@@ -2,15 +2,17 @@ import {Component, inject, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {MaterialService} from '../material.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {FloatLabelType, MatFormField, MatLabel} from '@angular/material/form-field';
+import {FloatLabelType, MatFormField, MatFormFieldModule, MatLabel} from '@angular/material/form-field';
 import {MatIcon} from '@angular/material/icon';
 import {MatInput} from '@angular/material/input';
 import {MatOption} from '@angular/material/core';
 import {MatRadioButton, MatRadioGroup} from '@angular/material/radio';
-import {MatSelect} from '@angular/material/select';
-import {MatSlideToggle, MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatSelectModule} from '@angular/material/select';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {map} from 'rxjs';
+import {NgForOf} from '@angular/common';
+import {MatCheckbox} from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-material-form',
@@ -24,9 +26,12 @@ import {map} from 'rxjs';
     MatOption,
     MatRadioButton,
     MatRadioGroup,
-    MatSelect,
     MatSlideToggleModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    NgForOf,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatCheckbox
   ],
   templateUrl: './material-form.component.html',
   styleUrl: './material-form.component.scss'
@@ -56,7 +61,10 @@ export class MaterialFormComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {
     this.materialForm = this.fb.group({
-      // definição dos controles
+      nomeMaterial: [''],
+      tipoMaterial: [''],
+      inativo: [false],  // Controle para o slide toggle
+      outroSelect: ['']
     });
   }
 
