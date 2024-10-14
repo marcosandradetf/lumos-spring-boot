@@ -1,0 +1,33 @@
+<div class="h-screen bg-neutral-50 border-r border-neutral-300 fixed 2xl:block 2xl:w-72 mb-10">
+  <!-- Botão de menu para mobile -->
+  <button class="block 2xl:hidden p-2 text-white" (click)="toggleMenu()">
+    <svg width="20px" height="20px" viewBox="0 -2 20 20" fill="black">
+      <g>
+        <path d="M4,5h12v2H4V5z M4,9h12v2H4V9z M4,13h12v2H4V13z"></path>
+      </g>
+    </svg>
+  </button>
+
+  <div class="w-screen 2xl:block 2xl:w-auto" [ngClass]="{'block': menuOpen, 'hidden': !menuOpen}">
+    <h1 class="text-2xl text-center border-b p-5 mb-5 hover:text-red-600 cursor-default hover:font-bold">
+      Estoque
+    </h1>
+    <ol>
+      <a routerLink="/estoque">
+        <li class="rounded pl-5 cursor-default hover:text-blue-500 hover:font-bold">Lista de Materiais</li>
+      </a>
+      <a routerLink="">
+        <li class="rounded pl-5 cursor-default text-blue-600 font-bold">Cadastrar Material</li>
+      </a>
+      <a routerLink="/estoque/entrada">
+        <li class="rounded pl-5 cursor-default hover:text-blue-500 hover:font-bold">Entrada de Material</li>
+      </a>
+      <a routerLink="/estoque/importar">
+        <li class="rounded pl-5 cursor-default hover:text-blue-500 hover:font-bold">Importar Material (.xlsx)</li>
+      </a>
+      <a routerLink="/estoque/sugestao">
+        <li class="rounded pl-5 cursor-default hover:text-blue-500 hover:font-bold">Sugestão de Compra</li>
+      </a>
+    </ol>
+  </div>
+</div>
