@@ -1,40 +1,44 @@
 <form [formGroup]="materialForm" (ngSubmit)="onSubmit()" class="border border-neutral-300 shadow p-5 w-[90vw] xl:w-[60rem] 2xl:w-[75rem]">
-  <h2 class="border-b border-neutral-300">Cadastrar Materiais</h2>
+  <h2 class="border-b border-neutral-300 text-sm">Cadastrar Materiais</h2>
 
-  <mat-slide-toggle labelPosition="before" ngModel name="acceptTerms" required>Material Inativo?</mat-slide-toggle>
+<!--  <div class="mb-5">-->
+<!--    <mat-slide-toggle labelPosition="before" ngModel name="acceptTerms" required>Material Inativo?</mat-slide-toggle>-->
+<!--  </div>-->
 
-  <div>
-    <label>Float label: </label>
-    <mat-radio-group [formControl]="floatLabelControl">
-      <mat-radio-button value="auto">Auto</mat-radio-button>
-      <mat-radio-button value="always">Always</mat-radio-button>
-    </mat-radio-group>
-  </div>
+  <div class="flex space-x-2">
 
-  <div class="flex">
-
-    <mat-form-field [hideRequiredMarker]="hideRequired()" [floatLabel]="floatLabel()" class="mr-2">
+    <mat-form-field floatLabel="always" class="mr-2 flex-2" appearance="fill">
       <mat-label>Nome do Material</mat-label>
       <input matInput placeholder="Insira o nome" formControlName="nomeMaterial" required />
     </mat-form-field>
 
-    <mat-form-field [hideRequiredMarker]="hideRequired()" [floatLabel]="floatLabel()" class="mr-2">
-      <mat-label>Selecione um tipo...</mat-label>
-      <mat-select formControlName="tipoMaterial" required>
-        <mat-option value="" disabled>-- Selecione --</mat-option>
+    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
+      <mat-label>Selecione a Marca</mat-label>
+      <mat-select formControlName="marca">
         <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field [hideRequiredMarker]="hideRequired()" [floatLabel]="floatLabel()" class="mr-2">
-      <mat-label>Select an option</mat-label>
-      <mat-select formControlName="outroSelect">
-        <mat-option value="none">None</mat-option>
-        <mat-option value="option1">Option 1</mat-option>
-        <mat-option value="option2">Option 2</mat-option>
-        <mat-option value="option3">Option 3</mat-option>
+    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
+      <mat-label>Selecione o Tipo</mat-label>
+      <mat-select formControlName="tipo">
         <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
       </mat-select>
     </mat-form-field>
+
+    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
+      <mat-label>Selecione o Grupo</mat-label>
+      <mat-select formControlName="grupo">
+        <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
+      <mat-label>Selecione o Almoxarifado</mat-label>
+      <mat-select formControlName="almoxarifado">
+        <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
   </div>
 </form>
