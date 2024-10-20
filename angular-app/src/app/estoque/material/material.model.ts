@@ -13,3 +13,7 @@ export interface Material {
   idAlmoxarifado: number;
 }
 
+export interface Tipos {
+    idTipo: number;
+    nomeTipo: string;
+}

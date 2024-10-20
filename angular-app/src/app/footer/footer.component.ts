@@ -9,4 +9,6 @@ import { Component } from '@angular/core';
 })
 export class FooterComponent {
 
+  protected readonly Date = Date;
+  currentYear: number = new Date().getFullYear();
 }

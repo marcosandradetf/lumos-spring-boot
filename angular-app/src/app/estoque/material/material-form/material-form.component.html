@@ -1,44 +1,132 @@
-<form [formGroup]="materialForm" (ngSubmit)="onSubmit()" class="border border-neutral-300 shadow p-5 w-[90vw] xl:w-[60rem] 2xl:w-[75rem]">
-  <h2 class="border-b border-neutral-300 text-sm">Cadastrar Materiais</h2>
+<form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
+      class="border border-neutral-300 shadow p-5 h-auto flex flex-col">
+  <h2 class="border-b border-neutral-300">Cadastrar Materiais</h2>
 
-<!--  <div class="mb-5">-->
-<!--    <mat-slide-toggle labelPosition="before" ngModel name="acceptTerms" required>Material Inativo?</mat-slide-toggle>-->
-<!--  </div>-->
+  <div class="flex space-x-2 flex-wrap">
 
-  <div class="flex space-x-2">
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Material</span>
+      </div>
+      <input type="text"
+             name="nomeMaterial"
+             [(ngModel)]="nomeMaterial"
+             required
+             minlength="3"
+             #firstNameModel="ngModel"
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+      <div *ngIf="firstNameModel.invalid && formSubmitted">
+        <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        <small *ngIf="firstNameModel.errors?.['minlength']" class="text-orange-600">
+          Nome do material requer no mínimo 3 caracteres.
+        </small>
+      </div>
+    </label>
 
-    <mat-form-field floatLabel="always" class="mr-2 flex-2" appearance="fill">
-      <mat-label>Nome do Material</mat-label>
-      <input matInput placeholder="Insira o nome" formControlName="nomeMaterial" required />
-    </mat-form-field>
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Marca</span>
+      </div>
+      <input type="text"
+             name="marcaMaterial"
+             [(ngModel)]="marcaMaterial"
+             required
+             minlength="3"
+             #marcaMaterialModel="ngModel"
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+      <div *ngIf="marcaMaterialModel.invalid && formSubmitted">
+        <small *ngIf="marcaMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        <small *ngIf="marcaMaterialModel.errors?.['minlength']" class="text-orange-600">
+          Marca do material requer no mínimo 3 caracteres.
+        </small>
+      </div>
+    </label>
 
-    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
-      <mat-label>Selecione a Marca</mat-label>
-      <mat-select formControlName="marca">
-        <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Un. Compra</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="unidCompra"
+        name="unidCompra"
+        required
+        #unidCompraModel="ngModel">
+        @for (unidade of unidades; track unidade.Value) {
+          <option [value]="unidade.Value">{{unidade.Value}}</option>
+        }
+      </select>
+      <div *ngIf="unidCompraModel.invalid && formSubmitted">
+        <small *ngIf="tipoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
 
-    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
-      <mat-label>Selecione o Tipo</mat-label>
-      <mat-select formControlName="tipo">
-        <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Un. Requisição</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="unidRequisicao"
+        name="unidRequisicao"
+        required
+        #unidRequisicaoModel="ngModel">
+        @for (unidade of unidades; track unidade.Value) {
+          <option [value]="unidade.Value">{{unidade.Value}}</option>
+        }
+      </select>
+      <div *ngIf="unidRequisicaoModel.invalid && formSubmitted">
+        <small *ngIf="unidRequisicaoModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
 
-    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
-      <mat-label>Selecione o Grupo</mat-label>
-      <mat-select formControlName="grupo">
-        <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Tipo</span>
+      </div>
+      <select
+        class="select select-bordered"
+        ngModel="tipoMaterial"
+        name="tipoMaterial"
+        required
+        #tipoMaterialModel="ngModel">
+        @for (tipo of tipos; track tipo.idTipo) {
+          <option [value]="tipo.idTipo">{{tipo.nomeTipo}}</option>
+        }
+      </select>
+      <div *ngIf="tipoMaterialModel.invalid && formSubmitted">
+        <small *ngIf="tipoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
 
-    <mat-form-field floatLabel="always" class="mr-2" appearance="fill">
-      <mat-label>Selecione o Almoxarifado</mat-label>
-      <mat-select formControlName="almoxarifado">
-        <mat-option *ngFor="let tipo of tipos" [value]="tipo.idTipo">{{ tipo.nomeTipo }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Grupo</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="grupoMaterial"
+        name="grupoMaterial"
+        required
+        #grupoMaterialModel="ngModel">
+        @for (grupo of grupos; track grupo.idGrupo) {
+          <option [value]="grupo.idGrupo">{{grupo.nomeGrupo}}</option>
+        }
+      </select>
+      <div *ngIf="grupoMaterialModel.invalid && formSubmitted">
+        <small *ngIf="grupoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
+
+    <div class="form-control">
+      <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
+        <span class="label-text">Material Inativo</span>
+        <input type="checkbox" class="toggle toggle-primary" />
+      </label>
+    </div>
 
   </div>
+
+  <button class="btn btn-active btn-primary ml-auto" type="submit">Gravar</button>
+
 </form>

@@ -17,7 +17,9 @@ import {map} from 'rxjs';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatRadioButton, MatRadioGroup} from '@angular/material/radio';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
-import {MaterialFormComponent} from '../material-form/material-form.component'; // Importar MatSnackBar
+import {MaterialFormComponent} from '../material-form/material-form.component';
+import {SidebarComponent} from "../../sidebar/sidebar.component";
+import {TabelaComponent} from '../components/tabela/tabela.component'; // Importar MatSnackBar
 
 
 
@@ -26,7 +28,7 @@ import {MaterialFormComponent} from '../material-form/material-form.component'; 
   standalone: true,
   templateUrl: './material-create.component.html',
   styleUrls: ['./material-create.component.scss'],
-  imports: [CommonModule, RouterModule, DeleteMaterialModalComponent, MatButton, MatFormField, MatSelect, MatOption, MatIcon, MatInput, ReactiveFormsModule, MatCheckbox, MatRadioGroup, MatRadioButton, MatLabel, MatSlideToggle, MaterialFormComponent] // Adicionando os módulos aqui
+  imports: [CommonModule, RouterModule, DeleteMaterialModalComponent, MatButton, MatFormField, MatSelect, MatOption, MatIcon, MatInput, ReactiveFormsModule, MatCheckbox, MatRadioGroup, MatRadioButton, MatLabel, MatSlideToggle, MaterialFormComponent, SidebarComponent, TabelaComponent] // Adicionando os módulos aqui
 })
 export class MaterialCreateComponent implements OnInit {
   materiais: Material[] = []; // Inicializando a lista de materiais

@@ -1,65 +1,51 @@
-<header class="mb-20">
-  <div class="flex items-center justify-between bg-neutral-200 fixed top-0 w-full h-10 z-20">
-    <div class="items-center justify-between h-full hidden 2xl:block">
-      <img src="assets/lumos.png" alt="Logo" class="ml-3 w-10">
-    </div>
-
-    <div class="flex h-screen w-72 p-5 text-neutral-700 flex-col absolute right-0 top-10 bg-neutral-200 2xl:w-auto items-center 2xl:justify-between 2xl:h-full 2xl:static 2xl:block 2xl:flex-row 2xl:p-2"
-         [ngClass]="{'block': navOpen, 'hidden': !navOpen}">
-      <a href="#" class="cursor-default rounded mr-5 hover:text-red-600 hover:font-bold">Início</a>
-      <a href="#" class="cursor-default rounded mr-5 hover:text-red-600 hover:font-bold mt-3 2xl:mt-0">Atendimentos</a>
-      <a href="#" class="cursor-default rounded mr-5 hover:text-red-600 hover:font-bold mt-3 2xl:mt-0">Equipes</a>
-      <a class="cursor-default bg-neutral-50 text-blue-600 border-r-2 border-l-2 border-neutral-300 p-3 mr-5 hover:font-bold mt-3 2xl:mt-0">Estoque</a>
-      <a href="#" class="cursor-default rounded mr-5 hover:text-red-600 hover:font-bold mt-3 2xl:mt-0">Requisições</a>
-      <a href="#" class="cursor-default rounded mr-5 hover:text-red-600 hover:font-bold mt-3 2xl:mt-0">Pontos de Iluminação Pública</a>
-    </div>
-
-    <div class="flex items-center justify-between relative">
-      <div class="flex items-center cursor-default group" (click)="toggleAccountMenu()">
-        <span class="text-neutral-700 account-name group-hover:text-red-600 text-xs group-hover:font-bold mr-4 select-none ml-4 2xl:ml-0">Marcos</span>
+<header>
+    <div class="drawer fixed top-0 border-b shadow z-50">
+    <input id="my-drawer-3" type="checkbox" class="drawer-toggle"/>
+    <div class="drawer-content flex flex-col">
+      <!-- Navbar -->
+      <div class="navbar bg-neutral-50 w-full">
+        <div class="flex-none mx-2 select-none">Lumos</div>
+        <div class="flex-1 mx-2 lg:hidden">
+          <label for="my-drawer-3" aria-label="open sidebar" class="btn btn-square btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black">
+              <path
+                d="M240-160q-33 0-56.5-23.5T160-240q0-33 23.5-56.5T240-320q33 0 56.5 23.5T320-240q0 33-23.5 56.5T240-160Zm240 0q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm240 0q-33 0-56.5-23.5T640-240q0-33 23.5-56.5T720-320q33 0 56.5 23.5T800-240q0 33-23.5 56.5T720-160ZM240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400ZM240-640q-33 0-56.5-23.5T160-720q0-33 23.5-56.5T240-800q33 0 56.5 23.5T320-720q0 33-23.5 56.5T240-640Zm240 0q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Zm240 0q-33 0-56.5-23.5T640-720q0-33 23.5-56.5T720-800q33 0 56.5 23.5T800-720q0 33-23.5 56.5T720-640Z"/>
+            </svg>
+          </label>
+        </div>
+        <div class="hidden ml-auto lg:block">
+          <ul class="menu menu-horizontal">
+            <!-- Navbar menu content here -->
+            <li><a>Chamados</a></li>
+            <li><a>Equipes</a></li>
+            <li><a>Contratos</a></li>
+            <li><a>Requisições</a></li>
+            <li><a>Estoque</a></li>
+          </ul>
+        </div>
+        <div class="dropdown dropdown-bottom dropdown-end ml-auto">
+          <div tabindex="0" role="button" class="avatar online placeholder">
+            <div class="bg-neutral text-neutral-content w-10 rounded-full">
+              <span class="text-xl">M</span>
+            </div>
+          </div>
+          <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+            <li><a>Minha conta</a></li>
+            <li><a>Sair</a></li>
+          </ul>
+        </div>
       </div>
-      <div *ngIf="accountMenuOpen" class="text-neutral-700 absolute top-6 2xl:right-0 bg-neutral-200 border border-neutral-300 shadow p-2 w-32 z-10" (mouseleave)="closeAccountMenu()">
-        <ol>
-          <li class="cursor-default hover:text-red-600 hover:font-bold">Minha conta</li>
-          <li class="cursor-default hover:text-red-600 hover:font-bold">Sair</li>
-        </ol>
-      </div>
     </div>
-
-    <button class="block 2xl:hidden p-2 text-white" (click)="toggleNav()">
-      <!-- Ícone de Menu -->
-      <svg width="20px" height="20px" viewBox="0 -2 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg"
-           xmlns:xlink="http://www.w3.org/1999/xlink" fill="black">
-        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-        <g id="SVGRepo_iconCarrier"><title>align_text_distribute [#914]</title>
-          <desc>Created with Sketch.</desc>
-          <defs></defs>
-          <g id="Page-1" stroke="none" stroke-width="1" fill="white" fill-rule="evenodd">
-            <g id="Dribbble-Light-Preview" transform="translate(-300.000000, -4161.000000)" fill="black">
-              <g id="icons" transform="translate(56.000000, 160.000000)">
-                <path d="M244,4017 L264,4017 L264,4015 L244,4015 L244,4017 Z M244,4003 L264,4003 L264,4001 L244,4001 L244,4003 Z M244,4010 L264,4010 L264,4008 L244,4008 L244,4010 Z"
-                      id="align_text_distribute-[#914]"></path>
-              </g>
-            </g>
-          </g>
-        </g>
-      </svg>
-    </button>
+    <div class="drawer-side z-50">
+      <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay z-50"></label>
+      <ul class="menu bg-base-200 min-h-full w-80 p-4 z-50">
+        <!-- Sidebar content here -->
+        <li><a>Chamados</a></li>
+        <li><a>Equipes</a></li>
+        <li><a>Contratos</a></li>
+        <li><a>Requisições</a></li>
+        <li><a>Estoque</a></li>
+      </ul>
+    </div>
   </div>
-  <ol class="flex justify-center border border-neutral-300 bg-neutral-50 p-2 fixed w-full top-10 ">
-    <li class="mb-1 mr-8 text-blue-600 font-bold text-xs relative">
-      <a href="#" class="block cursor-default"><span class="text-blue-600 font-bold">+</span> Cadastrar Material</a>
-      <div class="absolute left-0 right-0 -bottom-3 border-b-[3px] border-blue-500"></div>
-    </li>
-    <li class="hover:text-rose-900 hover:font-bold text-xs mb-1 mr-8">
-      <a href="#" class="cursor-default"><span class="font-bold">+</span> Cadastrar Tipo de Material</a>
-    </li>
-    <li class="cursor-default hover:text-rose-900 hover:font-bold text-xs mb-1 mr-8">
-      <a href="#" class="cursor-default"><span class="font-bold">+</span> Cadastrar Grupo de Material</a>
-    </li>
-    <li class="cursor-default hover:text-rose-900 hover:font-bold text-xs">
-      <a href="#" class="cursor-default"><span class="font-bold">+</span> Cadastrar Almoxarifado</a>
-    </li>
-  </ol>
 </header>
