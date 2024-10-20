@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {HeaderComponent} from './header/header.component';
-import {FooterComponent} from './footer/footer.component';
+import {HeaderComponent} from './shared/header/header.component';
+import {FooterComponent} from './shared/footer/footer.component';
 import {SidebarComponent} from './estoque/sidebar/sidebar.component';
 import {TopBarComponent} from './estoque/top-bar/top-bar.component';
 

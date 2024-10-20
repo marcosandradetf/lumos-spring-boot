@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {Material} from '../material.model';
-import {MaterialService} from '../material.service';
+import {Material} from '../../../models/material.model';
+import {MaterialService} from '../../../services/material.service';
 import {FormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 

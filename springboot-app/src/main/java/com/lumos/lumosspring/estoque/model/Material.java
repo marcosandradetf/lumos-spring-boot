@@ -8,27 +8,35 @@ public class Material {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long idMaterial;
 
+    @Column(columnDefinition = "TEXT", unique = true)
     private String nomeMaterial;
+
+    @Column(columnDefinition = "TEXT")
+    private String marcaMaterial;
+
+    @Column(columnDefinition = "TEXT")
     private String unidadeCompra;
+
+    @Column(columnDefinition = "TEXT")
     private String unidadeRequisicao;
 
     @ManyToOne
-    @JoinColumn(name = "tipo_material_id_tipo")
+    @JoinColumn(name = "id_tipo")
     private Tipo tipoMaterial;
 
     @ManyToOne
-    @JoinColumn(name = "grupo_material_id_grupo")
+    @JoinColumn(name = "id_grupo")
     private Grupo grupoMaterial;
 
     private int qtdeEstoque;
     private boolean inativo;
 
     @ManyToOne
-    @JoinColumn(name = "empresa_id_empresa")
+    @JoinColumn(name = "id_empresa")
     private Empresa empresa;
 
     @ManyToOne
-    @JoinColumn(name = "almoxarifado_id_almoxarifado")
+    @JoinColumn(name = "id_almoxarifado")
     private Almoxarifado almoxarifado;
 
     public Empresa getEmpresa() {
@@ -114,4 +122,11 @@ public class Material {
         this.inativo = inativo;
     }
 
+    public String getMarcaMaterial() {
+        return marcaMaterial;
+    }
+
+    public void setMarcaMaterial(String marcaMaterial) {
+        this.marcaMaterial = marcaMaterial;
+    }
 }

@@ -1,6 +1,6 @@
 import {Component, inject, OnInit} from '@angular/core';
-import {Material} from '../material.model';
-import {MaterialService} from '../material.service';
+import {Material} from '../../../models/material.model';
+import {MaterialService} from '../../../services/material.service';
 import { CommonModule } from '@angular/common'; // Importando o CommonModule
 import { RouterModule } from '@angular/router';
 import {DeleteMaterialModalComponent} from '../components/modal-delete/delete.component'; // Importando o RouterModule

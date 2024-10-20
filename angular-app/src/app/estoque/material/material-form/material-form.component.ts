@@ -1,6 +1,6 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {MaterialService} from '../material.service';
+import {MaterialService} from '../../../services/material.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {MatIcon, MatIconModule} from '@angular/material/icon';
 import {MatInput, MatInputModule} from '@angular/material/input';
@@ -12,7 +12,12 @@ import {NgForOf, NgIf} from '@angular/common';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {NgOptionComponent, NgSelectComponent} from '@ng-select/ng-select';
-import {Tipos} from '../material.model';
+import {Material} from '../../../models/material.model';
+import {Tipo} from '../../../models/tipo.model';
+import {Grupo} from '../../../models/grupo.model';
+import {Empresa} from '../../../models/empresa.model';
+import {Almoxarifado} from '../../../models/almoxarifado.model';
+import {catchError, of, Subject, takeUntil, tap} from 'rxjs';
 
 
 @Component({
@@ -35,23 +40,17 @@ import {Tipos} from '../material.model';
   templateUrl: './material-form.component.html',
   styleUrl: './material-form.component.scss'
 })
-export class MaterialFormComponent implements OnInit {
-  tipos: Tipos[] = [];
-  grupos: any[] = [];
-  empresas: any[] = [];
-  almoxarifados: any[] = [];
+export class MaterialFormComponent implements OnInit, OnDestroy {
+  tipos: Tipo[] = [];
+  grupos: Grupo[] = [];
+  empresas: Empresa[] = [];
+  almoxarifados: Almoxarifado[] = [];
+  material: Material = new Material();
 
-  nomeMaterial: string = '';
-  marcaMaterial: string = '';
-  unidCompra: string = '';
-  unidRequisicao: string = '';
-  tipoMaterial: number = 0;
-  grupoMaterial: number = 0;
-  qtdeEstoque: number = 0;
-  empresaMaterial: number = 0;
-  materialInativo: boolean = false;
   formSubmitted: boolean = false;
+  serverMessage: string | null = null;
 
+  private unsubscribe$ = new Subject<void>();
 
   unidades: any[] = [
     { Value: "CX" },
@@ -61,31 +60,63 @@ export class MaterialFormComponent implements OnInit {
     { Value: "CM" }
   ];
 
-
-
-  constructor(
-    private materialService: MaterialService,
-  ) {  }
+  constructor(private materialService: MaterialService) {}
 
   ngOnInit(): void {
-    this.materialService.getTipos().subscribe(tipos => this.tipos = tipos);
-    this.materialService.getGrupos().subscribe(grupos => this.grupos = grupos);
-    this.materialService.getEmpresas().subscribe(empresas => this.empresas = empresas);
-    this.materialService.getAlmoxarifados().subscribe(almoxarifados => this.almoxarifados = almoxarifados);
+    this.loadTipos();
+    this.loadGrupos();
+    this.loadEmpresas();
+    this.loadAlmoxarifados();
+  }
+
+  private loadTipos() {
+    this.materialService.getTipos()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(tipos => this.tipos = tipos);
+  }
+
+  private loadGrupos() {
+    this.materialService.getGrupos()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(grupos => this.grupos = grupos);
+  }
+
+  private loadEmpresas() {
+    this.materialService.getEmpresas()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(empresas => this.empresas = empresas);
+  }
+
+  private loadAlmoxarifados() {
+    this.materialService.getAlmoxarifados()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(almoxarifados => this.almoxarifados = almoxarifados);
   }
 
   onSubmit(form: NgForm) {
     this.formSubmitted = true;
     if (form.valid) {
-      // Processar a submissão do formulário
-      console.log('Formulário enviado com sucesso:', form.value);
-
-      // Resetar o formulário após o envio bem-sucedido
-      form.resetForm();
-
-      // Redefinir a variável para falso após a submissão
-      this.formSubmitted = false;
+      this.materialService.create(this.material).pipe(
+        tap(() => {
+          this.resetForm(form);
+          this.serverMessage = "Material cadastrado com sucesso!";
+        }),
+        catchError(error => {
+          this.serverMessage = error.error || "Erro ao cadastrar material.";
+          return of(null); // Retorna um observable nulo em caso de erro
+        })
+      ).subscribe(); // Apenas se inscreve sem precisar passar funções de sucesso e erro
     }
   }
 
+  private resetForm(form: NgForm) {
+    this.formSubmitted = false;
+    form.reset();
+    this.material = new Material(); // Reseta a instância do material
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
 }

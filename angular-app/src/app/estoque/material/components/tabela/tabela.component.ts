@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import {NgForOf} from "@angular/common";
 import {DeleteMaterialModalComponent} from '../modal-delete/delete.component';
-import {Material} from '../../material.model';
+import {Material} from '../../../../models/material.model';
 
 @Component({
   selector: 'app-tabela',

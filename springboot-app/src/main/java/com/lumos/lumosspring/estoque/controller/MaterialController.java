@@ -27,8 +27,13 @@ public class MaterialController {
     }
 
     @PostMapping
-    public Material create(@RequestBody Material material) {
-        return materialService.save(material);
+    public ResponseEntity<?>  create(@RequestBody Material material) {
+        try {
+            Material novoMaterial = materialService.save(material);
+            return ResponseEntity.ok(novoMaterial);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Material já cadastrado.");
+        }
     }
 
     @PutMapping("/{id}")

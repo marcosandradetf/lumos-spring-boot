@@ -1,17 +1,14 @@
 package com.lumos.lumosspring.estoque.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Grupo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long idGrupo;
-
-    private String nomeAlmoxarifadoo;
+    @Column(columnDefinition = "TEXT")
+    private String nomeGrupo;
 
     public long getIdGrupo() {
         return idGrupo;
@@ -21,11 +18,11 @@ public class Grupo {
         this.idGrupo = idGrupo;
     }
 
-    public String getNomeAlmoxarifadoo() {
-        return nomeAlmoxarifadoo;
+    public String getNomeGrupo() {
+        return nomeGrupo;
     }
 
-    public void setNomeAlmoxarifadoo(String nomeAlmoxarifadoo) {
-        this.nomeAlmoxarifadoo = nomeAlmoxarifadoo;
+    public void setNomeGrupo(String nomeGrupo) {
+        this.nomeGrupo = nomeGrupo;
     }
 }

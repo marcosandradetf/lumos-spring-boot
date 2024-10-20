@@ -1,15 +1,13 @@
 package com.lumos.lumosspring.estoque.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Empresa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idEmpresa;
+    @Column(columnDefinition = "TEXT")
     private String nomeEmpresa;
 
     public Long getIdEmpresa() {
