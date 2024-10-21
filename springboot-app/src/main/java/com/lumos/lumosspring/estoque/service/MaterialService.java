@@ -21,7 +21,7 @@ public class MaterialService {
     }
 
     public Material save(Material material) {
-        if (materialRepository.existsByName(material.getNomeMaterial())) {
+        if (materialRepository.existsByNomeMaterial(material.getNomeMaterial())) {
             throw new IllegalArgumentException("Material já cadastrado.");
         }
         return materialRepository.save(material);

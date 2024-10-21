@@ -8,7 +8,7 @@ import {MatOption} from '@angular/material/core';
 import {MatRadioButton, MatRadioGroup} from '@angular/material/radio';
 import {MatSelectModule} from '@angular/material/select';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
-import {NgForOf, NgIf} from '@angular/common';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {NgOptionComponent, NgSelectComponent} from '@ng-select/ng-select';
@@ -35,13 +35,14 @@ import {catchError, of, Subject, takeUntil, tap} from 'rxjs';
     NgForOf,
     MatSelectModule,
     MatCheckbox,
-    MatFormFieldModule, MatInputModule, MatIconModule, NgIf, NgSelectComponent, NgOptionComponent
+    MatFormFieldModule, MatInputModule, MatIconModule, NgIf, NgSelectComponent, NgOptionComponent, NgClass
   ],
   templateUrl: './material-form.component.html',
   styleUrl: './material-form.component.scss'
 })
 export class MaterialFormComponent implements OnInit, OnDestroy {
   tipos: Tipo[] = [];
+  tiposFiltrados: Tipo[] = []; // Tipos filtrados com base no grupo selecionado
   grupos: Grupo[] = [];
   empresas: Empresa[] = [];
   almoxarifados: Almoxarifado[] = [];
@@ -93,17 +94,40 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
       .subscribe(almoxarifados => this.almoxarifados = almoxarifados);
   }
 
+  onGroupChange(selectedGroupId: number) {
+    // Filtra os tipos com base no id_grupo do grupo selecionado
+    this.tiposFiltrados = this.tipos.filter(tipo => tipo.grupo.idGrupo === parseInt(selectedGroupId.toString(), 10));
+  }
+
+  private showMessage(message: string, timeout = 3000) {
+    this.serverMessage = message;
+    setTimeout(() => {
+      this.serverMessage = null;
+    }, timeout);
+  }
+
+
   onSubmit(form: NgForm) {
+    console.log('submit');
     this.formSubmitted = true;
     if (form.valid) {
       this.materialService.create(this.material).pipe(
         tap(() => {
           this.resetForm(form);
-          this.serverMessage = "Material cadastrado com sucesso!";
+          this.showMessage("Material cadastrado com sucesso!");
         }),
         catchError(error => {
-          this.serverMessage = error.error || "Erro ao cadastrar material.";
-          return of(null); // Retorna um observable nulo em caso de erro
+          let errorMessage = "Erro ao cadastrar material.";
+
+          if (error.status === 500) {
+            errorMessage = "Erro interno no servidor. Por favor, tente novamente mais tarde.";
+          } else if (error?.error?.message) {
+            errorMessage = error.error.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          this.showMessage(errorMessage);
+          return of(null);
         })
       ).subscribe(); // Apenas se inscreve sem precisar passar funções de sucesso e erro
     }

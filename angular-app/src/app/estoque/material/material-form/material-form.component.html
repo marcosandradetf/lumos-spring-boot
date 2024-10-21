@@ -6,6 +6,50 @@
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
+        <span class="label-text">Grupo</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="material.grupoMaterial.idGrupo"
+        name="grupoMaterial"
+        required
+        #grupoMaterialModel="ngModel"
+        (change)="onGroupChange(material.grupoMaterial.idGrupo)">
+        @for (grupo of grupos; track grupo.idGrupo) {
+          <option [value]="grupo.idGrupo">{{grupo.nomeGrupo}}</option>
+        }
+      </select>
+      <div *ngIf="grupoMaterialModel.invalid && formSubmitted">
+        <small *ngIf="grupoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
+
+    <div
+      [ngClass]="{'tooltip': !material.grupoMaterial?.idGrupo, 'tooltip-bottom': !material.grupoMaterial?.idGrupo}"
+      [attr.data-tip]="material.grupoMaterial?.idGrupo ? '' : 'Selecione o Grupo Primeiro'"
+      class="tooltip tooltip-bottom form-control w-full max-w-xs" >
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Tipo</span>
+        </div>
+        <select
+          class="select select-bordered"
+          [(ngModel)]="material.tipoMaterial.idTipo"
+          name="tipoMaterial"
+          required
+          #tipoMaterialModel="ngModel">
+          @for (tipo of tiposFiltrados; track tipo.idTipo) {
+            <option [value]="tipo.idTipo">{{tipo.nomeTipo}}</option>
+          }
+        </select>
+        <div *ngIf="tipoMaterialModel.invalid && formSubmitted">
+          <small *ngIf="tipoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+    </div>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
         <span class="label-text">Material</span>
       </div>
       <input type="text"
@@ -48,7 +92,7 @@
       </div>
       <select
         class="select select-bordered"
-        [(ngModel)]="unidCompra"
+        [(ngModel)]="material.unidadeCompra"
         name="unidCompra"
         required
         #unidCompraModel="ngModel">
@@ -67,8 +111,8 @@
       </div>
       <select
         class="select select-bordered"
-        [(ngModel)]="unidRequisicao"
-        name="unidRequisicao"
+        [(ngModel)]="material.unidadeRequisicao"
+        name="unidadeRequisicao"
         required
         #unidRequisicaoModel="ngModel">
         @for (unidade of unidades; track unidade.Value) {
@@ -82,51 +126,78 @@
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Tipo</span>
+        <span class="label-text">Qtde. Estoque</span>
       </div>
-      <select
-        class="select select-bordered"
-        ngModel="tipoMaterial"
-        name="tipoMaterial"
-        required
-        #tipoMaterialModel="ngModel">
-        @for (tipo of tipos; track tipo.idTipo) {
-          <option [value]="tipo.idTipo">{{tipo.nomeTipo}}</option>
-        }
-      </select>
-      <div *ngIf="tipoMaterialModel.invalid && formSubmitted">
-        <small *ngIf="tipoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      <input type="number"
+             name="qtdeEstoque"
+             [(ngModel)]="material.qtdeEstoque"
+             required
+             #qtdeEstoqueModel="ngModel"
+             placeholder="Informe a quantidade" class="input input-bordered w-full max-w-xs" />
+      <div *ngIf="qtdeEstoqueModel.invalid && formSubmitted">
+        <small *ngIf="qtdeEstoqueModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
       </div>
     </label>
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Grupo</span>
+        <span class="label-text">Empresa</span>
       </div>
       <select
         class="select select-bordered"
-        [(ngModel)]="grupoMaterial"
-        name="grupoMaterial"
+        [(ngModel)]="material.empresa.idEmpresa"
+        name="empresa"
         required
-        #grupoMaterialModel="ngModel">
-        @for (grupo of grupos; track grupo.idGrupo) {
-          <option [value]="grupo.idGrupo">{{grupo.nomeGrupo}}</option>
+        #empresaModel="ngModel">
+        @for (empresa of empresas; track empresa.idEmpresa) {
+          <option [value]="empresa.idEmpresa">{{empresa.nomeEmpresa}}</option>
         }
       </select>
-      <div *ngIf="grupoMaterialModel.invalid && formSubmitted">
-        <small *ngIf="grupoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      <div *ngIf="empresaModel.invalid && formSubmitted">
+        <small *ngIf="empresaModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Almoxarifado</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="material.almoxarifado.idAlmoxarifado"
+        name="almoxarifado"
+        required
+        #almoxarifadoModel="ngModel">
+        @for (almoxarifado of almoxarifados; track almoxarifado.idAlmoxarifado) {
+          <option [value]="almoxarifado.idAlmoxarifado">{{almoxarifado.nomeAlmoxarifado}}</option>
+        }
+      </select>
+      <div *ngIf="almoxarifadoModel.invalid && formSubmitted">
+        <small *ngIf="almoxarifadoModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
       </div>
     </label>
 
     <div class="form-control">
       <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
         <span class="label-text">Material Inativo</span>
-        <input type="checkbox" class="toggle toggle-primary" />
+        <input type="checkbox"
+               name="inativo"
+               [(ngModel)]="material.inativo"
+               class="toggle toggle-primary" />
       </label>
     </div>
 
   </div>
 
-  <button class="btn btn-active btn-primary ml-auto" type="submit">Gravar</button>
+  <div class="w-full flex border-t mt-10 p-6 border-neutral-300">
+    <button class="btn btn-active btn-primary ml-auto" type="submit">Gravar</button>
+  </div>
+
 
 </form>
+
+<div class="toast toast-end" *ngIf="serverMessage">
+  <div class="alert alert-error">
+    <span>{{ serverMessage }}</span>
+  </div>
+</div>

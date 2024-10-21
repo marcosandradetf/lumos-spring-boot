@@ -3,6 +3,7 @@
   <tr>
     <th class="border-b border-slate-600 p-2 bg-indigo-900 text-white text-left">Código</th>
     <th class="border-b border-slate-600 bg-indigo-900 text-white min-w-64 text-left">Nome Material</th>
+    <th class="border-b border-slate-600 bg-indigo-900 text-white min-w-64 text-left">Marca</th>
     <th class="border-b border-slate-600 bg-indigo-900 text-white min-w-32 text-left">Unid. Compra</th>
     <th class="border-b border-slate-600 bg-indigo-900 text-white min-w-36 text-left">Unid. Requisição</th>
     <th class="border-b border-slate-600 bg-indigo-900 text-white min-w-28 text-left">Tipo Material</th>
@@ -18,14 +19,15 @@
   <tr *ngFor="let material of materiais" class="odd:bg-white even:bg-gray-200">
     <td class="border-b-2 border-slate-400 p-2">{{ material.idMaterial }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.nomeMaterial }}</td>
+    <td class="border-b-2 border-slate-400 p-2">{{ material.marcaMaterial }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.unidadeCompra }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.unidadeRequisicao }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.tipoMaterial.nomeTipo }}</td>
-    <td class="border-b-2 border-slate-400 p-2">{{ material.idGrupo }}</td>
+    <td class="border-b-2 border-slate-400 p-2">{{ material.grupoMaterial.nomeGrupo }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.qtdeEstoque }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.inativo }}</td>
-    <td class="border-b-2 border-slate-400 p-2">{{ material.idEmpresa }}</td>
-    <td class="border-b-2 border-slate-400 p-2">{{ material.idAlmoxarifado }}</td>
+    <td class="border-b-2 border-slate-400 p-2">{{ material.empresa.nomeEmpresa }}</td>
+    <td class="border-b-2 border-slate-400 p-2">{{ material.almoxarifado.nomeAlmoxarifado }}</td>
     <td class="border-b-2 border-slate-400 p-2 cursor-pointer">
       <button (click)="deleteMaterial(material.idMaterial, material.nomeMaterial)"
               class="cursor-pointer material-icons text-red-600">delete

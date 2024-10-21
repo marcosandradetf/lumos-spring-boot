@@ -29,6 +29,7 @@ public class Material {
     private Grupo grupoMaterial;
 
     private int qtdeEstoque;
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inativo;
 
     @ManyToOne

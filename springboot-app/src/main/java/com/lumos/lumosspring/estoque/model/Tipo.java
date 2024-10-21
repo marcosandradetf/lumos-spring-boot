@@ -9,6 +9,9 @@ public class Tipo {
     private long idTipo;
     @Column(columnDefinition = "TEXT")
     private String nomeTipo;
+    @ManyToOne
+    @JoinColumn(name = "id_grupo")
+    private Grupo grupo;
 
     public long getIdTipo() {
         return idTipo;
@@ -24,5 +27,13 @@ public class Tipo {
 
     public void setNomeTipo(String nomeTipo) {
         this.nomeTipo = nomeTipo;
+    }
+
+    public Grupo getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(Grupo grupo) {
+        this.grupo = grupo;
     }
 }
