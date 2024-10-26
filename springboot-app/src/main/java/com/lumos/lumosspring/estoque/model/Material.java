@@ -20,23 +20,24 @@ public class Material {
     @Column(columnDefinition = "TEXT")
     private String unidadeRequisicao;
 
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tipo")
     private Tipo tipoMaterial;
 
-    @ManyToOne
-    @JoinColumn(name = "id_grupo")
-    private Grupo grupoMaterial;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "id_grupo")
+//    private Grupo grupoMaterial;
 
     private int qtdeEstoque;
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inativo;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empresa")
     private Empresa empresa;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_almoxarifado")
     private Almoxarifado almoxarifado;
 
@@ -56,13 +57,13 @@ public class Material {
         this.almoxarifado = almoxarifado;
     }
 
-    public Grupo getGrupoMaterial() {
-        return grupoMaterial;
-    }
-
-    public void setGrupoMaterial(Grupo grupoMaterial) {
-        this.grupoMaterial = grupoMaterial;
-    }
+//    public Grupo getGrupoMaterial() {
+//        return grupoMaterial;
+//    }
+//
+//    public void setGrupoMaterial(Grupo grupoMaterial) {
+//        this.grupoMaterial = grupoMaterial;
+//    }
 
     public Tipo getTipoMaterial() {
         return tipoMaterial;

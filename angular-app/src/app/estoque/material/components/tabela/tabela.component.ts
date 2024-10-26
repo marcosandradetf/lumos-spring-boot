@@ -20,23 +20,36 @@ export class TabelaComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.LoadMateriais()
+    this.loadMateriais()
   }
 
-  LoadMateriais(): void {
-    this.materialService.getAll().subscribe((data: Material[]) => {
-      this.materiais = data;
+  loadMateriais(): void {
+    this.materialService.materiais$.subscribe((materiais: Material[]) => {
+      this.materiais = materiais;
+    });
+
+    this.materialService.getAll();
+  }
+
+  deleteMaterial(idMaterial: number, nomeMaterial: string): void {
+    this.materialService.deleteMaterial(idMaterial).subscribe(() => {
+      this.materialService.deleteMaterialFetch(idMaterial);
+      this.showMessage("Material removido com sucesso!");
     }, error => {
-      console.error('Erro ao carregar materiais:', error);
+      this.showMessage(error.message || "Erro ao remover material.");
     });
   }
 
-
-  deleteMaterial(idMaterial: number, nomeMaterial: string): void {
-
+  updateMaterial(idMaterial: number, material: Material): void {
+    this.materialService.updateMaterial(idMaterial ,material).subscribe((materialAtualizado: Material) => {
+      this.materialService.updateMaterialFetch(materialAtualizado);
+      this.showMessage("Material removido com sucesso!");
+    }, error => {
+      this.showMessage(error.message || "Erro ao atualizar  material.");
+    });
   }
 
-  updateMaterial(idMaterial: number) {
+  private showMessage(message: string) {
 
   }
 

@@ -10,8 +10,7 @@ export class Material {
   unidadeCompra: string;
   unidadeRequisicao: string;
   tipoMaterial: Tipo;
-  grupoMaterial: Grupo;
-  qtdeEstoque: number;
+  qtdeEstoque: number | null;
   inativo: boolean;
   empresa: Empresa;
   almoxarifado: Almoxarifado;
@@ -23,8 +22,7 @@ export class Material {
     this.unidadeCompra = '';
     this.unidadeRequisicao = '';
     this.tipoMaterial = new Tipo();
-    this.grupoMaterial = new Grupo();
-    this.qtdeEstoque = 0;
+    this.qtdeEstoque = null;
     this.inativo = false;
     this.empresa = new Empresa();
     this.almoxarifado = new Almoxarifado();

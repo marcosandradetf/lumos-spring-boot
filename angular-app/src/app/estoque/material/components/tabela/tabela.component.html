@@ -1,4 +1,4 @@
-<table class="border-collapse cursor-default font-light select-none table table-xs -z-20" id="tabela-materiais">
+<table class="border-collapse cursor-default font-light select-none table table-xs z-10" id="tabela-materiais">
   <thead>
   <tr>
     <th class="border-b border-slate-600 p-2 bg-indigo-900 text-white text-left">Código</th>
@@ -23,7 +23,7 @@
     <td class="border-b-2 border-slate-400 p-2">{{ material.unidadeCompra }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.unidadeRequisicao }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.tipoMaterial.nomeTipo }}</td>
-    <td class="border-b-2 border-slate-400 p-2">{{ material.grupoMaterial.nomeGrupo }}</td>
+    <td class="border-b-2 border-slate-400 p-2">{{ material.tipoMaterial.grupo.nomeGrupo }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.qtdeEstoque }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.inativo }}</td>
     <td class="border-b-2 border-slate-400 p-2">{{ material.empresa.nomeEmpresa }}</td>
@@ -34,7 +34,7 @@
       </button>
     </td>
     <td class="border-b-2 border-slate-400 p-2 cursor-pointer">
-      <button (click)="updateMaterial(material.idMaterial)" class="cursor-pointer material-icons">edit</button>
+      <button (click)="updateMaterial(material.idMaterial, material)" class="cursor-pointer material-icons">edit</button>
     </td>
   </tr>
   </tbody>

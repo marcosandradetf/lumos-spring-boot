@@ -19,7 +19,10 @@ import {MatRadioButton, MatRadioGroup} from '@angular/material/radio';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {MaterialFormComponent} from '../material-form/material-form.component';
 import {SidebarComponent} from "../../sidebar/sidebar.component";
-import {TabelaComponent} from '../components/tabela/tabela.component'; // Importar MatSnackBar
+import {TabelaComponent} from '../components/tabela/tabela.component';
+import {HeaderComponent} from '../../../shared/header/header.component';
+import {Router} from 'express';
+import {EstoqueService} from '../../../services/estoque.service'; // Importar MatSnackBar
 
 
 
@@ -33,62 +36,14 @@ import {TabelaComponent} from '../components/tabela/tabela.component'; // Import
 export class MaterialCreateComponent implements OnInit {
   materiais: Material[] = []; // Inicializando a lista de materiais
   readonly dialog = inject(MatDialog);
+  // private header: HeaderComponent = new HeaderComponent();
 
-
-
-  constructor(private materialService: MaterialService, private snackBar: MatSnackBar) {}
-
+  constructor(private materialService: MaterialService, private snackBar: MatSnackBar, private estoque: EstoqueService,) {}
 
   ngOnInit(): void {
-    this.getMaterials(); // Chama o método ao inicializar
+    this.estoque.setPath('estoque');
+    this.estoque.setPathSideBar('opt1')
   }
 
-  getMaterials(): void {
-    this.materialService.getAll().subscribe(
-      (data) => {
-        this.materiais = data; // Armazena os materiais obtidos
-      },
-      (error) => {
-        console.error('Erro ao obter materiais', error); // Tratamento de erro
-      }
-    );
-  }
-
-  deleteMaterial(id: number, name: string): void {
-    const dialogRef = this.dialog.open(DeleteMaterialModalComponent, {
-      data: { id, name }, // passa os dados para o modal
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.deleteItem(id); // chama a função de exclusão
-      }
-    });
-  }
-
-  deleteItem(id: number): void {
-    this.materialService.deleteMaterial(id).subscribe(
-      (response: any) => {  // Aqui você pode especificar um tipo mais adequado
-        const message = response.message || `Item ${id} excluído com sucesso!`;
-        this.openSnackBar(message, 'Fechar');
-        this.getMaterials(); // Atualiza a lista de materiais após a exclusão
-      },
-      (error) => {
-        // Aqui você pode tratar o erro e, se o servidor retornar uma mensagem de erro, você pode usá-la
-        const errorMessage = error.error?.message || `Erro ao excluir o item ${id}.`;
-        this.openSnackBar(errorMessage, 'Tentar Novamente');
-      }
-    );
-  }
-
-  openSnackBar(message: string, action: string): void {
-    this.snackBar.open(message, action, {
-      duration: 3000, // Duração em milissegundos
-    });
-  }
-
-  updateMaterial(id: number) {
-    // Implementar lógica para atualizar o material
-  }
 
 }

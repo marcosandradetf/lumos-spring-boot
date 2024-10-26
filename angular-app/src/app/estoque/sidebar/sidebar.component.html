@@ -9,32 +9,27 @@
   </button>
 
   <div class="w-screen 2xl:block 2xl:w-auto" [ngClass]="{'block': menuOpen, 'hidden': !menuOpen}">
-    <h1 class="text-2xl text-center border-b p-5 mb-5 hover:text-red-600 cursor-default hover:font-bold">
+    <h3 class="text-center border-b p-4 mb-5 cursor-default select-none poppins-medium text-neutral-700">
       Estoque
-    </h1>
+    </h3>
     <ul class="menu text-base-content min-h-full p-4">
       <li>
-        <a routerLink="/estoque">
-          Lista de Materiais
+        <a routerLink="/estoque/materiais" [ngClass]="onPath === 'opt1' ? 'text-blue-700' : ''">
+          Gerenciar
         </a>
       </li>
       <li>
-        <a routerLink="">
-          Cadastrar Material
+        <a routerLink="/estoque/entrada" [ngClass]="onPath === 'opt2' ? 'text-blue-700' : ''">
+          Entrada de Nota Fiscal
         </a>
       </li>
       <li>
-        <a routerLink="/estoque/entrada">
-          Entrada de Material
-        </a>
-      </li>
-      <li>
-        <a routerLink="/estoque/importar">
+        <a routerLink="/estoque/importar" [ngClass]="onPath === 'opt3' ? 'text-blue-700' : ''">
           Importar Material (.xlsx)
         </a>
       </li>
       <li>
-        <a routerLink="/estoque/sugestao">
+        <a routerLink="/estoque/sugestao" [ngClass]="onPath === 'opt4' ? 'text-blue-700' : ''">
           Sugestão de Compra
         </a>
       </li>

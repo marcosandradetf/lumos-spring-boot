@@ -18,6 +18,7 @@ import {Grupo} from '../../../models/grupo.model';
 import {Empresa} from '../../../models/empresa.model';
 import {Almoxarifado} from '../../../models/almoxarifado.model';
 import {catchError, of, Subject, takeUntil, tap} from 'rxjs';
+import {EstoqueService} from '../../../services/estoque.service';
 
 
 @Component({
@@ -61,7 +62,8 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     { Value: "CM" }
   ];
 
-  constructor(private materialService: MaterialService) {}
+  constructor(private materialService: MaterialService,
+              private estoqueService: EstoqueService) {}
 
   ngOnInit(): void {
     this.loadTipos();
@@ -71,25 +73,25 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   }
 
   private loadTipos() {
-    this.materialService.getTipos()
+    this.estoqueService.getTipos()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(tipos => this.tipos = tipos);
   }
 
   private loadGrupos() {
-    this.materialService.getGrupos()
+    this.estoqueService.getGrupos()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(grupos => this.grupos = grupos);
   }
 
   private loadEmpresas() {
-    this.materialService.getEmpresas()
+    this.estoqueService.getEmpresas()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(empresas => this.empresas = empresas);
   }
 
   private loadAlmoxarifados() {
-    this.materialService.getAlmoxarifados()
+    this.estoqueService.getAlmoxarifados()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(almoxarifados => this.almoxarifados = almoxarifados);
   }
@@ -112,7 +114,9 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     this.formSubmitted = true;
     if (form.valid) {
       this.materialService.create(this.material).pipe(
-        tap(() => {
+        tap((newMaterial: Material) => {
+          this.materialService.addMaterialFetch(newMaterial);
+          console.log(newMaterial);
           this.resetForm(form);
           this.showMessage("Material cadastrado com sucesso!");
         }),
@@ -142,5 +146,11 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
+  }
+
+  disableKey(event: KeyboardEvent) {
+    if (event.key.toLowerCase() === 'e') {
+      event.preventDefault();
+    }
   }
 }
