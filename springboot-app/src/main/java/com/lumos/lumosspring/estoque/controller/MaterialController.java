@@ -4,16 +4,22 @@ import com.lumos.lumosspring.estoque.model.Material;
 import com.lumos.lumosspring.estoque.service.MaterialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/material")
 public class MaterialController {
-    @Autowired
-    private MaterialService materialService;
+    private final MaterialService materialService;
+
+    public MaterialController(MaterialService materialService) {
+        this.materialService = materialService;
+    }
 
     @GetMapping
     public List<Material> getAll() {
@@ -21,38 +27,25 @@ public class MaterialController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Material> getById(@PathVariable Long id) {
-        Material material = materialService.findById(id);
-        return material != null ? ResponseEntity.ok(material) : ResponseEntity.notFound().build();
+    public Material getById(@PathVariable Long id) {
+        return materialService.findById(id);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
     @PostMapping
-    public ResponseEntity<?>  create(@RequestBody Material material) {
-        try {
-            Material novoMaterial = materialService.save(material);
-            return ResponseEntity.ok(novoMaterial);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Material já cadastrado.");
-        }
+    public ResponseEntity<String>  create(@RequestBody Material material, JwtAuthenticationToken token) {
+        return materialService.save(material, UUID.fromString(token.getName()));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Material> update(@PathVariable Long id, @RequestBody Material material) {
-        if (materialService.findById(id) != null) {
-            material.setIdMaterial(id);
-            return ResponseEntity.ok(materialService.save(material));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PutMapping
+    public ResponseEntity<String> update(@RequestBody Material material, JwtAuthenticationToken token) {
+        return materialService.update(material, UUID.fromString(token.getName()));
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (materialService.findById(id) != null) {
-            materialService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<String> delete(@PathVariable Long id, JwtAuthenticationToken token) {
+        return materialService.deleteById(id, UUID.fromString(token.getName()));
     }
 }

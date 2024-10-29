@@ -3,11 +3,12 @@ package com.lumos.lumosspring.estoque.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "tb_tipos")
 public class Tipo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long idTipo;
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", unique = true)
     private String nomeTipo;
     @ManyToOne
     @JoinColumn(name = "id_grupo")

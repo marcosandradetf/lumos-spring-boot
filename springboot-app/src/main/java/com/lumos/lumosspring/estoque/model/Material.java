@@ -3,6 +3,7 @@ package com.lumos.lumosspring.estoque.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "tb_materiais")
 public class Material {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
