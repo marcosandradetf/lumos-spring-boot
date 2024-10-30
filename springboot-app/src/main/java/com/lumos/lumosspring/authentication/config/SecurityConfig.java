@@ -37,7 +37,7 @@ public class SecurityConfig {
 
         http
                 .authorizeRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/login", "/refresh-token").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout((logout) -> logout

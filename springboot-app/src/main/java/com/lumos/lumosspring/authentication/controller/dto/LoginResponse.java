@@ -1,4 +1,6 @@
 package com.lumos.lumosspring.authentication.controller.dto;
 
-public record LoginResponse(String accessToken, Long expiresIn) {
+import java.util.Set;
+
+public record LoginResponse(String accessToken, String refreshToken, Long expiresIn, String roles) {
 }
