@@ -1,23 +1,18 @@
+// app/app.routes.ts
 import { Routes } from '@angular/router';
-import {MaterialCreateComponent} from './estoque/material/material-create/material-create.component';
+import { AuthGuard } from './core/guards/auth.guard';
 
 
 export const routes: Routes = [
-  // chamados
-  {path: 'chamados', component: MaterialCreateComponent},
-
-  // equipes
-  {path: 'equipes', component: MaterialCreateComponent},
-
-  // contratos
-  {path: 'contratos', component: MaterialCreateComponent},
-
-  // requisicoes
-  {path: 'requisicoes', component: MaterialCreateComponent},
-
-  // estoque
-  {path: 'estoque', component: MaterialCreateComponent},
-
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
-  { path: '**', redirectTo: '/estoque/materiais' } // Para rotas não encontradas
+  { path: '', redirectTo: 'estoque/materiais', pathMatch: 'full' },
+  {
+    path: 'auth/login',
+    loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'estoque/materiais',
+    loadComponent: () => import('./estoque/material/material-page/material-page.component').then(m => m.MaterialPageComponent),
+    canActivate: [AuthGuard],
+  },
+  { path: '**', redirectTo: 'auth/login' }
 ];

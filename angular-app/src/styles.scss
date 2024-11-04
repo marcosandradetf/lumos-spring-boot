@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Itim&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Itim&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -10,15 +13,46 @@
     margin: 0;
   }
 }
-.poppins-thin {
-  font-family: "Poppins", sans-serif !important;
-  font-weight: 100 !important;
+.nunito-regular {
+  font-family: "Nunito", sans-serif !important;
+  font-optical-sizing: auto !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+ }
+
+.nunito-semibold {
+  font-family: "Nunito", sans-serif !important;
+  font-weight: 600 !important;
   font-style: normal !important;
 }
 
-.poppins-extralight {
-  font-family: "Poppins", sans-serif !important;
-  font-weight: 200 !important;
+.nunito-bold {
+  font-family: "Nunito", sans-serif !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+.roboto-light {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 300 !important;
+  font-style: normal !important;
+}
+
+.roboto-regular {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+.roboto-medium {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.roboto-bold {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 700 !important;
   font-style: normal !important;
 }
 

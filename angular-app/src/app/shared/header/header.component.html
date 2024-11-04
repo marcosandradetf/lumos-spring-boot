@@ -1,51 +1,59 @@
 <header>
+  @if (authService.isLoggedIn$ | async) {
     <div class="drawer fixed top-0 border-b shadow z-50">
-    <input id="my-drawer-3" type="checkbox" class="drawer-toggle"/>
-    <div class="drawer-content flex flex-col">
-      <!-- Navbar -->
-      <div class="navbar bg-neutral-50 w-full">
-        <div class="flex-none mx-2 select-none">Lumos</div>
-        <div class="flex-1 mx-2 lg:hidden">
-          <label for="my-drawer-3" aria-label="open sidebar" class="btn btn-square btn-ghost">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black">
-              <path
-                d="M240-160q-33 0-56.5-23.5T160-240q0-33 23.5-56.5T240-320q33 0 56.5 23.5T320-240q0 33-23.5 56.5T240-160Zm240 0q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm240 0q-33 0-56.5-23.5T640-240q0-33 23.5-56.5T720-320q33 0 56.5 23.5T800-240q0 33-23.5 56.5T720-160ZM240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400ZM240-640q-33 0-56.5-23.5T160-720q0-33 23.5-56.5T240-800q33 0 56.5 23.5T320-720q0 33-23.5 56.5T240-640Zm240 0q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Zm240 0q-33 0-56.5-23.5T640-720q0-33 23.5-56.5T720-800q33 0 56.5 23.5T800-720q0 33-23.5 56.5T720-640Z"/>
-            </svg>
-          </label>
-        </div>
-        <div class="hidden ml-auto lg:block">
-          <ul class="menu menu-horizontal">
-            <!-- Navbar menu content here -->
-            <li [routerLink]="['/chamados']"  routerLinkActive="text-blue-700"><a>Chamados</a></li>
-            <li [routerLink]="['/equipes']"  routerLinkActive="text-blue-700"><a>Equipes</a></li>
-            <li [routerLink]="['/contratos']"  routerLinkActive="text-blue-700"><a>Contratos</a></li>
-            <li [routerLink]="['/requisicoes']"  routerLinkActive="text-blue-700"><a>Requisições</a></li>
-            <li [routerLink]="['/estoque']"  routerLinkActive="text-blue-700"><a>Estoque</a></li>
-          </ul>
-        </div>
-        <div class="dropdown dropdown-bottom dropdown-end ml-auto">
-          <div tabindex="0" role="button" class="avatar online placeholder">
-            <div class="bg-neutral text-neutral-content w-10 rounded-full">
-              <span class="text-xl">M</span>
-            </div>
+      <input id="my-drawer-3" type="checkbox" class="drawer-toggle"/>
+      <div class="drawer-content flex flex-col">
+        <!-- Navbar -->
+        <div class="navbar bg-neutral-50 w-full">
+<!--          <div class="flex-none mx-2 select-none">Lumos</div>-->
+          <img class="rounded" ngSrc="/logo.png" alt="logo" height="30" width="30">
+          <div class="flex-1 mx-2 lg:hidden">
+            <label for="my-drawer-3" aria-label="open sidebar" class="btn btn-square btn-ghost">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black">
+                <path
+                  d="M240-160q-33 0-56.5-23.5T160-240q0-33 23.5-56.5T240-320q33 0 56.5 23.5T320-240q0 33-23.5 56.5T240-160Zm240 0q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm240 0q-33 0-56.5-23.5T640-240q0-33 23.5-56.5T720-320q33 0 56.5 23.5T800-240q0 33-23.5 56.5T720-160ZM240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400ZM240-640q-33 0-56.5-23.5T160-720q0-33 23.5-56.5T240-800q33 0 56.5 23.5T320-720q0 33-23.5 56.5T240-640Zm240 0q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Zm240 0q-33 0-56.5-23.5T640-720q0-33 23.5-56.5T720-800q33 0 56.5 23.5T800-720q0 33-23.5 56.5T720-640Z"/>
+              </svg>
+            </label>
           </div>
-          <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-            <li><a>Minha conta</a></li>
-            <li><a>Sair</a></li>
-          </ul>
+          <div class="hidden ml-auto lg:block">
+            <ul class="menu menu-horizontal">
+              <!-- Navbar menu content here -->
+              <li [routerLink]="['/chamados']"  routerLinkActive="text-blue-700"><a>Chamados</a></li>
+              <li [routerLink]="['/equipes']"  routerLinkActive="text-blue-700"><a>Equipes</a></li>
+              <li [routerLink]="['/contratos']"  routerLinkActive="text-blue-700"><a>Contratos</a></li>
+              <li [routerLink]="['/requisicoes']"  routerLinkActive="text-blue-700"><a>Requisições</a></li>
+              <li [routerLink]="['/estoque']"  routerLinkActive="text-blue-700"><a>Estoque</a></li>
+            </ul>
+          </div>
+          <div class="dropdown dropdown-bottom dropdown-end ml-auto">
+            <div tabindex="0" role="button" class="avatar online placeholder">
+              <div class="bg-neutral text-neutral-content w-10 rounded-full">
+                <span class="text-xl select-none">{{ authService.getUser()?.username?.charAt(0)?.toUpperCase() }}</span>
+              </div>
+            </div>
+            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+              <li><a>Minha conta</a></li>
+              <li><button  (click)="logout()">Sair</button ></li>
+            </ul>
+          </div>
         </div>
       </div>
+      <div class="drawer-side z-50">
+        <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay z-50"></label>
+        <ul class="menu bg-base-200 min-h-full w-80 p-4 z-50">
+          <!-- Sidebar content here -->
+          <li [routerLink]="['/chamados']"  routerLinkActive="text-blue-700"><a>Chamados</a></li>
+          <li [routerLink]="['/equipes']"  routerLinkActive="text-blue-700"><a>Equipes</a></li>
+          <li [routerLink]="['/contratos']"  routerLinkActive="text-blue-700"><a>Contratos</a></li>
+          <li [routerLink]="['/requisicoes']"  routerLinkActive="text-blue-700"><a>Requisições</a></li>
+          <li [routerLink]="['/estoque']"  routerLinkActive="text-blue-700"><a>Estoque</a></li>
+        </ul>
+      </div>
     </div>
-    <div class="drawer-side z-50">
-      <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay z-50"></label>
-      <ul class="menu bg-base-200 min-h-full w-80 p-4 z-50">
-        <!-- Sidebar content here -->
-        <li [routerLink]="['/chamados']"  routerLinkActive="text-blue-700"><a>Chamados</a></li>
-        <li [routerLink]="['/equipes']"  routerLinkActive="text-blue-700"><a>Equipes</a></li>
-        <li [routerLink]="['/contratos']"  routerLinkActive="text-blue-700"><a>Contratos</a></li>
-        <li [routerLink]="['/requisicoes']"  routerLinkActive="text-blue-700"><a>Requisições</a></li>
-        <li [routerLink]="['/estoque']"  routerLinkActive="text-blue-700"><a>Estoque</a></li>
-      </ul>
+  } @else {
+    <div class="flex justify-center items-center">
+      <img class="rounded" ngSrc="/logo.png" alt="logo" height="25" width="25">
     </div>
-  </div>
+  }
+
 </header>

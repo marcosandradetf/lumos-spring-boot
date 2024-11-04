@@ -17,8 +17,8 @@ import {map} from 'rxjs';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatRadioButton, MatRadioGroup} from '@angular/material/radio';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
-import {MaterialFormComponent} from '../material-form/material-form.component';
-import {SidebarComponent} from "../../sidebar/sidebar.component";
+import {MaterialFormComponent} from '../components/material-form/material-form.component';
+import {SidebarComponent} from "../../components/sidebar/sidebar.component";
 import {TabelaComponent} from '../components/tabela/tabela.component';
 import {HeaderComponent} from '../../../shared/header/header.component';
 import {Router} from 'express';
@@ -27,23 +27,18 @@ import {EstoqueService} from '../../../services/estoque.service'; // Importar Ma
 
 
 @Component({
-  selector: 'app-material-create',
+  selector: 'app-material-page',
   standalone: true,
-  templateUrl: './material-create.component.html',
-  styleUrls: ['./material-create.component.scss'],
+  templateUrl: './material-page.component.html',
+  styleUrls: ['./material-page.component.scss'],
   imports: [CommonModule, RouterModule, DeleteMaterialModalComponent, MatButton, MatFormField, MatSelect, MatOption, MatIcon, MatInput, ReactiveFormsModule, MatCheckbox, MatRadioGroup, MatRadioButton, MatLabel, MatSlideToggle, MaterialFormComponent, SidebarComponent, TabelaComponent] // Adicionando os módulos aqui
 })
-export class MaterialCreateComponent implements OnInit {
+export class MaterialPageComponent {
   materiais: Material[] = []; // Inicializando a lista de materiais
   readonly dialog = inject(MatDialog);
-  // private header: HeaderComponent = new HeaderComponent();
 
   constructor(private materialService: MaterialService, private snackBar: MatSnackBar, private estoque: EstoqueService,) {}
 
-  ngOnInit(): void {
-    this.estoque.setPath('estoque');
-    this.estoque.setPathSideBar('opt1')
-  }
 
 
 }

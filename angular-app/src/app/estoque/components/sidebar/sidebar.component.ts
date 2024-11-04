@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {NgClass} from '@angular/common';
 import {RouterLink} from '@angular/router';
-import {EstoqueService} from '../../services/estoque.service';
+import {EstoqueService} from '../../../services/estoque.service';
 
 @Component({
   selector: 'app-sidebar',

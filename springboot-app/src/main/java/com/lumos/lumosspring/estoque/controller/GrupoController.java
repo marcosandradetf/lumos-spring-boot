@@ -4,16 +4,19 @@ import com.lumos.lumosspring.estoque.model.Grupo;
 import com.lumos.lumosspring.estoque.service.GrupoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/api/grupo")
 public class GrupoController {
-    @Autowired
-    private GrupoService grupoService;
+    private final GrupoService grupoService;
+
+    public GrupoController(GrupoService grupoService) {
+        this.grupoService = grupoService;
+    }
 
     @GetMapping
     public List<Grupo> getAll() {

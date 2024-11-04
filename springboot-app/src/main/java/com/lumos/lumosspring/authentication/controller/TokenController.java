@@ -7,20 +7,21 @@ import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.authentication.entities.Role;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.authentication.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
 
 @RestController
+@RequestMapping("/api/auth")
 public class TokenController {
 
     private final JwtEncoder jwtEncoder;
@@ -39,7 +40,7 @@ public class TokenController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         var user = userRepository.findByUsername(loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             throw new BadCredentialsException("Usuário ou senha incorretos");
@@ -79,24 +80,41 @@ public class TokenController {
         refreshToken.setRevoked(false);
         refreshTokenRepository.save(refreshToken);
 
-        return ResponseEntity.ok(new LoginResponse(accessTokenValue, refreshTokenValue, expiresIn, scopes));
+        // Configura o `refreshToken` como um cookie HTTP-Only
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshTokenValue);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true); // Use apenas em HTTPS em produção
+        refreshTokenCookie.setPath("/"); // Disponível em toda a aplicação
+        refreshTokenCookie.setMaxAge((int) refreshExpiresIn); // Expiração em 1 dia
+        response.addCookie(refreshTokenCookie);
+
+        // Retorna o `accessToken` no corpo da resposta
+        return ResponseEntity.ok(new LoginResponse(accessTokenValue, expiresIn, scopes));
     }
 
+
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        var refreshToken = refreshTokenRequest.refreshToken();
+    public ResponseEntity<Void> logout(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isPresent()) {
             var token = tokenFromDb.get();
             token.setRevoked(true);
             refreshTokenRepository.save(token);
         }
+
+        // Remove o cookie do `refreshToken` do navegador
+        Cookie deleteCookie = new Cookie("refreshToken", null);
+        deleteCookie.setPath("/");
+        deleteCookie.setHttpOnly(true);
+        deleteCookie.setMaxAge(0); // Remove o cookie imediatamente
+        deleteCookie.setSecure(true); // Use apenas em HTTPS em produção
+        response.addCookie(deleteCookie);
+
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        var refreshToken = refreshTokenRequest.refreshToken();
+    public ResponseEntity<LoginResponse> refreshToken(@CookieValue("refreshToken") String refreshToken) {
         var now = Instant.now();
         var expiresIn = 300L;
 
@@ -123,6 +141,7 @@ public class TokenController {
 
         var newAccessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
 
-        return ResponseEntity.ok(new LoginResponse(newAccessToken, refreshToken, expiresIn, scope));
+        return ResponseEntity.ok(new LoginResponse(newAccessToken, expiresIn, scope));
     }
+
 }

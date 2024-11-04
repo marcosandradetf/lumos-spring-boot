@@ -5,6 +5,7 @@ import { Material } from '../models/material.model';
 import {Grupo} from '../models/grupo.model';
 import {Tipo} from '../models/tipo.model';
 import {Empresa} from '../models/empresa.model';
+import {AuthService} from '../core/service/auth.service';
 
 
 @Injectable({
@@ -25,22 +26,34 @@ export class EstoqueService {
     this.onPathSideBarSubject.next(path); // Atualiza o valor do BehaviorSubject
   }
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   getTipos() {
-    return this.http.get<Tipo[]>(`${this.apiUrl}/tipo`);
+    return this.http.get<Tipo[]>(`${this.apiUrl}/tipo`,  {
+      headers: this.authService.getHeaders(),
+      withCredentials: true,
+    });
   }
 
   getGrupos() {
-    return this.http.get<Grupo[]>(`${this.apiUrl}/grupo`);
+    return this.http.get<Grupo[]>(`${this.apiUrl}/grupo`,  {
+      headers: this.authService.getHeaders(),
+      withCredentials: true,
+    });
   }
 
   getEmpresas() {
-    return this.http.get<Empresa[]>(`${this.apiUrl}/empresa`);
+    return this.http.get<Empresa[]>(`${this.apiUrl}/empresa`,  {
+      headers: this.authService.getHeaders(),
+      withCredentials: true,
+    });
   }
 
   getAlmoxarifados() {
-    return this.http.get<any[]>(`${this.apiUrl}/almoxarifado`);
+    return this.http.get<any[]>(`${this.apiUrl}/almoxarifado`, {
+      headers: this.authService.getHeaders(),
+      withCredentials: true,
+    });
   }
 
 

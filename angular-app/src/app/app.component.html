@@ -1,5 +1,11 @@
-<app-header></app-header>
+@if (authService.isLoading$ | async) {
+  <div class="h-screen w-screen flex justify-center items-center">
+    <span class="loading loading-infinity loading-lg"></span>
+  </div>
+} @else {
+  <app-header></app-header>
 
-<router-outlet></router-outlet>
+  <router-outlet></router-outlet>
 
-<app-footer></app-footer>
+  <app-footer></app-footer>
+}

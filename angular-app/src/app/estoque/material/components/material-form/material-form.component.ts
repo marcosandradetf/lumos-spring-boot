@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {MaterialService} from '../../../services/material.service';
+import {MaterialService} from '../../../../services/material.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {MatIcon, MatIconModule} from '@angular/material/icon';
 import {MatInput, MatInputModule} from '@angular/material/input';
@@ -12,13 +12,14 @@ import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {NgOptionComponent, NgSelectComponent} from '@ng-select/ng-select';
-import {Material} from '../../../models/material.model';
-import {Tipo} from '../../../models/tipo.model';
-import {Grupo} from '../../../models/grupo.model';
-import {Empresa} from '../../../models/empresa.model';
-import {Almoxarifado} from '../../../models/almoxarifado.model';
+import {Material} from '../../../../models/material.model';
+import {Tipo} from '../../../../models/tipo.model';
+import {Grupo} from '../../../../models/grupo.model';
+import {Empresa} from '../../../../models/empresa.model';
+import {Almoxarifado} from '../../../../models/almoxarifado.model';
 import {catchError, of, Subject, takeUntil, tap} from 'rxjs';
-import {EstoqueService} from '../../../services/estoque.service';
+import {EstoqueService} from '../../../../services/estoque.service';
+import {AuthService} from '../../../../core/service/auth.service';
 
 
 @Component({
@@ -63,13 +64,15 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   ];
 
   constructor(private materialService: MaterialService,
-              private estoqueService: EstoqueService) {}
+              private estoqueService: EstoqueService, private authService: AuthService) {}
 
   ngOnInit(): void {
-    this.loadTipos();
-    this.loadGrupos();
-    this.loadEmpresas();
-    this.loadAlmoxarifados();
+    if (this.authService.isLoggedIn$) {
+      this.loadTipos();
+      this.loadGrupos();
+      this.loadEmpresas();
+      this.loadAlmoxarifados();
+    }
   }
 
   private loadTipos() {
@@ -110,7 +113,6 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
 
 
   onSubmit(form: NgForm) {
-    console.log('submit');
     this.formSubmitted = true;
     if (form.valid) {
       this.materialService.create(this.material).pipe(
