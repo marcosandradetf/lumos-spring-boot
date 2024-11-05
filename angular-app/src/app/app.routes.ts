@@ -14,5 +14,5 @@ export const routes: Routes = [
     loadComponent: () => import('./estoque/material/material-page/material-page.component').then(m => m.MaterialPageComponent),
     canActivate: [AuthGuard],
   },
-  { path: '**', redirectTo: 'auth/login' }
+  { path: '**', redirectTo: 'estoque/materiais' }
 ];

@@ -22,13 +22,13 @@
               <li [routerLink]="['/equipes']"  routerLinkActive="text-blue-700"><a>Equipes</a></li>
               <li [routerLink]="['/contratos']"  routerLinkActive="text-blue-700"><a>Contratos</a></li>
               <li [routerLink]="['/requisicoes']"  routerLinkActive="text-blue-700"><a>Requisições</a></li>
-              <li [routerLink]="['/estoque']"  routerLinkActive="text-blue-700"><a>Estoque</a></li>
+              <li [routerLink]="['/estoque/materiais']"  routerLinkActive="text-blue-700"><a>Estoque</a></li>
             </ul>
           </div>
           <div class="dropdown dropdown-bottom dropdown-end ml-auto">
             <div tabindex="0" role="button" class="avatar online placeholder">
               <div class="bg-neutral text-neutral-content w-10 rounded-full">
-                <span class="text-xl select-none">{{ authService.getUser()?.username?.charAt(0)?.toUpperCase() }}</span>
+                <span class="text-xl select-none">{{ authService.getUser().username.charAt(0).toUpperCase() }}</span>
               </div>
             </div>
             <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">

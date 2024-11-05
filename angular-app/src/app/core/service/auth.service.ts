@@ -1,24 +1,24 @@
 import { Injectable } from '@angular/core';
-import {BehaviorSubject, catchError, of, tap} from 'rxjs';
+import {BehaviorSubject, catchError, map, Observable, of, tap} from 'rxjs';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Router } from '@angular/router';
 import {User} from '../../models/user.model';
+import {routes} from '../../app.routes';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  public user: User | null = null;
   private apiUrl = 'http://localhost:8080/api/auth';
   public isLoggedInSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(this.hasTokens());
   public isLoading$ = new BehaviorSubject<boolean>(true); // status de carregamento
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, public user: User) {
     if (typeof window !== 'undefined' && localStorage) {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        this.user = new User(userData.username, userData.accessToken, userData.roles); // Converte para uma instância de User
+        this.user.initialize(userData.username, userData.accessToken, userData.roles); // Converte para uma instância de User
       }
       this.initializeAuthStatus();
     }
@@ -29,7 +29,7 @@ export class AuthService {
     if (this.user && !this.user.isAccessTokenExpired()) {
       this.isLoggedInSubject.next(true);
     } else {
-      this.refreshToken();
+      this.refreshToken().subscribe();
     }
     this.isLoading$.next(false); // Atualiza o status de carregamento
   }
@@ -43,9 +43,9 @@ export class AuthService {
   }
 
   login(username: string, password: string) { // Retorna um Observable
-    return this.http.post<any>(`${this.apiUrl}/login`, { username, password }, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${this.apiUrl}/login`, { username, password }).pipe(
       tap(response => {
-        this.user = new User(username, response.accessToken, response.scopes);
+        this.user.initialize(username, response.accessToken, response.scopes);
         localStorage.setItem('user', JSON.stringify(this.user));
         this.isLoggedInSubject.next(true);
       }),
@@ -57,8 +57,7 @@ export class AuthService {
   }
 
   logout() {
-    console.log(localStorage.getItem("refreshToken"));
-    return this.http.post(this.apiUrl + '/logout', { }, { withCredentials: true }).pipe(
+    return this.http.post(this.apiUrl + '/logout', {}, { withCredentials: true }).pipe(
       tap(() => {
         this.user?.clearToken();
         localStorage.removeItem('user');
@@ -67,19 +66,32 @@ export class AuthService {
     );
   }
 
-  refreshToken() {
-    if (!this.user) return of(null);
-    return this.http.post<any>(this.apiUrl + '/refresh-token', {}, { withCredentials: true }).pipe(
-      tap(response => {
-        this.user?.setToken(response.accessToken);
-        localStorage.setItem('user', JSON.stringify(this.user));
+  refreshToken(): Observable<string | null> {
+    if (!this.user) {
+      console.warn("Usuário não encontrado, renovação de token cancelada.");
+      return of(null); // Retorna Observable nulo se não houver usuário logado
+    }
+
+    return this.http.post<{ accessToken: string }>(`${this.apiUrl}/refresh-token`, {}).pipe(
+      map(response => {
+        if (response && response.accessToken) {
+          this.user?.setToken(response.accessToken); // Atualiza o token do usuário
+          localStorage.setItem('user', JSON.stringify(this.user)); // Salva no localStorage
+          return response.accessToken; // Retorna o novo token
+        } else {
+          console.warn("Nenhum token de acesso retornado na resposta.");
+          return null;
+        }
       }),
-      catchError(() => {
-        this.logout().subscribe(); // Se a renovação falhar, desloga o usuário
+      catchError(error => {
+        console.error("Erro ao tentar renovar o token:", error);
+        // O AuthInterceptor pode decidir o que fazer ao receber null
         return of(null);
       })
     );
   }
+
+
 
   setAccessToken(newToken: string) {
     if (this.user) {
@@ -89,10 +101,7 @@ export class AuthService {
   }
 
   getAccessToken() {
-    if (typeof window !== 'undefined' && localStorage) {
-      return this.user?.accessToken;
-    }
-    return false;
+      return this.user.accessToken;
   }
 
   // Método para verificar se o usuário possui um papel específico
@@ -102,14 +111,6 @@ export class AuthService {
 
   public getUser() {
     return this.user;
-  }
-
-  getHeaders(): HttpHeaders {
-    const token = this.getAccessToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
   }
 
 }

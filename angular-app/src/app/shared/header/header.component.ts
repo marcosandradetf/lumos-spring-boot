@@ -60,7 +60,7 @@ export class HeaderComponent implements OnInit{
     this.authService.logout().pipe(
       tap(response => {
         console.log('logout');
-        this.router.navigate(['/login']);
+        this.router.navigate(['/auth/login']);
       }),
       catchError(err => {
         console.log(err);

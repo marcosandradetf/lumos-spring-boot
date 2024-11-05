@@ -1,35 +1,66 @@
-import { Injectable } from '@angular/core';
-import {HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse} from '@angular/common/http';
-import { AuthService } from '../service/auth.service';
-import { Observable, switchMap, catchError, throwError } from 'rxjs';
-import {User} from '../../models/user.model';
+import {Injectable, Injector} from '@angular/core';
+import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
+import {BehaviorSubject, catchError, filter, Observable, switchMap, take, throwError} from 'rxjs';
+import {AuthService} from '../service/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  private tryingRefreshing = false;
+  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Verifique se o token está expirado e tente renovar
-    if (!this.authService.hasTokens()) {
-      return this.authService.refreshToken().pipe(
-        switchMap(() => {
-          // Após a renovação, clone a requisição com o novo token
-          const authReq = req.clone({
-            setHeaders: { Authorization: `Bearer ${this.authService.getAccessToken()}` }
-          });
-          return next.handle(authReq);
-        }),
-        catchError((error) => {
-          console.error("Erro ao interceptar e renovar token:", error);
-          return throwError(() => error);
-        })
-      );
+  constructor(private injector: Injector) { }
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const token = this.injector.get(AuthService).getAccessToken();
+    const logout = this.injector.get(AuthService).logout();
+
+
+    request = this.addAuthorization(request, token);
+    return next.handle(request).pipe(catchError(error => {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        const tokenExpired = error.headers.get('token-expired');
+        if (tokenExpired) {
+          return this.handle401Error(request, next);
+        }
+
+        logout.subscribe();
+        return throwError(() => error);
+      } else {
+        return throwError(() => error);
+      }
+    }));
+  }
+
+  private handle401Error(request: HttpRequest<any>, next: HttpHandler) {
+    if (!this.tryingRefreshing) {
+      this.tryingRefreshing = true;
+      this.refreshTokenSubject.next(null);
+
+      const refreshToken = this.injector.get(AuthService).refreshToken();
+
+      return refreshToken.pipe(
+        switchMap((token: any) => {
+          this.tryingRefreshing = false;
+          this.refreshTokenSubject.next(token);
+          return next.handle(this.addAuthorization(request, token));
+        }));
+
     } else {
-      // Se o token não expirou, prossiga com a requisição normalmente
-      const authReq = req.clone({
-        setHeaders: { Authorization: `Bearer ${this.authService.getAccessToken()}` }
-      });
-      return next.handle(authReq);
+      return this.refreshTokenSubject.pipe(
+        filter(token => token != null),
+        take(1),
+        switchMap(jwt => {
+          return next.handle(this.addAuthorization(request, jwt));
+        }));
     }
+  }
+
+  addAuthorization(httpRequest: HttpRequest<any>, token: string) {
+    return httpRequest.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      },
+      withCredentials: true
+    });
   }
 }

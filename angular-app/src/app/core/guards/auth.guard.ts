@@ -8,12 +8,16 @@ import {map, Observable} from 'rxjs';
 export class AuthGuard implements CanActivate {
   constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(): boolean {
-    if (this.authService.isLoggedInSubject.value) {
-      return true;
-    } else {
-      this.router.navigate(['/auth/login']);
-      return false;
-    }
+  canActivate(): Observable<boolean> {
+    return this.authService.isLoggedIn$.pipe(
+      map(isLoggedIn => {
+        if (isLoggedIn) {
+          return true;
+        } else {
+          this.router.navigate(['/auth/login']);
+          return false;
+        }
+      })
+    );
   }
 }

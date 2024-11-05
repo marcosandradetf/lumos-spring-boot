@@ -5,6 +5,7 @@ import { Material } from '../models/material.model';
 import {Grupo} from '../models/grupo.model';
 import {Tipo} from '../models/tipo.model';
 import {Empresa} from '../models/empresa.model';
+import {AuthService} from '../core/service/auth.service';
 
 
 @Injectable({
@@ -15,7 +16,7 @@ export class MaterialService {
   private materiaisSubject: BehaviorSubject<Material[]> = new BehaviorSubject<Material[]>([]);
   public materiais$: Observable<Material[]> = this.materiaisSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   getAll(): void {
     this.http.get<Material[]>(`${this.apiUrl}`)

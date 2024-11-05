@@ -29,31 +29,19 @@ export class EstoqueService {
   constructor(private http: HttpClient, private authService: AuthService) { }
 
   getTipos() {
-    return this.http.get<Tipo[]>(`${this.apiUrl}/tipo`,  {
-      headers: this.authService.getHeaders(),
-      withCredentials: true,
-    });
+    return this.http.get<Tipo[]>(`${this.apiUrl}/tipo`);
   }
 
   getGrupos() {
-    return this.http.get<Grupo[]>(`${this.apiUrl}/grupo`,  {
-      headers: this.authService.getHeaders(),
-      withCredentials: true,
-    });
+    return this.http.get<Grupo[]>(`${this.apiUrl}/grupo`);
   }
 
   getEmpresas() {
-    return this.http.get<Empresa[]>(`${this.apiUrl}/empresa`,  {
-      headers: this.authService.getHeaders(),
-      withCredentials: true,
-    });
+    return this.http.get<Empresa[]>(`${this.apiUrl}/empresa`);
   }
 
   getAlmoxarifados() {
-    return this.http.get<any[]>(`${this.apiUrl}/almoxarifado`, {
-      headers: this.authService.getHeaders(),
-      withCredentials: true,
-    });
+    return this.http.get<any[]>(`${this.apiUrl}/almoxarifado`);
   }
 
 

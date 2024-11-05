@@ -4,6 +4,7 @@ import {FormsModule, NgForm} from '@angular/forms';
 import {AuthService} from '../../core/service/auth.service';
 import { Router } from '@angular/router';
 import {Title} from '@angular/platform-browser';
+import {map} from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +22,16 @@ export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router, private titleService:Title) {
     this.titleService.setTitle("Lumos - Login");
+
+    this.authService.isLoggedIn$.pipe(
+      map(isLoggedIn => {
+        if (isLoggedIn) {
+          this.router.navigate(['/']);
+        }
+        return isLoggedIn;
+      })
+    ).subscribe();
+
   }
 
   login(form: NgForm) {
