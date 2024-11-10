@@ -1,6 +1,9 @@
 package com.lumos.lumosspring.estoque.model;
 
+import com.lumos.lumosspring.contrato.entities.Contrato;
 import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity
 @Table(name = "tb_materiais")
@@ -21,14 +24,13 @@ public class Material {
     @Column(columnDefinition = "TEXT")
     private String unidadeRequisicao;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tipo")
     private Tipo tipoMaterial;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "id_grupo")
-//    private Grupo grupoMaterial;
+    @OneToMany
+    @JoinColumn(name = "id_contrato")
+    private List<Contrato> contratos;
 
     private int qtdeEstoque;
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
@@ -58,13 +60,13 @@ public class Material {
         this.almoxarifado = almoxarifado;
     }
 
-//    public Grupo getGrupoMaterial() {
-//        return grupoMaterial;
-//    }
-//
-//    public void setGrupoMaterial(Grupo grupoMaterial) {
-//        this.grupoMaterial = grupoMaterial;
-//    }
+    public List<Contrato> getContratos() {
+        return contratos;
+    }
+
+    public void setContrato(Contrato contrato) {
+        this.contratos.add(contrato);
+    }
 
     public Tipo getTipoMaterial() {
         return tipoMaterial;
@@ -80,9 +82,6 @@ public class Material {
         return idMaterial;
     }
 
-    public void setIdMaterial(long idMaterial) {
-        this.idMaterial = idMaterial;
-    }
 
     public String getNomeMaterial() {
         return nomeMaterial;

@@ -1,0 +1,264 @@
+<div class="flex mt-[4rem] h-fit">
+  <app-sidebar></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a>Início</a></li>
+        <li><a>Contratos</a></li>
+        <li>Criar</li>
+      </ul>
+    </div>
+
+    <form
+      #myForm="ngForm" (ngSubmit)="submitContrato(myForm)"
+      class="border border-neutral-300 shadow p-5 h-auto flex flex-col">
+      <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Criar novo contrato</h4>
+      <p class="select-none lower-text text-orange-700">Informe os dados do contrato e selecione os itens</p>
+      <div class="flex space-x-4 flex-wrap mt-5">
+        <label class="form-control w-full max-w-xs ml-4">
+          <div class="label">
+            <span class="label-text">N.º Contrato</span>
+          </div>
+          <input type="number"
+                 name="nomeMaterial"
+                 class="input input-sm input-bordered w-full max-w-xs"
+                 placeholder="Insira o Número"
+                 required
+                 [(ngModel)]="contract.numeroContrato"
+                 #ngNumeroContrato="ngModel"/>
+          <div *ngIf="ngNumeroContrato.invalid && formSubmitted">
+            <div *ngIf="ngNumeroContrato.invalid && formSubmitted">
+              <small *ngIf="ngNumeroContrato.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+            </div>
+          </div>
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Contratante</span>
+          </div>
+          <input type="text"
+                 name="nomeMaterial"
+                 class="input input-sm input-bordered w-full max-w-xs"
+                 placeholder="Cidade ou Prefeitura"
+                 required
+                 [(ngModel)]="contract.contratante"
+                 #ngContratante="ngModel"/>
+          <div *ngIf="ngContratante.invalid && formSubmitted">
+            <div *ngIf="ngContratante.invalid && formSubmitted">
+              <small *ngIf="ngContratante.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+            </div>
+          </div>
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Almoxarifado</span>
+          </div>
+          <select
+            (change)="filterAlmoxarifado($any($event.target).value)"
+            class="select select-sm select-bordered"
+            name="almoxarifado"
+            required >
+            <option disabled>Selecione um Almoxarifado</option>
+            @for (almoxarifado of almoxarifados; track almoxarifado.idAlmoxarifado) {
+              <option [value]="almoxarifado.nomeAlmoxarifado">{{almoxarifado.nomeAlmoxarifado}}</option>
+            }
+          </select>
+          <div *ngIf="formSubmitted">
+            <small>Preenchimento obrigatório.</small>
+          </div>
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Estado</span>
+          </div>
+          <select
+            [(ngModel)]="contract.uf"
+            (change)="getCities($any($event.target).value)"
+            class="select select-sm select-bordered"
+            name="uf"
+            required >
+            <option disabled>Selecione o estado do contrato</option>
+            @for (uf of ufs; track uf.microrregiao.mesorregiao.UF.nome) {
+              <option [value]="uf.microrregiao.mesorregiao.UF.sigla">{{uf.microrregiao.mesorregiao.UF.nome}}</option>
+            }
+          </select>
+          <div *ngIf="formSubmitted">
+            <small>Preenchimento obrigatório.</small>
+          </div>
+        </label>
+
+        <div
+          [ngClass]="{'tooltip': !contract.uf, 'tooltip-bottom': !contract.uf}"
+          [attr.data-tip]="contract.uf ? '' : 'Selecione o Estado Primeiro'"
+          class="tooltip tooltip-bottom form-control w-full max-w-xs" >
+          <label class="form-control w-full max-w-xs">
+            <div class="label">
+              <span class="label-text">Cidade</span>
+            </div>
+            <select
+              [(ngModel)]="contract.city"
+              class="select select-sm select-bordered"
+              name="city"
+              [disabled]="!contract.uf"
+              required >
+              <option disabled>Selecione a cidade do contrato</option>
+              @for (city of cities; track city.nome) {
+                <option [value]="city.nome">{{city.nome}}</option>
+              }
+            </select>
+            <div *ngIf="formSubmitted">
+              <small>Preenchimento obrigatório.</small>
+            </div>
+          </label>
+        </div>
+
+        <div
+          [ngClass]="{'tooltip': !contract.city, 'tooltip-bottom': !contract.city}"
+          [attr.data-tip]="contract.city ? '' : 'Selecione a Cidade'"
+          class="tooltip tooltip-bottom form-control w-full max-w-xs" >
+          <label class="form-control w-full max-w-xs">
+            <div class="label">
+              <span class="label-text">Região</span>
+            </div>
+            <select
+              [(ngModel)]="contract.city"
+              class="select select-sm select-bordered"
+              name="region"
+              required >
+              @for (city of cities; track city.nome) {
+                <option [value]="city.microrregiao.nome">{{city.microrregiao.nome}}</option>
+              }
+            </select>
+            <div *ngIf="formSubmitted">
+              <small>Preenchimento obrigatório.</small>
+            </div>
+          </label>
+        </div>
+
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Edital</span>
+          </div>
+          <input type="file" class="file-input file-input-sm" accept=".pdf" />
+        </label>
+
+      </div>
+
+      <div class="mt-4">
+        <h4 class="poppins-regular select-none text-blue-700 mb-4">
+          Selecione os Itens do Contrato
+        </h4>
+
+        <div class="flex w-full items-center">
+          <label class="input input-sm input-bordered flex items-center gap-2 flex-1">
+            <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              class="h-4 w-4 opacity-70">
+              <path
+                fill-rule="evenodd"
+                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                clip-rule="evenodd"/>
+            </svg>
+          </label>
+          <div class="dropdown dropdown-end flex-2">
+            <div tabindex="0" role="button" class="p-1 m-1 material-icons">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                   fill="#246ddf">
+                <path
+                  d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z"/>
+              </svg>
+            </div>
+            <table tabindex="0" class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+              <tr *ngFor="let tipo of tipos">
+                <td>
+                  <input type="checkbox" class="checkbox" (change)="filterType(tipo.nomeTipo)" />
+                </td>
+                <td class="poppins-light select-none lower-text">{{ tipo.nomeTipo }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="table table-xs">
+            <thead>
+            <tr>
+              <th>Selecione</th>
+              <th>Nome</th>
+              <th>Marca</th>
+              <th>Qtde Estoque</th>
+              <th>Valor unitário*</th>
+              <th>Quantidade*</th>
+              <th>Unidade</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let material of itensRequest; let i = index">
+              <td>
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  [(ngModel)]="material.selected"
+                  (change)="toggleSelection(material)"
+                  name="selected{{i}}"
+                />
+              </td>
+              <td>{{ material.nomeMaterial }}</td>
+              <td>{{ material.marcaMaterial }}</td>
+              <td>{{ material.qtdeEstoque || 0 }}</td>
+              <td>
+                <input
+                  type="text"
+                  (input)="formatValue($event, i)"
+                  placeholder="R$"
+                  class="input input-bordered input-sm w-20"
+                  [(ngModel)]="contract.valor[i]"
+                  name="valor{{i}}"
+                  [disabled]="!material.selected"
+                  title="{{!material.selected ? 'Necessário selecionar o Item' : ''}}"
+                  #ngValor="ngModel"
+                  required
+                />
+                  <div *ngIf="ngValor.invalid && formSubmitted && material.selected">
+                    <small *ngIf="ngValor.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+                  </div>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  placeholder="Ex.: 2"
+                  class="input input-bordered input-sm w-16"
+                  [(ngModel)]="contract.qtde[i]"
+                  name="qtde{{i}}"
+                  [disabled]="!material.selected"
+                  title="{{!material.selected ? 'Necessário selecionar o Item' : ''}}"
+                  #ngQtde='ngModel'
+                  required
+                />
+                <div *ngIf="ngQtde.invalid && formSubmitted && material.selected">
+                  <small *ngIf="ngQtde.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+                </div>
+              </td>
+              <td>{{ material.unidadeRequisicao}}</td>
+            </tr>
+
+            </tbody>
+          </table>
+
+        </div>
+
+        <button type="submit" class="btn btn-sm btn-block bg-blue-700 text-neutral-100 mt-4 hover:bg-blue-900">Criar Contrato</button>
+
+      </div>
+
+
+    </form>
+  </div>
+</div>

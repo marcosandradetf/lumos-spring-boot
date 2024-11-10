@@ -1,0 +1,39 @@
+<div class="flex mt-[4rem] h-fit">
+  <app-sidebar></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+      <div class="breadcrumbs text-sm py-5">
+        <ul class="select-none">
+          <li><a>Início</a></li>
+          <li><a>Estoque</a></li>
+          <li>Materiais</li>
+        </ul>
+      </div>
+
+    <div>
+      <div role="tablist" class="tabs tabs-bordered w-full justify-center">
+
+        <input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Tipos" />
+        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
+
+        <input
+          type="radio"
+          name="my_tabs_1"
+          role="tab"
+          class="tab"
+          aria-label="Materiais"
+          checked="checked" />
+        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
+
+        <input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Grupos" />
+        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
+
+      </div>
+    </div>
+
+    <div id="material-table"
+         class="mt-4 border border-neutral-300 shadow p-1 overflow-auto h-[20rem] xl:h-[20rem] 2xl:h-[24.9rem]">
+      <app-tabela></app-tabela>
+
+    </div>
+  </div>
+</div>
