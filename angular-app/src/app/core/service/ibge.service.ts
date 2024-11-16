@@ -12,11 +12,11 @@ export class IbgeService {
   constructor(private http: HttpClient) { }
 
   getUfs(){
-    return this.http.get<citiesRequest[]>(this.endpoint + '/municipios');
+    return this.http.get<ufRequest[]>(this.endpoint + '/estados/?orderBy=nome');
   }
 
   getCities(uf: string){
-    return this.http.get<citiesRequest[]>(this.endpoint + '/estados/' + uf + '/municipios');
+    return this.http.get<citiesRequest[]>(this.endpoint + '/estados/' + uf + '/municipios/?orderBy=nome');
   }
 
 }

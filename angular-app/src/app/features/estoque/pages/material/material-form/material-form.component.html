@@ -1,0 +1,209 @@
+<form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
+      class=" h-auto flex flex-col">
+  <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar Materiais</h4>
+
+  <div class="flex space-x-4 flex-wrap">
+
+    <label class="form-control w-full max-w-xs ml-4">
+      <div class="label">
+        <span class="label-text">Grupo</span>
+      </div>
+      <select
+        class="select select-bordered"
+        name="group"
+        required
+        (change)="onGroupChange($any($event.target).value)">
+          <option value="" disabled selected>Selecione um Grupo</option>
+        @for (group of groups; track group.idGroup) {
+          <option [value]="group.idGroup">{{group.groupName}}</option>
+        }
+      </select>
+        @if (!selectGroup && formSubmitted) {
+          <small class="text-red-600">Preenchimento obrigatório.</small>
+        }
+    </label>
+
+    <div
+      [ngClass]="{'tooltip': !selectGroup, 'tooltip-bottom': !selectGroup}"
+      [attr.data-tip]="selectGroup ? '' : 'Selecione o Grupo Primeiro'"
+      class="tooltip tooltip-bottom form-control w-full max-w-xs" >
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Tipo</span>
+        </div>
+        <select
+          class="select select-bordered"
+          [(ngModel)]="material.materialType"
+          name="typeMaterial"
+          required
+          #tipoMaterialModel="ngModel">
+          <option disabled selected>Selecione um Tipo</option>
+          @for (type of filterTypes; track type.idType) {
+            <option [value]="type.idType">{{type.typeName}}</option>
+          }
+        </select>
+        <div *ngIf="tipoMaterialModel.invalid && formSubmitted">
+          <small *ngIf="tipoMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+    </div>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Material</span>
+      </div>
+      <input type="text"
+             name="nomeMaterial"
+             [(ngModel)]="material.materialName"
+             required
+             minlength="3"
+             #firstNameModel="ngModel"
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+      <div *ngIf="firstNameModel.invalid && formSubmitted">
+        <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        <small *ngIf="firstNameModel.errors?.['minlength']" class="text-orange-600">
+          Nome do material requer no mínimo 3 caracteres.
+        </small>
+      </div>
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Marca</span>
+      </div>
+      <input type="text"
+             name="marcaMaterial"
+             [(ngModel)]="material.materialBrand"
+             required
+             minlength="3"
+             #marcaMaterialModel="ngModel"
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+      <div *ngIf="marcaMaterialModel.invalid && formSubmitted">
+        <small *ngIf="marcaMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        <small *ngIf="marcaMaterialModel.errors?.['minlength']" class="text-orange-600">
+          Marca do material requer no mínimo 3 caracteres.
+        </small>
+      </div>
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Un. Compra</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="material.buyUnit"
+        name="unidadeCompra"
+        required
+        #unidadeCompraModel="ngModel">
+        @for (unidade of units; track unidade.Value) {
+          <option [value]="unidade.Value">{{unidade.Value}}</option>
+        }
+      </select>
+      @if (unidadeCompraModel.invalid && formSubmitted) {
+        @if (unidadeCompraModel.errors?.['required']) {
+          <small class="text-red-600">Preenchimento obrigatório.</small>
+        }
+      }
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Un. Requisição</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="material.requestUnit"
+        name="unidadeRequisicao"
+        required
+        #unidRequisicaoModel="ngModel">
+        @for (unidade of units; track unidade.Value) {
+          <option [value]="unidade.Value">{{unidade.Value}}</option>
+        }
+      </select>
+      @if (unidRequisicaoModel.invalid && formSubmitted) {
+        @if (unidRequisicaoModel.errors?.['required']) {
+          <small class="text-red-600">Preenchimento obrigatório.</small>
+        }
+      }
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Qtde. Estoque</span>
+      </div>
+      <input type="number"
+             inputmode="numeric"
+             name="qtdeEstoque"
+             [(ngModel)]="material.stockQt"
+             (keydown)="disableKey($event)"
+             required
+             #qtdeEstoqueModel="ngModel"
+             placeholder="Informe a quantidade" class="input input-bordered w-full max-w-xs " />
+      <div *ngIf="qtdeEstoqueModel.invalid && formSubmitted">
+        <small *ngIf="qtdeEstoqueModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Empresa</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="material.company"
+        name="empresa"
+        required
+        #empresaModel="ngModel">
+        @for (empresa of companies; track empresa.idCompany) {
+          <option [value]="empresa.idCompany">{{empresa.companyName}}</option>
+        }
+      </select>
+      <div *ngIf="empresaModel.invalid && formSubmitted">
+        <small *ngIf="empresaModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Almoxarifado</span>
+      </div>
+      <select
+        class="select select-bordered"
+        [(ngModel)]="material.deposit"
+        name="almoxarifado"
+        required
+        #almoxarifadoModel="ngModel">
+        @for (almoxarifado of deposits; track almoxarifado.idDeposit) {
+          <option [value]="almoxarifado.idDeposit">{{almoxarifado.depositName}}</option>
+        }
+      </select>
+      <div *ngIf="almoxarifadoModel.invalid && formSubmitted">
+        <small *ngIf="almoxarifadoModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+      </div>
+    </label>
+
+    <div class="form-control">
+      <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
+        <span class="label-text">Material Inativo</span>
+        <input type="checkbox"
+               name="inativo"
+               [(ngModel)]="material.inactive"
+               class="toggle toggle-primary" />
+      </label>
+    </div>
+
+  </div>
+
+  <div class="w-full flex border-t mt-10 p-6 border-neutral-300">
+    <button class="btn btn-active btn-primary ml-auto" type="submit">Gravar</button>
+  </div>
+
+
+</form>
+
+<div class="toast toast-end" *ngIf="serverMessage">
+  <div class="alert alert-error">
+    <span>{{ serverMessage }}</span>
+  </div>
+</div>

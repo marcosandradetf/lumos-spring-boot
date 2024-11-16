@@ -1,5 +1,5 @@
 <div class="flex mt-[4rem] h-fit">
-  <app-sidebar></app-sidebar>
+  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
   <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
       <div class="breadcrumbs text-sm py-5">
         <ul class="select-none">
@@ -22,7 +22,24 @@
           class="tab"
           aria-label="Materiais"
           checked="checked" />
-        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
+        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]">
+          <div class="collapse border border-neutral-300 shadow rounded-none">
+            <input type="checkbox" class="peer" (click)="setOpen()"/>
+            <div
+              class="collapse-title text-primary-content">
+              @if (!formOpen) {
+                <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>
+              } @else {
+                <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>
+              }
+            </div>
+            <div
+              class="collapse-content text-primary-content peer-checked: peer-checked:">
+              <app-material-form></app-material-form>
+            </div>
+          </div>
+
+        </div>
 
         <input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Grupos" />
         <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
@@ -31,7 +48,22 @@
     </div>
 
     <div id="material-table"
-         class="mt-4 border border-neutral-300 shadow p-1 overflow-auto h-[20rem] xl:h-[20rem] 2xl:h-[24.9rem]">
+         class="mt-4 border border-neutral-300 shadow p-1 overflow-auto  2xl:w-[99rem]">
+      <div class="flex w-full items-center mb-2">
+        <label class="input input-sm input-bordered flex items-center gap-2 flex-1">
+          <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="h-4 w-4 opacity-70">
+            <path
+              fill-rule="evenodd"
+              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+              clip-rule="evenodd"/>
+          </svg>
+        </label>
+      </div>
       <app-tabela></app-tabela>
 
     </div>

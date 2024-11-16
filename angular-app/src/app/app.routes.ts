@@ -15,8 +15,20 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
-    path: 'contratos',
+    path: 'contratos/dashboard',
+    loadComponent: () => import('./features/contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    canActivate: [AuthGuard],
+  },
+
+  {
+    path: 'contratos/criar',
     loadComponent: () => import('./features/contract/pages/create/create.component').then(m => m.CreateComponent),
+    canActivate: [AuthGuard],
+  },
+
+  {
+    path: 'estoque/movimento',
+    loadComponent: () => import('./features/estoque/pages/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
     canActivate: [AuthGuard],
   },
 

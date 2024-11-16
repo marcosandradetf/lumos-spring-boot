@@ -1,9 +1,9 @@
-export class Empresa {
-  idEmpresa: number;
-  nomeEmpresa: string;
+export class Company {
+  idCompany: number;
+  companyName: string;
 
   constructor(){
-    this.idEmpresa = 0;
-    this.nomeEmpresa = '';
+    this.idCompany = 0;
+    this.companyName = '';
   }
 }

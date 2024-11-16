@@ -1,24 +1,24 @@
 
 export class CreateMaterialRequest {
-  nomeMaterial: string;
-  marcaMaterial: string;
-  unidadeCompra: string;
-  unidadeRequisicao: string;
-  tipoMaterial: number;
-  qtdeEstoque: number | null;
-  inativo: boolean;
-  empresa: number;
-  almoxarifado: number;
+  materialName: string;
+  materialBrand: string;
+  buyUnit: string;
+  requestUnit: string;
+  materialType: number;
+  stockQt: number | null;
+  inactive: boolean;
+  company: number;
+  deposit: number;
 
   constructor() {
-    this.nomeMaterial = '';
-    this.marcaMaterial = '';
-    this.unidadeCompra = '';
-    this.unidadeRequisicao = '';
-    this.tipoMaterial = 0;
-    this.qtdeEstoque = null;
-    this.inativo = false;
-    this.empresa = 0;
-    this.almoxarifado = 0;
+    this.materialName = '';
+    this.materialBrand = '';
+    this.buyUnit = '';
+    this.requestUnit = '';
+    this.materialType = 0;
+    this.stockQt = null;
+    this.inactive = false;
+    this.company = 0;
+    this.deposit = 0;
   }
 }

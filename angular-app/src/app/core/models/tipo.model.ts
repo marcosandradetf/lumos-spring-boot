@@ -1,13 +1,13 @@
-import {Grupo} from './grupo.model';
+import {Group} from './grupo.model';
 
-export class Tipo {
-  idTipo: number;
-  nomeTipo: string;
-  grupo: Grupo;
+export class Type {
+  idType: number;
+  typeName: string;
+  group: Group;
 
   constructor() {
-    this.idTipo = 0;
-    this.nomeTipo = "";
-    this.grupo = new Grupo();
+    this.idType = 0;
+    this.typeName = "";
+    this.group = new Group();
   }
 }

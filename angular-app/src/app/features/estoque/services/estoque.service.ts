@@ -2,47 +2,51 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
 import { MaterialResponse } from '../material-response.dto';
-import {Grupo} from '../../../core/models/grupo.model';
-import {Tipo} from '../../../core/models/tipo.model';
-import {Empresa} from '../../../core/models/empresa.model';
+import {Group} from '../../../core/models/grupo.model';
+import {Type} from '../../../core/models/tipo.model';
+import {Company} from '../../../core/models/empresa.model';
 import {AuthService} from '../../../core/auth/auth.service';
+import {StockMovementDTO} from '../stock-movement.dto';
+import {SupplierDTO} from '../supplier.dto';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class EstoqueService {
-  private apiUrl = 'http://localhost:8080/api';
+  private endpoint = 'http://localhost:8080/api';
+
   private onPathSubject = new BehaviorSubject<string>(''); // Inicializa o caminho
-  private onPathSideBarSubject = new BehaviorSubject<string>(''); // Inicializa o caminho
   onPath$ = this.onPathSubject.asObservable(); // Observable para se inscrever
-  onPathSideBar$ = this.onPathSideBarSubject.asObservable();
-
-  setPath(path: string): void {
-    this.onPathSubject.next(path); // Atualiza o valor do BehaviorSubject
-  }
-
-  setPathSideBar(path: string): void {
-    this.onPathSideBarSubject.next(path); // Atualiza o valor do BehaviorSubject
-  }
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
-  getTipos() {
-    return this.http.get<Tipo[]>(`${this.apiUrl}/tipo`);
+  getTypes() {
+    return this.http.get<Type[]>(`${this.endpoint}/type`);
   }
 
-  getGrupos() {
-    return this.http.get<Grupo[]>(`${this.apiUrl}/grupo`);
+  getGroups() {
+    return this.http.get<Group[]>(`${this.endpoint}/group`);
   }
 
-  getEmpresas() {
-    return this.http.get<Empresa[]>(`${this.apiUrl}/empresa`);
+  getCompanies() {
+    return this.http.get<Company[]>(`${this.endpoint}/company`);
   }
 
-  getAlmoxarifados() {
-    return this.http.get<any[]>(`${this.apiUrl}/almoxarifado`);
+  getDeposits() {
+    return this.http.get<any[]>(`${this.endpoint}/deposit`);
   }
 
+  getSuppliers() {
+    return this.http.get<SupplierDTO[]>(`${this.endpoint}/stock/get-suppliers`);
+  }
+
+  postSupplier(supplier: SupplierDTO) {
+    return this.http.post(this.endpoint + '/stock/create-supplier', supplier);
+  }
+
+  stockMovement(stockMovement: StockMovementDTO) {
+    return this.http.post(this.endpoint + '/stock/stock-movement', stockMovement);
+  }
 
 }

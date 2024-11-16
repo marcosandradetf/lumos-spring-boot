@@ -1,4 +1,4 @@
-export interface Almoxarifado {
-  idAlmoxarifado: Number;
-  nomeAlmoxarifado: string;
+export interface Deposit {
+  idDeposit: Number;
+  depositName: string;
 }

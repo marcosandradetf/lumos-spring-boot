@@ -3,14 +3,12 @@ import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.co
 import {FormsModule} from '@angular/forms';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {Contract} from '../../contract-response.dto';
-import {MaterialService} from '../../../estoque/services/material.service';
 import {catchError, tap, throwError} from 'rxjs';
-import {CreateMaterialRequest} from '../../../estoque/create-material-request.dto';
 import {ContractService} from '../../services/contract.service';
 import {ItemRequest} from '../../itens-request.dto';
-import {Almoxarifado} from '../../../../core/models/almoxarifado.model';
+import {Deposit} from '../../../../core/models/almoxarifado.model';
 import {EstoqueService} from '../../../estoque/services/estoque.service';
-import {Tipo} from '../../../../core/models/tipo.model';
+import {Type} from '../../../../core/models/tipo.model';
 import {ufRequest} from '../../../../core/uf-request.dto';
 import {citiesRequest} from '../../../../core/cities-request.dto';
 import {IbgeService} from '../../../../core/service/ibge.service';
@@ -29,7 +27,7 @@ import {IbgeService} from '../../../../core/service/ibge.service';
   styleUrl: './create.component.scss'
 })
 export class CreateComponent {
-  material: CreateMaterialRequest = new CreateMaterialRequest();
+
   contract: Contract = {
     numeroContrato: '',
     contratante: '',
@@ -43,40 +41,34 @@ export class CreateComponent {
   allItens: ItemRequest[] = [];
   itensRequest: ItemRequest[] = [];
   formSubmitted: boolean = false;
-  almoxarifados: Almoxarifado[] = [];
-  tipos: Tipo[] = [];
-  ufs: citiesRequest[] = [];
+  almoxarifados: Deposit[] = [];
+  tipos: Type[] = [];
+  ufs: ufRequest[] = [];
   cities: citiesRequest[] = [];
   private searchFilter: string = '';
   private almoxarifadoFilter: string = '';
   private typeFilter: string = '';
-  selectedMicrorregiao: string = '';
+  selectedRegion: string = '';
+  currentPage: string = "0";
+  totalPages: number = 0;
+  pages: number[] = [];
 
-  constructor(private materialService: MaterialService,
-              private contractService: ContractService,
+  constructor(protected contractService: ContractService,
               private estoqueService: EstoqueService,
               private ibgeService: IbgeService,) {
-    this.contractService.getAllItens().subscribe((itens: ItemRequest[]) => {
-      this.allItens = itens; // Armazena todos os itens recebidos
-      this.itensRequest.filter(item => item.almoxarifado === '');
-    });
 
-    this.estoqueService.getAlmoxarifados().subscribe((almoxarifados: Almoxarifado[]) => {
+    this.loadItens(this.currentPage);
+
+    this.estoqueService.getDeposits().subscribe((almoxarifados: Deposit[]) => {
       this.almoxarifados = almoxarifados;
     });
-    this.estoqueService.getTipos().subscribe((tipos: Tipo[]) => {
+    this.estoqueService.getTypes().subscribe((tipos: Type[]) => {
       this.tipos = tipos;
     });
 
-    this.ibgeService.getUfs().subscribe(data => {
-      // Filtra UFs únicas com base na sigla
-      this.ufs = data.filter(
-        (value, index, self) =>
-          index === self.findIndex((t) => t.microrregiao.mesorregiao.UF.sigla === value.microrregiao.mesorregiao.UF.sigla)
-      );
+    this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {
+      this.ufs = ufs;
     });
-
-
   }
 
   getCities(uf: string) {
@@ -85,8 +77,10 @@ export class CreateComponent {
     })
   }
 
-  updateMicrorregiao(selectedCity: citiesRequest) {
-    this.selectedMicrorregiao = selectedCity.microrregiao?.nome || '';
+  // Busca a cidade completa e atualiza a região
+  updateRegion(selectedCityName: string): void {
+    const selectedCity = this.cities.find(city => city.nome === selectedCityName);
+    this.selectedRegion = selectedCity ? selectedCity.microrregiao.nome : '';
   }
 
   filterType(value: string) {
@@ -160,8 +154,8 @@ export class CreateComponent {
 
     this.contractService.createContract(contratoRequest).pipe(
       tap(response => {
-          console.log(response);
-        }),
+        console.log(response);
+      }),
       catchError(err => {
         console.log(err);
         return throwError(() => err);
@@ -194,7 +188,11 @@ export class CreateComponent {
     (event.target as HTMLInputElement).value = formattedValue; // Exibe o valor formatado no campo de input
   }
 
-
-
-
+  private loadItens(page: string) {
+    this.contractService.getAllItens(page, "20")
+      .subscribe(response => {
+      this.allItens = response.content; // Armazena todos os itens recebidos
+      this.itensRequest.filter(item => item.almoxarifado === '');
+    });
+  }
 }

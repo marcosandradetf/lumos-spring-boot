@@ -1,0 +1,50 @@
+<div class="overflow-x-auto">
+  <table class="table table-xs cursor-default select-none z-10">
+    <thead>
+    <tr class="bg-indigo-700 text-white">
+      <th class="text-left">Código</th>
+      <th class="text-left">Nome Material</th>
+      <th class="text-left">Marca</th>
+      <th class="text-left">Unid. Compra</th>
+      <th class="text-left">Unid. Requisição</th>
+      <th class="text-left">Tipo Material</th>
+      <th class="text-left">Grupo Material</th>
+      <th class="text-left">Qtde. Estoque</th>
+      <th class="text-left">Inativo</th>
+      <th class="text-left">Empresa</th>
+      <th class="text-left">Almoxarifado</th>
+      <th class="text-left" colspan="2">Ação</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let material of materials" class="odd:bg-neutral-100">
+      <td>{{ material.idMaterial }}</td>
+      <td>{{ material.materialName }}</td>
+      <td>{{ material.materialBrand }}</td>
+      <td>{{ material.buyUnit }}</td>
+      <td>{{ material.requestUnit }}</td>
+      <td>{{ material.materialType }}</td>
+      <td>{{ material.materialGroup }}</td>
+      <td>{{ material.stockQt }}</td>
+      <td>{{ material.inactive }}</td>
+      <td>{{ material.company }}</td>
+      <td>{{ material.deposit }}</td>
+      <td class="cursor-pointer">
+        <button (click)="deleteMaterial(material.idMaterial, material.materialName)"
+                class="cursor-pointer material-icons text-red-600">delete
+        </button>
+      </td>
+      <td class="cursor-pointer">
+        <button (click)="updateMaterial(material.idMaterial, material)" class="cursor-pointer material-icons">edit
+        </button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="join flex justify-center p-3">
+      <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of materialService.pages; let i = index" (click)="changePage(i)" [ngClass]="i === parseInt(currentPage) ? 'bg-indigo-700 text-white' : '' ">{{ i + 1}}</button>
+  </div>
+
+
+</div>

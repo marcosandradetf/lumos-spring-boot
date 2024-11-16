@@ -1,29 +1,27 @@
-import {Component, OnInit} from '@angular/core';
-import {NgClass} from '@angular/common';
-import {RouterLink} from '@angular/router';
-import {EstoqueService} from '../../../features/estoque/services/estoque.service';
+import { Component, Input, OnInit } from '@angular/core';
+import {NgClass, NgForOf} from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [
     NgClass,
-    RouterLink
+    RouterLink,
+    NgForOf
   ],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss'
+  styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit {
+  @Input() title: string = '';
+  @Input() links: { title: string; path: string; id: string }[] = [];
   menuOpen = false;
-  onPath: string = '';
 
-  constructor(private estoqueService: EstoqueService) {
-  }
+  constructor() {}
 
   ngOnInit(): void {
-    this.estoqueService.onPathSideBar$.subscribe(path => {
-      this.onPath = path; // Atualiza o caminho atual com base nas mudanças
-    });
+
   }
 
   toggleMenu() {

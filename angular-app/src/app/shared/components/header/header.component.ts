@@ -1,8 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {AsyncPipe, NgClass, NgIf, NgOptimizedImage} from '@angular/common';
-import {Tipo} from '../../../core/models/tipo.model';
-import {Empresa} from '../../../core/models/empresa.model';
-import {Almoxarifado} from '../../../core/models/almoxarifado.model';
+import {Type} from '../../../core/models/tipo.model';
+import {Company} from '../../../core/models/empresa.model';
+import {Deposit} from '../../../core/models/almoxarifado.model';
 import {BehaviorSubject, catchError, of, tap} from 'rxjs';
 import {EstoqueService} from '../../../features/estoque/services/estoque.service';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';

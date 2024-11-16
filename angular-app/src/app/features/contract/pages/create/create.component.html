@@ -1,5 +1,5 @@
 <div class="flex mt-[4rem] h-fit">
-  <app-sidebar></app-sidebar>
+  <app-sidebar title="Contratos" [links]="contractService.getSidebarLinks()"></app-sidebar>
   <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
     <div class="breadcrumbs text-sm py-5">
       <ul class="select-none">
@@ -12,8 +12,8 @@
     <form
       #myForm="ngForm" (ngSubmit)="submitContrato(myForm)"
       class="border border-neutral-300 shadow p-5 h-auto flex flex-col">
-      <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Criar novo contrato</h4>
-      <p class="select-none lower-text text-orange-700">Informe os dados do contrato e selecione os itens</p>
+      <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Criar novo contract</h4>
+      <p class="select-none lower-text text-orange-700">Informe os dados do contract e selecione os itens</p>
       <div class="flex space-x-4 flex-wrap mt-5">
         <label class="form-control w-full max-w-xs ml-4">
           <div class="label">
@@ -61,8 +61,8 @@
             name="almoxarifado"
             required >
             <option disabled>Selecione um Almoxarifado</option>
-            @for (almoxarifado of almoxarifados; track almoxarifado.idAlmoxarifado) {
-              <option [value]="almoxarifado.nomeAlmoxarifado">{{almoxarifado.nomeAlmoxarifado}}</option>
+            @for (almoxarifado of almoxarifados; track almoxarifado.idDeposit) {
+              <option [value]="almoxarifado.depositName">{{almoxarifado.depositName}}</option>
             }
           </select>
           <div *ngIf="formSubmitted">
@@ -80,9 +80,9 @@
             class="select select-sm select-bordered"
             name="uf"
             required >
-            <option disabled>Selecione o estado do contrato</option>
-            @for (uf of ufs; track uf.microrregiao.mesorregiao.UF.nome) {
-              <option [value]="uf.microrregiao.mesorregiao.UF.sigla">{{uf.microrregiao.mesorregiao.UF.nome}}</option>
+            <option disabled>Selecione o estado do contract</option>
+            @for (uf of ufs; track uf.nome) {
+              <option [value]="uf.sigla">{{uf.nome}}</option>
             }
           </select>
           <div *ngIf="formSubmitted">
@@ -99,12 +99,13 @@
               <span class="label-text">Cidade</span>
             </div>
             <select
+              (change)="updateRegion($any($event.target).value)"
               [(ngModel)]="contract.city"
               class="select select-sm select-bordered"
               name="city"
               [disabled]="!contract.uf"
               required >
-              <option disabled>Selecione a cidade do contrato</option>
+              <option disabled>Selecione a cidade do contract</option>
               @for (city of cities; track city.nome) {
                 <option [value]="city.nome">{{city.nome}}</option>
               }
@@ -123,15 +124,17 @@
             <div class="label">
               <span class="label-text">Região</span>
             </div>
-            <select
-              [(ngModel)]="contract.city"
-              class="select select-sm select-bordered"
+            <input
+              [(ngModel)]="contract.region"
+              disabled
+              type="text"
+              class="input input-sm input-disabled"
               name="region"
-              required >
-              @for (city of cities; track city.nome) {
-                <option [value]="city.microrregiao.nome">{{city.microrregiao.nome}}</option>
-              }
-            </select>
+              required
+              [value]="selectedRegion"
+
+            />
+
             <div *ngIf="formSubmitted">
               <small>Preenchimento obrigatório.</small>
             </div>
@@ -178,9 +181,9 @@
             <table tabindex="0" class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
               <tr *ngFor="let tipo of tipos">
                 <td>
-                  <input type="checkbox" class="checkbox" (change)="filterType(tipo.nomeTipo)" />
+                  <input type="checkbox" class="checkbox" (change)="filterType(tipo.typeName)" />
                 </td>
-                <td class="poppins-light select-none lower-text">{{ tipo.nomeTipo }}</td>
+                <td class="poppins-light select-none lower-text">{{ tipo.typeName }}</td>
               </tr>
             </table>
           </div>
