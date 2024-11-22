@@ -7,6 +7,8 @@ import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.service.MaterialService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,6 +44,23 @@ public class MaterialController {
         Page<Material> materials = materialService.findAll(page, size);
         Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
         return ResponseEntity.ok(materialsDTO);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
+            @RequestParam(value = "name") String name,  // 'name' vindo da URL
+            @RequestParam(value = "page", defaultValue = "0") int page,  // 'page' com valor padrão
+            @RequestParam(value = "size", defaultValue = "10") int size) {  // 'size' com valor padrão
+
+        Pageable pageable = PageRequest.of(page, size);  // Configura o Pageable para a paginação
+
+        // Busca materiais que começam com 'name' (parâmetro passado na URL)
+        Page<Material> materials = materialRepository.findByMaterialNameOrTypeIgnoreAccent(pageable, name.toLowerCase());
+
+        // Converte a lista de materiais para o DTO MaterialResponse
+        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
+
+        return ResponseEntity.ok(materialsDTO);  // Retorna os materiais no formato de resposta
     }
 
 

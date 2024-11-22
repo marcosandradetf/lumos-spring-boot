@@ -4,6 +4,7 @@ import {Company} from '../../core/models/empresa.model';
 import {Deposit} from '../../core/models/almoxarifado.model';
 
 export interface MaterialResponse {
+  selected: boolean;
   idMaterial: number;
   materialName: string;
   materialBrand: string;

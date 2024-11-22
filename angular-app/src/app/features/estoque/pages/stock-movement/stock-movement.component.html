@@ -1,1 +1,244 @@
-<p>stock-movement works!</p>
+<div class="flex mt-[4rem] h-fit">
+  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a href="/início">Início</a></li>
+        <li><a href="/estoque">Estoque</a></li>
+        <li>Movimentar Estoque</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="nunito-regular">Selecione os materiais desejados para movimentar o estoque</h3>
+    </div>
+
+    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+
+      <app-table [search]="true" >
+        <tr class="bg-indigo-700 text-white" header>
+          <th class="material-icons">call_received</th>
+          <th>Codigo</th>
+          <th>Nome</th>
+          <th>UN Compra</th>
+          <th>Estoque</th>
+          <th>Codigo</th>
+          <th>Codigo</th>
+          <th>Empresa</th>
+          <th>Almoxarifado</th>
+        </tr>
+        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100" body>
+          <td>
+            <input
+              type="checkbox"
+              class="checkbox"
+              [(ngModel)]="row.selected"
+              (change)="toggleSelection(row)"
+              name="selected{{i}}"
+            />
+          </td>
+          <td>{{row.idMaterial}}</td>
+          <td>{{row.materialName}}</td>
+          <td>{{row.buyUnit}}</td>
+          <td>{{row.stockQt}}</td>
+          <td>{{row.materialType}}</td>
+          <td>{{row.materialGroup}}</td>
+          <td>{{row.company}}</td>
+          <td>{{row.deposit}}</td>
+        </tr>
+      </app-table>
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <app-button [action]="handleClick" title="Continuar"></app-button>
+      <app-pagination [service]="this.materialService"></app-pagination>
+    </div>
+
+<!--    modal change -->
+    <app-modal [modalOpen]="openMovementModal" (modalClose)="closeMovementModal()">
+      <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
+        <app-table>
+          <tr class="bg-indigo-700 text-white" header>
+            <th>Codigo</th>
+            <th>Nome</th>
+            <th>Quantidade</th>
+            <th>UN. Compra</th>
+            <th>Qtde. por embalagem</th>
+            <th>Preço por item</th>
+            <th>Fornecedor</th>
+          </tr>
+          <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100" body>
+            <td><input
+              readonly
+              required
+              [ngModel]="movement.materialId"
+              class="input input-bordered input-xs w-12"
+              name="materialId{{i}}"
+              type="text"></td>
+            <td>{{ getDescription(movement.materialId) }}</td>
+            <td><input
+              [ngModel]="movement.inputQuantity"
+              required
+              name="inputQuantity{{i}}"
+              type="text"
+              placeholder="Digite aqui"
+              class="input input-bordered input-xs w-24" />
+
+            </td>
+            <td><input
+              [ngModel]="movement.buyUnit"
+              required
+              class="input input-bordered input-xs w-24"
+              name="buyUnit{{i}}"
+              type="text"></td>
+            <td>
+              <input
+                required
+                [ngModel]="movement.quantityPackage"
+                name="quantityPackage{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs w-24"
+                #ngQuantityPackage="ngModel"
+              />
+              <div *ngIf="ngQuantityPackage.invalid && formSubmitted">
+                <small *ngIf="ngQuantityPackage.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
+            <td><input
+              required
+              type="text"
+              [ngModel]="movement.pricePerItem"
+              (input)="formatValue($event, i)"
+              name="pricePerItem{{i}}"
+              placeholder="R$"
+              class="input input-bordered input-xs w-24"
+              #price="ngModel"
+            />
+              <div *ngIf="price.invalid && formSubmitted">
+                <small *ngIf="price.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
+            <td>
+              <select
+                [(ngModel)]="movement.supplierId"
+                name="supplierId"
+                class="select select-bordered select-xs w-56 max-w-xs"
+                required
+                #supplier="ngModel">
+                @for (s of suppliers; track s.id) {
+                  <option [value]="s.id">{{s.name}}</option>
+                }
+              </select>
+              <div *ngIf="supplier.invalid && formSubmitted">
+                <small *ngIf="supplier.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
+          </tr>
+        </app-table>
+        <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
+          <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor" class="bg-neutral-300 hover:bg-orange-500 rounded-none w-full" textColor="text-black"></app-button>
+          <app-button (click)="closeMovementModal()" title="Cancelar" class="bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
+          <app-button typeButton="submit" title="Salvar Movimentação" class="bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+        </div>
+      </form>
+    </app-modal>
+
+    <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+
+<!--    modal confirmation-->
+    <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">
+      <div>
+        <h3 class="text-center mb-7">Confirma a transação?</h3>
+        <div class="flex justify-around">
+          <app-button (click)="closeConfirmationModal()" title="Cancelar" class="bg-red-500 hover:bg-red-700" textColor="text-black"></app-button>
+          <app-button (click)="submitDataMovement()" title="Confirmar"></app-button>
+        </div>
+      </div>
+    </app-modal>
+
+    <app-modal [modalOpen]="openSupplierModal"  (modalClose)="closeSupplierModal()">
+      <form #supplierForm="ngForm" (ngSubmit)="submitDataSupplier(supplierForm)">
+        <app-table>
+          <tr class="bg-indigo-700 text-white" header>
+            <th>Nome*</th>
+            <th>CNPJ</th>
+            <th>Contato</th>
+            <th>Endereço</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th></th>
+          </tr>
+          <tr *ngFor="let supplier of sendSuppliers; let i = index" class="odd:bg-neutral-100" body>
+            <td>
+              <input
+                required
+                [(ngModel)]="supplier.name"
+                name="name{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"
+                #ngSupplierName="ngModel" />
+              <div *ngIf="ngSupplierName.invalid && formSubmitted">
+                <small *ngIf="ngSupplierName.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.cnpj"
+                name="cnpj{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs" />
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.contact"
+                name="contact{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs" />
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.address"
+                name="address{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs" />
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.phone"
+                name="phone{{i}}"
+                type="tel"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs" />
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.email"
+                name="email{{i}}"
+                type="email"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs" />
+            </td>
+            <td>
+              <span class="btn btn-outline btn-xs btn-error" (click)="removeRow(i)">-</span>
+            </td>
+          </tr>
+        </app-table>
+
+        <span class="btn btn-outline btn-primary" (click)="addSupplier()">Adicionar</span>
+
+        <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
+          <app-button (click)="closeSupplierModal()" title="Cancelar" class="bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
+          <app-button typeButton="submit" title="Salvar Fornecedor" class="bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+        </div>
+      </form>
+    </app-modal>
+
+
+
+  </div>
+</div>

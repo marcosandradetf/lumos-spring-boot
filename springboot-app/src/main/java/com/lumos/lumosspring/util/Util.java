@@ -41,4 +41,8 @@ public class Util {
         return tokenFromDb.get().getUser();
     }
 
+    // Método auxiliar para verificar se uma string está vazia ou é nula
+    public boolean isEmpty(String value) {
+        return value == null || value.trim().isEmpty();
+    }
 }

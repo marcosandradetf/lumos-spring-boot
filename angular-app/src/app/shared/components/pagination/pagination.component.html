@@ -1,0 +1,3 @@
+<div class="join flex justify-end p-3">
+  <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of service.pages; let i = index" (click)="changePage(i)" [ngClass]="i === parseInt(currentPage) ? 'bg-indigo-700 text-white' : '' ">{{ i + 1}}</button>
+</div>

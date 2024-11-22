@@ -23,7 +23,10 @@ public class StockMovement {
     private Instant stockMovementRefresh;
 
     @OneToOne
-    private User userUpdate;
+    private User userCreated;
+
+    @OneToOne
+    private User userFinished;
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private int inputQuantity;
@@ -40,6 +43,9 @@ public class StockMovement {
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
+    @Column(columnDefinition = "TEXT")
+    private String status;
+
     public StockMovement(Instant stockMovementRefresh) {
         this.stockMovementRefresh = stockMovementRefresh;
     }
@@ -47,20 +53,14 @@ public class StockMovement {
     public StockMovement() {
     }
 
-    // método para atualizar material
-    private void materialUpdate() {
+    // método para atualizar estoque do material
+    public void materialUpdate() {
         int stockQuantity = this.inputQuantity * this.quantityPackage;
         this.material.addStockQuantity(stockQuantity);
         this.material.addStockAvailable(stockQuantity);
         this.material.setCostPrice(this.pricePerItem);
     }
 
-    // Método chamado antes de salvar no banco de dados
-    @PrePersist
-    @PreUpdate
-    private void preSave() {
-        materialUpdate();
-    }
 
     public int getStockMovementId() {
         return stockMovementId;
@@ -92,14 +92,6 @@ public class StockMovement {
 
     public void setStockMovementRefresh(Instant stockMovementRefresh) {
         this.stockMovementRefresh = stockMovementRefresh;
-    }
-
-    public User getUserUpdate() {
-        return userUpdate;
-    }
-
-    public void setUserUpdate(User userUpdate) {
-        this.userUpdate = userUpdate;
     }
 
     public int getInputQuantity() {
@@ -140,5 +132,29 @@ public class StockMovement {
 
     public void setPricePerItem(BigDecimal pricePerItem) {
         this.pricePerItem = pricePerItem;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public User getUserCreated() {
+        return userCreated;
+    }
+
+    public void setUserCreated(User userCreated) {
+        this.userCreated = userCreated;
+    }
+
+    public User getUserFinished() {
+        return userFinished;
+    }
+
+    public void setUserFinished(User userFinished) {
+        this.userFinished = userFinished;
     }
 }

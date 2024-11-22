@@ -8,10 +8,12 @@ public class Supplier {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "supplier_id")
-    private int supplierId;
+    private Long supplierId;
 
     @Column(columnDefinition = "TEXT")
     private String supplierName;
+    @Column(columnDefinition = "TEXT")
+    private String supplierCnpj;
     @Column(columnDefinition = "TEXT")
     private String supplierContact;
     @Column(columnDefinition = "TEXT")
@@ -23,11 +25,11 @@ public class Supplier {
 
     public Supplier() { }
 
-    public int getSupplierId() {
+    public Long getSupplierId() {
         return supplierId;
     }
 
-    public void setSupplierId(int supplierId) {
+    public void setSupplierId(Long supplierId) {
         this.supplierId = supplierId;
     }
 
@@ -69,5 +71,13 @@ public class Supplier {
 
     public void setSupplierEmail(String supplierEmail) {
         this.supplierEmail = supplierEmail;
+    }
+
+    public String getSupplierCnpj() {
+        return supplierCnpj;
+    }
+
+    public void setSupplierCnpj(String supplierCnpj) {
+        this.supplierCnpj = supplierCnpj;
     }
 }

@@ -45,8 +45,11 @@ export class EstoqueService {
     return this.http.post(this.endpoint + '/stock/create-supplier', supplier);
   }
 
-  stockMovement(stockMovement: StockMovementDTO) {
+  stockMovement(stockMovement: StockMovementDTO[]) {
     return this.http.post(this.endpoint + '/stock/stock-movement', stockMovement);
   }
 
+  createSuppliers(sendSuppliers: any) {
+    return this.http.post(this.endpoint + "/stock/create-supplier", sendSuppliers);
+  }
 }

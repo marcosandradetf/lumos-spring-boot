@@ -99,7 +99,6 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     }, timeout);
   }
 
-
   onSubmit(form: NgForm) {
     this.formSubmitted = true;
     if (form.valid) {

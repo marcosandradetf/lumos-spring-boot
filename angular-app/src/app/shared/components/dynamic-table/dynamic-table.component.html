@@ -1,0 +1,14 @@
+<div class="overflow-x-auto">
+  <!-- Filtro de pesquisa -->
+  <ng-content select="[table-optional]"></ng-content>
+
+  <!-- Tabela -->
+  <table class="table table-xs cursor-default select-none z-10">
+    <thead>
+      <ng-content select="[table-header]"></ng-content> <!-- Inserir conteúdo para cabeçalho -->
+    </thead>
+    <tbody>
+      <ng-content select="[table-body]"></ng-content> <!-- Inserir conteúdo para o corpo -->
+    </tbody>
+  </table>
+</div>

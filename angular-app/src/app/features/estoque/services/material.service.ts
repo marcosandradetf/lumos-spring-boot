@@ -32,7 +32,15 @@ export class MaterialService {
       });
   }
 
-
+  getBySearch(page: string, size: string, search: string){
+    let params = new HttpParams().set('name', search).set('page', page).set('size', size);
+    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}/search`, { params })
+      .subscribe(response => {
+        this.materialsSubject.next(response.content); // Atualiza o conteúdo
+        this.totalPages = response.totalPages;
+        this.pages = Array.from({ length: this.totalPages }, (_, i) => i);
+      });
+  }
 
   getAll(){
     return this.http.get<MaterialResponse[]>(`${this.apiUrl}`);
@@ -71,5 +79,7 @@ export class MaterialService {
     const updatedMaterials = currentMaterials.filter(material => material.idMaterial !== idMaterial);
     this.materialsSubject.next(updatedMaterials);
   }
+
+
 
 }
