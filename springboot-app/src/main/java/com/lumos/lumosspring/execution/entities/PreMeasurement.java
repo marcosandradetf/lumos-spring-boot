@@ -12,8 +12,4 @@ public class PreMeasurement {
 
     private String city;
 
-
-
-
-
 }
