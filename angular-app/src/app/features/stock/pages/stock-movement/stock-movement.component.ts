@@ -1,20 +1,15 @@
-import { Component } from '@angular/core';
+import {Component, DoCheck, OnInit} from '@angular/core';
 import {MaterialService} from '../../services/material.service';
 import {EstoqueService} from '../../services/estoque.service';
 import {MaterialResponse} from '../../material-response.dto';
-import {BehaviorSubject, catchError, Observable, of, tap, throwError} from 'rxjs';
-import {MaterialFormComponent} from '../material/material-form/material-form.component';
+import {catchError, Observable, of, tap, throwError} from 'rxjs';
 import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
-import {TabelaComponent} from '../material/tabela/tabela.component';
 import {TableComponent} from '../../../../shared/components/table/table.component';
 import {PaginationComponent} from '../../../../shared/components/pagination/pagination.component';
 import {ButtonComponent} from '../../../../shared/components/button/button.component';
 import {ModalComponent} from '../../../../shared/components/modal/modal.component';
-import {DynamicTableComponent} from '../../../../shared/components/dynamic-table/dynamic-table.component';
-import {NgForOf, NgIf} from '@angular/common';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
-import {ItemRequest} from '../../../contract/itens-request.dto';
-import {Contract} from '../../../contract/contract-response.dto';
 import {AlertMessageComponent} from '../../../../shared/components/alert-message/alert-message.component';
 import {StockMovementDTO} from '../../stock-movement.dto';
 import {SupplierDTO} from '../../supplier.dto';
@@ -32,7 +27,8 @@ import {UtilsService} from '../../../../core/service/utils.service';
     NgForOf,
     FormsModule,
     AlertMessageComponent,
-    NgIf
+    NgIf,
+    NgClass
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'
@@ -45,6 +41,15 @@ export class StockMovementComponent {
     { title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4' },
     { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
   ];
+
+  units: any[] = [
+    { Value: "CX" },
+    { Value: "PÇ" },
+    { Value: "UN" },
+    { Value: "M" },
+    { Value: "CM" }
+  ];
+
   materials: MaterialResponse[] = [];
   suppliers: any = [];
 
@@ -60,23 +65,24 @@ export class StockMovementComponent {
   formSubmitted: boolean = false;
 
   private validate(): boolean {
-    for (let i = 0; i < this.sendMovement.length; i++) {
-      if(this.sendMovement[i].inputQuantity === 0) {
-        this.serverMessage = "A quantidade não pode ser igual a 0."
+    for (let item of this.sendMovement) {
+      if (item.inputQuantity.length === 0) {
+        this.serverMessage = "A quantidade não pode ser igual a 0 ou estar inválida.";
         this.alertType = "alert-error";
-        return false;
-      } else if (this.sendMovement[i].quantityPackage === 0) {
-        this.serverMessage = "A quantidade por embalagem não pode ser igual a 0."
+        return false; // Aqui retorna e sai da função
+      } else if (item.quantityPackage.length === 0) {
+        this.serverMessage = "A quantidade por embalagem não pode ser igual a 0 ou estar inválida.";
         this.alertType = "alert-error";
-        return false;
+        return false; // Aqui também retorna e sai da função
       }
     }
-    return true;
-  };
+    return true; // Se não encontrou erro, retorna true
+  }
+
 
   constructor(protected materialService: MaterialService,
               private estoqueService: EstoqueService,
-              private utils: UtilsService,) {
+              protected utils: UtilsService,) {
     this.loadMaterials();
   }
 
@@ -89,7 +95,19 @@ export class StockMovementComponent {
 
     this.materialService.materials$.subscribe((materials: MaterialResponse[]) => {
       this.materials = materials;
+
+      this.materials = this.materials.filter(movement => !movement.inactive);
+
+      // Itera sobre os materiais recebidos
+      this.materials.forEach((material) => {
+        // Verifica se o ID do material está presente em sendMovement
+        const matchedMovement = this.sendMovement.find(movement => movement.materialId === material.idMaterial);
+        // Se houver correspondência, marque o material como selecionado
+        material.selected = !!matchedMovement;
+      });
+
     });
+
 
     this.estoqueService.getSuppliers().subscribe((suppliers: SupplierDTO[]) => {
       this.suppliers = suppliers;
@@ -101,18 +119,11 @@ export class StockMovementComponent {
       this.alertType = 'alert-warning';
       this.serverMessage = "Antes de continuar você deve selecionar os itens desejados.";
     } else {
-      // this.getSomeState(true).subscribe(state => {
-      //   this.modalOpenMovement = state;
-      // });
       this.openMovementModal = true;
     }
 
   }
 
-
-  getSomeState(value: boolean): Observable<boolean> {
-    return of(value);
-  }
 
   handleConfirmMovement() {
     if (this.validate()) {
@@ -123,32 +134,25 @@ export class StockMovementComponent {
   toggleSelection(item: MaterialResponse) {
     if (item.selected) {
       const newMovement: StockMovementDTO = {
-        buyUnit: item.buyUnit,
+        buyUnit: '',
         description: '',
-        inputQuantity: 0,
+        inputQuantity: '',
         materialId: item.idMaterial,
         pricePerItem: '',
-        quantityPackage: 0,
-        supplierId: item.idMaterial
+        quantityPackage: '',
+        supplierId: ""
       };
       this.sendMovement.push(newMovement);
-      console.log(this.sendMovement);
-
-
     } else {
-      // const index = this.sendMovement;
-      // if (index !== -1) {
-      //   this.movement.idMaterial.splice(index, 1);
-      //
-      // }
+      // Remove o item filtrando pelo `materialId`
+      this.sendMovement = this.sendMovement.filter(movement => movement.materialId !== item.idMaterial);
     }
   }
 
   submitDataMovement(): void {
     this.estoqueService.stockMovement(this.sendMovement).pipe(
       tap(response => {
-        console.log(response);
-        this.serverMessage = response.toString();
+        this.serverMessage = response;
         this.alertType = 'alert-success';
         this.formSubmitted = false;
         this.closeConfirmationModal();
@@ -180,7 +184,13 @@ export class StockMovementComponent {
   }
 
   clearSelection(): void {
+    this.materials.forEach((material: MaterialResponse) => {
+      if(material.selected) {
+        material.selected = false;
+      }
+    });
 
+    this.sendMovement = [];
   }
 
   closeSupplierModal() {
@@ -191,7 +201,6 @@ export class StockMovementComponent {
 
   submitDataSupplier(form: any) {
     this.formSubmitted = true;
-    console.log(this.sendSuppliers);
 
     if (form.invalid) {
       console.log('Formulário inválido');
@@ -200,14 +209,14 @@ export class StockMovementComponent {
 
     this.estoqueService.createSuppliers(this.sendSuppliers).pipe(
       tap(response => {
-        console.log(response);
-        this.serverMessage = "Fornecedor criado com Sucesso.";
+        this.serverMessage = response;
         this.alertType = 'alert-success';
         this.suppliers = response;
         this.formSubmitted = false;
+        this.sendSuppliers = [];
       }),
       catchError(err => {
-        this.serverMessage = err.message;
+        this.serverMessage = err.error;
         this.alertType = 'alert-error';
         this.formSubmitted = false;
         return throwError(() => err);
@@ -241,9 +250,11 @@ export class StockMovementComponent {
     this.formSubmitted = true;
 
     if (form.invalid) {
+      console.log("invalid form");
       return;
     }
 
+    console.log(this.sendMovement);
     this.handleConfirmMovement();
   }
 
@@ -258,12 +269,18 @@ export class StockMovementComponent {
       return;
     }
 
-    // Atualiza o valor no modelo e no campo de input
-    console.log(this.getDescription(this.sendMovement[index].materialId));
     const value = this.utils.formatValue(targetValue);
     this.sendMovement[index].pricePerItem = value;
     (event.target as HTMLInputElement).value = value; // Exibe o valor formatado no campo de input
 
   }
 
+
+  updateQuantityPackage() {
+    this.sendMovement.forEach(movement => {
+      if (movement.buyUnit.toLowerCase() === 'un') {
+        movement.quantityPackage = '1';
+      }
+    });
+  }
 }

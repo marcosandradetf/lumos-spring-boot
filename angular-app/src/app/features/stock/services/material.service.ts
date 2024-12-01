@@ -42,6 +42,24 @@ export class MaterialService {
       });
   }
 
+  // Função para atualizar a propriedade "selected" de um material específico
+  updateMaterialSelection(materialId: number, selected: boolean): void {
+    // Obtenha os materiais atuais
+    const materials = this.materialsSubject.getValue(); // Obtém o valor atual do BehaviorSubject
+
+    // Atualiza o material desejado
+    const updatedMaterials = materials.map(material => {
+      if (material.idMaterial === materialId) {
+        return { ...material, selected }; // Atualiza a propriedade "selected"
+      }
+      return material; // Retorna o material sem mudanças se o ID não coincidir
+    });
+
+    // Emite o novo array com a propriedade atualizada
+    this.materialsSubject.next(updatedMaterials);
+  }
+
+
   getAll(){
     return this.http.get<MaterialResponse[]>(`${this.apiUrl}`);
   }

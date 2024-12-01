@@ -3,6 +3,7 @@ package com.lumos.lumosspring.stock.service;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.authentication.repository.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementDTO;
+import com.lumos.lumosspring.stock.controller.dto.StockMovementResponse;
 import com.lumos.lumosspring.stock.entities.StockMovement;
 import com.lumos.lumosspring.stock.repository.*;
 import com.lumos.lumosspring.util.Util;
@@ -13,9 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class StockMovementService {
@@ -25,12 +24,6 @@ public class StockMovementService {
     private final UserRepository userRepository;
     private final Util util;
 
-    enum status {
-        PENDING,
-        APPROVED,
-        REJECTED
-    }
-
     public StockMovementService(MaterialRepository materialRepository, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util) {
         this.materialRepository = materialRepository;
         this.stockMovementRepository = stockMovementRepository;
@@ -39,6 +32,42 @@ public class StockMovementService {
         this.util = util;
     }
 
+    public ResponseEntity<?> stockMovementGet() {
+        // Busca todos os movimentos de estoque
+        List<StockMovement> stockMovements = this.stockMovementRepository.findAll();
+
+        // Filtra os movimentos de estoque com status PENDING
+        List<StockMovement> pendingMovements = stockMovements.stream()
+                .filter(m -> m.getStatus().equals(StockMovement.Status.PENDING))
+                .toList();
+
+        // Verifica se não existem movimentos pendentes
+        if (pendingMovements.isEmpty()) {
+            return new ResponseEntity<>("Nenhum movimento pendente foi encontrado!", HttpStatus.NO_CONTENT);
+        }
+
+        // Criação da lista de resposta
+        List<StockMovementResponse> response = new ArrayList<>();
+        for (StockMovement movement : pendingMovements) {
+            // Formatação de preço para substituir ponto por vírgula
+            String formattedPrice = this.util.formatPrice(movement.getPricePerItem());
+
+            // Adiciona o movimento de estoque na resposta
+            response.add(new StockMovementResponse(
+                    movement.getStockMovementId(),
+                    movement.getStockMovementDescription(),
+                    movement.getMaterial().getMaterialName(),
+                    movement.getInputQuantity(),
+                    movement.getBuyUnit(),
+                    movement.getInputQuantity(), // Note que este valor aparece duas vezes, verifique se é necessário
+                    formattedPrice,
+                    movement.getSupplier().getSupplierName()
+            ));
+        }
+
+        // Retorna a resposta com status OK
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     public ResponseEntity<?> createMovement(List<StockMovementDTO> stockMovementRequest, String refreshToken) {
         ResponseEntity<String> validationError = validateStockMovementRequest(stockMovementRequest);
@@ -51,7 +80,7 @@ public class StockMovementService {
 
     private ResponseEntity<String> validateStockMovementRequest(List<StockMovementDTO> stockMovement) {
         for (StockMovementDTO movement : stockMovement) {
-            if (!supplierRepository.existsById(movement.supplierId())) {
+            if (!supplierRepository.existsById(Long.parseLong(movement.supplierId()))) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Fornecedor não encontrado.");
             }
@@ -61,7 +90,7 @@ public class StockMovementService {
 
     private ResponseEntity<String> convertToStockMovementAndSave(List<StockMovementDTO> stockMovement, UUID userUUID) {
         var date = ZonedDateTime.now(
-                ZoneId.of( "America/Sao_Paulo" )
+                ZoneId.of("America/Sao_Paulo")
         );
 
         for (StockMovementDTO movement : stockMovement) {
@@ -72,10 +101,10 @@ public class StockMovementService {
             newMovement.setBuyUnit(movement.buyUnit());
             newMovement.setQuantityPackage(movement.quantityPackage());
             newMovement.setPricePerItem(util.convertToBigDecimal(movement.pricePerItem()));
-            newMovement.setUserCreated(userRepository.findById(userUUID).orElse(null));
+            newMovement.setUserCreated(userRepository.findByIdUser(userUUID).orElse(null));
             newMovement.setMaterial(materialRepository.findById(movement.materialId()).orElse(null));
-            newMovement.setSupplier(supplierRepository.findById(movement.supplierId()).orElse(null));
-            newMovement.setStatus(status.PENDING.name());
+            newMovement.setSupplier(supplierRepository.findById(Long.parseLong(movement.supplierId())).orElse(null));
+            newMovement.setStatus(StockMovement.Status.PENDING);
             stockMovementRepository.save(newMovement);
         }
 
@@ -88,12 +117,12 @@ public class StockMovementService {
         if (movement == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Movimento não encontrado.");
-        } else if (Objects.equals(movement.getStatus(), status.REJECTED.name())) {
+        } else if (Objects.equals(movement.getStatus(), StockMovement.Status.REJECTED)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível aprovar pois Movimento já foi rejeitado.");
-        } else if (Objects.equals(movement.getStatus(), status.APPROVED.name())) {
+        } else if (Objects.equals(movement.getStatus(), StockMovement.Status.APPROVED)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível aprovar pois Movimento já foi aprovado.");
         }
-        movement.setStatus(status.APPROVED.name());
+        movement.setStatus(StockMovement.Status.APPROVED);
         movement.setUserFinished(util.getUserFromRToken(refreshToken));
         movement.materialUpdate();
         stockMovementRepository.save(movement);
@@ -106,10 +135,10 @@ public class StockMovementService {
         if (movement == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Movimento não encontrado.");
-        } else if (Objects.equals(movement.getStatus(), status.APPROVED.name())) {
+        } else if (Objects.equals(movement.getStatus(), StockMovement.Status.APPROVED)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível reprovar pois Movimento já foi aprovado.");
         }
-        movement.setStatus(status.REJECTED.name());
+        movement.setStatus(StockMovement.Status.REJECTED);
         movement.setUserFinished(util.getUserFromRToken(refreshToken));
         stockMovementRepository.save(movement);
         return ResponseEntity.status(HttpStatus.OK).body("Movimento rejeitado com sucesso.");

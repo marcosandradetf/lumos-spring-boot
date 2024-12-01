@@ -14,8 +14,16 @@
     </div>
 
     <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+      <div class="flex justify-center m-5">
+        <ul class="steps">
+          <li class="step step-primary">Selecionar itens</li>
+          <li class="step"><a href="estoque/movimento/pendente" class="link link-hover hover:text-blue-700">Pendente de Aprovação</a></li>
+          <li class="step cursor-pointer"><a href="estoque/movimento/aprovado" class="link link-hover hover:text-blue-700">Aprovado</a></li>
+        </ul>
+      </div>
 
       <app-table [search]="true" >
+
         <tr class="bg-indigo-700 text-white" header>
           <th class="material-icons">call_received</th>
           <th>Codigo</th>
@@ -59,13 +67,14 @@
       <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
         <app-table>
           <tr class="bg-indigo-700 text-white" header>
-            <th>Codigo</th>
-            <th>Nome</th>
-            <th>Quantidade</th>
-            <th>UN. Compra</th>
-            <th>Qtde. por embalagem</th>
-            <th>Preço por item</th>
-            <th>Fornecedor</th>
+            <th>Codigo*</th>
+            <th>Nome*</th>
+            <th>Quantidade*</th>
+            <th>UN. Compra*</th>
+            <th>Qtde. por unidade*</th>
+            <th>Preço por item*</th>
+            <th>Fornecedor*</th>
+            <th>Descricão</th>
           </tr>
           <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100" body>
             <td><input
@@ -77,38 +86,59 @@
               type="text"></td>
             <td>{{ getDescription(movement.materialId) }}</td>
             <td><input
-              [ngModel]="movement.inputQuantity"
               required
+              [(ngModel)]="movement.inputQuantity"
               name="inputQuantity{{i}}"
               type="text"
+              (input)="this.utils.formatNumber($event)"
               placeholder="Digite aqui"
-              class="input input-bordered input-xs w-24" />
-
-            </td>
-            <td><input
-              [ngModel]="movement.buyUnit"
-              required
               class="input input-bordered input-xs w-24"
-              name="buyUnit{{i}}"
-              type="text"></td>
+              #inputQuantity="ngModel" />
+              <div *ngIf="inputQuantity.invalid && formSubmitted">
+                <small *ngIf="inputQuantity.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
             <td>
+                <select
+                  class="select select-bordered select-xs w-16"
+                  [(ngModel)]="movement.buyUnit"
+                  (change)="updateQuantityPackage()"
+                  name="buyUnit{{i}}"
+                  required
+                  #buyUnit="ngModel">
+                  @for (unit of units; track unit.Value) {
+                    <option [value]="unit.Value" [selected]="movement.buyUnit === unit.Value">{{unit.Value}}</option>
+                  }
+                </select>
+                @if (buyUnit.invalid && formSubmitted) {
+                  @if (buyUnit.errors?.['required']) {
+                    <small class="text-red-600">Preenchimento obrigatório.</small>
+                  }
+                }
+            </td>
+            <td
+              [ngClass]="movement.buyUnit !== '' && movement.buyUnit !== 'UN' ? 'tooltip tooltip-right'
+                  : ''" data-tip="Informe a quantidade de itens por Unidade. Exemplo: 5 Caixas, 5 Metros, 5 Peças e etc.">
               <input
                 required
-                [ngModel]="movement.quantityPackage"
-                name="quantityPackage{{i}}"
                 type="text"
+                (input)="this.utils.formatNumber($event)"
+                [(ngModel)]="movement.quantityPackage"
+                [disabled]="movement.buyUnit === ''"
+                [readOnly]="movement.quantityPackage === '1' && movement.buyUnit.toLowerCase() === 'un'"
+                name="quantityPackage{{i}}"
                 placeholder="Digite aqui"
                 class="input input-bordered input-xs w-24"
-                #ngQuantityPackage="ngModel"
+                #quantityPackage="ngModel"
               />
-              <div *ngIf="ngQuantityPackage.invalid && formSubmitted">
-                <small *ngIf="ngQuantityPackage.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              <div *ngIf="quantityPackage.invalid && formSubmitted">
+                <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
               </div>
             </td>
             <td><input
               required
               type="text"
-              [ngModel]="movement.pricePerItem"
+              [(ngModel)]="movement.pricePerItem"
               (input)="formatValue($event, i)"
               name="pricePerItem{{i}}"
               placeholder="R$"
@@ -121,11 +151,12 @@
             </td>
             <td>
               <select
-                [(ngModel)]="movement.supplierId"
-                name="supplierId"
-                class="select select-bordered select-xs w-56 max-w-xs"
                 required
+                [(ngModel)]="movement.supplierId"
+                name="supplierId{{i}}"
+                class="select select-bordered select-xs w-56 max-w-xs"
                 #supplier="ngModel">
+                <option value="" disabled>Selecione um Fornecedor</option>
                 @for (s of suppliers; track s.id) {
                   <option [value]="s.id">{{s.name}}</option>
                 }
@@ -134,6 +165,13 @@
                 <small *ngIf="supplier.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
               </div>
             </td>
+            <td><input
+              type="text"
+              [(ngModel)]="movement.description"
+              name="description{{i}}"
+              placeholder="Digite aqui"
+              class="input input-bordered input-xs  w-64 max-w-xs"
+            />
           </tr>
         </app-table>
         <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">

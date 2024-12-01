@@ -8,6 +8,7 @@ import {Company} from '../../../core/models/empresa.model';
 import {AuthService} from '../../../core/auth/auth.service';
 import {StockMovementDTO} from '../stock-movement.dto';
 import {SupplierDTO} from '../supplier.dto';
+import {StockMovementResponse} from '../stock-movement-response.dto';
 
 
 @Injectable({
@@ -41,15 +42,24 @@ export class EstoqueService {
     return this.http.get<SupplierDTO[]>(`${this.endpoint}/stock/get-suppliers`);
   }
 
-  postSupplier(supplier: SupplierDTO) {
-    return this.http.post(this.endpoint + '/stock/create-supplier', supplier);
+  stockMovement(stockMovement: StockMovementDTO[]) {
+    return this.http.post(this.endpoint + '/stock/stock-movement/create', stockMovement, { responseType: "text" });
   }
 
-  stockMovement(stockMovement: StockMovementDTO[]) {
-    return this.http.post(this.endpoint + '/stock/stock-movement', stockMovement);
+  getStockMovement() {
+    return this.http.get<StockMovementResponse[]>(`${this.endpoint}/stock/stock-movement/get`);
   }
+
+  approveStockMovement(stockMovement: StockMovementDTO[]) {
+    return this.http.post(this.endpoint + '/stock/stock-movement/approve', stockMovement, { responseType: "text" });
+  }
+
+  rejectStockMovement(stockMovement: StockMovementDTO[]) {
+    return this.http.post(this.endpoint + '/stock/stock-movement/reject', stockMovement, { responseType: "text" });
+  }
+
 
   createSuppliers(sendSuppliers: any) {
-    return this.http.post(this.endpoint + "/stock/create-supplier", sendSuppliers);
+    return this.http.post(this.endpoint + "/stock/create-supplier", sendSuppliers, { responseType: "text" });
   }
 }

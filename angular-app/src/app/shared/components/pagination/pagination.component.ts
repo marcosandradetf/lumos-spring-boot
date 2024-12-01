@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 import {NgClass, NgForOf} from "@angular/common";
-import {MaterialService} from '../../../features/estoque/services/material.service';
+import {MaterialService} from '../../../features/stock/services/material.service';
 
 @Component({
   selector: 'app-pagination',

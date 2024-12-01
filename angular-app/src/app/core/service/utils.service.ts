@@ -23,4 +23,8 @@ export class UtilsService {
 
   }
 
+  formatNumber(event: Event) {
+    (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
+  }
+
 }

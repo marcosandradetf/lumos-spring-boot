@@ -2,7 +2,7 @@
       class=" h-auto flex flex-col">
   <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar Materiais</h4>
 
-  <div class="flex space-x-4 flex-wrap">
+  <div class="flex space-x-4 flex-wrap text-neutral-700">
 
     <label class="form-control w-full max-w-xs ml-4">
       <div class="label">
@@ -132,11 +132,11 @@
       <div class="label">
         <span class="label-text">Qtde. Estoque</span>
       </div>
-      <input type="number"
+      <input type="text"
              inputmode="numeric"
              name="qtdeEstoque"
              [(ngModel)]="material.stockQt"
-             (keydown)="disableKey($event)"
+             (input)="this.utils.formatNumber($event)"
              required
              #qtdeEstoqueModel="ngModel"
              placeholder="Informe a quantidade" class="input input-bordered w-full max-w-xs " />

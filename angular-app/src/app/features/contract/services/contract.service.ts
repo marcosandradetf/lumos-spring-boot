@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {Contract} from '../contract-response.dto';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {MaterialResponse} from '../../estoque/material-response.dto';
+import {MaterialResponse} from '../../stock/material-response.dto';
 import {ItemRequest} from '../itens-request.dto';
 
 @Injectable({
@@ -24,7 +24,7 @@ export class ContractService {
 
   getAllItens(page: string, size: string){
     let params = new HttpParams().set('page', page).set('size', size);
-    return this.http.get<{content: ItemRequest[], totalPages: number, currentPage: number }>(this.endpoint + "/material", { params });
+    return this.http.get<{content: any[], totalPages: number, currentPage: number }>(this.endpoint + "/material", { params });
   }
 
   getSidebarLinks() {

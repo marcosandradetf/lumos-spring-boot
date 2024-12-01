@@ -8,5 +8,5 @@ public record StockMovementDTO(String description,
                                String buyUnit,
                                int quantityPackage,
                                String pricePerItem,
-                               Long supplierId) {
+                               String supplierId) {
 }

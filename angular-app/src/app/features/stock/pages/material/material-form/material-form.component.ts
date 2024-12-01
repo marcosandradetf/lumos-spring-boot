@@ -12,6 +12,7 @@ import {EstoqueService} from '../../../services/estoque.service';
 import {AuthService} from '../../../../../core/auth/auth.service';
 import {NgClass, NgIf} from '@angular/common';
 import {CreateMaterialRequest} from '../../../create-material-request.dto';
+import {UtilsService} from '../../../../../core/service/utils.service';
 
 
 @Component({
@@ -51,7 +52,8 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
 
 
   constructor(private materialService: MaterialService,
-              private estoqueService: EstoqueService, private authService: AuthService) {}
+              private estoqueService: EstoqueService, private authService: AuthService,
+              protected utils: UtilsService) {}
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn$) {
@@ -137,9 +139,4 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
-  disableKey(event: KeyboardEvent) {
-    if (event.key.toLowerCase() === 'e') {
-      event.preventDefault();
-    }
-  }
 }

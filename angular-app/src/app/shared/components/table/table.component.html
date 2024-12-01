@@ -13,7 +13,7 @@
 
 
   <!-- Tabela -->
-  <table class="table table-xs cursor-default select-none z-10 w-full">
+  <table class="table cursor-default select-none z-10 w-full" [ngClass]="large ? '' : 'table-xs'">
     <thead>
       <!-- Conteúdo do cabeçalho (usando ng-content para inserir dinamicamente) -->
       <ng-content select="[header]"></ng-content>

@@ -48,6 +48,11 @@ public class StockController {
         return stockMovementService.createMovement(movement, refreshToken);
     }
 
+    @GetMapping("/stock-movement/get")
+    public ResponseEntity<?> stockMovementGet() {
+        return stockMovementService.stockMovementGet();
+    }
+
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
     @PostMapping("/stock-movement/approve")
     public ResponseEntity<?> stockMovementApprove(@RequestParam Long movementId, @CookieValue("refreshToken") String refreshToken) {

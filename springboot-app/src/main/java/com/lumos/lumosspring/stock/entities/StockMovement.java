@@ -12,20 +12,20 @@ public class StockMovement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "stock_movement_id")
-    private int stockMovementId;
+    private Long stockMovementId;
 
     @Column(columnDefinition = "TEXT")
     private String stockMovementDescription;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Material material;
 
     private Instant stockMovementRefresh;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User userCreated;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User userFinished;
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
@@ -43,14 +43,21 @@ public class StockMovement {
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
-    @Column(columnDefinition = "TEXT")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
 
     public StockMovement(Instant stockMovementRefresh) {
         this.stockMovementRefresh = stockMovementRefresh;
     }
 
     public StockMovement() {
+    }
+
+    public enum Status {
+        PENDING,
+        APPROVED,
+        REJECTED
     }
 
     // método para atualizar estoque do material
@@ -62,11 +69,11 @@ public class StockMovement {
     }
 
 
-    public int getStockMovementId() {
+    public Long getStockMovementId() {
         return stockMovementId;
     }
 
-    public void setStockMovementId(int stockMovementId) {
+    public void setStockMovementId(Long stockMovementId) {
         this.stockMovementId = stockMovementId;
     }
 
@@ -134,11 +141,11 @@ public class StockMovement {
         this.pricePerItem = pricePerItem;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
@@ -157,4 +164,5 @@ public class StockMovement {
     public void setUserFinished(User userFinished) {
         this.userFinished = userFinished;
     }
+
 }

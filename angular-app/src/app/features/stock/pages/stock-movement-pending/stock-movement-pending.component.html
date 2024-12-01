@@ -1,0 +1,53 @@
+<div class="flex mt-[4rem] h-fit">
+  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a href="/início">Início</a></li>
+        <li><a href="/estoque">Estoque</a></li>
+        <li>Pendente de Aprovação</li>
+      </ul>
+    </div>
+
+    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+      <div class="flex justify-center m-5">
+        <ul class="steps">
+          <li class="step step-primary"><a href="estoque/movimento" class="link link-hover hover:text-blue-700">Selecionar itens</a></li>
+          <li class="step step-primary">Pendente de Aprovação</li>
+          <li class="step cursor-pointer"><a href="estoque/movimento/aprovado" class="link link-hover hover:text-blue-700">Aprovado</a></li>
+        </ul>
+      </div>
+
+      <app-table [large]="true">
+
+        <tr class="bg-indigo-700 text-white" header>
+          <th>Codigo</th>
+          <th>Descrição</th>
+          <th>Material</th>
+          <th>Quantidade</th>
+          <th>Unid. Compra</th>
+          <th>Qtde. p/ Unidade</th>
+          <th>Preço por item</th>
+          <th>Fornecedor</th>
+          <th>Empresa</th>
+          <th>Almoxarifado</th>
+          <th>Funcionário</th>
+        </tr>
+        <tr *ngFor="let row of stockMovement; let i = index" class="odd:bg-neutral-100" body>
+          <td>{{row.id}}</td>
+          <td>{{row.description}}</td>
+          <td>{{row.materialName}}</td>
+          <td>{{row.inputQuantity}}</td>
+          <td>{{row.buyUnit}}</td>
+          <td>{{row.quantityPackage}}</td>
+          <td>{{row.pricePerItem}}</td>
+          <td>{{row.supplierName}}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </app-table>
+    </div>
+
+  </div>
+</div>

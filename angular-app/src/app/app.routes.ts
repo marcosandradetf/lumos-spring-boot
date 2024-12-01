@@ -11,7 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'estoque/materiais',
-    loadComponent: () => import('./features/estoque/pages/material/material-page.component').then(m => m.MaterialPageComponent),
+    loadComponent: () => import('./features/stock/pages/material/material-page.component').then(m => m.MaterialPageComponent),
     canActivate: [AuthGuard],
   },
   {
@@ -28,9 +28,26 @@ export const routes: Routes = [
 
   {
     path: 'estoque/movimento',
-    loadComponent: () => import('./features/estoque/pages/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
+    loadComponent: () => import('./features/stock/pages/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
     canActivate: [AuthGuard],
   },
 
+  {
+    path: 'estoque/movimento/pendente',
+    loadComponent: () => import('./features/stock/pages/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
+    canActivate: [AuthGuard],
+  },
+
+  {
+    path: 'estoque/movimento/aprovado',
+    loadComponent: () => import('./features/stock/pages/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
+    canActivate: [AuthGuard],
+  },
+
+  { path: 'chamados', redirectTo: 'estoque/materiais' },
+  { path: 'equipes', redirectTo: 'estoque/materiais' },
+  { path: 'contratos', redirectTo: 'contratos/criar' },
+  { path: 'requisicoes', redirectTo: '**' },
+  { path: 'estoque', redirectTo: 'estoque/materiais' },
   { path: '**', redirectTo: 'estoque/materiais' }
 ];

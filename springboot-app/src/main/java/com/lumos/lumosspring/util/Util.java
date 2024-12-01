@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 
 @Component
 public class Util {
@@ -44,5 +45,14 @@ public class Util {
     // Método auxiliar para verificar se uma string está vazia ou é nula
     public boolean isEmpty(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    public String formatPrice(BigDecimal price) {
+        if (price != null) {
+            // Formatação de número para garantir que a vírgula seja usada como separador decimal
+            DecimalFormat df = new DecimalFormat("#,##0.00");
+            return df.format(price).replace('.', ','); // Troca o ponto por vírgula
+        }
+        return "0,00";
     }
 }

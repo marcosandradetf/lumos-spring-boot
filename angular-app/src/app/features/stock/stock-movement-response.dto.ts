@@ -1,9 +1,10 @@
-export interface StockMovementDTO {
+export interface StockMovementResponse {
+  id: number;
   description: string;
-  materialId: number;
+  materialName: string;
   inputQuantity: number;
   buyUnit: string;
   quantityPackage: number;
   pricePerItem: string;
-  supplierId: number;
+  supplierName: string;
 }

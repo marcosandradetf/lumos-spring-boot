@@ -7,7 +7,7 @@ import {catchError, tap, throwError} from 'rxjs';
 import {ContractService} from '../../services/contract.service';
 import {ItemRequest} from '../../itens-request.dto';
 import {Deposit} from '../../../../core/models/almoxarifado.model';
-import {EstoqueService} from '../../../estoque/services/estoque.service';
+import {EstoqueService} from '../../../stock/services/estoque.service';
 import {Type} from '../../../../core/models/tipo.model';
 import {ufRequest} from '../../../../core/uf-request.dto';
 import {citiesRequest} from '../../../../core/cities-request.dto';
@@ -191,7 +191,7 @@ export class CreateComponent {
   private loadItens(page: string) {
     this.contractService.getAllItens(page, "20")
       .subscribe(response => {
-      this.allItens = response.content; // Armazena todos os itens recebidos
+      this.allItens = response.content.filter(i => !i.inactive); // Armazena todos os itens recebidos
       this.itensRequest.filter(item => item.almoxarifado === '');
     });
   }

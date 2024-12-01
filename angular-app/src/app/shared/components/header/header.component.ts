@@ -4,7 +4,7 @@ import {Type} from '../../../core/models/tipo.model';
 import {Company} from '../../../core/models/empresa.model';
 import {Deposit} from '../../../core/models/almoxarifado.model';
 import {BehaviorSubject, catchError, of, tap} from 'rxjs';
-import {EstoqueService} from '../../../features/estoque/services/estoque.service';
+import {EstoqueService} from '../../../features/stock/services/estoque.service';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {AuthService} from '../../../core/auth/auth.service';
 import {User} from '../../../core/models/user.model';

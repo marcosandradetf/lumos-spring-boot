@@ -1,6 +1,6 @@
 @if (modalOpen) {
     <dialog class="modal modal-open" (click)="onOutsideClick($event)">
-      <div class="modal-box rounded-none" [ngClass]="!confirmation ? 'm-0 p-1 w-11/12 max-w-5xl' : ''">
+      <div class="modal-box rounded-none" [ngClass]="!confirmation ? 'm-0 p-1 w-11/12 max-w-[75rem]' : ''">
         <ng-content>
         </ng-content>
       </div>

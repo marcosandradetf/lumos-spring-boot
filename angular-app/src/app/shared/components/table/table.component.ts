@@ -1,12 +1,14 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { NgForOf } from '@angular/common';
+import {NgClass, NgForOf} from '@angular/common';
 import {HttpClient} from '@angular/common/http';
-import {MaterialService} from '../../../features/estoque/services/material.service';
+import {MaterialService} from '../../../features/stock/services/material.service';
+import {MaterialResponse} from '../../../features/stock/material-response.dto';
 
 @Component({
   selector: 'app-table',
   standalone: true,
   imports: [
+    NgClass
   ],
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.scss']
@@ -14,6 +16,7 @@ import {MaterialService} from '../../../features/estoque/services/material.servi
 export class TableComponent {
   @Input() search: boolean = false;
   @Input() filter: boolean = false;
+  @Input() large: boolean = false;
 
   constructor(private materialService: MaterialService) { }
 
