@@ -2,18 +2,20 @@ import {Component, DoCheck, OnInit} from '@angular/core';
 import {MaterialService} from '../../services/material.service';
 import {EstoqueService} from '../../services/estoque.service';
 import {MaterialResponse} from '../../material-response.dto';
-import {catchError, Observable, of, tap, throwError} from 'rxjs';
+import {catchError, firstValueFrom, map, Observable, of, tap, throwError} from 'rxjs';
 import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../../../shared/components/table/table.component';
 import {PaginationComponent} from '../../../../shared/components/pagination/pagination.component';
 import {ButtonComponent} from '../../../../shared/components/button/button.component';
 import {ModalComponent} from '../../../../shared/components/modal/modal.component';
-import {NgClass, NgForOf, NgIf} from '@angular/common';
+import {AsyncPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {AlertMessageComponent} from '../../../../shared/components/alert-message/alert-message.component';
 import {StockMovementDTO} from '../../stock-movement.dto';
 import {SupplierDTO} from '../../supplier.dto';
 import {UtilsService} from '../../../../core/service/utils.service';
+import {Title} from '@angular/platform-browser';
+import {Deposit} from '../../../../core/models/almoxarifado.model';
 
 @Component({
   selector: 'app-stock-movement',
@@ -28,7 +30,7 @@ import {UtilsService} from '../../../../core/service/utils.service';
     FormsModule,
     AlertMessageComponent,
     NgIf,
-    NgClass
+    NgClass,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'
@@ -50,11 +52,15 @@ export class StockMovementComponent {
     { Value: "CM" }
   ];
 
+  deposits: Deposit[] = [];
+
   materials: MaterialResponse[] = [];
   suppliers: any = [];
+  selectedDeposits: string[] = [];
 
   sendSuppliers: any[] = [];
   sendMovement: StockMovementDTO[] = [];
+  selectedMaterials: any[] = [];
 
   private currentPage: string = "0";
   openMovementModal: boolean = false;
@@ -82,8 +88,11 @@ export class StockMovementComponent {
 
   constructor(protected materialService: MaterialService,
               private estoqueService: EstoqueService,
-              protected utils: UtilsService,) {
+              protected utils: UtilsService,
+              private titleService:Title) {
     this.loadMaterials();
+    this.titleService.setTitle("Movimentar Estoque");
+    this.estoqueService.getDeposits().subscribe(d => this.deposits = d);
   }
 
 
@@ -106,8 +115,8 @@ export class StockMovementComponent {
         material.selected = !!matchedMovement;
       });
 
-    });
 
+    });
 
     this.estoqueService.getSuppliers().subscribe((suppliers: SupplierDTO[]) => {
       this.suppliers = suppliers;
@@ -133,6 +142,7 @@ export class StockMovementComponent {
 
   toggleSelection(item: MaterialResponse) {
     if (item.selected) {
+      this.selectedMaterials.push({idMaterial: item.idMaterial, materialName: item.materialName});
       const newMovement: StockMovementDTO = {
         buyUnit: '',
         description: '',
@@ -145,6 +155,7 @@ export class StockMovementComponent {
       this.sendMovement.push(newMovement);
     } else {
       // Remove o item filtrando pelo `materialId`
+      this.selectedMaterials = this.selectedMaterials.filter(m => m.materialId !== item.idMaterial);
       this.sendMovement = this.sendMovement.filter(movement => movement.materialId !== item.idMaterial);
     }
   }
@@ -209,7 +220,7 @@ export class StockMovementComponent {
 
     this.estoqueService.createSuppliers(this.sendSuppliers).pipe(
       tap(response => {
-        this.serverMessage = response;
+        this.serverMessage = "Fornecedor Criado com Sucesso!";
         this.alertType = 'alert-success';
         this.suppliers = response;
         this.formSubmitted = false;
@@ -241,10 +252,14 @@ export class StockMovementComponent {
     this.sendSuppliers.splice(index, 1); // Remove o fornecedor pelo índice
   }
 
+
+
   getDescription(id: number): string {
-    const material = this.materials.find(m => m.idMaterial === id);
-    return material ? material.materialName : '';
+    let material = this.selectedMaterials.find(m => m.idMaterial === id);
+    return material ? material.materialName : "";
   }
+
+
 
   submitFormMovement(form: NgForm) {
     this.formSubmitted = true;
@@ -283,4 +298,26 @@ export class StockMovementComponent {
       }
     });
   }
+
+  filterDeposit(depositId: string, event: Event) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+
+    if (isChecked) {
+      // Adiciona o depósito selecionado
+      this.selectedDeposits.push(depositId);
+      this.materialService.getMaterialsByDeposit(this.currentPage, "25", this.selectedDeposits)
+    } else {
+      // Remove o depósito desmarcado
+      this.selectedDeposits = this.selectedDeposits.filter(dep => dep !== depositId);
+      if (this.selectedDeposits.length === 0) {
+        this.materialService.getFetch(this.currentPage, "25");
+      } else {
+        this.materialService.getMaterialsByDeposit(this.currentPage, "25", this.selectedDeposits);
+      }
+
+    }
+  }
+
+
+
 }

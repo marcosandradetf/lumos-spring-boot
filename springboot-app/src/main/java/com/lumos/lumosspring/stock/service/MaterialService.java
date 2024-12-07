@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -44,10 +45,6 @@ public class MaterialService {
         return materialRepository.findAll(pageable);
     }
 
-    public Material findById(Long id) {
-        return materialRepository.findById(id).orElse(null);
-    }
-
     @Transactional
     public ResponseEntity<?> save(MaterialRequest material) {
         // Validação do material
@@ -64,10 +61,12 @@ public class MaterialService {
     }
 
     private ResponseEntity<String> validateMaterialRequest(MaterialRequest material) {
-        if (materialRepository.existsByMaterialName(material.materialName())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Já existe um material com o nome fornecido.");
+        if (materialRepository.existsMaterial(
+                material.materialName(), material.deposit(), material.materialBrand())) {
+           return  ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body("Este material já existe no almoxarifado informado.");
         }
+
         if (!tipoRepository.existsById(material.materialType())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Tipo de material não encontrado.");

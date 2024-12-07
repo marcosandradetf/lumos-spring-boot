@@ -53,15 +53,20 @@ public class StockController {
         return stockMovementService.stockMovementGet();
     }
 
+    @GetMapping("/stock-movement/get-approved")
+    public ResponseEntity<?> stockMovementGetApproved() {
+        return stockMovementService.stockMovementGetApproved();
+    }
+
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
-    @PostMapping("/stock-movement/approve")
-    public ResponseEntity<?> stockMovementApprove(@RequestParam Long movementId, @CookieValue("refreshToken") String refreshToken) {
+    @PostMapping("/stock-movement/approve/{movementId}")
+    public ResponseEntity<?> stockMovementApprove(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.approveStockMovement(movementId, refreshToken);
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
-    @PostMapping("/stock-movement/reject")
-    public ResponseEntity<?> stockMovementReject(@RequestParam Long movementId, @CookieValue("refreshToken") String refreshToken) {
+    @PostMapping("/stock-movement/reject/{movementId}")
+    public ResponseEntity<?> stockMovementReject(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.rejectStockMovement(movementId, refreshToken);
     }
 

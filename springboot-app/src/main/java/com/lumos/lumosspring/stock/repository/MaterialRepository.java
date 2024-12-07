@@ -5,18 +5,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface MaterialRepository extends JpaRepository<Material, Long> {
     boolean existsByMaterialName(String materialName); // verificar duplicatas
+    @Query("SELECT COUNT(m) > 0 FROM Material m WHERE m.materialName = :materialName AND m.deposit.idDeposit = :idDeposit AND m.materialBrand = :materialBrand")
+    boolean existsMaterial(@Param("materialName") String materialName,
+                           @Param("idDeposit") Long idDeposit,
+                           @Param("materialBrand") String materialBrand);
 
-//    @Query("SELECT m FROM Material m " +
-//            "INNER JOIN Type t ON t.idType = m.materialType.idType " +
-//            "WHERE unaccent(m.materialName) LIKE unaccent(:name) " +
-//            "OR unaccent(t.typeName) LIKE unaccent(:name)")
-//    Page<Material> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
-//
+    List<Material> findByMaterialName(String materialName);
+
 
     @Query(value = "SELECT * FROM tb_materials m " +
             "INNER JOIN tb_types t ON t.id_type = m.id_material_type " +
@@ -25,8 +26,10 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
             nativeQuery = true)
     Page<Material> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
 
-//
-//    @Query("SELECT m FROM Material m WHERE unaccent(m.materialName) LIKE unaccent(:name) OR unaccent(m.materialType.typeName) LIKE unaccent(:name)")
-//    Page<Material> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
+    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit IN :depositIds")
+    Page<Material> findByDeposit(Pageable pageable, @Param("depositIds") List<Long> depositIds);
+
+    @Query("SELECT m.materialName from Material m where m.idMaterial = :id")
+    String GetNameById(Long id);
 }
 

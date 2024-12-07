@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,18 @@ public class MaterialController {
         return ResponseEntity.ok(materialsDTO);
     }
 
+    @GetMapping("/filter-by-deposit")
+    public ResponseEntity<Page<MaterialResponse>> getMaterialsByDeposit(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "deposit") List<Long> depositId
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Material> materials = materialRepository.findByDeposit(pageable, depositId);
+        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
+        return ResponseEntity.ok(materialsDTO);
+    }
+
     @GetMapping("/search")
     public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
             @RequestParam(value = "name") String name,  // 'name' vindo da URL
@@ -65,8 +78,9 @@ public class MaterialController {
 
 
     @GetMapping("/{id}")
-    public Material getById(@PathVariable Long id) {
-        return materialService.findById(id);
+    public ResponseEntity<String>  getById(@PathVariable Long id) {
+        var name = materialRepository.GetNameById(id);
+        return ResponseEntity.ok(Objects.requireNonNullElse(name, ""));
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")

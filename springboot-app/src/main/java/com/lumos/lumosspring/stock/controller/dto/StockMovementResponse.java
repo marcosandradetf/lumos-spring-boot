@@ -8,5 +8,8 @@ public record StockMovementResponse(
         String buyUnit,
         int quantityPackage,
         String pricePerItem,
-        String supplierName
+        String supplierName,
+        String company,
+        String deposit,
+        String employee
 ) { }

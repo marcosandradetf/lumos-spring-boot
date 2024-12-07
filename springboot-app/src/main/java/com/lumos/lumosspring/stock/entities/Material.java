@@ -14,7 +14,7 @@ public class Material {
     @Column(name = "id_material")
     private long idMaterial;
 
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT")
     private String materialName;
 
     @Column(columnDefinition = "TEXT")

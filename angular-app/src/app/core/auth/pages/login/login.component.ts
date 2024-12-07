@@ -19,6 +19,7 @@ import {map} from 'rxjs';
 export class LoginComponent {
   username: string = '';
   password: string = '';
+  showPassword: boolean = false;
 
   constructor(private authService: AuthService, private router: Router, private titleService:Title) {
     this.titleService.setTitle("Lumos - Login");
@@ -50,5 +51,9 @@ export class LoginComponent {
         }
       );
     }
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

@@ -1,4 +1,4 @@
-<div class="overflow-x-auto">
+<div class="overflow-x-auto min-h-96">
   <!-- Filtro de Pesquisa -->
   @if (search) {
     <div class="flex w-full items-center">
@@ -9,6 +9,10 @@
         </svg>
       </label>
     </div>
+
+    @if (filter) {
+      <ng-content select="[filter]"></ng-content>
+    }
   }
 
 

@@ -12,8 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -51,6 +53,8 @@ public class StockMovementService {
         for (StockMovement movement : pendingMovements) {
             // Formatação de preço para substituir ponto por vírgula
             String formattedPrice = this.util.formatPrice(movement.getPricePerItem());
+            String employee = movement.getUserCreated().getName().concat(" ")
+                    .concat(movement.getUserCreated().getLastName());
 
             // Adiciona o movimento de estoque na resposta
             response.add(new StockMovementResponse(
@@ -61,7 +65,10 @@ public class StockMovementService {
                     movement.getBuyUnit(),
                     movement.getInputQuantity(), // Note que este valor aparece duas vezes, verifique se é necessário
                     formattedPrice,
-                    movement.getSupplier().getSupplierName()
+                    movement.getSupplier().getSupplierName(),
+                    movement.getMaterial().getCompany().getCompanyName(),
+                    movement.getMaterial().getDeposit().getDepositName(),
+                    employee
             ));
         }
 
@@ -144,4 +151,57 @@ public class StockMovementService {
         return ResponseEntity.status(HttpStatus.OK).body("Movimento rejeitado com sucesso.");
     }
 
+
+    public ResponseEntity<?> stockMovementGetApproved() {
+        // Busca todos os movimentos de estoque
+        Instant endDate = Instant.now();
+
+        // Converter Instant para ZonedDateTime (para poder manipular meses)
+        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(endDate, ZoneId.systemDefault());
+
+        // Subtrair 3 meses
+        ZonedDateTime startDate = zonedDateTime.minusMonths(3);
+
+        // Converter de volta para Instant
+        Instant startInstant = startDate.toInstant();
+
+        List<StockMovement> stockMovements = this.stockMovementRepository.findApprovedBetweenDates(startInstant, endDate);
+
+        // Filtra os movimentos de estoque com status PENDING
+        List<StockMovement> approvedMovements = stockMovements.stream()
+                .filter(m -> m.getStatus().equals(StockMovement.Status.APPROVED))
+                .toList();
+
+        // Verifica se não existem movimentos aprovado
+        if (approvedMovements.isEmpty()) {
+            return new ResponseEntity<>("Nenhum movimento aprovado foi encontrado!", HttpStatus.NO_CONTENT);
+        }
+
+        // Criação da lista de resposta
+        List<StockMovementResponse> response = new ArrayList<>();
+        for (StockMovement movement : approvedMovements) {
+            // Formatação de preço para substituir ponto por vírgula
+            String formattedPrice = this.util.formatPrice(movement.getPricePerItem());
+            String employee = movement.getUserFinished().getName().concat(" ")
+                    .concat(movement.getUserCreated().getLastName());
+
+            // Adiciona o movimento de estoque na resposta
+            response.add(new StockMovementResponse(
+                    movement.getStockMovementId(),
+                    movement.getStockMovementDescription(),
+                    movement.getMaterial().getMaterialName(),
+                    movement.getInputQuantity(),
+                    movement.getBuyUnit(),
+                    movement.getInputQuantity(), // Note que este valor aparece duas vezes, verifique se é necessário
+                    formattedPrice,
+                    movement.getSupplier().getSupplierName(),
+                    movement.getMaterial().getCompany().getCompanyName(),
+                    movement.getMaterial().getDeposit().getDepositName(),
+                    employee
+            ));
+        }
+
+        // Retorna a resposta com status OK
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

@@ -13,7 +13,8 @@ import {SidebarComponent} from "../../../../shared/components/sidebar/sidebar.co
 import {TabelaComponent} from './tabela/tabela.component';
 import {HeaderComponent} from '../../../../shared/components/header/header.component';
 import {Router} from 'express';
-import {EstoqueService} from '../../services/estoque.service'; // Importar MatSnackBar
+import {EstoqueService} from '../../services/estoque.service';
+import {Title} from '@angular/platform-browser'; // Importar MatSnackBar
 
 
 
@@ -36,7 +37,9 @@ export class MaterialPageComponent {
     { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
   ];
 
-  constructor(private materialService: MaterialService, private estoque: EstoqueService,) {}
+  constructor(private materialService: MaterialService, private estoque: EstoqueService,private titleService:Title) {
+    this.titleService.setTitle("Gerenciar - Materiais");
+  }
 
 
   // Atualiza o filtro de pesquisa e aplica os filtros combinados

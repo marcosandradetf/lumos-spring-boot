@@ -32,6 +32,7 @@ export class MaterialService {
       });
   }
 
+
   getBySearch(page: string, size: string, search: string){
     let params = new HttpParams().set('name', search).set('page', page).set('size', size);
     this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}/search`, { params })
@@ -40,28 +41,6 @@ export class MaterialService {
         this.totalPages = response.totalPages;
         this.pages = Array.from({ length: this.totalPages }, (_, i) => i);
       });
-  }
-
-  // Função para atualizar a propriedade "selected" de um material específico
-  updateMaterialSelection(materialId: number, selected: boolean): void {
-    // Obtenha os materiais atuais
-    const materials = this.materialsSubject.getValue(); // Obtém o valor atual do BehaviorSubject
-
-    // Atualiza o material desejado
-    const updatedMaterials = materials.map(material => {
-      if (material.idMaterial === materialId) {
-        return { ...material, selected }; // Atualiza a propriedade "selected"
-      }
-      return material; // Retorna o material sem mudanças se o ID não coincidir
-    });
-
-    // Emite o novo array com a propriedade atualizada
-    this.materialsSubject.next(updatedMaterials);
-  }
-
-
-  getAll(){
-    return this.http.get<MaterialResponse[]>(`${this.apiUrl}`);
   }
 
   create(material: CreateMaterialRequest): Observable<CreateMaterialRequest> {
@@ -98,6 +77,22 @@ export class MaterialService {
     this.materialsSubject.next(updatedMaterials);
   }
 
+  getMaterialsByDeposit(page: string, size: string, depositId: string[]) {
+    let params = new HttpParams().set('page', page).set('size', size);
+    depositId.forEach(id => {
+      params = params.append('deposit', id);
+    });
 
+    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}/filter-by-deposit`, { params })
+      .subscribe(response => {
+        this.materialsSubject.next(response.content); // Atualiza o conteúdo
+        this.totalPages = response.totalPages;
+        this.pages = Array.from({ length: this.totalPages }, (_, i) => i);
+      });
 
+  }
+
+  getById(id: number) {
+    return this.http.get<string>(`${this.apiUrl}/${id}`);
+  }
 }

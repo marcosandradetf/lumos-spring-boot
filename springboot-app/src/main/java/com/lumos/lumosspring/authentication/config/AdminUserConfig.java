@@ -14,9 +14,9 @@ import java.util.Set;
 @Configuration
 public class AdminUserConfig implements CommandLineRunner {
 
-    private RoleRepository roleRepository;
-    private UserRepository userRepository;
-    private BCryptPasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public AdminUserConfig(RoleRepository roleRepository, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
@@ -30,12 +30,14 @@ public class AdminUserConfig implements CommandLineRunner {
         var roleAdmin = roleRepository.findByNomeRole(Role.Values.ADMIN.name());
         var userAdmin = userRepository.findByUsername("admin");
         userAdmin.ifPresentOrElse(
-                user -> {
+                _ -> {
                     System.out.println("Admin já existe!");
                 },
                 () -> {
                     var user = new User();
                     user.setUsername("admin");
+                    user.setName("Conta");
+                    user.setLastName("Administrador");
                     user.setPassword(passwordEncoder.encode("4dejulho_"));
                     user.setRoles(Set.of(roleAdmin));
                     userRepository.save(user);

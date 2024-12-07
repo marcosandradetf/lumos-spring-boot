@@ -19,6 +19,9 @@ public class User {
     @Column(unique = true)
     private String username;
 
+    private String name;
+    private String lastName;
+
     @Column(unique = true)
     private String email;
 
@@ -86,4 +89,19 @@ public class User {
         this.dateOfBirth = dateOfBirth;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 }
