@@ -50,16 +50,20 @@ export class EstoqueService {
     return this.http.get<StockMovementResponse[]>(`${this.endpoint}/stock/stock-movement/get`);
   }
 
-  approveStockMovement(stockMovement: StockMovementDTO[]) {
-    return this.http.post(this.endpoint + '/stock/stock-movement/approve', stockMovement, { responseType: "text" });
+  approveStockMovement(id: number) {
+    return this.http.post(this.endpoint + '/stock/stock-movement/approve/'+ id, null, { responseType: "text" });
   }
 
-  rejectStockMovement(stockMovement: StockMovementDTO[]) {
-    return this.http.post(this.endpoint + '/stock/stock-movement/reject', stockMovement, { responseType: "text" });
+  rejectStockMovement(id: number) {
+    return this.http.post(this.endpoint + '/stock/stock-movement/reject/' + id, null, { responseType: "text" });
   }
 
 
   createSuppliers(sendSuppliers: any) {
-    return this.http.post(this.endpoint + "/stock/create-supplier", sendSuppliers, { responseType: "text" });
+    return this.http.post(this.endpoint + "/stock/create-supplier", sendSuppliers);
+  }
+
+  getStockMovementApproved() {
+    return this.http.get<StockMovementResponse[]>(`${this.endpoint}/stock/stock-movement/get-approved`);
   }
 }

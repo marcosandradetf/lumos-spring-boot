@@ -7,6 +7,11 @@ import {EstoqueService} from '../../services/estoque.service';
 import {NgForOf} from '@angular/common';
 import {ReactiveFormsModule} from '@angular/forms';
 import {TableComponent} from '../../../../shared/components/table/table.component';
+import {Title} from '@angular/platform-browser';
+import {ButtonComponent} from '../../../../shared/components/button/button.component';
+import {ModalComponent} from '../../../../shared/components/modal/modal.component';
+import {AlertMessageComponent} from '../../../../shared/components/alert-message/alert-message.component';
+import {catchError, tap, throwError} from 'rxjs';
 
 @Component({
   selector: 'app-stock-movement-pending',
@@ -15,7 +20,10 @@ import {TableComponent} from '../../../../shared/components/table/table.componen
     SidebarComponent,
     NgForOf,
     ReactiveFormsModule,
-    TableComponent
+    TableComponent,
+    ButtonComponent,
+    ModalComponent,
+    AlertMessageComponent
   ],
   templateUrl: './stock-movement-pending.component.html',
   styleUrl: './stock-movement-pending.component.scss'
@@ -30,8 +38,13 @@ export class StockMovementPendingComponent {
   ];
 
   stockMovement: StockMovementResponse[] = [];
+  openModalAprovation: boolean = false;
+  movementId: number = 0;
+  serverMessage: string | null = null;
+  alertType: string | null = null;
 
-  constructor(private stockService: EstoqueService) {
+  constructor(private stockService: EstoqueService, private title: Title) {
+    this.title.setTitle('Estoque - Pendente');
     this.stockService.getStockMovement().subscribe(
       stockMovement => {
         this.stockMovement = stockMovement;
@@ -39,5 +52,52 @@ export class StockMovementPendingComponent {
     );
   }
 
+  handleOpenModal(id: number): void {
+    this.movementId = id;
+    this.openModalAprovation = true;
+  }
+
+  closeAprovationModal() {
+    this.openModalAprovation = false;
+    this.movementId = 0;
+  }
+
+  submitAprovationMovement() {
+    this.stockService.approveStockMovement(this.movementId).pipe(
+      tap(response => {
+        this.closeAprovationModal();
+        this.serverMessage = response;
+        this.alertType = 'alert-success';
+      }),
+      catchError(err => {
+        this.serverMessage = err.message;
+        this.alertType = 'alert-error';
+        this.closeAprovationModal();
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+
+  getMovementmovement(Id: number): any {
+    return this.stockMovement.find((x) => x.id === Id);
+  }
+
+
+  RejectMovement() {
+    this.stockService.rejectStockMovement(this.movementId).pipe(
+      tap(response => {
+        this.closeAprovationModal();
+        this.serverMessage = response;
+        this.alertType = 'alert-success';
+      }),
+      catchError(err => {
+        this.serverMessage = err.message;
+        this.alertType = 'alert-error';
+        this.closeAprovationModal();
+        return throwError(() => err);
+      })
+    )
+  }
 
 }

@@ -40,7 +40,7 @@ export const routes: Routes = [
 
   {
     path: 'estoque/movimento/aprovado',
-    loadComponent: () => import('./features/stock/pages/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
+    loadComponent: () => import('./features/stock/pages/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
     canActivate: [AuthGuard],
   },
 

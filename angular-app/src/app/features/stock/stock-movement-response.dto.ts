@@ -7,4 +7,7 @@ export interface StockMovementResponse {
   quantityPackage: number;
   pricePerItem: string;
   supplierName: string;
+  company: string;
+  deposit: string;
+  employee: string;
 }
