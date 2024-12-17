@@ -1,26 +1,32 @@
 package com.lumos.lumosspring.stock.controller;
 
-import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
-import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
-import com.lumos.lumosspring.stock.entities.Material;
-import com.lumos.lumosspring.stock.repository.MaterialRepository;
-import com.lumos.lumosspring.stock.service.MaterialService;
+import java.util.List;
+import java.util.Objects;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
+import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
+import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
+import com.lumos.lumosspring.stock.entities.Material;
+import com.lumos.lumosspring.stock.repository.MaterialRepository;
+import com.lumos.lumosspring.stock.service.MaterialService;
 
 @RestController
 @RequestMapping("/api/material")
@@ -98,7 +104,6 @@ public class MaterialController {
         if (tokenFromDb.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        Jwt jwt = jwtDecoder.decode(refreshToken);
         var userUUID = tokenFromDb.get().getUser().getIdUser();
 
         return materialService.update(material, userUUID);
@@ -106,7 +111,13 @@ public class MaterialController {
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id, JwtAuthenticationToken token) {
-        return materialService.deleteById(id, UUID.fromString(token.getName()));
+    public ResponseEntity<String> delete(@PathVariable Long id, @CookieValue("refreshToken") String refreshToken) {
+        var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
+        if (tokenFromDb.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        var userUUID = tokenFromDb.get().getUser().getIdUser();
+        
+        return materialService.deleteById(id, userUUID);
     }
 }

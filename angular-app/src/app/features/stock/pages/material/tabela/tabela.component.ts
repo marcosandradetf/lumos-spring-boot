@@ -40,6 +40,7 @@ export class TabelaComponent implements OnInit {
       this.showMessage("Material removido com sucesso!");
     }, error => {
       this.showMessage(error.message || "Erro ao remover material.");
+      console.log(error.message)
     });
   }
 

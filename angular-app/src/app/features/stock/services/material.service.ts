@@ -67,8 +67,8 @@ export class MaterialService {
   }
 
   deleteMaterial(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
+  }  
 
   // Atualizar materiais localmente
   deleteMaterialFetch(idMaterial: number): void {
