@@ -34,13 +34,11 @@ public class MaterialController {
     private final MaterialService materialService;
     private final MaterialRepository materialRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final JwtDecoder jwtDecoder;
 
     public MaterialController(MaterialService materialService, MaterialRepository materialRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder) {
         this.materialService = materialService;
         this.materialRepository = materialRepository;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.jwtDecoder = jwtDecoder;
     }
 
     // Endpoint para retornar todos os materiais
@@ -50,6 +48,13 @@ public class MaterialController {
             @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Material> materials = materialService.findAll(page, size);
         Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
+        return ResponseEntity.ok(materialsDTO);
+    }
+
+    @GetMapping("{pIdMaterial}")
+    public ResponseEntity<MaterialResponse> getMaterial(@PathVariable Long pIdMaterial) {
+        Material material = materialService.findById(pIdMaterial);
+        MaterialResponse materialsDTO = material.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
         return ResponseEntity.ok(materialsDTO);
     }
 
@@ -111,7 +116,7 @@ public class MaterialController {
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id, @CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<?> delete(@PathVariable Long id, @CookieValue("refreshToken") String refreshToken) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

@@ -132,6 +132,7 @@ export class StockMovementComponent {
     }
 
   }
+  openUpdateModal: boolean = false;
 
 
   handleConfirmMovement() {
@@ -317,7 +318,6 @@ export class StockMovementComponent {
 
     }
   }
-
 
 
 }

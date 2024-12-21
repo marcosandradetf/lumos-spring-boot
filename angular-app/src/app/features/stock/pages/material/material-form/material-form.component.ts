@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
 import {MaterialService} from '../../../services/material.service';
 import {NgOptionComponent, NgSelectComponent} from '@ng-select/ng-select';
@@ -21,8 +21,6 @@ import {UtilsService} from '../../../../../core/service/utils.service';
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    NgSelectComponent,
-    NgOptionComponent,
     NgClass,
     NgIf
   ],
@@ -35,7 +33,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   groups: Group[] = [];
   companies: Company[] = [];
   deposits: Deposit[] = [];
-  material: CreateMaterialRequest = new CreateMaterialRequest();
+  material: CreateMaterialRequest | null  = null;
   selectGroup: boolean = false;
   formSubmitted: boolean = false;
   serverMessage: string | null = null;
@@ -50,7 +48,6 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     { Value: "CM" }
   ];
 
-
   constructor(private materialService: MaterialService,
               private estoqueService: EstoqueService, private authService: AuthService,
               protected utils: UtilsService) {}
@@ -62,6 +59,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
       this.loadCompanies();
       this.loadDeposits();
     }
+
   }
 
   private loadTypes() {
@@ -103,7 +101,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
 
   onSubmit(form: NgForm) {
     this.formSubmitted = true;
-    if (form.valid) {
+    if (form.valid && this.material !== null) {
       this.materialService.create(this.material).pipe(
         tap(res => {
           this.materialService.addMaterialFetch(res);
@@ -131,7 +129,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   private resetForm(form: NgForm) {
     this.formSubmitted = false;
     form.reset();
-    this.material = new CreateMaterialRequest(); // Reseta a instância do material
+    this.material = null; // Reseta a instância do material
   }
 
   ngOnDestroy() {

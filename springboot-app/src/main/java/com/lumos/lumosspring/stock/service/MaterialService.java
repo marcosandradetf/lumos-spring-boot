@@ -113,7 +113,7 @@ public class MaterialService {
     }
 
     @Transactional
-    public ResponseEntity<String> deleteById(Long idMaterial, UUID idUsuario) {
+    public ResponseEntity<?> deleteById(Long idMaterial, UUID idUsuario) {
         var user = userRepository.findById(idUsuario);
         var material = materialRepository.findById(idMaterial);
         var log = new Log();

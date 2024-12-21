@@ -3,13 +3,24 @@ import {NgClass, NgForOf} from "@angular/common";
 import {DeleteMaterialModalComponent} from '../../../../../shared/components/modal-delete/delete.component';
 import {MaterialResponse} from '../../../material-response.dto';
 import {MaterialService} from '../../../services/material.service';
+import { tap, catchError, of } from 'rxjs';
+import { AlertMessageComponent } from '../../../../../shared/components/alert-message/alert-message.component';
+import {ModalComponent} from '../../../../../shared/components/modal/modal.component';
+import {ButtonComponent} from '../../../../../shared/components/button/button.component';
+import {Router} from '@angular/router';
+import {MaterialFormComponent} from '../material-form/material-form.component';
+import {CreateMaterialRequest} from '../../../create-material-request.dto';
 
 @Component({
   selector: 'app-tabela',
   standalone: true,
   imports: [
     NgForOf,
-    NgClass
+    NgClass,
+    AlertMessageComponent,
+    ModalComponent,
+    ButtonComponent,
+    MaterialFormComponent
   ],
   templateUrl: './tabela.component.html',
   styleUrl: './tabela.component.scss'
@@ -17,9 +28,16 @@ import {MaterialService} from '../../../services/material.service';
 export class TabelaComponent implements OnInit {
   materials: MaterialResponse[] = [];
   currentPage: string = "0";
+  serverMessage: string | null = null;
+  alertType: string | null = null;
+  idMaterial: number = 0;
+  openUpdateModal: boolean = false;
+  protected readonly parseInt = parseInt;
+  openConfirmationModal: boolean = false;
+  material: any = null;
 
-
-  constructor(protected materialService: MaterialService) {
+  constructor(protected materialService: MaterialService, private router: Router,
+              ) {
   }
 
   ngOnInit() {
@@ -34,26 +52,30 @@ export class TabelaComponent implements OnInit {
     this.materialService.getFetch(this.currentPage, "20");
   }
 
-  deleteMaterial(idMaterial: number, nomeMaterial: string): void {
-    this.materialService.deleteMaterial(idMaterial).subscribe(() => {
-      this.materialService.deleteMaterialFetch(idMaterial);
-      this.showMessage("Material removido com sucesso!");
-    }, error => {
-      this.showMessage(error.message || "Erro ao remover material.");
-      console.log(error.message)
-    });
+  deleteMaterial(): void {
+    this.materialService.deleteMaterial(this.idMaterial).pipe(
+      tap(() => {
+        this.serverMessage = "Material removido com sucesso!";
+        this.alertType = "alert-success";
+        this.materialService.deleteMaterialFetch(this.idMaterial);
+      }),
+      catchError((error) => {
+        this.openConfirmationModal = false;
+        this.serverMessage = error.error || "Erro ao remover material.";
+        this.alertType = "alert-error";
+        return of(null);
+      })
+    ).subscribe();
   }
 
-  updateMaterial(idMaterial: number, material: MaterialResponse): void {
-    this.materialService.updateMaterial(idMaterial ,material).subscribe((materialAtualizado: MaterialResponse) => {
-      this.materialService.updateMaterialFetch(materialAtualizado);
-      this.showMessage("Material removido com sucesso!");
-    }, error => {
-      this.showMessage(error.message || "Erro ao atualizar  material.");
-    });
+  updateMaterial(pIdmaterial: number): void {
+    this.idMaterial = pIdmaterial;
+    this.openUpdateModal = true;
+    this.getMaterial();
+    if (this.material) this.materialService.setMaterial(this.idMaterial);
   }
 
-  private showMessage(message: string) {
+  getMaterial(): void {
 
   }
 
@@ -64,5 +86,7 @@ export class TabelaComponent implements OnInit {
     }
   }
 
-  protected readonly parseInt = parseInt;
+  submitDeleteMaterial() {
+    this.deleteMaterial();
+  }
 }

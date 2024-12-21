@@ -18,6 +18,7 @@ export class MaterialService {
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
   public totalPages: number = 0;
   public pages: number[] = [];
+  private material: MaterialResponse | null = null;
 
   constructor(private http: HttpClient) { }
 
@@ -66,9 +67,12 @@ export class MaterialService {
     this.materialsSubject.next(updatedMaterials);
   }
 
-  deleteMaterial(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
-  }  
+  deleteMaterial(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, {
+      withCredentials: true,
+      responseType: 'text'
+    });
+  }
 
   // Atualizar materiais localmente
   deleteMaterialFetch(idMaterial: number): void {
@@ -95,4 +99,13 @@ export class MaterialService {
   getById(id: number) {
     return this.http.get<string>(`${this.apiUrl}/${id}`);
   }
+
+  setMaterial(pIdMaterial: number) {
+    t
+  }
+
+  getMaterial() {
+    return this.material;
+  }
+
 }
