@@ -1,8 +1,6 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {MaterialService} from '../../../services/material.service';
-import {NgOptionComponent, NgSelectComponent} from '@ng-select/ng-select';
-import {MaterialResponse} from '../../../material-response.dto';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
+import {MaterialService, State} from '../../../services/material.service';
 import {Type} from '../../../../../core/models/tipo.model';
 import {Group} from '../../../../../core/models/grupo.model';
 import {Company} from '../../../../../core/models/empresa.model';
@@ -33,7 +31,17 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   groups: Group[] = [];
   companies: Company[] = [];
   deposits: Deposit[] = [];
-  material: CreateMaterialRequest | null  = null;
+  material: CreateMaterialRequest = {
+    buyUnit: '',
+    company: 0,
+    deposit: 0,
+    inactive: false,
+    materialBrand: '',
+    materialName: '',
+    materialType: 0,
+    requestUnit: '',
+  };
+
   selectGroup: boolean = false;
   formSubmitted: boolean = false;
   serverMessage: string | null = null;
@@ -41,16 +49,21 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
 
   units: any[] = [
-    { Value: "CX" },
-    { Value: "PÇ" },
-    { Value: "UN" },
-    { Value: "M" },
-    { Value: "CM" }
+    {Value: "CX"},
+    {Value: "PÇ"},
+    {Value: "UN"},
+    {Value: "M"},
+    {Value: "CM"}
   ];
 
-  constructor(private materialService: MaterialService,
+  constructor(protected materialService: MaterialService,
               private estoqueService: EstoqueService, private authService: AuthService,
-              protected utils: UtilsService) {}
+              protected utils: UtilsService) {
+    this.materialService.getMaterialObservable().subscribe(material => {
+      this.material = material;
+    });
+  }
+
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn$) {
@@ -67,6 +80,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(tipos => this.types = tipos);
   }
+
 
   private loadGroups() {
     this.estoqueService.getGroups()
@@ -102,34 +116,58 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   onSubmit(form: NgForm) {
     this.formSubmitted = true;
     if (form.valid && this.material !== null) {
-      this.materialService.create(this.material).pipe(
-        tap(res => {
-          this.materialService.addMaterialFetch(res);
-          console.log(res);
-          this.resetForm(form);
-          this.showMessage("Material cadastrado com sucesso!");
-        }),
-        catchError(error => {
-          let errorMessage = "Erro ao cadastrar material.";
+      if (this.materialService.getState() === State.create) {
+        this.materialService.create(this.material).pipe(
+          tap(res => {
+            this.materialService.addMaterialFetch(res);
+            console.log(res);
+            this.resetForm(form);
+            this.showMessage("Material cadastrado com sucesso!");
+          }),
+          catchError(error => {
+            let errorMessage = "Erro ao cadastrar material.";
 
-          if (error.status === 500) {
-            errorMessage = "Erro interno no servidor. Por favor, tente novamente mais tarde.";
-          } else if (error?.error?.message) {
-            errorMessage = error.error.message;
-          } else if (error.message) {
-            errorMessage = error.message;
-          }
-          this.showMessage(errorMessage);
-          return of(null);
-        })
-      ).subscribe(); // Apenas se inscreve sem precisar passar funções de sucesso e erro
+            if (error.status === 500) {
+              errorMessage = "Erro interno no servidor. Por favor, tente novamente mais tarde.";
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+            this.showMessage(errorMessage);
+            return of(null);
+          })
+        ).subscribe(); // Apenas se inscreve sem precisar passar funções de sucesso e erro
+      } else if (this.materialService.getState() === State.update) {
+        this.materialService.updateMaterial(this.material).pipe(
+          tap(res => {
+            this.materialService.updateMaterialFetch(res);
+            this.resetForm(form);
+            this.showMessage("Material atualizado com sucesso!");
+          }),
+          catchError(error => {
+            let errorMessage = "Erro ao cadastrar material.";
+
+            if (error.status === 500) {
+              errorMessage = "Erro interno no servidor. Por favor, tente novamente mais tarde.";
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+            this.showMessage(errorMessage);
+            return of(null);
+          })
+        ).subscribe();
+      }
+
     }
   }
 
   private resetForm(form: NgForm) {
     this.formSubmitted = false;
     form.reset();
-    this.material = null; // Reseta a instância do material
+    this.materialService.resetObject();
   }
 
   ngOnDestroy() {
@@ -137,4 +175,5 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
+  protected readonly State = State;
 }

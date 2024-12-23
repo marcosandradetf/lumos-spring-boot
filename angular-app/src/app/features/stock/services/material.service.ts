@@ -1,13 +1,17 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
-import { MaterialResponse } from '../material-response.dto';
+import {MaterialResponse} from '../material-response.dto';
 import {Group} from '../../../core/models/grupo.model';
 import {Type} from '../../../core/models/tipo.model';
 import {Company} from '../../../core/models/empresa.model';
 import {AuthService} from '../../../core/auth/auth.service';
 import {CreateMaterialRequest} from '../create-material-request.dto';
 
+export enum State {
+  create,
+  update,
+}
 
 @Injectable({
   providedIn: 'root'
@@ -18,29 +22,47 @@ export class MaterialService {
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
   public totalPages: number = 0;
   public pages: number[] = [];
-  private material: MaterialResponse | null = null;
+  materialSubject: BehaviorSubject<CreateMaterialRequest> = new BehaviorSubject<CreateMaterialRequest>({
+    buyUnit: '',
+    company: 0,
+    deposit: 0,
+    inactive: false,
+    materialBrand: '',
+    materialName: '',
+    materialType: 0,
+    requestUnit: '',
+  });
+  public material$: Observable<CreateMaterialRequest> = this.materialSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  public stateSubject: BehaviorSubject<State> = new BehaviorSubject<State>(State.create);
+  private materialId: number = 0;
+
+  constructor(private http: HttpClient) {
+  }
 
   getFetch(page: string, size: string): void {
     let params = new HttpParams().set('page', page).set('size', size);
 
-    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}`, { params })
+    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}`, {params})
       .subscribe(response => {
         this.materialsSubject.next(response.content); // Atualiza o conteúdo
         this.totalPages = response.totalPages;
-        this.pages = Array.from({ length: this.totalPages }, (_, i) => i);
+        this.pages = Array.from({length: this.totalPages}, (_, i) => i);
       });
   }
 
 
-  getBySearch(page: string, size: string, search: string){
+  getBySearch(page: string, size: string, search: string) {
     let params = new HttpParams().set('name', search).set('page', page).set('size', size);
-    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}/search`, { params })
+    this.http.get<{
+      content: MaterialResponse[],
+      totalPages: number,
+      currentPage: number
+    }>(`${this.apiUrl}/search`, {params})
       .subscribe(response => {
         this.materialsSubject.next(response.content); // Atualiza o conteúdo
         this.totalPages = response.totalPages;
-        this.pages = Array.from({ length: this.totalPages }, (_, i) => i);
+        this.pages = Array.from({length: this.totalPages}, (_, i) => i);
       });
   }
 
@@ -54,8 +76,8 @@ export class MaterialService {
     this.materialsSubject.next([...currentMaterials, material]);
   }
 
-  updateMaterial(id: number, material: MaterialResponse): Observable<MaterialResponse> {
-    return this.http.put<MaterialResponse>(`${this.apiUrl}/${id}`, material);
+  updateMaterial(material: CreateMaterialRequest): Observable<MaterialResponse> {
+    return this.http.put<MaterialResponse>(`${this.apiUrl}/${this.materialId}`, material);
   }
 
   // Atualizar materiais localmente
@@ -87,11 +109,15 @@ export class MaterialService {
       params = params.append('deposit', id);
     });
 
-    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}/filter-by-deposit`, { params })
+    this.http.get<{
+      content: MaterialResponse[],
+      totalPages: number,
+      currentPage: number
+    }>(`${this.apiUrl}/filter-by-deposit`, {params})
       .subscribe(response => {
         this.materialsSubject.next(response.content); // Atualiza o conteúdo
         this.totalPages = response.totalPages;
-        this.pages = Array.from({ length: this.totalPages }, (_, i) => i);
+        this.pages = Array.from({length: this.totalPages}, (_, i) => i);
       });
 
   }
@@ -100,12 +126,52 @@ export class MaterialService {
     return this.http.get<string>(`${this.apiUrl}/${id}`);
   }
 
-  setMaterial(pIdMaterial: number) {
-    t
+  setMaterial(_material: MaterialResponse) {
+    const material: CreateMaterialRequest = {
+      buyUnit: _material.buyUnit,
+      company: 0,
+      deposit: 0,
+      inactive: _material.inactive,
+      materialBrand: _material.materialBrand,
+      materialName: _material.materialName,
+      materialType: 0,
+      requestUnit: _material.requestUnit
+    }
+    this.materialId = _material.idMaterial;
+    this.materialSubject.next(material);
   }
 
   getMaterial() {
-    return this.material;
+    return this.materialSubject.value;
   }
 
+  getMaterialObservable() {
+    return this.materialSubject.asObservable();
+  }
+
+  getState() {
+    return this.stateSubject.value;
+  }
+
+  getStatebservable() {
+    return this.stateSubject.asObservable();
+  }
+
+  resetObject() {
+    const material: CreateMaterialRequest = {
+      buyUnit: '',
+      company: 0,
+      deposit: 0,
+      inactive: false,
+      materialBrand: '',
+      materialName: '',
+      materialType: 0,
+      requestUnit: '',
+    };
+    this.materialSubject.next(material);// Reseta a instância do material
+  }
+
+  setState(state: State) {
+    this.stateSubject.next(state);
+  }
 }

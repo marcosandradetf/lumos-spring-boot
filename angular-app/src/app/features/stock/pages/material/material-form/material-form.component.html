@@ -1,6 +1,6 @@
 <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
       class=" h-auto flex flex-col">
-  <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar Materiais</h4>
+  <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">{{materialService.getState() === State.create ? "Cadastrar novo Material" : "Atualizar Material" }}</h4>
 
   <div class="flex space-x-4 flex-wrap text-neutral-700">
 
@@ -126,23 +126,6 @@
           <small class="text-red-600">Preenchimento obrigatório.</small>
         }
       }
-    </label>
-
-    <label class="form-control w-full max-w-xs">
-      <div class="label">
-        <span class="label-text">Qtde. Estoque</span>
-      </div>
-      <input type="text"
-             inputmode="numeric"
-             name="qtdeEstoque"
-             [(ngModel)]="material.stockQt"
-             (input)="this.utils.formatNumber($event)"
-             required
-             #qtdeEstoqueModel="ngModel"
-             placeholder="Informe a quantidade" class="input input-bordered w-full max-w-xs " />
-      <div *ngIf="qtdeEstoqueModel.invalid && formSubmitted">
-        <small *ngIf="qtdeEstoqueModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
-      </div>
     </label>
 
     <label class="form-control w-full max-w-xs">

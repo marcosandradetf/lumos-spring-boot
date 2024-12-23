@@ -59,7 +59,7 @@
     </div>
   </app-modal>
 
-  <app-modal [modalOpen]="openUpdateModal" (modalClose)="openUpdateModal = false">
+  <app-modal [modalOpen]="openUpdateModal" (modalClose)="closeUpdateModal()">
     <form>
       {{material ? material.materialName : ""}}
     </form>

@@ -1,57 +1,41 @@
 <div class="flex mt-[4rem] h-fit">
   <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
   <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
-      <div class="breadcrumbs text-sm py-5">
-        <ul class="select-none">
-          <li><a>Início</a></li>
-          <li><a>Estoque</a></li>
-          <li>Materiais</li>
-        </ul>
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a>Início</a></li>
+        <li><a>Estoque</a></li>
+        <li>Materiais</li>
+      </ul>
+    </div>
+
+    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])" />
+      <input type="radio" class="tab" aria-label="Materiais" checked />
+      <input type="radio" class="tab" aria-label="Grupos" (click)="router.navigate(['/estoque/grupos'])"/>
+      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>
+    </div>
+
+    <div class="collapse border border-neutral-300 shadow rounded-none">
+      <input type="checkbox" class="peer" (click)="setOpen()"/>
+      <div
+        class="collapse-title text-primary-content">
+        @if (!formOpen) {
+          <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>
+        } @else {
+          <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>
+        }
       </div>
-
-    <div>
-      <div role="tablist" class="tabs tabs-bordered w-full justify-center">
-
-        <input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Tipos" />
-        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
-
-        <input
-          type="radio"
-          name="my_tabs_1"
-          role="tab"
-          class="tab"
-          aria-label="Materiais"
-          checked="checked" />
-        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]">
-          <div class="collapse border border-neutral-300 shadow rounded-none">
-            <input type="checkbox" class="peer" (click)="setOpen()"/>
-            <div
-              class="collapse-title text-primary-content">
-              @if (!formOpen) {
-                <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>
-              } @else {
-                <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>
-              }
-            </div>
-            <div
-              class="collapse-content text-primary-content peer-checked: peer-checked:">
-              <app-material-form></app-material-form>
-            </div>
-          </div>
-
-        </div>
-
-        <input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Grupos" />
-        <div role="tabpanel" class="tab-content pt-5 w-[85vw] xl:w-[60rem] 2xl:w-[75rem]"><app-material-form></app-material-form></div>
-
+      <div
+        class="collapse-content text-primary-content peer-checked: peer-checked:">
+        <app-material-form></app-material-form>
       </div>
     </div>
 
-    <div id="material-table"
-         class="mt-4 border border-neutral-300 shadow p-1 overflow-auto  2xl:w-[99rem]">
+    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto">
       <div class="flex w-full items-center mb-2">
         <label class="input input-sm input-bordered flex items-center gap-2 flex-1">
-          <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)" />
+          <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)"/>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 16 16"

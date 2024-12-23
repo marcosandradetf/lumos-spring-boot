@@ -1,15 +1,13 @@
 import {Component, OnInit} from '@angular/core';
 import {NgClass, NgForOf} from "@angular/common";
-import {DeleteMaterialModalComponent} from '../../../../../shared/components/modal-delete/delete.component';
 import {MaterialResponse} from '../../../material-response.dto';
-import {MaterialService} from '../../../services/material.service';
-import { tap, catchError, of } from 'rxjs';
-import { AlertMessageComponent } from '../../../../../shared/components/alert-message/alert-message.component';
+import {MaterialService, State} from '../../../services/material.service';
+import {catchError, of, tap} from 'rxjs';
+import {AlertMessageComponent} from '../../../../../shared/components/alert-message/alert-message.component';
 import {ModalComponent} from '../../../../../shared/components/modal/modal.component';
 import {ButtonComponent} from '../../../../../shared/components/button/button.component';
 import {Router} from '@angular/router';
 import {MaterialFormComponent} from '../material-form/material-form.component';
-import {CreateMaterialRequest} from '../../../create-material-request.dto';
 
 @Component({
   selector: 'app-tabela',
@@ -70,14 +68,14 @@ export class TabelaComponent implements OnInit {
 
   updateMaterial(pIdmaterial: number): void {
     this.idMaterial = pIdmaterial;
-    this.openUpdateModal = true;
-    this.getMaterial();
-    if (this.material) this.materialService.setMaterial(this.idMaterial);
+    const material: MaterialResponse | undefined = this.materials.find(m => m.idMaterial === pIdmaterial);
+    if (material !== undefined) {
+      this.materialService.setState(State.update)
+      this.materialService.setMaterial(material);
+      this.openUpdateModal = true;
+    }
   }
 
-  getMaterial(): void {
-
-  }
 
   changePage(page: number): void {
     if (page.toString() !== this.currentPage) {
@@ -88,5 +86,13 @@ export class TabelaComponent implements OnInit {
 
   submitDeleteMaterial() {
     this.deleteMaterial();
+  }
+
+  protected readonly State = State;
+
+  closeUpdateModal() {
+    this.openUpdateModal = false;
+    this.materialService.setState(State.create);
+    this.materialService.resetObject();
   }
 }

@@ -51,12 +51,12 @@ public class MaterialController {
         return ResponseEntity.ok(materialsDTO);
     }
 
-    @GetMapping("{pIdMaterial}")
-    public ResponseEntity<MaterialResponse> getMaterial(@PathVariable Long pIdMaterial) {
-        Material material = materialService.findById(pIdMaterial);
-        MaterialResponse materialsDTO = material.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
-        return ResponseEntity.ok(materialsDTO);
-    }
+//    @GetMapping("{pIdMaterial}")
+//    public ResponseEntity<MaterialResponse> getMaterial(@PathVariable Long pIdMaterial) {
+//        Material material = materialService.findById(pIdMaterial);
+//        MaterialResponse materialsDTO = material.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
+//        return ResponseEntity.ok(materialsDTO);
+//    }
 
     @GetMapping("/filter-by-deposit")
     public ResponseEntity<Page<MaterialResponse>> getMaterialsByDeposit(
@@ -103,15 +103,15 @@ public class MaterialController {
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
-    @PutMapping
-    public ResponseEntity<String> update(@RequestBody Material material, @CookieValue("refreshToken") String refreshToken) {
+    @PutMapping("{materialId}")
+    public ResponseEntity<?> update(@RequestBody MaterialRequest material, @PathVariable Long materialId, @CookieValue("refreshToken") String refreshToken) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         var userUUID = tokenFromDb.get().getUser().getIdUser();
 
-        return materialService.update(material, userUUID);
+        return materialService.update(material, materialId, userUUID);
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
