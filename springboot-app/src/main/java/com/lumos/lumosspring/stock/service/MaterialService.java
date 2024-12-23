@@ -19,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -30,19 +29,21 @@ public class MaterialService {
     private final TypeRepository tipoRepository;
     private final DepositRepository depositRepository;
     private final CompanyRepository companyRepository;
+    private final TypeRepository typeRepository;
 
-    public MaterialService(MaterialRepository materialRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository) {
+    public MaterialService(MaterialRepository materialRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository) {
         this.materialRepository = materialRepository;
         this.userRepository = userRepository;
         this.logRepository = logRepository;
         this.tipoRepository = tipoRepository;
         this.depositRepository = depositRepository;
         this.companyRepository = companyRepository;
+        this.typeRepository = typeRepository;
     }
 
     public Page<Material> findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return materialRepository.findAll(pageable);
+        return materialRepository.findAllOrderByIdMaterial(pageable);
     }
 
     @Transactional
@@ -143,9 +144,9 @@ public class MaterialService {
     }
 
     @Transactional
-    public ResponseEntity<String> update(Material material, UUID idUsuario) {
+    public ResponseEntity<?> update(MaterialRequest material, Long materialId, UUID idUsuario) {
         var user = userRepository.findById(idUsuario);
-        var existingMaterial = materialRepository.findById(material.getIdMaterial());
+        var existingMaterial = materialRepository.findById(materialId);
 
         // Verifica se o material existe
         if (existingMaterial.isEmpty()) {
@@ -161,15 +162,14 @@ public class MaterialService {
 
         // Atualiza os campos necessários do material existente
         Material materialToUpdate = existingMaterial.get();
-        materialToUpdate.setMaterialName(material.getMaterialName());
-        materialToUpdate.setMaterialBrand(material.getMaterialBrand());
-        materialToUpdate.setBuyUnit(material.getBuyUnit());
-        materialToUpdate.setRequestUnit(material.getRequestUnit());
-        materialToUpdate.setInactive(material.isInactive());
-        materialToUpdate.setStockQuantity(material.getStockQuantity());
-        materialToUpdate.setMaterialType(material.getMaterialType());
-        materialToUpdate.setCompany(material.getCompany());
-        materialToUpdate.setDeposit(material.getDeposit());
+        materialToUpdate.setMaterialName(material.materialName());
+        materialToUpdate.setMaterialBrand(material.materialBrand());
+        materialToUpdate.setBuyUnit(material.buyUnit());
+        materialToUpdate.setRequestUnit(material.requestUnit());
+        materialToUpdate.setInactive(material.inactive());
+        materialToUpdate.setMaterialType(typeRepository.findById(material.materialType()).orElse(null));
+        materialToUpdate.setCompany(companyRepository.findById(material.company()).orElse(null));
+        materialToUpdate.setDeposit(depositRepository.findById(material.deposit()).orElse(null));
 
         materialRepository.save(materialToUpdate);
 
@@ -177,7 +177,7 @@ public class MaterialService {
         var log = new Log();
         String logMessage = String.format("Usuário %s atualizou material %d com sucesso.",
                 user.get().getUsername(),
-                material.getIdMaterial());
+                materialId);
 
         log.setMessage(logMessage);
         log.setUser(user.get());
@@ -185,7 +185,8 @@ public class MaterialService {
         log.setType("Atualização");
         logRepository.save(log);
 
-        return ResponseEntity.ok("Material atualizado com sucesso.");
+        return ResponseEntity.ok(convertToMaterialResponse(materialToUpdate));
     }
+
 
 }

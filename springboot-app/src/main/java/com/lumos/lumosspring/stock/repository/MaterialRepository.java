@@ -16,9 +16,6 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
                            @Param("idDeposit") Long idDeposit,
                            @Param("materialBrand") String materialBrand);
 
-    List<Material> findByMaterialName(String materialName);
-
-
     @Query(value = "SELECT * FROM tb_materials m " +
             "INNER JOIN tb_types t ON t.id_type = m.id_material_type " +
             "WHERE unaccent(LOWER(m.material_name)) LIKE unaccent(concat('%', :name, '%')) " +
@@ -31,5 +28,8 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     @Query("SELECT m.materialName from Material m where m.idMaterial = :id")
     String GetNameById(Long id);
+
+    @Query("select m from Material m order by m.idMaterial")
+    Page<Material> findAllOrderByIdMaterial(Pageable pageable);
 }
 
