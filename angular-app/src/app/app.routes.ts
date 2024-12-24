@@ -14,7 +14,7 @@ export const routes: Routes = [
   // start paths stock
   {
     path: 'estoque/materiais',
-    loadComponent: () => import('./features/stock/pages/material/material-page.component').then(m => m.MaterialPageComponent),
+    loadComponent: () => import('./stock/material/material-page.component').then(m => m.MaterialPageComponent),
     canActivate: [AuthGuard],
   },
   {
@@ -29,17 +29,17 @@ export const routes: Routes = [
   },
   {
     path: 'estoque/movimento',
-    loadComponent: () => import('./features/stock/pages/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
+    loadComponent: () => import('./stock/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
     canActivate: [AuthGuard],
   },
   {
     path: 'estoque/movimento/pendente',
-    loadComponent: () => import('./features/stock/pages/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
+    loadComponent: () => import('./stock/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
     canActivate: [AuthGuard],
   },
   {
     path: 'estoque/movimento/aprovado',
-    loadComponent: () => import('./features/stock/pages/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
+    loadComponent: () => import('./stock/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
     canActivate: [AuthGuard],
   },
   {
@@ -53,12 +53,12 @@ export const routes: Routes = [
   // start contract paths
   {
     path: 'contratos/dashboard',
-    loadComponent: () => import('./features/contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    loadComponent: () => import('./contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [AuthGuard],
   },
   {
     path: 'contratos/criar',
-    loadComponent: () => import('./features/contract/pages/create/create.component').then(m => m.CreateComponent),
+    loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
     canActivate: [AuthGuard],
   },
   // end

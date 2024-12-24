@@ -1,21 +1,19 @@
-import { Component } from '@angular/core';
-import {AlertMessageComponent} from '../../../../shared/components/alert-message/alert-message.component';
-import {ButtonComponent} from '../../../../shared/components/button/button.component';
-import {ModalComponent} from '../../../../shared/components/modal/modal.component';
+import {Component} from '@angular/core';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
+import {ButtonComponent} from '../../shared/components/button/button.component';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {NgForOf} from '@angular/common';
-import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
-import {TableComponent} from '../../../../shared/components/table/table.component';
-import {StockMovementResponse} from '../../stock-movement-response.dto';
-import {EstoqueService} from '../../services/estoque.service';
+import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
+import {TableComponent} from '../../shared/components/table/table.component';
+import {StockMovementResponse} from '../stock-movement-response.dto';
+import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
+
 
 @Component({
   selector: 'app-stock-movement-approvated',
   standalone: true,
   imports: [
-    AlertMessageComponent,
-    ButtonComponent,
-    ModalComponent,
     NgForOf,
     SidebarComponent,
     TableComponent

@@ -11,6 +11,10 @@ public class Deposit {
     @Column(columnDefinition = "TEXT", unique = true)
     private String depositName;
 
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
     public long getIdDeposit() {
         return idDeposit;
     }
@@ -25,5 +29,12 @@ public class Deposit {
 
     public void setDepositName(String depositName) {
         this.depositName = depositName;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+    public Company getCompany() {
+        return company;
     }
 }

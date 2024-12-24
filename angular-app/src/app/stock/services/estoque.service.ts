@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
-import { MaterialResponse } from '../material-response.dto';
-import {Group} from '../../../core/models/grupo.model';
-import {Type} from '../../../core/models/tipo.model';
-import {Company} from '../../../core/models/empresa.model';
-import {AuthService} from '../../../core/auth/auth.service';
+
 import {StockMovementDTO} from '../stock-movement.dto';
 import {SupplierDTO} from '../supplier.dto';
 import {StockMovementResponse} from '../stock-movement-response.dto';
+import {AuthService} from '../../core/auth/auth.service';
+import {Type} from '../../core/models/tipo.model';
+import {Group} from '../../core/models/grupo.model';
+import {Company} from '../../core/models/empresa.model';
 
 
 @Injectable({
@@ -66,4 +66,35 @@ export class EstoqueService {
   getStockMovementApproved() {
     return this.http.get<StockMovementResponse[]>(`${this.endpoint}/stock/stock-movement/get-approved`);
   }
+
+  insertType(type: any) {
+    return this.http.post<Type[]>(`${this.endpoint}/type/insert`, type);
+  }
+  deleteType(type: any) {
+    return this.http.post(`${this.endpoint}/type/delete`, type);
+  }
+  updateType(type: any) {
+    return this.http.post(`${this.endpoint}/type/update`, type);
+  }
+
+  insertGroup(group: any) {
+    return this.http.post(`${this.endpoint}/type/insert`, group);
+  }
+  updateGroup(group: any) {
+    return this.http.post(`${this.endpoint}/type/update`, group);
+  }
+  deleteGroup(group: any) {
+    return this.http.post(`${this.endpoint}/type/delete`, group);
+  }
+
+  insertDeposit(deposit: any) {
+    return this.http.post(`${this.endpoint}/deposit/insert`, deposit);
+  }
+  updateDeposit(deposit: any) {
+    return this.http.post(`${this.endpoint}/deposit/update`, deposit);
+  }
+  deleteDeposit(deposit: any) {
+    return this.http.post(`${this.endpoint}/deposit/delete`, deposit);
+  }
+
 }

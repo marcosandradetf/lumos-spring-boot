@@ -1,1 +1,85 @@
-<p>groups works!</p>
+<div class="flex mt-[4rem] h-fit">
+  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a>Início</a></li>
+        <li><a>Estoque</a></li>
+        <li>Grupos</li>
+      </ul>
+    </div>
+
+    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])"/>
+      <input type="radio" class="tab" aria-label="Materiais" (click)="router.navigate(['/estoque/materiais'])"/>
+      <input type="radio" class="tab" aria-label="Grupos" checked/>
+      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>
+    </div>
+
+    <!--    form    -->
+    <div class="collapse border border-neutral-300 shadow rounded-none">
+      <input type="checkbox" class="peer" (click)="setOpen()"/>
+      <div
+        class="collapse-title text-primary-content">
+        @if (!formOpen) {
+          <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>
+        } @else {
+          <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>
+        }
+      </div>
+      <div
+        class="collapse-content text-primary-content peer-checked: peer-checked:">
+        <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
+              class=" h-auto flex flex-col">
+          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar novo Grupo</h4>
+
+          <div class="flex space-x-4 flex-wrap text-neutral-700">
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Descrição</span>
+              </div>
+              <input type="text"
+                     name="nomeMaterial"
+                     [(ngModel)]="group.groupName"
+                     required
+                     minlength="3"
+                     #firstNameModel="ngModel"
+                     placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
+              <div *ngIf="firstNameModel.invalid && formSubmitted">
+                <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+                <small *ngIf="firstNameModel.errors?.['minlength']" class="text-orange-600">
+                  Nome do almoxarifado requer no mínimo 3 caracteres.
+                </small>
+              </div>
+            </label>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!--    table     -->
+    <div class="border border-neutral-300 shadow mt-3 p-1">
+      <app-table>
+        <tr class="bg-indigo-700 text-white" header>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th colspan="2"></th>
+        </tr>
+
+        @for (g of gps; track g.idGroup) {
+          <tr class="odd:bg-neutral-100" body>
+            <td>{{ g.idGroup }}</td>
+            <td>{{ g.groupName }}</td>
+            <td class="material-icons cursor-pointer">edit</td>
+            <td class="material-icons cursor-pointer text-red-600">delete</td>
+          </tr>
+        }
+
+      </app-table>
+    </div>
+
+  </div>
+</div>

@@ -1,21 +1,21 @@
-import {Component, DoCheck, OnInit} from '@angular/core';
-import {MaterialService} from '../../services/material.service';
-import {EstoqueService} from '../../services/estoque.service';
-import {MaterialResponse} from '../../material-response.dto';
+import {Component} from '@angular/core';
 import {catchError, firstValueFrom, map, Observable, of, tap, throwError} from 'rxjs';
-import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
-import {TableComponent} from '../../../../shared/components/table/table.component';
-import {PaginationComponent} from '../../../../shared/components/pagination/pagination.component';
-import {ButtonComponent} from '../../../../shared/components/button/button.component';
-import {ModalComponent} from '../../../../shared/components/modal/modal.component';
-import {AsyncPipe, NgClass, NgForOf, NgIf} from '@angular/common';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
-import {AlertMessageComponent} from '../../../../shared/components/alert-message/alert-message.component';
-import {StockMovementDTO} from '../../stock-movement.dto';
-import {SupplierDTO} from '../../supplier.dto';
-import {UtilsService} from '../../../../core/service/utils.service';
 import {Title} from '@angular/platform-browser';
-import {Deposit} from '../../../../core/models/almoxarifado.model';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import {TableComponent} from '../../shared/components/table/table.component';
+import {PaginationComponent} from '../../shared/components/pagination/pagination.component';
+import {ButtonComponent} from '../../shared/components/button/button.component';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
+import {Deposit} from '../../core/models/almoxarifado.model';
+import {MaterialResponse} from '../material-response.dto';
+import {StockMovementDTO} from '../stock-movement.dto';
+import {MaterialService} from '../services/material.service';
+import {EstoqueService} from '../services/estoque.service';
+import {UtilsService} from '../../core/service/utils.service';
+import {SupplierDTO} from '../supplier.dto';
 
 @Component({
   selector: 'app-stock-movement',

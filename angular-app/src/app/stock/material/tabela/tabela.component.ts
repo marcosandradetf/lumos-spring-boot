@@ -1,13 +1,13 @@
 import {Component, OnInit} from '@angular/core';
 import {NgClass, NgForOf} from "@angular/common";
-import {MaterialResponse} from '../../../material-response.dto';
-import {MaterialService, State} from '../../../services/material.service';
 import {catchError, of, tap} from 'rxjs';
-import {AlertMessageComponent} from '../../../../../shared/components/alert-message/alert-message.component';
-import {ModalComponent} from '../../../../../shared/components/modal/modal.component';
-import {ButtonComponent} from '../../../../../shared/components/button/button.component';
 import {Router} from '@angular/router';
 import {MaterialFormComponent} from '../material-form/material-form.component';
+import {AlertMessageComponent} from '../../../shared/components/alert-message/alert-message.component';
+import {ModalComponent} from '../../../shared/components/modal/modal.component';
+import {ButtonComponent} from '../../../shared/components/button/button.component';
+import {MaterialResponse} from '../../material-response.dto';
+import {MaterialService, State} from '../../services/material.service';
 
 @Component({
   selector: 'app-tabela',

@@ -1,11 +1,9 @@
 import { Component } from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
-import {EstoqueService} from '../../features/stock/services/estoque.service';
+import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
-import {MaterialFormComponent} from '../../features/stock/pages/material/material-form/material-form.component';
 import {FormsModule, NgForm} from '@angular/forms';
-import {State} from '../../features/stock/services/material.service';
 import {NgIf} from '@angular/common';
 import {Company} from '../../core/models/empresa.model';
 import {TableComponent} from '../../shared/components/table/table.component';
@@ -16,7 +14,6 @@ import {Deposit} from '../../core/models/almoxarifado.model';
   standalone: true,
   imports: [
     SidebarComponent,
-    MaterialFormComponent,
     FormsModule,
     NgIf,
     TableComponent
@@ -39,13 +36,16 @@ export class DepositsComponent {
   }
   formSubmitted: null | boolean = false;
   companies: Company[] = []
-  deposits: any[] = [];
+  deposits: Deposit[] = [];
 
   constructor(private stockService: EstoqueService,
               private title: Title, protected router: Router) {
     this.stockService.getCompanies().subscribe(
       c => this.companies = c
     );
+    this.stockService.getDeposits().subscribe(
+      d => this.deposits = d
+    )
   }
 
   setOpen() {
@@ -55,4 +55,5 @@ export class DepositsComponent {
   onSubmit(myForm: NgForm) {
 
   }
+
 }

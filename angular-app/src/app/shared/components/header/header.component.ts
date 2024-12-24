@@ -1,10 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {AsyncPipe, NgClass, NgIf, NgOptimizedImage} from '@angular/common';
-import {Type} from '../../../core/models/tipo.model';
-import {Company} from '../../../core/models/empresa.model';
-import {Deposit} from '../../../core/models/almoxarifado.model';
-import {BehaviorSubject, catchError, of, tap} from 'rxjs';
-import {EstoqueService} from '../../../features/stock/services/estoque.service';
+import {catchError, of, tap} from 'rxjs';
+import {EstoqueService} from '../../../stock/services/estoque.service';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {AuthService} from '../../../core/auth/auth.service';
 import {User} from '../../../core/models/user.model';
@@ -13,8 +10,6 @@ import {User} from '../../../core/models/user.model';
   selector: 'app-header',
   standalone: true,
   imports: [
-    NgClass,
-    NgIf,
     RouterLink,
     RouterLinkActive,
     AsyncPipe,
@@ -57,15 +52,6 @@ export class HeaderComponent implements OnInit{
   }
 
   logout() {
-    this.authService.logout().pipe(
-      tap(response => {
-        console.log('logout');
-        this.router.navigate(['/auth/login']);
-      }),
-      catchError(err => {
-        console.log(err);
-        return of(null);
-      })
-    ).subscribe();
+    this.authService.logout().subscribe();
   }
 }

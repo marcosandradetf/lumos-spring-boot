@@ -1,16 +1,15 @@
-import {Component, inject, OnInit} from '@angular/core';
-import {MaterialResponse} from '../../material-response.dto';
-import {MaterialService} from '../../services/material.service';
+import {Component} from '@angular/core';
 import { CommonModule } from '@angular/common'; // Importando o CommonModule
 import { Router } from '@angular/router';
-import {DeleteMaterialModalComponent} from '../../../../shared/components/modal-delete/delete.component'; // Importando o RouterModule
 
-import {FormBuilder, FormControl, ReactiveFormsModule} from '@angular/forms';
+import {ReactiveFormsModule} from '@angular/forms';
 import {MaterialFormComponent} from './material-form/material-form.component';
-import {SidebarComponent} from "../../../../shared/components/sidebar/sidebar.component";
 import {TabelaComponent} from './tabela/tabela.component';
-import {EstoqueService} from '../../services/estoque.service';
 import {Title} from '@angular/platform-browser';
+import {MaterialResponse} from '../material-response.dto';
+import {MaterialService} from '../services/material.service';
+import {EstoqueService} from '../services/estoque.service';
+import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 
 
 @Component({

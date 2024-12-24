@@ -1,5 +1,4 @@
-import {booleanAttribute, Component, EventEmitter, Input, Output, SimpleChanges} from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {AsyncPipe, NgClass} from '@angular/common';
 import {ButtonComponent} from '../button/button.component';
 
@@ -7,8 +6,6 @@ import {ButtonComponent} from '../button/button.component';
   selector: 'app-modal',
   standalone: true,
   imports: [
-    AsyncPipe,
-    ButtonComponent,
     NgClass
   ],
   templateUrl: './modal.component.html',

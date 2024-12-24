@@ -1,17 +1,18 @@
 import {Component} from '@angular/core';
-import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
+import {SidebarComponent} from '../../../shared/components/sidebar/sidebar.component';
 import {FormsModule} from '@angular/forms';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {Contract} from '../../contract-response.dto';
-import {catchError, tap, throwError} from 'rxjs';
-import {ContractService} from '../../services/contract.service';
 import {ItemRequest} from '../../itens-request.dto';
-import {Deposit} from '../../../../core/models/almoxarifado.model';
+import {Deposit} from '../../../core/models/almoxarifado.model';
+import {Type} from '../../../core/models/tipo.model';
+import {ufRequest} from '../../../core/uf-request.dto';
+import {citiesRequest} from '../../../core/cities-request.dto';
+import {ContractService} from '../../services/contract.service';
 import {EstoqueService} from '../../../stock/services/estoque.service';
-import {Type} from '../../../../core/models/tipo.model';
-import {ufRequest} from '../../../../core/uf-request.dto';
-import {citiesRequest} from '../../../../core/cities-request.dto';
-import {IbgeService} from '../../../../core/service/ibge.service';
+import {IbgeService} from '../../../core/service/ibge.service';
+import {catchError, tap, throwError} from 'rxjs';
+
 
 @Component({
   selector: 'app-create',

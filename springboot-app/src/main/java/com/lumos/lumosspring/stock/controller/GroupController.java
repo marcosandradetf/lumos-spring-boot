@@ -27,28 +27,18 @@ public class GroupController {
         return group != null ? ResponseEntity.ok(group) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping
-    public Group create(@RequestBody Group group) {
-        return grupoService.save(group);
+    @PostMapping("insert")
+    public ResponseEntity<?> create(@RequestBody String groupName) {
+        return grupoService.save(groupName);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Group> update(@PathVariable Long id, @RequestBody Group group) {
-        if (grupoService.findById(id) != null) {
-            group.setIdGroup(id);
-            return ResponseEntity.ok(grupoService.save(group));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @PutMapping("/{id}/update")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody String groupName) {
+        return ResponseEntity.ok(grupoService.update(id, groupName));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (grupoService.findById(id) != null) {
-            grupoService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return grupoService.delete(id);
     }
 }

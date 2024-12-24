@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.controller;
 
+import com.lumos.lumosspring.stock.controller.dto.DepositDTO;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.service.DepositService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,28 +26,18 @@ public class DepositController {
         return almoxarifado != null ? ResponseEntity.ok(almoxarifado) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping
-    public Deposit create(@RequestBody Deposit almoxarifado) {
+    @PostMapping("/insert")
+    public ResponseEntity<?> create(@RequestBody DepositDTO almoxarifado) {
         return almoxarifadoService.save(almoxarifado);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Deposit> update(@PathVariable Long id, @RequestBody Deposit almoxarifado) {
-        if (almoxarifadoService.findById(id) != null) {
-            almoxarifado.setIdDeposit(id);
-            return ResponseEntity.ok(almoxarifadoService.save(almoxarifado));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @PutMapping("/{id}/update")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody DepositDTO almoxarifado) {
+        return almoxarifadoService.update(id, almoxarifado);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (almoxarifadoService.findById(id) != null) {
-            almoxarifadoService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return almoxarifadoService.delete(id);
     }
 }

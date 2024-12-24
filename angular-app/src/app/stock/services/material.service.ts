@@ -2,10 +2,6 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
 import {MaterialResponse} from '../material-response.dto';
-import {Group} from '../../../core/models/grupo.model';
-import {Type} from '../../../core/models/tipo.model';
-import {Company} from '../../../core/models/empresa.model';
-import {AuthService} from '../../../core/auth/auth.service';
 import {CreateMaterialRequest} from '../create-material-request.dto';
 
 export enum State {

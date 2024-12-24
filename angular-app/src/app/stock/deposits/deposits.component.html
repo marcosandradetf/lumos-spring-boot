@@ -5,18 +5,18 @@
       <ul class="select-none">
         <li><a>Início</a></li>
         <li><a>Estoque</a></li>
-        <li>Materiais</li>
+        <li>Almoxarifados</li>
       </ul>
     </div>
 
     <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
-      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])" />
-      <input type="radio" class="tab" aria-label="Materiais" />
+      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])"/>
+      <input type="radio" class="tab" aria-label="Materiais" (click)="router.navigate(['/estoque/materiais'])"/>
       <input type="radio" class="tab" aria-label="Grupos" (click)="router.navigate(['/estoque/grupos'])"/>
-      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])" checked/>
+      <input type="radio" class="tab" aria-label="Almoxarifados" checked/>
     </div>
 
-<!--    form    -->
+    <!--    form    -->
     <div class="collapse border border-neutral-300 shadow rounded-none">
       <input type="checkbox" class="peer" (click)="setOpen()"/>
       <div
@@ -31,7 +31,8 @@
         class="collapse-content text-primary-content peer-checked: peer-checked:">
         <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
               class=" h-auto flex flex-col">
-          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar novo Almoxarifado</h4>
+          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar novo
+            Almoxarifado</h4>
 
           <div class="flex space-x-4 flex-wrap text-neutral-700">
 
@@ -45,9 +46,10 @@
                      required
                      minlength="3"
                      #firstNameModel="ngModel"
-                     placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+                     placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
               <div *ngIf="firstNameModel.invalid && formSubmitted">
-                <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+                <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
                 <small *ngIf="firstNameModel.errors?.['minlength']" class="text-orange-600">
                   Nome do almoxarifado requer no mínimo 3 caracteres.
                 </small>
@@ -66,7 +68,7 @@
                 #unidadeCompraModel="ngModel">
                 <option selected disabled>Selecione a empresa...</option>
                 @for (company of companies; track company.idCompany) {
-                  <option [value]="company.idCompany">{{company.companyName}}</option>
+                  <option [value]="company.idCompany">{{ company.companyName }}</option>
                 }
               </select>
               @if (unidadeCompraModel.invalid && formSubmitted) {
@@ -81,27 +83,28 @@
       </div>
     </div>
 
-<!--    table     -->
-    <app-table >
-      <tr class="bg-indigo-700 text-white" header>
-        <th>Código</th>
-        <th>Descrição</th>
-        <th>Empresa</th>
-        <th>Editar</th>
-        <th>Apagar</th>
-      </tr>
+    <!--    table     -->
+    <div class="border border-neutral-300 shadow mt-3 p-1">
+      <app-table>
+        <tr class="bg-indigo-700 text-white" header>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Empresa</th>
+          <th colspan="2" ></th>
+        </tr>
 
-      <tr class="odd:bg-neutral-100" body>
-        @for(deposit of deposits; track deposit.depositId) {
-            <td>{{ deposit.depositId }}</td>
+        @for (deposit of deposits; track deposit.idDeposit) {
+          <tr class="odd:bg-neutral-100" body>
+            <td>{{ deposit.idDeposit }}</td>
             <td>{{ deposit.depositName }}</td>
-            <td>{{ deposit.companyName }}</td>
-            <td class="">edit</td>
-            <td class="">delete</td>
+            <td>{{ deposit }}</td>
+            <td class="material-icons cursor-pointer">edit</td>
+            <td class="material-icons cursor-pointer text-red-600">delete</td>
+          </tr>
         }
-      </tr>
 
-    </app-table>
+      </app-table>
+    </div>
 
   </div>
 </div>

@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
+import {Component} from '@angular/core';
+import {SidebarComponent} from '../../../shared/components/sidebar/sidebar.component';
 import {ContractService} from '../../services/contract.service';
 
 @Component({

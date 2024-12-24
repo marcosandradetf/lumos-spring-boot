@@ -1,17 +1,16 @@
-import { Component } from '@angular/core';
-import {SidebarComponent} from '../../../../shared/components/sidebar/sidebar.component';
-import {StockMovementDTO} from '../../stock-movement.dto';
-import {StockMovementResponse} from '../../stock-movement-response.dto';
-import {HttpClient} from '@angular/common/http';
-import {EstoqueService} from '../../services/estoque.service';
+import {Component} from '@angular/core';
+import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {NgForOf} from '@angular/common';
 import {ReactiveFormsModule} from '@angular/forms';
-import {TableComponent} from '../../../../shared/components/table/table.component';
+import {TableComponent} from '../../shared/components/table/table.component';
+import {ButtonComponent} from '../../shared/components/button/button.component';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
+import {StockMovementResponse} from '../stock-movement-response.dto';
+import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
-import {ButtonComponent} from '../../../../shared/components/button/button.component';
-import {ModalComponent} from '../../../../shared/components/modal/modal.component';
-import {AlertMessageComponent} from '../../../../shared/components/alert-message/alert-message.component';
 import {catchError, tap, throwError} from 'rxjs';
+
 
 @Component({
   selector: 'app-stock-movement-pending',

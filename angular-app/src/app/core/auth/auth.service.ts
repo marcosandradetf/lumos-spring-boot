@@ -61,6 +61,15 @@ export class AuthService {
         this.user?.clearToken();
         localStorage.removeItem('user');
         this.isLoggedInSubject.next(false);
+        this.router.navigate(['/auth/login']);
+        this.isLoading$.next(false);
+      }), catchError(error => {
+        console.error("Erro no logout:", error);
+        this.user?.clearToken();
+        localStorage.removeItem('user');
+        this.isLoggedInSubject.next(false);
+         this.router.navigate(['/auth/login']);
+        return of(null); // Retorna um observable nulo em caso de erro
       })
     );
   }
@@ -85,7 +94,7 @@ export class AuthService {
       }),
       catchError(error => {
         console.error("Erro ao tentar renovar o token:", error);
-        // O AuthInterceptor pode decidir o que fazer ao receber null
+        this.logout().subscribe();
         return of(null);
       })
     );

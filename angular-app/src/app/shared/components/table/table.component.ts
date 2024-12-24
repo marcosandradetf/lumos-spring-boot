@@ -1,8 +1,6 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import {NgClass, NgForOf} from '@angular/common';
-import {HttpClient} from '@angular/common/http';
-import {MaterialService} from '../../../features/stock/services/material.service';
-import {MaterialResponse} from '../../../features/stock/material-response.dto';
+import {Component, Input} from '@angular/core';
+import {NgClass} from '@angular/common';
+import {MaterialService} from '../../../stock/services/material.service';
 
 @Component({
   selector: 'app-table',

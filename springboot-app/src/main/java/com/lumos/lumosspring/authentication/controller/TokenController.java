@@ -47,8 +47,8 @@ public class TokenController {
         }
 
         var now = Instant.now();
-        var expiresIn = 300L;
-        var refreshExpiresIn = 86400L; // Expiração do refresh token (24 horas)
+        var expiresIn = 1800L; // 30 Minutos
+        var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
 
         var scopes = user.get().getRoles()
                 .stream()
@@ -116,7 +116,7 @@ public class TokenController {
     @PostMapping("/refresh-token")
     public ResponseEntity<LoginResponse> refreshToken(@CookieValue("refreshToken") String refreshToken) {
         var now = Instant.now();
-        var expiresIn = 300L;
+        var expiresIn = 1800L; // 30 minutos para access token expirar
 
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isEmpty() || tokenFromDb.get().isRevoked() || tokenFromDb.get().getExpiryDate().isBefore(now)) {

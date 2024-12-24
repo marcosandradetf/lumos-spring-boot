@@ -1,16 +1,18 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {MaterialService, State} from '../../../services/material.service';
-import {Type} from '../../../../../core/models/tipo.model';
-import {Group} from '../../../../../core/models/grupo.model';
-import {Company} from '../../../../../core/models/empresa.model';
-import {Deposit} from '../../../../../core/models/almoxarifado.model';
+
 import {catchError, of, Subject, takeUntil, tap} from 'rxjs';
-import {EstoqueService} from '../../../services/estoque.service';
-import {AuthService} from '../../../../../core/auth/auth.service';
+
 import {NgClass, NgIf} from '@angular/common';
-import {CreateMaterialRequest} from '../../../create-material-request.dto';
-import {UtilsService} from '../../../../../core/service/utils.service';
+import {Group} from '../../../core/models/grupo.model';
+import {Company} from '../../../core/models/empresa.model';
+import {Deposit} from '../../../core/models/almoxarifado.model';
+import {CreateMaterialRequest} from '../../create-material-request.dto';
+import {Type} from '../../../core/models/tipo.model';
+import {MaterialService, State} from '../../services/material.service';
+import {EstoqueService} from '../../services/estoque.service';
+import {AuthService} from '../../../core/auth/auth.service';
+import {UtilsService} from '../../../core/service/utils.service';
 
 
 @Component({
