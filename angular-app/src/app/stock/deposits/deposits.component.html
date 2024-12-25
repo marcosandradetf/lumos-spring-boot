@@ -41,7 +41,7 @@
                 <span class="label-text">Descrição</span>
               </div>
               <input type="text"
-                     name="nomeMaterial"
+                     name="depositName"
                      [(ngModel)]="deposit.depositName"
                      required
                      minlength="3"
@@ -63,7 +63,7 @@
               <select
                 class="select select-bordered"
                 [(ngModel)]="deposit.companyId"
-                name="unidadeCompra"
+                name="companyId"
                 required
                 #unidadeCompraModel="ngModel">
                 <option selected disabled>Selecione a empresa...</option>
@@ -77,6 +77,11 @@
                 }
               }
             </label>
+
+            <div class="w-full flex border-t mt-10 p-6 border-neutral-300">
+              <p>{{ message }}</p>
+              <button class="btn btn-active btn-primary ml-auto" type="submit">Gravar</button>
+            </div>
 
           </div>
         </form>
@@ -97,7 +102,7 @@
           <tr class="odd:bg-neutral-100" body>
             <td>{{ deposit.idDeposit }}</td>
             <td>{{ deposit.depositName }}</td>
-            <td>{{ deposit }}</td>
+            <td>{{ deposit.companyName }}</td>
             <td class="material-icons cursor-pointer">edit</td>
             <td class="material-icons cursor-pointer text-red-600">delete</td>
           </tr>

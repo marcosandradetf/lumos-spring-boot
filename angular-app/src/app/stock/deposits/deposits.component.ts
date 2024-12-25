@@ -8,6 +8,7 @@ import {NgIf} from '@angular/common';
 import {Company} from '../../core/models/empresa.model';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {Deposit} from '../../core/models/almoxarifado.model';
+import {catchError, tap, throwError} from 'rxjs';
 
 @Component({
   selector: 'app-deposits',
@@ -30,16 +31,19 @@ export class DepositsComponent {
     { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
   ];
   formOpen: boolean = false;
-  deposit: any = {
+  deposit= {
     depositName: "",
     companyId: ""
   }
   formSubmitted: null | boolean = false;
   companies: Company[] = []
   deposits: Deposit[] = [];
+  message: string = '';
 
   constructor(private stockService: EstoqueService,
               private title: Title, protected router: Router) {
+    this.title.setTitle('Gerenciar - Almoxarifados');
+
     this.stockService.getCompanies().subscribe(
       c => this.companies = c
     );
@@ -53,7 +57,21 @@ export class DepositsComponent {
   }
 
   onSubmit(myForm: NgForm) {
+    this.formSubmitted = true;
+    if (myForm.invalid) {
+      return;
+    }
 
+    this.stockService.insertDeposit(this.deposit).pipe(
+      tap(response => {
+        this.deposits = response;
+        this.message = 'Almoxarifado foi salvo com sucesso.';
+      }), catchError(err => {
+        console.log(err);
+        this.message = err;
+        return throwError(() => throwError(() => this.message));
+      })
+    );
   }
 
 }

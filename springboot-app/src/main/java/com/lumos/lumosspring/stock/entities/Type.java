@@ -9,7 +9,7 @@ public class Type {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_type")
     private long idType;
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT")
     private String typeName;
     @ManyToOne
     @JoinColumn(name = "id_group")

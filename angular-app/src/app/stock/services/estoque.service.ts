@@ -9,6 +9,7 @@ import {AuthService} from '../../core/auth/auth.service';
 import {Type} from '../../core/models/tipo.model';
 import {Group} from '../../core/models/grupo.model';
 import {Company} from '../../core/models/empresa.model';
+import {Deposit} from '../../core/models/almoxarifado.model';
 
 
 @Injectable({
@@ -73,8 +74,8 @@ export class EstoqueService {
   deleteType(type: any) {
     return this.http.post(`${this.endpoint}/type/delete`, type);
   }
-  updateType(type: any) {
-    return this.http.post(`${this.endpoint}/type/update`, type);
+  updateType(typeId: number, type: any) {
+    return this.http.put<Type[]>(`${this.endpoint}/type/${typeId}/update`, type);
   }
 
   insertGroup(group: any) {
@@ -88,8 +89,9 @@ export class EstoqueService {
   }
 
   insertDeposit(deposit: any) {
-    return this.http.post(`${this.endpoint}/deposit/insert`, deposit);
+    return this.http.post<Deposit[]>(`${this.endpoint}/deposit/insert`, deposit);
   }
+
   updateDeposit(deposit: any) {
     return this.http.post(`${this.endpoint}/deposit/update`, deposit);
   }

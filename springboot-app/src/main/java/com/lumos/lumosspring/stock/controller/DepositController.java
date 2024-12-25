@@ -17,6 +17,7 @@ public class DepositController {
 
     @GetMapping
     public List<Deposit> getAll() {
+
         return almoxarifadoService.findAll();
     }
 

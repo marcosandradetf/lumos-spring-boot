@@ -5,9 +5,11 @@ import com.lumos.lumosspring.stock.entities.Type;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -31,6 +33,10 @@ public class TypeService {
     }
 
     public ResponseEntity<?>    save(TypeDTO typeDTO) {
+        if (typeRepository.existsByTypeName(typeDTO.typeName())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este tipo já existe."));
+        }
+
         Type type = new Type();
         type.setTypeName(typeDTO.typeName());
         type.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));

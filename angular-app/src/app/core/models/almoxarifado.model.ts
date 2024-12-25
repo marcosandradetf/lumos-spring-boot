@@ -1,4 +1,5 @@
 export interface Deposit {
-  idDeposit: Number;
+  idDeposit: number;
   depositName: string;
+  companyName: string;
 }

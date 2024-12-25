@@ -17,8 +17,11 @@
     </div>
 
     <!--    form    -->
-    <div class="collapse border border-neutral-300 shadow rounded-none">
-      <input type="checkbox" class="peer" (click)="setOpen()"/>
+    <div
+      class="collapse border border-neutral-300 shadow rounded-none">
+      <input
+        #collapseDiv
+        type="checkbox" class="peer" (click)="setOpen()"/>
       <div
         class="collapse-title text-primary-content">
         @if (!formOpen) {
@@ -31,8 +34,9 @@
         class="collapse-content text-primary-content peer-checked: peer-checked:">
         <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
               class=" h-auto flex flex-col">
-          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar novo
-            Almoxarifado</h4>
+          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">{{
+            state === State.create ? "Cadastrar Novo Tipo" : "Atualizar Tipo"
+            }}</h4>
 
           <div class="flex space-x-4 flex-wrap text-neutral-700">
 
@@ -41,7 +45,7 @@
                 <span class="label-text">Descrição</span>
               </div>
               <input type="text"
-                     name="nomeMaterial"
+                     name="typeName"
                      [(ngModel)]="type.typeName"
                      required
                      minlength="3"
@@ -63,7 +67,7 @@
               <select
                 class="select select-bordered"
                 [(ngModel)]="type.groupId"
-                name="unidadeCompra"
+                name="groupId"
                 required
                 #unidadeCompraModel="ngModel">
                 <option selected disabled>Selecione o grupo...</option>
@@ -80,7 +84,9 @@
 
             <div class="w-full flex border-t mt-10 p-6 border-neutral-300">
               <p>{{ message }}</p>
-              <button class="btn btn-active btn-primary ml-auto" type="submit">Gravar</button>
+              <button class="btn btn-active btn-primary ml-auto" type="submit">{{
+                state === State.create ? "Gravar" : "Atualizar"
+                }}</button>
             </div>
           </div>
         </form>
@@ -102,7 +108,7 @@
             <td>{{ t.idType }}</td>
             <td>{{ t.typeName }}</td>
             <td>{{ t.group.groupName }}</td>
-            <td class="material-icons cursor-pointer">edit</td>
+            <td class="material-icons cursor-pointer" (click)="updateType(t)">edit</td>
             <td class="material-icons cursor-pointer text-red-600">delete</td>
           </tr>
         }
