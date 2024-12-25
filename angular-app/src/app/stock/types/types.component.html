@@ -1,4 +1,4 @@
-<div class="flex mt-[4rem] h-fit">
+<div class="flex mt-[4rem] h-fit" #top>
   <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
   <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
     <div class="breadcrumbs text-sm py-5">
@@ -109,12 +109,23 @@
             <td>{{ t.typeName }}</td>
             <td>{{ t.group.groupName }}</td>
             <td class="material-icons cursor-pointer" (click)="updateType(t)">edit</td>
-            <td class="material-icons cursor-pointer text-red-600">delete</td>
+            <td class="material-icons cursor-pointer text-red-600" (click)="typeId = t.idType; showConfirmation = true;">delete</td>
           </tr>
         }
 
       </app-table>
     </div>
+
+    <app-modal [modalOpen]="showConfirmation" [confirmation]="true" (modalClose)="showConfirmation = false">
+      <div>
+        <h3 class="text-center mb-7">Confirma a exclusão?</h3>
+        <div class="flex justify-around">
+          <app-button (click)="showConfirmation = false" title="Cancelar" class="bg-red-500 hover:bg-red-700"
+                      textColor="text-black"></app-button>
+          <app-button (click)="deleteType()" title="Confirmar"></app-button>
+        </div>
+      </div>
+    </app-modal>
 
   </div>
 </div>

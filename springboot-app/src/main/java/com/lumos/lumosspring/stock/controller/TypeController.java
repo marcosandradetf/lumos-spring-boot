@@ -36,7 +36,7 @@ public class TypeController {
 
     @PutMapping("/{id}/update")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody TypeDTO typeDTO) {
-        return ResponseEntity.ok(typeService.update(id, typeDTO));
+        return typeService.update(id, typeDTO);
     }
 
     @DeleteMapping("/{id}/delete")

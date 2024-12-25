@@ -71,32 +71,31 @@ export class EstoqueService {
   insertType(type: any) {
     return this.http.post<Type[]>(`${this.endpoint}/type/insert`, type);
   }
-  deleteType(type: any) {
-    return this.http.post(`${this.endpoint}/type/delete`, type);
+  deleteType(id: number) {
+    return this.http.delete<Type[]>(`${this.endpoint}/type/${id}/delete`);
   }
   updateType(typeId: number, type: any) {
     return this.http.put<Type[]>(`${this.endpoint}/type/${typeId}/update`, type);
   }
 
   insertGroup(group: any) {
-    return this.http.post(`${this.endpoint}/type/insert`, group);
+    return this.http.post<Group[]>(`${this.endpoint}/type/insert`, group);
   }
   updateGroup(group: any) {
-    return this.http.post(`${this.endpoint}/type/update`, group);
+    return this.http.put<Group[]>(`${this.endpoint}/type/update`, group);
   }
-  deleteGroup(group: any) {
-    return this.http.post(`${this.endpoint}/type/delete`, group);
+  deleteGroup(groupId: number){
+    return this.http.delete<Group[]>(`${this.endpoint}/type/${groupId}/delete`);
   }
 
   insertDeposit(deposit: any) {
     return this.http.post<Deposit[]>(`${this.endpoint}/deposit/insert`, deposit);
   }
-
   updateDeposit(deposit: any) {
-    return this.http.post(`${this.endpoint}/deposit/update`, deposit);
+    return this.http.put<Deposit[]>(`${this.endpoint}/deposit/update`, deposit);
   }
-  deleteDeposit(deposit: any) {
-    return this.http.post(`${this.endpoint}/deposit/delete`, deposit);
+  deleteDeposit(depositId: number) {
+    return this.http.delete<Deposit[]>(`${this.endpoint}/${depositId}}/deposit/delete`);
   }
 
 }

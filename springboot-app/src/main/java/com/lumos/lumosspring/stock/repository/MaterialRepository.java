@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MaterialRepository extends JpaRepository<Material, Long> {
     boolean existsByMaterialName(String materialName); // verificar duplicatas
@@ -31,5 +32,9 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     @Query("select m from Material m order by m.idMaterial")
     Page<Material> findAllOrderByIdMaterial(Pageable pageable);
+
+    @Query("SELECT 1 FROM Material m WHERE m.materialType.idType = :id")
+    Optional<Integer> existsType(@Param("id") Long id);
+
 }
 

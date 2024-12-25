@@ -10,6 +10,8 @@ import {Type} from '../../core/models/tipo.model';
 import {Group} from '../../core/models/grupo.model';
 import {catchError, tap, throwError} from 'rxjs';
 import {State} from '../services/material.service';
+import {ButtonComponent} from '../../shared/components/button/button.component';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-types',
@@ -18,7 +20,9 @@ import {State} from '../services/material.service';
     FormsModule,
     NgIf,
     SidebarComponent,
-    TableComponent
+    TableComponent,
+    ButtonComponent,
+    ModalComponent
   ],
   templateUrl: './types.component.html',
   styleUrl: './types.component.scss'
@@ -41,8 +45,9 @@ export class TypesComponent {
   formSubmitted: null | boolean = false;
   message: string  = '';
   state: State = State.create;
-  private typeId: number = 0;
+  typeId: number = 0;
   @ViewChild('collapseDiv') collapseDiv!: ElementRef;
+  @ViewChild('top') top!: ElementRef;
 
 
   constructor(private stockService: EstoqueService,
@@ -58,6 +63,15 @@ export class TypesComponent {
 
   setOpen() {
     this.formOpen = !this.formOpen;
+    if (this.state === State.update && !this.formOpen) {
+      this.state = State.create;
+      this.type = {
+        typeName: '',
+        groupId: ''
+      }
+      this.formSubmitted = false;
+      this.message = '';
+    }
   }
 
   onSubmit(myForm: NgForm) {
@@ -66,10 +80,20 @@ export class TypesComponent {
       return;
     }
 
+    if (this.typeId === 0) {
+      this.message = 'Selecione outro tipo para atualizar ou feche essa opção.';
+      return;
+    }
+
     if (this.state === State.create) {
       this.stockService.insertType(this.type).pipe(
         tap(response => {
-          this.message = 'Tipo salvo com sucesso.';
+          this.type = {
+            typeName: '',
+            groupId: ''
+          }
+          this.formSubmitted = false;
+          this.message = 'Tipo criado com sucesso.';
           this.types = response;
         }),
         catchError(err => {
@@ -81,7 +105,13 @@ export class TypesComponent {
     } else if (this.state === State.update) {
       this.stockService.updateType(this.typeId, this.type).pipe(
         tap(response => {
-          this.message = 'Tipo salvo com sucesso.';
+          this.type = {
+            typeName: '',
+            groupId: ''
+          }
+          this.formSubmitted = false;
+          this.typeId = 0;
+          this.message = 'Tipo atualizado com sucesso.';
           this.types = response;
         }),
         catchError(err => {
@@ -98,13 +128,29 @@ export class TypesComponent {
 
   updateType(t: Type) {
     if (this.collapseDiv) {
-      this.formOpen = false;
       this.state = State.update;
-      this.collapseDiv.nativeElement.click();
+      if(!this.formOpen) this.collapseDiv.nativeElement.click();
 
       this.type.typeName = t.typeName;
       this.type.groupId = t.group.idGroup;
       this.typeId = t.idType;
+      if (this.top)
+        this.top.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
+
+  showConfirmation: boolean = false;
+
+  deleteType() {
+    this.stockService.deleteType(this.typeId).pipe(
+      tap(response => {
+        this.message = 'Tipo excluído com sucesso.';
+        this.types = response;
+      }),catchError(err => {
+        this.message = err.error.message;
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
 }

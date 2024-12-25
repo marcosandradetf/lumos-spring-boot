@@ -3,6 +3,7 @@ package com.lumos.lumosspring.stock.service;
 import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
 import com.lumos.lumosspring.stock.entities.Type;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
+import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,22 +18,24 @@ public class TypeService {
     private final TypeRepository tipoRepository;
     private final GroupRepository groupRepository;
     private final TypeRepository typeRepository;
+    private final MaterialRepository materialRepository;
 
-    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository) {
+    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository, MaterialRepository materialRepository) {
         this.tipoRepository = tipoRepository;
         this.groupRepository = groupRepository;
         this.typeRepository = typeRepository;
+        this.materialRepository = materialRepository;
     }
 
     public List<Type> findAll() {
-        return tipoRepository.findAll();
+        return tipoRepository.findAllByOrderByIdTypeAsc();
     }
 
     public Type findById(Long id) {
         return tipoRepository.findById(id).orElse(null);
     }
 
-    public ResponseEntity<?>    save(TypeDTO typeDTO) {
+    public ResponseEntity<?> save(TypeDTO typeDTO) {
         if (typeRepository.existsByTypeName(typeDTO.typeName())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este tipo já existe."));
         }
@@ -42,7 +45,7 @@ public class TypeService {
         type.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));
         tipoRepository.save(type);
 
-        return ResponseEntity.ok(typeRepository.findAll());
+        return ResponseEntity.ok(this.findAll());
     }
 
     public ResponseEntity<?> update(Long typeId ,TypeDTO typeDTO) {
@@ -59,7 +62,7 @@ public class TypeService {
         type.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));
         tipoRepository.save(type);
 
-        return ResponseEntity.ok(typeRepository.findAll());
+        return ResponseEntity.ok(this.findAll());
     }
 
     public ResponseEntity<?> delete(Long id) {
@@ -67,7 +70,12 @@ public class TypeService {
         if (type == null) {
             return ResponseEntity.notFound().build();
         }
+
+        if (materialRepository.existsType(id).isPresent()) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais associados a este tipo."));
+        }
+
         typeRepository.delete(type);
-        return ResponseEntity.ok(typeRepository.findAll());
+        return ResponseEntity.ok(this.findAll());
     }
 }
