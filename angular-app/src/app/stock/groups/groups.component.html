@@ -1,4 +1,4 @@
-<div class="flex mt-[4rem] h-fit">
+<div class="flex mt-[4rem] h-fit" #top>
   <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
   <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
     <div class="breadcrumbs text-sm py-5">
@@ -17,8 +17,11 @@
     </div>
 
     <!--    form    -->
-    <div class="collapse border border-neutral-300 shadow rounded-none">
-      <input type="checkbox" class="peer" (click)="setOpen()"/>
+    <div
+      class="collapse border border-neutral-300 shadow rounded-none">
+      <input
+        #collapseDiv
+        type="checkbox" class="peer" (click)="setOpen()"/>
       <div
         class="collapse-title text-primary-content">
         @if (!formOpen) {
@@ -31,8 +34,9 @@
         class="collapse-content text-primary-content peer-checked: peer-checked:">
         <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
               class=" h-auto flex flex-col">
-          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">Cadastrar novo Grupo</h4>
-
+          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">{{
+              state === State.create ? "Cadastrar Novo Grupo" : "Atualizar Grupo"
+            }}</h4>
           <div class="flex space-x-4 flex-wrap text-neutral-700">
 
             <label class="form-control w-full max-w-xs">
@@ -40,7 +44,7 @@
                 <span class="label-text">Descrição</span>
               </div>
               <input type="text"
-                     name="nomeMaterial"
+                     name="groupName"
                      [(ngModel)]="group.groupName"
                      required
                      minlength="3"
@@ -50,7 +54,7 @@
                 <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento
                   obrigatório.</small>
                 <small *ngIf="firstNameModel.errors?.['minlength']" class="text-orange-600">
-                  Nome do almoxarifado requer no mínimo 3 caracteres.
+                  Nome do grupo requer no mínimo 3 caracteres.
                 </small>
               </div>
             </label>
@@ -73,13 +77,24 @@
           <tr class="odd:bg-neutral-100" body>
             <td>{{ g.idGroup }}</td>
             <td>{{ g.groupName }}</td>
-            <td class="material-icons cursor-pointer">edit</td>
-            <td class="material-icons cursor-pointer text-red-600">delete</td>
+            <td class="material-icons cursor-pointer" (click)="updateGroup(g)">edit</td>
+            <td class="material-icons cursor-pointer text-red-600" (click)="groupId = g.idGroup; showConfirmation = true;">delete</td>
           </tr>
         }
 
       </app-table>
     </div>
+
+    <app-modal [modalOpen]="showConfirmation" [confirmation]="true" (modalClose)="showConfirmation = false">
+      <div>
+        <h3 class="text-center mb-7">Confirma a exclusão?</h3>
+        <div class="flex justify-around">
+          <app-button (click)="showConfirmation = false" title="Cancelar" class="bg-red-500 hover:bg-red-700"
+                      textColor="text-black"></app-button>
+          <app-button (click)="deleteGroup()" title="Confirmar"></app-button>
+        </div>
+      </div>
+    </app-modal>
 
   </div>
 </div>

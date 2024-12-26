@@ -36,7 +36,7 @@ export class TypesComponent {
     { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
   ];
   formOpen: boolean = false;
-  type: any = {
+  type = {
     typeName: '',
     groupId: ''
   }
@@ -80,7 +80,7 @@ export class TypesComponent {
       return;
     }
 
-    if (this.typeId === 0) {
+    if (this.typeId === 0  && this.state === State.update) {
       this.message = 'Selecione outro tipo para atualizar ou feche essa opção.';
       return;
     }
@@ -132,7 +132,7 @@ export class TypesComponent {
       if(!this.formOpen) this.collapseDiv.nativeElement.click();
 
       this.type.typeName = t.typeName;
-      this.type.groupId = t.group.idGroup;
+      this.type.groupId = t.group.idGroup.toString();
       this.typeId = t.idType;
       if (this.top)
         this.top.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });

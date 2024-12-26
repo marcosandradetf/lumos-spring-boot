@@ -79,23 +79,23 @@ export class EstoqueService {
   }
 
   insertGroup(group: any) {
-    return this.http.post<Group[]>(`${this.endpoint}/type/insert`, group);
+    return this.http.post<Group[]>(`${this.endpoint}/group/insert`, group);
   }
-  updateGroup(group: any) {
-    return this.http.put<Group[]>(`${this.endpoint}/type/update`, group);
+  updateGroup(id:number, group: any) {
+    return this.http.put<Group[]>(`${this.endpoint}/group/${id}/update`, group);
   }
   deleteGroup(groupId: number){
-    return this.http.delete<Group[]>(`${this.endpoint}/type/${groupId}/delete`);
+    return this.http.delete<Group[]>(`${this.endpoint}/group/${groupId}/delete`);
   }
 
   insertDeposit(deposit: any) {
     return this.http.post<Deposit[]>(`${this.endpoint}/deposit/insert`, deposit);
   }
-  updateDeposit(deposit: any) {
-    return this.http.put<Deposit[]>(`${this.endpoint}/deposit/update`, deposit);
+  updateDeposit(id:number, deposit: any) {
+    return this.http.put<Deposit[]>(`${this.endpoint}/deposit/${id}/update`, deposit);
   }
   deleteDeposit(depositId: number) {
-    return this.http.delete<Deposit[]>(`${this.endpoint}/${depositId}}/deposit/delete`);
+    return this.http.delete<Deposit[]>(`${this.endpoint}/deposit/${depositId}/delete`);
   }
 
 }

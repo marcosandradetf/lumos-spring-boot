@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, ElementRef, ViewChild} from '@angular/core';
 import {FormsModule, NgForm} from '@angular/forms';
 import {NgIf} from '@angular/common';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
@@ -7,6 +7,11 @@ import {Group} from '../../core/models/grupo.model';
 import {Router} from '@angular/router';
 import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
+import {ButtonComponent} from '../../shared/components/button/button.component';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {State} from '../services/material.service';
+import {catchError, tap, throwError} from 'rxjs';
+
 
 @Component({
   selector: 'app-groups',
@@ -15,7 +20,9 @@ import {Title} from '@angular/platform-browser';
     FormsModule,
     NgIf,
     SidebarComponent,
-    TableComponent
+    TableComponent,
+    ButtonComponent,
+    ModalComponent
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss'
@@ -28,12 +35,17 @@ export class GroupsComponent {
     { title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4' },
     { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
   ];
-  formSubmitted: null | boolean = false;
   formOpen: boolean = false;
-  group: any = {
+  group = {
     groupName: '',
   }
   gps: Group[] = [];
+  formSubmitted: boolean = false;
+  message: string  = '';
+  state: State = State.create;
+  groupId: number = 0;
+  @ViewChild('collapseDiv') collapseDiv!: ElementRef;
+  @ViewChild('top') top!: ElementRef;
 
   constructor(protected router: Router, private stockService: EstoqueService,
               private title: Title,) {
@@ -45,10 +57,90 @@ export class GroupsComponent {
 
   setOpen() {
     this.formOpen = !this.formOpen;
+    if (this.state === State.update && !this.formOpen) {
+      this.state = State.create;
+      this.group = {
+        groupName: '',
+      }
+      this.formSubmitted = false;
+      this.message = '';
+    }
   }
 
   onSubmit(myForm: NgForm) {
+    this.formSubmitted = true;
+    if (myForm.invalid) {
+      return;
+    }
 
+    if (this.groupId === 0  && this.state === State.update) {
+      this.message = 'Selecione outro grupo para atualizar ou feche essa opção.';
+      return;
+    }
+
+    if (this.state === State.create) {
+      this.stockService.insertGroup(this.group).pipe(
+        tap(response => {
+          this.group = {
+            groupName: '',
+          }
+          this.formSubmitted = false;
+          this.message = 'Grupo criado com sucesso.';
+          this.gps = response;
+        }),
+        catchError(err => {
+          console.log(err)
+          this.message = err.error.message;
+          return throwError(() => err);
+        })
+      ).subscribe();
+    } else if (this.state === State.update) {
+      this.stockService.updateGroup(this.groupId, this.group).pipe(
+        tap(response => {
+          this.group = {
+            groupName: '',
+          }
+          this.formSubmitted = false;
+          this.groupId = 0;
+          this.message = 'Tipo atualizado com sucesso.';
+          this.gps = response;
+        }),
+        catchError(err => {
+          console.log(err)
+          this.message = err.error.message;
+          return throwError(() => err);
+        })
+      ).subscribe();
+    }
+
+  }
+
+  protected readonly State = State;
+
+  updateGroup(g: Group) {
+    if (this.collapseDiv) {
+      this.state = State.update;
+      if(!this.formOpen) this.collapseDiv.nativeElement.click();
+
+      this.group.groupName = g.groupName;
+      this.groupId = g.idGroup;
+      if (this.top)
+        this.top.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  showConfirmation: boolean = false;
+
+  deleteGroup() {
+    this.stockService.deleteGroup(this.groupId).pipe(
+      tap(response => {
+        this.message = 'Grupo excluído com sucesso.';
+        this.gps = response;
+      }),catchError(err => {
+        this.message = err.error.message;
+        return throwError(() => err);
+      })
+    ).subscribe();
   }
 
 }
