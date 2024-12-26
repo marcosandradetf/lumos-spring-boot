@@ -36,5 +36,7 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
     @Query("SELECT 1 FROM Material m WHERE m.materialType.idType = :id")
     Optional<Integer> existsType(@Param("id") Long id);
 
+    @Query("SELECT 1 FROM Material m WHERE m.deposit.idDeposit = :id")
+    Optional<Integer> existsDeposit(@Param("id") Long id);
 }
 

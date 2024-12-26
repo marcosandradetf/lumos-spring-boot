@@ -27,7 +27,7 @@ public class GroupController {
         return group != null ? ResponseEntity.ok(group) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping("insert")
+    @PostMapping("/insert")
     public ResponseEntity<?> create(@RequestBody String groupName) {
         return grupoService.save(groupName);
     }

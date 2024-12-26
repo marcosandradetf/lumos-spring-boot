@@ -59,7 +59,7 @@ public class TypeService {
         }
 
         type.setTypeName(typeDTO.typeName());
-        type.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));
+        type.setGroup(group);
         tipoRepository.save(type);
 
         return ResponseEntity.ok(this.findAll());
