@@ -47,6 +47,13 @@ export const routes: Routes = [
     loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'estoque/importar',
+    loadComponent: () => import('./stock/import-materials/import-materials.component').then(m => m.ImportMaterialsComponent),
+    canActivate: [AuthGuard],
+  },
+
+
   { path: 'estoque', redirectTo: 'estoque/materiais' },
   // end
 

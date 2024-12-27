@@ -12,6 +12,7 @@ import {catchError, tap, throwError} from 'rxjs';
 import {State} from '../services/material.service';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 
 @Component({
   selector: 'app-types',
@@ -22,7 +23,8 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
     SidebarComponent,
     TableComponent,
     ButtonComponent,
-    ModalComponent
+    ModalComponent,
+    AlertMessageComponent
   ],
   templateUrl: './types.component.html',
   styleUrl: './types.component.scss'
@@ -140,14 +142,22 @@ export class TypesComponent {
   }
 
   showConfirmation: boolean = false;
+  serverMessage: string = '';
+  alertType: string = '';
 
   deleteType() {
+    this.serverMessage = '';  // Reseta a mensagem para garantir que o *ngIf seja acionado
+
     this.stockService.deleteType(this.typeId).pipe(
       tap(response => {
-        this.message = 'Tipo excluído com sucesso.';
+        this.showConfirmation = false;
+        this.serverMessage = 'Tipo excluído com sucesso.';
+        this.alertType = 'alert-success';
         this.types = response;
       }),catchError(err => {
-        this.message = err.error.message;
+        this.showConfirmation = false;
+        this.serverMessage = err.error.message;
+        this.alertType = 'alert-error';
         return throwError(() => err);
       })
     ).subscribe();

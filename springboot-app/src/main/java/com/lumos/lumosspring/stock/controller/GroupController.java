@@ -34,7 +34,7 @@ public class GroupController {
 
     @PutMapping("/{id}/update")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody String groupName) {
-        return ResponseEntity.ok(grupoService.update(id, groupName));
+        return grupoService.update(id, groupName);
     }
 
     @DeleteMapping("/{id}/delete")

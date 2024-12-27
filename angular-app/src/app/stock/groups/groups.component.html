@@ -59,6 +59,13 @@
               </div>
             </label>
 
+            <div class="w-full flex border-t mt-10 p-6 border-neutral-300">
+              <p>{{ message }}</p>
+              <button class="btn btn-active btn-primary ml-auto" type="submit">{{
+                state === State.create ? "Gravar" : "Atualizar"
+                }}</button>
+            </div>
+
           </div>
         </form>
       </div>
@@ -95,6 +102,9 @@
         </div>
       </div>
     </app-modal>
+
+    <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+
 
   </div>
 </div>

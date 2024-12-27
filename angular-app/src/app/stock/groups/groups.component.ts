@@ -11,6 +11,7 @@ import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {State} from '../services/material.service';
 import {catchError, tap, throwError} from 'rxjs';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 
 
 @Component({
@@ -22,7 +23,8 @@ import {catchError, tap, throwError} from 'rxjs';
     SidebarComponent,
     TableComponent,
     ButtonComponent,
-    ModalComponent
+    ModalComponent,
+    AlertMessageComponent
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss'
@@ -79,7 +81,7 @@ export class GroupsComponent {
     }
 
     if (this.state === State.create) {
-      this.stockService.insertGroup(this.group).pipe(
+      this.stockService.insertGroup(this.group.groupName).pipe(
         tap(response => {
           this.group = {
             groupName: '',
@@ -95,7 +97,7 @@ export class GroupsComponent {
         })
       ).subscribe();
     } else if (this.state === State.update) {
-      this.stockService.updateGroup(this.groupId, this.group).pipe(
+      this.stockService.updateGroup(this.groupId, this.group.groupName).pipe(
         tap(response => {
           this.group = {
             groupName: '',
@@ -130,14 +132,22 @@ export class GroupsComponent {
   }
 
   showConfirmation: boolean = false;
+    serverMessage: string = '';
+  alertType: string = '';
 
   deleteGroup() {
+    this.serverMessage = '';
+
     this.stockService.deleteGroup(this.groupId).pipe(
       tap(response => {
-        this.message = 'Grupo excluído com sucesso.';
+        this.showConfirmation = false;
+        this.serverMessage = 'Grupo excluído com sucesso.';
+        this.alertType = 'alert-success';
         this.gps = response;
       }),catchError(err => {
-        this.message = err.error.message;
+        this.showConfirmation = false;
+        this.serverMessage = err.error.message;
+        this.alertType = 'alert-error';
         return throwError(() => err);
       })
     ).subscribe();

@@ -78,11 +78,11 @@ export class EstoqueService {
     return this.http.put<Type[]>(`${this.endpoint}/type/${typeId}/update`, type);
   }
 
-  insertGroup(group: any) {
-    return this.http.post<Group[]>(`${this.endpoint}/group/insert`, group);
+  insertGroup(groupName: string) {
+    return this.http.post<Group[]>(`${this.endpoint}/group/insert`, groupName);
   }
-  updateGroup(id:number, group: any) {
-    return this.http.put<Group[]>(`${this.endpoint}/group/${id}/update`, group);
+  updateGroup(id:number, groupName: string) {
+    return this.http.put<Group[]>(`${this.endpoint}/group/${id}/update`, groupName);
   }
   deleteGroup(groupId: number){
     return this.http.delete<Group[]>(`${this.endpoint}/group/${groupId}/delete`);

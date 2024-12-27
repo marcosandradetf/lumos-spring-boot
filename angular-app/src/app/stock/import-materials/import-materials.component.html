@@ -1,0 +1,132 @@
+<div class="flex mt-[4rem] h-fit" #top>
+  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a>Início</a></li>
+        <li><a>Estoque</a></li>
+        <li>Importar Materiais</li>
+      </ul>
+    </div>
+
+    @if (!loading && !showTable) {
+      <div class="h-[calc(100vh-200px)] w-[calc(100vw-320px)] flex justify-center items-center border shadow">
+
+        <div class="p-5 border rounded-lg w-[85%]">
+          <label class="form-control mb-5">
+            <div class="label">
+              <span class="label-text" >Clique no botão abaixo e selecione a planilha com os materiais seguindo o padrão abaixo</span>
+            </div>
+            <input type="file" class="file-input file-input-bordered file-input-success w-full max-w-xs"
+                   accept=".xlsx, .xls" (change)="onFileChange($event)" />
+          </label>
+          <div class="border-t w-[100%] h-1 border-neutral-400 mb-3"></div>
+
+          <app-table>
+            <tr class="bg-green-700 text-white" header>
+              <th>Nome do Material*</th>
+              <th>Marca</th>
+              <th>Potência</th>
+              <th>Unidade de Compra*</th>
+              <th>Unidade de Requisição*</th>
+              <th>Tipo Material*</th>
+              <th>Grupo Material*</th>
+              <th>Empresa*</th>
+              <th>Almoxarifado*</th>
+            </tr>
+            <tr class="odd:bg-neutral-100" body>
+              <td>Led</td>
+              <td>Max Power</td>
+              <td>100W</td>
+              <td>CX</td>
+              <td>UN</td>
+              <td>Leds</td>
+              <td>Equipamentos Elétricos</td>
+              <td>SCL Solutions</td>
+              <td>Galpão BH</td>
+            </tr>
+            <tr body>
+              <td colspan="9">
+                <div role="alert" class="alert shadow-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    class="stroke-info h-6 w-6 shrink-0">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div>
+                    <h3 class="font-bold">Atenção!</h3>
+                    <div class="text-xs">Caso os Tipos, Grupos, Empresas e Almoxarifados informados não existam no
+                      sistema ou o nome informado estiver diferente, eles poderão serão criados.
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </app-table>
+
+
+          <div class="border-t w-[100%] border-neutral-300">
+            <h2 class="my-3">Exemplos de unidades de compra e requisição</h2>
+
+            <kbd class="kbd">UN</kbd>
+            <kbd class="kbd mx-1">▶︎</kbd>
+            <kbd class="kbd mr-4">Unidade</kbd>
+            <kbd class="kbd">CX</kbd>
+            <kbd class="kbd mx-1">▶︎</kbd>
+            <kbd class="kbd mr-4">Caixa</kbd>
+            <kbd class="kbd">CM</kbd>
+            <kbd class="kbd mx-1">▶︎</kbd>
+            <kbd class="kbd mr-4">Centímetro</kbd>
+            <kbd class="kbd">M</kbd>
+            <kbd class="kbd mx-1">▶︎</kbd>
+            <kbd class="kbd">Metro</kbd>
+          </div>
+
+        </div>
+
+      </div>
+    } @else if (loading) {
+      <div class="h-[calc(100vh-200px)] w-[calc(100vw-200px)] flex justify-center items-center">
+        <span class="loading loading-infinity loading-lg"></span>
+      </div>
+    } @else if (!loading && materials.length > 0) {
+      <div class="h-[calc(100vh-200px)] w-[calc(100vw-320px)] flex justify-center items-center border shadow">
+        <app-table>
+          <tr class="bg-green-700 text-white" header>
+            <th>Nome do Material*</th>
+            <th>Marca</th>
+            <th>Potência</th>
+            <th>Unidade de Compra*</th>
+            <th>Unidade de Requisição*</th>
+            <th>Tipo Material*</th>
+            <th>Grupo Material*</th>
+            <th>Empresa*</th>
+            <th>Almoxarifado*</th>
+          </tr>
+          @for(m of materials; track m) {
+              <tr class="odd:bg-neutral-100" body>
+              <td>{{ m.materialName }}</td>
+              <td>{{ m.materialBrand }}</td>
+              <td>{{ m.power }}</td>
+              <td>{{ m.buyUnit }}</td>
+              <td>{{ m.buyRequest }}</td>
+              <td>{{ m.materialType }}</td>
+              <td>{{ m.materialGroup }}</td>
+              <td>{{ m.company }}</td>
+              <td>{{ m.deposit }}</td>
+            </tr>
+          }
+        </app-table>
+      </div>
+    }
+
+
+  </div>
+
+</div>

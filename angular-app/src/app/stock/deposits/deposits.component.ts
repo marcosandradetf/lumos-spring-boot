@@ -13,6 +13,7 @@ import {State} from '../services/material.service';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {Type} from '../../core/models/tipo.model';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 
 @Component({
   selector: 'app-deposits',
@@ -23,7 +24,8 @@ import {Type} from '../../core/models/tipo.model';
     NgIf,
     TableComponent,
     ButtonComponent,
-    ModalComponent
+    ModalComponent,
+    AlertMessageComponent
   ],
   templateUrl: './deposits.component.html',
   styleUrl: './deposits.component.scss'
@@ -139,17 +141,25 @@ export class DepositsComponent {
   }
 
   showConfirmation: boolean = false;
+  serverMessage: string = '';
+  alertType: string = '';
 
   deleteDeposit() {
+    this.serverMessage = '';
+
     this.stockService.deleteDeposit(this.depositId).pipe(
       tap(response => {
-        this.message = 'Almoxarifado excluído com sucesso.';
+        this.showConfirmation = false;
+        this.serverMessage = 'Almoxarifado excluído com sucesso.';
+        this.alertType = 'alert-success';
         this.deposits = response;
       }),catchError(err => {
-        this.message = err.error.message;
+        this.showConfirmation = false;
+        this.serverMessage = err.error.message;
+        this.alertType = 'alert-error';
         return throwError(() => err);
       })
     ).subscribe();
   }
-  
+
 }
