@@ -34,3 +34,4 @@ build/
 
 ### node ###
 
+/golang-services/keys/
