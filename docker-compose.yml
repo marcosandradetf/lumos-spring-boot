@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=4dejulho_
+      - POSTGRES_DB=001SCLCONST
+    networks:
+      - my_network
+    restart: always
+
+  # springboot-app:
+  #   build:
+  #     context: ./lumos-spring-boot/springboot-app/docker
+  #   container_name: springboot-app
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./lumos-spring-boot/springboot-app:/app
+  #     - shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=development
+  #   networks:
+  #     - my_network
+  #   restart: always
+
+  go-server:
+    build: ./lumos-golang
+    container_name: go-server
+    ports:
+      - "8081:8081"
+    volumes:
+      - shared-data:/mnt/nfs  # Montando volume compartilhado para dados
+    environment:
+      - ENVIRONMENT=development
+    networks:
+      - my_network
+    restart: always
+
+  nfs-server:
+    image: itsthenetwork/nfs-server-alpine
+    container_name: nfs-server
+    volumes:
+      - shared-data:/srv/nfs/exports  # Usando o volume compartilhado
+    environment:
+      - SHARED_DIRECTORY=/srv/nfs/exports
+    networks:
+      - my_network
+    restart: always
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+  shared-data:

@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.controller;
 
 import com.lumos.lumosspring.stock.controller.dto.DepositDTO;
+import com.lumos.lumosspring.stock.controller.dto.DepositResponse;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.service.DepositService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ public class DepositController {
     private DepositService almoxarifadoService;
 
     @GetMapping
-    public List<Deposit> getAll() {
+    public List<DepositResponse> getAll() {
 
         return almoxarifadoService.findAll();
     }

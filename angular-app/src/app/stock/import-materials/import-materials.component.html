@@ -10,15 +10,15 @@
     </div>
 
     @if (!loading && !showTable) {
-      <div class="h-[calc(100vh-200px)] w-[calc(100vw-320px)] flex justify-center items-center border shadow">
+      <div class="lg:h-[calc(100vh-200px)] lg:w-[calc(100vw-320px)] flex justify-center items-center lg:border shadow">
 
-        <div class="p-5 border rounded-lg w-[85%]">
+        <div class="p-5 border rounded-lg w-[100%] lg:w-[85%]">
           <label class="form-control mb-5">
             <div class="label">
-              <span class="label-text" >Clique no botão abaixo e selecione a planilha com os materiais seguindo o padrão abaixo</span>
+              <span class="label-text">Clique no botão abaixo e selecione a planilha com os materiais seguindo o padrão abaixo</span>
             </div>
             <input type="file" class="file-input file-input-bordered file-input-success w-full max-w-xs"
-                   accept=".xlsx, .xls" (change)="onFileChange($event)" />
+                   accept=".xlsx, .xls" (change)="onFileChange($event)"/>
           </label>
           <div class="border-t w-[100%] h-1 border-neutral-400 mb-3"></div>
 
@@ -35,15 +35,15 @@
               <th>Almoxarifado*</th>
             </tr>
             <tr class="odd:bg-neutral-100" body>
-              <td>Led</td>
-              <td>Max Power</td>
-              <td>100W</td>
-              <td>CX</td>
-              <td>UN</td>
-              <td>Leds</td>
-              <td>Equipamentos Elétricos</td>
-              <td>SCL Solutions</td>
-              <td>Galpão BH</td>
+              <td>Material Led</td>
+              <td>Marca Max Power</td>
+              <td>Potência 100W</td>
+              <td>Compra CX</td>
+              <td>Requisição UN</td>
+              <td>Tipo Leds</td>
+              <td>Grupo Equipamentos Elétricos</td>
+              <td>Empresa SCL Solutions</td>
+              <td>Almoxarifado Galpão BH</td>
             </tr>
             <tr body>
               <td colspan="9">
@@ -61,11 +61,42 @@
                   </svg>
                   <div>
                     <h3 class="font-bold">Atenção!</h3>
+                    <div class="text-xs">A redundância é apenas para validação dos dados, o sistema irá salvar somente o nome real.
+                    </div>
                     <div class="text-xs">Caso os Tipos, Grupos, Empresas e Almoxarifados informados não existam no
-                      sistema ou o nome informado estiver diferente, eles poderão serão criados.
+                      sistema ou o nome informado estiver diferente, eles serão criados automaticamente.
                     </div>
                   </div>
                 </div>
+              </td>
+            </tr>
+            <tr body>
+              <td colspan="8">
+                <div *ngIf="errors.length > 0" class="error-list">
+                  <h2 class="mb-2 text-lg font-semibold text-gray-900 ">Planilha enviada fora do Padrão! Erros
+                    Encontrados: ({{errors.length}})</h2>
+                  <ul class="space-y-1 text-gray-600 list-inside max-h-44 overflow-auto">
+                    <li *ngFor="let error of errors" class="flex items-center">
+                      <span class="material-icons text-red-500 mr-1">error</span>
+                      {{ error }}
+                    </li>
+                  </ul>
+                </div>
+              </td>
+              <td>
+                <button type="button"
+                        class="text-gray-900 bg-[#F7BE38] hover:bg-[#F7BE38]/90 focus:ring-4 focus:outline-none focus:ring-[#F7BE38]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#F7BE38]/50 me-2 mb-2"
+                        (click)="onDownloadClick('planilha.xlsx')">
+                  <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="50" viewBox="0 0 48 48">
+                    <path fill="#4CAF50" d="M41,10H25v28h16c0.553,0,1-0.447,1-1V11C42,10.447,41.553,10,41,10z"></path>
+                    <path fill="#FFF"
+                          d="M32 15H39V18H32zM32 25H39V28H32zM32 30H39V33H32zM32 20H39V23H32zM25 15H30V18H25zM25 25H30V28H25zM25 30H30V33H25zM25 20H30V23H25z"></path>
+                    <path fill="#2E7D32" d="M27 42L6 38 6 10 27 6z"></path>
+                    <path fill="#FFF"
+                          d="M19.129,31l-2.411-4.561c-0.092-0.171-0.186-0.483-0.284-0.938h-0.037c-0.046,0.215-0.154,0.541-0.324,0.979L13.652,31H9.895l4.462-7.001L10.274,17h3.837l2.001,4.196c0.156,0.331,0.296,0.725,0.42,1.179h0.04c0.078-0.271,0.224-0.68,0.439-1.22L19.237,17h3.515l-4.199,6.939l4.316,7.059h-3.74V31z"></path>
+                  </svg>
+                  Baixar Exemplo
+                </button>
               </td>
             </tr>
           </app-table>
@@ -85,7 +116,11 @@
             <kbd class="kbd mr-4">Centímetro</kbd>
             <kbd class="kbd">M</kbd>
             <kbd class="kbd mx-1">▶︎</kbd>
-            <kbd class="kbd">Metro</kbd>
+            <kbd class="kbd mr-4">Metro</kbd>
+
+            <kbd class="kbd">PÇ</kbd>
+            <kbd class="kbd mx-1">▶︎</kbd>
+            <kbd class="kbd">Peça</kbd>
           </div>
 
         </div>
@@ -109,8 +144,8 @@
             <th>Empresa*</th>
             <th>Almoxarifado*</th>
           </tr>
-          @for(m of materials; track m) {
-              <tr class="odd:bg-neutral-100" body>
+          @for (m of materials; track m) {
+            <tr class="odd:bg-neutral-100" body>
               <td>{{ m.materialName }}</td>
               <td>{{ m.materialBrand }}</td>
               <td>{{ m.power }}</td>

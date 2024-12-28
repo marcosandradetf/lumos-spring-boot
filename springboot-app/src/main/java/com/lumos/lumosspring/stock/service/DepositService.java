@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.service;
 
 import com.lumos.lumosspring.stock.controller.dto.DepositDTO;
+import com.lumos.lumosspring.stock.controller.dto.DepositResponse;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.entities.Type;
 import com.lumos.lumosspring.stock.repository.CompanyRepository;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,8 +25,28 @@ public class DepositService {
     @Autowired
     private MaterialRepository materialRepository;
 
-    public List<Deposit> findAll() {
-        return depositRepository.findAllByOrderByIdDeposit();
+    public List<DepositResponse> findAll() {
+        var deposits =  depositRepository.findAllByOrderByIdDeposit();
+        List<DepositResponse> depositResponses = new ArrayList<>();
+        String companyName;
+
+        for (var deposit : deposits) {
+            // Verifica se o campo 'company' é nulo
+            if (deposit.getCompany() != null) {
+                companyName = deposit.getCompany().getCompanyName();
+            } else {
+                // Se 'company' for nulo, define um valor padrão ou pode lançar uma exceção
+                companyName = "Não definido";  // Valor padrão
+                // Ou lançar uma exceção se preferir, por exemplo:
+                // throw new IllegalArgumentException("O depósito " + deposit.getIdDeposit() + " não tem empresa associada.");
+            }
+            depositResponses.add(new DepositResponse(
+                    deposit.getIdDeposit(),
+                    deposit.getDepositName(),
+                    companyName
+            ));
+        }
+        return depositResponses;
     }
 
     public Deposit findById(Long id) {
