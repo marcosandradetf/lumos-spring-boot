@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres
+    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -8,35 +9,41 @@ services:
       - POSTGRES_PASSWORD=4dejulho_
       - POSTGRES_DB=001SCLCONST
     networks:
-      - my_network
+      - lumos-network
     restart: always
 
-  # springboot-app:
-  #   build:
-  #     context: ./lumos-spring-boot/springboot-app/docker
-  #   container_name: springboot-app
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - ./lumos-spring-boot/springboot-app:/app
-  #     - shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
-  #   environment:
-  #     - SPRING_PROFILES_ACTIVE=development
-  #   networks:
-  #     - my_network
-  #   restart: always
+  springboot-app:
+    build:
+      context: ./springboot-app
+    container_name: springboot-app
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      # - ./springboot-app:/app
+      - /app/target
+      #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+    networks:
+      - lumos-network
+    restart: always
 
   go-server:
-    build: ./lumos-golang
+    build: ./golang-services
     container_name: go-server
+    depends_on:
+      - postgres
     ports:
       - "8081:8081"
     volumes:
+      - ./golang-services:/app 
       - shared-data:/mnt/nfs  # Montando volume compartilhado para dados
     environment:
       - ENVIRONMENT=development
     networks:
-      - my_network
+      - lumos-network
     restart: always
 
   nfs-server:
@@ -47,11 +54,28 @@ services:
     environment:
       - SHARED_DIRECTORY=/srv/nfs/exports
     networks:
-      - my_network
+      - lumos-network
     restart: always
 
+  # angular-app:
+  #   build:
+  #     context: ./angular-app  # Diretorio do projeto Angular
+  #   container_name: angular-app
+  #   depends_on:
+  #     - springboot-app
+  #   ports:
+  #     - "4200:4200"  # Expondo a porta 4200 do Angular
+  #   volumes:
+  #     - ./angular-app/src:/app/src  # Mapeia o codigo-fonte local para o container
+  #     - /app/node_modules  # Evita sobrescrever os node_modules
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true  # Habilita o polling para o hot reload no Windows ou ambientes nao Unix-like
+  #   networks:
+  #     - lumos-network
+  #   restart: always
+
 networks:
-  my_network:
+  lumos-network:
     driver: bridge
 
 volumes:

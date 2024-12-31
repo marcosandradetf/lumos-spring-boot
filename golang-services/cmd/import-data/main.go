@@ -9,5 +9,5 @@ func main() {
 	router := gin.Default()
 
 	middleware.ConfigureCORS(router)
-	mid
+	
 }

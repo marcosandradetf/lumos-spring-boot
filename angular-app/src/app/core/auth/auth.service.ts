@@ -4,12 +4,13 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Router } from '@angular/router';
 import {User} from '../models/user.model';
 import {routes} from '../../app.routes';
+import {environment} from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
+  private apiUrl = environment.springboot + "/api/auth";
   public isLoggedInSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(this.hasTokens());
   public isLoading$ = new BehaviorSubject<boolean>(true); // status de carregamento
 

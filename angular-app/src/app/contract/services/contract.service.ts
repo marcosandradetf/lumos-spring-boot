@@ -3,12 +3,13 @@ import {Contract} from '../contract-response.dto';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {MaterialResponse} from '../../stock/material-response.dto';
 import {ItemRequest} from '../itens-request.dto';
+import {environment} from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContractService {
-  private endpoint:string = 'http://localhost:8080/api';
+  private endpoint:string = environment.springboot + '/api';
   sidebarLinks = [
     { title: 'Dashboard', path: '/contratos/dashboard', id: 'opt1' },
     { title: 'Criar novo', path: '/contratos/criar', id: 'opt2' },

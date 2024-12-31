@@ -22,6 +22,8 @@ func init() {
 		return
 	}
 
+	fmt.Println(homeDir)
+
 	// Construir o caminho completo para o arquivo da chave pública
 	publicKeyPath := filepath.Join(homeDir, ".ssh", "app.pub")
 

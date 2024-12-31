@@ -10,13 +10,14 @@ import {Type} from '../../core/models/tipo.model';
 import {Group} from '../../core/models/grupo.model';
 import {Company} from '../../core/models/empresa.model';
 import {Deposit} from '../../core/models/almoxarifado.model';
+import {environment} from '../../../environments/environment';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class EstoqueService {
-  private endpoint = 'http://localhost:8080/api';
+  private endpoint = environment.springboot + '/api';
 
   private onPathSubject = new BehaviorSubject<string>(''); // Inicializa o caminho
   onPath$ = this.onPathSubject.asObservable(); // Observable para se inscrever

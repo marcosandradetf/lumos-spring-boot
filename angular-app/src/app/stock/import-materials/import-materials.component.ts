@@ -8,7 +8,7 @@ import {TableComponent} from '../../shared/components/table/table.component';
 import * as XLSX from 'xlsx';
 import {NgForOf, NgIf} from '@angular/common';
 import {FileServerService} from '../../file-server.service';
-import { saveAs } from 'file-saver'
+import {saveAs} from 'file-saver'
 
 @Component({
   selector: 'app-import-materials',
@@ -36,6 +36,8 @@ export class ImportMaterialsComponent {
     materialName: '',
     materialBrand: '',
     power: '',
+    amps: '',
+    length: '',
     buyUnit: '',
     buyRequest: '',
     materialType: '',
@@ -43,6 +45,7 @@ export class ImportMaterialsComponent {
     company: '',
     deposit: '',
   }[] = [];
+  fileName: string = '';
 
   constructor(private stockService: EstoqueService,
               private materialService: MaterialService,
@@ -55,12 +58,18 @@ export class ImportMaterialsComponent {
   onFileChange(event: any): void {
     const file = event.target.files[0];  // Pega o primeiro arquivo selecionado
     if (!file) {
+      this.fileName = '';
       return;
     }
 
+    if (this.materials.length > 0)
+      this.materials = [];
+
+    this.fileName = file.name;
+
     // Lê o arquivo Excel usando a biblioteca XLSX
     this.loading = true;
-    // this.showTable = true;
+    this.showTable = true;
 
     const reader = new FileReader();
     reader.onload = (e: any) => {
@@ -85,20 +94,23 @@ export class ImportMaterialsComponent {
   // Função para processar os dados e transformar em objetos conforme o modelo
   errors: string[] = [];
   columnRules = [
-    {columnName: 'Nome do Material', prefixes: ['Material'], required: true},
-    {columnName: 'Marca', prefixes: ['Marca'], required: true},
-    {columnName: 'Potência', prefixes: ['Potência', 'Potencia'], required: false},
-    {columnName: 'Unidade de Compra', prefixes: ['Unidade'], required: true},
-    {columnName: 'Unidade de Requisição', prefixes: ['Requisição', 'Requisicao', 'Requisiçao'], required: true},
-    {columnName: 'Tipo Material', prefixes: ['Tipo'], required: true},
-    {columnName: 'Grupo Material', prefixes: ['Grupo'], required: true},
-    {columnName: 'Empresa', prefixes: ['Empresa'], required: true},
-    {columnName: 'Almoxarifado', prefixes: ['Depósito', 'Deposito'], required: true},
+    {columnName: 'Nome do Material', required: true},
+    {columnName: 'Marca', required: false},
+    {columnName: 'Potência', required: false},
+    {columnName: 'Corrente', required: false},
+    {columnName: 'Tamanho', required: false},
+    {columnName: 'Unidade de Compra', required: true},
+    {columnName: 'Unidade de Requisição', required: true},
+    {columnName: 'Tipo Material', required: true},
+    {columnName: 'Grupo Material', required: true},
+    {columnName: 'Empresa', required: true},
+    {columnName: 'Almoxarifado', required: true},
   ];
 
 
   validateRowByPrefix(row: string[], line: number): boolean {
     let result = true;
+
     for (let i = 0; i < this.columnRules.length; i++) {
       const rule = this.columnRules[i];
       const value = row[i]?.trim();
@@ -109,22 +121,15 @@ export class ImportMaterialsComponent {
         result = false;
       }
 
-      console.log(value)
-      console.log(value.split(' ')[1])
-
-      if (value.split(' ')[1] === null || value.split(' ')[1] === '' || value.split(' ')[1] === undefined) {
-        this.errors.push(`Linha ${line}: Por questão de segurança dados na coluna ${rule.columnName} deve começar pelo prefixo: "${rule.prefixes[0]}" + Descrição. Valor encontrado: "${value}".`);
-        result = false;
+      if (i === 5 || i === 6) {
+        if (value.length > 2) {
+          this.errors.push(
+            `Linha ${line}: Para a coluna ${rule.columnName}, após o prefixo é permitido até 2 caracteres.`
+          );
+          result = false;
+        }
       }
 
-      // Verificar se o valor começa com algum dos prefixos permitidos
-      const isValidPrefix = rule.prefixes.some((prefix) => value.startsWith(prefix));
-      if (!isValidPrefix) {
-        this.errors.push(
-          `Linha ${line}: Por questão de segurança dados na coluna ${rule.columnName} deve começar pelo prefixo: "${rule.prefixes[0]}". Valor encontrado: "${value}".`
-        );
-        result = false;
-      }
     }
     return result;
   }
@@ -139,7 +144,11 @@ export class ImportMaterialsComponent {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       if (row.length === header.length) {  // Verifica se a linha tem o número correto de colunas
-        // Validar a linha inteira por prefixo
+        if(data.length > 500) {
+          this.showTable = false
+          return [];
+        }
+
         if (!this.validateRowByPrefix(row, i)) {
           continue; // Pula a linha com erro
         }
@@ -148,12 +157,14 @@ export class ImportMaterialsComponent {
           materialName: row[0] || '',
           materialBrand: row[1] || '',
           power: row[2] || '',
-          buyUnit: row[3] || '',
-          buyRequest: row[4] || '',
-          materialType: row[5] || '',
-          materialGroup: row[6] || '',
-          company: row[7] || '',
-          deposit: row[8] || ''
+          amps: row[3] || '',
+          length: row[4] || '',
+          buyUnit: row[5] || '',
+          buyRequest: row[6] || '',
+          materialType: row[7] || '',
+          materialGroup: row[8] || '',
+          company: row[9] || '',
+          deposit: row[10] || ''
         };
 
         // Adiciona o objeto material no array de materiais

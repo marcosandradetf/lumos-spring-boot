@@ -6,7 +6,7 @@ import {Observable} from 'rxjs';
   providedIn: 'root'
 })
 export class FileServerService {
-  private apiUrl = 'http://192.168.3.100:8081/download/';  // URL do seu servidor (ajuste conforme necessário)
+  private apiUrl = 'http://localhost:8081/download/';  // URL do seu servidor (ajuste conforme necessário)
 
   constructor(private http: HttpClient) { }
 

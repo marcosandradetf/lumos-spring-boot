@@ -1,0 +1,2 @@
+-> Copiar para o servidor de arquivos
+docker cp .\importacao_materiais.xlsx nfs-server:/srv/nfs/exports

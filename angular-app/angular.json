@@ -43,6 +43,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -55,6 +61,9 @@
                   "maximumError": "4kB"
                 }
               ],
+              "optimization": true,
+              "sourceMap": false,
+              "aot": true,
               "outputHashing": "all"
             },
             "development": {

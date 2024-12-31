@@ -16,14 +16,18 @@ func main() {
 	// Configuração do middleware CORS
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-			"http://192.168.3.100:4200", // Permite o frontend rodando no IP local da VM
-			"http://localhost:4200",     // Permite o frontend local
-			"http://frontend:4200",      // Permite o frontend dentro do container (caso esteja rodando dentro do Docker)
+			"http://192.168.3.100:4200", // Frontend local
+			"http://localhost:4200",     // Frontend local
+			"http://frontend:4200",      // Frontend dentro de Docker (se aplicável)
 		},
-		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"}, // Métodos permitidos
-		AllowHeaders:     []string{"*"},                                                // Permite todos os cabeçalhos (cuidado, pois em produção pode ser mais restritivo)
-		AllowCredentials: true,                                                         // Permite cookies e credenciais
-		MaxAge:           3600,                                                         // Cache da preflight request
+		AllowMethods: []string{
+			"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE",
+		}, // Métodos permitidos
+		AllowHeaders: []string{
+			"Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "X-Custom-Header",
+		}, // Permite cabeçalhos necessários, incluindo 'Authorization'
+		AllowCredentials: true, // Permite cookies e credenciais
+		MaxAge:           3600, // Cache da preflight request
 	}))
 
 	// Usando o middleware de autenticação JWT em todas as rotas que precisam

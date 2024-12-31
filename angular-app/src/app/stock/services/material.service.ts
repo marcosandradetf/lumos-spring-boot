@@ -3,6 +3,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
 import {MaterialResponse} from '../material-response.dto';
 import {CreateMaterialRequest} from '../create-material-request.dto';
+import {environment} from '../../../environments/environment';
 
 export enum State {
   create,
@@ -13,7 +14,7 @@ export enum State {
   providedIn: 'root'
 })
 export class MaterialService {
-  private apiUrl = 'http://localhost:8080/api/material';
+  private apiUrl = environment.springboot + '/api/material';
   private materialsSubject: BehaviorSubject<MaterialResponse[]> = new BehaviorSubject<MaterialResponse[]>([]);
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
   public totalPages: number = 0;

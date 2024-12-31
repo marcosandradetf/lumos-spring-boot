@@ -1,0 +1,8 @@
+version: "2"
+sql:
+  - engine: "postgresql"  # Ou outro banco, como "mysql" ou "sqlite"
+    schema: "schema.sql"  # Arquivo de esquema, veja a próxima etapa
+    queries: "queries/"
+    gen:
+      go:
+        package: "db"
