@@ -9,10 +9,10 @@ public class Type {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_type")
     private long idType;
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String typeName;
     @ManyToOne
-    @JoinColumn(name = "id_group")
+    @JoinColumn(name = "id_group", nullable = false)
     private Group group;
 
     public long getIdType() {

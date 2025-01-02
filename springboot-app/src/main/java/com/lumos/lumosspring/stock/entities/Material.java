@@ -14,22 +14,26 @@ public class Material {
     @Column(name = "id_material")
     private long idMaterial;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String materialName;
 
     @Column(columnDefinition = "TEXT")
     private String materialBrand;
 
-    private Float materialPower;
+    private String materialPower;
 
-    @Column(columnDefinition = "TEXT")
+    private String materialAmps;
+
+    private String materialLength;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String buyUnit;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String requestUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_material_type")
+    @JoinColumn(name = "id_material_type", nullable = false)
     private Type materialType;
 
     @OneToMany
@@ -48,11 +52,11 @@ public class Material {
     private boolean inactive;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_company")
+    @JoinColumn(name = "id_company", nullable = false)
     private Company company;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_deposit")
+    @JoinColumn(name = "id_deposit", nullable = false)
     private Deposit deposit;
 
     public Company getCompany() {
@@ -157,11 +161,11 @@ public class Material {
         this.stockAvailable -= quantityAvailable;
     }
 
-    public Float getMaterialPower() {
+    public String getMaterialPower() {
         return materialPower;
     }
 
-    public void setMaterialPower(Float materialPower) {
+    public void setMaterialPower(String materialPower) {
         this.materialPower = materialPower;
     }
 
@@ -184,4 +188,21 @@ public class Material {
     public void setCostPrice(BigDecimal costPrice) {
         this.costPrice = costPrice;
     }
+
+    public String getMaterialAmps() {
+        return materialAmps;
+    }
+
+    public void setMaterialAmps(String materialAmps) {
+        this.materialAmps = materialAmps;
+    }
+
+    public String getMaterialLength() {
+        return materialLength;
+    }
+
+    public void setMaterialLength(String materialLength) {
+        this.materialLength = materialLength;
+    }
 }
+

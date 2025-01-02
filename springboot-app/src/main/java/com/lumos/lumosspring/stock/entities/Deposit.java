@@ -8,11 +8,11 @@ public class Deposit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long idDeposit;
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String depositName;
 
     @ManyToOne
-    @JoinColumn(name = "company_id")
+    @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
     public long getIdDeposit() {

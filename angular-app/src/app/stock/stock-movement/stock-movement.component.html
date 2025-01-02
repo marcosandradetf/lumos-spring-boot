@@ -82,7 +82,9 @@
 
     <div class="flex justify-between mt-4">
       <app-button [action]="handleClick" title="Continuar"></app-button>
-      <app-pagination [service]="this.materialService"></app-pagination>
+      <div class="overflow-auto m-10">
+        <app-pagination [service]="this.materialService"></app-pagination>
+      </div>
     </div>
 
     <!--    modal change -->

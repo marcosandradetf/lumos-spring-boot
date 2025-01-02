@@ -10,7 +10,7 @@ public class Group {
     @Column(name = "id_group")
     private long idGroup;
 
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String groupName;
 
     public long getIdGroup() {

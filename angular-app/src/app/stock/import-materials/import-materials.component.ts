@@ -9,6 +9,7 @@ import * as XLSX from 'xlsx';
 import {NgForOf, NgIf} from '@angular/common';
 import {FileServerService} from '../../file-server.service';
 import {saveAs} from 'file-saver'
+import {catchError, tap, throwError} from 'rxjs';
 
 @Component({
   selector: 'app-import-materials',
@@ -35,19 +36,21 @@ export class ImportMaterialsComponent {
   materials: {
     materialName: '',
     materialBrand: '',
-    power: '',
-    amps: '',
-    length: '',
+    materialPower: '',
+    materialAmps: '',
+    materialLength: '',
     buyUnit: '',
-    buyRequest: '',
-    materialType: '',
-    materialGroup: '',
-    company: '',
-    deposit: '',
+    requestUnit: '',
+    materialTypeName: '',
+    materialGroupName: '',
+    companyName: '',
+    depositName: '',
   }[] = [];
   fileName: string = '';
+  responseMessage: string = '';
+  responseClass: string = "";
 
-  constructor(private stockService: EstoqueService,
+  constructor(
               private materialService: MaterialService,
               private title: Title, protected router: Router,
               private fileServerService: FileServerService) {
@@ -107,7 +110,6 @@ export class ImportMaterialsComponent {
     {columnName: 'Almoxarifado', required: true},
   ];
 
-
   validateRowByPrefix(row: string[], line: number): boolean {
     let result = true;
 
@@ -144,7 +146,7 @@ export class ImportMaterialsComponent {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       if (row.length === header.length) {  // Verifica se a linha tem o número correto de colunas
-        if(data.length > 500) {
+        if(data.length > 501) {
           this.showTable = false
           return [];
         }
@@ -156,15 +158,15 @@ export class ImportMaterialsComponent {
         const material = {
           materialName: row[0] || '',
           materialBrand: row[1] || '',
-          power: row[2] || '',
-          amps: row[3] || '',
-          length: row[4] || '',
+          materialPower: row[2] || '',
+          materialAmps: row[3] || '',
+          materialLength: row[4] || '',
           buyUnit: row[5] || '',
-          buyRequest: row[6] || '',
-          materialType: row[7] || '',
-          materialGroup: row[8] || '',
-          company: row[9] || '',
-          deposit: row[10] || ''
+          requestUnit: row[6] || '',
+          materialTypeName: row[7] || '',
+          materialGroupName: row[8] || '',
+          companyName: row[9] || '',
+          depositName: row[10] || ''
         };
 
         // Adiciona o objeto material no array de materiais
@@ -187,4 +189,30 @@ export class ImportMaterialsComponent {
       }
     });
   }
+
+  confirmImport() {
+    if (this.materials.length === 0) {
+      return;
+    }
+
+    this.loading = true;
+
+    this.materialService.importData(this.materials).pipe(
+      tap(res => {
+        this.loading = false;
+        this.responseClass = "bg-success text-white"
+        this.responseMessage = ((res as any).message);
+      }),
+      catchError(err => {
+        this.loading = false;
+        console.log(err);
+        this.responseClass = "bg-error text-white"
+        this.responseMessage = err.error.error;
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  protected readonly Window = Window;
+  protected readonly location = location;
 }

@@ -9,7 +9,7 @@ public class Company {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_company")
     private Long idCompany;
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String companyName;
 
     public Long getIdCompany() {

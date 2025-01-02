@@ -9,7 +9,7 @@
       </ul>
     </div>
 
-    @if (!loading && !showTable) {
+    @if (!loading && !showTable && !responseMessage) {
       <div
         class="w-[90%] lg:w-[calc(100vw-100px)] 2xl:w-[calc(100vw-320px)] flex flex-col justify-center items-center border shadow">
         <h2 class="bg-neutral-200 text-neutral-800 w-[100%] text-center text-sm p-1">Role a página e siga o passo a
@@ -201,11 +201,11 @@
 
       </div>
 
-    } @else if (loading) {
+    } @else if (loading && !responseMessage) {
       <div class="h-[calc(100vh-200px)] w-[calc(100vw-200px)] flex justify-center items-center">
         <span class="loading loading-infinity loading-lg"></span>
       </div>
-    } @else if (!loading && materials.length > 0) {
+    } @else if (!loading && materials.length > 0 && !responseMessage) {
       <div
         class="overflow-auto w-[90%] lg:w-[calc(100vw-100px)] 2xl:w-[calc(100vw-320px)] flex flex-col justify-center items-center border shadow">
         <h2 class="mb-5 bg-neutral-200 text-neutral-800 w-[100%] text-center text-sm p-1">
@@ -215,9 +215,12 @@
         <div>
           <button type="button"
                   class="text-neutral-50 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2"
-                  (click)="null">
-            <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#e8eaed"><path d="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z"/></svg>
-            Confirmar Exportação
+                  (click)="confirmImport()">
+            <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#e8eaed">
+              <path
+                d="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z"/>
+            </svg>
+            Confirmar Importação
           </button>
         </div>
 
@@ -237,23 +240,56 @@
               <th>Empresa*</th>
               <th>Almoxarifado*</th>
             </tr>
-            @for (m of materials; track m; let i = $index;) {
+            @for (m of materials; track m; let i = $index; ) {
               <tr class="odd:bg-neutral-100" body>
-                <td>{{ i+2 }}</td>
+                <td>{{ i + 2 }}</td>
                 <td>{{ m.materialName }}</td>
                 <td>{{ m.materialBrand }}</td>
-                <td>{{ m.power }}</td>
-                <td>{{ m.amps }}</td>
-                <td>{{ m.length }}</td>
+                <td>{{ m.materialPower }}</td>
+                <td>{{ m.materialAmps }}</td>
+                <td>{{ m.materialLength }}</td>
                 <td>{{ m.buyUnit }}</td>
-                <td>{{ m.buyRequest }}</td>
-                <td>{{ m.materialType }}</td>
-                <td>{{ m.materialGroup }}</td>
-                <td>{{ m.company }}</td>
-                <td>{{ m.deposit }}</td>
+                <td>{{ m.requestUnit }}</td>
+                <td>{{ m.materialTypeName }}</td>
+                <td>{{ m.materialGroupName }}</td>
+                <td>{{ m.companyName }}</td>
+                <td>{{ m.depositName }}</td>
               </tr>
             }
           </app-table>
+        </div>
+      </div>
+    } @else if (responseMessage) {
+      <div
+        class="overflow-auto w-[90%] lg:w-[calc(100vw-100px)] 2xl:w-[calc(100vw-320px)] flex flex-col justify-center items-center border shadow pb-5">
+        <div class="p-5 border rounded-xl mt-5 mb-5 shadow {{responseClass}} text-center p-5 px-20">
+          {{ responseMessage }}
+        </div>
+        <div>
+
+          @if (responseClass.includes('success')) {
+            <button type="button"
+                    class="text-neutral-50 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2"
+                    (click)="router.navigate(['/estoque'])">
+              <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px"
+                   fill="#e8eaed">
+                <path
+                  d="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z"/>
+              </svg>
+              Ir ao Estoque
+            </button>
+          } @else {
+            <button type="button"
+                    class="text-neutral-50 bg-warning-content hover:bg-neutral-900 focus:ring-neutral-900 focus:outline-none focus:bg-neutral-900 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2"
+                    (click)="location.reload()">
+              <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px"
+                   fill="#e8eaed">
+                <path
+                  d="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z"/>
+              </svg>
+              Tentar Novamente
+            </button>
+          }
         </div>
       </div>
     }

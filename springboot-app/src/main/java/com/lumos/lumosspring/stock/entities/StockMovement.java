@@ -18,8 +18,10 @@ public class StockMovement {
     private String stockMovementDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "material_id", nullable = false)
     private Material material;
 
+    @Column(nullable = false)
     private Instant stockMovementRefresh;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,12 +33,13 @@ public class StockMovement {
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private int inputQuantity;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String buyUnit;
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
     private int quantityPackage;
 
+    @Column(nullable = false)
     private BigDecimal pricePerItem;
 
     @ManyToOne
@@ -45,7 +48,6 @@ public class StockMovement {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-
 
     public StockMovement(Instant stockMovementRefresh) {
         this.stockMovementRefresh = stockMovementRefresh;

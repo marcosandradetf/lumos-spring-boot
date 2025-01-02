@@ -1,12 +1,12 @@
 <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
       class=" h-auto flex flex-col">
-  <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">{{materialService.getState() === State.create ? "Cadastrar novo Material" : "Atualizar Material" }}</h4>
+  <h2 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700 pb-2">{{materialService.getState() === State.create ? "Cadastrar novo Material" : "Atualizar Material" }}</h2>
+  <h4 class="mt-3 mb-3 poppins-light select-none text-neutral-700">Somente os campos com asterisco(*) possuem preenchimento obrigatório</h4>
 
   <div class="flex space-x-4 flex-wrap text-neutral-700">
-
     <label class="form-control w-full max-w-xs ml-4">
       <div class="label">
-        <span class="label-text">Grupo</span>
+        <span class="label-text">Grupo*</span>
       </div>
       <select
         class="select select-bordered"
@@ -29,7 +29,7 @@
       class="tooltip tooltip-bottom form-control w-full max-w-xs" >
       <label class="form-control w-full max-w-xs">
         <div class="label">
-          <span class="label-text">Tipo</span>
+          <span class="label-text">Tipo*</span>
         </div>
         <select
           class="select select-bordered"
@@ -50,7 +50,7 @@
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Material</span>
+        <span class="label-text">Material*</span>
       </div>
       <input type="text"
              name="nomeMaterial"
@@ -74,26 +74,55 @@
       <input type="text"
              name="marcaMaterial"
              [(ngModel)]="material.materialBrand"
-             required
              minlength="3"
              #marcaMaterialModel="ngModel"
              placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
       <div *ngIf="marcaMaterialModel.invalid && formSubmitted">
-        <small *ngIf="marcaMaterialModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
         <small *ngIf="marcaMaterialModel.errors?.['minlength']" class="text-orange-600">
           Marca do material requer no mínimo 3 caracteres.
         </small>
       </div>
     </label>
 
+
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Un. Compra</span>
+        <span class="label-text">Potência (W/KW)</span>
+      </div>
+      <input type="text"
+             name="materialPower"
+             [(ngModel)]="material.materialPower"
+             placeholder="Ex.: 1000W / 130KW" class="input input-bordered w-full max-w-xs" />
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Corrente (A)</span>
+      </div>
+      <input type="text"
+             name="materialLength"
+             [(ngModel)]="material.materialAmps"
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+    </label>
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Tamanho</span>
+      </div>
+      <input type="text"
+             name="materialLength"
+             [(ngModel)]="material.materialLength"
+             minlength="3"
+             placeholder="Ex. 0,75X25,4X1000mm" class="input input-bordered w-full max-w-xs" />
+    </label>
+
+    <label class="form-control w-full max-w-xs">
+      <div class="label">
+        <span class="label-text">Un. Compra*</span>
       </div>
       <select
         class="select select-bordered"
         [(ngModel)]="material.buyUnit"
-        name="unidadeCompra"
+        name="buyUnit"
         required
         #unidadeCompraModel="ngModel">
         @for (unidade of units; track unidade.Value) {
@@ -109,12 +138,12 @@
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Un. Requisição</span>
+        <span class="label-text">Un. Requisição*</span>
       </div>
       <select
         class="select select-bordered"
         [(ngModel)]="material.requestUnit"
-        name="unidadeRequisicao"
+        name="requestUnit"
         required
         #unidRequisicaoModel="ngModel">
         @for (unidade of units; track unidade.Value) {
@@ -130,12 +159,12 @@
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Empresa</span>
+        <span class="label-text">Empresa*</span>
       </div>
       <select
         class="select select-bordered"
         [(ngModel)]="material.company"
-        name="empresa"
+        name="company"
         required
         #empresaModel="ngModel">
         @for (empresa of companies; track empresa.idCompany) {
@@ -149,12 +178,12 @@
 
     <label class="form-control w-full max-w-xs">
       <div class="label">
-        <span class="label-text">Almoxarifado</span>
+        <span class="label-text">Almoxarifado*</span>
       </div>
       <select
         class="select select-bordered"
         [(ngModel)]="material.deposit"
-        name="almoxarifado"
+        name="deposit"
         required
         #almoxarifadoModel="ngModel">
         @for (almoxarifado of deposits; track almoxarifado.idDeposit) {
@@ -170,7 +199,7 @@
       <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
         <span class="label-text">Material Inativo</span>
         <input type="checkbox"
-               name="inativo"
+               name="inactive"
                [(ngModel)]="material.inactive"
                class="toggle toggle-primary" />
       </label>

@@ -87,6 +87,11 @@ public class MaterialService {
         var newMaterial = new Material();
         newMaterial.setMaterialName(material.materialName());
         newMaterial.setMaterialBrand(material.materialBrand());
+
+        newMaterial.setMaterialPower(material.materialPower());
+        newMaterial.setMaterialAmps(material.materialBrand());
+        newMaterial.setMaterialLength(material.materialBrand());
+
         newMaterial.setBuyUnit(material.buyUnit());
         newMaterial.setRequestUnit(material.requestUnit());
         newMaterial.setStockQuantity(material.stockQt());
@@ -102,6 +107,9 @@ public class MaterialService {
                 material.getIdMaterial(),
                 material.getMaterialName(),
                 material.getMaterialBrand(),
+                material.getMaterialPower() != null ? material.getMaterialPower().toString() : null,
+                material.getMaterialAmps() != null ? material.getMaterialPower().toString() : null,
+                material.getMaterialLength() != null ? material.getMaterialPower().toString() : null,
                 material.getBuyUnit(),
                 material.getRequestUnit(),
                 material.getStockQuantity(),
@@ -164,6 +172,11 @@ public class MaterialService {
         Material materialToUpdate = existingMaterial.get();
         materialToUpdate.setMaterialName(material.materialName());
         materialToUpdate.setMaterialBrand(material.materialBrand());
+
+        materialToUpdate.setMaterialPower(material.materialPower());
+        materialToUpdate.setMaterialAmps(material.materialAmps());
+        materialToUpdate.setMaterialLength(material.materialLength());
+
         materialToUpdate.setBuyUnit(material.buyUnit());
         materialToUpdate.setRequestUnit(material.requestUnit());
         materialToUpdate.setInactive(material.inactive());

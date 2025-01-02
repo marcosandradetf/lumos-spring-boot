@@ -39,6 +39,11 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     deposit: 0,
     inactive: false,
     materialBrand: '',
+
+    materialPower: '',
+    materialAmps: '',
+    materialLength: '',
+
     materialName: '',
     materialType: 0,
     requestUnit: '',

@@ -4,6 +4,11 @@ export interface MaterialResponse {
   idMaterial: number;
   materialName: string;
   materialBrand: string;
+
+  materialPower: string;
+  materialAmps: string;
+  materialLength: string;
+
   buyUnit: string;
   requestUnit: string;
   materialType: string;

@@ -15,6 +15,7 @@ export enum State {
 })
 export class MaterialService {
   private apiUrl = environment.springboot + '/api/material';
+  private goEndpoint = environment.goStock + '/api/stock';
   private materialsSubject: BehaviorSubject<MaterialResponse[]> = new BehaviorSubject<MaterialResponse[]>([]);
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
   public totalPages: number = 0;
@@ -25,6 +26,11 @@ export class MaterialService {
     deposit: 0,
     inactive: false,
     materialBrand: '',
+
+    materialPower: '',
+    materialAmps: '',
+    materialLength: '',
+
     materialName: '',
     materialType: 0,
     requestUnit: '',
@@ -130,6 +136,11 @@ export class MaterialService {
       deposit: 0,
       inactive: _material.inactive,
       materialBrand: _material.materialBrand,
+
+      materialPower: _material.materialPower,
+      materialAmps: _material.materialAmps,
+      materialLength: _material.materialLength,
+
       materialName: _material.materialName,
       materialType: 0,
       requestUnit: _material.requestUnit
@@ -161,6 +172,11 @@ export class MaterialService {
       deposit: 0,
       inactive: false,
       materialBrand: '',
+
+      materialPower: '',
+      materialAmps: '',
+      materialLength: '',
+
       materialName: '',
       materialType: 0,
       requestUnit: '',
@@ -170,5 +186,23 @@ export class MaterialService {
 
   setState(state: State) {
     this.stateSubject.next(state);
+  }
+
+  importData(
+    materials: {
+      materialName: '',
+      materialBrand: '',
+      materialPower: '',
+      materialAmps: '',
+      materialLength: '',
+      buyUnit: '',
+      requestUnit: '',
+      materialTypeName: '',
+      materialGroupName: '',
+      companyName: '',
+      depositName: '',
+    }[]
+  ){
+    return this.http.post(this.goEndpoint + "/import", materials);
   }
 }

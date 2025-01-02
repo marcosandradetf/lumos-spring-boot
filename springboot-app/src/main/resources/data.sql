@@ -63,8 +63,8 @@ values('SCL Solutions')
     ON CONFLICT (company_name) DO NOTHING;
 
 -- script deposit
-insert into tb_deposits (deposit_name)
-values('Galpão BH')
+insert into tb_deposits (deposit_name, company_id)
+values('Galpão BH', 1)
     ON CONFLICT (deposit_name) DO NOTHING;
 
 -- script roles

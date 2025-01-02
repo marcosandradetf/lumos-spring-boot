@@ -1,8 +1,9 @@
 version: "2"
 sql:
-  - engine: "postgresql"  # Ou outro banco, como "mysql" ou "sqlite"
-    schema: "schema.sql"  # Arquivo de esquema, veja a próxima etapa
-    queries: "queries/"
+  - engine: "postgresql"
+    schema: "sql/schema.sql"
+    queries: "sql/queries.sql"
     gen:
       go:
         package: "db"
+        out: "internal/db"

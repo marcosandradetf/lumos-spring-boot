@@ -5,7 +5,8 @@
 export const environment = {
   production: false,
   springboot: "http://localhost:8080",
-  golang: "http://localhost:8081",
+  goFileserver: "http://localhost:8081",
+  goStock: "http://localhost:8082"
 };
 
 /*
