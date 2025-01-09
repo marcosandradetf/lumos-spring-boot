@@ -24,7 +24,7 @@ func main() {
 	}
 
 	queries := db.New(connDb)
-	handler := &handlers.Handler{Queries: queries}
+	handler := &handlers.Handler{Queries: queries, DB: connDb}
 
 	//handler := &handlers.Handler{}
 

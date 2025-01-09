@@ -15,6 +15,7 @@ import (
 
 type Handler struct {
 	Queries *db.Queries
+	DB      *sql.DB
 }
 
 func (h *Handler) CreateMaterials(c *gin.Context) {
@@ -26,12 +27,28 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 		return
 	}
 
+	tx, err := h.DB.Begin()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Transaction failed"})
+		return
+	}
+	defer func() {
+		if p := recover(); p != nil { // Caso haja um panic, realiza o rollback e repropaga o panic
+			_ = tx.Rollback()
+			panic(p)
+		} else if err != nil { // Caso ocorra erro durante o fluxo, realiza o rollback
+			_ = tx.Rollback()
+		}
+	}()
+
+	qtx := h.Queries.WithTx(tx)
+
 	caser := cases.Title(language.BrazilianPortuguese)
 
 	// Iterar pelos materiais
 	for _, material := range materials {
 		// Verificar se o material já existe
-		_, err := h.Queries.ExistsMaterialByName(c.Request.Context(), db.ExistsMaterialByNameParams{
+		_, err := qtx.ExistsMaterialByName(c.Request.Context(), db.ExistsMaterialByNameParams{
 			MaterialName:   strings.ToLower(material.MaterialName),
 			MaterialBrand:  sql.NullString{String: strings.ToLower(material.MaterialBrand), Valid: material.MaterialBrand != ""},
 			MaterialPower:  sql.NullString{String: strings.ToLower(material.MaterialPower), Valid: material.MaterialPower != ""},
@@ -50,11 +67,11 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 			continue
 		}
 
-		companyId, err := h.Queries.ExistsCompanyByName(c.Request.Context(),
+		companyId, err := qtx.ExistsCompanyByName(c.Request.Context(),
 			strings.ToLower(material.CompanyName))
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				companyId, err = h.Queries.CreateCompany(c.Request.Context(), material.CompanyName)
+				companyId, err = qtx.CreateCompany(c.Request.Context(), material.CompanyName)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Error"})
 					return
@@ -68,11 +85,11 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 			fmt.Println("Empresa já existe ID: ", companyId)
 		}
 
-		depositId, err := h.Queries.ExistsDepositByName(c.Request.Context(),
+		depositId, err := qtx.ExistsDepositByName(c.Request.Context(),
 			strings.ToLower(material.DepositName))
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				depositId, err = h.Queries.CreateDeposit(c.Request.Context(), db.CreateDepositParams{
+				depositId, err = qtx.CreateDeposit(c.Request.Context(), db.CreateDepositParams{
 					DepositName: material.DepositName,
 					CompanyID:   companyId,
 				})
@@ -89,11 +106,11 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 			fmt.Println("Almoxarifado já existe ID: ", depositId)
 		}
 
-		groupId, err := h.Queries.ExistsByGroupName(c.Request.Context(),
+		groupId, err := qtx.ExistsByGroupName(c.Request.Context(),
 			strings.ToLower(material.MaterialGroupName))
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				groupId, err = h.Queries.CreateGroup(c.Request.Context(), material.MaterialGroupName)
+				groupId, err = qtx.CreateGroup(c.Request.Context(), material.MaterialGroupName)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Error"})
 					return
@@ -107,11 +124,11 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 			fmt.Println("Grupo já existe ID: ", groupId)
 		}
 
-		typeId, err := h.Queries.ExistsTypeByName(c.Request.Context(),
+		typeId, err := qtx.ExistsTypeByName(c.Request.Context(),
 			strings.ToLower(material.MaterialTypeName))
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				typeId, err = h.Queries.CreateType(c.Request.Context(), db.CreateTypeParams{
+				typeId, err = qtx.CreateType(c.Request.Context(), db.CreateTypeParams{
 					IDGroup:  groupId,
 					TypeName: material.MaterialTypeName,
 				})
@@ -129,7 +146,7 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 		}
 
 		// Criar material no banco
-		err = h.Queries.CreateMaterial(c.Request.Context(), db.CreateMaterialParams{
+		err = qtx.CreateMaterial(c.Request.Context(), db.CreateMaterialParams{
 			MaterialName:   material.MaterialName,
 			MaterialBrand:  sql.NullString{String: caser.String(strings.ToLower(material.MaterialBrand)), Valid: material.MaterialBrand != ""},
 			MaterialPower:  sql.NullString{String: strings.ToUpper(material.MaterialPower), Valid: material.MaterialPower != ""},
@@ -145,6 +162,12 @@ func (h *Handler) CreateMaterials(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Error"})
 			return
 		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction failed"})
+		return
 	}
 
 	// Retornar resposta de sucesso

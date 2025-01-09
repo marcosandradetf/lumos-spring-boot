@@ -3,7 +3,6 @@ package com.lumos.lumosspring.authentication.controller;
 import com.lumos.lumosspring.authentication.controller.dto.LoginRequest;
 import com.lumos.lumosspring.authentication.controller.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.controller.dto.LoginResponseMobile;
-import com.lumos.lumosspring.authentication.controller.dto.RefreshTokenRequest;
 import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.authentication.entities.Role;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
@@ -22,34 +21,32 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/auth")
-public class TokenController {
+@RequestMapping("/api/auth/mobile")
+public class TokenControllerMobile {
 
     private final JwtEncoder jwtEncoder;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtDecoder jwtDecoder;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public TokenController(JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository) {
+    public TokenControllerMobile(JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository) {
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtDecoder = jwtDecoder;
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+    public ResponseEntity<?> loginMobile(@RequestBody LoginRequest loginRequest) {
         var user = userRepository.findByUsername(loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             throw new BadCredentialsException("Usuário ou senha incorretos");
         }
 
         var now = Instant.now();
-        var expiresIn = 1800L; // 30 Minutos
-        var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
+        var expiresIn = 1800L; // 30 minutos
+        var refreshExpiresIn = 2592000L; // 30 dias
 
         var scopes = user.get().getRoles()
                 .stream()
@@ -81,20 +78,14 @@ public class TokenController {
         refreshToken.setRevoked(false);
         refreshTokenRepository.save(refreshToken);
 
-        // Configura o `refreshToken` como um cookie HTTP-Only
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshTokenValue);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true); // Use apenas em HTTPS em produção
-        refreshTokenCookie.setPath("/"); // Disponível em toda a aplicação
-        refreshTokenCookie.setMaxAge((int) refreshExpiresIn); // Expiração em 1 dia
-        response.addCookie(refreshTokenCookie);
+        // Ajuste: Retorna o refreshToken no corpo em vez de cookie
+        var responseBody = new LoginResponseMobile(accessTokenValue, expiresIn, scopes, refreshTokenValue);
 
-        // Retorna o `accessToken` no corpo da resposta
-        return ResponseEntity.ok(new LoginResponse(accessTokenValue, expiresIn, scopes));
+        return ResponseEntity.ok(responseBody);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
+    public ResponseEntity<Void> logout(@RequestBody String refreshToken) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isPresent()) {
             var token = tokenFromDb.get();
@@ -108,13 +99,12 @@ public class TokenController {
         deleteCookie.setHttpOnly(true);
         deleteCookie.setMaxAge(0); // Remove o cookie imediatamente
         deleteCookie.setSecure(true); // Use apenas em HTTPS em produção
-        response.addCookie(deleteCookie);
 
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse> refreshToken(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<LoginResponse> refreshToken(@RequestBody String refreshToken) {
         var now = Instant.now();
         var expiresIn = 1800L; // 30 minutos para access token expirar
 
@@ -123,7 +113,6 @@ public class TokenController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Jwt jwt = jwtDecoder.decode(refreshToken);
         var user = tokenFromDb.get().getUser();
         var scope = user.getRoles()
                 .stream()
