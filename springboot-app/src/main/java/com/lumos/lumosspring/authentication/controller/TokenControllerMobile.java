@@ -21,7 +21,7 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/auth/mobile")
+@RequestMapping("/api/mobile/auth")
 public class TokenControllerMobile {
 
     private final JwtEncoder jwtEncoder;

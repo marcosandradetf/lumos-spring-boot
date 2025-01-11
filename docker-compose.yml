@@ -12,23 +12,23 @@ services:
       - lumos-network
     restart: always
 
-  springboot-app:
-    build:
-      context: ./springboot-app
-    container_name: springboot-app
-    depends_on:
-      - postgres
-    ports:
-      - "8080:8080"
-    volumes:
-      # - ./springboot-app:/app
-      - /app/target
-      #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
-    environment:
-      - SPRING_PROFILES_ACTIVE=development
-    networks:
-      - lumos-network
-    restart: always
+  # springboot-app:
+  #   build:
+  #     context: ./springboot-app
+  #   container_name: springboot-app
+  #   depends_on:
+  #     - postgres
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     # - ./springboot-app:/app
+  #     - /app/target
+  #     #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=development
+  #   networks:
+  #     - lumos-network
+  #   restart: always
 
   go-server:
     build: ./golang-services

@@ -43,7 +43,15 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+                    // Definindo comportamento de CORS baseado no caminho
+                    String path = request.getRequestURI();
+                    if (path.startsWith("/api/mobile")) {
+                        // Para caminhos que começam com "/api/mobile", permite qualquer origem
+                        configuration.setAllowedOrigins(List.of("*"));
+                    } else {
+                        // Para outros caminhos, define origens específicas (se necessário)
+                        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+                    }
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
                     configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
@@ -51,6 +59,7 @@ public class SecurityConfig {
                 }))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/mobile/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
