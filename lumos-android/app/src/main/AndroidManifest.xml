@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -11,27 +14,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Lumos"
+        android:usesCleartextTraffic="true"
+
         tools:targetApi="31">
-        <activity
-            android:name=".ui.components.TopBar"
-            android:exported="false"
-            android:label="@string/title_activity_top_bar"
-            android:theme="@style/Theme.Lumos" />
-        <activity
-            android:name=".ui.components.MainActivity"
-            android:exported="false"
-            android:label="@string/title_activity_main"
-            android:theme="@style/Theme.Lumos" />
-        <activity
-            android:name=".ui.home.ui.Home"
-            android:exported="false"
-            android:label="@string/title_activity_home"
-            android:theme="@style/Theme.Lumos" />
-        <activity
-            android:name=".ui.home.HomeActivity"
-            android:exported="false"
-            android:label="@string/title_activity_home"
-            android:theme="@style/Theme.Lumos" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -44,5 +29,6 @@
             </intent-filter>
         </activity>
     </application>
+
 
 </manifest>

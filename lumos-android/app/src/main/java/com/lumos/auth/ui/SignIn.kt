@@ -1,6 +1,5 @@
-package com.lumos.ui.auth
+package com.lumos.auth.ui
 
-import android.R.style
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,8 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
@@ -28,26 +25,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lumos.ui.theme.LumosTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import com.lumos.auth.service.AuthViewModel
+import com.lumos.ui.home.HomeScreen
 
 
 @Composable
 fun Login(
-    sendCred: (String, String) -> Unit,
-    signUp: () -> Unit,
+    onLoginSuccess: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
-    var user by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
+    var errorMessage by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -94,8 +94,8 @@ fun Login(
                 }
                 OutlinedTextField(
                     textStyle = TextStyle(Color(0xFF613F23)),
-                    value = user,
-                    onValueChange = { user = it },
+                    value = username,
+                    onValueChange = { username = it },
                     label = { Text(text = "Usuário ou email:", color = Color(0xFF9EA4B6)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     maxLines = 1,
@@ -112,7 +112,15 @@ fun Login(
                     modifier = Modifier.fillMaxWidth()
                 )
                 ElevatedButton(
-                    onClick = { sendCred(user, password) },
+                    onClick = {
+                        authViewModel.login(
+                            context = context,
+                            username = username,
+                            password = password,
+                            onSuccess = onLoginSuccess,
+                            onFailure = { errorMessage = "Login failed. Try again!" }
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp),
@@ -135,14 +143,10 @@ fun Login(
     }
 }
 
-
-@Preview(showBackground = true)
+@Preview
 @Composable
-fun SimpleComposablePreview() {
-    LumosTheme {
-        Login(
-            sendCred = { _, _ -> /* Mock do login */ },
-            signUp = { /* Mock da navegação para criar conta */ }
-        )
-    }
+fun PrevLogin() {
+    Login(
+        {},
+    )
 }

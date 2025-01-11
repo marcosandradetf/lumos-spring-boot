@@ -24,7 +24,6 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun TopBar(
     navigateBack: (() -> Unit)? = null,
-    start: Boolean = false,
     title: String = "Navigation example"
 ) {
     TopAppBar(

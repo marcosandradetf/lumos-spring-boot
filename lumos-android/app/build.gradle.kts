@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+//    implementation(libs.androidx.security.crypto.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -58,7 +59,17 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("androidx.navigation:navigation-compose:2.7.4")
+
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    // Retrofit para chamadas de API
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    // Interceptor para autenticação
+    implementation(libs.logging.interceptor)
+    // Shared Preferences seguras
+    implementation(libs.androidx.security.crypto)
+
 
 }

@@ -1,41 +1,50 @@
-package com.lumos.ui.home
+package com.lumos.ui.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 
 @Composable
-fun HomeScreen(
+fun ProfileScreen(
     onNavigateToMenu: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToNotifications: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    navController: NavHostController,
-) {
+    navController: NavHostController) {
     AppLayout(
-        title = "Início",
-        pSelected = BottomBar.HOME.value,
+        title = "Minha Conta",
+        pSelected = BottomBar.PROFILE.value,
         sliderNavigateToMenu = onNavigateToMenu,
+        sliderNavigateToHome = onNavigateToHome,
         sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
     ) { modifier ->
         Column(
             modifier = modifier
         ) {
-            Text("Home Screen")
+            Text("Minha Conta")
         }
     }
 }
 
 @Preview
 @Composable
-fun PrevHome() {
-    HomeScreen(
+fun PrevProfileScreen() {
+    ProfileScreen(
         {},
         {},
         {},

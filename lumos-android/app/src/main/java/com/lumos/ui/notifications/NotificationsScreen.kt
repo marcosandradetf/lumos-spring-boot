@@ -1,4 +1,4 @@
-package com.lumos.ui.home
+package com.lumos.ui.notifications
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
@@ -10,32 +10,32 @@ import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 
 @Composable
-fun HomeScreen(
+fun NotificationsScreen(
     onNavigateToMenu: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit,
     navController: NavHostController,
 ) {
     AppLayout(
-        title = "Início",
-        pSelected = BottomBar.HOME.value,
+        title = "Notificações",
+        pSelected = BottomBar.NOTIFICATIONS.value,
         sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToNotifications = onNavigateToNotifications,
+        sliderNavigateToHome = onNavigateToHome,
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
     ) { modifier ->
         Column(
             modifier = modifier
         ) {
-            Text("Home Screen")
+            Text("Notifications Screen")
         }
     }
 }
 
 @Preview
 @Composable
-fun PrevHome() {
-    HomeScreen(
+fun PrevNotifications() {
+    NotificationsScreen(
         {},
         {},
         {},
