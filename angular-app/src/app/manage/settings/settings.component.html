@@ -1,0 +1,20 @@
+<div class="flex mt-[4rem] h-fit" #top>
+  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a>Início</a></li>
+        <li><a>Configurações</a></li>
+      </ul>
+    </div>
+
+    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])"/>
+      <input type="radio" class="tab" aria-label="Materiais" (click)="router.navigate(['/estoque/materiais'])"/>
+      <input type="radio" class="tab" aria-label="Grupos" checked/>
+      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>
+    </div>
+
+  </div>
+
+</div>

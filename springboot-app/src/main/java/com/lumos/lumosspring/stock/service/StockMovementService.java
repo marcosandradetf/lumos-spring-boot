@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.stock.service;
 
-import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.authentication.repository.UserRepository;
+import com.lumos.lumosspring.authentication.RefreshTokenRepository;
+import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementDTO;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementResponse;
 import com.lumos.lumosspring.stock.entities.StockMovement;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -96,12 +95,8 @@ public class StockMovementService {
     }
 
     private ResponseEntity<String> convertToStockMovementAndSave(List<StockMovementDTO> stockMovement, UUID userUUID) {
-        var date = ZonedDateTime.now(
-                ZoneId.of("America/Sao_Paulo")
-        );
-
         for (StockMovementDTO movement : stockMovement) {
-            var newMovement = new StockMovement(date.toInstant());
+            var newMovement = new StockMovement(util.getDateTime());
 
             newMovement.setStockMovementDescription(movement.description());
             newMovement.setInputQuantity(movement.inputQuantity());

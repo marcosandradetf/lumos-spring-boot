@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.authentication.repository;
+package com.lumos.lumosspring.user.repository;
 
-import com.lumos.lumosspring.authentication.entities.User;
+import com.lumos.lumosspring.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByIdUser(UUID uuid);
     Optional<User> findByUsername(String username);
+    Optional<User> findByUsernameOrEmail(String username, String email);
 }

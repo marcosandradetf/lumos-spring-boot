@@ -1,14 +1,18 @@
 package com.lumos.lumosspring.util;
 
-import com.lumos.lumosspring.authentication.entities.User;
-import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.authentication.repository.UserRepository;
+import com.lumos.lumosspring.stock.controller.dto.StockMovementDTO;
+import com.lumos.lumosspring.stock.entities.StockMovement;
+import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 @Component
 public class Util {
@@ -54,5 +58,13 @@ public class Util {
             return df.format(price).replace('.', ','); // Troca o ponto por vírgula
         }
         return "0,00";
+    }
+
+    public Instant getDateTime() {
+        var date = ZonedDateTime.now(
+                ZoneId.of("America/Sao_Paulo")
+        );
+
+        return date.toInstant();
     }
 }

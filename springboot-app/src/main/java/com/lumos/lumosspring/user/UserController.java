@@ -1,10 +1,8 @@
-package com.lumos.lumosspring.authentication.controller;
+package com.lumos.lumosspring.user;
 
-import com.lumos.lumosspring.authentication.controller.dto.CreateUserDto;
-import com.lumos.lumosspring.authentication.entities.Role;
-import com.lumos.lumosspring.authentication.entities.User;
-import com.lumos.lumosspring.authentication.repository.RoleRepository;
-import com.lumos.lumosspring.authentication.repository.UserRepository;
+import com.lumos.lumosspring.user.dto.CreateUserDto;
+import com.lumos.lumosspring.user.repository.RoleRepository;
+import com.lumos.lumosspring.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

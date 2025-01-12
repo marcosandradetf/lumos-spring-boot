@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.authentication.controller.dto;
+package com.lumos.lumosspring.authentication.dto;
 
 public record LoginRequest(String username, String password) {
 }

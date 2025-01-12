@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.system.entities;
 
-import com.lumos.lumosspring.authentication.entities.User;
+import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 

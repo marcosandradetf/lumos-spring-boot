@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.authentication.repository;
+package com.lumos.lumosspring.user.repository;
 
-import com.lumos.lumosspring.authentication.entities.Role;
+import com.lumos.lumosspring.user.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

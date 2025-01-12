@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.authentication.entities;
+package com.lumos.lumosspring.user;
 
-import com.lumos.lumosspring.authentication.controller.dto.LoginRequest;
+import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -104,4 +104,5 @@ public class User {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
+
 }

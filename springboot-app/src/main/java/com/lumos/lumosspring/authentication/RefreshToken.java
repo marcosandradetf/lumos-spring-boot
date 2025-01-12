@@ -1,5 +1,6 @@
-package com.lumos.lumosspring.authentication.entities;
+package com.lumos.lumosspring.authentication;
 
+import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
 import java.time.Instant;

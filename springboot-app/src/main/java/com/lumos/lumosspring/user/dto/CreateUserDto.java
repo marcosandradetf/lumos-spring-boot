@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.authentication.controller.dto;
+package com.lumos.lumosspring.user.dto;
 
 public record CreateUserDto(String username, String email, String password) {
 

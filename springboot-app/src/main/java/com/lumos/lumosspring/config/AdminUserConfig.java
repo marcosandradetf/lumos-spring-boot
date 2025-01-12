@@ -1,9 +1,9 @@
-package com.lumos.lumosspring.authentication.config;
+package com.lumos.lumosspring.config;
 
-import com.lumos.lumosspring.authentication.entities.Role;
-import com.lumos.lumosspring.authentication.entities.User;
-import com.lumos.lumosspring.authentication.repository.RoleRepository;
-import com.lumos.lumosspring.authentication.repository.UserRepository;
+import com.lumos.lumosspring.user.Role;
+import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.repository.RoleRepository;
+import com.lumos.lumosspring.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
