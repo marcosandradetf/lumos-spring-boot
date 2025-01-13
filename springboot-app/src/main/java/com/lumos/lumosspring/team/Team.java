@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.team;
 
 import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.user.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 

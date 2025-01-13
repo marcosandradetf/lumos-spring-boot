@@ -37,7 +37,7 @@ export class EstoqueService {
   }
 
   getDeposits() {
-    return this.http.get<any[]>(`${this.endpoint}/deposit`);
+    return this.http.get<Deposit[]>(`${this.endpoint}/deposit`);
   }
 
   getSuppliers() {

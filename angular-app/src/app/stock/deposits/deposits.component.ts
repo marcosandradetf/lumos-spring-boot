@@ -4,7 +4,7 @@ import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {FormsModule, NgForm} from '@angular/forms';
-import {NgIf} from '@angular/common';
+import {NgClass, NgIf} from '@angular/common';
 import {Company} from '../../core/models/empresa.model';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {Deposit} from '../../core/models/almoxarifado.model';
@@ -12,8 +12,10 @@ import {catchError, tap, throwError} from 'rxjs';
 import {State} from '../services/material.service';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {Type} from '../../core/models/tipo.model';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
+import {ufRequest} from '../../core/uf-request.dto';
+import {IbgeService} from '../../core/service/ibge.service';
+import {citiesRequest} from '../../core/cities-request.dto';
 
 @Component({
   selector: 'app-deposits',
@@ -25,27 +27,38 @@ import {AlertMessageComponent} from '../../shared/components/alert-message/alert
     TableComponent,
     ButtonComponent,
     ModalComponent,
-    AlertMessageComponent
+    AlertMessageComponent,
+    NgClass,
   ],
   templateUrl: './deposits.component.html',
   styleUrl: './deposits.component.scss'
 })
 export class DepositsComponent {
   sidebarLinks = [
-    { title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1' },
-    { title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2' },
-    { title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3' },
-    { title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4' },
-    { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
+    {title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1'},
+    {title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2'},
+    {title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3'},
+    {title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4'},
+    {title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5'}
   ];
   formOpen: boolean = false;
-  deposit= {
+  deposit = {
     depositName: "",
-    companyId: ""
+    companyId: "",
+    depositAddress: "",
+    depositDistrict: "",
+    depositCity: "",
+    depositState: "",
+    depositRegion: "",
+    depositPhone: "",
   }
   formSubmitted: null | boolean = false;
   companies: Company[] = []
   deposits: Deposit[] = [];
+  ufs: ufRequest[] = [];
+  cities: citiesRequest[] = [];
+  selectedRegion: string = '';
+
   message: string = '';
   state: State = State.create;
   depositId: number = 0;
@@ -53,7 +66,8 @@ export class DepositsComponent {
   @ViewChild('top') top!: ElementRef;
 
   constructor(private stockService: EstoqueService,
-              private title: Title, protected router: Router) {
+              private title: Title, protected router: Router,
+              private ibgeService: IbgeService) {
     this.title.setTitle('Gerenciar - Almoxarifados');
 
     this.stockService.getCompanies().subscribe(
@@ -61,7 +75,11 @@ export class DepositsComponent {
     );
     this.stockService.getDeposits().subscribe(
       d => this.deposits = d
-    )
+    );
+
+    this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {
+      this.ufs = ufs;
+    });
   }
 
   setOpen() {
@@ -69,8 +87,14 @@ export class DepositsComponent {
     if (this.state === State.update && !this.formOpen) {
       this.state = State.create;
       this.deposit = {
-        depositName: '',
-        companyId: ''
+        depositName: "",
+        companyId: "",
+        depositAddress: "",
+        depositDistrict: "",
+        depositCity: "",
+        depositState: "",
+        depositRegion: "",
+        depositPhone: "",
       }
       this.formSubmitted = false;
       this.message = '';
@@ -83,17 +107,23 @@ export class DepositsComponent {
       return;
     }
 
-    if(this.depositId === 0 && this.state === State.update) {
+    if (this.depositId === 0 && this.state === State.update) {
       this.message = 'Selecione outro almoxarifado para atualizar ou feche essa opção.';
       return;
     }
 
-    if(this.state === State.create) {
+    if (this.state === State.create) {
       this.stockService.insertDeposit(this.deposit).pipe(
         tap(response => {
           this.deposit = {
-            depositName: '',
-            companyId: ''
+            depositName: "",
+            companyId: "",
+            depositAddress: "",
+            depositDistrict: "",
+            depositCity: "",
+            depositState: "",
+            depositRegion: "",
+            depositPhone: "",
           }
           this.formSubmitted = false
           this.message = 'Almoxarifado foi criado com sucesso.';
@@ -108,8 +138,14 @@ export class DepositsComponent {
       this.stockService.updateDeposit(this.depositId, this.deposit).pipe(
         tap(response => {
           this.deposit = {
-            depositName: '',
-            companyId: ''
+            depositName: "",
+            companyId: "",
+            depositAddress: "",
+            depositDistrict: "",
+            depositCity: "",
+            depositState: "",
+            depositRegion: "",
+            depositPhone: "",
           }
           this.formSubmitted = false
           this.depositId = 0;
@@ -130,13 +166,13 @@ export class DepositsComponent {
   updateDeposit(d: Deposit) {
     if (this.collapseDiv) {
       this.state = State.update;
-      if(!this.formOpen) this.collapseDiv.nativeElement.click();
+      if (!this.formOpen) this.collapseDiv.nativeElement.click();
 
       this.deposit.depositName = d.depositName;
       this.deposit.companyId = '';
       this.depositId = d.idDeposit;
       if (this.top)
-        this.top.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this.top.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start'});
     }
   }
 
@@ -153,7 +189,7 @@ export class DepositsComponent {
         this.serverMessage = 'Almoxarifado excluído com sucesso.';
         this.alertType = 'alert-success';
         this.deposits = response;
-      }),catchError(err => {
+      }), catchError(err => {
         this.showConfirmation = false;
         this.serverMessage = err.error.message;
         this.alertType = 'alert-error';
@@ -162,4 +198,65 @@ export class DepositsComponent {
     ).subscribe();
   }
 
+  getCities(uf: string) {
+    this.ibgeService.getCities(uf).subscribe(cities => {
+      this.cities = cities;
+    })
+  }
+
+  updateRegion(selectedCityName: string): void {
+    const selectedCity = this.cities.find(city => city.nome === selectedCityName);
+    this.selectedRegion = selectedCity ? selectedCity.microrregiao.nome : '';
+  }
+
+  formatTel(event: any): void {
+    let value = event.target.value;
+
+    // Remove qualquer caractere que não seja número
+    value = value.replace(/\D/g, '');
+
+    // Formata para (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+    if (value.length > 10) {
+      value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (value.length > 5) {
+      value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else if (value.length > 2) {
+      value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+    }
+
+    event.target.value = value; // Atualiza o valor do input
+  }
+
+  formatPhone(phone: string): string {
+    return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+
+  formatPhoneView(phone: string): string {
+    if (!phone) {
+      return ''; // Retorna vazio se o telefone for null, undefined ou vazio
+    }
+
+    // Remove quaisquer caracteres que não sejam números
+    phone = phone.replace(/\D/g, '');
+
+    // Formata corretamente com base no tamanho do telefone
+    if (phone.length === 11) {
+      // Exemplo: 11999999999 -> (11) 99999-9999
+      return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (phone.length === 10) {
+      // Exemplo: 1199999999 -> (11) 9999-9999
+      return phone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    } else if (phone.length > 2) {
+      // Exemplo: números parciais (119) ou inválidos
+      return phone.replace(/(\d{2})/, '($1) ') + phone.substring(2);
+    }
+
+    // Retorna o valor original para casos inesperados
+    return phone;
+  }
+
+  // Atualiza o modelo com o valor limpo
+  updatePhone(formattedPhone: string): void {
+    this.deposit.depositPhone = formattedPhone.replace(/\D/g, ''); // Remove caracteres especiais
+  }
 }

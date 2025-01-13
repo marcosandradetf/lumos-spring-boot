@@ -18,7 +18,6 @@ public class DepositController {
 
     @GetMapping
     public List<DepositResponse> getAll() {
-
         return almoxarifadoService.findAll();
     }
 
