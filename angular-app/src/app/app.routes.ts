@@ -70,9 +70,22 @@ export const routes: Routes = [
   },
   // end
 
+  // start settings path
+  {
+    path: 'configuracoes/usuarios',
+    loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'configuracoes/equipes',
+    loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
+    canActivate: [AuthGuard],
+  },
+  // end
+
   { path: '', redirectTo: 'estoque/materiais', pathMatch: 'full' },
   { path: 'chamados', redirectTo: 'estoque/materiais' },
-  { path: 'equipes', redirectTo: 'estoque/materiais' },
+  { path: 'configuracoes', redirectTo: 'configuracoes/usuarios' },
   { path: 'contratos', redirectTo: 'contratos/criar' },
   { path: 'requisicoes', redirectTo: '**' },
   { path: '**', redirectTo: 'estoque/materiais' }

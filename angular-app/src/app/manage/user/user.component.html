@@ -4,16 +4,98 @@
     <div class="breadcrumbs text-sm py-5">
       <ul class="select-none">
         <li><a>Início</a></li>
-        <li><a>Estoque</a></li>
-        <li>Grupos</li>
+        <li><a>Configurações</a></li>
+        <li>Usuários</li>
       </ul>
     </div>
 
     <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
-      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])"/>
-      <input type="radio" class="tab" aria-label="Materiais" (click)="router.navigate(['/estoque/materiais'])"/>
-      <input type="radio" class="tab" aria-label="Grupos" checked/>
-      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>
+      <input type="radio" class="tab" aria-label="Usuários" checked/>
+      <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
+      <input type="radio" class="tab" aria-label="Minha Empresa" (click)="router.navigate(['/configuracoes/empresa'])"/>
+    </div>
+
+    <div class="shadow border p-2">
+      <div class="flex justify-evenly pb-5">
+        <app-button title="Alterar Usuários" [action]="changeUser()">
+
+        </app-button>
+        <app-button title="Adicionar Usuários" class="btn-success text-white">
+
+        </app-button>
+      </div>
+      <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
+        <app-table>
+          <tr header>
+            <th>Código</th>
+            <th>Usuário</th>
+            <th>Nome</th>
+            <th>Sobrenome</th>
+            <th>Email</th>
+            <th>Data de Nascimento</th>
+            <th>Função</th>
+            <th>Status</th>
+          </tr>
+
+          <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
+            @if (change) {
+              <td>{{ user.userId }}</td>
+              <td><input required
+                         [(ngModel)]="user.username"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"
+              ></td>
+              <td><input required
+                         [(ngModel)]="user.name"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.lastname"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.email"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.dateOfBirth"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.role"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.status"
+                         name="name{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+            } @else {
+              <td>{{ user.userId }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.lastname }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.dateOfBirth }}</td>
+              <td>{{ user.role }}</td>
+              <td>{{ user.status }}</td>
+            }
+          </tr>
+        </app-table>
+      </form>
     </div>
 
   </div>
