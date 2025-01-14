@@ -1,6 +1,5 @@
-package com.lumos.lumosspring.user.repository;
+package com.lumos.lumosspring.user;
 
-import com.lumos.lumosspring.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

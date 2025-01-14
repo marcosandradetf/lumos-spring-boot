@@ -5,20 +5,17 @@ import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
 import com.lumos.lumosspring.team.TeamRepository;
 import com.lumos.lumosspring.user.Role;
-import com.lumos.lumosspring.user.repository.UserRepository;
+import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 @RestController

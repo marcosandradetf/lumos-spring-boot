@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {SidebarComponent} from "../../shared/components/sidebar/sidebar.component";
 import {Router} from '@angular/router';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
 import {NgForOf} from '@angular/common';
+import {UserService} from './user-service.service';
+import {catchError, tap, throwError} from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
   selector: 'app-user',
@@ -22,10 +25,10 @@ import {NgForOf} from '@angular/common';
 })
 export class UserComponent {
   sidebarLinks = [
-    { title: 'Início', path: '/configuracoes', id: 'opt1' },
-    { title: 'Usuários', path: '/configuracoes/usuarios', id: 'opt2' },
-    { title: 'Equipes', path: '/configuracoes/equipes', id: 'opt3' },
-    { title: 'Minha Empresa', path: '/configuracoes/empresa', id: 'opt4' },
+    {title: 'Início', path: '/configuracoes', id: 'opt1'},
+    {title: 'Usuários', path: '/configuracoes/usuarios', id: 'opt2'},
+    {title: 'Equipes', path: '/configuracoes/equipes', id: 'opt3'},
+    {title: 'Minha Empresa', path: '/configuracoes/empresa', id: 'opt4'},
   ];
 
   change: boolean = false;
@@ -36,11 +39,18 @@ export class UserComponent {
     lastname: string,
     email: string,
     dateOfBirth: string,
-    role: string,
+    role: string[],
     status: boolean
   }[] = []
 
-  constructor(protected router: Router) {
+  private message: string = '';
+
+  constructor(protected router: Router, private userService: UserService) {
+    this.userService.getUsers().subscribe(
+      users => {
+        this.users = users;
+      }
+    );
   }
 
 
@@ -52,5 +62,21 @@ export class UserComponent {
 
   submitUsers(usersForm: NgForm) {
 
+  }
+
+  resetPassword(userId: string) {
+    return () => {
+      this.userService.resetPassword(userId).pipe(
+        tap(r => {
+          this.message = ((r as any).message);
+        }),
+        catchError(err => {
+          console.log(err)
+          this.message = err.error.message;
+          return throwError(() => err);
+
+        })
+      ).subscribe();
+    };
   }
 }

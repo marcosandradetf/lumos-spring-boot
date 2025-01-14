@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.stock.service;
 
-import com.lumos.lumosspring.user.repository.UserRepository;
+import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
 import com.lumos.lumosspring.stock.entities.Material;

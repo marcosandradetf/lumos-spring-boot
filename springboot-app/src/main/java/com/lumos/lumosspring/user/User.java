@@ -27,6 +27,8 @@ public class User {
 
     private String password;
 
+    private String codeResetPassword;
+
     @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JoinTable(
             name = "tb_users_roles",
@@ -105,4 +107,11 @@ public class User {
         this.lastName = lastName;
     }
 
+    public String getCodeResetPassword() {
+        return codeResetPassword;
+    }
+
+    public void setCodeResetPassword(String codeResetPassword) {
+        this.codeResetPassword = codeResetPassword;
+    }
 }

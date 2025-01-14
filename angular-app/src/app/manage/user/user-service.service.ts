@@ -1,0 +1,43 @@
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {User} from '../../core/models/user.model';
+import {Observable} from 'rxjs';
+import * as http from 'node:http';
+import {Deposit} from '../../core/models/almoxarifado.model';
+import {environment} from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+  private endpoint = environment.springboot + '/api/user';
+
+  constructor(private http: HttpClient) {
+  }
+
+  public getUsers(): Observable<{
+    userId: string,
+    username: string,
+    name: string,
+    lastname: string,
+    email: string,
+    dateOfBirth: string,
+    role: string[],
+    status: boolean
+  }[]> {
+    return this.http.get<{
+      userId: string,
+      username: string,
+      name: string,
+      lastname: string,
+      email: string,
+      dateOfBirth: string,
+      role: string[],
+      status: boolean
+    }[]>(`${this.endpoint}/get-users`);
+  }
+
+  public resetPassword(userId: string) {
+    return this.http.post(`${this.endpoint}/${userId}/reset-password`, {});
+  }
+}

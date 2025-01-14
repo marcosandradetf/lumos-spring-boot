@@ -27,7 +27,7 @@
       <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
         <app-table>
           <tr header>
-            <th>Código</th>
+            <th hidden>Código</th>
             <th>Usuário</th>
             <th>Nome</th>
             <th>Sobrenome</th>
@@ -35,14 +35,15 @@
             <th>Data de Nascimento</th>
             <th>Função</th>
             <th>Status</th>
+            <th>Ação</th>
           </tr>
 
           <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
             @if (change) {
-              <td>{{ user.userId }}</td>
+              <td hidden>{{ user.userId }}</td>
               <td><input required
                          [(ngModel)]="user.username"
-                         name="name{{i}}"
+                         name="username{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"
@@ -54,37 +55,37 @@
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
-                         [(ngModel)]="user.lastname"
-                         name="name{{i}}"
+                         [(ngModel)]="user.username"
+                         name="username{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
                          [(ngModel)]="user.email"
-                         name="name{{i}}"
+                         name="email{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
                          [(ngModel)]="user.dateOfBirth"
-                         name="name{{i}}"
+                         name="dateOfBirth{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
                          [(ngModel)]="user.role"
-                         name="name{{i}}"
+                         name="role{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
                          [(ngModel)]="user.status"
-                         name="name{{i}}"
+                         name="status{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
             } @else {
-              <td>{{ user.userId }}</td>
+              <td hidden disabled>{{ user.userId }}</td>
               <td>{{ user.username }}</td>
               <td>{{ user.name }}</td>
               <td>{{ user.lastname }}</td>
@@ -92,6 +93,12 @@
               <td>{{ user.dateOfBirth }}</td>
               <td>{{ user.role }}</td>
               <td>{{ user.status }}</td>
+              <td>
+                <app-button title="Resetar Senha"
+                            class="btn-sm"
+                            [action]="resetPassword(user.userId)">
+                </app-button>
+              </td>
             }
           </tr>
         </app-table>
