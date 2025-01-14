@@ -4,7 +4,7 @@ import {Router} from '@angular/router';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {NgForOf} from '@angular/common';
+import {NgForOf, NgIf} from '@angular/common';
 import {UserService} from './user-service.service';
 import {catchError, tap, throwError} from 'rxjs';
 import {HttpErrorResponse} from '@angular/common/http';
@@ -18,7 +18,8 @@ import {HttpErrorResponse} from '@angular/common/http';
     ButtonComponent,
     FormsModule,
     ReactiveFormsModule,
-    NgForOf
+    NgForOf,
+    NgIf
   ],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
@@ -41,14 +42,27 @@ export class UserComponent {
     dateOfBirth: string,
     role: string[],
     status: boolean
-  }[] = []
+  }[] = [];
+
+  usersBackup: {
+    userId: string,
+    username: string,
+    name: string,
+    lastname: string,
+    email: string,
+    dateOfBirth: string,
+    role: string[],
+    status: boolean
+  }[] = [];
 
   private message: string = '';
+  add: boolean = false;
 
   constructor(protected router: Router, private userService: UserService) {
     this.userService.getUsers().subscribe(
       users => {
         this.users = users;
+        this.usersBackup = users;
       }
     );
   }
@@ -58,6 +72,19 @@ export class UserComponent {
     return () => {
       this.change = true;
     };
+  }
+
+  addUser() {
+    return () => {
+      this.add = true;
+    }
+  }
+
+  cancel() {
+    return () => {
+      this.change = false;
+      this.add = false;
+    }
   }
 
   submitUsers(usersForm: NgForm) {
@@ -78,5 +105,26 @@ export class UserComponent {
         })
       ).subscribe();
     };
+  }
+
+  newUser() {
+    const user = {
+      userId: "",
+      username: "",
+      name: "",
+      lastname: "",
+      email: "",
+      dateOfBirth: "",
+      role: [],
+      status: true
+    };
+    this.users.push(user);
+  }
+
+  removeUser() {
+    const lastElement = this.users[this.users.length - 1];
+    if (lastElement.userId === '') {
+      this.users.pop();
+    }
   }
 }

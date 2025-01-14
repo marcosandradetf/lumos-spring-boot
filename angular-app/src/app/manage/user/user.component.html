@@ -16,13 +16,37 @@
     </div>
 
     <div class="shadow border p-2">
-      <div class="flex justify-evenly pb-5">
-        <app-button title="Alterar Usuários" [action]="changeUser()">
+      <div class="flex justify-evenly pb-5 items-center">
+        @if (!add && !change) {
+          <app-button title="Alterar Usuários" [action]="changeUser()">
 
-        </app-button>
-        <app-button title="Adicionar Usuários" class="btn-success text-white">
+          </app-button>
+        }
+        @if (!add && !change) {
+          <app-button title="Adicionar Usuários" class="btn-success text-white" [action]="addUser()">
 
-        </app-button>
+          </app-button>
+        }
+        @if (add || change) {
+          <app-button title="Cancelar" class="btn" [action]="cancel()">
+          </app-button>
+          <app-button title="Salvar"></app-button>
+          @if (add) {
+            <div class="flex">
+              <div class="flex flex-col items-center mr-2">
+                <button class="btn btn-outline btn-primary btn-xs" (click)="newUser()">+</button>
+                <p class="text-xs">Adicionar</p>
+              </div>
+              <div class="flex flex-col items-center">
+                <button class="btn btn-outline btn-xs" (click)="removeUser()">-</button>
+                <p class="text-xs">Remover</p>
+              </div>
+            </div>
+          } @else if (change) {
+
+          }
+        }
+
       </div>
       <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
         <app-table>
@@ -35,12 +59,19 @@
             <th>Data de Nascimento</th>
             <th>Função</th>
             <th>Status</th>
-            <th>Ação</th>
+            @if (!add && !change) {
+              <th>Ação</th>
+            }
           </tr>
 
           <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
             @if (change) {
-              <td hidden>{{ user.userId }}</td>
+              <td hidden><input disabled
+                                [(ngModel)]="user.userId"
+                                name="userId{{i}}"
+                                type="text"
+                                class="input input-bordered input-xs"
+              ></td>
               <td><input required
                          [(ngModel)]="user.username"
                          name="username{{i}}"
@@ -78,12 +109,65 @@
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.status"
+              <td><input type="checkbox"
                          name="status{{i}}"
+                         [(ngModel)]="user.status"
+                         class="toggle toggle-primary"/>
+                } @else if (add) {
+              <td hidden><input disabled
+                                [(ngModel)]="user.userId"
+                                name="userId{{i}}"
+                                type="text"
+                                class="input input-bordered input-xs"
+              ></td>
+              <td><input required
+                         [disabled]="user.userId !== ''"
+                         [(ngModel)]="user.username"
+                         name="username{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"
+              ></td>
+              <td><input required
+                         [disabled]="user.userId !== ''"
+                         [(ngModel)]="user.name"
+                         name="name{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.username"
+                         [disabled]="user.userId !== ''"
+                         name="username{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.email"
+                         [disabled]="user.userId !== ''"
+                         name="email{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.dateOfBirth"
+                         [disabled]="user.userId !== ''"
+                         name="dateOfBirth{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input required
+                         [(ngModel)]="user.role"
+                         [disabled]="user.userId !== ''"
+                         name="role{{i}}"
+                         type="text"
+                         placeholder="Digite aqui"
+                         class="input input-bordered input-xs"></td>
+              <td><input type="checkbox"
+                         name="status{{i}}"
+                         [(ngModel)]="user.status"
+                         [disabled]="user.userId !== ''"
+                         class="toggle toggle-primary"/></td>
             } @else {
               <td hidden disabled>{{ user.userId }}</td>
               <td>{{ user.username }}</td>

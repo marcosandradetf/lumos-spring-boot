@@ -69,7 +69,7 @@ export class AuthService {
         this.user?.clearToken();
         localStorage.removeItem('user');
         this.isLoggedInSubject.next(false);
-         this.router.navigate(['/auth/login']);
+        window.location.reload();
         return of(null); // Retorna um observable nulo em caso de erro
       })
     );
