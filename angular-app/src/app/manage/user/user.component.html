@@ -109,16 +109,28 @@
                   class="input input-bordered input-xs"
                 >
 
-                <input
-                  required
-                  [(ngModel)]="user.month"
-                  name="month{{i}}"
-                  type="text"
-                  min="1"
-                  max="12"
-                  placeholder="Mês"
-                  class="input input-bordered input-xs"
-                >
+                <!--                <input-->
+                <!--                  required-->
+                <!--                  [(ngModel)]="user.month"-->
+                <!--                  name="month{{i}}"-->
+                <!--                  type="text"-->
+                <!--                  min="1"-->
+                <!--                  max="12"-->
+                <!--                  placeholder="Mês"-->
+                <!--                  class="input input-bordered input-xs"-->
+                <!--                >-->
+
+                <details #dropdown class="dropdown">
+                  <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs">
+                    {{ getMonth(user.month)?.name }}
+                  </summary>
+                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-52 p-2 shadow">
+                    <li *ngFor="let m of months" class="select-none lower-text">
+                      <a (click)="handleClick(dropdown, m.name)">{{ m.name }}</a>
+                    </li>
+                  </ul>
+                </details>
+
 
                 <input
                   required

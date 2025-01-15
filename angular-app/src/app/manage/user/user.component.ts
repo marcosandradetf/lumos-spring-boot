@@ -24,6 +24,7 @@ import {HttpErrorResponse} from '@angular/common/http';
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
 })
+
 export class UserComponent {
   sidebarLinks = [
     {title: 'Início', path: '/configuracoes', id: 'opt1'},
@@ -74,6 +75,32 @@ export class UserComponent {
 
   private message: string = '';
   add: boolean = false;
+
+  months: {
+    number: string,
+    name: string,
+  }[] = [
+    {number: '1', name: "Janeiro"},
+    {number: '2', name: "Fevereiro"},
+    {number: '3', name: "Março"},
+    {number: '4', name: "Abril"},
+    {number: '5', name: "Maio"},
+    {number: '6', name: "Junho"},
+    {number: '7', name: "Julho"},
+    {number: '8', name: "Agosto"},
+    {number: '9', name: "Setembro"},
+    {number: '10', name: "Outubro"},
+    {number: '11', name: "Novembro"},
+    {number: '12', name: "Dezembro"},
+  ];
+
+    // Função para obter o nome do mês
+  private openDropdown: boolean = false;
+   getMonth(monthNumber: string) {
+    return this.months.find(m => m.number === monthNumber);
+  }
+
+
 
   constructor(protected router: Router, private userService: UserService) {
     this.userService.getUsers().subscribe(
@@ -161,6 +188,8 @@ export class UserComponent {
     this.users.push(user);
   }
 
+
+
   removeUser() {
     const lastElement = this.users[this.users.length - 1];
     if (lastElement.userId === '') {
@@ -216,6 +245,16 @@ export class UserComponent {
 
     // Verifica se alguma role no array corresponde ao nomeRole fornecido
     return userRoles.some(role => role.role === nomeRole);
+  }
+
+
+  handleClick(dropdown: HTMLDetailsElement, selectedMonth: string) {
+    console.log('Mês selecionado:', selectedMonth);
+
+    // Fecha o dropdown
+    dropdown.open = false;
+
+    // Opcional: Atualizar algum estado ou executar lógica
   }
 
 }
