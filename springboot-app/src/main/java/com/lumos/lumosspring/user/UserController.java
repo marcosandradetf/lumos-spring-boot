@@ -57,6 +57,12 @@ public class UserController {
         return userService.findAll();
     }
 
+    @GetMapping("/get-roles")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public List<Role> findAllRoles() {
+        return roleRepository.findAll();
+    }
+
     @PostMapping("/{userId}/reset-password")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> resetPassword(@PathVariable String userId) {

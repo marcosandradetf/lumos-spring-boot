@@ -36,7 +36,12 @@
       <td>{{ material.materialType }}</td>
       <td>{{ material.materialGroup }}</td>
       <td>{{ material.stockQt }}</td>
-      <td>{{ material.inactive }}</td>
+      <td>
+        <input type="checkbox"
+               (click)="false"
+               [checked]="material.inactive"
+               class="toggle toggle-primary"/>
+      </td>
       <td>{{ material.company }}</td>
       <td>{{ material.deposit }}</td>
       <td class="cursor-pointer">
@@ -53,7 +58,10 @@
   </table>
 
   <div class="join flex justify-center p-3">
-      <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of materialService.pages; let i = index" (click)="changePage(i)" [ngClass]="i === parseInt(currentPage) ? 'bg-indigo-700 text-white' : '' ">{{ i + 1}}</button>
+    <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of materialService.pages; let i = index"
+            (click)="changePage(i)"
+            [ngClass]="i === parseInt(currentPage) ? 'bg-indigo-700 text-white' : '' ">{{ i + 1 }}
+    </button>
   </div>
 
   <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
@@ -71,7 +79,7 @@
 
   <app-modal [modalOpen]="openUpdateModal" (modalClose)="closeUpdateModal()">
     <form>
-      {{material ? material.materialName : ""}}
+      {{ material ? material.materialName : "" }}
     </form>
     <app-material-form></app-material-form>
   </app-modal>

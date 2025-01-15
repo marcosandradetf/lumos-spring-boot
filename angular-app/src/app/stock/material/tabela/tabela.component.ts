@@ -8,18 +8,20 @@ import {ModalComponent} from '../../../shared/components/modal/modal.component';
 import {ButtonComponent} from '../../../shared/components/button/button.component';
 import {MaterialResponse} from '../../material-response.dto';
 import {MaterialService, State} from '../../services/material.service';
+import {ReactiveFormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-tabela',
   standalone: true,
-  imports: [
-    NgForOf,
-    NgClass,
-    AlertMessageComponent,
-    ModalComponent,
-    ButtonComponent,
-    MaterialFormComponent
-  ],
+    imports: [
+        NgForOf,
+        NgClass,
+        AlertMessageComponent,
+        ModalComponent,
+        ButtonComponent,
+        MaterialFormComponent,
+        ReactiveFormsModule
+    ],
   templateUrl: './tabela.component.html',
   styleUrl: './tabela.component.scss'
 })

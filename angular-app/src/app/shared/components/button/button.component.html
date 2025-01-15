@@ -1,4 +1,4 @@
-@if (class) {
+@if (class !== "") {
   <button class="btn {{class}} {{textColor}}" (click)="action()" type="{{typeButton ? typeButton : 'button'}}" >
     {{title}}
   </button>

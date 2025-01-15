@@ -9,6 +9,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Set;
 
 @Configuration
@@ -28,7 +32,9 @@ public class AdminUserConfig implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
         var roleAdmin = roleRepository.findByNomeRole(Role.Values.ADMIN.name());
+        var roleManager = roleRepository.findByNomeRole(Role.Values.MANAGER.name());
         var userAdmin = userRepository.findByUsername("admin");
+        var date = LocalDate.now();
         userAdmin.ifPresentOrElse(
                 _ -> {
                     System.out.println("Admin já existe!");
@@ -36,10 +42,13 @@ public class AdminUserConfig implements CommandLineRunner {
                 () -> {
                     var user = new User();
                     user.setUsername("admin");
-                    user.setName("Conta");
+                    user.setName("Usuário");
                     user.setLastName("Administrador");
+                    user.setEmail("admin@admin.com");
+                    user.setDateOfBirth(date);
                     user.setPassword(passwordEncoder.encode("4dejulho_"));
-                    user.setRoles(Set.of(roleAdmin));
+                    user.setRoles(Set.of(roleAdmin, roleManager));
+                    user.setStatus(true);
                     userRepository.save(user);
                 }
         );

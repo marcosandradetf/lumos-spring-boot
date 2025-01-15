@@ -4,6 +4,7 @@ import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
@@ -37,7 +38,10 @@ public class User {
     )
     private Set<Role> roles;
 
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
+    private Boolean status;
 
     public UUID getIdUser() {
         return idUser;
@@ -83,11 +87,11 @@ public class User {
         return passwordEncoder.matches(loginRequest.password(), this.password);
     }
 
-    public Date getDateOfBirth() {
+    public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(Date dateOfBirth) {
+    public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
 
@@ -113,5 +117,13 @@ public class User {
 
     public void setCodeResetPassword(String codeResetPassword) {
         this.codeResetPassword = codeResetPassword;
+    }
+
+    public Boolean getStatus() {
+        return status;
+    }
+
+    public void setStatus(Boolean status) {
+        this.status = status;
     }
 }

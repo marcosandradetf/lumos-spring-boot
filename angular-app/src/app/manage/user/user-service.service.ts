@@ -15,16 +15,7 @@ export class UserService {
   constructor(private http: HttpClient) {
   }
 
-  public getUsers(): Observable<{
-    userId: string,
-    username: string,
-    name: string,
-    lastname: string,
-    email: string,
-    dateOfBirth: string,
-    role: string[],
-    status: boolean
-  }[]> {
+  public getUsers(){
     return this.http.get<{
       userId: string,
       username: string,
@@ -32,6 +23,9 @@ export class UserService {
       lastname: string,
       email: string,
       dateOfBirth: string,
+      day: string;
+      month: string;
+      year: string;
       role: string[],
       status: boolean
     }[]>(`${this.endpoint}/get-users`);
@@ -39,5 +33,14 @@ export class UserService {
 
   public resetPassword(userId: string) {
     return this.http.post(`${this.endpoint}/${userId}/reset-password`, {});
+  }
+
+  public getRoles() {
+    return this.http.get<{
+      selected: boolean,
+      idRole: string,
+      nomeRole: string,
+    }[]>(`${this.endpoint}/get-roles`);
+
   }
 }

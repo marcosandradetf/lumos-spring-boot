@@ -1,6 +1,6 @@
 <div class="flex mt-[4rem] h-fit" #top>
   <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>
-  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
+  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[80rem] 2xl:w-[100rem] mb-5 ">
     <div class="breadcrumbs text-sm py-5">
       <ul class="select-none">
         <li><a>Início</a></li>
@@ -57,7 +57,7 @@
             <th>Sobrenome</th>
             <th>Email</th>
             <th>Data de Nascimento</th>
-            <th>Função</th>
+            <th>Funções</th>
             <th>Status</th>
             @if (!add && !change) {
               <th>Ação</th>
@@ -86,8 +86,8 @@
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
-                         [(ngModel)]="user.username"
-                         name="username{{i}}"
+                         [(ngModel)]="user.lastname"
+                         name="lastname{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
@@ -97,18 +97,66 @@
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.dateOfBirth"
-                         name="dateOfBirth{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.role"
-                         name="role{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
+              <td class="flex">
+                <input
+                  required
+                  [(ngModel)]="user.day"
+                  name="day{{i}}"
+                  type="text"
+                  min="1"
+                  max="31"
+                  placeholder="Dia"
+                  class="input input-bordered input-xs"
+                >
+
+                <input
+                  required
+                  [(ngModel)]="user.month"
+                  name="month{{i}}"
+                  type="text"
+                  min="1"
+                  max="12"
+                  placeholder="Mês"
+                  class="input input-bordered input-xs"
+                >
+
+                <input
+                  required
+                  [(ngModel)]="user.year"
+                  name="year{{i}}"
+                  type="text"
+                  placeholder="Ano"
+                  class="input input-bordered input-xs"
+                >
+              </td>
+
+              <td>
+                <div class="dropdown dropdown-end flex-2">
+                  <div tabindex="0" role="button"
+                       class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
+                    <span class="text-sm poppins-regular pr-10">Selecionar</span>
+                  </div>
+                  <table tabindex="0"
+                         class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+                    <tr *ngFor="let role of roles">
+                      <td>
+                        <input type="checkbox"
+                               class="checkbox"
+                               (change)="changeRole(user.userId, role.nomeRole)"
+                               [checked]="verifyRole(user.userId, role.nomeRole)"/>
+                      </td>
+                      <td class="poppintypeNames-light select-none lower-text">{{ role.nomeRole }}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!--                <input required-->
+                <!--                         [(ngModel)]="user.role"-->
+                <!--                         name="role{{i}}"-->
+                <!--                         type="text"-->
+                <!--                         placeholder="Digite aqui"-->
+                <!--                         class="input input-bordered input-xs">-->
+              </td>
               <td><input type="checkbox"
                          name="status{{i}}"
                          [(ngModel)]="user.status"
@@ -136,9 +184,9 @@
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
               <td><input required
-                         [(ngModel)]="user.username"
+                         [(ngModel)]="user.lastname"
                          [disabled]="user.userId !== ''"
-                         name="username{{i}}"
+                         name="lastname{{i}}"
                          type="text"
                          placeholder="Digite aqui"
                          class="input input-bordered input-xs"></td>
@@ -174,9 +222,21 @@
               <td>{{ user.name }}</td>
               <td>{{ user.lastname }}</td>
               <td>{{ user.email }}</td>
-              <td>{{ user.dateOfBirth }}</td>
-              <td>{{ user.role }}</td>
-              <td>{{ user.status }}</td>
+              <td>{{ user.dateOfBirth | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                <div class="dropdown dropdown-hover">
+                  <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
+                    class="material-icons">arrow_drop_down_icon </span></div>
+                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <li *ngFor="let role of filterRolesByUserId(user.userId)">{{ role.role }}</li>
+                  </ul>
+                </div>
+              </td>
+              <td><input type="checkbox"
+                         (click)="false"
+                         name="status{{i}}"
+                         [(ngModel)]="user.status"
+                         class="toggle toggle-primary"/></td>
               <td>
                 <app-button title="Resetar Senha"
                             class="btn-sm"

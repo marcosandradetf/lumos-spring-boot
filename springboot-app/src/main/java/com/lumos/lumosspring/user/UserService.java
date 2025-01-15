@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,7 +32,7 @@ public class UserService {
         List<User> users = userRepository.findAll();
         List<UserResponse> userResponses = new ArrayList<>();
         for (User user : users) {
-            Date dateOfBirth = user.getDateOfBirth();
+            LocalDate dateOfBirth = user.getDateOfBirth();
             userResponses.add(new UserResponse(
                     user.getIdUser().toString(),
                     user.getUsername(),
@@ -41,7 +42,8 @@ public class UserService {
                     user.getRoles().stream()
                             .map(Role::getNomeRole) // Pega apenas o nome de cada Role
                             .collect(Collectors.toList()), // Coleta como uma lista
-                    dateOfBirth != null ? dateOfBirth.toString() : null
+                    dateOfBirth != null ? dateOfBirth.toString() : null,
+                    user.getStatus()
             ));
         }
 
