@@ -27,7 +27,8 @@ export class UserService {
       month: string;
       year: string;
       role: string[],
-      status: boolean
+      status: boolean,
+      sel: boolean
     }[]>(`${this.endpoint}/get-users`);
   }
 

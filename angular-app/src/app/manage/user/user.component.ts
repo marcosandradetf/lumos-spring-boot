@@ -48,20 +48,7 @@ export class UserComponent {
     year: string;
     role: string[],
     status: boolean
-  }[] = [];
-
-  usersBackup: {
-    userId: string,
-    username: string,
-    name: string,
-    lastname: string,
-    email: string,
-    dateOfBirth: string,
-    day: string;
-    month: string;
-    year: string;
-    role: string[],
-    status: boolean
+    sel: boolean
   }[] = [];
 
   rolesUser: {
@@ -122,7 +109,6 @@ export class UserComponent {
             role: role
           }))
         );
-        this.usersBackup = users;
       }
     );
 
@@ -197,7 +183,8 @@ export class UserComponent {
       month: "",
       year: "",
       role: [],
-      status: true
+      status: true,
+      sel: false
     };
     this.users.push(user);
   }
