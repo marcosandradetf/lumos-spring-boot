@@ -8,6 +8,7 @@ import {DatePipe, NgForOf, NgIf} from '@angular/common';
 import {UserService} from './user-service.service';
 import {catchError, tap, throwError} from 'rxjs';
 import {HttpErrorResponse} from '@angular/common/http';
+import {UtilsService} from '../../core/service/utils.service';
 
 @Component({
   selector: 'app-user',
@@ -19,7 +20,8 @@ import {HttpErrorResponse} from '@angular/common/http';
     FormsModule,
     ReactiveFormsModule,
     NgForOf,
-    DatePipe
+    DatePipe,
+    NgIf
   ],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
@@ -94,15 +96,15 @@ export class UserComponent {
     {number: '12', name: "Dezembro"},
   ];
 
-    // Função para obter o nome do mês
-  private openDropdown: boolean = false;
-   getMonth(monthNumber: string) {
+  formSubmitted: boolean = false;
+  validation: string = '';
+
+  getMonth(monthNumber: string) {
     return this.months.find(m => m.number === monthNumber);
   }
 
 
-
-  constructor(protected router: Router, private userService: UserService) {
+  constructor(protected router: Router, private userService: UserService, protected utils: UtilsService) {
     this.userService.getUsers().subscribe(
       users => {
         this.users = users;
@@ -152,7 +154,19 @@ export class UserComponent {
   }
 
   submitUsers(usersForm: NgForm) {
+    this.formSubmitted = true;
 
+    this.users.forEach(user => {
+      if (user.month === '0') {
+        this.validation = "Mês inválido";
+        return;
+      } else if (user.month === '') {
+        this.validation = 'Campo obrigatório';
+        return;
+      }
+    });
+
+    this.validation = "";
   }
 
   resetPassword(userId: string) {
@@ -189,7 +203,6 @@ export class UserComponent {
   }
 
 
-
   removeUser() {
     const lastElement = this.users[this.users.length - 1];
     if (lastElement.userId === '') {
@@ -220,7 +233,7 @@ export class UserComponent {
       roles = roles.filter(role => role.role !== nomeRole);
     } else {
       // Caso contrário, adicionar a nova role
-      roles.push({ userId: id, role: nomeRole });
+      roles.push({userId: id, role: nomeRole});
     }
 
     // Atualizar as roles do usuário
@@ -248,13 +261,44 @@ export class UserComponent {
   }
 
 
-  handleClick(dropdown: HTMLDetailsElement, selectedMonth: string) {
-    console.log('Mês selecionado:', selectedMonth);
-
+  handleClick(dropdown: HTMLDetailsElement, month: string, userId: string) {
     // Fecha o dropdown
     dropdown.open = false;
+    console.log(month)
 
-    // Opcional: Atualizar algum estado ou executar lógica
+    const userIndex = this.users.findIndex(u => u.userId === userId);
+    if (userIndex === -1) {
+      return;
+    }
+
+    this.users[userIndex].month = month;
+
+    console.log(this.users);
+
+  }
+
+  getMaxDay(month: string, year: string): number {
+    const daysInMonth: Record<number, number> = {
+      1: 31, // Janeiro
+      2: this.isLeapYear(year) ? 29 : 28, // Fevereiro
+      3: 31, // Março
+      4: 30, // Abril
+      5: 31, // Maio
+      6: 30, // Junho
+      7: 31, // Julho
+      8: 31, // Agosto
+      9: 30, // Setembro
+      10: 31, // Outubro
+      11: 30, // Novembro
+      12: 31, // Dezembro
+    };
+    return daysInMonth[parseInt(month, 10)] || 31; // Valor padrão para meses inválidos
+  }
+
+
+  isLeapYear(strYear: string): boolean {
+    const year = parseInt(strYear, 10);
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   }
 
 }

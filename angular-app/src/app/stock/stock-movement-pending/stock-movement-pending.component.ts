@@ -6,7 +6,7 @@ import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
-import {StockMovementResponse} from '../stock-movement-response.dto';
+import {StockMovementResponse} from '../../models/stock-movement-response.dto';
 import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
 import {catchError, tap, throwError} from 'rxjs';

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {Contract} from '../contract-response.dto';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {MaterialResponse} from '../../stock/material-response.dto';
+import {MaterialResponse} from '../../models/material-response.dto';
 import {ItemRequest} from '../itens-request.dto';
 import {environment} from '../../../environments/environment';
 

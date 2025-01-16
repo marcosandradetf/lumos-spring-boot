@@ -6,7 +6,7 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {MaterialFormComponent} from './material-form/material-form.component';
 import {TabelaComponent} from './tabela/tabela.component';
 import {Title} from '@angular/platform-browser';
-import {MaterialResponse} from '../material-response.dto';
+import {MaterialResponse} from '../../models/material-response.dto';
 import {MaterialService} from '../services/material.service';
 import {EstoqueService} from '../services/estoque.service';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';

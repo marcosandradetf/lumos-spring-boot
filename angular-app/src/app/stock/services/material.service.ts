@@ -1,8 +1,8 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {MaterialResponse} from '../material-response.dto';
-import {CreateMaterialRequest} from '../create-material-request.dto';
+import {MaterialResponse} from '../../models/material-response.dto';
+import {CreateMaterialRequest} from '../../models/create-material-request.dto';
 import {environment} from '../../../environments/environment';
 
 export enum State {

@@ -1,4 +1,4 @@
-<div class="overflow-x-auto">
+<div class="overflow-x-auto {{class}}">
   <!-- Filtro de Pesquisa -->
   @if (search) {
     <div class="flex w-full items-center">
@@ -17,7 +17,7 @@
 
 
   <!-- Tabela -->
-  <table class="table cursor-default select-none z-10 w-full mb-5" [ngClass]="large ? '' : 'table-xs'">
+  <table class="table table-auto cursor-default select-none z-10 w-full mb-5" [ngClass]="large ? '' : 'table-xs'">
     <thead>
       <!-- Conteúdo do cabeçalho (usando ng-content para inserir dinamicamente) -->
       <ng-content select="[header]"></ng-content>

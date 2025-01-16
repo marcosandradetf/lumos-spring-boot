@@ -6,7 +6,7 @@ import {MaterialFormComponent} from '../material-form/material-form.component';
 import {AlertMessageComponent} from '../../../shared/components/alert-message/alert-message.component';
 import {ModalComponent} from '../../../shared/components/modal/modal.component';
 import {ButtonComponent} from '../../../shared/components/button/button.component';
-import {MaterialResponse} from '../../material-response.dto';
+import {MaterialResponse} from '../../../models/material-response.dto';
 import {MaterialService, State} from '../../services/material.service';
 import {ReactiveFormsModule} from "@angular/forms";
 

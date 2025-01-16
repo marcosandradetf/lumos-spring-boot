@@ -15,6 +15,7 @@ export class TableComponent {
   @Input() search: boolean = false;
   @Input() filter: boolean = false;
   @Input() large: boolean = false;
+  @Input() class: string = '';
 
   constructor(private materialService: MaterialService) { }
 

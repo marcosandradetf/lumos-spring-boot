@@ -3,7 +3,7 @@ import {FormsModule, NgForm} from '@angular/forms';
 import {NgIf} from '@angular/common';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {Group} from '../../core/models/grupo.model';
+import {Group} from '../../models/grupo.model';
 import {Router} from '@angular/router';
 import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';

@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
 
-import {StockMovementDTO} from '../stock-movement.dto';
-import {SupplierDTO} from '../supplier.dto';
-import {StockMovementResponse} from '../stock-movement-response.dto';
+import {StockMovementDTO} from '../../models/stock-movement.dto';
+import {SupplierDTO} from '../../models/supplier.dto';
+import {StockMovementResponse} from '../../models/stock-movement-response.dto';
 import {AuthService} from '../../core/auth/auth.service';
-import {Type} from '../../core/models/tipo.model';
-import {Group} from '../../core/models/grupo.model';
-import {Company} from '../../core/models/empresa.model';
-import {Deposit} from '../../core/models/almoxarifado.model';
+import {Type} from '../../models/tipo.model';
+import {Group} from '../../models/grupo.model';
+import {Company} from '../../models/empresa.model';
+import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 
 

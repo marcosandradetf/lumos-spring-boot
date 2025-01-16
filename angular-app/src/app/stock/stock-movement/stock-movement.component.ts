@@ -9,13 +9,13 @@ import {PaginationComponent} from '../../shared/components/pagination/pagination
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
-import {Deposit} from '../../core/models/almoxarifado.model';
-import {MaterialResponse} from '../material-response.dto';
-import {StockMovementDTO} from '../stock-movement.dto';
+import {Deposit} from '../../models/almoxarifado.model';
+import {MaterialResponse} from '../../models/material-response.dto';
+import {StockMovementDTO} from '../../models/stock-movement.dto';
 import {MaterialService} from '../services/material.service';
 import {EstoqueService} from '../services/estoque.service';
 import {UtilsService} from '../../core/service/utils.service';
-import {SupplierDTO} from '../supplier.dto';
+import {SupplierDTO} from '../../models/supplier.dto';
 
 @Component({
   selector: 'app-stock-movement',

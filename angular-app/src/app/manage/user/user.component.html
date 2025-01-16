@@ -15,7 +15,7 @@
       <input type="radio" class="tab" aria-label="Minha Empresa" (click)="router.navigate(['/configuracoes/empresa'])"/>
     </div>
 
-    <div class="shadow border p-2">
+    <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)" class="shadow border p-2">
       <div class="flex justify-evenly pb-5 items-center">
         @if (!add && !change) {
           <app-button title="Alterar Usuários" [action]="changeUser()">
@@ -30,7 +30,7 @@
         @if (add || change) {
           <app-button title="Cancelar" class="btn" [action]="cancel()">
           </app-button>
-          <app-button title="Salvar"></app-button>
+          <app-button title="Salvar" typeButton="submit"></app-button>
           @if (add) {
             <div class="flex">
               <div class="flex flex-col items-center mr-2">
@@ -48,218 +48,234 @@
         }
 
       </div>
-      <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
-        <app-table>
-          <tr header>
-            <th hidden>Código</th>
-            <th>Usuário</th>
-            <th>Nome</th>
-            <th>Sobrenome</th>
-            <th>Email</th>
-            <th>Data de Nascimento</th>
-            <th>Funções</th>
-            <th>Status</th>
-            @if (!add && !change) {
-              <th>Ação</th>
-            }
-          </tr>
+      <app-table class="min-h-96">
+        <tr header>
+          <th hidden>Código</th>
+          <th>Usuário</th>
+          <th>Nome</th>
+          <th>Sobrenome</th>
+          <th>Email</th>
+          <th>Data de Nascimento</th>
+          <th>Funções</th>
+          <th>Status</th>
+          @if (!add && !change) {
+            <th>Ação</th>
+          }
+        </tr>
 
-          <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
-            @if (change) {
-              <td hidden><input disabled
-                                [(ngModel)]="user.userId"
-                                name="userId{{i}}"
-                                type="text"
-                                class="input input-bordered input-xs"
+        <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
+          @if (change) {
+            <td hidden>
+              <input disabled
+                     [(ngModel)]="user.userId"
+                     name="userId{{i}}"
+                     type="text"
+                     class="input input-bordered input-xs"
               ></td>
-              <td><input required
-                         [(ngModel)]="user.username"
-                         name="username{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"
+            <td>
+              <input required
+                     [(ngModel)]="user.username"
+                     name="username{{i}}"
+                     type="text"
+                     placeholder="Digite aqui"
+                     class="input input-bordered input-xs"
               ></td>
-              <td><input required
-                         [(ngModel)]="user.name"
-                         name="name{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.lastname"
-                         name="lastname{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.email"
-                         name="email{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td class="flex">
+            <td>
+              <input required
+                       [(ngModel)]="user.name"
+                       name="name{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input required
+                       [(ngModel)]="user.lastname"
+                       name="lastname{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input required
+                       [(ngModel)]="user.email"
+                       name="email{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td class="flex items-center space-x-2">
+              <div class="flex flex-col">
                 <input
                   required
                   [(ngModel)]="user.day"
+                  [ngModelOptions]="{ updateOn: 'blur' }"
                   name="day{{i}}"
-                  type="text"
-                  min="1"
-                  max="31"
+                  #day="ngModel"
+                  type="number"
                   placeholder="Dia"
-                  class="input input-bordered input-xs"
+                  min="1"
+                  [max]="getMaxDay(user.month, user.year)"
+                  class="input input-bordered input-xs max-w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 >
+                <div *ngIf="day.invalid && formSubmitted">
+                  <small *ngIf="day.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="day.errors?.['min']" class="text-orange-600">Dia deve ser no mínimo 1.</small>
+                  <small *ngIf="day.errors?.['max']" class="text-orange-600">Dia inválido para o mês
+                    selecionado.</small>
+                </div>
+              </div>
 
-                <!--                <input-->
-                <!--                  required-->
-                <!--                  [(ngModel)]="user.month"-->
-                <!--                  name="month{{i}}"-->
-                <!--                  type="text"-->
-                <!--                  min="1"-->
-                <!--                  max="12"-->
-                <!--                  placeholder="Mês"-->
-                <!--                  class="input input-bordered input-xs"-->
-                <!--                >-->
 
+              <div class="flex flex-col">
                 <details #dropdown class="dropdown">
                   <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs">
                     {{ getMonth(user.month)?.name }}
                   </summary>
-                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-52 p-2 shadow">
+                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow">
                     <li *ngFor="let m of months" class="select-none lower-text">
-                      <a (click)="handleClick(dropdown, m.name)">{{ m.name }}</a>
+                      <a (click)="handleClick(dropdown, m.number, user.userId)">{{ m.name }}</a>
                     </li>
                   </ul>
                 </details>
 
+                <small class="text-red-600">{{ validation }}</small>
+              </div>
 
+              <div class="flex flex-col">
                 <input
                   required
                   [(ngModel)]="user.year"
                   name="year{{i}}"
                   type="text"
+                  minlength="4"
+                  maxlength="4"
                   placeholder="Ano"
-                  class="input input-bordered input-xs"
+                  class="input input-bordered input-xs max-w-16"
+                  (input)="utils.formatNumber($event)"
+                  #year="ngModel"
                 >
-              </td>
-
-              <td>
-                <div class="dropdown dropdown-end flex-2">
-                  <div tabindex="0" role="button"
-                       class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
-                    <span class="text-sm poppins-regular pr-10">Selecionar</span>
-                  </div>
-                  <table tabindex="0"
-                         class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
-                    <tr *ngFor="let role of roles">
-                      <td>
-                        <input type="checkbox"
-                               class="checkbox"
-                               (change)="changeRole(user.userId, role.nomeRole)"
-                               [checked]="verifyRole(user.userId, role.nomeRole)"/>
-                      </td>
-                      <td class="poppintypeNames-light select-none lower-text">{{ role.nomeRole }}</td>
-                    </tr>
-                  </table>
+                <div *ngIf="year.invalid && formSubmitted">
+                  <small *ngIf="year.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="year.errors?.['minlength']" class="text-orange-600">
+                    Ano requer no mínimo 4 caracteres.
+                  </small>
                 </div>
+              </div>
+            </td>
 
-                <!--                <input required-->
-                <!--                         [(ngModel)]="user.role"-->
-                <!--                         name="role{{i}}"-->
-                <!--                         type="text"-->
-                <!--                         placeholder="Digite aqui"-->
-                <!--                         class="input input-bordered input-xs">-->
-              </td>
-              <td><input type="checkbox"
-                         name="status{{i}}"
-                         [(ngModel)]="user.status"
-                         class="toggle toggle-primary"/>
-                } @else if (add) {
-              <td hidden><input disabled
-                                [(ngModel)]="user.userId"
-                                name="userId{{i}}"
-                                type="text"
-                                class="input input-bordered input-xs"
-              ></td>
-              <td><input required
-                         [disabled]="user.userId !== ''"
-                         [(ngModel)]="user.username"
-                         name="username{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"
-              ></td>
-              <td><input required
-                         [disabled]="user.userId !== ''"
-                         [(ngModel)]="user.name"
-                         name="name{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.lastname"
-                         [disabled]="user.userId !== ''"
-                         name="lastname{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.email"
-                         [disabled]="user.userId !== ''"
-                         name="email{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.dateOfBirth"
-                         [disabled]="user.userId !== ''"
-                         name="dateOfBirth{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input required
-                         [(ngModel)]="user.role"
-                         [disabled]="user.userId !== ''"
-                         name="role{{i}}"
-                         type="text"
-                         placeholder="Digite aqui"
-                         class="input input-bordered input-xs"></td>
-              <td><input type="checkbox"
-                         name="status{{i}}"
-                         [(ngModel)]="user.status"
-                         [disabled]="user.userId !== ''"
-                         class="toggle toggle-primary"/></td>
-            } @else {
-              <td hidden disabled>{{ user.userId }}</td>
-              <td>{{ user.username }}</td>
-              <td>{{ user.name }}</td>
-              <td>{{ user.lastname }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.dateOfBirth | date: 'dd/MM/yyyy' }}</td>
-              <td>
-                <div class="dropdown dropdown-hover">
-                  <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
-                    class="material-icons">arrow_drop_down_icon </span></div>
-                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                    <li *ngFor="let role of filterRolesByUserId(user.userId)">{{ role.role }}</li>
-                  </ul>
+            <td>
+              <div class="dropdown dropdown-end flex-2">
+                <div tabindex="0" role="button"
+                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
+                  <span class="text-sm poppins-regular pr-10">Selecionar</span>
                 </div>
-              </td>
-              <td><input type="checkbox"
-                         (click)="false"
-                         name="status{{i}}"
-                         [(ngModel)]="user.status"
-                         class="toggle toggle-primary"/></td>
-              <td>
-                <app-button title="Resetar Senha"
-                            class="btn-sm"
-                            [action]="resetPassword(user.userId)">
-                </app-button>
-              </td>
-            }
-          </tr>
-        </app-table>
-      </form>
-    </div>
+                <table tabindex="0"
+                       class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+                  <tr *ngFor="let role of roles">
+                    <td>
+                      <input type="checkbox"
+                             class="checkbox"
+                             (change)="changeRole(user.userId, role.nomeRole)"
+                             [checked]="verifyRole(user.userId, role.nomeRole)"/>
+                    </td>
+                    <td class="poppintypeNames-light select-none lower-text">{{ role.nomeRole }}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!--                <input required-->
+              <!--                         [(ngModel)]="user.role"-->
+              <!--                         name="role{{i}}"-->
+              <!--                         type="text"-->
+              <!--                         placeholder="Digite aqui"-->
+              <!--                         class="input input-bordered input-xs">-->
+            </td>
+            <td><input type="checkbox"
+                       name="status{{i}}"
+                       [(ngModel)]="user.status"
+                       class="toggle toggle-primary"/>
+              } @else if (add) {
+            <td hidden><input disabled
+                              [(ngModel)]="user.userId"
+                              name="userId{{i}}"
+                              type="text"
+                              class="input input-bordered input-xs"
+            ></td>
+            <td><input required
+                       [disabled]="user.userId !== ''"
+                       [(ngModel)]="user.username"
+                       name="username{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"
+            ></td>
+            <td><input required
+                       [disabled]="user.userId !== ''"
+                       [(ngModel)]="user.name"
+                       name="name{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input required
+                       [(ngModel)]="user.lastname"
+                       [disabled]="user.userId !== ''"
+                       name="lastname{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input required
+                       [(ngModel)]="user.email"
+                       [disabled]="user.userId !== ''"
+                       name="email{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input required
+                       [(ngModel)]="user.dateOfBirth"
+                       [disabled]="user.userId !== ''"
+                       name="dateOfBirth{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input required
+                       [(ngModel)]="user.role"
+                       [disabled]="user.userId !== ''"
+                       name="role{{i}}"
+                       type="text"
+                       placeholder="Digite aqui"
+                       class="input input-bordered input-xs"></td>
+            <td><input type="checkbox"
+                       name="status{{i}}"
+                       [(ngModel)]="user.status"
+                       [disabled]="user.userId !== ''"
+                       class="toggle toggle-primary"/></td>
+          } @else {
+            <td hidden disabled>{{ user.userId }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.lastname }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.dateOfBirth | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <div class="dropdown dropdown-hover">
+                <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
+                  class="material-icons">arrow_drop_down_icon </span></div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                  <li *ngFor="let role of filterRolesByUserId(user.userId)">{{ role.role }}</li>
+                </ul>
+              </div>
+            </td>
+            <td><input type="checkbox"
+                       (click)="false"
+                       name="status{{i}}"
+                       [(ngModel)]="user.status"
+                       class="toggle toggle-primary"/></td>
+            <td>
+              <app-button title="Resetar Senha"
+                          class="btn-sm"
+                          [action]="resetPassword(user.userId)">
+              </app-button>
+            </td>
+          }
+        </tr>
+      </app-table>
+    </form>
 
   </div>
 

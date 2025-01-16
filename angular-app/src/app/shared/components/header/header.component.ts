@@ -4,7 +4,7 @@ import {catchError, of, tap} from 'rxjs';
 import {EstoqueService} from '../../../stock/services/estoque.service';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {AuthService} from '../../../core/auth/auth.service';
-import {User} from '../../../core/models/user.model';
+import {User} from '../../../models/user.model';
 
 @Component({
   selector: 'app-header',

@@ -1,9 +1,9 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {User} from '../../core/models/user.model';
+import {User} from '../../models/user.model';
 import {Observable} from 'rxjs';
 import * as http from 'node:http';
-import {Deposit} from '../../core/models/almoxarifado.model';
+import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 
 @Injectable({

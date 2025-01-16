@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {BehaviorSubject, catchError, map, Observable, of, tap} from 'rxjs';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Router } from '@angular/router';
-import {User} from '../models/user.model';
+import {User} from '../../models/user.model';
 import {routes} from '../../app.routes';
 import {environment} from '../../../environments/environment';
 
