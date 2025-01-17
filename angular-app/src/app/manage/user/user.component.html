@@ -19,26 +19,25 @@
       <div class="flex justify-evenly pb-5 items-center">
         @if (!add && !change) {
           <app-button title="Alterar Usuários" [action]="changeUser()">
-
           </app-button>
         }
         @if (!add && !change) {
-          <app-button title="Adicionar Usuários" class="btn-success text-white" [action]="addUser()">
-
+          <app-button title="Adicionar Usuários" class="btn btn-success text-white" [action]="addUser()">
           </app-button>
         }
         @if (add || change) {
           <app-button title="Cancelar" class="btn" [action]="cancel()">
           </app-button>
-          <app-button title="Salvar" typeButton="submit"></app-button>
+          <app-button title="Salvar" typeButton="submit" [loading]="loading" class="btn btn-primary w-32 text-white">
+          </app-button>
           @if (add) {
             <div class="flex">
               <div class="flex flex-col items-center mr-2">
-                <button class="btn btn-outline btn-primary btn-xs" (click)="newUser()">+</button>
+                <button class="btn btn-outline btn-primary btn-xs" (click)="newUser()" type="button">+</button>
                 <p class="text-xs">Adicionar</p>
               </div>
               <div class="flex flex-col items-center">
-                <button class="btn btn-outline btn-xs" (click)="removeUser()">-</button>
+                <button class="btn btn-outline btn-xs" (click)="removeUser()" type="button">-</button>
                 <p class="text-xs">Remover</p>
               </div>
             </div>
@@ -85,22 +84,40 @@
                      type="text"
                      placeholder="Digite aqui"
                      class="input input-bordered input-xs"
-              ></td>
+                     #username="ngModel"
+              >
+              <div *ngIf="username.invalid && formSubmitted">
+                <small *ngIf="username.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="username.errors?.['min']" class="text-orange-600">Usuário inválido</small>
+              </div>
+            </td>
             <td>
               <input required
                      [readOnly]="!user.sel"
                      [(ngModel)]="user.name"
                      name="name{{i}}"
                      type="text"
+                     min="5"
                      placeholder="Digite aqui"
-                     class="input input-bordered input-xs"></td>
+                     class="input input-bordered input-xs"
+                     #name="ngModel">
+              <div *ngIf="name.invalid && formSubmitted">
+                <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="name.errors?.['min']" class="text-orange-600">Nome inválido</small>
+              </div>
+            </td>
             <td><input required
                        [readOnly]="!user.sel"
                        [(ngModel)]="user.lastname"
                        name="lastname{{i}}"
                        type="text"
                        placeholder="Digite aqui"
-                       class="input input-bordered input-xs"></td>
+                       class="input input-bordered input-xs"
+                       #lastname="ngModel">
+              <div *ngIf="lastname.invalid && formSubmitted">
+                <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              </div>
+            </td>
             <td><input required
                        [readOnly]="!user.sel"
                        [(ngModel)]="user.email"
@@ -190,6 +207,7 @@
                   </tr>
                 </table>
               </div>
+              <small class="text-red-600">{{ user.month  === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
             </td>
             <td><input type="checkbox"
                        name="status{{i}}"
@@ -262,16 +280,17 @@
               <div class="flex flex-col">
                 <details #dropdown class="dropdown">
                   <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs disabled">
-                    {{ getMonth(user.month)?.name }}
+                    {{ getMonth(user.month)?.name || 'Selecione' }}
                   </summary>
-                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow" *ngIf="user.userId === ''">
+                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow"
+                      *ngIf="user.userId === ''">
                     <li *ngFor="let m of months" class="select-none lower-text">
                       <a (click)="handleClick(dropdown, m.number, user.userId)">{{ m.name }}</a>
                     </li>
                   </ul>
                 </details>
 
-                <small class="text-red-600">{{ validation }}</small>
+                <small class="text-red-600">{{ user.month  === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
               </div>
 
               <div class="flex flex-col">
@@ -323,7 +342,7 @@
                        [readOnly]="user.userId !== ''"
                        [(ngModel)]="user.status"
                        class="toggle toggle-primary"/>
-          } @else {
+              } @else {
             <td hidden disabled>{{ user.userId }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.name }}</td>
@@ -347,7 +366,7 @@
             <td>
               <app-button title="Resetar Senha"
                           class="btn-sm"
-                          [action]="resetPassword(user.userId)">
+                          [action]="confirmResetPassword(user.userId)">
               </app-button>
             </td>
           }
@@ -356,5 +375,18 @@
     </form>
 
   </div>
+
+  <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+  <!--    modal confirmation-->
+  <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="openConfirmationModal = false">
+    <div>
+      <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
+      <div class="flex justify-around">
+        <app-button (click)="openConfirmationModal = false" title="Cancelar" class="btn bg-red-500 hover:bg-red-700"
+                    textColor="text-black"></app-button>
+        <app-button (click)="resetPassword()" title="Confirmar"></app-button>
+      </div>
+    </div>
+  </app-modal>
 
 </div>

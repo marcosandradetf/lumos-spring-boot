@@ -17,15 +17,15 @@ export class AlertMessageComponent implements OnChanges {
   @Input() timeout: number = 3000;  // O tempo de exibição da mensagem
   @Input() alertType:string | null = null;
 
-  serverMessage: string = '';
+  serverMessage: string | null = null;
 
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['message'] && this.message) {
       this.serverMessage = this.message;
       setTimeout(() => {
-        this.serverMessage = '';
-        this.message = '';
+        this.serverMessage = null;
+        this.message = null;
       }, this.timeout);
     }
   }

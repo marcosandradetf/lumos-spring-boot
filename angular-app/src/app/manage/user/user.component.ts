@@ -9,6 +9,8 @@ import {UserService} from './user-service.service';
 import {catchError, tap, throwError} from 'rxjs';
 import {HttpErrorResponse} from '@angular/common/http';
 import {UtilsService} from '../../core/service/utils.service';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-user',
@@ -21,7 +23,9 @@ import {UtilsService} from '../../core/service/utils.service';
     ReactiveFormsModule,
     NgForOf,
     DatePipe,
-    NgIf
+    NgIf,
+    AlertMessageComponent,
+    ModalComponent
   ],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
@@ -51,6 +55,22 @@ export class UserComponent {
     sel: boolean
   }[] = [];
 
+  usersBackup: {
+    userId: string,
+    username: string,
+    name: string,
+    lastname: string,
+    email: string,
+    dateOfBirth: string,
+    day: string;
+    month: string;
+    year: string;
+    role: string[],
+    status: boolean
+    sel: boolean
+  }[] = [];
+
+
   rolesUser: {
     userId: string,
     role: string,
@@ -62,7 +82,6 @@ export class UserComponent {
     nomeRole: string,
   }[] = [];
 
-  private message: string = '';
   add: boolean = false;
 
   months: {
@@ -85,6 +104,11 @@ export class UserComponent {
 
   formSubmitted: boolean = false;
   validation: string = '';
+  serverMessage: string | null = null;
+  alertType: string | null = null;
+  loading: boolean = false;
+  userId: string = '';
+  openConfirmationModal: boolean = false;
 
   getMonth(monthNumber: string) {
     return this.months.find(m => m.number === monthNumber);
@@ -95,6 +119,7 @@ export class UserComponent {
     this.userService.getUsers().subscribe(
       users => {
         this.users = users;
+        this.usersBackup = users;
         this.users.forEach((u) => {
           const [year, month, day] = u.dateOfBirth.split("-");
           // Preencha as propriedades user.day, user.month e user.year
@@ -117,6 +142,7 @@ export class UserComponent {
         this.roles = roles;
       }
     );
+
   }
 
 
@@ -136,39 +162,102 @@ export class UserComponent {
     return () => {
       this.change = false;
       this.add = false;
+      this.users = JSON.parse(JSON.stringify(this.usersBackup));
     }
   }
 
-  submitUsers(usersForm: NgForm) {
+  submitUsers(form: NgForm) {
     this.formSubmitted = true;
 
-    this.users.forEach(user => {
-      if (user.month === '0') {
-        this.validation = "Mês inválido";
-        return;
-      } else if (user.month === '') {
-        this.validation = 'Campo obrigatório';
-        return;
+    if (form.invalid) {
+      console.log('Formulário inválido');
+      return;
+    }
+
+    this.users.forEach((u) => {
+      if (u.userId === '') {
+        this.insertUsers();
+      } else {
+        this.updateUsers();
       }
-    });
+    })
 
     this.validation = "";
   }
 
-  resetPassword(userId: string) {
-    return () => {
-      this.userService.resetPassword(userId).pipe(
+  private insertUsers() {
+    this.loading = true;
+
+
+    this.userService.updateUser(this.users)
+      .pipe(tap(r => {
+          this.showMessage("Usuários atualizados com sucesso.");
+          this.alertType = "alert-success";
+          this.users = r;
+          this.usersBackup = r;
+        }),
+        catchError(err => {
+          this.showMessage(err.error.message);
+          this.alertType = "alert-error";
+          throw err;
+        })
+      ).subscribe();
+
+    this.loading = false;
+  }
+
+  private updateUsers() {
+    this.loading = true;
+    // Verifica se nenhum usuário foi selecionado
+    const noneSelected = this.users.every(u => !u.sel);
+
+    if (noneSelected) {
+      // this.serverMessage = "Nenhum usuário foi selecionado."
+      this.showMessage("Nenhum usuário foi selecionado.");
+      this.alertType = "alert-error";
+      this.loading = false;
+      return;
+    }
+
+    this.userService.insertUsers(this.users)
+      .pipe(tap(r => {
+          this.showMessage("Usuários inseridos com sucesso.");
+          this.alertType = "alert-success";
+          this.users = r;
+          this.usersBackup = r;
+        }),
+        catchError(err => {
+          this.showMessage(err.error.message);
+          this.alertType = "alert-error";
+          throw err;
+        })
+      ).subscribe();
+
+    this.loading = false;
+
+  }
+
+  private showMessage(message: string, timeout = 3000) {
+    this.serverMessage = message;
+    setTimeout(() => {
+      this.serverMessage = null;
+    }, timeout);
+  }
+
+
+  resetPassword() {
+    if (this.userId !== '') {
+      this.userService.resetPassword(this.userId).pipe(
         tap(r => {
-          this.message = ((r as any).message);
         }),
         catchError(err => {
           console.log(err)
-          this.message = err.error.message;
           return throwError(() => err);
 
         })
       ).subscribe();
-    };
+    }
+
   }
 
   newUser() {
@@ -258,6 +347,9 @@ export class UserComponent {
       return;
     }
 
+    console.log(userIndex);
+    console.log(this.users)
+
     this.users[userIndex].month = month;
 
     console.log(this.users);
@@ -288,4 +380,10 @@ export class UserComponent {
     return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   }
 
+  confirmResetPassword(userId: string) {
+    return () => {
+      this.openConfirmationModal = true;
+      this.userId = userId;
+    };
+  }
 }

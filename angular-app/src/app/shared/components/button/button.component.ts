@@ -14,5 +14,6 @@ export class ButtonComponent {
   @Input() class: string = "";
   @Input() textColor: string = "";
   @Input() typeButton: string | null = null;
+  @Input() loading: boolean = false;
 
 }

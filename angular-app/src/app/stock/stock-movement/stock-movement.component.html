@@ -209,12 +209,12 @@
         </app-table>
         <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
           <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor"
-                      class="bg-neutral-300 hover:bg-orange-500 rounded-none w-full"
+                      class="btn bg-neutral-300 hover:bg-orange-500 rounded-none w-full"
                       textColor="text-black"></app-button>
           <app-button (click)="closeMovementModal()" title="Cancelar"
-                      class="bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
+                      class="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
           <app-button typeButton="submit" title="Salvar Movimentação"
-                      class="bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+                      class="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
         </div>
       </form>
     </app-modal>
@@ -226,7 +226,7 @@
       <div>
         <h3 class="text-center mb-7">Confirma a transação?</h3>
         <div class="flex justify-around">
-          <app-button (click)="closeConfirmationModal()" title="Cancelar" class="bg-red-500 hover:bg-red-700"
+          <app-button (click)="closeConfirmationModal()" title="Cancelar" class="btn bg-red-500 hover:bg-red-700"
                       textColor="text-black"></app-button>
           <app-button (click)="submitDataMovement()" title="Confirmar"></app-button>
         </div>
@@ -310,9 +310,9 @@
 
         <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
           <app-button (click)="closeSupplierModal()" title="Cancelar"
-                      class="bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
+                      class="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
           <app-button typeButton="submit" title="Salvar Fornecedor"
-                      class="bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+                      class="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
         </div>
       </form>
     </app-modal>

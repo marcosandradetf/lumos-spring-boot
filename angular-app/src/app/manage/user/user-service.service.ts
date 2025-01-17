@@ -15,7 +15,7 @@ export class UserService {
   constructor(private http: HttpClient) {
   }
 
-  public getUsers(){
+  public getUsers() {
     return this.http.get<{
       userId: string,
       username: string,
@@ -43,5 +43,65 @@ export class UserService {
       nomeRole: string,
     }[]>(`${this.endpoint}/get-roles`);
 
+  }
+
+  public updateUser(user: {
+    userId: string,
+    username: string,
+    name: string,
+    lastname: string,
+    email: string,
+    dateOfBirth: string,
+    day: string;
+    month: string;
+    year: string;
+    role: string[],
+    status: boolean,
+    sel: boolean
+  }[]) {
+    return this.http.post<{
+      userId: string,
+      username: string,
+      name: string,
+      lastname: string,
+      email: string,
+      dateOfBirth: string,
+      day: string;
+      month: string;
+      year: string;
+      role: string[],
+      status: boolean,
+      sel: boolean
+    }[]>(`${this.endpoint}/update-users`, user);
+  }
+
+  public insertUsers(user: {
+    userId: string,
+    username: string,
+    name: string,
+    lastname: string,
+    email: string,
+    dateOfBirth: string,
+    day: string;
+    month: string;
+    year: string;
+    role: string[],
+    status: boolean,
+    sel: boolean
+  }[]) {
+    return this.http.post<{
+      userId: string,
+      username: string,
+      name: string,
+      lastname: string,
+      email: string,
+      dateOfBirth: string,
+      day: string;
+      month: string;
+      year: string;
+      role: string[],
+      status: boolean,
+      sel: boolean
+    }[]>(`${this.endpoint}/insert-users`, user);
   }
 }
