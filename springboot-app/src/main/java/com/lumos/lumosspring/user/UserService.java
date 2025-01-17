@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.notification.EmailService;
+import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
@@ -10,10 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,11 +19,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final RoleRepository roleRepository;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.roleRepository = roleRepository;
     }
 
     public ResponseEntity<List<UserResponse>> findAll() {
@@ -134,4 +134,60 @@ public class UserService {
 
         return ResponseEntity.ok().body(new DefaultResponse("Senha atualizada com sucesso"));
     }
+
+    public ResponseEntity<?> updateUsers(List<UpdateUserDto> dto) {
+        boolean hasInvalidUser = dto.stream().noneMatch(UpdateUserDto::sel);
+
+        if (hasInvalidUser) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Erro: Nenhum usuário selecionado foi enviado."));
+        }
+
+        hasInvalidUser = dto.stream().anyMatch(u -> u.userId().isEmpty());
+        if (hasInvalidUser) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Erro: Foi enviado um ou mais usuário sem identificação."));
+        }
+
+        Set<Role> userRoles = new HashSet<>();
+
+        for (UpdateUserDto u : dto) {
+            if (!u.sel()) {
+                continue;
+            }
+            var user = userRepository.findByIdUser(UUID.fromString(u.userId()));
+            if (user.isEmpty()) {
+                continue;
+            }
+            var date = LocalDate.of(u.year(), u.month(), u.day());
+
+            for (String r: u.role()) {
+                if (r.isEmpty()) {
+                    continue;
+                }
+
+                var role = roleRepository.findByNomeRole(r);
+                if (role == null) {
+                    continue;
+                }
+                userRoles.add(role);
+            }
+
+            user.get().setUsername(u.username());
+            user.get().setName(u.name());
+            user.get().setLastName(u.lastname());
+            user.get().setEmail(u.email());
+            user.get().setDateOfBirth(date);
+            user.get().setRoles(userRoles);
+            user.get().setStatus(u.status());
+            userRepository.save(user.get());
+        }
+
+
+        return ResponseEntity.ok(this.findAll());
+    }
+
+
+
+
 }

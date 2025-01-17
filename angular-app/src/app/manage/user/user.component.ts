@@ -174,13 +174,17 @@ export class UserComponent {
       return;
     }
 
-    this.users.forEach((u) => {
-      if (u.userId === '') {
+    const insert = this.users.some(u => u.userId === '');
+    const update = this.users.every(u => u.userId !== '');
+    const updateCheckSel = this.users.some(u => u.sel);
+
+      if (insert && this.users.length !== this.usersBackup.length) {
+        console.log('insert');
         this.insertUsers();
-      } else {
+      } else if (update && updateCheckSel) {
+        console.log('update');
         this.updateUsers();
       }
-    })
 
     this.validation = "";
   }
@@ -189,9 +193,9 @@ export class UserComponent {
     this.loading = true;
 
 
-    this.userService.updateUser(this.users)
+    this.userService.insertUsers(this.users)
       .pipe(tap(r => {
-          this.showMessage("Usuários atualizados com sucesso.");
+          this.showMessage("Usuários criados com sucesso.");
           this.alertType = "alert-success";
           this.users = r;
           this.usersBackup = r;
@@ -219,9 +223,9 @@ export class UserComponent {
       return;
     }
 
-    this.userService.insertUsers(this.users)
+    this.userService.updateUser(this.users)
       .pipe(tap(r => {
-          this.showMessage("Usuários inseridos com sucesso.");
+          this.showMessage("Usuários atualizados com sucesso.");
           this.alertType = "alert-success";
           this.users = r;
           this.usersBackup = r;

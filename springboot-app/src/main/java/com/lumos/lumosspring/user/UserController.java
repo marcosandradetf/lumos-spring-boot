@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.user.dto.CreateUserDto;
+import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
@@ -29,28 +30,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @Transactional
-    @PostMapping("/create-user")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<Void> newUser(@RequestBody CreateUserDto dto) {
-        var basicRole = roleRepository.findByNomeRole(Role.Values.BASIC.name());
-        var userFromDb = userRepository.findByUsername(dto.username());
-
-        if(userFromDb.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-
-        var user = new User();
-        user.setUsername(dto.username());
-        user.setEmail(dto.email());
-        user.setPassword(passwordEncoder.encode(dto.password()));
-        user.setRoles(Set.of(basicRole));
-        userRepository.save(user);
-
-        return ResponseEntity.ok().build();
-    }
-
-
     @GetMapping("/get-users")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<List<UserResponse>> findAll() {
@@ -67,6 +46,13 @@ public class UserController {
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> resetPassword(@PathVariable String userId) {
         return userService.resetPassword(userId);
+    }
+
+    @PostMapping("update-users")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Transactional
+    public ResponseEntity<?> updateUsers(@RequestBody List<UpdateUserDto> dto) {
+        return userService.updateUsers(dto);
     }
 
 }
