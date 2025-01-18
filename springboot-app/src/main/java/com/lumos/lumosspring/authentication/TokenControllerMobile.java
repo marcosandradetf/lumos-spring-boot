@@ -57,7 +57,7 @@ public class TokenControllerMobile {
 
         var scopes = user.get().getRoles()
                 .stream()
-                .map(Role::getNomeRole)
+                .map(Role::getRoleName)
                 .collect(Collectors.joining(" "));
 
         var accessTokenClaims = JwtClaimsSet.builder()
@@ -123,7 +123,7 @@ public class TokenControllerMobile {
         var user = tokenFromDb.get().getUser();
         var scope = user.getRoles()
                 .stream()
-                .map(Role::getNomeRole)
+                .map(Role::getRoleName)
                 .collect(Collectors.joining(" "));
 
         // Cria novo token de acesso com as mesmas informações do refresh token

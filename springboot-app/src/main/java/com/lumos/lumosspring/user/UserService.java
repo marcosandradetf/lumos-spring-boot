@@ -40,9 +40,11 @@ public class UserService {
                     user.getLastName(),
                     user.getEmail(),
                     user.getRoles().stream()
-                            .map(Role::getNomeRole) // Pega apenas o nome de cada Role
+                            .map(Role::getRoleName) // Pega apenas o nome de cada Role
                             .collect(Collectors.toList()), // Coleta como uma lista
-                    dateOfBirth != null ? dateOfBirth.toString() : null,
+                    dateOfBirth != null ? dateOfBirth.getYear() : null,
+                    dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
+                    dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
                     user.getStatus()
             ));
         }
@@ -166,7 +168,7 @@ public class UserService {
                     continue;
                 }
 
-                var role = roleRepository.findByNomeRole(r);
+                var role = roleRepository.findByRoleName(r);
                 if (role == null) {
                     continue;
                 }
@@ -184,7 +186,7 @@ public class UserService {
         }
 
 
-        return ResponseEntity.ok(this.findAll());
+        return this.findAll();
     }
 
 

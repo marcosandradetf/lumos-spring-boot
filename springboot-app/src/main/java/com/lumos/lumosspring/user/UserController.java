@@ -18,15 +18,11 @@ import java.util.Set;
 @RequestMapping("/api/user")
 public class UserController {
 
-    private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final UserService userService;
 
     public UserController(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder passwordEncoder, UserService userService) {
-        this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
         this.userService = userService;
     }
 

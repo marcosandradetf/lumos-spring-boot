@@ -11,7 +11,7 @@ import {Component, Input} from '@angular/core';
 export class ButtonComponent {
   @Input() title: string = "";
   @Input() action: () => void = () => {};
-  @Input() class: string = "";
+  @Input() classButton: string = "";
   @Input() textColor: string = "";
   @Input() typeButton: string | null = null;
   @Input() loading: boolean = false;

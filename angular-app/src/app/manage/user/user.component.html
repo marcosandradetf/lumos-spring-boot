@@ -9,10 +9,12 @@
       </ul>
     </div>
 
+
     <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
       <input type="radio" class="tab" aria-label="Usuários" checked/>
       <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
-      <input type="radio" class="tab" aria-label="Minha Empresa" (click)="router.navigate(['/configuracoes/empresa'])"/>
+      <input type="radio" class="tab" aria-label="Minha Empresa"
+             (click)="router.navigate(['/configuracoes/empresa'])"/>
     </div>
 
     <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)" class="shadow border p-2">
@@ -22,13 +24,14 @@
           </app-button>
         }
         @if (!add && !change) {
-          <app-button title="Adicionar Usuários" class="btn btn-success text-white" [action]="addUser()">
+          <app-button title="Adicionar Usuários" classButton="btn btn-success text-white" [action]="addUser()">
           </app-button>
         }
         @if (add || change) {
-          <app-button title="Cancelar" class="btn" [action]="cancel()">
+          <app-button title="Cancelar" classButton="btn" [action]="resetView()">
           </app-button>
-          <app-button title="Salvar" typeButton="submit" [loading]="loading" class="btn btn-primary w-32 text-white">
+          <app-button title="Salvar" typeButton="submit" [loading]="loading"
+                      classButton="btn btn-primary w-32 text-white">
           </app-button>
           @if (add) {
             <div class="flex">
@@ -152,7 +155,7 @@
               <div class="flex flex-col">
                 <details #dropdown class="dropdown">
                   <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs disabled">
-                    {{ getMonth(user.month)?.name }}
+                    {{ getMonth(user.month.toString())?.name }}
                   </summary>
                   <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow" *ngIf="user.sel">
                     <li *ngFor="let m of months" class="select-none lower-text">
@@ -200,14 +203,14 @@
                     <td>
                       <input type="checkbox"
                              class="checkbox"
-                             (change)="changeRole(user.userId, role.nomeRole)"
-                             [checked]="verifyRole(user.userId, role.nomeRole)"/>
+                             (change)="changeRole(user.userId, role.roleName)"
+                             [checked]="verifyRole(user.userId, role.roleName)"/>
                     </td>
-                    <td class="poppintypeNames-light select-none lower-text">{{ role.nomeRole }}</td>
+                    <td class="poppintypeNames-light select-none lower-text">{{ role.roleName }}</td>
                   </tr>
                 </table>
               </div>
-              <small class="text-red-600">{{ user.month  === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
+              <small class="text-red-600">{{ user.month === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
             </td>
             <td><input type="checkbox"
                        name="status{{i}}"
@@ -280,7 +283,7 @@
               <div class="flex flex-col">
                 <details #dropdown class="dropdown">
                   <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs disabled">
-                    {{ getMonth(user.month)?.name || 'Selecione' }}
+                    {{ getMonth(user.month.toString())?.name || 'Mês' }}
                   </summary>
                   <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow"
                       *ngIf="user.userId === ''">
@@ -290,7 +293,8 @@
                   </ul>
                 </details>
 
-                <small class="text-red-600">{{ user.month  === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
+                <small
+                  class="text-red-600">{{ user.month === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
               </div>
 
               <div class="flex flex-col">
@@ -329,17 +333,17 @@
                     <td>
                       <input type="checkbox"
                              class="checkbox"
-                             (change)="changeRole(user.userId, role.nomeRole)"
-                             [checked]="verifyRole(user.userId, role.nomeRole)"/>
+                             (change)="changeRole(user.userId, role.roleName)"
+                             [checked]="verifyRole(user.userId, role.roleName)"/>
                     </td>
-                    <td class="poppintypeNames-light select-none lower-text">{{ role.nomeRole }}</td>
+                    <td class="poppintypeNames-light select-none lower-text">{{ role.roleName }}</td>
                   </tr>
                 </table>
               </div>
             </td>
             <td><input type="checkbox"
                        name="status{{i}}"
-                       [readOnly]="user.userId !== ''"
+                       (click)="user.userId === ''"
                        [(ngModel)]="user.status"
                        class="toggle toggle-primary"/>
               } @else {
@@ -348,7 +352,7 @@
             <td>{{ user.name }}</td>
             <td>{{ user.lastname }}</td>
             <td>{{ user.email }}</td>
-            <td>{{ user.dateOfBirth | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ user.day + " de " + getMonth(user.month.toString())?.name + " de " + user.year }}</td>
             <td>
               <div class="dropdown dropdown-hover">
                 <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
@@ -365,7 +369,7 @@
                        class="toggle toggle-primary"/></td>
             <td>
               <app-button title="Resetar Senha"
-                          class="btn-sm"
+                          classButton="btn-sm"
                           [action]="confirmResetPassword(user.userId)">
               </app-button>
             </td>
@@ -373,6 +377,7 @@
         </tr>
       </app-table>
     </form>
+
 
   </div>
 
@@ -382,11 +387,13 @@
     <div>
       <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
       <div class="flex justify-around">
-        <app-button (click)="openConfirmationModal = false" title="Cancelar" class="btn bg-red-500 hover:bg-red-700"
+        <app-button (click)="openConfirmationModal = false" title="Cancelar"
+                    classButton="btn bg-red-500 hover:bg-red-700"
                     textColor="text-black"></app-button>
         <app-button (click)="resetPassword()" title="Confirmar"></app-button>
       </div>
     </div>
   </app-modal>
+
 
 </div>

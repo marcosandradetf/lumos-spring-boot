@@ -7,41 +7,41 @@ import jakarta.persistence.*;
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_role")
-    private long idRole;
+    private long roleId;
 
     @Column(unique = true)
-    private String nomeRole;
+    private String roleName;
 
-    public long getIdRole() {
-        return idRole;
+    public long getRoleId() {
+        return roleId;
     }
 
-    public void setIdRole(long idRole) {
-        this.idRole = idRole;
+    public void setRoleId(long idRole) {
+        this.roleId = idRole;
     }
 
-    public String getNomeRole() {
-        return nomeRole;
+    public String getRoleName() {
+        return roleName;
     }
 
-    public void setNomeRole(String nomeRole) {
-        this.nomeRole = nomeRole;
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
     }
 
     public enum Values {
         ADMIN(1L),
-        MANAGER(2L),
-        BASIC(3L);
+        ANALISTA(2L),
+        ESTOQUISTA(3L),
+        OPERADOR(4L);
 
-        long idRole;
+        final long roleId;
 
-        Values(long idRole) {
-            this.idRole = idRole;
+        Values(long roleId) {
+            this.roleId = roleId;
         }
 
-        public long getIdRole() {
-            return idRole;
+        public long getRoleId() {
+            return roleId;
         }
 
     }

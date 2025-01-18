@@ -89,7 +89,7 @@ export class StockMovementComponent {
   constructor(protected materialService: MaterialService,
               private estoqueService: EstoqueService,
               protected utils: UtilsService,
-              private titleService:Title) {
+              private titleService: Title) {
     this.loadMaterials();
     this.titleService.setTitle("Movimentar Estoque");
     this.estoqueService.getDeposits().subscribe(d => this.deposits = d);

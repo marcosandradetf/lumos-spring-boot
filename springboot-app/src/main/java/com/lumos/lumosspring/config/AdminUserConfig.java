@@ -10,9 +10,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.Set;
 
 @Configuration
@@ -31,8 +28,8 @@ public class AdminUserConfig implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        var roleAdmin = roleRepository.findByNomeRole(Role.Values.ADMIN.name());
-        var roleManager = roleRepository.findByNomeRole(Role.Values.MANAGER.name());
+        var roleAdmin = roleRepository.findByRoleName(Role.Values.ADMIN.name());
+        var roleManager = roleRepository.findByRoleName(Role.Values.ANALISTA.name());
         var userAdmin = userRepository.findByUsername("admin");
         var date = LocalDate.now();
         userAdmin.ifPresentOrElse(

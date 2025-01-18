@@ -11,6 +11,9 @@ import {HttpErrorResponse} from '@angular/common/http';
 import {UtilsService} from '../../core/service/utils.service';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {AuthService} from '../../core/auth/auth.service';
+import {NoAccessComponent} from '../../shared/components/no-access/no-access.component';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-user',
@@ -25,7 +28,8 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
     DatePipe,
     NgIf,
     AlertMessageComponent,
-    ModalComponent
+    ModalComponent,
+    NoAccessComponent
   ],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
@@ -33,7 +37,7 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
 
 export class UserComponent {
   sidebarLinks = [
-    {title: 'Início', path: '/configuracoes', id: 'opt1'},
+    {title: 'Início', path: '/configuracoes/dashboard', id: 'opt1'},
     {title: 'Usuários', path: '/configuracoes/usuarios', id: 'opt2'},
     {title: 'Equipes', path: '/configuracoes/equipes', id: 'opt3'},
     {title: 'Minha Empresa', path: '/configuracoes/empresa', id: 'opt4'},
@@ -46,10 +50,9 @@ export class UserComponent {
     name: string,
     lastname: string,
     email: string,
-    dateOfBirth: string,
-    day: string;
-    month: string;
     year: string;
+    month: string;
+    day: string;
     role: string[],
     status: boolean
     sel: boolean
@@ -61,10 +64,9 @@ export class UserComponent {
     name: string,
     lastname: string,
     email: string,
-    dateOfBirth: string,
-    day: string;
-    month: string;
     year: string;
+    month: string;
+    day: string;
     role: string[],
     status: boolean
     sel: boolean
@@ -78,8 +80,8 @@ export class UserComponent {
 
   roles: {
     selected: boolean,
-    idRole: string,
-    nomeRole: string,
+    roleId: string,
+    roleName: string,
   }[] = [];
 
   add: boolean = false;
@@ -115,18 +117,15 @@ export class UserComponent {
   }
 
 
-  constructor(protected router: Router, private userService: UserService, protected utils: UtilsService) {
+  constructor(protected router: Router, private userService: UserService, protected utils: UtilsService,
+              protected authService: AuthService, private titleService: Title) {
+
+    this.titleService.setTitle("Configurações - Usuários");
+
     this.userService.getUsers().subscribe(
       users => {
         this.users = users;
         this.usersBackup = users;
-        this.users.forEach((u) => {
-          const [year, month, day] = u.dateOfBirth.split("-");
-          // Preencha as propriedades user.day, user.month e user.year
-          u.day = String(+day);   // Usando + para converter em número
-          u.month = String(+month);   // Usando + para converter em número
-          u.year = String(+year);   // Usando + para converter em número
-        })
 
         this.rolesUser = users.flatMap(user =>
           user.role.map(role => ({
@@ -158,7 +157,7 @@ export class UserComponent {
     }
   }
 
-  cancel() {
+  resetView() {
     return () => {
       this.change = false;
       this.add = false;
@@ -174,44 +173,42 @@ export class UserComponent {
       return;
     }
 
+    this.loading = true;
+
     const insert = this.users.some(u => u.userId === '');
     const update = this.users.every(u => u.userId !== '');
     const updateCheckSel = this.users.some(u => u.sel);
 
-      if (insert && this.users.length !== this.usersBackup.length) {
-        console.log('insert');
-        this.insertUsers();
-      } else if (update && updateCheckSel) {
-        console.log('update');
-        this.updateUsers();
-      }
+    if (insert && this.users.length !== this.usersBackup.length) {
+      this.insertUsers();
+    } else if (update && updateCheckSel) {
+      this.updateUsers();
+    }
 
     this.validation = "";
   }
 
   private insertUsers() {
-    this.loading = true;
 
-
-    this.userService.insertUsers(this.users)
-      .pipe(tap(r => {
-          this.showMessage("Usuários criados com sucesso.");
-          this.alertType = "alert-success";
-          this.users = r;
-          this.usersBackup = r;
-        }),
-        catchError(err => {
-          this.showMessage(err.error.message);
-          this.alertType = "alert-error";
-          throw err;
-        })
-      ).subscribe();
+    this.userService.insertUsers(this.users).pipe(
+      tap(r => {
+        this.showMessage("Usuários criados com sucesso.");
+        this.alertType = "alert-success";
+        this.users = r;
+        this.usersBackup = r;
+        this.resetView();
+      }),
+      catchError(err => {
+        this.showMessage(err.error.message);
+        this.alertType = "alert-error";
+        throw err;
+      })
+    ).subscribe();
 
     this.loading = false;
   }
 
   private updateUsers() {
-    this.loading = true;
     // Verifica se nenhum usuário foi selecionado
     const noneSelected = this.users.every(u => !u.sel);
 
@@ -229,6 +226,7 @@ export class UserComponent {
           this.alertType = "alert-success";
           this.users = r;
           this.usersBackup = r;
+          this.change = false;
         }),
         catchError(err => {
           this.showMessage(err.error.message);
@@ -271,10 +269,9 @@ export class UserComponent {
       name: "",
       lastname: "",
       email: "",
-      dateOfBirth: "",
-      day: "",
-      month: "",
       year: "",
+      month: "",
+      day: "",
       role: [],
       status: true,
       sel: false

@@ -39,8 +39,8 @@ export class UserService {
   public getRoles() {
     return this.http.get<{
       selected: boolean,
-      idRole: string,
-      nomeRole: string,
+      roleId: string,
+      roleName: string,
     }[]>(`${this.endpoint}/get-roles`);
 
   }
@@ -51,12 +51,11 @@ export class UserService {
     name: string,
     lastname: string,
     email: string,
-    dateOfBirth: string,
-    day: string;
-    month: string;
     year: string;
+    month: string;
+    day: string;
     role: string[],
-    status: boolean,
+    status: boolean
     sel: boolean
   }[]) {
     return this.http.post<{
@@ -65,12 +64,11 @@ export class UserService {
       name: string,
       lastname: string,
       email: string,
-      dateOfBirth: string,
-      day: string;
-      month: string;
       year: string;
+      month: string;
+      day: string;
       role: string[],
-      status: boolean,
+      status: boolean
       sel: boolean
     }[]>(`${this.endpoint}/update-users`, user);
   }
@@ -81,12 +79,11 @@ export class UserService {
     name: string,
     lastname: string,
     email: string,
-    dateOfBirth: string,
-    day: string;
-    month: string;
     year: string;
+    month: string;
+    day: string;
     role: string[],
-    status: boolean,
+    status: boolean
     sel: boolean
   }[]) {
     return this.http.post<{
@@ -95,12 +92,11 @@ export class UserService {
       name: string,
       lastname: string,
       email: string,
-      dateOfBirth: string,
-      day: string;
-      month: string;
       year: string;
+      month: string;
+      day: string;
       role: string[],
-      status: boolean,
+      status: boolean
       sel: boolean
     }[]>(`${this.endpoint}/insert-users`, user);
   }

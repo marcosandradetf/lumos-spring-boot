@@ -68,12 +68,13 @@ values('Galpão BH', 1)
     ON CONFLICT (deposit_name) DO NOTHING;
 
 -- script roles
-INSERT INTO tb_roles (id_role, nome_role)
+INSERT INTO tb_roles (role_name)
 VALUES
-    (1, 'ADMIN'),
-    (2, 'MANAGER'),
-    (3, 'BASIC')
-ON CONFLICT (nome_role) DO NOTHING;
+    ('ADMIN'),
+    ('ANALISTA'),
+    ('ESTOQUISTA'),
+    ('OPERADOR')
+ON CONFLICT (role_name) DO NOTHING;
 
 
 --

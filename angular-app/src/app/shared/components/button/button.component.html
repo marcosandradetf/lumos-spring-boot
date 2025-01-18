@@ -1,9 +1,9 @@
-@if (class !== "" && !loading) {
-  <button (click)="action()" type="{{typeButton ? typeButton : 'button'}}" >
+@if (classButton !== "" && !loading) {
+  <button (click)="action()" type="{{typeButton ? typeButton : 'button'}}" class="btn {{ classButton }}">
     {{title}}
   </button>
 } @else if (loading) {
-  <button (click)="action()" type="{{typeButton ? typeButton : 'button'}}" >
+  <button (click)="action()" type="{{typeButton ? typeButton : 'button'}}" class="btn {{ classButton }}">
     <span class="loading loading-spinner"></span>
   </button>
 } @else {
