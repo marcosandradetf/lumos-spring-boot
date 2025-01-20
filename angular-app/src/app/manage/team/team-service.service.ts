@@ -9,27 +9,23 @@ import {environment} from '../../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
-export class UserService {
-  private endpoint = environment.springboot + '/api/user';
+export class TeamService {
+  private endpoint = environment.springboot + '/api/teams';
 
   constructor(private http: HttpClient) {
   }
 
-  public getUsers() {
+  public getTeams() {
     return this.http.get<{
+      idTeam: string,
+      teamName: string,
       userId: string,
       username: string,
-      name: string,
-      lastname: string,
-      email: string,
-      dateOfBirth: string,
-      day: string;
-      month: string;
-      year: string;
-      role: string[],
-      status: boolean,
-      sel: boolean
-    }[]>(`${this.endpoint}/get-users`);
+      UFName: string,
+      cityName: string,
+      regionName: string,
+      sel: boolean,
+    }[]>(`${this.endpoint}/get-teams`);
   }
 
   public getUsersSelect() {

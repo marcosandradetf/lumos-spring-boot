@@ -5,7 +5,7 @@ export class User {
   public username!: string;
   public accessToken!: string;
   public birthDate!: Date; // Data de nascimento do usuário
-  public roles!: String; // Perfis de acesso do usuário
+  public roles!: string[]; // Perfis de acesso do usuário
 
   // constructor(username: string, accessToken: string, roles: string) {
   //   this.username = username;
@@ -17,7 +17,7 @@ export class User {
   constructor() {
   }
 
-  initialize(username: string, accessToken: string, roles: string) {
+  initialize(username: string, accessToken: string, roles: string[]) {
     this.username = username;
     this.accessToken = accessToken;
     this.birthDate = new Date();
@@ -58,9 +58,18 @@ export class User {
     this.accessToken = '';
   }
 
-  // Verifica se o usuário possui um papel específico
-  hasRole(role: string): boolean {
-    return this.roles.includes(role);
+  getRoles(): string[] {
+    return this.roles;
   }
+
+  // Verifica se o usuário possui um papel específico
+  hasRole(role: string[]): boolean {
+    console.log(role)
+    // role.forEach((item) => {
+    //   return this.roles.includes(item);
+    // });
+    return false;
+  }
+
 
 }

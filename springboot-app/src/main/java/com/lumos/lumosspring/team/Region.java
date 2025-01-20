@@ -14,9 +14,6 @@ public class Region {
 
     private String regionName;
 
-    @ManyToMany(mappedBy = "regions")
-    private Set<Team> teams;
-
     public long getRegionId() {
         return regionId;
     }
@@ -32,13 +29,4 @@ public class Region {
     public void setRegionName(String regionName) {
         this.regionName = regionName;
     }
-
-    public Set<Team> getTeams() {
-        return teams;
-    }
-
-    public void setTeams(Set<Team> teams) {
-        this.teams = teams;
-    }
-
 }

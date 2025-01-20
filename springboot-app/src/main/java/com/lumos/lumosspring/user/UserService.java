@@ -1,6 +1,8 @@
 package com.lumos.lumosspring.user;
 
+import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import com.lumos.lumosspring.notification.EmailService;
+import com.lumos.lumosspring.user.dto.CreateUserDto;
 import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import com.lumos.lumosspring.util.DefaultResponse;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,12 +23,14 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public ResponseEntity<List<UserResponse>> findAll() {
@@ -61,9 +66,7 @@ public class UserService {
         user.get().setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user.get());
 
-        emailService.sendEmail(user.get().getEmail(),
-                "Sistema Lumos - Reset de Senha",
-                STR."Olá, \{user.get().getName()}<br>Sua senha foi resetada! A nova senha é: \{newPassword}<br>Use-a para acessar sua conta e definir uma nova senha.");
+        emailService.sendNewPasswordForEmail(user.get().getName(), user.get().getEmail(), newPassword);
 
         return ResponseEntity.ok(new DefaultResponse(STR."A nova senha foi enviada para o email \{user.get().getEmail()}"));
     }
@@ -139,6 +142,8 @@ public class UserService {
 
     public ResponseEntity<?> updateUsers(List<UpdateUserDto> dto) {
         boolean hasInvalidUser = dto.stream().noneMatch(UpdateUserDto::sel);
+        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        Pattern pattern = Pattern.compile(regex);
 
         if (hasInvalidUser) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -151,8 +156,6 @@ public class UserService {
                     .body(new ErrorResponse("Erro: Foi enviado um ou mais usuário sem identificação."));
         }
 
-        Set<Role> userRoles = new HashSet<>();
-
         for (UpdateUserDto u : dto) {
             if (!u.sel()) {
                 continue;
@@ -161,9 +164,42 @@ public class UserService {
             if (user.isEmpty()) {
                 continue;
             }
+
+            if (!pattern.matcher(u.email()).matches()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
+            }
+
+            // Verifica se o username já existe no sistema
+            Optional<User> userOptional = userRepository.findByUsername(u.username());
+            if (userOptional.isPresent()) {
+                // Verifica se o ID do usuário encontrado é igual ao fornecido
+                UUID existingUserId = userOptional.get().getIdUser();
+                if (!existingUserId.equals(UUID.fromString(u.userId()))) {
+                    // Se os IDs forem iguais, retorna a resposta de erro
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                            new ErrorResponse(String.format("Username %s já existente no sistema.", u.username()))
+                    );
+                }
+            }
+
+            // Verifica se o e-mail já existe no banco de dados
+            userOptional = userRepository.findByEmail(u.email());
+            if (userOptional.isPresent()) {
+                // Se o e-mail já existir, compara se ele é o mesmo
+                String existingEmail = userOptional.get().getEmail();
+                if (!existingEmail.equals(u.email())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                            new ErrorResponse(String.format("Email %s já existente no sistema.", u.email()))
+                    );
+                }
+            }
+
+
+
+            Set<Role> userRoles = new HashSet<>();
             var date = LocalDate.of(u.year(), u.month(), u.day());
 
-            for (String r: u.role()) {
+            for (String r : u.role()) {
                 if (r.isEmpty()) {
                     continue;
                 }
@@ -183,13 +219,83 @@ public class UserService {
             user.get().setRoles(userRoles);
             user.get().setStatus(u.status());
             userRepository.save(user.get());
+
+            var refreshToken = this.refreshTokenRepository.findByUser(user.get());
+            if (refreshToken.isEmpty()) {
+                continue;
+            }
+            refreshToken.get().setRevoked(true);
+            refreshTokenRepository.save(refreshToken.get());
         }
 
 
         return this.findAll();
     }
 
+    public ResponseEntity<?> insertUsers(List<CreateUserDto> dto) {
+        var hasInvalidUser = dto.stream().noneMatch(u -> u.userId().isEmpty());
+        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        Pattern pattern = Pattern.compile(regex);
 
+        if (hasInvalidUser) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Erro: Foi enviado apenas usuários já existentes no sistema!"));
+        }
+
+        for (CreateUserDto u : dto) {
+            if (!u.userId().isEmpty()) {
+                continue;
+            }
+
+            if (u.username().contains(" ")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Username \{u.username()} foi enviado com espaços."));
+            }
+
+            if (!pattern.matcher(u.email()).matches()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
+            }
+
+            if (userRepository.findByUsername(u.username()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Username \{u.username()} já existente no sistema, recupere a senha ou utilize outro username."));
+            }
+
+            if (userRepository.findByEmail(u.email()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Email \{u.email()} já existente no sistema, recupere a senha ou utilize outro email."));
+            }
+
+            Set<Role> userRoles = new HashSet<>();
+            var user = new User();
+            var date = LocalDate.of(u.year(), u.month(), u.day());
+            var password = UUID.randomUUID().toString();
+
+            for (String r : u.role()) {
+                if (r.isEmpty()) {
+                    continue;
+                }
+
+                var role = roleRepository.findByRoleName(r);
+                if (role == null) {
+                    continue;
+                }
+                userRoles.add(role);
+            }
+
+            user.setUsername(u.username());
+            user.setPassword(passwordEncoder.encode(password));
+            user.setName(u.name());
+            user.setLastName(u.lastname());
+            user.setEmail(u.email());
+            user.setDateOfBirth(date);
+            user.setRoles(userRoles);
+            user.setStatus(u.status());
+            userRepository.save(user);
+
+            emailService.sendPasswordForEmail(u.name(), u.email(), password);
+        }
+
+
+        return this.findAll();
+    }
 
 
 }

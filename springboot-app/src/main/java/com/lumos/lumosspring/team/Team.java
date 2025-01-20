@@ -31,13 +31,14 @@ public class Team {
     )
     private List<PreMeasurement> preMeasurement;
 
-    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "tb_users_regions",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "region_id")
-    )
-    private Set<Region> regions;
+    @Column(columnDefinition = "TEXT")
+    private String UFName;
+
+    @Column(columnDefinition = "TEXT")
+    private String cityName;
+
+    @ManyToOne
+    private Region region;
 
     public long getIdTeam() {
         return idTeam;
@@ -71,11 +72,27 @@ public class Team {
         this.preMeasurement = preMeasurement;
     }
 
-    public Set<Region> getRegions() {
-        return regions;
+    public Region getRegion() {
+        return region;
     }
 
-    public void setRegions(Set<Region> regions) {
-        this.regions = regions;
+    public void setRegion(Region region) {
+        this.region = region;
+    }
+
+    public String getUFName() {
+        return UFName;
+    }
+
+    public void setUFName(String UFName) {
+        this.UFName = UFName;
+    }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    public void setCityName(String cityName) {
+        this.cityName = cityName;
     }
 }

@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {BehaviorSubject, catchError, map, Observable, of, tap} from 'rxjs';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import { Router } from '@angular/router';
+import {Router} from '@angular/router';
 import {User} from '../../models/user.model';
 import {routes} from '../../app.routes';
 import {environment} from '../../../environments/environment';
@@ -19,7 +19,9 @@ export class AuthService {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        this.user.initialize(userData.username, userData.accessToken, userData.roles); // Converte para uma instância de User
+        const roles: string[] = userData.roles;
+
+        this.user.initialize(userData.username, userData.accessToken, roles); // Converte para uma instância de User
       }
       this.initializeAuthStatus();
     }
@@ -43,9 +45,9 @@ export class AuthService {
   }
 
   login(username: string, password: string) { // Retorna um Observable
-    return this.http.post<any>(`${this.apiUrl}/login`, { username, password }, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${this.apiUrl}/login`, {username, password}, {withCredentials: true}).pipe(
       tap(response => {
-        this.user.initialize(username, response.accessToken, response.scopes);
+        this.user.initialize(username, response.accessToken, response.roles.split(' '));
         localStorage.setItem('user', JSON.stringify(this.user));
         this.isLoggedInSubject.next(true);
       }),
@@ -57,7 +59,7 @@ export class AuthService {
   }
 
   logout() {
-    return this.http.post(this.apiUrl + '/logout', {}, { withCredentials: true }).pipe(
+    return this.http.post(this.apiUrl + '/logout', {}, {withCredentials: true}).pipe(
       tap(() => {
         this.user?.clearToken();
         localStorage.removeItem('user');
@@ -69,6 +71,7 @@ export class AuthService {
         this.user?.clearToken();
         localStorage.removeItem('user');
         this.isLoggedInSubject.next(false);
+        this.isLoading$.next(false);
         window.location.reload();
         return of(null); // Retorna um observable nulo em caso de erro
       })
@@ -102,7 +105,6 @@ export class AuthService {
   }
 
 
-
   setAccessToken(newToken: string) {
     if (this.user) {
       this.user.setToken(newToken);
@@ -111,13 +113,9 @@ export class AuthService {
   }
 
   getAccessToken() {
-      return this.user.accessToken;
+    return this.user.accessToken;
   }
 
-  // Método para verificar se o usuário possui um papel específico
-  hasRole(role: string): boolean {
-    return this.user ? this.user.hasRole(role) : false;
-  }
 
   public getUser() {
     return this.user;

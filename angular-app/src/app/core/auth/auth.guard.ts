@@ -1,18 +1,40 @@
 // app/core/guards/auth.guard.ts
-import { Injectable } from '@angular/core';
-import {CanActivate, Router, UrlTree} from '@angular/router';
+import {Injectable, Input} from '@angular/core';
+import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree} from '@angular/router';
 import {AuthService} from './auth.service';
 import {map, Observable} from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {
+  }
 
-  canActivate(): Observable<boolean> {
+  canActivate(next: ActivatedRouteSnapshot): Observable<boolean> {
+    const requiredRole: string[] = next.data['role'];
+    const path: string[] = next.data['path'];
+    let hasAcess: boolean = false;
+
+    if (requiredRole.length > 1) {
+      const roles: string[] = this.authService.user.getRoles();
+      hasAcess = roles.some(role => requiredRole.includes(role));
+    }
+
+
     return this.authService.isLoggedIn$.pipe(
       map(isLoggedIn => {
         if (isLoggedIn) {
+
+          if (requiredRole.length > 1) {
+            if (hasAcess) {
+              return true;
+            } else {
+              this.router.navigate(['/acesso-negado', path]);
+              return false;
+            }
+          }
+
           return true;
+
         } else {
           this.router.navigate(['/auth/login']);
           return false;

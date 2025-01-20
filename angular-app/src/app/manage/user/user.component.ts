@@ -74,7 +74,7 @@ export class UserComponent {
 
 
   rolesUser: {
-    userId: string,
+    index: number,
     role: string,
   }[] = [];
 
@@ -111,6 +111,9 @@ export class UserComponent {
   loading: boolean = false;
   userId: string = '';
   openConfirmationModal: boolean = false;
+  usernamePattern: string = '^[a-zA-Z0-9._-]{3,20}$';
+  emailPattern: string = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+  private email: string = "";
 
   getMonth(monthNumber: string) {
     return this.months.find(m => m.number === monthNumber);
@@ -125,11 +128,10 @@ export class UserComponent {
     this.userService.getUsers().subscribe(
       users => {
         this.users = users;
-        this.usersBackup = users;
-
+        this.usersBackup = JSON.parse(JSON.stringify(this.users));
         this.rolesUser = users.flatMap(user =>
           user.role.map(role => ({
-            userId: user.userId,
+            index: this.users.findIndex(u => u.userId === user.userId),
             role: role
           }))
         );
@@ -141,7 +143,6 @@ export class UserComponent {
         this.roles = roles;
       }
     );
-
   }
 
 
@@ -185,6 +186,7 @@ export class UserComponent {
       this.updateUsers();
     }
 
+    this.loading = false;
     this.validation = "";
   }
 
@@ -192,11 +194,11 @@ export class UserComponent {
 
     this.userService.insertUsers(this.users).pipe(
       tap(r => {
-        this.showMessage("Usuários criados com sucesso.");
+        this.showMessage("Usuários criados com sucesso, a senha provisória foi enviada para o email cadastrado de cada usuário.");
         this.alertType = "alert-success";
         this.users = r;
-        this.usersBackup = r;
-        this.resetView();
+        this.usersBackup = JSON.parse(JSON.stringify(this.users));
+        this.add = false;
       }),
       catchError(err => {
         this.showMessage(err.error.message);
@@ -205,7 +207,6 @@ export class UserComponent {
       })
     ).subscribe();
 
-    this.loading = false;
   }
 
   private updateUsers() {
@@ -225,7 +226,7 @@ export class UserComponent {
           this.showMessage("Usuários atualizados com sucesso.");
           this.alertType = "alert-success";
           this.users = r;
-          this.usersBackup = r;
+          this.usersBackup = JSON.parse(JSON.stringify(this.users));
           this.change = false;
         }),
         catchError(err => {
@@ -234,8 +235,6 @@ export class UserComponent {
           throw err;
         })
       ).subscribe();
-
-    this.loading = false;
 
   }
 
@@ -248,18 +247,22 @@ export class UserComponent {
 
 
   resetPassword() {
+    this.loading = true;
     if (this.userId !== '') {
       this.userService.resetPassword(this.userId).pipe(
         tap(r => {
+          this.openConfirmationModal = false;
+          this.loading = false;
+          this.alertType = "alert-success";
+          this.serverMessage = (r as any).message
         }),
         catchError(err => {
           console.log(err)
+          this.loading = false;
           return throwError(() => err);
-
         })
       ).subscribe();
     }
-
   }
 
   newUser() {
@@ -287,20 +290,22 @@ export class UserComponent {
     }
   }
 
-  changeRole(id: string, nomeRole: string) {
-    const userIndex = this.users.findIndex(u => u.userId === id);
+  changeRole(userIndex: number, nomeRole: string) {
     if (userIndex === -1) {
       console.log('Usuário não encontrado');
       return;
     }
-    const user = this.users.find(u => u.userId === id);
-    if (!user) {
-      console.log('Usuário não encontrado');
-      return;
-    }
+
+    console.log(this.rolesUser);
+
+    // const user = this.users.find(u => u.userId === id);
+    // if (!user) {
+    //   console.log('Usuário não encontrado');
+    //   return;
+    // }
 
     // Obter todas as roles associadas ao usuário
-    let roles = this.rolesUser.filter(u => u.userId === id);
+    let roles = this.rolesUser.filter(u => u.index === userIndex);
 
     // Verificar se a role já existe
     const roleExists = roles.some(role => role.role === nomeRole);
@@ -310,28 +315,29 @@ export class UserComponent {
       roles = roles.filter(role => role.role !== nomeRole);
     } else {
       // Caso contrário, adicionar a nova role
-      roles.push({userId: id, role: nomeRole});
+      roles.push({index: userIndex, role: nomeRole});
     }
 
     // Atualizar as roles do usuário
-    this.rolesUser = this.rolesUser.filter(u => u.userId !== id);
-    user.role = [];
+    this.rolesUser = this.rolesUser.filter(u => u.index !== userIndex);
+    // user.role = [];
+    this.users[userIndex].role = [];
     roles.forEach(role => {
       this.rolesUser.push(role);
-      user.role.push(role.role);
+      // user.role.push(role.role);
+      this.users[userIndex].role.push(role.role);
     });
 
 
-    this.users[userIndex] = user;
   }
 
 
-  filterRolesByUserId(userId: string) {
-    return this.rolesUser.filter(role => role.userId === userId);
+  filterRolesByUserId(index: number) {
+    return this.rolesUser.filter(role => role.index === index);
   }
 
-  verifyRole(userId: string, nomeRole: string): boolean {
-    const userRoles = this.filterRolesByUserId(userId); // Obtém as roles do usuário filtrado
+  verifyRole(index: number, nomeRole: string): boolean {
+    const userRoles = this.filterRolesByUserId(index); // Obtém as roles do usuário filtrado
 
     // Verifica se alguma role no array corresponde ao nomeRole fornecido
     return userRoles.some(role => role.role === nomeRole);
@@ -341,20 +347,24 @@ export class UserComponent {
   handleClick(dropdown: HTMLDetailsElement, month: string, userId: string) {
     // Fecha o dropdown
     dropdown.open = false;
-    console.log(month)
 
     const userIndex = this.users.findIndex(u => u.userId === userId);
     if (userIndex === -1) {
       return;
     }
 
-    console.log(userIndex);
-    console.log(this.users)
-
     this.users[userIndex].month = month;
+  }
 
-    console.log(this.users);
+  handleClickInsert(dropdown: HTMLDetailsElement, month: string, index: number) {
+    // Fecha o dropdown
+    dropdown.open = false;
 
+    if (index === -1) {
+      return;
+    }
+
+    this.users[index].month = month;
   }
 
   getMaxDay(month: string, year: string): number {
@@ -375,16 +385,17 @@ export class UserComponent {
     return daysInMonth[parseInt(month, 10)] || 31; // Valor padrão para meses inválidos
   }
 
-
   isLeapYear(strYear: string): boolean {
     const year = parseInt(strYear, 10);
     return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   }
 
-  confirmResetPassword(userId: string) {
+  confirmResetPassword(userId: string, email: string) {
     return () => {
       this.openConfirmationModal = true;
       this.userId = userId;
+      this.email = email;
     };
   }
+
 }

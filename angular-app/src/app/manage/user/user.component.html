@@ -85,13 +85,15 @@
                      [(ngModel)]="user.username"
                      name="username{{i}}"
                      type="text"
-                     placeholder="Digite aqui"
+                     placeholder="Insira o username"
                      class="input input-bordered input-xs"
                      #username="ngModel"
+                     [pattern]="usernamePattern"
               >
-              <div *ngIf="username.invalid && formSubmitted">
-                <small *ngIf="username.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                <small *ngIf="username.errors?.['min']" class="text-orange-600">Usuário inválido</small>
+              <div *ngIf="username.invalid && username.touched">
+                <small *ngIf="username.errors?.['required']" class="text-red-600">Campo é obrigatório.</small>
+                <small *ngIf="username.errors?.['pattern']" class="text-red-600">Não é permitido espaços no username é
+                  permitido incluir letras, números, e os caracteres '_', '-', '.'.</small>
               </div>
             </td>
             <td>
@@ -100,13 +102,13 @@
                      [(ngModel)]="user.name"
                      name="name{{i}}"
                      type="text"
-                     min="5"
-                     placeholder="Digite aqui"
+                     min="4"
+                     placeholder="Insira o nome"
                      class="input input-bordered input-xs"
                      #name="ngModel">
-              <div *ngIf="name.invalid && formSubmitted">
+              <div *ngIf="name.invalid && name.touched">
                 <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                <small *ngIf="name.errors?.['min']" class="text-orange-600">Nome inválido</small>
+                <small *ngIf="name.errors?.['min']" class="text-red-600">Nome inválido</small>
               </div>
             </td>
             <td><input required
@@ -114,11 +116,13 @@
                        [(ngModel)]="user.lastname"
                        name="lastname{{i}}"
                        type="text"
-                       placeholder="Digite aqui"
+                       min="4"
+                       placeholder="Insira o sobrenome"
                        class="input input-bordered input-xs"
                        #lastname="ngModel">
-              <div *ngIf="lastname.invalid && formSubmitted">
+              <div *ngIf="lastname.invalid && lastname.touched">
                 <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="lastname.errors?.['min']" class="text-red-600">Sobrenome inválido</small>
               </div>
             </td>
             <td><input required
@@ -126,8 +130,15 @@
                        [(ngModel)]="user.email"
                        name="email{{i}}"
                        type="text"
-                       placeholder="Digite aqui"
-                       class="input input-bordered input-xs"></td>
+                       placeholder="nome@exemplo.com"
+                       class="input input-bordered input-xs"
+                       #email="ngModel"
+                       [pattern]="emailPattern">
+              <div *ngIf="email.invalid && email.touched">
+                <small *ngIf="email.errors?.['required']" class="text-red-600">Email é obrigatório.</small>
+                <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
+              </div>
+            </td>
             <td class="flex items-center space-x-2 align-middle mt-[.25rem]">
               <div class="flex flex-col">
                 <input
@@ -143,10 +154,10 @@
                   [max]="getMaxDay(user.month, user.year)"
                   class="input input-bordered input-xs max-w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 >
-                <div *ngIf="day.invalid && formSubmitted">
+                <div *ngIf="day.invalid && day.touched">
                   <small *ngIf="day.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                  <small *ngIf="day.errors?.['min']" class="text-orange-600">Dia deve ser no mínimo 1.</small>
-                  <small *ngIf="day.errors?.['max']" class="text-orange-600">Dia inválido para o mês
+                  <small *ngIf="day.errors?.['min']" class="text-red-600">Dia deve ser no mínimo 1.</small>
+                  <small *ngIf="day.errors?.['max']" class="text-red-600">Dia inválido para o mês
                     selecionado.</small>
                 </div>
               </div>
@@ -181,9 +192,9 @@
                   (input)="utils.formatNumber($event)"
                   #year="ngModel"
                 >
-                <div *ngIf="year.invalid && formSubmitted">
+                <div *ngIf="year.invalid && year.touched">
                   <small *ngIf="year.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                  <small *ngIf="year.errors?.['minlength']" class="text-orange-600">
+                  <small *ngIf="year.errors?.['minlength']" class="text-red-600">
                     Ano requer no mínimo 4 caracteres.
                   </small>
                 </div>
@@ -194,7 +205,8 @@
               <div class="dropdown dropdown-end flex-2">
                 <div tabindex="0" role="button"
                      class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
-                  <span class="text-sm poppins-regular pr-10">Selecionar</span>
+                  <span
+                    class="text-sm poppins-regular pr-10">{{ user.role.length === 0 ? 'Selecionar' : 'Selecionadas' }}</span>
                 </div>
                 <table *ngIf="user.sel"
                        tabindex="0"
@@ -203,8 +215,8 @@
                     <td>
                       <input type="checkbox"
                              class="checkbox"
-                             (change)="changeRole(user.userId, role.roleName)"
-                             [checked]="verifyRole(user.userId, role.roleName)"/>
+                             (change)="changeRole(i, role.roleName)"
+                             [checked]="verifyRole(i, role.roleName)"/>
                     </td>
                     <td class="poppintypeNames-light select-none lower-text">{{ role.roleName }}</td>
                   </tr>
@@ -231,31 +243,59 @@
                      [(ngModel)]="user.username"
                      name="username{{i}}"
                      type="text"
-                     placeholder="Digite aqui"
+                     placeholder="Insira o username"
                      class="input input-bordered input-xs"
-              ></td>
+                     #username="ngModel"
+                     [pattern]="usernamePattern">
+              <div *ngIf="username.invalid && username.touched">
+                <small *ngIf="username.errors?.['required']" class="text-red-600">Username é obrigatório.</small>
+                <small *ngIf="username.errors?.['pattern']" class="text-red-600">Não é permitido espaços no username é
+                  permitido incluir letras, números, e os caracteres '_', '-', '.'.</small>
+              </div>
+            </td>
             <td>
               <input required
                      [readOnly]="user.userId !== ''"
                      [(ngModel)]="user.name"
                      name="name{{i}}"
                      type="text"
-                     placeholder="Digite aqui"
-                     class="input input-bordered input-xs"></td>
+                     placeholder="Insira o nome"
+                     min="4"
+                     class="input input-bordered input-xs"
+                     #name="ngModel">
+              <div *ngIf="name.invalid && name.touched">
+                <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="name.errors?.['min']" class="text-red-600">Nome inválido</small>
+              </div>
+            </td>
             <td><input required
                        [readOnly]="user.userId !== ''"
                        [(ngModel)]="user.lastname"
                        name="lastname{{i}}"
                        type="text"
-                       placeholder="Digite aqui"
-                       class="input input-bordered input-xs"></td>
+                       min="4"
+                       placeholder="Insira o sobrenome"
+                       class="input input-bordered input-xs"
+                       #lastname="ngModel">
+              <div *ngIf="lastname.invalid && lastname.touched">
+                <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="lastname.errors?.['min']" class="text-red-600">Sobrenome inválido</small>
+              </div>
+            </td>
             <td><input required
                        [readOnly]="user.userId !== ''"
                        [(ngModel)]="user.email"
                        name="email{{i}}"
                        type="text"
-                       placeholder="Digite aqui"
-                       class="input input-bordered input-xs"></td>
+                       [pattern]="emailPattern"
+                       placeholder="nome@exemplo.com"
+                       class="input input-bordered input-xs"
+                       #email="ngModel">
+              <div *ngIf="email.invalid && email.touched">
+                <small *ngIf="email.errors?.['required']" class="text-red-600">Email é obrigatório.</small>
+                <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
+              </div>
+            </td>
             <td class="flex items-center space-x-2 align-middle mt-[.25rem]">
               <div class="flex flex-col">
                 <input
@@ -271,10 +311,10 @@
                   [max]="getMaxDay(user.month, user.year)"
                   class="input input-bordered input-xs max-w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 >
-                <div *ngIf="day.invalid && formSubmitted">
+                <div *ngIf="day.invalid  && day.touched">
                   <small *ngIf="day.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                  <small *ngIf="day.errors?.['min']" class="text-orange-600">Dia deve ser no mínimo 1.</small>
-                  <small *ngIf="day.errors?.['max']" class="text-orange-600">Dia inválido para o mês
+                  <small *ngIf="day.errors?.['min']" class="text-red-600">Dia deve ser no mínimo 1.</small>
+                  <small *ngIf="day.errors?.['max']" class="text-red-600">Dia inválido para o mês
                     selecionado.</small>
                 </div>
               </div>
@@ -288,7 +328,7 @@
                   <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow"
                       *ngIf="user.userId === ''">
                     <li *ngFor="let m of months" class="select-none lower-text">
-                      <a (click)="handleClick(dropdown, m.number, user.userId)">{{ m.name }}</a>
+                      <a (click)="handleClickInsert(dropdown, m.number, i)">{{ m.name }}</a>
                     </li>
                   </ul>
                 </details>
@@ -311,9 +351,9 @@
                   (input)="utils.formatNumber($event)"
                   #year="ngModel"
                 >
-                <div *ngIf="year.invalid && formSubmitted">
+                <div *ngIf="year.invalid && year.touched">
                   <small *ngIf="year.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                  <small *ngIf="year.errors?.['minlength']" class="text-orange-600">
+                  <small *ngIf="year.errors?.['minlength']" class="text-red-600">
                     Ano requer no mínimo 4 caracteres.
                   </small>
                 </div>
@@ -324,7 +364,8 @@
               <div class="dropdown dropdown-end flex-2">
                 <div tabindex="0" role="button"
                      class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
-                  <span class="text-sm poppins-regular pr-10">Selecionar</span>
+                  <span
+                    class="text-sm poppins-regular pr-10">{{ user.role.length === 0 ? 'Selecionar' : 'Selecionadas' }}</span>
                 </div>
                 <table *ngIf="user.userId === ''"
                        tabindex="0"
@@ -333,8 +374,8 @@
                     <td>
                       <input type="checkbox"
                              class="checkbox"
-                             (change)="changeRole(user.userId, role.roleName)"
-                             [checked]="verifyRole(user.userId, role.roleName)"/>
+                             (change)="changeRole(i, role.roleName)"
+                             [checked]="verifyRole(i, role.roleName)"/>
                     </td>
                     <td class="poppintypeNames-light select-none lower-text">{{ role.roleName }}</td>
                   </tr>
@@ -358,7 +399,7 @@
                 <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
                   class="material-icons">arrow_drop_down_icon </span></div>
                 <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                  <li *ngFor="let role of filterRolesByUserId(user.userId)">{{ role.role }}</li>
+                  <li *ngFor="let role of filterRolesByUserId(i)">{{ role.role }}</li>
                 </ul>
               </div>
             </td>
@@ -370,7 +411,7 @@
             <td>
               <app-button title="Resetar Senha"
                           classButton="btn-sm"
-                          [action]="confirmResetPassword(user.userId)">
+                          [action]="confirmResetPassword(user.userId, user.email)">
               </app-button>
             </td>
           }
@@ -387,10 +428,10 @@
     <div>
       <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
       <div class="flex justify-around">
-        <app-button (click)="openConfirmationModal = false" title="Cancelar"
+        <app-button (click)="openConfirmationModal = false; loading = false" title="Cancelar"
                     classButton="btn bg-red-500 hover:bg-red-700"
                     textColor="text-black"></app-button>
-        <app-button (click)="resetPassword()" title="Confirmar"></app-button>
+        <app-button (click)="resetPassword()" title="Confirmar" [loading]="loading" classButton="btn btn-primary w-32 text-white"></app-button>
       </div>
     </div>
   </app-modal>

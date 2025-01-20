@@ -51,4 +51,11 @@ public class UserController {
         return userService.updateUsers(dto);
     }
 
+    @PostMapping("insert-users")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Transactional
+    public ResponseEntity<?> insertUsers(@RequestBody List<CreateUserDto> dto) {
+        return userService.insertUsers(dto);
+    }
+
 }
