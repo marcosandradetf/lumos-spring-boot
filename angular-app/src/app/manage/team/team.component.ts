@@ -13,6 +13,8 @@ import {ufRequest} from '../../core/uf-request.dto';
 import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
 import {TeamService} from './team-service.service';
+import {catchError, tap} from 'rxjs';
+import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 
 @Component({
   selector: 'app-team',
@@ -25,7 +27,8 @@ import {TeamService} from './team-service.service';
     NgIf,
     ReactiveFormsModule,
     TableComponent,
-    NgClass
+    NgClass,
+    AlertMessageComponent
   ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss'
@@ -41,7 +44,6 @@ export class TeamComponent {
   change: boolean = false;
   loading: boolean = false;
   formSubmitted: boolean = false;
-  selectedRegion: string = '';
   teams: {
     idTeam: string,
     teamName: string,
@@ -68,8 +70,10 @@ export class TeamComponent {
     userId: string,
     username: string,
   }[] = [];
+  serverMessage: string | null = null;
+  alertType: string = '';
 
-  constructor(protected router: Router, private userService: UserService, protected utils: UtilsService,
+  constructor(protected router: Router, protected utils: UtilsService,
               protected authService: AuthService, private titleService: Title, private ibgeService: IbgeService,
               private teamService : TeamService,) {
     this.titleService.setTitle("Configurações - Equipes");
@@ -79,7 +83,7 @@ export class TeamComponent {
       }
     );
 
-    this.userService.getUsersSelect().subscribe(
+    this.teamService.getUsers().subscribe(
       response => {
         this.users = response;
       }
@@ -88,6 +92,7 @@ export class TeamComponent {
     this.teamService.getTeams().subscribe(
       response => {
         this.teams = response;
+        this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
       }
     );
 
@@ -114,6 +119,18 @@ export class TeamComponent {
     }
 
     this.loading = true;
+
+    const insert = this.teams.some(t => t.userId === '');
+    const update = this.teams.every(t => t.userId !== '');
+    const updateCheckSel = this.teams.some(t => t.sel);
+
+    if (insert && this.users.length !== this.teamsBackup.length) {
+      this.insertTeams();
+    } else if (update && updateCheckSel) {
+      this.updateTeams();
+    }
+
+    this.loading = false;
 
   }
 
@@ -146,4 +163,57 @@ export class TeamComponent {
     }
   }
 
+  private insertTeams() {
+
+    this.teamService.insertTeams(this.teams).pipe(
+      tap(r => {
+        this.showMessage("Equipes criadas com sucesso!");
+        this.alertType = "alert-success";
+        this.users = r;
+        this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
+        this.add = false;
+      }),
+      catchError(err => {
+        this.showMessage(err.error.message);
+        this.alertType = "alert-error";
+        throw err;
+      })
+    ).subscribe();
+
+  }
+
+  private updateTeams() {
+    // Verifica se nenhum usuário foi selecionado
+    const noneSelected = this.teams.every(t => !t.sel);
+
+    if (noneSelected) {
+      this.showMessage("Nenhuma equipe foi selecionada.");
+      this.alertType = "alert-error";
+      this.loading = false;
+      return;
+    }
+
+    this.teamService.updateTeams(this.teams)
+      .pipe(tap(r => {
+          this.showMessage("Equipes atualizadas com sucesso.");
+          this.alertType = "alert-success";
+          this.teams = r;
+          this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
+          this.change = false;
+        }),
+        catchError(err => {
+          this.showMessage(err.error.message);
+          this.alertType = "alert-error";
+          throw err;
+        })
+      ).subscribe();
+
+  }
+
+  private showMessage(message: string, timeout = 3000) {
+    this.serverMessage = message;
+    setTimeout(() => {
+      this.serverMessage = null;
+    }, timeout);
+  }
 }

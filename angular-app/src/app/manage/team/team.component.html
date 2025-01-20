@@ -78,14 +78,14 @@
               <input required
                      [readOnly]="!team.sel"
                      [(ngModel)]="team.teamName"
-                     name="username{{i}}"
+                     name="teamName{{i}}"
                      type="text"
                      placeholder="Insira o username"
                      class="input input-bordered input-xs"
                      #teamName="ngModel"
               >
               <div *ngIf="teamName.invalid && teamName.touched">
-                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo é obrigatório.</small>
+                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
             </td>
             <td>
@@ -100,13 +100,14 @@
                   <option [value]="user.userId">{{ user.username }}</option>
                 }
               </select>
+              <div *ngIf="userId.invalid && userId.touched">
+                <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              </div>
             </td>
             <td>
-
               <select
                 class="select select-bordered select-xs"
                 [(ngModel)]="team.UFName"
-
                 name="UFName{{i}}"
                 required
                 #UFName="ngModel">
@@ -115,6 +116,9 @@
                   <option [value]="uf.sigla">{{ uf.nome }}</option>
                 }
               </select>
+              <div *ngIf="UFName.invalid && UFName.touched">
+                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              </div>
             </td>
             <td>
               <div
@@ -135,6 +139,9 @@
                     <option [value]="city.nome">{{ city.nome }}</option>
                   }
                 </select>
+                <div *ngIf="cityName.invalid && cityName.touched">
+                  <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
               </div>
             </td>
             <td>
@@ -158,14 +165,14 @@
               <input required
                      [readOnly]="!team.sel"
                      [(ngModel)]="team.teamName"
-                     name="username{{i}}"
+                     name="teamName{{i}}"
                      type="text"
                      placeholder="Insira o username"
                      class="input input-bordered input-xs"
                      #teamName="ngModel"
               >
               <div *ngIf="teamName.invalid && teamName.touched">
-                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo é obrigatório.</small>
+                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
             </td>
             <td>
@@ -180,13 +187,14 @@
                   <option [value]="user.userId">{{ user.username }}</option>
                 }
               </select>
+              <div *ngIf="userId.invalid && userId.touched">
+                <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              </div>
             </td>
             <td>
-
               <select
                 class="select select-bordered select-xs"
                 [(ngModel)]="team.UFName"
-
                 name="UFName{{i}}"
                 required
                 #UFName="ngModel">
@@ -195,6 +203,9 @@
                   <option [value]="uf.sigla">{{ uf.nome }}</option>
                 }
               </select>
+              <div *ngIf="UFName.invalid && UFName.touched">
+                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              </div>
             </td>
             <td>
               <div
@@ -215,6 +226,9 @@
                     <option [value]="city.nome">{{ city.nome }}</option>
                   }
                 </select>
+                <div *ngIf="cityName.invalid && cityName.touched">
+                  <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
               </div>
             </td>
             <td>
@@ -236,6 +250,6 @@
         </tr>
       </app-table>
     </form>
-
+    <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
   </div>
 </div>

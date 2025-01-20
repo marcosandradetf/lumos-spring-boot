@@ -32,12 +32,6 @@ export class UserService {
     }[]>(`${this.endpoint}/get-users`);
   }
 
-  public getUsersSelect() {
-    return this.http.get<{
-      userId: string,
-      username: string,
-    }[]>(`${this.endpoint}/get-users`);
-  }
 
   public resetPassword(userId: string) {
     return this.http.post(`${this.endpoint}/${userId}/reset-password`, {});

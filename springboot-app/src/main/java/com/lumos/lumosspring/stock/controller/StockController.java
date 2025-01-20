@@ -33,6 +33,7 @@ public class StockController {
         return ResponseEntity.ok(supplierDTOS);
     }
 
+    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'ESTOQUISTA_CHEFE', 'ESTOQUISTA')")
     @PostMapping("/stock-movement/create")
     public ResponseEntity<?> stockMovement(@RequestBody List<StockMovementDTO> movement, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.createMovement(movement, refreshToken);
@@ -48,19 +49,19 @@ public class StockController {
         return stockMovementService.stockMovementGetApproved();
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('ESTOQUISTA_CHEFE')")
     @PostMapping("/stock-movement/approve/{movementId}")
     public ResponseEntity<?> stockMovementApprove(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.approveStockMovement(movementId, refreshToken);
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('ESTOQUISTA_CHEFE')")
     @PostMapping("/stock-movement/reject/{movementId}")
     public ResponseEntity<?> stockMovementReject(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.rejectStockMovement(movementId, refreshToken);
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'ESTOQUISTA_CHEFE', 'ESTOQUISTA')")
     @PostMapping("/create-supplier")
     public ResponseEntity<?> createSupplier(@RequestBody List<SupplierDTO> supplierDTO) {
 

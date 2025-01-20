@@ -28,79 +28,54 @@ export class TeamService {
     }[]>(`${this.endpoint}/get-teams`);
   }
 
-  public getUsersSelect() {
+  public getUsers() {
     return this.http.get<{
       userId: string,
       username: string,
     }[]>(`${this.endpoint}/get-users`);
   }
 
-  public resetPassword(userId: string) {
-    return this.http.post(`${this.endpoint}/${userId}/reset-password`, {});
-  }
-
-  public getRoles() {
-    return this.http.get<{
-      selected: boolean,
-      roleId: string,
-      roleName: string,
-    }[]>(`${this.endpoint}/get-roles`);
-
-  }
-
-  public updateUser(user: {
+  public updateTeams(user: {
+    idTeam: string,
+    teamName: string,
     userId: string,
     username: string,
-    name: string,
-    lastname: string,
-    email: string,
-    year: string;
-    month: string;
-    day: string;
-    role: string[],
-    status: boolean
-    sel: boolean
+    UFName: string,
+    cityName: string,
+    regionName: string,
+    sel: boolean,
   }[]) {
     return this.http.post<{
+      idTeam: string,
+      teamName: string,
       userId: string,
       username: string,
-      name: string,
-      lastname: string,
-      email: string,
-      year: string;
-      month: string;
-      day: string;
-      role: string[],
-      status: boolean
-      sel: boolean
-    }[]>(`${this.endpoint}/update-users`, user);
+      UFName: string,
+      cityName: string,
+      regionName: string,
+      sel: boolean,
+    }[]>(`${this.endpoint}/update-teams`, user);
   }
 
-  public insertUsers(user: {
+  public insertTeams(user: {
+    idTeam: string,
+    teamName: string,
     userId: string,
     username: string,
-    name: string,
-    lastname: string,
-    email: string,
-    year: string;
-    month: string;
-    day: string;
-    role: string[],
-    status: boolean
-    sel: boolean
+    UFName: string,
+    cityName: string,
+    regionName: string,
+    sel: boolean,
   }[]) {
     return this.http.post<{
+      idTeam: string,
+      teamName: string,
       userId: string,
       username: string,
-      name: string,
-      lastname: string,
-      email: string,
-      year: string;
-      month: string;
-      day: string;
-      role: string[],
-      status: boolean
-      sel: boolean
-    }[]>(`${this.endpoint}/insert-users`, user);
+      UFName: string,
+      cityName: string,
+      regionName: string,
+      sel: boolean,
+    }[]>(`${this.endpoint}/post-teams`, user);
   }
 }

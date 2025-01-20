@@ -72,6 +72,7 @@ INSERT INTO tb_roles (role_name)
 VALUES
     ('ADMIN'),
     ('ANALISTA'),
+    ('ESTOQUISTA_CHEFE'),
     ('ESTOQUISTA'),
     ('OPERADOR')
 ON CONFLICT (role_name) DO NOTHING;
