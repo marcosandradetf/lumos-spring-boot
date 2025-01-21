@@ -11,18 +11,19 @@ import java.math.BigDecimal;
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_item")
-    private int idItem;
-    private int itemQuantity;
+    @Column(name = "item_id")
+    private long itemId;
+
+    @ManyToOne
+    @JoinColumn(name = "material_id")
+    private Material material;
+
+    private float itemQuantity;
     private BigDecimal itemValue = BigDecimal.ZERO;
     private BigDecimal itemTotalValue = BigDecimal.ZERO;
 
     @ManyToOne
-    @JoinColumn(name = "id_material")
-    private Material material;
-
-    @ManyToOne
-    @JoinColumn(name = "id_contract")
+    @JoinColumn(name = "contract_id")
     private Contract contract;
 
     // Método para calcular o valor total do contrato
@@ -37,33 +38,25 @@ public class Item {
     }
 
     private void removeStockAvailable() {
-        int qtStockAvailable = this.material.getStockAvailable();
+        float qtStockAvailable = this.material.getStockAvailable();
         if (qtStockAvailable > 0) {
             this.material.removeStockAvailable(this.itemQuantity);
         }
     }
 
-    // Método chamado antes de salvar no banco de dados
-    @PrePersist
-    @PreUpdate
-    private void preSave() {
-        calculateContractTotalValue(); // Garante o cálculo antes de salvar ou atualizar
-        removeStockAvailable();
+    public long getItemId() {
+        return itemId;
     }
 
-    public int getItemId() {
-        return idItem;
+    public void setItemId(long itemId) {
+        this.itemId = itemId;
     }
 
-    public void setItemId(int itemId) {
-        this.idItem = itemId;
-    }
-
-    public int getItemQuantity() {
+    public float getItemQuantity() {
         return itemQuantity;
     }
 
-    public void setItemQuantity(int itemQuantity) {
+    public void setItemQuantity(float itemQuantity) {
         this.itemQuantity = itemQuantity;
     }
 

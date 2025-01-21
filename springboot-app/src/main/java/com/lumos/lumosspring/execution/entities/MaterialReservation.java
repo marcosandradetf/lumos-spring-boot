@@ -18,7 +18,7 @@ public class MaterialReservation {
     private Material material;
 
     @ManyToOne
-    private PreMeasurement preMeasurement;
+    private Street street;
 
     @Column(nullable = false)
     private int reservedQuantity;
@@ -26,7 +26,7 @@ public class MaterialReservation {
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private int quantityCompleted;
 
-    private String status; // Pode ser "pendente", "coletado", "cancelado"
+    private ReservationStatus status; // Pode ser "pendente", "coletado", "cancelado"
 
     public long getIdMaterialReservation() {
         return idMaterialReservation;
@@ -52,14 +52,6 @@ public class MaterialReservation {
         this.material = material;
     }
 
-    public PreMeasurement getPreMeasurement() {
-        return preMeasurement;
-    }
-
-    public void setPreMeasurement(PreMeasurement preMeasurement) {
-        this.preMeasurement = preMeasurement;
-    }
-
     public int getReservedQuantity() {
         return reservedQuantity;
     }
@@ -78,11 +70,20 @@ public class MaterialReservation {
         this.material.removeStockQuantity(quantityCompleted);
     }
 
-    public String getStatus() {
+    public ReservationStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ReservationStatus status) {
         this.status = status;
     }
+
+    public enum ReservationStatus {
+        PENDING,
+        COLLECTED,
+        CANCELLED
+    }
+
 }
+
+

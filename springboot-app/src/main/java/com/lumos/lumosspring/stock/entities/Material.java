@@ -36,15 +36,11 @@ public class Material {
     @JoinColumn(name = "id_material_type", nullable = false)
     private Type materialType;
 
-    @OneToMany
-    @JoinColumn(name = "id_contract")
-    private List<Contract> contracts;
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private float stockQuantity;
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private int stockQuantity;
-
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private int stockAvailable;
+    private float stockAvailable;
 
     private BigDecimal costPrice;
 
@@ -73,14 +69,6 @@ public class Material {
 
     public void setDeposit(Deposit almoxarifado) {
         this.deposit = almoxarifado;
-    }
-
-    public List<Contract> getContracts() {
-        return contracts;
-    }
-
-    public void setContrato(Contract contract) {
-        this.contracts.add(contract);
     }
 
     public Type getMaterialType() {
@@ -121,11 +109,11 @@ public class Material {
         this.requestUnit = unidadeRequisicao;
     }
 
-    public int getStockQuantity() {
+    public float getStockQuantity() {
         return stockQuantity;
     }
 
-    public void setStockQuantity(int qtdeEstoque) {
+    public void setStockQuantity(float qtdeEstoque) {
         this.stockQuantity = qtdeEstoque;
     }
 
@@ -157,7 +145,7 @@ public class Material {
         this.stockQuantity -= quantityCompleted;
     }
 
-    public void removeStockAvailable(int quantityAvailable) {
+    public void removeStockAvailable(float quantityAvailable) {
         this.stockAvailable -= quantityAvailable;
     }
 
@@ -169,15 +157,11 @@ public class Material {
         this.materialPower = materialPower;
     }
 
-    public void setContracts(List<Contract> contracts) {
-        this.contracts = contracts;
-    }
-
-    public int getStockAvailable() {
+    public float getStockAvailable() {
         return stockAvailable;
     }
 
-    public void setStockAvailable(int stockAvailable) {
+    public void setStockAvailable(float stockAvailable) {
         this.stockAvailable = stockAvailable;
     }
 
