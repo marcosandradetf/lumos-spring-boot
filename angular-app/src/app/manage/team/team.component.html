@@ -13,18 +13,18 @@
     <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
       <input type="radio" class="tab" aria-label="Usuários" (click)="router.navigate(['/configuracoes/usuarios'])"/>
       <input type="radio" class="tab" aria-label="Equipes" checked/>
-      <input type="radio" class="tab" aria-label="Minha Empresa"
+      <input type="radio" class="tab" aria-label="Empresa" disabled
              (click)="router.navigate(['/configuracoes/empresa'])"/>
     </div>
 
     <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)" class="shadow border p-2">
       <div class="flex justify-evenly pb-5 items-center">
         @if (!add && !change) {
-          <app-button title="Alterar Usuários" (click)="change = true">
+          <app-button title="Alterar Equipes" (click)="change = true">
           </app-button>
         }
         @if (!add && !change) {
-          <app-button title="Adicionar Usuários" classButton="btn btn-success text-white" (click)="add = true">
+          <app-button title="Adicionar Equipes" classButton="btn btn-success text-white" (click)="add = true">
           </app-button>
         }
         @if (add || change) {
@@ -65,6 +65,7 @@
               <input type="checkbox"
                      class="check-box"
                      [(ngModel)]="team.sel"
+                     (change)="team.sel ? getCities(team.UFName) : null"
                      name="sel{{i}}">
             </td>
             <td hidden>
@@ -76,52 +77,62 @@
               ></td>
             <td>
               <input required
-                     [readOnly]="!team.sel"
+                     [disabled]="!team.sel"
                      [(ngModel)]="team.teamName"
                      name="teamName{{i}}"
                      type="text"
-                     placeholder="Insira o username"
+                     placeholder="Insira o nome da equipe"
                      class="input input-bordered input-xs"
                      #teamName="ngModel"
               >
-              <div *ngIf="teamName.invalid && teamName.touched">
+              <div *ngIf="teamName.invalid && (teamName.touched || teamForm.submitted)">
                 <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
             </td>
             <td>
-              <select
-                class="select select-bordered select-xs"
-                [(ngModel)]="team.userId"
-                name="userId{{i}}"
-                required
-                #userId="ngModel">
-                <option disabled selected [value]="team.userId">{{ team.username }}</option>
-                @for (user of users; track user.userId) {
-                  <option [value]="user.userId">{{ user.username }}</option>
-                }
-              </select>
-              <div *ngIf="userId.invalid && userId.touched">
-                <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.username }}</p>
+              <div *ngIf="team.sel">
+                <select
+                  class="select select-bordered select-xs"
+                  [(ngModel)]="team.userId"
+                  [disabled]="!team.sel"
+                  name="userId{{i}}"
+                  required
+                  #userId="ngModel">
+                  <option value="" disabled>Selecione o usuário</option>
+                  @for (user of users; track user.userId) {
+                    <option [value]="user.userId" [selected]="user.userId === team.userId">{{ user.username }}</option>
+                  }
+                </select>
+                <div *ngIf="userId.invalid && (userId.touched || teamForm.submitted)">
+                  <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
               </div>
             </td>
             <td>
-              <select
-                class="select select-bordered select-xs"
-                [(ngModel)]="team.UFName"
-                name="UFName{{i}}"
-                required
-                #UFName="ngModel">
-                <option disabled selected [value]="team.UFName">{{ team.UFName }}</option>
-                @for (uf of ufs; track uf.nome) {
-                  <option [value]="uf.sigla">{{ uf.nome }}</option>
-                }
-              </select>
-              <div *ngIf="UFName.invalid && UFName.touched">
-                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.UFName }}</p>
+              <div *ngIf="team.sel">
+                <select
+                  class="select select-bordered select-xs"
+                  [(ngModel)]="team.UFName"
+                  [disabled]="!team.sel"
+                  name="UFName{{i}}"
+                  required
+                  #UFName="ngModel">
+                  <option value="" disabled>Selecione o estado da equipe</option>
+                  @for (uf of ufs; track uf.nome) {
+                    <option [value]="uf.sigla">{{ uf.nome }}</option>
+                  }
+                </select>
+                <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
+                  <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
               </div>
             </td>
             <td>
+              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.cityName }}</p>
               <div
+                *ngIf="team.sel"
                 [ngClass]="{'tooltip': !team.UFName, 'tooltip-bottom': !team.UFName}"
                 [attr.data-tip]="team.UFName ? '' : 'Selecione o Estado Primeiro'"
                 class="tooltip tooltip-bottom form-control w-full max-w-xs">
@@ -134,12 +145,12 @@
                   [disabled]="!team.UFName"
                   #cityName="ngModel"
                   required>
-                  <option disabled selected [value]="team.cityName">{{ team.cityName }}</option>
+                  <option value="" disabled>Selecione a cidade da equipe</option>
                   @for (city of cities; track city.nome) {
                     <option [value]="city.nome">{{ city.nome }}</option>
                   }
                 </select>
-                <div *ngIf="cityName.invalid && cityName.touched">
+                <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
                   <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
                 </div>
               </div>
@@ -163,52 +174,62 @@
               ></td>
             <td>
               <input required
-                     [readOnly]="!team.sel"
+                     [disabled]="team.idTeam !== ''"
                      [(ngModel)]="team.teamName"
                      name="teamName{{i}}"
                      type="text"
-                     placeholder="Insira o username"
+                     placeholder="Insira o nome da equipe"
                      class="input input-bordered input-xs"
                      #teamName="ngModel"
               >
-              <div *ngIf="teamName.invalid && teamName.touched">
+              <div *ngIf="teamName.invalid && (teamName.touched || teamForm.submitted)">
                 <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
             </td>
             <td>
-              <select
-                class="select select-bordered select-xs"
-                [(ngModel)]="team.userId"
-                name="userId{{i}}"
-                required
-                #userId="ngModel">
-                <option disabled selected [value]="team.userId">{{ team.username }}</option>
-                @for (user of users; track user.userId) {
-                  <option [value]="user.userId">{{ user.username }}</option>
-                }
-              </select>
-              <div *ngIf="userId.invalid && userId.touched">
-                <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              <p *ngIf="team.idTeam" class="input input-bordered input-xs input-disabled">{{ team.username }}</p>
+              <div *ngIf="!team.idTeam">
+                <select
+                  class="select select-bordered select-xs"
+                  [(ngModel)]="team.userId"
+                  [disabled]="team.idTeam !== ''"
+                  name="userId{{i}}"
+                  required
+                  #userId="ngModel">
+                  <option value="" disabled>{{ team.username ? team.username : 'Selecione o usuário' }}</option>
+                  @for (user of users; track user.userId) {
+                    <option [value]="user.userId">{{ user.username }}</option>
+                  }
+                </select>
+                <div *ngIf="userId.invalid && (userId.touched || teamForm.submitted)">
+                  <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
               </div>
             </td>
             <td>
-              <select
-                class="select select-bordered select-xs"
-                [(ngModel)]="team.UFName"
-                name="UFName{{i}}"
-                required
-                #UFName="ngModel">
-                <option disabled selected [value]="team.UFName">{{ team.UFName }}</option>
-                @for (uf of ufs; track uf.nome) {
-                  <option [value]="uf.sigla">{{ uf.nome }}</option>
-                }
-              </select>
-              <div *ngIf="UFName.invalid && UFName.touched">
-                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              <p *ngIf="team.idTeam" class="input input-bordered input-xs input-disabled">{{ team.UFName }}</p>
+              <div *ngIf="!team.idTeam">
+                <select
+                  class="select select-bordered select-xs"
+                  [(ngModel)]="team.UFName"
+                  name="UFName{{i}}"
+                  [disabled]="team.idTeam !== ''"
+                  required
+                  #UFName="ngModel">
+                  <option value="" disabled>{{ team.UFName ? team.UFName : 'Selecione o estado da equipe' }}</option>
+                  @for (uf of ufs; track uf.nome) {
+                    <option [value]="uf.sigla">{{ uf.nome }}</option>
+                  }
+                </select>
+                <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
+                  <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
               </div>
             </td>
             <td>
+              <p *ngIf="team.idTeam" class="input input-bordered input-xs input-disabled">{{ team.cityName }}</p>
               <div
+                *ngIf="!team.idTeam"
                 [ngClass]="{'tooltip': !team.UFName, 'tooltip-bottom': !team.UFName}"
                 [attr.data-tip]="team.UFName ? '' : 'Selecione o Estado Primeiro'"
                 class="tooltip tooltip-bottom form-control w-full max-w-xs">
@@ -221,12 +242,13 @@
                   [disabled]="!team.UFName"
                   #cityName="ngModel"
                   required>
-                  <option disabled selected [value]="team.cityName">{{ team.cityName }}</option>
+                  <option value="" disabled>{{ team.cityName ? team.cityName : 'Selecione a cidade da equipe' }}
+                  </option>
                   @for (city of cities; track city.nome) {
                     <option [value]="city.nome">{{ city.nome }}</option>
                   }
                 </select>
-                <div *ngIf="cityName.invalid && cityName.touched">
+                <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
                   <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
                 </div>
               </div>

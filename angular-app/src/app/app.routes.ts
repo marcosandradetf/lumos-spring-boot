@@ -114,10 +114,20 @@ export const routes: Routes = [
   },
   // end
 
+  // start executions path
+  {
+    path: 'execucoes/pre-medicao',
+    loadComponent: () => import('./executions/pre-measurement/pre-measurement.component').then(p => p.PreMeasurementComponent),
+    canActivate: [AuthGuard],
+    data: { role: ['ADMIN', 'ANALISTA'], path: 'execucoes' },
+  },
+  //end
+
   { path: '', redirectTo: 'estoque/materiais', pathMatch: 'full' },
   { path: 'chamados', redirectTo: 'estoque/materiais' },
   { path: 'configuracoes', redirectTo: 'configuracoes/equipes' },
   { path: 'contratos', redirectTo: 'contratos/criar' },
+  { path: 'execucoes', redirectTo: 'execucoes/pre-medicao' },
   { path: 'requisicoes', redirectTo: '**' },
   { path: '**', redirectTo: 'estoque/materiais' }
 

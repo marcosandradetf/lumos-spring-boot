@@ -147,11 +147,8 @@
                   class="input input-disabled"
                   name="depositRegion"
                   required
-                  [value]="selectedRegion"
                   #regionModel="ngModel"
-
                 />
-
                 <div *ngIf="regionModel.invalid && formSubmitted">
                   <small *ngIf="regionModel.errors?.['required']" class="text-red-600">Preenchimento
                     obrigatório.</small>

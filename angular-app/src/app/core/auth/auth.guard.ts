@@ -10,12 +10,12 @@ export class AuthGuard implements CanActivate {
   }
 
   canActivate(next: ActivatedRouteSnapshot): Observable<boolean> {
-    const requiredRole: string[] = next.data['role'];
+    const requiredRole: string[] = Array.isArray(next.data['role']) ? next.data['role'] : [];
     const path: string[] = next.data['path'];
     let hasAcess: boolean = false;
 
     if (requiredRole.length > 1) {
-      const roles: string[] = this.authService.user.getRoles();
+      const roles: string[] = this.authService.user?.getRoles() || [];
       hasAcess = roles.some(role => requiredRole.includes(role));
     }
 

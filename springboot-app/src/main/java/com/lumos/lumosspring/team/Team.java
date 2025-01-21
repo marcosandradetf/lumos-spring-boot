@@ -9,7 +9,7 @@ import java.util.Set;
 
 
 @Entity
-@Table(name = "tb_team")
+@Table(name = "tb_teams")
 public class Team {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +19,7 @@ public class Team {
     @Column(columnDefinition = "TEXT")
     private String teamName;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 

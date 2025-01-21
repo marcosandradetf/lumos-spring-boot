@@ -34,6 +34,7 @@ public class TeamService {
             teamsResponses.add(new TeamResponse(
                     team.getIdTeam(),
                     team.getTeamName(),
+                    team.getUser().getIdUser().toString(),
                     team.getUser().getUsername(),
                     team.getUFName(),
                     team.getCityName(),
@@ -98,6 +99,10 @@ public class TeamService {
         }
 
         for (TeamCreate t : teams) {
+            if (!t.sel()) {
+                continue;
+            }
+
             var user = userRepository.findByIdUser(UUID.fromString(t.userId()));
 
             if (user.isEmpty()) {

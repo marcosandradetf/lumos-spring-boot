@@ -9,8 +9,8 @@ import {environment} from '../../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
-export class TeamService {
-  private endpoint = environment.springboot + '/api/teams';
+export class PreMeasurementService {
+  private endpoint = environment.springboot + '/api/execution';
 
   constructor(private http: HttpClient) {
   }

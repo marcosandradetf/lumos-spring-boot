@@ -120,18 +120,17 @@ export class TeamComponent {
 
     this.loading = true;
 
-    const insert = this.teams.some(t => t.userId === '');
-    const update = this.teams.every(t => t.userId !== '');
+    const insert = this.teams.some(t => t.idTeam === '');
+    const update = this.teams.every(t => t.idTeam !== '');
     const updateCheckSel = this.teams.some(t => t.sel);
 
-    if (insert && this.users.length !== this.teamsBackup.length) {
+    if (insert && this.teams.length !== this.teamsBackup.length) {
       this.insertTeams();
     } else if (update && updateCheckSel) {
       this.updateTeams();
     }
 
     this.loading = false;
-
   }
 
   resetView() {

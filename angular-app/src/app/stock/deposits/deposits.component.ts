@@ -168,8 +168,17 @@ export class DepositsComponent {
       this.state = State.update;
       if (!this.formOpen) this.collapseDiv.nativeElement.click();
 
+
+      this.getCities(d.depositState);
+
       this.deposit.depositName = d.depositName;
       this.deposit.companyId = '';
+      this.deposit.depositState = d.depositState;
+      this.deposit.depositCity = d.depositCity;
+      this.deposit.depositRegion = d.depositRegion;
+      this.deposit.depositAddress = d.depositAddress;
+      this.deposit.depositDistrict = d.depositDistrict;
+      this.deposit.depositPhone = d.depositPhone;
       this.depositId = d.idDeposit;
       if (this.top)
         this.top.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -206,7 +215,7 @@ export class DepositsComponent {
 
   updateRegion(selectedCityName: string): void {
     const selectedCity = this.cities.find(city => city.nome === selectedCityName);
-    this.selectedRegion = selectedCity ? selectedCity.microrregiao.nome : '';
+    this.deposit.depositRegion = selectedCity ? selectedCity.microrregiao.mesorregiao.nome : '';
   }
 
   formatTel(event: any): void {
