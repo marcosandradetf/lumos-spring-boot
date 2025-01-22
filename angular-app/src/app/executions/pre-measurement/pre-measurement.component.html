@@ -18,64 +18,83 @@
         class="material-icons text-xs mr-1">add</span>Adicionar Pré-Medição</span>
     </div>
 
-    <div class="border-b w-full pl-2 flex">
-      <ul class="menu menu-xs rounded-lg w-full max-w-xs">
-        <li>
-          <details open>
-            <summary class="font-semibold">
-              Pré-medição
-            </summary>
-            <ul class="flex">
-              <li>
-                <div class="flex">
-                  <div class="relative pt-4">
-                    <span class="absolute top-0 left-2">Descrição</span>
-                    <input type="text" class="input input-bordered input-xs">
-                  </div>
-                  <div class="relative pt-4">
-                    <span class="absolute top-0 left-2">Descrição</span>
-                    <input type="text" class="input input-bordered input-xs">
-                  </div>
-                </div>
-
-                <details open>
-                  <summary class="font-semibold">
-                    Ruas
-                  </summary>
-
-                  <!--                  start streets -->
-                  <ul>
-                    <li class="flex items-center flex-row">
-                      <div class="relative pt-4">
-                        <span class="absolute top-0 left-2">Nome</span>
-                        <input type="text" class="input input-bordered input-xs">
-                      </div>
-                      <div class="relative pt-4">
-                        <span class="absolute top-0 left-2">Nome</span>
-                        <input type="text" class="input input-bordered input-xs">
-                      </div>
-                      <div class="relative pt-4">
-                        <span class="absolute top-0 left-2">Nome</span>
-                        <input type="text" class="input input-bordered input-xs">
-                      </div>
-
-                      <span
-                        class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mt-2">+ Adicionar Rua</span>
-                    </li>
-
-                  </ul>
-                  <!--                  end streets-->
-
-                </details>
-              </li>
-            </ul>
-          </details>
-        </li>
-      </ul>
-
-
+    <div class="border-b w-full p-2">
+      <div class="flex flex-col ">
+        <h2 class="font-semibold">Pré-medição</h2>
+        <div class="flex space-x-2">
+          <label class="form-control w-full max-w-xs">
+            <div class="label">
+              <span class="label-text text-xs">Descrição</span>
+            </div>
+            <input type="text" placeholder="Type here" class="input input-xs input-bordered w-full max-w-xs"/>
+          </label>
+          <label class="form-control w-full max-w-xs">
+            <div class="label">
+              <span class="label-text text-xs">Estado</span>
+            </div>
+            <select class="select select-bordered select-xs">
+              <option value="">Selecione o estado</option>
+            </select>
+          </label>
+        </div>
+        <div class="ml-10 mt-4 border-l pl-2">
+          <h2 class="text-sm font-semibold">Informe as ruas</h2>
+          <div class="flex space-x-2">
+            <label class="form-control max-w-xs">
+              <div class="label">
+                <span class="label-text text-xs">x</span>
+              </div>
+              <input type="radio" class="radio radio-xs radio-primary">
+            </label>
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text text-xs">Descrição</span>
+              </div>
+              <input type="text" placeholder="Type here" class="input input-xs input-bordered w-full max-w-xs"/>
+            </label>
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text text-xs">Almoxarifado</span>
+              </div>
+              <select class="select select-bordered select-xs">
+                <option value="">Selecione o almoxarifado</option>
+              </select>
+            </label>
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text text-xs">Adicionar rua</span>
+              </div>
+              <button class="btn btn-success rounded-2xl btn-xs text-white">+</button>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!---->
+    <div class="border-b p-2">
+      <div class="flex justify-between mb-5">
+        <h2 class="text-sm">Selecione os itens para a rua X</h2>
+        <h2 class="text-xs font-semibold">Almoxarifado X</h2>
+      </div>
+      <app-table [search]="true">
+        <tr header>
+          <th></th>
+          <th>Código</th>
+          <th>Nome</th>
+          <th>Quantidade</th>
+        </tr>
+        <tr body>
+          <td class="p-0"><input type="checkbox" class="checkbox checkbox-success checkbox-xs"></td>
+          <td><p type="text" class="input input-xs input-disabled"></p></td>
+          <td><p type="text" class="input input-disabled input-xs"></p></td>
+          <td>
+            <input type="text" class="input input-bordered input-xs"
+                   placeholder="Informe a quantidade">
+          </td>
+        </tr>
+      </app-table>
+    </div>
 
   </div>
 </div>

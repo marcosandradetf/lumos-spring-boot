@@ -2,13 +2,15 @@ import { Component } from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {Router, RouterLinkActive} from '@angular/router';
 import {PreMeasurementService} from './premeasurement-service.service';
+import {TableComponent} from '../../shared/components/table/table.component';
 
 @Component({
   selector: 'app-pre-measurement',
   standalone: true,
   imports: [
     SidebarComponent,
-    RouterLinkActive
+    RouterLinkActive,
+    TableComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
