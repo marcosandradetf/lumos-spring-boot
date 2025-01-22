@@ -44,7 +44,7 @@ export const routes: Routes = [
     data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
   },
   {
-    path: 'estoque/movimento/pendente',
+    path: 'estoque/movimento-pendente',
     loadComponent: () => import('./stock/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
     canActivate: [AuthGuard],
     data: { role: ['ADMIN', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
@@ -62,7 +62,7 @@ export const routes: Routes = [
     data: { role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
   },
   {
-    path: 'estoque/importar',
+    path: 'configuracoes/importar-planilha',
     loadComponent: () => import('./stock/import-materials/import-materials.component').then(m => m.ImportMaterialsComponent),
     canActivate: [AuthGuard],
     data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
@@ -124,11 +124,6 @@ export const routes: Routes = [
   //end
 
   { path: '', redirectTo: 'estoque/materiais', pathMatch: 'full' },
-  { path: 'chamados', redirectTo: 'estoque/materiais' },
-  { path: 'configuracoes', redirectTo: 'configuracoes/equipes' },
-  { path: 'contratos', redirectTo: 'contratos/criar' },
-  { path: 'execucoes', redirectTo: 'execucoes/pre-medicao' },
-  { path: 'requisicoes', redirectTo: '**' },
   { path: '**', redirectTo: 'estoque/materiais' }
 
 ];

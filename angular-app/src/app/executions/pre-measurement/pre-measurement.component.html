@@ -1,22 +1,80 @@
-<div class="flex mt-[4rem] h-fit" #top>
-  <app-sidebar title="Execuções" [links]="sidebarLinks"></app-sidebar>
-  <div class="ml-12 lg:ml-14 2xl:ml-[19rem] w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
-    <div class="breadcrumbs text-sm py-5">
-      <ul class="select-none">
-        <li><a>Início</a></li>
-        <li><a>Execuçoes</a></li>
-        <li>Pré-Medição</li>
+<div class="flex mt-[3rem] h-fit" #top>
+  <div class="w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a>Início</a></li>
+          <li><a>Execuçoes</a></li>
+          <li>Pré-Medição</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5">Pré-Medição</h3>
+    </div>
+
+    <div class="border-b w-full pl-2 flex h-8 items-center justify-end">
+      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mr-4"><span
+        class="material-icons text-xs mr-1">remove</span>Remover Pré-Medição</span>
+      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex"><span
+        class="material-icons text-xs mr-1">add</span>Adicionar Pré-Medição</span>
+    </div>
+
+    <div class="border-b w-full pl-2 flex">
+      <ul class="menu menu-xs rounded-lg w-full max-w-xs">
+        <li>
+          <details open>
+            <summary class="font-semibold">
+              Pré-medição
+            </summary>
+            <ul class="flex">
+              <li>
+                <div class="flex">
+                  <div class="relative pt-4">
+                    <span class="absolute top-0 left-2">Descrição</span>
+                    <input type="text" class="input input-bordered input-xs">
+                  </div>
+                  <div class="relative pt-4">
+                    <span class="absolute top-0 left-2">Descrição</span>
+                    <input type="text" class="input input-bordered input-xs">
+                  </div>
+                </div>
+
+                <details open>
+                  <summary class="font-semibold">
+                    Ruas
+                  </summary>
+
+                  <!--                  start streets -->
+                  <ul>
+                    <li class="flex items-center flex-row">
+                      <div class="relative pt-4">
+                        <span class="absolute top-0 left-2">Nome</span>
+                        <input type="text" class="input input-bordered input-xs">
+                      </div>
+                      <div class="relative pt-4">
+                        <span class="absolute top-0 left-2">Nome</span>
+                        <input type="text" class="input input-bordered input-xs">
+                      </div>
+                      <div class="relative pt-4">
+                        <span class="absolute top-0 left-2">Nome</span>
+                        <input type="text" class="input input-bordered input-xs">
+                      </div>
+
+                      <span
+                        class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mt-2">+ Adicionar Rua</span>
+                    </li>
+
+                  </ul>
+                  <!--                  end streets-->
+
+                </details>
+              </li>
+            </ul>
+          </details>
+        </li>
       </ul>
-    </div>
 
-    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
-      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])"/>
-      <input type="radio" class="tab" aria-label="Materiais" (click)="router.navigate(['/estoque/materiais'])"/>
-      <input type="radio" class="tab" aria-label="Grupos" (click)="router.navigate(['/estoque/grupos'])"/>
-      <input type="radio" class="tab" aria-label="Almoxarifados" checked/>
-    </div>
 
-    <!--    form    -->
+    </div>
 
 
   </div>
