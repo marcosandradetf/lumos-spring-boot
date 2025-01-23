@@ -3,11 +3,16 @@
     <span class="loading loading-infinity loading-lg"></span>
   </div>
 } @else {
-  <app-header></app-header>
+  @if (authService.isLoggedIn$ | async) {
+    <app-header></app-header>
+    <app-sidebar (menuToggle)="onMenuToggle($event)"></app-sidebar>
+  }
 
-  <div class="min-h-full">
+  <!-- Conteúdo principal -->
+  <div [ngClass]="{'ml-[18rem]': menuOpen, 'ml-9': !menuOpen}" class="min-h-full transition-all">
     <router-outlet></router-outlet>
   </div>
 
   <app-footer></app-footer>
+
 }

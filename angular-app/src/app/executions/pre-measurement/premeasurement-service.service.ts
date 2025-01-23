@@ -15,6 +15,14 @@ export class PreMeasurementService {
   constructor(private http: HttpClient) {
   }
 
+  getDeposits() {
+    return this.http.get<Deposit[]>(`${environment.springboot + '/api/deposit'}`);
+  }
+
+  getItemsByDeposit(depositId: string): Observable<{ materialId: string; materialName: string; materialQuantity: string }[]> {
+    return this.http.get<{ materialId: string; materialName: string; materialQuantity: string }[]>(`${this.endpoint}/itens/${depositId}`);
+  }
+
   public getTeams() {
     return this.http.get<{
       idTeam: string,

@@ -12,89 +12,161 @@
     </div>
 
     <div class="border-b w-full pl-2 flex h-8 items-center justify-end">
-      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mr-4"><span
-        class="material-icons text-xs mr-1">remove</span>Remover Pré-Medição</span>
-      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex"><span
-        class="material-icons text-xs mr-1">add</span>Adicionar Pré-Medição</span>
+      <div class="tooltip tooltip-right mr-auto mt-1"
+           data-tip="Após preencher os dados, arraste os itens do almoxarifado para as ruas correspondentes.">
+        <span class="cursor-pointer material-icons text-info">info</span>
+      </div>
+      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mr-4 font-semibold items-center"><span
+        class="material-icons text-sm font-bold mr-1">remove</span>Remover Pré-Medição</span>
+      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex font-semibold items-center"><span
+        class="material-icons text-sm font-bold mr-1">add</span>Adicionar Pré-Medição</span>
     </div>
 
-    <div class="border-b w-full p-2">
-      <div class="flex flex-col ">
-        <h2 class="font-semibold">Pré-medição</h2>
-        <div class="flex space-x-2">
-          <label class="form-control w-full max-w-xs">
-            <div class="label">
-              <span class="label-text text-xs">Descrição</span>
-            </div>
-            <input type="text" placeholder="Type here" class="input input-xs input-bordered w-full max-w-xs"/>
-          </label>
-          <label class="form-control w-full max-w-xs">
-            <div class="label">
-              <span class="label-text text-xs">Estado</span>
-            </div>
-            <select class="select select-bordered select-xs">
-              <option value="">Selecione o estado</option>
-            </select>
-          </label>
-        </div>
-        <div class="ml-10 mt-4 border-l pl-2">
-          <h2 class="text-sm font-semibold">Informe as ruas</h2>
-          <div class="flex space-x-2">
-            <label class="form-control max-w-xs">
-              <div class="label">
-                <span class="label-text text-xs">x</span>
-              </div>
-              <input type="radio" class="radio radio-xs radio-primary">
-            </label>
+    <div class="border-b w-full flex justify-between flex-col xl:flex-row">
+      <!--      -->
+      <form class="flex flex-col p-2 pl-" #PreMeasurementForm="ngForm" (ngSubmit)="submit(PreMeasurementForm)">
+        <h2 class="font-semibold">Pré-medição 1</h2>
+
+        <div class="border-l pl-2">
+          <div class="flex space-x-2 overflow-auto">
             <label class="form-control w-full max-w-xs">
               <div class="label">
                 <span class="label-text text-xs">Descrição</span>
               </div>
-              <input type="text" placeholder="Type here" class="input input-xs input-bordered w-full max-w-xs"/>
+              <input type="text" placeholder="Insira a descrição" class="input input-xs input-bordered"
+                     [(ngModel)]="p.description" name="description"/>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text text-xs">Estado</span>
+              </div>
+              <select class="select select-bordered select-xs" [(ngModel)]="p.uf"  (change)="getCities(p.uf)" name="uf">
+                <option value="" disabled selected>Selecione o estado</option>
+                <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>
+              </select>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text text-xs">Cidade</span>
+              </div>
+              <select class="select select-bordered select-xs" [(ngModel)]="p.city" (change)="getRegion(p.city)" name="city">
+                <option value="" disabled selected>Selecione a cidade</option>
+                <option *ngFor="let c of cities" [value]="c.nome">{{ c.nome }}</option>
+              </select>
+            </label>
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text text-xs">Região</span>
+              </div>
+              <p class="input input-disabled input-xs min-w-40">{{ p.region }}</p>
             </label>
             <label class="form-control w-full max-w-xs">
               <div class="label">
                 <span class="label-text text-xs">Almoxarifado</span>
               </div>
-              <select class="select select-bordered select-xs">
-                <option value="">Selecione o almoxarifado</option>
+              <select class="select select-bordered select-xs" (change)="toggleDeposit(p.idDeposit)" name="idDeposit" #almox>
+                <option value="" disabled selected>Selecione o almoxarifado</option>
+                <option *ngFor="let d of deposits" [value]="d.idDeposit">{{ d.depositName }}</option>
               </select>
             </label>
-            <label class="form-control">
-              <div class="label">
-                <span class="label-text text-xs">Adicionar rua</span>
-              </div>
-              <button class="btn btn-success rounded-2xl btn-xs text-white">+</button>
-            </label>
           </div>
+          <!--   streets       -->
+
+          <div class="ml-10 mt-4 mb-4">
+            <h2 class="text-sm font-semibold">Informe as ruas</h2>
+            <div class="border-l border-b p-2 pl-2 relative pt-5" *ngFor="let street of p.streets; let i = index">
+              <span class="material-icons absolute top-1 right-0 text-error cursor-pointer" (click)="removeStreet(i)">close</span>
+              <div class="flex space-x-2 overflow-auto">
+                <label class="form-control w-full max-w-xs">
+                  <div class="label">
+                    <span class="label-text text-xs">Descrição</span>
+                  </div>
+                  <input type="text" placeholder="Ex. Rua D, 432" class="input input-xs input-bordered"/>
+                </label>
+                <label class="form-control w-full max-w-xs">
+                  <div class="label">
+                    <span class="label-text text-xs">Bairro</span>
+                  </div>
+                  <input type="text" placeholder="Ex. Cinco" class="input input-xs input-bordered"/>
+                </label>
+                <label class="form-control w-full max-w-xs">
+                  <div class="label">
+                    <span class="label-text text-xs">Complemento</span>
+                  </div>
+                  <input type="text" placeholder="Ex. Esquina com rua X" class="input input-xs input-bordered"/>
+                </label>
+              </div>
+              <div class="flex flex-wrap mt-2">
+                <div class="skeleton h-2 w-32 mr-2"></div>
+                <div class="skeleton h-2 w-32 mr-2"></div>
+                <div class="skeleton h-2 w-32 mr-2"></div>
+                <div class="skeleton h-2 w-32 mr-2"></div>
+                <div class="skeleton h-2 w-32 mr-2"></div>
+                <div class="skeleton h-2 w-32 mr-2"></div>
+              </div>
+            </div>
+
+
+            <!--          -->
+          </div>
+
         </div>
+
+        <div class="flex justify-end space-x-2">
+          <span
+            class="bg-base-200 hover:bg-base-300 p-2 rounded text-xs font-semibold cursor-pointer" (click)="addStreet()">+ Adicionar Rua</span>
+          <span
+            class="bg-base-200 hover:bg-base-300 p-2 rounded text-xs font-semibold cursor-pointer" (click)="removeLastSteet()">- Remover Última Rua</span>
+        </div>
+      </form>
+      <!--      -->
+      <div class="border-t xl:border-l p-2 overflow-auto fixed right-0 h-full pt-[4.67rem] top-0 bg-neutral-50">
+        @if (depositSelected) {
+          <div>
+            <div class="flex justify-between items-center mb-5 border-b p-2">
+              <h2 class="text-sm mr-20">Arraste os itens para as ruas</h2>
+              <h2
+                class="text-xs font-semibold bg-base-200 p-2 rounded cursor-default hover:bg-base-300">{{ depositName }}</h2>
+            </div>
+            <app-table [search]="true">
+              <tr header>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Estoque</th>
+              </tr>
+              <tr body
+                  class="hover:bg-neutral-400 hover:text-white cursor-grab" (press)="drag = true"
+                  [ngClass]="{'cursor-grabbing' : drag}"
+                  *ngFor="let item of items">
+                @if(items.length === 0) {
+                  <td colspan="3"><p type="text" class="text-xs">Nenhum item foi encontrado</p></td>
+                } @else {
+                  <td><p type="text" class="text-xs">{{ item.materialId }}</p></td>
+                  <td><p type="text" class="text-xs">{{ item.materialName }}</p></td>
+                  <td><p type="text" class="text-xs">{{ item.materialQuantity }}</p></td>
+                }
+              </tr>
+            </app-table>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-4 w-96">
+            <div class="skeleton h-12 w-full"></div>
+
+            <div class="skeleton h-10 w-full"></div>
+
+            <div class="skeleton h-6 w-full"></div>
+            <div class="skeleton h-6 w-full"></div>
+            <div class="skeleton h-6 w-full"></div>
+            <div class="skeleton h-6 w-full"></div>
+          </div>
+        }
+
       </div>
+
     </div>
 
-    <!---->
-    <div class="border-b p-2">
-      <div class="flex justify-between mb-5">
-        <h2 class="text-sm">Selecione os itens para a rua X</h2>
-        <h2 class="text-xs font-semibold">Almoxarifado X</h2>
-      </div>
-      <app-table [search]="true">
-        <tr header>
-          <th></th>
-          <th>Código</th>
-          <th>Nome</th>
-          <th>Quantidade</th>
-        </tr>
-        <tr body>
-          <td class="p-0"><input type="checkbox" class="checkbox checkbox-success checkbox-xs"></td>
-          <td><p type="text" class="input input-xs input-disabled"></p></td>
-          <td><p type="text" class="input input-disabled input-xs"></p></td>
-          <td>
-            <input type="text" class="input input-bordered input-xs"
-                   placeholder="Informe a quantidade">
-          </td>
-        </tr>
-      </app-table>
-    </div>
 
   </div>
 </div>

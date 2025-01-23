@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.execution.service;
 
 import com.lumos.lumosspring.execution.controller.dto.PreMeasurementDTO;
-import com.lumos.lumosspring.execution.repository.ItemRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
