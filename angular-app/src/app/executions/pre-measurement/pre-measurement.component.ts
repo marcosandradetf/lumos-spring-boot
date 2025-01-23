@@ -9,6 +9,7 @@ import {Deposit} from '../../models/almoxarifado.model';
 import {ufRequest} from '../../core/uf-request.dto';
 import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-pre-measurement',
@@ -17,7 +18,8 @@ import {citiesRequest} from '../../core/cities-request.dto';
     TableComponent,
     NgClass,
     NgForOf,
-    FormsModule
+    FormsModule,
+    ModalComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
@@ -86,7 +88,7 @@ export class PreMeasurementComponent {
     const depositName = this.deposits.find(d => d.idDeposit === Number(depositId))?.depositName;
     this.depositName = depositName ? depositName : '';
     if (depositId) {
-      this.preMeasurementService.getItemsByDeposit(depositId).subscribe(items => {
+      this.preMeasurementService.getItemsByDeposit("1").subscribe(items => {
         this.items = items;
       });
     }
