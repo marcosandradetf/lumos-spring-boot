@@ -34,9 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
-import com.lumos.auth.service.AuthViewModel
-import com.lumos.ui.home.HomeScreen
+import com.lumos.service.AuthViewModel
 
 
 @Composable

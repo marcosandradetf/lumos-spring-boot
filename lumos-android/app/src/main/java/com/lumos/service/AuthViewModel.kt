@@ -1,4 +1,4 @@
-package com.lumos.auth.service
+package com.lumos.service
 
 import android.content.Context
 import androidx.compose.runtime.State

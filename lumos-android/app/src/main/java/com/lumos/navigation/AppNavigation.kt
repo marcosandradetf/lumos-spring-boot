@@ -1,22 +1,18 @@
 package com.lumos.navigation
 
-import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.lumos.auth.service.AuthViewModel
+import com.lumos.service.AuthViewModel
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.auth.ui.Login
-import com.lumos.midleware.SecureStorage
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen

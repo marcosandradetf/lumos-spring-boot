@@ -1,8 +1,8 @@
 package com.lumos.midleware
 
 import android.content.Context
-import com.lumos.auth.service.AuthService
-import com.lumos.auth.service.RefreshTokenRequest
+import com.lumos.service.AuthService
+import com.lumos.service.RefreshTokenRequest
 import okhttp3.Interceptor
 import okhttp3.Response
 

@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.play.services.location)
 //    implementation(libs.androidx.security.crypto.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -71,5 +72,7 @@ dependencies {
     // Shared Preferences seguras
     implementation(libs.androidx.security.crypto)
 
+    implementation("androidx.room:room-runtime:2.5.0")
+    implementation("androidx.room:room-compiler:2.5.0")
 
 }
