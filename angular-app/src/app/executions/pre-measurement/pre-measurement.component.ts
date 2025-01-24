@@ -10,6 +10,7 @@ import {ufRequest} from '../../core/uf-request.dto';
 import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {ButtonComponent} from '../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-pre-measurement',
@@ -19,7 +20,8 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
     NgClass,
     NgForOf,
     FormsModule,
-    ModalComponent
+    ModalComponent,
+    ButtonComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
@@ -96,6 +98,8 @@ export class PreMeasurementComponent {
 
 
   protected readonly alert = alert;
+  openModalItens: boolean = false;
+  depositMessage: string  = '';
 
   getRegion(selectedCityName: string) {
     const selectedCity = this.cities.find(city => city.nome === selectedCityName);
@@ -129,4 +133,12 @@ export class PreMeasurementComponent {
   removeLastSteet() {
     this.p.streets.pop();
   }
+
+  choseItems() {
+    this.depositMessage = this.p.idDeposit ? '' : 'Selecione o almoxarifado';
+    this.openModalItens = !!this.p.idDeposit;
+
+  }
+
+
 }
