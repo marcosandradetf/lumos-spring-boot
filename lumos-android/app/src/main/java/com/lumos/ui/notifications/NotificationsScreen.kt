@@ -1,8 +1,10 @@
 package com.lumos.ui.notifications
 
+import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -15,6 +17,7 @@ fun NotificationsScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit,
     navController: NavHostController,
+    context: Context
 ) {
     AppLayout(
         title = "Notificações",
@@ -23,6 +26,7 @@ fun NotificationsScreen(
         sliderNavigateToHome = onNavigateToHome,
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
+        context = context
     ) { modifier ->
         Column(
             modifier = modifier
@@ -40,5 +44,6 @@ fun PrevNotifications() {
         {},
         {},
         rememberNavController(),
+        LocalContext.current
     )
 }

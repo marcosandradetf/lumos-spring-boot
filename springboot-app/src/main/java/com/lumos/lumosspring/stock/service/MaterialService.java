@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.service;
 
+import com.lumos.lumosspring.stock.controller.dto.mobile.MaterialDTOMob;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -202,4 +204,8 @@ public class MaterialService {
     }
 
 
+    public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
+
+        return ResponseEntity.ok().build();
+    }
 }

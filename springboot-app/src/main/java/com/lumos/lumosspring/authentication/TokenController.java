@@ -46,7 +46,7 @@ public class TokenController {
         }
 
         var now = util.getDateTime();
-        var expiresIn = 1800L; // 30 Minutos
+        var expiresIn = 2592000L; // 30 Minutos
         var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
 
         var scopes = user.get().getRoles()

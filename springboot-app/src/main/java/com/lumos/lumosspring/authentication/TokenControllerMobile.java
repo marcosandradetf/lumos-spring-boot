@@ -5,6 +5,7 @@ import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
 import com.lumos.lumosspring.team.TeamRepository;
 import com.lumos.lumosspring.user.Role;
+import com.lumos.lumosspring.user.RoleRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
@@ -16,6 +17,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -28,26 +32,32 @@ public class TokenControllerMobile {
     private final RefreshTokenRepository refreshTokenRepository;
     private final TeamRepository teamRepository;
     private final Util util;
+    private final RoleRepository roleRepository;
 
-    public TokenControllerMobile(JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository, TeamRepository teamRepository, Util util) {
+    public TokenControllerMobile(JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository, TeamRepository teamRepository, Util util, RoleRepository roleRepository) {
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
         this.teamRepository = teamRepository;
         this.util = util;
+        this.roleRepository = roleRepository;
     }
 
 
     @PostMapping("/login")
     public ResponseEntity<?> loginMobile(@RequestBody LoginRequest loginRequest) {
-        var user = userRepository.findByUsernameOrEmail(loginRequest.username(), loginRequest.username());
-        if (user.isEmpty() || user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
+        var user = userRepository.findByUsernameOrEmail(loginRequest.username(), loginRequest.email());
+        if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }
 
-        var team = teamRepository.findByUser(user.get());
-        if (team.isEmpty()) {
+        var allowedRoles = new HashSet<>(Set.of(Role.Values.OPERADOR.name(), Role.Values.ADMIN.name(), Role.Values.TECNICO.name()));
+
+        var roles = user.get().getRoles();
+        boolean hasAccess = roles.stream().anyMatch(roleName -> allowedRoles.contains(roleName.getRoleName()));
+
+        if (!hasAccess) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário sem acesso ao aplicativo"));
         }
 
@@ -92,7 +102,7 @@ public class TokenControllerMobile {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody String refreshToken) {
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String refreshToken) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isPresent()) {
             var token = tokenFromDb.get();
@@ -100,18 +110,11 @@ public class TokenControllerMobile {
             refreshTokenRepository.save(token);
         }
 
-        // Remove o cookie do `refreshToken` do navegador
-        Cookie deleteCookie = new Cookie("refreshToken", null);
-        deleteCookie.setPath("/");
-        deleteCookie.setHttpOnly(true);
-        deleteCookie.setMaxAge(0); // Remove o cookie imediatamente
-        deleteCookie.setSecure(true); // Use apenas em HTTPS em produção
-
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody String refreshToken) {
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String refreshToken) {
         var now = util.getDateTime();
         var expiresIn = 1800L; // 30 minutos para access token expirar
 

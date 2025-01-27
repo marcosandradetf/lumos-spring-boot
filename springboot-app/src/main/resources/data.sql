@@ -72,6 +72,7 @@ INSERT INTO tb_roles (role_name)
 VALUES
     ('ADMIN'),
     ('ANALISTA'),
+    ('TECNICO'),
     ('ESTOQUISTA_CHEFE'),
     ('ESTOQUISTA'),
     ('OPERADOR')

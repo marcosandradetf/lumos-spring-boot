@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">lumos</string>
+    <string name="app_name">Thryon</string>
     <string name="title_activity_home">HomeActivity</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_top_bar">TopBar</string>
+    <string name="title_activity_measurement_screen">MeasurementScreen</string>
 </resources>

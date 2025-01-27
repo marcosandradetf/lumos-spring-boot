@@ -2,15 +2,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+//    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.lumos"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.lumos"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -37,6 +39,13 @@ android {
     buildFeatures {
         compose = true
     }
+
+    configurations {
+        create("cleanedAnnotations")
+        implementation {
+            exclude(group = "org.jetbrains", module = "annotations")
+        }
+    }
 }
 
 dependencies {
@@ -52,6 +61,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.work.runtime.ktx)
 //    implementation(libs.androidx.security.crypto.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -72,7 +82,18 @@ dependencies {
     // Shared Preferences seguras
     implementation(libs.androidx.security.crypto)
 
-    implementation("androidx.room:room-runtime:2.5.0")
-    implementation("androidx.room:room-compiler:2.5.0")
+//    implementation(libs.androidx.room.common)
+//    implementation(libs.androidx.room.runtime)
+//    implementation(libs.androidx.room.compiler)
+
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    // If this project only uses Java source, use the Java annotationProcessor
+    // No additional plugins are necessary
+    ksp("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+
 
 }
+

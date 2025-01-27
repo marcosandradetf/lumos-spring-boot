@@ -1,9 +1,15 @@
 package com.lumos.ui.components
 
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -40,6 +46,7 @@ fun AppLayout(
     sliderNavigateToProfile: (() -> Unit?)? = null,
     navController: NavHostController,
     navigateBack: (() -> Unit)? = null,
+    context: Context, // Adicione o contexto como parâmetro para passar para o NetworkStatusBar
     pContent: @Composable (Modifier) -> Unit,
 ) {
     var selectedItem by remember { mutableIntStateOf(1) }
@@ -58,14 +65,16 @@ fun AppLayout(
             Icons.Outlined.Notifications,
             Icons.Outlined.Person
         )
-
     Scaffold(
         containerColor = Color(0xFFF5F5F7),
         topBar = {
-            TopBar(
-                navigateBack = navigateBack,
-                title = title
-            )
+            Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+                NetworkStatusBar(context = context)
+                TopBar(
+                    navigateBack = navigateBack,
+                    title = title
+                )
+            }
         },
         bottomBar = {
             NavigationBar(
@@ -82,8 +91,13 @@ fun AppLayout(
                         label = { Text(item) },
                         selected = pSelected == index,
                         onClick = {
-//                            selectedItem = index
-                            handleNavigation(index, sliderNavigateToMenu, sliderNavigateToHome, sliderNavigateToNotifications, sliderNavigateToProfile)
+                            handleNavigation(
+                                index,
+                                sliderNavigateToMenu,
+                                sliderNavigateToHome,
+                                sliderNavigateToNotifications,
+                                sliderNavigateToProfile
+                            )
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color.White, // Cor do ícone selecionado
@@ -107,6 +121,7 @@ fun AppLayout(
         },
     )
 }
+
 
 // Função para lidar com navegação ou ações específicas
 fun handleNavigation(

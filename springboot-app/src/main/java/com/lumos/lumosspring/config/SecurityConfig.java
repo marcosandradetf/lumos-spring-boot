@@ -45,13 +45,14 @@ public class SecurityConfig {
                     if (path.startsWith("/api/mobile")) {
                         // Para caminhos que começam com "/api/mobile", permite qualquer origem
                         configuration.setAllowedOrigins(List.of("*"));
+                        configuration.setAllowCredentials(false);
                     } else {
                         // Para outros caminhos, define origens específicas (se necessário)
                         configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+                        configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
                     }
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
-                    configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
                     return configuration;
                 }))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests

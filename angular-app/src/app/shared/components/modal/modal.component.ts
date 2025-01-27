@@ -15,10 +15,11 @@ export class ModalComponent {
   @Input() modalOpen: boolean = false; // Recebe a variável do pai
   @Input() confirmation: boolean = false; // Recebe a variável do pai
   @Output() modalClose = new EventEmitter<void>(); // Emite evento quando o modal é fechado
-
+  @Input() classModal!: any;
 
 
   // Método para detectar clique fora do modal e fechar
+
   onOutsideClick(event: MouseEvent): void {
     const modalBox = event.target as HTMLElement;
     if (modalBox.classList.contains('modal')) {

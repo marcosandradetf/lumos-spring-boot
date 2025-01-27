@@ -6,22 +6,33 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.lumos.domain.service.SyncMeasurement
 import com.lumos.navigation.AppNavigation
 import com.lumos.ui.theme.LumosTheme
+import java.util.concurrent.TimeUnit
+
 
 class MainActivity : ComponentActivity() {
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+//    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Instancie o FusedLocationProviderClient corretamente
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Solicite as permissões de localização
         checkAndRequestPermissions()
@@ -37,17 +48,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkAndRequestPermissions() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Solicitar permissão
-            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -57,31 +57,62 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showPermissionDeniedDialog() {
+    private fun checkAndRequestPermissions() {
+        when {
+            // Caso a permissão já tenha sido concedida
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                return
+            }
+
+            (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) -> {
+                showPermissionRationale()
+            }
+
+            else -> {
+                showSettingsDialog()
+            }
+
+        }
+    }
+
+    private fun showPermissionRationale() {
         AlertDialog.Builder(this)
             .setTitle("Permissão Necessária")
-            .setMessage("A localização é essencial para o funcionamento do aplicativo. O aplicativo será encerrado caso você não permita o acesso à localização.")
-            .setPositiveButton("Tentar Novamente") { _, _ ->
-                // Re-solicite a permissão
-                checkAndRequestPermissions()
+            .setMessage("O aplicativo precisa de permissão de localização para funcionar corretamente. Por favor, permita o acesso.")
+            .setPositiveButton("Permitir") { _, _ ->
+                requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
-            .setNegativeButton("Sair") { _, _ ->
-                // Feche o app
-                finish()
+            .setNegativeButton("Cancelar") { _, _ ->
+                finish() // Feche o app se a permissão for crucial
             }
             .setCancelable(false)
             .show()
     }
 
-    private fun showPermissionRationale() {
+
+    private fun showSettingsDialog() {
         AlertDialog.Builder(this)
-            .setTitle("Permissão de Localização Necessária")
-            .setMessage("O aplicativo utiliza sua localização para realizar medições com precisão. Por favor, permita o acesso à localização.")
-            .setPositiveButton("OK") { _, _ ->
-                requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            .setTitle("Permissão Bloqueada")
+            .setMessage("A permissão de localização foi permanentemente negada. Por favor, habilite a permissão manualmente nas configurações do aplicativo.")
+            .setPositiveButton("Abrir Configurações") { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton("Cancelar") { _, _ ->
+                finish() // Feche o app se a permissão for crucial
             }
             .setCancelable(false)
             .show()
     }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        startActivity(intent)
+    }
+
 
 }

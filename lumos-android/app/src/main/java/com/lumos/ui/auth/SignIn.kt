@@ -1,4 +1,4 @@
-package com.lumos.auth.ui
+package com.lumos.ui.auth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,9 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,22 +31,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lumos.service.AuthViewModel
 
+import com.lumos.ui.viewmodel.AuthViewModel
 
 @Composable
 fun Login(
     onLoginSuccess: () -> Unit,
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel
 ) {
-    val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+    var checked by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
 
     Column(
         modifier = Modifier
@@ -61,7 +64,7 @@ fun Login(
                 .padding(20.dp)
         ) {
             Text(
-                text = "Lumos™",
+                text = "Thryon™",
                 fontSize = 25.sp,
             )
         }
@@ -87,7 +90,7 @@ fun Login(
                         modifier = Modifier.padding(bottom = 30.dp),
                         fontFamily = FontFamily.SansSerif,
                         fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = Color.Black
                     )
                 }
                 OutlinedTextField(
@@ -104,20 +107,46 @@ fun Login(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text(text = "Senha:", color = Color(0xFF9EA4B6)) },
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (checked) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     maxLines = 1,
                     modifier = Modifier.fillMaxWidth()
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text("Mostrar senha", style = TextStyle(fontSize = 12.sp))
+                    Checkbox(
+                        checked = checked,
+                        onCheckedChange = { checked = it },
+
+                        colors = CheckboxColors(
+                            checkedCheckmarkColor = Color(0xFF486FF0),
+                            uncheckedCheckmarkColor = Color.Blue,
+                            checkedBoxColor = Color.White,
+                            uncheckedBoxColor = Color.White,
+                            disabledCheckedBoxColor = Color.Blue,
+                            disabledUncheckedBoxColor = Color.Blue,
+                            disabledIndeterminateBoxColor = Color.Blue,
+                            checkedBorderColor = Color(0xFF486FF0),
+                            uncheckedBorderColor = Color(0xFF2F2F2F),
+                            disabledBorderColor = Color.Blue,
+                            disabledUncheckedBorderColor = Color.Blue,
+                            disabledIndeterminateBorderColor = Color.Blue,
+                        )
+                    )
+                }
                 ElevatedButton(
                     onClick = {
-                        authViewModel.login(
-                            context = context,
-                            username = username,
-                            password = password,
-                            onSuccess = onLoginSuccess,
-                            onFailure = { errorMessage = "Login failed. Try again!" }
-                        )
+                        if (username.isNotEmpty() && password.isNotEmpty())
+                            authViewModel.login(
+                                username = username,
+                                password = password,
+                                onSuccess = onLoginSuccess,
+                                onFailure = { errorMessage = "Login failed. Try again!" }
+                            )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,24 +156,25 @@ fun Login(
                 ) {
                     Text(
                         text = "Entrar",
-                        color = Color.White
+                        color = Color.White,
                     )
                 }
-            }
-        }
-        Text(
-            text = "Esqueceu a senha?",
-            modifier = Modifier
-                .clickable { }
-                .padding(20.dp),
-        )
-    }
-}
 
-@Preview
-@Composable
-fun PrevLogin() {
-    Login(
-        {},
-    )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Esqueceu a senha?",
+                    modifier = Modifier
+                        .clickable { }
+                        .padding(20.dp),
+                    style = TextStyle(fontSize = 13.sp)
+                )
+            }
+
+        }
+
+    }
 }

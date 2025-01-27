@@ -2,6 +2,7 @@ package com.lumos.lumosspring.stock.service;
 
 import com.lumos.lumosspring.stock.controller.dto.DepositDTO;
 import com.lumos.lumosspring.stock.controller.dto.DepositResponse;
+import com.lumos.lumosspring.stock.controller.dto.mobile.DepositResponseMobile;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
@@ -150,6 +151,36 @@ public class DepositService {
 
         depositRepository.delete(deposit);
         return ResponseEntity.ok(this.findAll());
+    }
+
+    public ResponseEntity<List<DepositResponseMobile>> findAllForMobile() {
+        var deposits =  depositRepository.findAllByOrderByIdDeposit();
+        List<DepositResponseMobile> depositResponses = new ArrayList<>();
+        String companyName;
+        String depositRegion;
+
+        for (var deposit : deposits) {
+            // Verifica se o campo 'company' é nulo
+            if (deposit.getCompany() != null) {
+                companyName = deposit.getCompany().getCompanyName();
+            } else {
+                companyName = "Não definido";  // Valor padrão
+            }
+
+            if (deposit.getRegion() != null) {
+                depositRegion = deposit.getRegion().getRegionName();
+            } else {
+                depositRegion = "Não definido";  // Valor padrão
+            }
+
+            depositResponses.add(new DepositResponseMobile(
+                    deposit.getIdDeposit(),
+                    deposit.getDepositName(),
+                    depositRegion,
+                    companyName
+            ));
+        }
+        return ResponseEntity.ok(depositResponses);
     }
 
 }

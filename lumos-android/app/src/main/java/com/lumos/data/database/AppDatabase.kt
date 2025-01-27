@@ -4,11 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.lumos.data.entities.Measurement
+import com.lumos.domain.model.Deposit
+import com.lumos.domain.model.Item
+import com.lumos.domain.model.Material
+import com.lumos.domain.model.Measurement
 
-@Database(entities = [Measurement::class], version = 1, exportSchema = false)
+@Database(entities = [(Measurement::class), (Deposit::class), (Item::class), (Material::class)], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun measurementDao(): MeasurementDao
+    abstract fun stockDao(): StockDao
 
     companion object {
         @Volatile
