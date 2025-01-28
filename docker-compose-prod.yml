@@ -7,10 +7,12 @@ services:
       - "8080:8080"
     volumes:
       # - ./springboot-app:/app
-      - /app/target
+      #- /app/target
       #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
     environment:
-      - SPRING_PROFILES_ACTIVE=development
+      - SPRING_PROFILES_ACTIVE=production
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
     networks:
       - lumos-network
     restart: always
@@ -21,12 +23,23 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - ./golang-services:/app 
       - shared-data:/mnt/nfs  # Montando volume compartilhado para dados
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
     networks:
       - lumos-network
+    restart: always
+
+  import-data:
+    build:
+      context: ./golang-services
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - ENVIRONMENT=production
+    networks:
+      - app-network
     restart: always
 
   nfs-server:

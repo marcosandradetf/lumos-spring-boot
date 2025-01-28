@@ -12,7 +12,7 @@ COPY ./src /app/src/
 RUN mvn clean package
 
 # Verifique se o arquivo JAR foi gerado corretamente
-RUN ls -l /app/target
+#RUN ls -l /app/target
 
 # Etapa 2: Usando uma imagem do OpenJDK para rodar o Spring Boot
 FROM openjdk:21
@@ -21,7 +21,7 @@ FROM openjdk:21
 WORKDIR /app
 
 # Copie o JAR gerado pela etapa de build para o container
-COPY --from=builder /app/target/lumos-spring-0.0.1-SNAPSHOT.jar /app/lumos-spring.jar
+COPY --from=builder /app/target/*.jar /app/lumos-spring.jar
 
 # Exponha a porta 8080 para o Spring Boot
 EXPOSE 8080

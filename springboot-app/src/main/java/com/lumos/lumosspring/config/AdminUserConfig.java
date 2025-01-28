@@ -43,7 +43,7 @@ public class AdminUserConfig implements CommandLineRunner {
                     user.setLastName("Administrador");
                     user.setEmail("admin@admin.com");
                     user.setDateOfBirth(date);
-                    user.setPassword(passwordEncoder.encode("4dejulho_"));
+                    user.setPassword(passwordEncoder.encode("admin@scl"));
                     user.setRoles(Set.of(roleAdmin, roleManager));
                     user.setStatus(true);
                     userRepository.save(user);
