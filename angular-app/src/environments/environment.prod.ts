@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
-  springboot: "http://springboot-app:8080",
-  golang: "http://go-server:8081",
+  springboot: "https://spring.thryon.com.br",
+  goFileserver: "https://fileserver.thryon.com.br",
+  goStock: "https://gostock.thryon.com.br"
 };

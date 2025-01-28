@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {RouterOutlet} from '@angular/router';
 import {HeaderComponent} from './shared/components/header/header.component';
 import {FooterComponent} from './shared/components/footer/footer.component';
 import {AuthService} from './core/auth/auth.service';
@@ -25,11 +25,12 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     // Verifica se existe algum valor salvo no localStorage
-    const savedMenuState = localStorage.getItem('menuOpen');
-    if (savedMenuState !== null) {
-      this.menuOpen = JSON.parse(savedMenuState); // Converte de volta para booleano
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedMenuState = localStorage.getItem('menuOpen');
+      if (savedMenuState !== null) {
+        this.menuOpen = JSON.parse(savedMenuState); // Converte de volta para booleano
+      }
     }
   }
-
 
 }

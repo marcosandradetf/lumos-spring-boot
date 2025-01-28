@@ -25,8 +25,8 @@ export class HeaderComponent implements OnInit{
   onPath: string = ''; // Caminho atual
 
   constructor(private estoqueService: EstoqueService, protected authService: AuthService, private router: Router) {
-    if (typeof window !== 'undefined' && localStorage) {
-      const storedUser = localStorage.getItem('user');
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const storedUser = window.localStorage.getItem('user');
       if (storedUser) {
         this.user = JSON.parse(storedUser); // Converte de volta para o objeto `User`
       }

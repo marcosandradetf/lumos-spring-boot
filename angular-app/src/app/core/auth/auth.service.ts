@@ -15,7 +15,7 @@ export class AuthService {
   public isLoading$ = new BehaviorSubject<boolean>(true); // status de carregamento
 
   constructor(private http: HttpClient, private router: Router, public user: User) {
-    if (typeof window !== 'undefined' && localStorage) {
+    if (typeof window !== 'undefined' && window.localStorage) {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
@@ -48,7 +48,7 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/login`, {username, password}, {withCredentials: true}).pipe(
       tap(response => {
         this.user.initialize(username, response.accessToken, response.roles.split(' '));
-        localStorage.setItem('user', JSON.stringify(this.user));
+        if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
         this.isLoggedInSubject.next(true);
       }),
       catchError(error => {
@@ -62,14 +62,14 @@ export class AuthService {
     return this.http.post(this.apiUrl + '/logout', {}, {withCredentials: true}).pipe(
       tap(() => {
         this.user?.clearToken();
-        localStorage.removeItem('user');
+        if (typeof window !== 'undefined' && window.localStorage)  localStorage.removeItem('user');
         this.isLoggedInSubject.next(false);
         this.router.navigate(['/auth/login']);
         this.isLoading$.next(false);
       }), catchError(error => {
         console.error("Erro no logout:", error);
         this.user?.clearToken();
-        localStorage.removeItem('user');
+        if (typeof window !== 'undefined' && window.localStorage)  localStorage.removeItem('user');
         this.isLoggedInSubject.next(false);
         this.isLoading$.next(false);
         window.location.reload();
@@ -89,7 +89,7 @@ export class AuthService {
       map(response => {
         if (response && response.accessToken) {
           this.user?.setToken(response.accessToken); // Atualiza o token do usuário
-          localStorage.setItem('user', JSON.stringify(this.user)); // Salva no localStorage
+          if (typeof window !== 'undefined' && window.localStorage)  localStorage.setItem('user', JSON.stringify(this.user)); // Salva no localStorage
           return response.accessToken; // Retorna o novo token
         } else {
           console.warn("Nenhum token de acesso retornado na resposta.");
@@ -108,7 +108,7 @@ export class AuthService {
   setAccessToken(newToken: string) {
     if (this.user) {
       this.user.setToken(newToken);
-      localStorage.setItem('user', JSON.stringify(this.user)); // Atualiza o `user` no localStorage
+      if (typeof window !== 'undefined' && window.localStorage)  localStorage.setItem('user', JSON.stringify(this.user)); // Atualiza o `user` no localStorage
     }
   }
 
