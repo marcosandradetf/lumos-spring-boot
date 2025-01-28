@@ -16,7 +16,6 @@ func main() {
 	// Configuração do middleware CORS
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-			"http://localhost:4200",       // Frontend local
 			"https://lumos.thryon.com.br", // Frontend local
 		},
 		AllowMethods: []string{
