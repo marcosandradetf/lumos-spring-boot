@@ -18,7 +18,7 @@ func main() {
 	router.Use(middleware.AuthMiddleware())
 
 	// Conecta ao banco de dados
-	connDb, err := sql.Open("postgres", "postgresql://postgres:4dejulho_@localhost:5432/001SCLCONST?sslmode=disable")
+	connDb, err := sql.Open("postgres", "postgresql://postgres:4dejulho_@157.230.65.81:5432/001SCLCONST?sslmode=disable")
 	if err != nil {
 		log.Fatal("Cannot connect to database:", err)
 	}
