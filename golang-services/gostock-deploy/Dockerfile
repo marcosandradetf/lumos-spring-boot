@@ -40,5 +40,5 @@ COPY --from=build /myapp /myapp
 
 # Rodar o aplicativo
 WORKDIR /app
-EXPOSE 8081
+EXPOSE 8082
 CMD ["/myapp"]
