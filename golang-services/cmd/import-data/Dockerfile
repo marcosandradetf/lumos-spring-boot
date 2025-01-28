@@ -21,7 +21,7 @@ COPY ../.. .
 
 # Compilar o binário
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-RUN go build -o /myapp ./cmd/import-data
+RUN go build -o /myapp .
 
 # Etapa final
 FROM alpine:latest AS run
