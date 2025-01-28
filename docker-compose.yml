@@ -1,49 +1,45 @@
 services:
-  postgres:
-    image: postgres
-    container_name: postgres
+  springboot-app:
+    build:
+      context: ./springboot-app
+    container_name: springboot-app
     ports:
-      - "5432:5432"
+      - "8080:8080"
+    volumes:
+      # - ./springboot-app:/app
+      #- /app/target
+      #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=4dejulho_
-      - POSTGRES_DB=001SCLCONST
+      - SPRING_PROFILES_ACTIVE=production
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
     networks:
       - lumos-network
     restart: always
 
-  # springboot-app:
-  #   build:
-  #     context: ./springboot-app
-  #   container_name: springboot-app
-  #   depends_on:
-  #     - postgres
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     # - ./springboot-app:/app
-  #     - /app/target
-  #     #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
-  #   environment:
-  #     - SPRING_PROFILES_ACTIVE=development
-  #   networks:
-  #     - lumos-network
-  #   restart: always
-
   go-server:
     build: ./golang-services
     container_name: go-server
-    depends_on:
-      - postgres
     ports:
       - "8081:8081"
     volumes:
-      - ./golang-services:/app 
       - shared-data:/mnt/nfs  # Montando volume compartilhado para dados
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
     networks:
       - lumos-network
+    restart: always
+
+  import-data:
+    build:
+      context: ./golang-services
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - ENVIRONMENT=production
+    networks:
+      - app-network
     restart: always
 
   nfs-server:
@@ -56,23 +52,6 @@ services:
     networks:
       - lumos-network
     restart: always
-
-  # angular-app:
-  #   build:
-  #     context: ./angular-app  # Diretorio do projeto Angular
-  #   container_name: angular-app
-  #   depends_on:
-  #     - springboot-app
-  #   ports:
-  #     - "4200:4200"  # Expondo a porta 4200 do Angular
-  #   volumes:
-  #     - ./angular-app/src:/app/src  # Mapeia o codigo-fonte local para o container
-  #     - /app/node_modules  # Evita sobrescrever os node_modules
-  #   environment:
-  #     - CHOKIDAR_USEPOLLING=true  # Habilita o polling para o hot reload no Windows ou ambientes nao Unix-like
-  #   networks:
-  #     - lumos-network
-  #   restart: always
 
 networks:
   lumos-network:
