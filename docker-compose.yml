@@ -39,7 +39,7 @@ services:
     environment:
       - ENVIRONMENT=production
     networks:
-      - app-network
+      - lumos-network
     restart: always
 
   nfs-server:
