@@ -48,7 +48,7 @@ public class SecurityConfig {
                         configuration.setAllowCredentials(false);
                     } else {
                         // Para outros caminhos, define origens específicas (se necessário)
-                        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://lumos.thryon.com.br"));
+                        configuration.setAllowedOrigins(List.of("https://lumos.thryon.com.br"));
                         configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
                     }
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
