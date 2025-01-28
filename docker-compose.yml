@@ -43,7 +43,7 @@ services:
 
   go-server:
     build: ./golang-services
-    container_name: go-server
+    container_name: fileserver
     expose:
       - "8081"
     volumes:
@@ -54,17 +54,16 @@ services:
       - lumos-network
     restart: always
 
-  import-data:
-    build:
-      context: ./golang-services
-      dockerfile: Dockerfile
-    expose:
-      - "8082"
-    environment:
-      - ENVIRONMENT=production
-    networks:
-      - lumos-network
-    restart: always
+  # import-data:
+  #   build: ./golang-services
+  #   container_name: gostock
+  #   expose:
+  #     - "8082"
+  #   environment:
+  #     - ENVIRONMENT=production
+  #   networks:
+  #     - lumos-network
+  #   restart: always
 
   nfs-server:
     image: itsthenetwork/nfs-server-alpine
