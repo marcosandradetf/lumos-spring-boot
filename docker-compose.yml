@@ -5,7 +5,7 @@ services:
     container_name: springboot-app
     ports:
       - "8080:8080"
-    volumes:
+    # volumes:
       # - ./springboot-app:/app
       #- /app/target
       #- shared-data:/mnt/nfs  # Montando o volume compartilhado NFS
