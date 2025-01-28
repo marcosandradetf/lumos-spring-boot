@@ -55,7 +55,7 @@ services:
     restart: always
 
   import-data:
-    build: ./golang-services/gostock-deploy
+    build: ./golang-services/cmd/import-data
     container_name: gostock-service
     expose:
       - "8082"
