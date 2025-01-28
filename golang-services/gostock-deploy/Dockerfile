@@ -5,7 +5,7 @@ FROM golang:1.23-alpine AS build
 RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 # Copiar a chave pública para o diretório ~/.ssh do usuário root
-COPY ../keys/app.pub /root/.ssh/app.pub
+COPY ./../keys/app.pub /root/.ssh/app.pub
 
 # Ajustar permissões da chave pública
 RUN chmod 644 /root/.ssh/app.pub
