@@ -1,4 +1,17 @@
 services:
+  services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/lumos:/etc/nginx/conf.d
+    networks:
+      - lumos-network
+    restart: always
+
+    
   springboot-app:
     build:
       context: ./springboot-app
