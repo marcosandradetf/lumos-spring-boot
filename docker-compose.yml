@@ -43,7 +43,7 @@ services:
 
   go-server:
     build: ./golang-services
-    container_name: fileserver
+    container_name: fileserver-app
     expose:
       - "8081"
     volumes:
