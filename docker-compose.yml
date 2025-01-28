@@ -42,7 +42,9 @@ services:
     restart: always
 
   go-server:
-    build: ./golang-services
+    build:
+      context: .  
+      dockerfile: Dockerfile.fileserver 
     container_name: fileserver-service
     expose:
       - "8081"
@@ -55,7 +57,9 @@ services:
     restart: always
 
   import-data:
-    build: ./golang-services/cmd/import-data
+    build:
+      context: .  
+      dockerfile: Dockerfile.gostock
     container_name: gostock-service
     expose:
       - "8082"
