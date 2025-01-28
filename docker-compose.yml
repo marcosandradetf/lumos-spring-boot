@@ -1,5 +1,4 @@
 services:
-  services:
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -11,7 +10,7 @@ services:
       - lumos-network
     restart: always
 
-    
+
   springboot-app:
     build:
       context: ./springboot-app
