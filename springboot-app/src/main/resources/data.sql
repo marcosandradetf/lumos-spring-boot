@@ -12,9 +12,9 @@ FROM (VALUES ('Materiais Elétricos'),
              ('Equipamentos de Proteção Individual (EPI)'),
              ('Equipamentos de Medição e Teste'),
              ('Peças de Reposição'),
-             ('Materiais de Limpeza e Manutenção') AS groups(group_name)
-      WHERE NOT EXISTS (SELECT 1
-          FROM tb_groups);
+             ('Materiais de Limpeza e Manutenção')) AS groups(group_name)
+WHERE NOT EXISTS (SELECT 1
+                  FROM tb_groups);
 
 -- Script para inserir types
 INSERT INTO tb_types (type_name, id_group)
@@ -62,9 +62,9 @@ FROM (VALUES ('ADMIN'),
              ('TECNICO'),
              ('ESTOQUISTA_CHEFE'),
              ('ESTOQUISTA'),
-             ('OPERADOR') AS roles(role_name)
-      WHERE NOT EXISTS (SELECT 1
-          FROM tb_roles);
+             ('OPERADOR')) AS roles(role_name)
+WHERE NOT EXISTS (SELECT 1
+                  FROM tb_roles);
 
 
 --
