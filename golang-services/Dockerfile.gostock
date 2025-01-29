@@ -17,7 +17,7 @@ COPY go.sum .
 RUN go mod download
 
 # Copiar o código-fonte
-COPY cmd/import-data .
+COPY . .
 
 # Compilar o binário
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64

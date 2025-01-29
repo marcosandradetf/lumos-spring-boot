@@ -37,7 +37,7 @@ FROM (VALUES
           ('EPI (Equipamentos de Proteção Individual)', 5),
 
           -- Equipamentos de Medição e Teste (ID 6)
-          ('Equipamentos de Medição', 6),
+          ('Equipamentos de Medição', 6)
      ) AS data(type_name, id_group)
 WHERE NOT EXISTS (
     SELECT 1
