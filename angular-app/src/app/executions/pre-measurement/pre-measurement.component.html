@@ -11,168 +11,172 @@
       <h3 class="text-medium pr-5 hidden lg:block">Pré-Medição</h3>
     </div>
 
-    <div class="border-b w-full pl-2 flex h-8 items-center justify-end">
-      <div class="tooltip tooltip-right mr-auto mt-1"
-           data-tip="Após preencher os dados, arraste os itens do almoxarifado para as ruas correspondentes.">
-        <span class="cursor-pointer material-icons text-info">info</span>
-      </div>
-      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mr-4 font-semibold items-center"><span
-        class="material-icons lg:text-sm font-bold mr-1 text-xs">remove</span>Remover Pré-Medição</span>
-      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex font-semibold items-center"><span
-        class="material-icons lg:text-sm font-bold mr-1 text-xs">add</span>Adicionar Pré-Medição</span>
+    <div class="border-b w-full pl-2 flex h-screen items-center justify-center">
+      Módulo em desenvolvimento
     </div>
 
-    <div class="border-b w-full flex justify-between">
-      <!--      -->
-      <form class="flex flex-col p-2 w-full" #PreMeasurementForm="ngForm" (ngSubmit)="submit(PreMeasurementForm)">
-        <h2 class="font-semibold">Pré-medição 1</h2>
+    <!--    <div class="border-b w-full pl-2 flex h-8 items-center justify-end">-->
+    <!--      <div class="tooltip tooltip-right mr-auto mt-1"-->
+    <!--           data-tip="Após preencher os dados, arraste os itens do almoxarifado para as ruas correspondentes.">-->
+    <!--        <span class="cursor-pointer material-icons text-info">info</span>-->
+    <!--      </div>-->
+    <!--      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex mr-4 font-semibold items-center"><span-->
+    <!--        class="material-icons lg:text-sm font-bold mr-1 text-xs">remove</span>Remover Pré-Medição</span>-->
+    <!--      <span class="text-xs hover:bg-neutral-300 cursor-pointer p-1 rounded flex font-semibold items-center"><span-->
+    <!--        class="material-icons lg:text-sm font-bold mr-1 text-xs">add</span>Adicionar Pré-Medição</span>-->
+    <!--    </div>-->
 
-        <div class="border-l pl-2 w-full">
-          <div class="flex flex-wrap space-x-2 w-full">
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text text-xs">Descrição</span>
-              </div>
-              <input type="text" placeholder="Insira a descrição" class="input input-xs input-bordered"
-                     [(ngModel)]="p.description" name="description"/>
-            </label>
+    <!--    <div class="border-b w-full flex justify-between">-->
+    <!--      &lt;!&ndash;      &ndash;&gt;-->
+    <!--      <form class="flex flex-col p-2 w-full" #PreMeasurementForm="ngForm" (ngSubmit)="submit(PreMeasurementForm)">-->
+    <!--        <h2 class="font-semibold">Pré-medição 1</h2>-->
 
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text text-xs">Estado</span>
-              </div>
-              <select class="select select-bordered select-xs" [(ngModel)]="p.uf" (change)="getCities(p.uf)" name="uf">
-                <option value="" disabled selected>Selecione o estado</option>
-                <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>
-              </select>
-            </label>
+    <!--        <div class="border-l pl-2 w-full">-->
+    <!--          <div class="flex flex-wrap space-x-2 w-full">-->
+    <!--            <label class="form-control w-full max-w-xs">-->
+    <!--              <div class="label">-->
+    <!--                <span class="label-text text-xs">Descrição</span>-->
+    <!--              </div>-->
+    <!--              <input type="text" placeholder="Insira a descrição" class="input input-xs input-bordered"-->
+    <!--                     [(ngModel)]="p.description" name="description"/>-->
+    <!--            </label>-->
 
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text text-xs">Cidade</span>
-              </div>
-              <select class="select select-bordered select-xs" [(ngModel)]="p.city" (change)="getRegion(p.city)"
-                      name="city">
-                <option value="" disabled selected>Selecione a cidade</option>
-                <option *ngFor="let c of cities" [value]="c.nome">{{ c.nome }}</option>
-              </select>
-            </label>
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text text-xs">Região</span>
-              </div>
-              <p class="input input-disabled input-xs min-w-40">{{ p.region }}</p>
-            </label>
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text text-xs">Almoxarifado</span>
-              </div>
-              <select class="select select-bordered select-xs" (change)="toggleDeposit(p.idDeposit)" name="idDeposit"
-                      #almox>
-                <option value="" disabled selected>Selecione o almoxarifado</option>
-                <option *ngFor="let d of deposits" [value]="d.idDeposit">{{ d.depositName }}</option>
-              </select>
-              <p class="text-error text-xs">{{ depositMessage }}</p>
-            </label>
-          </div>
-          <!--   streets       -->
+    <!--            <label class="form-control w-full max-w-xs">-->
+    <!--              <div class="label">-->
+    <!--                <span class="label-text text-xs">Estado</span>-->
+    <!--              </div>-->
+    <!--              <select class="select select-bordered select-xs" [(ngModel)]="p.uf" (change)="getCities(p.uf)" name="uf">-->
+    <!--                <option value="" disabled selected>Selecione o estado</option>-->
+    <!--                <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>-->
+    <!--              </select>-->
+    <!--            </label>-->
 
-          <div class="ml-10 mt-4 mb-4  w-full">
-            <h2 class="text-sm font-semibold">Informe as ruas</h2>
-            <div class="flex flex-wrap w-full">
-              <div class="border-l border-b p-2 pl-2 relative pt-5 lg:m-2" *ngFor="let street of p.streets; let i = index" (click)="choseItems()">
-                <span class="material-icons absolute top-1 right-0 text-error cursor-pointer" (click)="removeStreet(i)">close</span>
-                <div class="flex space-x-2">
-                  <label class="form-control w-full max-w-xs">
-                    <div class="label">
-                      <span class="label-text text-xs">Descrição</span>
-                    </div>
-                    <input type="text" placeholder="Ex. Rua D, 432" class="input input-xs input-bordered"/>
-                  </label>
-                  <label class="form-control w-full max-w-xs">
-                    <div class="label">
-                      <span class="label-text text-xs">Bairro</span>
-                    </div>
-                    <input type="text" placeholder="Ex. Cinco" class="input input-xs input-bordered"/>
-                  </label>
-                  <label class="form-control w-full max-w-xs">
-                    <div class="label">
-                      <span class="label-text text-xs">Complemento</span>
-                    </div>
-                    <input type="text" placeholder="Ex. Esquina com rua X" class="input input-xs input-bordered"/>
-                  </label>
-                </div>
-                <div class="flex flex-wrap mt-2">
-                  <div class="skeleton h-2 w-32 mr-2"></div>
-                  <div class="skeleton h-2 w-32 mr-2"></div>
-                  <div class="skeleton h-2 w-32 mr-2"></div>
-                  <div class="skeleton h-2 w-32 mr-2"></div>
-                  <div class="skeleton h-2 w-32 mr-2"></div>
-                  <div class="skeleton h-2 w-32 mr-2"></div>
-                </div>
-              </div>
-            </div>
+    <!--            <label class="form-control w-full max-w-xs">-->
+    <!--              <div class="label">-->
+    <!--                <span class="label-text text-xs">Cidade</span>-->
+    <!--              </div>-->
+    <!--              <select class="select select-bordered select-xs" [(ngModel)]="p.city" (change)="getRegion(p.city)"-->
+    <!--                      name="city">-->
+    <!--                <option value="" disabled selected>Selecione a cidade</option>-->
+    <!--                <option *ngFor="let c of cities" [value]="c.nome">{{ c.nome }}</option>-->
+    <!--              </select>-->
+    <!--            </label>-->
+    <!--            <label class="form-control w-full max-w-xs">-->
+    <!--              <div class="label">-->
+    <!--                <span class="label-text text-xs">Região</span>-->
+    <!--              </div>-->
+    <!--              <p class="input input-disabled input-xs min-w-40">{{ p.region }}</p>-->
+    <!--            </label>-->
+    <!--            <label class="form-control w-full max-w-xs">-->
+    <!--              <div class="label">-->
+    <!--                <span class="label-text text-xs">Almoxarifado</span>-->
+    <!--              </div>-->
+    <!--              <select class="select select-bordered select-xs" (change)="toggleDeposit(p.idDeposit)" name="idDeposit"-->
+    <!--                      #almox>-->
+    <!--                <option value="" disabled selected>Selecione o almoxarifado</option>-->
+    <!--                <option *ngFor="let d of deposits" [value]="d.idDeposit">{{ d.depositName }}</option>-->
+    <!--              </select>-->
+    <!--              <p class="text-error text-xs">{{ depositMessage }}</p>-->
+    <!--            </label>-->
+    <!--          </div>-->
+    <!--          &lt;!&ndash;   streets       &ndash;&gt;-->
 
-            <!--          -->
-          </div>
+    <!--          <div class="ml-10 mt-4 mb-4  w-full">-->
+    <!--            <h2 class="text-sm font-semibold">Informe as ruas</h2>-->
+    <!--            <div class="flex flex-wrap w-full">-->
+    <!--              <div class="border-l border-b p-2 pl-2 relative pt-5 lg:m-2" *ngFor="let street of p.streets; let i = index" (click)="choseItems()">-->
+    <!--                <span class="material-icons absolute top-1 right-0 text-error cursor-pointer" (click)="removeStreet(i)">close</span>-->
+    <!--                <div class="flex space-x-2">-->
+    <!--                  <label class="form-control w-full max-w-xs">-->
+    <!--                    <div class="label">-->
+    <!--                      <span class="label-text text-xs">Descrição</span>-->
+    <!--                    </div>-->
+    <!--                    <input type="text" placeholder="Ex. Rua D, 432" class="input input-xs input-bordered"/>-->
+    <!--                  </label>-->
+    <!--                  <label class="form-control w-full max-w-xs">-->
+    <!--                    <div class="label">-->
+    <!--                      <span class="label-text text-xs">Bairro</span>-->
+    <!--                    </div>-->
+    <!--                    <input type="text" placeholder="Ex. Cinco" class="input input-xs input-bordered"/>-->
+    <!--                  </label>-->
+    <!--                  <label class="form-control w-full max-w-xs">-->
+    <!--                    <div class="label">-->
+    <!--                      <span class="label-text text-xs">Complemento</span>-->
+    <!--                    </div>-->
+    <!--                    <input type="text" placeholder="Ex. Esquina com rua X" class="input input-xs input-bordered"/>-->
+    <!--                  </label>-->
+    <!--                </div>-->
+    <!--                <div class="flex flex-wrap mt-2">-->
+    <!--                  <div class="skeleton h-2 w-32 mr-2"></div>-->
+    <!--                  <div class="skeleton h-2 w-32 mr-2"></div>-->
+    <!--                  <div class="skeleton h-2 w-32 mr-2"></div>-->
+    <!--                  <div class="skeleton h-2 w-32 mr-2"></div>-->
+    <!--                  <div class="skeleton h-2 w-32 mr-2"></div>-->
+    <!--                  <div class="skeleton h-2 w-32 mr-2"></div>-->
+    <!--                </div>-->
+    <!--              </div>-->
+    <!--            </div>-->
 
-        </div>
+    <!--            &lt;!&ndash;          &ndash;&gt;-->
+    <!--          </div>-->
 
-        <div class="flex justify-end space-x-2">
-          <span
-            class="bg-base-200 hover:bg-base-300 p-2 rounded text-xs font-semibold cursor-pointer select-none"
-            (click)="addStreet()">+ Adicionar Rua</span>
-          <span
-            class="bg-base-200 hover:bg-base-300 p-2 rounded text-xs font-semibold cursor-pointer select-none"
-            (click)="removeLastSteet()">- Remover Última Rua</span>
-        </div>
-      </form>
-      <!--      -->
+    <!--        </div>-->
 
-    </div>
+    <!--        <div class="flex justify-end space-x-2">-->
+    <!--          <span-->
+    <!--            class="bg-base-200 hover:bg-base-300 p-2 rounded text-xs font-semibold cursor-pointer select-none"-->
+    <!--            (click)="addStreet()">+ Adicionar Rua</span>-->
+    <!--          <span-->
+    <!--            class="bg-base-200 hover:bg-base-300 p-2 rounded text-xs font-semibold cursor-pointer select-none"-->
+    <!--            (click)="removeLastSteet()">- Remover Última Rua</span>-->
+    <!--        </div>-->
+    <!--      </form>-->
+    <!--      &lt;!&ndash;      &ndash;&gt;-->
 
-    <app-modal [modalOpen]="openModalItens" classModal="rounded-lg h-screen relative overflow-hidden select-none w-screen">
+    <!--    </div>-->
 
-      <div class="w-full shadow-xl rounded-xl flex flex-col items-center justify-center fixed">
-        <p class="bg-base-300 w-full font-semibold rounded-t text-center text-sm">Rua Esmael</p>
-        <div class="p-2">
-          <div class="badge badge-primary">{{ 0 }}</div>
-          <p class="font-semibold">Itens</p>
-        </div>
-      </div>
-      <div class="mt-32 mb-2 flex justify-end space-x-4">
-        <span class="cursor-pointer rounded p-1 bg-base-300 hover:bg-base-200 text-sm font-semibold"
-              (click)="openModalItens = false">Cancelar</span>
-        <span class="cursor-pointer rounded p-1 bg-base-300 hover:bg-base-200 text-sm font-semibold"
-              (click)="openModalItens = false">Confirmar</span>
-      </div>
-      <div class="border p-2 overflow-auto bg-neutral-50">
-        <div class="flex justify-between items-center mb-5 border-b p-2">
-          <h2 class="text-sm mr-20">Para adicionar, arraste os itens do almoxarifado para a rua acima</h2>
-          <h2
-            class="text-xs font-semibold bg-base-200 p-2 rounded cursor-default hover:bg-base-300">{{ depositName }}</h2>
-        </div>
-        <app-table [search]="true">
-          <tr header>
-            <th>Código</th>
-            <th>Nome</th>
-            <th>Estoque</th>
-          </tr>
-          <tr body
-              class="hover:bg-neutral-400 hover:text-white cursor-grab" (press)="drag = true"
-              [ngClass]="{'cursor-grabbing' : drag}"
-              *ngFor="let item of items">
-            @if (items.length === 0) {
-              <td colspan="3"><p type="text" class="text-xs">Nenhum item foi encontrado</p></td>
-            } @else {
-              <td><p type="text" class="text-xs">{{ item.materialId }}</p></td>
-              <td><p type="text" class="text-xs">{{ item.materialName }}</p></td>
-              <td><p type="text" class="text-xs">{{ item.materialQuantity }}</p></td>
-            }
-          </tr>
-        </app-table>
-      </div>
-    </app-modal>
+    <!--    <app-modal [modalOpen]="openModalItens" classModal="rounded-lg h-screen relative overflow-hidden select-none w-screen">-->
+
+    <!--      <div class="w-full shadow-xl rounded-xl flex flex-col items-center justify-center fixed">-->
+    <!--        <p class="bg-base-300 w-full font-semibold rounded-t text-center text-sm">Rua Esmael</p>-->
+    <!--        <div class="p-2">-->
+    <!--          <div class="badge badge-primary">{{ 0 }}</div>-->
+    <!--          <p class="font-semibold">Itens</p>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--      <div class="mt-32 mb-2 flex justify-end space-x-4">-->
+    <!--        <span class="cursor-pointer rounded p-1 bg-base-300 hover:bg-base-200 text-sm font-semibold"-->
+    <!--              (click)="openModalItens = false">Cancelar</span>-->
+    <!--        <span class="cursor-pointer rounded p-1 bg-base-300 hover:bg-base-200 text-sm font-semibold"-->
+    <!--              (click)="openModalItens = false">Confirmar</span>-->
+    <!--      </div>-->
+    <!--      <div class="border p-2 overflow-auto bg-neutral-50">-->
+    <!--        <div class="flex justify-between items-center mb-5 border-b p-2">-->
+    <!--          <h2 class="text-sm mr-20">Para adicionar, arraste os itens do almoxarifado para a rua acima</h2>-->
+    <!--          <h2-->
+    <!--            class="text-xs font-semibold bg-base-200 p-2 rounded cursor-default hover:bg-base-300">{{ depositName }}</h2>-->
+    <!--        </div>-->
+    <!--        <app-table [search]="true">-->
+    <!--          <tr header>-->
+    <!--            <th>Código</th>-->
+    <!--            <th>Nome</th>-->
+    <!--            <th>Estoque</th>-->
+    <!--          </tr>-->
+    <!--          <tr body-->
+    <!--              class="hover:bg-neutral-400 hover:text-white cursor-grab" (press)="drag = true"-->
+    <!--              [ngClass]="{'cursor-grabbing' : drag}"-->
+    <!--              *ngFor="let item of items">-->
+    <!--            @if (items.length === 0) {-->
+    <!--              <td colspan="3"><p type="text" class="text-xs">Nenhum item foi encontrado</p></td>-->
+    <!--            } @else {-->
+    <!--              <td><p type="text" class="text-xs">{{ item.materialId }}</p></td>-->
+    <!--              <td><p type="text" class="text-xs">{{ item.materialName }}</p></td>-->
+    <!--              <td><p type="text" class="text-xs">{{ item.materialQuantity }}</p></td>-->
+    <!--            }-->
+    <!--          </tr>-->
+    <!--        </app-table>-->
+    <!--      </div>-->
+    <!--    </app-modal>-->
 
 
   </div>

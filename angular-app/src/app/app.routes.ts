@@ -123,7 +123,21 @@ export const routes: Routes = [
   },
   //end
 
-  { path: '', redirectTo: 'estoque/materiais', pathMatch: 'full' },
-  { path: '**', redirectTo: 'estoque/materiais' }
+  // start executions path
+  {
+    path: 'requisicoes/itens',
+    loadComponent: () => import('./requests/request-items/request-items.component').then(r => r.RequestItemsComponent),
+    canActivate: [AuthGuard],
+    data: { role: ['ADMIN', 'TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'requisicoes' },
+  },
+  //end
+
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./dashboard/dashboard.component').then(d => d.DashboardComponent),
+    canActivate: [AuthGuard],
+    data: { role: [], path: 'dashboard' },
+  },
+  { path: '**', redirectTo: 'dashboard' }
 
 ];
