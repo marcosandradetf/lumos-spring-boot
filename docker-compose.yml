@@ -35,8 +35,7 @@ services:
       - "8080"
     environment:
       - SPRING_PROFILES_ACTIVE=production
-      - SMTP_USER_NAME=${SMTP_USER_NAME}
-      - MAIL_USERNAME=${MAIL_USERNAME}
+      - SMTP_ACCESS_KEY_ID=${SMTP_ACCESS_KEY_ID}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
     networks:
       - lumos-network
