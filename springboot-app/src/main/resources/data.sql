@@ -1,41 +1,48 @@
 -- Extension
-CREATE
-EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- Script para inserir groups
 INSERT INTO tb_groups(group_name)
-VALUES ('Materiais Elétricos'),
-       ('Ferramentas e Instrumentos'),
-       ('Materiais de Construção'),
-       ('Componentes Eletrônicos'),
-       ('Equipamentos de Proteção Individual (EPI)'),
-       ('Equipamentos de Medição e Teste'),
-       ('Peças de Reposição'),
-       ('Materiais de Limpeza e Manutenção') ON CONFLICT (group_name) DO NOTHING;
+VALUES
+    ( 'Materiais Elétricos'),
+    ( 'Ferramentas e Instrumentos'),
+    ( 'Materiais de Construção'),
+    ( 'Componentes Eletrônicos'),
+    ( 'Equipamentos de Proteção Individual (EPI)'),
+    ( 'Equipamentos de Medição e Teste'),
+    ( 'Peças de Reposição'),
+    ( 'Materiais de Limpeza e Manutenção')
+ON CONFLICT (group_name) DO NOTHING;
 
 -- Script para inserir types
 INSERT INTO tb_types (type_name, id_group)
-VALUES
-    -- Equipamentos Elétricos (ID 1)
-    ('Disjuntores', 1),
-    ('Motores Elétricos', 1),
-    ('Cabos', 1),
-    ('Relés', 1),
-    ('Fusíveis', 1),
-    ('Leds', 1),
+SELECT type_name, id_group
+FROM (VALUES
+          -- Equipamentos Elétricos (ID 1)
+          ('Disjuntores', 1),
+          ('Motores Elétricos', 1),
+          ('Cabos', 1),
+          ('Relés', 1),
+          ('Fusíveis', 1),
+          ('Leds', 1),
 
-    -- Ferramentas e Instrumentos (ID 2)
-    ('Ferramentas Manuais', 2),
-    ('Ferramentas Elétricas', 2),
+          -- Ferramentas e Instrumentos (ID 2)
+          ('Ferramentas Manuais', 2),
+          ('Ferramentas Elétricas', 2),
 
-    -- Materiais de Construção (ID 3)
-    ('Tubulações e Conexões', 3),
+          -- Materiais de Construção (ID 3)
+          ('Tubulações e Conexões', 3),
 
-    -- Equipamentos de Proteção Individual (EPI) (ID 5)
-    ('EPI (Equipamentos de Proteção Individual)', 5),
+          -- Equipamentos de Proteção Individual (EPI) (ID 5)
+          ('EPI (Equipamentos de Proteção Individual)', 5),
 
-    -- Equipamentos de Medição e Teste (ID 6)
-    ('Equipamentos de Medição', 6) ON CONFLICT (type_name) DO NOTHING;
+          -- Equipamentos de Medição e Teste (ID 6)
+          ('Equipamentos de Medição', 6)
+     ) AS data(type_name, id_group)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM tb_types
+);
 
 
 -- -- script company
@@ -49,10 +56,14 @@ VALUES
 --     ON CONFLICT (deposit_name) DO NOTHING;
 
 -- script roles
-    INSERT
-INTO tb_roles (role_name)
+INSERT INTO tb_roles (role_name)
 VALUES
-    ('ADMIN'), ('ANALISTA'), ('TECNICO'), ('ESTOQUISTA_CHEFE'), ('ESTOQUISTA'), ('OPERADOR')
+    ('ADMIN'),
+    ('ANALISTA'),
+    ('TECNICO'),
+    ('ESTOQUISTA_CHEFE'),
+    ('ESTOQUISTA'),
+    ('OPERADOR')
 ON CONFLICT (role_name) DO NOTHING;
 
 

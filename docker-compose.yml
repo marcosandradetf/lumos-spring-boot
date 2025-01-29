@@ -43,7 +43,7 @@ services:
 
   go-server:
     build:
-      context: .  
+      context: ./golang-services
       dockerfile: Dockerfile.fileserver 
     container_name: fileserver-service
     expose:
@@ -58,7 +58,7 @@ services:
 
   import-data:
     build:
-      context: .  
+      context: ./golang-services
       dockerfile: Dockerfile.gostock
     container_name: gostock-service
     expose:
