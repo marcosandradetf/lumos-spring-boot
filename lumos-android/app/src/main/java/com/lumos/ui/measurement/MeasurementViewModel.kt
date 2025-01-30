@@ -1,4 +1,4 @@
-package com.lumos.ui.viewmodel
+package com.lumos.ui.measurement
 
 import androidx.lifecycle.ViewModel
 import com.lumos.data.repository.MeasurementRepository

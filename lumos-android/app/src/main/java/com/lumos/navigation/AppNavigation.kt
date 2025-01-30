@@ -13,17 +13,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.lumos.MyApp
-import com.lumos.data.api.AuthApi
 import com.lumos.data.api.MeasurementApi
 import com.lumos.data.api.StockApi
-import com.lumos.data.api.RetrofitClient
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.database.StockDao
 import com.lumos.data.repository.AuthRepository
@@ -39,7 +35,7 @@ import com.lumos.ui.measurement.MeasurementHome
 import com.lumos.ui.measurement.MeasurementScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen
-import com.lumos.ui.viewmodel.MeasurementViewModel
+import com.lumos.ui.measurement.MeasurementViewModel
 import com.lumos.ui.viewmodel.StockViewModel
 import retrofit2.Retrofit
 

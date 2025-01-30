@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 //    id("kotlin-kapt")
     id("com.google.devtools.ksp")
+
 }
 
 android {
