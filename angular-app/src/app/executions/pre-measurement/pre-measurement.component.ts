@@ -11,6 +11,7 @@ import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-pre-measurement',
@@ -64,7 +65,9 @@ export class PreMeasurementComponent {
   @ViewChild('almox') almox: any;
 
   constructor(private preMeasurementService: PreMeasurementService,
-              public router: Router, private ibgeService: IbgeService) {
+              public router: Router, private ibgeService: IbgeService, private titleService: Title) {
+
+    this.titleService.setTitle("Execuções - Pré-medição");
 
     this.preMeasurementService.getDeposits().subscribe(deposits => {
       this.deposits = deposits;
@@ -99,7 +102,7 @@ export class PreMeasurementComponent {
 
   protected readonly alert = alert;
   openModalItens: boolean = false;
-  depositMessage: string  = '';
+  depositMessage: string = '';
 
   getRegion(selectedCityName: string) {
     const selectedCity = this.cities.find(city => city.nome === selectedCityName);
@@ -116,7 +119,7 @@ export class PreMeasurementComponent {
   }
 
   addStreet() {
-    const street: { name: string, items: { itemName: string, itemQuantity: string }[]} = {
+    const street: { name: string, items: { itemName: string, itemQuantity: string }[] } = {
       name: '',
       items: [
         {itemName: '', itemQuantity: ''}

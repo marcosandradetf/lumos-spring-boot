@@ -69,6 +69,7 @@
               <input type="checkbox"
                      class="check-box"
                      [(ngModel)]="user.sel"
+                     (click)="user.username !== 'admin'"
                      name="sel{{i}}">
             </td>
             <td hidden>
@@ -410,7 +411,7 @@
             <td>
               <app-button title="Resetar Senha"
                           classButton="btn-sm"
-                          [action]="confirmResetPassword(user.userId, user.email)">
+                          (click)="confirmResetPassword(user.userId, user.email)">
               </app-button>
             </td>
           }

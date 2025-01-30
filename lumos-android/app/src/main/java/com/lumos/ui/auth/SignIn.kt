@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.lumos.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun Login(
@@ -48,7 +50,16 @@ fun Login(
     var checked by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
+    suspend fun login() {
+        authViewModel.login(
+            username = username,
+            password = password,
+            onSuccess = onLoginSuccess,
+            onFailure = { errorMessage = "Login failed. Try again!" }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -141,12 +152,9 @@ fun Login(
                 ElevatedButton(
                     onClick = {
                         if (username.isNotEmpty() && password.isNotEmpty())
-                            authViewModel.login(
-                                username = username,
-                                password = password,
-                                onSuccess = onLoginSuccess,
-                                onFailure = { errorMessage = "Login failed. Try again!" }
-                            )
+                            coroutineScope.launch {
+                                login()
+                            }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -178,3 +186,5 @@ fun Login(
 
     }
 }
+
+

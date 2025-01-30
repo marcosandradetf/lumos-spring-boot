@@ -19,7 +19,6 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.lumos.domain.service.SyncMeasurement
 import com.lumos.navigation.AppNavigation
 import com.lumos.ui.theme.LumosTheme
 import java.util.concurrent.TimeUnit
@@ -37,13 +36,18 @@ class MainActivity : ComponentActivity() {
         // Solicite as permissões de localização
         checkAndRequestPermissions()
 
-        // Ative o Edge-to-Edge (ou outra funcionalidade relacionada)
         enableEdgeToEdge()
+        val app = application as MyApp
 
         // Configure o tema e a navegação do Jetpack Compose
         setContent {
             LumosTheme {
-                AppNavigation()
+                AppNavigation(
+                    database = app.database,
+                    retrofit = app.retrofit,
+                    secureStorage = app.secureStorage,
+                    context = this
+                )
             }
         }
     }

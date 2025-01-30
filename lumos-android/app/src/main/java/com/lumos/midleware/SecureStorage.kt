@@ -36,4 +36,11 @@ class SecureStorage(private val context: Context) {
     fun clearTokens() {
         getSharedPreferences().edit().clear().apply()
     }
+
+    fun saveAccessToken(newAccessToken: String) {
+        val prefs = getSharedPreferences()
+        prefs.edit()
+            .putString(KEY_ACCESS_TOKEN, newAccessToken)
+            .apply()
+    }
 }

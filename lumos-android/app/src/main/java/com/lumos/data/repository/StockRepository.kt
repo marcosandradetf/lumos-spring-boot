@@ -87,4 +87,11 @@ class StockRepository(
         return dao.getMaterials(depositId)
     }
 
+    suspend fun firstSync() {
+        if (dao.getCountDeposits() == 0 || dao.getCountMaterials() == 0) {
+            syncMaterials()
+            syncDeposits()
+        }
+    }
+
 }

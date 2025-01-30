@@ -391,11 +391,13 @@ export class UserComponent {
   }
 
   confirmResetPassword(userId: string, email: string) {
-    return () => {
+    const adminId = this.users.find(u => u.username === 'admin')?.userId;
+    if (userId !== adminId) {
       this.openConfirmationModal = true;
       this.userId = userId;
       this.email = email;
-    };
+    }
+
   }
 
 }

@@ -19,9 +19,8 @@ class SyncStock(appContext: Context, workerParams: WorkerParameters) :
 
     init {
         // Reconstruindo a MeasurementApi com os dados passados
-        val authApi = RetrofitClient.createService(AuthApi::class.java)
         val secureStorage = SecureStorage(appContext)
-        val api = ApiService(secureStorage, authApi)
+        val api = ApiService(secureStorage)
         val stockApi = api.createApi(StockApi::class.java)
 
         repository = StockRepository(
@@ -35,11 +34,16 @@ class SyncStock(appContext: Context, workerParams: WorkerParameters) :
     override suspend fun doWork(): Result {
         return try {
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
+                Log.e("SyncStock", "Internet")
                 repository.syncDeposits()
                 repository.syncMaterials()
-            } else Result.retry()
-            Result.success()
+                Result.success()
+            } else {
+                Log.e("SyncStock", "Sem Internet")
+                Result.retry()
+            }
         } catch (e: Exception) {
+            Log.e("SyncStock", "Erro ao sincronizar: ${e.message}")
             Result.retry() // Retenta em caso de falha
         }
     }

@@ -18,11 +18,10 @@ class SyncMeasurement(appContext: Context, workerParams: WorkerParameters) :
     private val repository: MeasurementRepository
     private var address: String? = null
 
+
     init {
-        // Reconstruindo a MeasurementApi com os dados passados
-        val authApi = RetrofitClient.createService(AuthApi::class.java)
         val secureStorage = SecureStorage(appContext)
-        val api = ApiService(secureStorage, authApi)
+        val api = ApiService(secureStorage)
         val measurementApi = api.createApi(MeasurementApi::class.java)
 
         repository = MeasurementRepository(

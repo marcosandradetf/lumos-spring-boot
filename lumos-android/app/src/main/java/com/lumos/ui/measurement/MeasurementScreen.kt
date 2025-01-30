@@ -17,24 +17,37 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,11 +60,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -60,6 +83,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.Deposit
+import com.lumos.domain.model.Material
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
@@ -88,7 +112,10 @@ fun MeasurementScreen(
 
     // Obtém o estado atual dos depósitos
     val deposits by stockViewModel.deposits
+    val materials by stockViewModel.materials
+
     var selectedDeposit by remember { mutableStateOf<Deposit?>(null) }
+    var showModal by remember { mutableStateOf(false) }
 
     // Execute a função assíncrona
     LaunchedEffect(Unit) {
@@ -232,13 +259,13 @@ fun MeasurementScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         OutlinedTextField(
-                            textStyle = TextStyle(Color(0xFF613F23)),
+                            textStyle = TextStyle(Color.Black),
                             value = address,
                             onValueChange = { address = it },
                             label = {
                                 Text(
                                     text = "Endereço:",
-                                    color = Color(0xFF9EA4B6)
+                                    color = Color.Black
                                 )
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
@@ -248,38 +275,70 @@ fun MeasurementScreen(
 
                         // Exibe um indicador de carregamento se os depósitos ainda não foram carregados
                         if (deposits.isEmpty()) {
-                            Text("Nenhum depósito encontrado.")
+                            OutlinedTextField(
+                                textStyle = TextStyle(Color.Black),
+                                value = "Nenhum Almoxarifado Encontrado",
+                                onValueChange = { },
+                                label = {
+                                    Text(
+                                        text = "Almoxarifado:",
+                                        color = Color.Black
+                                    )
+                                },
+                                readOnly = true,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 15.dp),
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Filled.ArrowDropDown, "contentDescription",
+                                    )
+                                }
+                            )
                         } else {
                             // Exibe o Dropdown com os depósitos
                             Column {
-                                Text("Selecione um depósito:")
 
                                 var expanded by remember { mutableStateOf(false) }
 
                                 Box(modifier = Modifier.fillMaxWidth()) {
-                                    Text(
-                                        text = selectedDeposit?.depositName
-                                            ?: "Escolha um depósito",
-                                        modifier = Modifier
-                                            .clickable { expanded = true }
-                                            .padding(16.dp)
-                                            .background(
-                                                Color.Gray,
-                                                shape = RoundedCornerShape(4.dp)
+
+                                    OutlinedTextField(
+                                        textStyle = TextStyle(Color.Black),
+                                        value = selectedDeposit?.depositName
+                                            ?: "Escolha um almoxarifado",
+                                        onValueChange = { },
+                                        label = {
+                                            Text(
+                                                text = "Almoxarifado:",
+                                                color = Color.Black
                                             )
+                                        },
+                                        readOnly = true,
+                                        maxLines = 1,
+                                        modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                                            .padding(top = 15.dp),
+                                        trailingIcon = {
+                                            Icon(Icons.Filled.ArrowDropDown, "contentDescription",
+                                                Modifier.clickable { expanded = true })
+                                        }
                                     )
 
                                     DropdownMenu(
                                         expanded = expanded,
-                                        onDismissRequest = { expanded = false }
-                                    ) {
+                                        onDismissRequest = { expanded = false },
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+
+                                        ) {
                                         deposits.forEach { deposit ->
                                             DropdownMenuItem(
                                                 onClick = {
                                                     selectedDeposit = deposit
                                                     expanded = false
+                                                    stockViewModel.loadMaterials(deposit.depositId)
                                                 },
                                                 text = { Text(text = deposit.depositName) }, // Nome do depósito
                                                 modifier = Modifier
@@ -306,7 +365,7 @@ fun MeasurementScreen(
                                                     trailingIconColor = Color.Black,
                                                     disabledTextColor = Color.Black,
                                                     disabledLeadingIconColor = Color.Gray,
-                                                    disabledTrailingIconColor = Color.Gray,
+                                                    disabledTrailingIconColor = Color.White,
                                                 ),
                                                 contentPadding = PaddingValues(
                                                     horizontal = 16.dp,
@@ -315,9 +374,60 @@ fun MeasurementScreen(
                                             )
                                         }
 
+                                        if (showModal) {
+                                            ItemSelectionModal(
+                                                onDismiss = { showModal = false },
+                                                materials,
+                                                onConfirm = { item, quantity ->
+                                                    // Lógica para confirmar a seleção do item e quantidade
+                                                    println("Item selecionado: $item, Quantidade: $quantity")
+                                                    showModal =
+                                                        false // Fecha o modal após a confirmação
+                                                }
+                                            )
+                                        }
+
+
                                     }
                                 }
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(250.dp))
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Card redondo para o botão
+                            Card(
+                                modifier = Modifier
+                                    .size(50.dp) // Tamanho maior para um botão redondo
+                                    .clickable { showModal = true }, // Adiciona interação de clique
+                                shape = CircleShape, // Formato circular
+                                elevation = CardDefaults.cardElevation(10.dp), // Sombra
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF2E8146) // Cor de fundo do botão
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Add,
+                                        contentDescription = "Adicionar",
+                                        tint = Color.White, // Cor do ícone
+                                        modifier = Modifier.size(30.dp) // Tamanho do ícone
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp)) // Espaço entre o botão e o texto
+                            Text(
+                                text = "Adicionar Item",
+                                color = Color(0xFF1E1F22), // Cor do texto
+                                fontSize = 16.sp, // Tamanho da fonte
+                                fontWeight = FontWeight.Medium // Peso da fonte
+                            )
                         }
 
 
@@ -375,13 +485,72 @@ fun DialogExit(
     )
 }
 
-//
-//@Preview
+@Composable
+fun ItemSelectionModal(
+    onDismiss: () -> Unit, // Função para fechar o modal
+    materials: List<Material>,
+    onConfirm: (String, Int) -> Unit // Função para confirmar a seleção
+) {
+    var selectedItem by remember { mutableStateOf("") } // Item selecionado
+    var quantity by remember { mutableStateOf(1) } // Quantidade
+
+    Dialog(
+        onDismissRequest = {},
+        DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .zIndex(10F),
+            contentAlignment = Alignment.Center
+        ) {
+            Dialog(onDismissRequest = onDismiss) {
+                Column {
+                    materials.forEach { m ->
+                        ListItem(
+                            leadingContent = {
+                                Icon(
+                                    Icons.Filled.Info,
+                                    contentDescription = "Localized description",
+                                )
+                            },
+                            overlineContent = {
+                                Text("Estoque: ${m.stockQt ?: ""} - ${m.requestUnit ?: ""}")
+                            },
+                            headlineContent = {
+                                Text(m.materialName ?: "")
+                            },
+                            supportingContent = {
+                                if (m.materialPower != null) {
+                                    Text("Potência: ${m.materialPower}")
+                                } else if (m.materialLength != null) {
+                                    Text("Tamanho ${m.materialLength}")
+                                } else if (m.materialAmps != null) {
+                                    Text("Corrente ${m.materialAmps}")
+                                }
+
+                            },
+                            trailingContent = {
+                                Icon(Icons.Filled.MoreVert, "")
+                            },
+
+                            )
+                        HorizontalDivider()
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+
+
+//@Preview(showBackground = true)
 //@Composable
-//fun PrevMeasurementScree() {
-//    MeasurementScreen(
-//        {},
-//        rememberNavController(),
-//        LocalContext.current,
-//    )
+//fun PrevMeasurementScreen() {
+//    ItemSelectionModal({})
 //}

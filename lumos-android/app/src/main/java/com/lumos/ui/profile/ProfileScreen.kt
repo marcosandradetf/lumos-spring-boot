@@ -11,6 +11,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -21,6 +22,8 @@ import androidx.navigation.compose.rememberNavController
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 @Composable
 fun ProfileScreen(
@@ -32,6 +35,7 @@ fun ProfileScreen(
     onLogoutSuccess: () -> Unit,
     authViewModel: AuthViewModel
 ) {
+    val coroutineScope = rememberCoroutineScope()
     AppLayout(
         title = "Perfil",
         pSelected = BottomBar.PROFILE.value,
@@ -68,9 +72,12 @@ fun ProfileScreen(
                 modifier = Modifier
                     .padding(bottom = 10.dp)
                     .clickable {
-                        authViewModel.logout(
-                            onLogoutSuccess
-                        )
+                        coroutineScope.launch {
+                            authViewModel.logout(
+                                onLogoutSuccess
+                            )
+                        }
+
                     }
             )
         }

@@ -1,5 +1,6 @@
 package com.lumos.navigation
 
+import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.api.ApiService
+import com.lumos.MyApp
 import com.lumos.data.api.AuthApi
 import com.lumos.data.api.MeasurementApi
 import com.lumos.data.api.StockApi
@@ -40,6 +41,7 @@ import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.viewmodel.MeasurementViewModel
 import com.lumos.ui.viewmodel.StockViewModel
+import retrofit2.Retrofit
 
 enum class BottomBar(val value: Int) {
     MENU(0),
@@ -49,27 +51,26 @@ enum class BottomBar(val value: Int) {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    database: AppDatabase,
+    retrofit: Retrofit,
+    secureStorage: SecureStorage,
+    context: Context
+) {
     val navController = rememberNavController()
     var isLoading by remember { mutableStateOf(true) }
-    val context = LocalContext.current
 
-    val secureStorage = SecureStorage(context)
-    val dao: StockDao = AppDatabase.getInstance(context).stockDao()
-    val authApi = RetrofitClient.createService(AuthApi::class.java)
+    val dao: StockDao = database.stockDao()
 
     // Usar viewModel para armazenar o ViewModel corretamente
     val authViewModel: AuthViewModel = viewModel {
-
-        val authRepository = AuthRepository(authApi, secureStorage, context)
+        val authRepository = AuthRepository(retrofit, secureStorage, context)
         AuthViewModel(authRepository, secureStorage)
     }
 
 
     val stockViewModel: StockViewModel = viewModel {
-        val depositApi = ApiService(secureStorage, authApi)
-        val api = depositApi.createApi(StockApi::class.java)
-
+        val api = retrofit.create(StockApi::class.java)
         val repository = StockRepository(dao, api)
         val service = DepositService(context, repository)
 
@@ -78,9 +79,8 @@ fun AppNavigation() {
 
 
     val measurementViewModel: MeasurementViewModel = viewModel {
-        val measurementDao = AppDatabase.getInstance(context).measurementDao()
-        val measurementApi = ApiService(secureStorage, authApi)
-        val api = measurementApi.createApi(MeasurementApi::class.java)
+        val measurementDao = database.measurementDao()
+        val api = retrofit.create(MeasurementApi::class.java)
 
         val measurementRepository = MeasurementRepository(measurementDao, api, context)
         MeasurementViewModel(measurementRepository)
@@ -95,11 +95,6 @@ fun AppNavigation() {
     LaunchedEffect(Unit) {
         authViewModel.authenticate(context)
         isLoading = false
-
-
-        if (dao.getCountDeposits() != 1) {
-            stockViewModel.syncDeposits()
-        }
 
     }
 

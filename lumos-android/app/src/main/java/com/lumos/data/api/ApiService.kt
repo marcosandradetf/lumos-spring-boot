@@ -10,13 +10,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class ApiService(
     private val secureStorage: SecureStorage,
-    private val authApi: AuthApi
 ) {
     private val baseUrl = "http://192.168.3.2:8080"
 
     private fun getOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(authApi, secureStorage))
+            .addInterceptor(AuthInterceptor(secureStorage))
             .build()
     }
 

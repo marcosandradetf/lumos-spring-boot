@@ -11,11 +11,12 @@ import com.lumos.domain.model.LoginResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import retrofit2.Retrofit
 
 
 // Repositório que faz a autenticação e lida com os tokens
-class AuthRepository (
-    private val authApi: AuthApi,
+class AuthRepository(
+    retrofit: Retrofit,
     private val secureStorage: SecureStorage,
     private val context: Context
 ) {
@@ -24,7 +25,9 @@ class AuthRepository (
         return !secureStorage.getAccessToken().isNullOrBlank()
     }
 
-    fun login(
+    private val authApi: AuthApi = retrofit.create(AuthApi::class.java)
+
+    suspend fun login(
         username: String,
         email: String,
         password: String,
@@ -33,60 +36,42 @@ class AuthRepository (
     ) {
         val loginRequest = LoginRequest(username, email, password)
 
+        try {
+            // Faz a chamada de forma assíncrona e aguarda a resposta
+            val response = authApi.login(request = loginRequest)
 
-        authApi.login("application/json", loginRequest).enqueue(object :
-            Callback<LoginResponse> {
-            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null) {
-                        secureStorage.saveTokens(body.accessToken, body.refreshToken)
-                        onSuccess()
-                    } else {
-//                        showToast("Resposta do servidor está vazia")
-                        onFailure()
-                    }
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    secureStorage.saveTokens(body.accessToken, body.refreshToken)
+                    onSuccess()
                 } else {
-                    // Obter o corpo do erro como uma string
-                    val errorMessage = response.errorBody()?.string()
-
-                    // Converter o JSON para JsonObject e acessar o campo "message"
-                    val jsonObject = JsonParser.parseString(errorMessage).asJsonObject
-                    val message = jsonObject.get("message")?.asString ?: "Erro desconhecido"
-
-                    // Exibir a mensagem de erro
-//                    showToast(message)
-
+                    val errorMessage = response.errorBody()?.string() ?: "Erro desconhecido"
+                    showToast(errorMessage)
                     onFailure()
                 }
             }
-
-            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-//                showToast(context, "Erro: ${t.localizedMessage}")
-                Log.e("LoginError", "Falha na requisição: ${t.localizedMessage}", t)
-                onFailure()
-            }
-        })
+        } catch (e: Exception) {
+            // Se der erro na requisição, trata a falha
+            Log.e("Login Error", "Erro ao fazer login: ${e.localizedMessage}")
+            onFailure()
+        }
     }
 
-    fun logout(onComplete: () -> Unit) {
-        var refreshToken = secureStorage.getRefreshToken()
-        refreshToken = refreshToken?.replace("\"", "")?.trim()
-        if (refreshToken != null) {
-            authApi.logout("application/json", refreshToken).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                    secureStorage.clearTokens()
-                    onComplete()
-                }
 
-                override fun onFailure(call: Call<Void>, t: Throwable) {
-                    secureStorage.clearTokens()
-                    onComplete()
-                }
-            })
-        } else {
-            secureStorage.clearTokens()
-            onComplete()
+    suspend fun logout(onComplete: () -> Unit) {
+        val refreshToken = secureStorage.getRefreshToken()
+
+        try {
+            // Faz a chamada de forma assíncrona e aguarda a resposta
+            val response = authApi.logout(refreshToken = refreshToken)
+
+            if (response.isSuccessful) {
+                onComplete()
+            }
+        } catch (e: Exception) {
+            // Se der erro na requisição, trata a falha
+            Log.e("Logout Error", "Erro ao fazer Logout: ${e.localizedMessage}")
         }
     }
 

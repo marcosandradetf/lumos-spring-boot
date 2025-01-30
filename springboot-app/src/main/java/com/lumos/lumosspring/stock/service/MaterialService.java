@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,8 +67,8 @@ public class MaterialService {
     private ResponseEntity<String> validateMaterialRequest(MaterialRequest material) {
         if (materialRepository.existsMaterial(
                 material.materialName(), material.deposit(), material.materialBrand())) {
-           return  ResponseEntity.status(HttpStatus.CONFLICT)
-                            .body("Este material já existe no almoxarifado informado.");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Este material já existe no almoxarifado informado.");
         }
 
         if (!tipoRepository.existsById(material.materialType())) {
@@ -205,7 +206,25 @@ public class MaterialService {
 
 
     public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
+        var materials = materialRepository.findAll();
+        List<MaterialDTOMob> materialsDTO = new ArrayList<>();
 
-        return ResponseEntity.ok().build();
+        for (Material m : materials) {
+            var companyName = m.getCompany().getCompanyName() != null ? m.getCompany().getCompanyName() : "";
+            materialsDTO.add(new MaterialDTOMob(
+                    m.getIdMaterial(),
+                    m.getMaterialName(),
+                    m.getMaterialBrand(),
+                    m.getMaterialPower(),
+                    m.getMaterialAmps(),
+                    m.getMaterialLength(),
+                    m.getRequestUnit(),
+                    String.valueOf(m.getStockAvailable()),
+                    companyName,
+                    m.getDeposit().getIdDeposit()
+            ));
+        }
+
+        return ResponseEntity.ok(materialsDTO);
     }
 }

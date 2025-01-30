@@ -22,7 +22,7 @@ class AuthViewModel (
         _isAuthenticated.value = authRepository.isAuthenticated()
     }
 
-    fun login(
+    suspend fun login(
         username: String,
         password: String,
         onSuccess: () -> Unit,
@@ -31,7 +31,7 @@ class AuthViewModel (
         authRepository.login(username, username, password, onSuccess, onFailure)
     }
 
-    fun logout(
+    suspend fun logout(
         onSuccess: () -> Unit,
     ) {
         _isAuthenticated.value = false
