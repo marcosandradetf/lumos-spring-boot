@@ -1,12 +1,13 @@
 package com.lumos.lumosspring.execution.entities;
 
+import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.team.Region;
 import jakarta.persistence.*;
 
 import java.util.List;
 
 @Entity
-@Table(name = "tb_PreMeasurement")
+@Table(name = "tb_measurement")
 public class PreMeasurement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,11 +16,17 @@ public class PreMeasurement {
 
     private String description;
 
-    private String UF;
-    private String city;
+    private String address;
+
+    private double latitude;
+
+    private double longitude;
 
     @ManyToOne
     private Region region;
+
+    @ManyToOne
+    private Deposit deposit;
 
     @OneToMany
     List<Street> streets;
@@ -40,20 +47,30 @@ public class PreMeasurement {
         this.description = description;
     }
 
-    public String getUF() {
-        return UF;
+
+
+    public String getAddress() {
+        return address;
     }
 
-    public void setUF(String UF) {
-        this.UF = UF;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
-    public String getCity() {
-        return city;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     public Region getRegion() {
@@ -70,5 +87,13 @@ public class PreMeasurement {
 
     public void setStreets(List<Street> streets) {
         this.streets = streets;
+    }
+
+    public Deposit getDeposit() {
+        return deposit;
+    }
+
+    public void setDeposit(Deposit deposit) {
+        this.deposit = deposit;
     }
 }

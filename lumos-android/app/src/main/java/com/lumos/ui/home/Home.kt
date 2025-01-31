@@ -27,6 +27,26 @@ import com.lumos.ui.components.AppLayout
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.ContextCompat
 
 @Composable
@@ -37,21 +57,6 @@ fun HomeScreen(
     navController: NavHostController,
 ) {
     val context = LocalContext.current
-    val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
-
-    // Defina o estado para latitude e longitude
-    var vLatitude by remember { mutableStateOf<Double?>(null) }
-    var vLongitude by remember { mutableStateOf<Double?>(null) }
-    var address by remember { mutableStateOf<String?>(null) }
-    var btnClick by remember { mutableStateOf<Boolean>(false) }
-
-    // Crie a instância do seu UseCase
-    val coord = CoordinatesService(context, fusedLocationProvider)
-
-    // Execute a função assíncrona
-    LaunchedEffect(Unit) {
-
-    }
 
     AppLayout(
         title = "Início",
@@ -64,53 +69,111 @@ fun HomeScreen(
     ) { modifier ->
         Column(
             modifier = modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
+            // Cards Minimalistas
+            MaintenanceStatusCard()
+            Spacer(modifier = Modifier.height(16.dp))
+            AlertsCard()
 
-            Text("Home Screen")
+            // Botão de Ação Principal
+            Spacer(modifier = Modifier.height(24.dp))
+            ReportProblemButton()
 
-            Button(onClick = {
-                coord.execute { latitude, longitude ->
-                    if (latitude != null && longitude != null) {
-                        vLatitude = latitude
-                        vLongitude = longitude
-                        val addr = AddressService(context)
-                        address = addr.execute(latitude, longitude)?.get(0).toString()
-                        btnClick = true
-                    } else {
-                        btnClick = false
-                        Log.e("GET Address", "Latitude ou Longitude são nulos.")
-                    }
-                }
-
-            }) {
-                Text("Buscar Localização")
-            }
-
-            if (btnClick) {
-
-                Column {
-
-                    Row {
-                        Text(text = vLatitude.toString())
-                        Text(text = vLongitude.toString())
-                    }
-
-                    Text(
-                        text = address ?: "Endereço não disponível",
-                        modifier = Modifier.padding(16.dp)
-                    )
-
-                    Button(
-                        onClick = { openGoogleMaps(vLatitude!!, vLongitude!!, context) },
-                        content = { Text("Abrir no Google Maps") }
-                    )
-
-                }
-
-
-            }
-
+            // Lista de Atividades Recentes
+            Spacer(modifier = Modifier.height(24.dp))
+            RecentActivitiesList()
         }
+    }
+}
+@Composable
+fun MaintenanceStatusCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Ícone ilustrativo
+            Icon(
+                imageVector = Icons.Outlined.Assignment, // Ícone de "tarefa"
+                contentDescription = "Nenhuma execução",
+                modifier = Modifier.size(48.dp),
+                tint = Color.LightGray
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Título
+            Text(
+                text = "Status das Execuções",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Mensagem informativa
+            Text(
+                text = "Nenhuma execução alocada no momento.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun AlertsCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Alertas",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Nenhum alerta no momento.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@Composable
+fun ReportProblemButton() {
+    Button(
+        onClick = { /* Ação para reportar problema */ },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)) // Azul
+    ) {
+        Text(text = "Reportar Problema")
+    }
+}
+
+@Composable
+fun RecentActivitiesList() {
+
+
+    Column {
+        Text(
+            text = "Atividades Recentes",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.Black
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
     }
 }
 

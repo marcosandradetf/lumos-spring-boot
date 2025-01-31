@@ -8,7 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface MeasurementApi {
-    @POST("/api/mobile/insert-measurement")
+    @POST("/api/mobile/execution/insert-measurement")
     suspend fun sendMeasurement(@Body measurement: MeasurementDto)
 
 }

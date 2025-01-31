@@ -46,7 +46,8 @@ class MyApp : Application() {
             .build()
 
         retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+//            .baseUrl("https://spring.thryon.com.br")
+            .baseUrl("http://192.168.3.2:8080")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

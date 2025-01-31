@@ -1,7 +1,10 @@
 package com.lumos.ui.measurement
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -29,9 +32,15 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -49,17 +58,24 @@ import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -67,24 +83,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.Material
+import com.lumos.domain.model.Measurement
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
 import com.lumos.navigation.Routes
 import com.lumos.ui.viewmodel.StockViewModel
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
 
+@SuppressLint("HardwareIds")
 @Composable
 fun MeasurementScreen(
     onNavigateToHome: () -> Unit,
@@ -96,7 +117,7 @@ fun MeasurementScreen(
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coord = CoordinatesService(context, fusedLocationProvider)
 
-    var initMeasurement by remember { mutableStateOf(false) }
+    var finishMeasurement by remember { mutableStateOf(false) }
     var exitMeasurement by remember { mutableStateOf(false) }
 
     var vLatitude by remember { mutableStateOf<Double?>(null) }
@@ -109,7 +130,23 @@ fun MeasurementScreen(
 
     var selectedDeposit by remember { mutableStateOf<Deposit?>(null) }
     var showModal by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
+    var measurement by remember {
+        mutableStateOf<Measurement>(
+            Measurement(
+                latitude = 0.0,
+                longitude = 0.0,
+                address = "",
+                depositId = 0,
+                deviceId = Settings.Secure.getString(
+                    context.contentResolver,
+                    Settings.Secure.ANDROID_ID
+                ),
+                synced = false,
+            )
+        )
+    }
     var items by remember { mutableStateOf<List<Item>>(emptyList()) }
 
     // Execute a função assíncrona
@@ -120,6 +157,11 @@ fun MeasurementScreen(
                 vLongitude = longitude
                 val addr = AddressService(context)
                 address = addr.execute(latitude, longitude)?.get(0).toString()
+
+                measurement.address = address ?: ""
+                measurement.latitude = vLatitude ?: 0.0
+                measurement.longitude = vLongitude ?: 0.0
+
             } else {
                 Log.e("GET Address", "Latitude ou Longitude são nulos.")
             }
@@ -145,6 +187,14 @@ fun MeasurementScreen(
         )
 
         stockViewModel.loadDeposits()
+
+        val workManager = WorkManager.getInstance(context)
+        workManager.getWorkInfoByIdLiveData(workRequest.id).observe(lifecycleOwner) { workInfo ->
+            if (workInfo != null && workInfo.state == WorkInfo.State.SUCCEEDED) {
+                // Somente chama loadDeposits() quando o Worker terminar com sucesso
+                stockViewModel.loadDeposits()
+            }
+        }
     }
 
 
@@ -200,7 +250,31 @@ fun MeasurementScreen(
                         .padding(10.dp)
                         .padding(bottom = 50.dp)
                         .height(48.dp),
-                    onClick = { navController.navigate(Routes.MEASUREMENT_SCREEN) },
+                    onClick = {
+                        if (items.isEmpty() || measurement.address == "") {
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Adicione os itens",
+                                    Toast.LENGTH_SHORT
+                                )
+                                .show()
+                        } else {
+                            measurementViewModel.saveMeasurementOffline(measurement) { measurementId ->
+                                if (measurementId != null) {
+                                    try {
+                                        measurementViewModel.saveItensOffline(items, measurementId)
+                                        finishMeasurement = true
+                                    } catch (e: Exception) {
+                                        finishMeasurement = false
+                                        Log.e("SaveError", "Erro ao salvar itens offline: ${e.message}")
+                                    }
+
+                                }
+                            }
+
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
                     shape = RoundedCornerShape(8.dp) // Botão com cantos menos arredondados
                 ) {
@@ -237,19 +311,52 @@ fun MeasurementScreen(
                     }
 
                     Column(
-                        Modifier.fillMaxWidth()
+                        Modifier.fillMaxWidth(),
                     ) {
-
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(
-                            text = "Pré-Medição",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF00308F) // Azul escuro
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically // Certificando que os itens dentro da Row ficam alinhados verticalmente
+                        ) {
+                            Text(
+                                text = "Pré-Medição",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF00308F) // Azul escuro
+                                )
                             )
-                        )
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally // Alinha o conteúdo da coluna no centro
+                            ) {
+                                BadgedBox(
+                                    badge = {
+                                        Badge(
+                                            containerColor = Color.Red,
+                                            contentColor = Color.White
+                                        ) {
+                                            Text(items.size.toString()) // Evitei o uso de `items.size.toString() ?: ""`, já que `items.size.toString()` é sempre seguro
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Lightbulb,
+                                        contentDescription = "Shopping cart",
+                                    )
+                                }
+
+                                Text(
+                                    text = "Itens adicionados",
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 10.sp,
+                                    color = Color.Black,
+                                )
+                            }
+                        }
+
 
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -298,7 +405,6 @@ fun MeasurementScreen(
                                 var expanded by remember { mutableStateOf(false) }
 
                                 Box(modifier = Modifier.fillMaxWidth()) {
-
                                     OutlinedTextField(
                                         textStyle = TextStyle(Color.Black),
                                         value = selectedDeposit?.depositName
@@ -321,61 +427,66 @@ fun MeasurementScreen(
                                         }
                                     )
 
-                                    DropdownMenu(
-                                        expanded = expanded,
-                                        onDismissRequest = { expanded = false },
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
+                                    MaterialTheme(
+                                        colorScheme = lightColorScheme() // Força o modo claro dentro do BottomSheet
+                                    ) {
+                                        DropdownMenu(
+                                            expanded = expanded,
+                                            onDismissRequest = { expanded = false },
+                                            modifier = Modifier
+                                                .fillMaxWidth(),
 
-                                        ) {
-                                        deposits.forEach { deposit ->
-                                            DropdownMenuItem(
-                                                onClick = {
-                                                    selectedDeposit = deposit
-                                                    expanded = false
-                                                    stockViewModel.loadMaterials(deposit.depositId)
-                                                },
-                                                text = { Text(text = deposit.depositName) }, // Nome do depósito
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp), // Modificador para o item
-                                                leadingIcon = {
-                                                    // Se desejar um ícone à esquerda, pode ser adicionado aqui
-                                                    Icon(
-                                                        imageVector = Icons.Default.Add,
-                                                        contentDescription = "Ícone do Depósito"
-                                                    )
-                                                },
-                                                trailingIcon = {
-                                                    // Se desejar um ícone à direita, pode ser adicionado aqui
-                                                    Icon(
-                                                        imageVector = Icons.Default.ArrowForward,
-                                                        contentDescription = "Seta"
-                                                    )
-                                                },
-                                                enabled = true, // Se você deseja desabilitar o item, altere para 'false'
-                                                colors = MenuItemColors(
-                                                    textColor = Color.Black,
-                                                    leadingIconColor = Color.Black,
-                                                    trailingIconColor = Color.Black,
-                                                    disabledTextColor = Color.Black,
-                                                    disabledLeadingIconColor = Color.Gray,
-                                                    disabledTrailingIconColor = Color.White,
-                                                ),
-                                                contentPadding = PaddingValues(
-                                                    horizontal = 16.dp,
-                                                    vertical = 12.dp
-                                                ) // Espaçamento do conteúdo dentro do item
-                                            )
+                                            ) {
+                                            deposits.forEach { deposit ->
+                                                DropdownMenuItem(
+                                                    onClick = {
+                                                        selectedDeposit = deposit
+                                                        measurement.depositId = deposit.depositId
+                                                        expanded = false
+                                                        stockViewModel.loadMaterials(deposit.depositId)
+                                                    },
+                                                    text = { Text(text = deposit.depositName) }, // Nome do depósito
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 16.dp), // Modificador para o item
+                                                    leadingIcon = {
+                                                        // Se desejar um ícone à esquerda, pode ser adicionado aqui
+                                                        Icon(
+                                                            imageVector = Icons.Default.Add,
+                                                            contentDescription = "Ícone do Depósito"
+                                                        )
+                                                    },
+                                                    trailingIcon = {
+                                                        // Se desejar um ícone à direita, pode ser adicionado aqui
+                                                        Icon(
+                                                            imageVector = Icons.Default.ArrowForward,
+                                                            contentDescription = "Seta"
+                                                        )
+                                                    },
+                                                    enabled = true, // Se você deseja desabilitar o item, altere para 'false'
+                                                    colors = MenuItemColors(
+                                                        textColor = Color.Black,
+                                                        leadingIconColor = Color.Black,
+                                                        trailingIconColor = Color.Black,
+                                                        disabledTextColor = Color.Black,
+                                                        disabledLeadingIconColor = Color.Gray,
+                                                        disabledTrailingIconColor = Color.White,
+                                                    ),
+                                                    contentPadding = PaddingValues(
+                                                        horizontal = 16.dp,
+                                                        vertical = 12.dp
+                                                    ) // Espaçamento do conteúdo dentro do item
+                                                )
+                                            }
+
+
                                         }
-
-
                                     }
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(250.dp))
+                        Spacer(modifier = Modifier.height(200.dp))
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -384,7 +495,20 @@ fun MeasurementScreen(
                             Card(
                                 modifier = Modifier
                                     .size(50.dp) // Tamanho maior para um botão redondo
-                                    .clickable { showModal = true }, // Adiciona interação de clique
+                                    .clickable {
+                                        if (selectedDeposit != null) {
+                                            items = emptyList()
+                                            showModal = true
+                                        } else {
+                                            Toast
+                                                .makeText(
+                                                    context,
+                                                    "Selecione o almoxarifado",
+                                                    Toast.LENGTH_SHORT
+                                                )
+                                                .show()
+                                        }
+                                    }, // Adiciona interação de clique
                                 shape = CircleShape, // Formato circular
                                 elevation = CardDefaults.cardElevation(10.dp), // Sombra
                                 colors = CardDefaults.cardColors(
@@ -405,7 +529,7 @@ fun MeasurementScreen(
                             }
                             Spacer(modifier = Modifier.height(8.dp)) // Espaço entre o botão e o texto
                             Text(
-                                text = "Adicionar Item",
+                                text = "Adicionar Itens",
                                 color = Color(0xFF1E1F22), // Cor do texto
                                 fontSize = 16.sp, // Tamanho da fonte
                                 fontWeight = FontWeight.Medium // Peso da fonte
@@ -420,14 +544,26 @@ fun MeasurementScreen(
                 // Abrir o BottomSheetDialog quando isDialogOpen for true
                 if (showModal) {
                     BottomSheetDialog(
-                        onDismissRequest = { showModal = false },
-                        materials = materials,
-                        onConfirm = { selected ->
+                        onDismissRequest = { selected ->
                             items = selected
                             showModal = false
-                        }
+                        },
+                        materials = materials,
                     )
                 }
+
+                if (finishMeasurement) {
+                    items = emptyList()
+                    Toast
+                        .makeText(
+                            context,
+                            "Medição salva com sucesso!",
+                            Toast.LENGTH_SHORT
+                        )
+                        .show()
+                    finishMeasurement = false
+                }
+
             }
 
 
@@ -483,9 +619,8 @@ fun DialogExit(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheetDialog(
-    onDismissRequest: () -> Unit,
+    onDismissRequest: (List<Item>) -> Unit,
     materials: List<Material>,
-    onConfirm: (List<Item>) -> Unit,
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -495,59 +630,64 @@ fun BottomSheetDialog(
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        modifier = Modifier.fillMaxSize()
+    MaterialTheme(
+        colorScheme = lightColorScheme() // Força o modo claro dentro do BottomSheet
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Selecione os itens:", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        ModalBottomSheet(
+            onDismissRequest = { onDismissRequest(items) },
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Selecione os itens:", fontWeight = FontWeight.Bold, fontSize = 18.sp)
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Barra de pesquisa
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text("Buscar") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Pesquiar") }
-            )
+                // Barra de pesquisa
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Buscar") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Pesquiar"
+                        )
+                    }
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            LazyColumn {
-                items(filteredList) { material ->
-                    ItemIluminacaoRow(
-                        material = material,
-                        onItemSelected = { m ->
-                            items.add(
-                                Item(
-                                    materialId = m.materialId.toString(),
-                                    materialQuantity = 0,
-                                    lastPower = "",
-                                    measurementId = 1
-                                )
-                            )
-                        },
-                        onQuantidadeChange = { materialId, quantity ->
-                            items.replaceAll {
-                                if (it.materialId == materialId.toString()) it.copy(materialQuantity = quantity) else it
+                LazyColumn {
+                    items(filteredList) { material ->
+                        ItemIluminacaoRow(
+                            material = material,
+                            onItemSelected = { m ->
+
+                                if (items.find { item -> item.materialId == m.materialId.toString() } == null) {
+                                    items.add(
+                                        Item(
+                                            materialId = m.materialId.toString(),
+                                            materialQuantity = 0,
+                                            lastPower = "",
+                                            measurementId = 1
+                                        )
+                                    )
+                                } else {
+                                    items.removeAll { item -> item.materialId == m.materialId.toString() }
+                                }
+                            },
+                            onQuantidadeChange = { materialId, quantity ->
+                                items.replaceAll {
+                                    if (it.materialId == materialId.toString()) it.copy(
+                                        materialQuantity = quantity
+                                    ) else it
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { onConfirm(items) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Confirmar Seleção")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -558,59 +698,167 @@ fun ItemIluminacaoRow(
     onItemSelected: (Material) -> Unit,
     onQuantidadeChange: (Long, Int) -> Unit
 ) {
+
+    var selected by rememberSaveable { mutableStateOf(false) }
+    var quantity by rememberSaveable { mutableIntStateOf(0) }
+    val materialChar = if (material.materialLength != null) {
+        "Tamanho: ${material.materialLength ?: ""}"
+    } else if (material.materialAmps != null) {
+        "Corrente: ${material.materialAmps ?: ""}"
+    } else {
+        "Potência: ${material.materialPower ?: ""}"
+    }
+
     val backgroundColor by animateColorAsState(
-        targetValue = if (true) Color(0xFFE3F2FD) else Color.White,
+        targetValue = if (selected) Color(0xFF6BA3F2) else Color(0xFFFFFFFF),
         animationSpec = tween(durationMillis = 300)
     )
 
-    var selected by remember { mutableStateOf(false) }
-    var quantity by remember { mutableStateOf(0) }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { onItemSelected(material) },
+    if (!selected) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable {
+                    selected = !selected
+                    onItemSelected(material)
+                },
 
-        elevation = CardDefaults.cardElevation(10.dp),
-        colors = CardColors(
-            contentColor = Color.White,
-            containerColor = backgroundColor,
-            disabledContainerColor = Color.White,
-            disabledContentColor = Color.White
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            elevation = CardDefaults.cardElevation(10.dp),
+            colors = CardColors(
+                contentColor = Color.White,
+                containerColor = backgroundColor,
+                disabledContainerColor = Color.White,
+                disabledContentColor = Color.White
+            )
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = material.materialName ?: "", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(
-                    text = "Potência: ${material.materialPower ?: ""}",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "Em estoque: ${material.stockQt ?: ""}",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = material.materialName ?: "",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (selected) Color.White else Color.Black,
+                    )
+                    Text(
+                        text = materialChar,
+                        fontSize = 14.sp,
+                        color = if (selected) Color.White else Color.Black
+                    )
+                    Text(
+                        text = "Em estoque: ${(material.stockQt.toString() ?: "")}",
+                        fontSize = 14.sp,
+                        color = if (selected) Color.White else Color.Black
+                    )
+
+                    // Só mostra o controle de quantidade se o item estiver selecionado
+
+                }
             }
 
-            if (selected) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = {
-                        if (quantity > 0) onQuantidadeChange(material.materialId, quantity - 1)
-                    }) {
-                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Diminuir")
+        }
+    } else {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable {
+                    selected = !selected
+                    onItemSelected(material)
+                },
+
+            elevation = CardDefaults.cardElevation(10.dp),
+            colors = CardColors(
+                contentColor = Color.White,
+                containerColor = backgroundColor,
+                disabledContainerColor = Color.White,
+                disabledContentColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally, // Centraliza tudo dentro do Card
+                verticalArrangement = Arrangement.Center // Centraliza verticalmente
+            ) {
+                // Texto para o nome do material ou outros detalhes, se necessário
+                Text(
+                    text = "${material.materialName ?: ""} -  ${materialChar ?: ""}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.height(8.dp)) // Espaçamento entre os itens
+
+                // Linha com os botões de aumentar e diminuir a quantidade
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center // Centraliza os itens
+                ) {
+                    IconButton(
+                        onClick = {
+                            quantity -= 1
+                            if (quantity > 0) onQuantidadeChange(
+                                material.materialId,
+                                quantity
+                            )
+                        },
+                        modifier = Modifier
+                            .background(Color(0xFFE0E0E0), shape = CircleShape)
+                            .padding(5.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Remove,
+                            contentDescription = "Diminuir",
+                            tint = Color.Black
+                        )
                     }
-                    Text(text = quantity.toString(), fontSize = 16.sp)
-                    IconButton(onClick = { onQuantidadeChange(material.materialId, quantity + 1) }) {
-                        Icon(Icons.Default.Add, contentDescription = "Aumentar")
+
+                    Spacer(modifier = Modifier.width(16.dp)) // Espaçamento entre os ícones
+
+                    Text(
+                        text = quantity.toString(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    IconButton(
+                        onClick = {
+                            quantity += 1
+                            onQuantidadeChange(material.materialId, quantity)
+                        },
+                        modifier = Modifier
+                            .background(Color(0xFFE0E0E0), shape = CircleShape)
+                            .padding(5.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Aumentar",
+                            tint = Color.Black
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Quantidade",
+                    fontSize = 12.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
+
 }
+

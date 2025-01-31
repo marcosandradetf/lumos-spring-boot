@@ -63,7 +63,7 @@ public class TokenControllerMobile {
 
         var now = util.getDateTime();
         var expiresIn = 1800L; // 30 minutos
-        var refreshExpiresIn = 2592000L; // 30 dias
+        var refreshExpiresIn = 15552000L; // 6 meses
 
         var scopes = user.get().getRoles()
                 .stream()

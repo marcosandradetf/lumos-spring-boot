@@ -44,6 +44,9 @@ class SyncMeasurement(appContext: Context, workerParams: WorkerParameters) :
                     val items = repository.getItems(measurement.measurementId)
                     if (repository.sendMeasurementToBackend(updatedMeasurement, items)) {
                         repository.markAsSynced(measurement.measurementId)
+                        Result.success()
+                    } else {
+                        Result.retry()
                     }
                 }
                 Result.success()

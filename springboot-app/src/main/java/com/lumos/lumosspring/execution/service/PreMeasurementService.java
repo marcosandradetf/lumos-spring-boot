@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.execution.service;
 
-import com.lumos.lumosspring.execution.controller.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.execution.controller.dto.MeasurementDTO;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,12 +18,12 @@ public class PreMeasurementService {
         return ResponseEntity.ok().build();
     }
 
-    public ResponseEntity<?> Post(PreMeasurementDTO dto) {
+    public ResponseEntity<?> Post(MeasurementDTO dto) {
 
         return ResponseEntity.ok().build();
     }
 
-    public ResponseEntity<?> Update(PreMeasurementDTO dto) {
+    public ResponseEntity<?> Update(MeasurementDTO dto) {
 
         return ResponseEntity.ok().build();
     }

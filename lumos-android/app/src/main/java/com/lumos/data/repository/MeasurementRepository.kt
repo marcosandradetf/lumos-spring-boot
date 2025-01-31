@@ -1,6 +1,7 @@
 package com.lumos.data.repository
 
 import android.content.Context
+import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -22,29 +23,13 @@ class MeasurementRepository(
 ) {
 
 
-    suspend fun saveMeasurement(measurement: Measurement) {
-        dao.insertMeasurement(measurement)
-
-        // Agendar o Worker assim que a medição for adicionada
-        val workRequest = OneTimeWorkRequestBuilder<SyncMeasurement>()
-            .setBackoffCriteria(
-                BackoffPolicy.EXPONENTIAL,
-                30, TimeUnit.MINUTES
-            )
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .setRequiresBatteryNotLow(true)
-                    .build()
-            )
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            "sync_measurements", // Nome único para o trabalho
-            ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
-            workRequest
-        )
-
+    suspend fun saveMeasurement(measurement: Measurement): Long? {
+        return try {
+            dao.insertMeasurement(measurement)
+        } catch (e: Exception) {
+            Log.e("Error saveMeasurement", e.message.toString())
+            null
+        }
     }
 
     suspend fun getUnsyncedMeasurements(): List<Measurement> {
@@ -74,6 +59,28 @@ class MeasurementRepository(
 
     suspend fun getItems(measurementId: Long): List<Item> {
         return dao.getItems(measurementId)
+    }
+
+    fun syncMeasurement() {
+        // Agendar o Worker assim que a medição for adicionada
+        val workRequest = OneTimeWorkRequestBuilder<SyncMeasurement>()
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                30, TimeUnit.MINUTES
+            )
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .setRequiresBatteryNotLow(true)
+                    .build()
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "sync_measurements", // Nome único para o trabalho
+            ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
+            workRequest
+        )
     }
 
 }

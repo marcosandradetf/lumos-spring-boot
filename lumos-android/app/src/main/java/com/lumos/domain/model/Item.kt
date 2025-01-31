@@ -9,5 +9,5 @@ data class Item(
     val materialId: String,
     val materialQuantity: Int,
     val lastPower: String,
-    val measurementId: Long,
+    var measurementId: Long,
 )

@@ -8,10 +8,12 @@ import com.lumos.domain.model.RefreshTokenRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Header
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,28 +42,28 @@ class AuthInterceptor(
 
         // Se o token expirar (status 401), tenta renovar o token
         if (response.code == 401) {
-            CoroutineScope(Dispatchers.IO).launch {
-
-
+            // Usando runBlocking para aguardar a renovação do token de forma síncrona
+            val newAccessToken = runBlocking(Dispatchers.IO) {
                 val refreshToken = secureStorage.getRefreshToken()
 
                 // Usando Retrofit para renovar o token
                 val retrofit = Retrofit.Builder()
-                    .baseUrl("https://api.seuservidor.com/") // URL base da sua API
+                    .baseUrl("http://192.168.3.2:8080") // URL base da sua API
+                    .addConverterFactory(GsonConverterFactory.create())
                     .build()
 
                 val authApi = retrofit.create(AuthApi::class.java)
 
-                val newAccessToken = try {
-                    // Realiza a chamada de refresh token de forma assíncrona
-                    val response = authApi.refreshToken(refreshToken = refreshToken)
+                try {
+                    // Realiza a chamada de refresh token de forma assíncrona, mas aguarda de forma síncrona
+                    val tokenResponse = authApi.refreshToken(refreshToken = refreshToken)
 
-                    if (response.isSuccessful) {
+                    if (tokenResponse.isSuccessful) {
                         // Retorna o novo token de acesso se a resposta for bem-sucedida
-                        response.body()?.accessToken
+                        tokenResponse.body()?.accessToken
                     } else {
                         // Trata a falha na requisição (por exemplo, token de refresh inválido)
-                        Log.e("Refresh Token Error", "Erro ao renovar o token: ${response.code()}")
+                        Log.e("Refresh Token Error", "Erro ao renovar o token: ${tokenResponse.code()}")
                         null
                     }
                 } catch (e: Exception) {
@@ -69,20 +71,19 @@ class AuthInterceptor(
                     Log.e("Exception", "Erro durante a renovação do token: ${e.localizedMessage}")
                     null
                 }
+            }
 
-                // Se obtivemos um novo access token, tenta a requisição novamente com o novo token
-                if (newAccessToken != null) {
-                    secureStorage.saveAccessToken(newAccessToken)
+            // Se obtivemos um novo access token, tenta a requisição novamente com o novo token
+            if (newAccessToken != null) {
+                secureStorage.saveAccessToken(newAccessToken)
 
-                    // Retenta a requisição com o novo token
-                    val newRequest = request.newBuilder()
-                        .addHeader("Authorization", "Bearer $newAccessToken")
-                        .build()
+                // Retenta a requisição com o novo token
+                val newRequest = request.newBuilder()
+                    .addHeader("Authorization", "Bearer $newAccessToken")
+                    .build()
 
-                    // Aqui, fazemos a chamada novamente com o novo token
-                    response = chain.proceed(newRequest)
-                }
-
+                // Aqui, fazemos a chamada novamente com o novo token
+                response = chain.proceed(newRequest)
             }
         }
 
@@ -93,5 +94,6 @@ class AuthInterceptor(
 
         return response
     }
+
 }
 

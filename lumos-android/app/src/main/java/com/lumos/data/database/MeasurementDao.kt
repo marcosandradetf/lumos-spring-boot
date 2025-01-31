@@ -7,7 +7,7 @@ import com.lumos.domain.model.Measurement
 @Dao
 interface MeasurementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMeasurement(measurement: Measurement)
+    suspend fun insertMeasurement(measurement: Measurement): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: Item)

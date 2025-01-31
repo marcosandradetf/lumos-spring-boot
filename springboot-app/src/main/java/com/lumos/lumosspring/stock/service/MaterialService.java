@@ -206,11 +206,12 @@ public class MaterialService {
 
 
     public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
-        var materials = materialRepository.findAll();
+        var materials = materialRepository.findAllByOrderByMaterialName();
         List<MaterialDTOMob> materialsDTO = new ArrayList<>();
 
         for (Material m : materials) {
-            var companyName = m.getCompany().getCompanyName() != null ? m.getCompany().getCompanyName() : "";
+            var companyName = m.getCompany() != null ? m.getCompany().getCompanyName() : "";
+            var depositId = m.getDeposit() != null  ? m.getDeposit().getIdDeposit() : 0;
             materialsDTO.add(new MaterialDTOMob(
                     m.getIdMaterial(),
                     m.getMaterialName(),
@@ -221,7 +222,7 @@ public class MaterialService {
                     m.getRequestUnit(),
                     String.valueOf(m.getStockAvailable()),
                     companyName,
-                    m.getDeposit().getIdDeposit()
+                    depositId
             ));
         }
 
