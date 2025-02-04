@@ -157,7 +157,7 @@
       }
     </label>
 
-    <label class="form-control w-full max-w-xs">
+    <label class="form-control w-full max-w-xs" *ngIf="materialService.getState() === State.create">
       <div class="label">
         <span class="label-text">Empresa*</span>
       </div>
@@ -176,7 +176,7 @@
       </div>
     </label>
 
-    <label class="form-control w-full max-w-xs">
+    <label class="form-control w-full max-w-xs" *ngIf="materialService.getState() === State.create">
       <div class="label">
         <span class="label-text">Almoxarifado*</span>
       </div>
@@ -184,7 +184,8 @@
         class="select select-bordered"
         [(ngModel)]="material.deposit"
         name="deposit"
-        required
+        [required]="!material.allDeposits"
+        [disabled]="material.allDeposits"
         #almoxarifadoModel="ngModel">
         @for (almoxarifado of deposits; track almoxarifado.idDeposit) {
           <option [value]="almoxarifado.idDeposit">{{almoxarifado.depositName}}</option>
@@ -195,12 +196,22 @@
       </div>
     </label>
 
-    <div class="form-control">
+<!--    <div class="form-control hidden">-->
+<!--      <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">-->
+<!--        <span class="label-text">Material Inativo</span>-->
+<!--        <input disabled type="checkbox"-->
+<!--               name="inactive"-->
+<!--               [(ngModel)]="material.inactive"-->
+<!--               class="toggle toggle-primary" />-->
+<!--      </label>-->
+<!--    </div>-->
+
+    <div class="form-control" *ngIf="materialService.getState() === State.create">
       <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
-        <span class="label-text">Material Inativo</span>
+        <span class="label-text">Cadastrar em todos os almoxarifados</span>
         <input type="checkbox"
                name="inactive"
-               [(ngModel)]="material.inactive"
+               [(ngModel)]="material.allDeposits"
                class="toggle toggle-primary" />
       </label>
     </div>
@@ -215,7 +226,7 @@
 </form>
 
 <div class="toast toast-end" *ngIf="serverMessage">
-  <div class="alert alert-error">
+  <div class="alert {{alertType}}">
     <span>{{ serverMessage }}</span>
   </div>
 </div>

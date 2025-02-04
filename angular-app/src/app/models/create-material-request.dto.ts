@@ -9,8 +9,9 @@ export interface CreateMaterialRequest {
 
   buyUnit: string;
   requestUnit: string;
-  materialType: number;
+  materialType: string;
   inactive: boolean;
-  company: number;
-  deposit: number;
+  allDeposits: boolean;
+  company: string;
+  deposit: string;
 }

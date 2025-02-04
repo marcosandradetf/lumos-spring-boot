@@ -22,9 +22,10 @@ export class MaterialService {
   public pages: number[] = [];
   materialSubject: BehaviorSubject<CreateMaterialRequest> = new BehaviorSubject<CreateMaterialRequest>({
     buyUnit: '',
-    company: 0,
-    deposit: 0,
+    company: '',
+    deposit: '',
     inactive: false,
+    allDeposits: false,
     materialBrand: '',
 
     materialPower: '',
@@ -32,7 +33,7 @@ export class MaterialService {
     materialLength: '',
 
     materialName: '',
-    materialType: 0,
+    materialType: '',
     requestUnit: '',
   });
   public material$: Observable<CreateMaterialRequest> = this.materialSubject.asObservable();
@@ -69,27 +70,32 @@ export class MaterialService {
       });
   }
 
-  create(material: CreateMaterialRequest): Observable<CreateMaterialRequest> {
-    return this.http.post<CreateMaterialRequest>(`${this.apiUrl}`, material);
+  create(material: CreateMaterialRequest): Observable<MaterialResponse[]> {
+    return this.http.post<MaterialResponse[]>(`${this.apiUrl}`, material);
   }
 
   // Atualiza a lista de materiais local
-  addMaterialFetch(material: any): void {
-    const currentMaterials = this.materialsSubject.value;
-    this.materialsSubject.next([...currentMaterials, material]);
+  addMaterialFetch(materials: MaterialResponse[]): void {
+    materials.forEach(material => {
+      const currentMaterials = this.materialsSubject.value;
+      this.materialsSubject.next([...currentMaterials, material]);
+    });
   }
 
-  updateMaterial(material: CreateMaterialRequest): Observable<MaterialResponse> {
-    return this.http.put<MaterialResponse>(`${this.apiUrl}/${this.materialId}`, material);
+  updateMaterial(material: CreateMaterialRequest): Observable<MaterialResponse[]> {
+    return this.http.put<MaterialResponse[]>(`${this.apiUrl}/${this.materialId}`, material);
   }
 
   // Atualizar materiais localmente
-  updateMaterialFetch(updatedMaterial: MaterialResponse): void {
+  updateMaterialFetch(materialsResponse: MaterialResponse[]): void {
     const currentMaterials = this.materialsSubject.value;
-    const updatedMaterials = currentMaterials.map(material =>
-      material.idMaterial === updatedMaterial.idMaterial ? updatedMaterial : material
-    );
-    this.materialsSubject.next(updatedMaterials);
+    materialsResponse.forEach(updatedMaterial => {
+      const updatedMaterials = currentMaterials.map(material =>
+        material.idMaterial === updatedMaterial.idMaterial ? updatedMaterial : material
+      );
+      this.materialsSubject.next(updatedMaterials);
+    });
+
   }
 
   deleteMaterial(id: number): Observable<any> {
@@ -132,17 +138,17 @@ export class MaterialService {
   setMaterial(_material: MaterialResponse) {
     const material: CreateMaterialRequest = {
       buyUnit: _material.buyUnit,
-      company: 0,
-      deposit: 0,
+      company: '',
+      deposit: '',
       inactive: _material.inactive,
-      materialBrand: _material.materialBrand,
+      allDeposits: false,
 
+      materialBrand: _material.materialBrand,
       materialPower: _material.materialPower,
       materialAmps: _material.materialAmps,
       materialLength: _material.materialLength,
-
       materialName: _material.materialName,
-      materialType: 0,
+      materialType: '',
       requestUnit: _material.requestUnit
     }
     this.materialId = _material.idMaterial;
@@ -168,9 +174,10 @@ export class MaterialService {
   resetObject() {
     const material: CreateMaterialRequest = {
       buyUnit: '',
-      company: 0,
-      deposit: 0,
+      company: '',
+      deposit: '',
       inactive: false,
+      allDeposits: false,
       materialBrand: '',
 
       materialPower: '',
@@ -178,7 +185,7 @@ export class MaterialService {
       materialLength: '',
 
       materialName: '',
-      materialType: 0,
+      materialType: '',
       requestUnit: '',
     };
     this.materialSubject.next(material);// Reseta a instância do material
@@ -202,7 +209,7 @@ export class MaterialService {
       companyName: '',
       depositName: '',
     }[]
-  ){
+  ) {
     return this.http.post(this.goEndpoint + "/import", materials);
   }
 }

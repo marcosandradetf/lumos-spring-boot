@@ -35,9 +35,10 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   deposits: Deposit[] = [];
   material: CreateMaterialRequest = {
     buyUnit: '',
-    company: 0,
-    deposit: 0,
+    company: '',
+    deposit: '',
     inactive: false,
+    allDeposits: false,
     materialBrand: '',
 
     materialPower: '',
@@ -45,7 +46,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     materialLength: '',
 
     materialName: '',
-    materialType: 0,
+    materialType: '',
     requestUnit: '',
   };
 
@@ -113,8 +114,9 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     this.filterTypes = this.types.filter(type => type.group.idGroup === parseInt(selectedGroupId.toString(), 10));
   }
 
-  private showMessage(message: string, timeout = 3000) {
+  private showMessage(message: string, error: boolean, timeout = 3000) {
     this.serverMessage = message;
+    error ? this.alertType = 'alert-error' : this.alertType = 'alert-success';
     setTimeout(() => {
       this.serverMessage = null;
     }, timeout);
@@ -129,10 +131,10 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
             this.materialService.addMaterialFetch(res);
             console.log(res);
             this.resetForm(form);
-            this.showMessage("Material cadastrado com sucesso!");
+            this.showMessage("Cadastro realizado com sucesso!", false);
           }),
           catchError(error => {
-            let errorMessage = "Erro ao cadastrar material.";
+            let errorMessage = "Erro durante o cadastro.";
 
             if (error.status === 500) {
               errorMessage = "Erro interno no servidor. Por favor, tente novamente mais tarde.";
@@ -141,7 +143,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
             } else if (error.message) {
               errorMessage = error.message;
             }
-            this.showMessage(errorMessage);
+            this.showMessage(errorMessage, false);
             return of(null);
           })
         ).subscribe(); // Apenas se inscreve sem precisar passar funções de sucesso e erro
@@ -150,7 +152,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
           tap(res => {
             this.materialService.updateMaterialFetch(res);
             this.resetForm(form);
-            this.showMessage("Material atualizado com sucesso!");
+            this.showMessage("Estoque atualizado com sucesso!", false);
           }),
           catchError(error => {
             let errorMessage = "Erro ao cadastrar material.";
@@ -162,7 +164,8 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
             } else if (error.message) {
               errorMessage = error.message;
             }
-            this.showMessage(errorMessage);
+            this.showMessage(errorMessage, true);
+
             return of(null);
           })
         ).subscribe();
@@ -183,4 +186,5 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   }
 
   protected readonly State = State;
+  alertType: string = '';
 }
