@@ -1,7 +1,9 @@
 <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
       class=" h-auto flex flex-col">
-  <h2 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700 pb-2">{{materialService.getState() === State.create ? "Cadastrar novo Material" : "Atualizar Material" }}</h2>
-  <h4 class="mt-3 mb-3 poppins-light select-none text-neutral-700">Somente os campos com asterisco(*) possuem preenchimento obrigatório</h4>
+  <h2
+    class="border-b border-neutral-300 poppins-regular select-none text-neutral-700 pb-2">{{ materialService.getState() === State.create ? "Cadastrar novo Material" : "Atualizar Material" }}</h2>
+  <h4 class="mt-3 mb-3 poppins-light select-none text-neutral-700">Somente os campos com asterisco(*) possuem
+    preenchimento obrigatório</h4>
 
   <div class="flex space-x-4 flex-wrap text-neutral-700">
     <label class="form-control w-full max-w-xs ml-4">
@@ -13,20 +15,20 @@
         name="group"
         required
         (change)="onGroupChange($any($event.target).value)">
-          <option value="" disabled selected>Selecione um Grupo</option>
+        <option value="" disabled selected>Selecione um Grupo</option>
         @for (group of groups; track group.idGroup) {
-          <option [value]="group.idGroup">{{group.groupName}}</option>
+          <option [value]="group.idGroup">{{ group.groupName }}</option>
         }
       </select>
-        @if (!selectGroup && formSubmitted) {
-          <small class="text-red-600">Preenchimento obrigatório.</small>
-        }
+      @if (!selectGroup && formSubmitted) {
+        <small class="text-red-600">Preenchimento obrigatório.</small>
+      }
     </label>
 
     <div
       [ngClass]="{'tooltip': !selectGroup, 'tooltip-bottom': !selectGroup}"
       [attr.data-tip]="selectGroup ? '' : 'Selecione o Grupo Primeiro'"
-      class="tooltip tooltip-bottom form-control w-full max-w-xs" >
+      class="tooltip tooltip-bottom form-control w-full max-w-xs">
       <label class="form-control w-full max-w-xs">
         <div class="label">
           <span class="label-text">Tipo*</span>
@@ -39,7 +41,7 @@
           #tipoMaterialModel="ngModel">
           <option disabled selected>Selecione um Tipo</option>
           @for (type of filterTypes; track type.idType) {
-            <option [value]="type.idType">{{type.typeName}}</option>
+            <option [value]="type.idType">{{ type.typeName }}</option>
           }
         </select>
         <div *ngIf="tipoMaterialModel.invalid && formSubmitted">
@@ -58,7 +60,7 @@
              required
              minlength="3"
              #firstNameModel="ngModel"
-             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
       <div *ngIf="firstNameModel.invalid && formSubmitted">
         <small *ngIf="firstNameModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
         <small *ngIf="firstNameModel.errors?.['minlength']" class="text-orange-600">
@@ -76,7 +78,7 @@
              [(ngModel)]="material.materialBrand"
              minlength="3"
              #marcaMaterialModel="ngModel"
-             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
       <div *ngIf="marcaMaterialModel.invalid && formSubmitted">
         <small *ngIf="marcaMaterialModel.errors?.['minlength']" class="text-orange-600">
           Marca do material requer no mínimo 3 caracteres.
@@ -92,7 +94,7 @@
       <input type="text"
              name="materialPower"
              [(ngModel)]="material.materialPower"
-             placeholder="Ex.: 1000W / 130KW" class="input input-bordered w-full max-w-xs" />
+             placeholder="Ex.: 1000W / 130KW" class="input input-bordered w-full max-w-xs"/>
     </label>
 
     <label class="form-control w-full max-w-xs">
@@ -102,7 +104,7 @@
       <input type="text"
              name="materialLength"
              [(ngModel)]="material.materialAmps"
-             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs" />
+             placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
     </label>
     <label class="form-control w-full max-w-xs">
       <div class="label">
@@ -112,7 +114,7 @@
              name="materialLength"
              [(ngModel)]="material.materialLength"
              minlength="3"
-             placeholder="Ex. 0,75X25,4X1000mm" class="input input-bordered w-full max-w-xs" />
+             placeholder="Ex. 0,75X25,4X1000mm" class="input input-bordered w-full max-w-xs"/>
     </label>
 
     <label class="form-control w-full max-w-xs">
@@ -126,7 +128,7 @@
         required
         #unidadeCompraModel="ngModel">
         @for (unidade of units; track unidade.Value) {
-          <option [value]="unidade.Value">{{unidade.Value}}</option>
+          <option [value]="unidade.Value">{{ unidade.Value }}</option>
         }
       </select>
       @if (unidadeCompraModel.invalid && formSubmitted) {
@@ -147,7 +149,7 @@
         required
         #unidRequisicaoModel="ngModel">
         @for (unidade of units; track unidade.Value) {
-          <option [value]="unidade.Value">{{unidade.Value}}</option>
+          <option [value]="unidade.Value">{{ unidade.Value }}</option>
         }
       </select>
       @if (unidRequisicaoModel.invalid && formSubmitted) {
@@ -168,7 +170,7 @@
         required
         #empresaModel="ngModel">
         @for (empresa of companies; track empresa.idCompany) {
-          <option [value]="empresa.idCompany">{{empresa.companyName}}</option>
+          <option [value]="empresa.idCompany">{{ empresa.companyName }}</option>
         }
       </select>
       <div *ngIf="empresaModel.invalid && formSubmitted">
@@ -188,7 +190,7 @@
         [disabled]="material.allDeposits"
         #almoxarifadoModel="ngModel">
         @for (almoxarifado of deposits; track almoxarifado.idDeposit) {
-          <option [value]="almoxarifado.idDeposit">{{almoxarifado.depositName}}</option>
+          <option [value]="almoxarifado.idDeposit">{{ almoxarifado.depositName }}</option>
         }
       </select>
       <div *ngIf="almoxarifadoModel.invalid && formSubmitted">
@@ -196,15 +198,15 @@
       </div>
     </label>
 
-<!--    <div class="form-control hidden">-->
-<!--      <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">-->
-<!--        <span class="label-text">Material Inativo</span>-->
-<!--        <input disabled type="checkbox"-->
-<!--               name="inactive"-->
-<!--               [(ngModel)]="material.inactive"-->
-<!--               class="toggle toggle-primary" />-->
-<!--      </label>-->
-<!--    </div>-->
+    <div class="form-control" *ngIf="materialService.getState() === State.update">
+      <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
+        <span class="label-text">Material Inativo</span>
+        <input type="checkbox"
+               name="inactive"
+               [(ngModel)]="material.inactive"
+               class="toggle toggle-primary"/>
+      </label>
+    </div>
 
     <div class="form-control" *ngIf="materialService.getState() === State.create">
       <label class="label cursor-pointer flex flex-col justify-between h-full space-y-2">
@@ -212,7 +214,7 @@
         <input type="checkbox"
                name="inactive"
                [(ngModel)]="material.allDeposits"
-               class="toggle toggle-primary" />
+               class="toggle toggle-primary"/>
       </label>
     </div>
 
