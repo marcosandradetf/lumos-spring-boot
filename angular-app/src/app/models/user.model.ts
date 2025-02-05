@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class User {
+  public uuid!: string;
   public username!: string;
   public accessToken!: string;
   public birthDate!: Date; // Data de nascimento do usuário
@@ -17,7 +18,8 @@ export class User {
   constructor() {
   }
 
-  initialize(username: string, accessToken: string, roles: string[]) {
+  initialize(uuid:string, username: string, accessToken: string, roles: string[]) {
+    this.uuid = uuid;
     this.username = username;
     this.accessToken = accessToken;
     this.birthDate = new Date();

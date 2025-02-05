@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.user.dto.CreateUserDto;
+import com.lumos.lumosspring.user.dto.PasswordDTO;
 import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import jakarta.transaction.Transactional;
@@ -32,6 +33,11 @@ public class UserController {
         return userService.findAll();
     }
 
+    @GetMapping("/get-user/{uuid}")
+    public ResponseEntity<UserResponse> find(@PathVariable String uuid) {
+        return userService.find(uuid);
+    }
+
     @GetMapping("/get-roles")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public List<Role> findAllRoles() {
@@ -42,6 +48,11 @@ public class UserController {
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> resetPassword(@PathVariable String userId) {
         return userService.resetPassword(userId);
+    }
+
+    @PostMapping("/{userId}/set-password")
+    public ResponseEntity<?> setPassword(@PathVariable String userId, @RequestBody PasswordDTO dto) {
+        return userService.setPassword(userId, dto);
     }
 
     @PostMapping("update-users")

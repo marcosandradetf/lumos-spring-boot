@@ -5,6 +5,7 @@ import {Router} from '@angular/router';
 import {User} from '../../models/user.model';
 import {routes} from '../../app.routes';
 import {environment} from '../../../environments/environment';
+import {jwtDecode} from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +22,7 @@ export class AuthService {
         const userData = JSON.parse(storedUser);
         const roles: string[] = userData.roles;
 
-        this.user.initialize(userData.username, userData.accessToken, roles); // Converte para uma instância de User
+        this.user.initialize(userData.uuid, userData.username, userData.accessToken, roles); // Converte para uma instância de User
       }
       this.initializeAuthStatus();
     }
@@ -47,7 +48,9 @@ export class AuthService {
   login(username: string, password: string) { // Retorna um Observable
     return this.http.post<any>(`${this.apiUrl}/login`, {username, password}, {withCredentials: true}).pipe(
       tap(response => {
-        this.user.initialize(username, response.accessToken, response.roles.split(' '));
+        const decodedToken = jwtDecode(response.accessToken);
+        const userId = decodedToken.sub ? decodedToken.sub : '';  // Aqui você tem o ID do usuário
+        this.user.initialize(userId, username, response.accessToken, response.roles.split(' '));
         if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
         this.isLoggedInSubject.next(true);
       }),

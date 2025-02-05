@@ -64,11 +64,20 @@ public class StockMovement {
 
     // método para atualizar estoque do material
     public void materialUpdate() {
-        int stockQuantity = this.inputQuantity * this.quantityPackage;
+        if (this.inputQuantity <= 0 || this.quantityPackage <= 0) {
+            throw new IllegalArgumentException("Quantidade e embalagem devem ser maiores que zero.");
+        }
+
+        int stockQuantity = switch (this.buyUnit) {
+            case "UN", "PÇ", "PAR", "KIT" -> this.inputQuantity; // Não multiplica
+            default -> this.inputQuantity * this.quantityPackage; // Multiplica normalmente
+        };
+
         this.material.addStockQuantity(stockQuantity);
         this.material.addStockAvailable(stockQuantity);
         this.material.setCostPrice(this.pricePerItem);
     }
+
 
 
     public Long getStockMovementId() {

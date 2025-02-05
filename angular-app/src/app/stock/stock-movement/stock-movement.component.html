@@ -1,5 +1,5 @@
 <div class="flex mt-[4rem] h-fit pl-2">
-<!--  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>-->
+  <!--  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>-->
   <div class="w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
     <div class="breadcrumbs text-sm py-5">
       <ul class="select-none">
@@ -32,10 +32,12 @@
               <span class="material-icons text-indigo-400">filter_alt</span>
               <span class="text-sm poppins-regular">Almoxarifados</span>
             </div>
-            <table tabindex="0" class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+            <table tabindex="0"
+                   class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
               <tr *ngFor="let deposit of deposits">
                 <td>
-                  <input type="checkbox" class="checkbox" (change)="filterDeposit(deposit.idDeposit.toString(), $event)" />
+                  <input type="checkbox" class="checkbox"
+                         (change)="filterDeposit(deposit.idDeposit.toString(), $event)"/>
                 </td>
                 <td class="poppintypeNames-light select-none lower-text">{{ deposit.depositName }}</td>
               </tr>
@@ -43,8 +45,6 @@
           </div>
 
         </div>
-
-
 
 
         <tr class="bg-indigo-700 text-white" header>
@@ -110,8 +110,8 @@
               name="materialId{{i}}"
               type="text"></td>
             <td>
-              @if(openMovementModal) {
-                {{ getDescription(movement.materialId)}}
+              @if (openMovementModal) {
+                {{ getDescription(movement.materialId) }}
               }
             </td>
 
@@ -148,16 +148,15 @@
               }
             </td>
             <td
-              [ngClass]="movement.buyUnit !== '' && movement.buyUnit !== 'UN' ? 'tooltip tooltip-right'
-                  : ''"
-              data-tip="Informe a quantidade de itens por Unidade. Exemplo: 5 Caixas, 5 Metros, 5 Peças e etc.">
+              [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
+              [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
               <input
                 required
                 type="text"
                 (input)="this.utils.formatNumber($event)"
                 [(ngModel)]="movement.quantityPackage"
                 [disabled]="movement.buyUnit === ''"
-                [readOnly]="movement.quantityPackage === '1' && movement.buyUnit.toLowerCase() === 'un'"
+                [readOnly]="!shouldShowTooltip(movement.buyUnit)"
                 name="quantityPackage{{i}}"
                 placeholder="Digite aqui"
                 class="input input-bordered input-xs w-24"
@@ -212,7 +211,8 @@
                       classButton="btn bg-neutral-300 hover:bg-orange-500 rounded-none w-full"
                       textColor="text-black"></app-button>
           <app-button (click)="closeMovementModal()" title="Cancelar" class="w-full"
-                      classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
+                      classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
+                      textColor="text-black"></app-button>
           <app-button typeButton="submit" title="Salvar Movimentação" class="w-full"
                       classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
         </div>
@@ -310,7 +310,8 @@
 
         <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
           <app-button (click)="closeSupplierModal()" title="Cancelar" class="w-full"
-                      classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full" textColor="text-black"></app-button>
+                      classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
+                      textColor="text-black"></app-button>
           <app-button typeButton="submit" title="Salvar Fornecedor" class="w-full"
                       classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
         </div>

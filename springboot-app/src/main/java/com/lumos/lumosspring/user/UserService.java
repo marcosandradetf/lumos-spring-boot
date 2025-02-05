@@ -3,6 +3,7 @@ package com.lumos.lumosspring.user;
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import com.lumos.lumosspring.notification.EmailService;
 import com.lumos.lumosspring.user.dto.CreateUserDto;
+import com.lumos.lumosspring.user.dto.PasswordDTO;
 import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import com.lumos.lumosspring.util.DefaultResponse;
@@ -55,6 +56,31 @@ public class UserService {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(userResponses);
+    }
+
+    public ResponseEntity<UserResponse> find(String uuid) {
+        var user = userRepository.findByIdUser(UUID.fromString(uuid));
+        if (user.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        LocalDate dateOfBirth = user.get().getDateOfBirth();
+        UserResponse userResponse = new UserResponse(
+                user.get().getIdUser().toString(),
+                user.get().getUsername(),
+                user.get().getName(),
+                user.get().getLastName(),
+                user.get().getEmail(),
+                user.get().getRoles().stream()
+                        .map(Role::getRoleName) // Pega apenas o nome de cada Role
+                        .collect(Collectors.toList()), // Coleta como uma lista
+                dateOfBirth != null ? dateOfBirth.getYear() : null,
+                dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
+                dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
+                user.get().getStatus()
+        );
+
+
+        return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
     public ResponseEntity<?> resetPassword(String userId) {
@@ -123,7 +149,7 @@ public class UserService {
         return ResponseEntity.ok().build();
     }
 
-    private ResponseEntity<?> updatePassword(String userId, String code, String newPassword) {
+    private ResponseEntity<?> recoveryPassword(String userId, String code, String newPassword) {
         var user = userRepository.findByIdUser(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
@@ -193,7 +219,6 @@ public class UserService {
                     );
                 }
             }
-
 
 
             Set<Role> userRoles = new HashSet<>();
@@ -298,4 +323,20 @@ public class UserService {
     }
 
 
+    public ResponseEntity<?> setPassword(String userId, PasswordDTO dto) {
+        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado."));
+        }
+
+        if (!dto.password().equals(dto.passwordConfirm())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("As senhas não conferem."));
+        }
+
+        String newPasswordHash = passwordEncoder.encode(dto.password());
+        user.get().setPassword(newPasswordHash);
+        userRepository.save(user.get());
+
+        return ResponseEntity.ok().body(new DefaultResponse("Senha atualizada com sucesso"));
+    }
 }

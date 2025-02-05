@@ -32,6 +32,23 @@ export class UserService {
     }[]>(`${this.endpoint}/get-users`);
   }
 
+  public getUser(uuid: string) {
+    return this.http.get<{
+      userId: string,
+      username: string,
+      name: string,
+      lastname: string,
+      email: string,
+      dateOfBirth: string,
+      day: string;
+      month: string;
+      year: string;
+      role: string[],
+      status: boolean,
+      sel: boolean
+    }>(`${this.endpoint}/get-user/${uuid}`);
+  }
+
 
   public resetPassword(userId: string) {
     return this.http.post(`${this.endpoint}/${userId}/reset-password`, {});
@@ -100,5 +117,9 @@ export class UserService {
       status: boolean
       sel: boolean
     }[]>(`${this.endpoint}/insert-users`, user);
+  }
+
+  setPassword(uuid: string, password: {oldPassword: string; password: string; passwordConfirm: string}) {
+    return this.http.post<{ message: string }>(`${this.endpoint}/${uuid}/set-password`, password);
   }
 }

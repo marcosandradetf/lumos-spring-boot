@@ -1,47 +1,36 @@
 import {Component} from '@angular/core';
-import {SidebarComponent} from "../../shared/components/sidebar/sidebar.component";
 import {Router} from '@angular/router';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {NgForOf, NgIf} from '@angular/common';
 import {UserService} from './user-service.service';
 import {catchError, tap, throwError} from 'rxjs';
-import {HttpErrorResponse} from '@angular/common/http';
 import {UtilsService} from '../../core/service/utils.service';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {AuthService} from '../../core/auth/auth.service';
-import {NoAccessComponent} from '../../shared/components/no-access/no-access.component';
 import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-user',
   standalone: true,
   imports: [
-    SidebarComponent,
     TableComponent,
     ButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     NgForOf,
-    DatePipe,
     NgIf,
     AlertMessageComponent,
-    ModalComponent,
-    NoAccessComponent
+    ModalComponent
   ],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
 })
 
 export class UserComponent {
-  sidebarLinks = [
-    {title: 'Início', path: '/configuracoes/dashboard', id: 'opt1'},
-    {title: 'Usuários', path: '/configuracoes/usuarios', id: 'opt2'},
-    {title: 'Equipes', path: '/configuracoes/equipes', id: 'opt3'},
-    {title: 'Minha Empresa', path: '/configuracoes/empresa', id: 'opt4'},
-  ];
+
 
   change: boolean = false;
   users: {

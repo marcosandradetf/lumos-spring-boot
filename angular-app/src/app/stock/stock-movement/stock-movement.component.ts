@@ -3,7 +3,7 @@ import {catchError, firstValueFrom, map, Observable, of, tap, throwError} from '
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {Title} from '@angular/platform-browser';
-import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {PaginationComponent} from '../../shared/components/pagination/pagination.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
@@ -21,7 +21,6 @@ import {SupplierDTO} from '../../models/supplier.dto';
   selector: 'app-stock-movement',
   standalone: true,
   imports: [
-    SidebarComponent,
     TableComponent,
     PaginationComponent,
     ButtonComponent,
@@ -37,20 +36,29 @@ import {SupplierDTO} from '../../models/supplier.dto';
 })
 export class StockMovementComponent {
   sidebarLinks = [
-    { title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1' },
-    { title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2' },
-    { title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3' },
-    { title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4' },
-    { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
+    {title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1'},
+    {title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2'},
+    {title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3'},
+    {title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4'},
+    {title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5'}
   ];
 
   units: any[] = [
-    { Value: "CX" },
-    { Value: "PÇ" },
-    { Value: "UN" },
-    { Value: "M" },
-    { Value: "CM" }
+    {Value: "CX"},   // Caixa
+    {Value: "Rolo"}, // Rolo de cabo ou fita
+    {Value: "PÇ"},   // Peça
+    {Value: "UN"},   // Unidade
+    {Value: "M"},    // Metro
+    {Value: "CM"},   // Centímetro
+    {Value: "KG"},   // Quilograma
+    {Value: "T"},    // Tonelada
+    {Value: "L"},    // Litro
+    {Value: "ML"},   // Mililitro
+    {Value: "KV"},   // Quilovolt (para equipamentos elétricos)
+    {Value: "KIT"},  // Conjunto de materiais
+    {Value: "PAR"},  // Par (ex: lâmpadas)
   ];
+
 
   deposits: Deposit[] = [];
 
@@ -197,7 +205,7 @@ export class StockMovementComponent {
 
   clearSelection(): void {
     this.materials.forEach((material: MaterialResponse) => {
-      if(material.selected) {
+      if (material.selected) {
         material.selected = false;
       }
     });
@@ -208,7 +216,6 @@ export class StockMovementComponent {
   closeSupplierModal() {
     this.openSupplierModal = false;
   }
-
 
 
   submitDataSupplier(form: any) {
@@ -232,7 +239,7 @@ export class StockMovementComponent {
         this.alertType = 'alert-error';
         this.formSubmitted = false;
         return throwError(() => err);
-    })
+      })
     ).subscribe();
 
   }
@@ -254,12 +261,10 @@ export class StockMovementComponent {
   }
 
 
-
   getDescription(id: number): string {
     let material = this.selectedMaterials.find(m => m.idMaterial === id);
     return material ? material.materialName : "";
   }
-
 
 
   submitFormMovement(form: NgForm) {
@@ -294,13 +299,31 @@ export class StockMovementComponent {
 
   updateQuantityPackage() {
     this.sendMovement.forEach(movement => {
-      if (movement.buyUnit.toLowerCase() === 'un') {
-        movement.quantityPackage = '1';
+      switch (movement.buyUnit.toUpperCase()) {
+        case 'UN':
+          movement.quantityPackage = '1';
+          break;
+        case 'PÇ':
+          movement.quantityPackage = '1';
+          break;
+        case 'PAR':
+          movement.quantityPackage = '2';
+          break;
+        case 'KIT':
+          movement.quantityPackage = '1';
+          break;
+        default:
+          break;
       }
     });
   }
 
-  filterDeposit(depositId: string, event: Event) {
+  filterDeposit(depositId
+                :
+                string, event
+                :
+                Event
+  ) {
     const isChecked = (event.target as HTMLInputElement).checked;
 
     if (isChecked) {
@@ -317,6 +340,56 @@ export class StockMovementComponent {
       }
 
     }
+  }
+
+
+  getTooltipText(buyUnit
+                 :
+                 string
+  ):
+    string {
+    switch (buyUnit) {
+      case 'CX':
+        return 'Informe a quantidade de itens por Caixa. Exemplo: 5 itens por caixa.';
+      case 'Rolo':
+        return 'Informe o tamanho por Rolo em Metro. Exemplo: 5 metros por rolo.';
+      case 'PÇ':
+        return 'Informe a quantidade de Peças. Exemplo: 10 peças.';
+      case 'UN':
+        return 'Unidade individual. Geralmente não precisa de multiplicação.';
+      case 'M':
+        return 'Informe o comprimento em Metros. Exemplo: 10 metros.';
+      case 'CM':
+        return 'Informe o comprimento em Centímetros. Exemplo: 100 cm.';
+      case 'KG':
+        return 'Informe o peso em Quilogramas. Exemplo: 2 kg.';
+      case 'T':
+        return 'Informe o peso em Toneladas. Exemplo: 1 tonelada.';
+      case 'L':
+        return 'Informe o volume em Litros. Exemplo: 5 litros.';
+      case 'ML':
+        return 'Informe o volume em Mililitros. Exemplo: 250 ml.';
+      case 'KV':
+        return 'Informe a capacidade em Quilovolts. Exemplo: 13.8 kV.';
+      case 'KIT':
+        return 'Informe a quantidade de Kits. Exemplo: 3 kits.';
+      case 'PAR':
+        return 'Informe a quantidade de Pares. Exemplo: 2 pares de lâmpadas.';
+      case 'Balde':
+        return 'Informe a quantidade de Baldes. Exemplo: 1 balde de cimento.';
+      default:
+        return '';
+    }
+  }
+
+
+  shouldShowTooltip(buyUnit
+                    :
+                    string
+  ):
+    boolean | string {
+    const unitsWithoutTooltip = ["UN", "PÇ", "PAR", "KIT"];
+    return buyUnit && !unitsWithoutTooltip.includes(buyUnit.toUpperCase());
   }
 
 

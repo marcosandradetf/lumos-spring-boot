@@ -112,6 +112,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: ['ADMIN', 'ANALISTA'], path: 'configuracoes' },
   },
+  {
+    path: 'configuracoes/conta',
+    loadComponent: () => import('./manage/account/account.component').then(a => a.AccountComponent),
+    canActivate: [AuthGuard],
+    data: { role: [], path: 'conta' },
+  },
   // end
 
   // start executions path
