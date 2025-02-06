@@ -54,26 +54,26 @@ public class EmailService {
 
     public void sendNewPasswordForEmail(String toNome, String toEmail, String password) {
         String body = String.format("Olá, %s,<br><br>" +
-                        "Sua senha foi resetada com sucesso pelo administrador no sistema Thryion. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
+                        "Sua senha foi resetada com sucesso pelo administrador no sistema Lumos. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
                         "<b>Nova Senha:</b> %s<br><br>" +
                         "Importante: Por questões de segurança, recomendamos que você altere sua senha assim que fizer login no sistema. Você pode fazer isso acessando a seção \"Alterar Senha\" nas configurações do seu usuário.<br><br>" +
                         "Se você tiver qualquer dúvida ou precisar de assistência, nossa equipe de suporte está à disposição para ajudá-lo.<br><br>" +
                         "Atenciosamente,<br>" +
-                        "Equipe Thryion System<br>"
+                        "Equipe Thryon System<br>"
                 ,toNome, password);
-        sendSystemMailConfig(toEmail, body, "Thryion System - Nova Senha");
+        sendSystemMailConfig(toEmail, body, "Lumos Thryon System - Nova Senha");
     }
 
     public void sendPasswordForEmail(String toNome, String toEmail, String password) {
         String body = String.format("Olá, %s,<br><br>" +
-                "Sua conta foi criada com sucesso no sistema Thryion. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
+                "Sua conta foi criada com sucesso no sistema Lumos. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
                 "<b>Senha:</b> %s<br><br>" +
                 "Importante: Por questões de segurança, recomendamos que você altere sua senha assim que fizer login no sistema. Você pode fazer isso acessando a seção \"Alterar Senha\" nas configurações do seu usuário.<br><br>" +
                 "Se você tiver qualquer dúvida ou precisar de assistência, nossa equipe de suporte está à disposição para ajudá-lo.<br><br>" +
                 "Atenciosamente,<br>" +
-                "Equipe Sistema Thryion<br>"
+                "Equipe Sistema Thryon<br>"
                 ,toNome, password);
-        sendSystemMailConfig(toEmail, body, "Thryion System - Boas Vindas");
+        sendSystemMailConfig(toEmail, body, "Lumos - Thryon System");
     }
 
     private void sendSystemMailConfig(String toEmail, String body, String subject) {
@@ -81,9 +81,11 @@ public class EmailService {
             JavaMailSender mailSender = systemMailConfig.getJavaMailSender();
             var message = mailSender.createMimeMessage();
             var helper = new MimeMessageHelper(message, true);
+            helper.setFrom("no-reply@thryon.com.br");
             helper.setTo(toEmail);
             helper.setSubject(subject);
-            helper.setText(body, true); // `true` permite HTML no corpo do e-mail.
+            helper.setText(body, true);
+            message.setContent(body, "text/html; charset=UTF-8"); // `true` permite HTML no corpo do e-mail.
             mailSender.send(message);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao enviar e-mails", e);

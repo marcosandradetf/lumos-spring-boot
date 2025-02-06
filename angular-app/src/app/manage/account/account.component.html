@@ -62,7 +62,7 @@
         </div>
 
         <div
-          (click)="openConfirmationModal = true"
+          (click)="user.username !== 'admin' ? openConfirmationModal = true : serverMessage = 'Não é possível alterar a senha do administrador'; alertType = 'alert-error'"
           class="cursor-pointer card bg-neutral text-neutral-content w-96 m-5 transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2">
           <div class="card-body">
             <div class="card-title flex justify-between">

@@ -151,6 +151,7 @@ export class AccountComponent {
         response => {
           this.alertType = 'alert-success';
           this.serverMessage = response.message;
+          this.openConfirmationModal = false;
         }
       ),
       catchError(err => {
