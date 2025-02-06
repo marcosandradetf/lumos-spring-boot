@@ -12,8 +12,6 @@ services:
       - ./nginx/log:/var/log/nginx
 #      - ./certbot/conf:/etc/letsencrypt
  #     - ./certbot/www:/var/www/certbot
-    networks:
-      - lumos-network
     restart: always
 
 #  certbot:
@@ -23,8 +21,6 @@ services:
    #   - ./certbot/conf:/etc/letsencrypt
     #  - ./certbot/www:/var/www/certbot
     #command: certonly --webroot -w /var/www/certbot --email marcostfandrade@gmail.com --agree-tos --no-eff-email -d spring.thryon.com.br -d fileserver.thryon.com.br -d gostock.thryon.com.br --force-renewal
-    #networks:
-     # - lumos-network
     #restart: on-failure
 
   springboot-app:
@@ -35,10 +31,12 @@ services:
       - "8080"
     environment:
       - SPRING_PROFILES_ACTIVE=production
-      - SMTP_ACCESS_KEY_ID=${SMTP_ACCESS_KEY_ID}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
-    networks:
-      - lumos-network
+      - DB_HOST=172.17.0.1
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
     restart: always
 
   go-server:
@@ -52,8 +50,11 @@ services:
       - shared-data:/mnt/nfs
     environment:
       - ENVIRONMENT=production
-    networks:
-      - lumos-network
+      - DB_HOST=172.17.0.1
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
     restart: always
 
   import-data:
@@ -65,8 +66,11 @@ services:
       - "8082"
     environment:
       - ENVIRONMENT=production
-    networks:
-      - lumos-network
+      - DB_HOST=172.17.0.1
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
     restart: always
 
   nfs-server:
@@ -76,13 +80,7 @@ services:
       - shared-data:/srv/nfs/exports
     environment:
       - SHARED_DIRECTORY=/srv/nfs/exports
-    networks:
-      - lumos-network
     restart: always
-
-networks:
-  lumos-network:
-    driver: bridge
 
 volumes:
   shared-data:
