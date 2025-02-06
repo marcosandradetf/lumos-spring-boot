@@ -2,12 +2,15 @@ package main
 
 import (
 	"database/sql"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"fmt"
 	"log"
 	"lumos-golang/api/middleware"
 	"lumos-golang/handlers"
 	"lumos-golang/internal/db"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -16,9 +19,24 @@ func main() {
 	middleware.ConfigureCORS(router)
 
 	router.Use(middleware.AuthMiddleware())
+	// Pega as variáveis de ambiente
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	// Verifica se alguma variável de ambiente está vazia
+	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
+		log.Fatal("ERRO: Alguma variável de ambiente do banco de dados está vazia")
+	}
+
+	// Monta a string de conexão
+	connStr := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		dbUser, dbPassword, dbHost, dbPort, dbName)
 
 	// Conecta ao banco de dados
-	connDb, err := sql.Open("postgres", "postgresql://postgres:4dejulho_@157.230.65.81:5432/001SCLCONST?sslmode=disable")
+	connDb, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal("Cannot connect to database:", err)
 	}
