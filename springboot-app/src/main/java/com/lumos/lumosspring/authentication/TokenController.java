@@ -45,6 +45,10 @@ public class TokenController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }
 
+        if (!user.get().getStatus()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possuí permissão de acesso."));
+        }
+
         var now = util.getDateTime();
         var expiresIn = 2592000L; // 30 Minutos
         var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)

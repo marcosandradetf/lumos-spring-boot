@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.user;
 
+import com.lumos.lumosspring.authentication.RefreshToken;
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import com.lumos.lumosspring.notification.EmailService;
 import com.lumos.lumosspring.user.dto.CreateUserDto;
@@ -168,7 +169,7 @@ public class UserService {
 
     public ResponseEntity<?> updateUsers(List<UpdateUserDto> dto) {
         boolean hasInvalidUser = dto.stream().noneMatch(UpdateUserDto::sel);
-        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        String regex = "^(?!.*\\.\\.)(?!.*\\.@)(?!.*@\\.)(?!.*@example)(?!.*@teste)(?!.*@email)\\b[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}\\b$";
         Pattern pattern = Pattern.compile(regex);
 
         if (hasInvalidUser) {
@@ -176,7 +177,7 @@ public class UserService {
                     .body(new ErrorResponse("Erro: Nenhum usuário selecionado foi enviado."));
         }
 
-        hasInvalidUser = dto.stream().anyMatch(u -> u.userId().isEmpty());
+        hasInvalidUser = dto.stream().anyMatch(u -> u.userId() == null || u.userId().isEmpty());
         if (hasInvalidUser) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("Erro: Foi enviado um ou mais usuário sem identificação."));
@@ -197,27 +198,18 @@ public class UserService {
 
             // Verifica se o username já existe no sistema
             Optional<User> userOptional = userRepository.findByUsername(u.username());
-            if (userOptional.isPresent()) {
-                // Verifica se o ID do usuário encontrado é igual ao fornecido
-                UUID existingUserId = userOptional.get().getIdUser();
-                if (!existingUserId.equals(UUID.fromString(u.userId()))) {
-                    // Se os IDs forem iguais, retorna a resposta de erro
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                            new ErrorResponse(String.format("Username %s já existente no sistema.", u.username()))
-                    );
-                }
+            if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        new ErrorResponse(String.format("Username %s já existente no sistema.", u.username()))
+                );
             }
 
             // Verifica se o e-mail já existe no banco de dados
             userOptional = userRepository.findByEmail(u.email());
-            if (userOptional.isPresent()) {
-                // Se o e-mail já existir, compara se ele é o mesmo
-                String existingEmail = userOptional.get().getEmail();
-                if (!existingEmail.equals(u.email())) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                            new ErrorResponse(String.format("Email %s já existente no sistema.", u.email()))
-                    );
-                }
+            if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        new ErrorResponse(String.format("Email %s já existente no sistema.", u.email()))
+                );
             }
 
 
@@ -236,6 +228,20 @@ public class UserService {
                 userRoles.add(role);
             }
 
+            Set<String> oldRoleNames = user.get().getRoles().stream()
+                    .map(Role::getRoleName)
+                    .collect(Collectors.toSet());
+
+            Set<String> newRoleNames = new HashSet<>(u.role());
+
+            if (!u.status() || !oldRoleNames.equals(newRoleNames)) {
+                refreshTokenRepository.findByUser(user.get())
+                        .ifPresent(tokens -> tokens.forEach(token -> {
+                            token.setRevoked(true);
+                            refreshTokenRepository.save(token);
+                        }));
+            }
+
             user.get().setUsername(u.username());
             user.get().setName(u.name());
             user.get().setLastName(u.lastname());
@@ -245,21 +251,14 @@ public class UserService {
             user.get().setStatus(u.status());
             userRepository.save(user.get());
 
-            var refreshToken = this.refreshTokenRepository.findByUser(user.get());
-            if (refreshToken.isEmpty()) {
-                continue;
-            }
-            refreshToken.get().setRevoked(true);
-            refreshTokenRepository.save(refreshToken.get());
         }
-
 
         return this.findAll();
     }
 
     public ResponseEntity<?> insertUsers(List<CreateUserDto> dto) {
         var hasInvalidUser = dto.stream().noneMatch(u -> u.userId().isEmpty());
-        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        String regex = "^(?!.*\\.\\.)(?!.*\\.@)(?!.*@\\.)(?!.*@example)(?!.*@teste)(?!.*@email)\\b[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}\\b$";
         Pattern pattern = Pattern.compile(regex);
 
         if (hasInvalidUser) {
