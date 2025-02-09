@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface TeamRepository extends JpaRepository<Team, Long> {
-    Optional<Team> findByUser(User user);
+    Optional<Team> findByDriver(User driver);
+    Optional<Team> findByElectrician(User electrician);
+    Optional<Team> findByTeamName(String teamName);
 }

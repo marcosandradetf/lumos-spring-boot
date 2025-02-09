@@ -1,5 +1,9 @@
 package com.lumos.lumosspring.team.dto;
 
 
-public record TeamResponse(long idTeam, String teamName, String userId, String username, String UFName, String cityName, String regionName) {
+import com.lumos.lumosspring.user.dto.UserResponse;
+
+import java.util.List;
+
+public record TeamResponse(long idTeam, String teamName, Driver driver, Electrician electrician, List<Member> othersMembers, String UFName, String cityName, String regionName, String plate) {
 }

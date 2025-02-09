@@ -1,5 +1,6 @@
-<div class="flex mt-[4rem] h-fit pl-2" #top>
-  <div class="w-[85vw] xl:w-[80rem] 2xl:w-[100rem] mb-5 ">
+<div class="flex mt-[3rem] h-fit" #top>
+  <div class="w-full h-full">
+
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
@@ -12,14 +13,15 @@
     </div>
 
 
-    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5 mt-5">
       <input type="radio" class="tab" aria-label="Usuários" (click)="router.navigate(['/configuracoes/usuarios'])"/>
       <input type="radio" class="tab" aria-label="Equipes" checked/>
       <input type="radio" class="tab" aria-label="Empresa" disabled
              (click)="router.navigate(['/configuracoes/empresa'])"/>
     </div>
 
-    <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)" class="shadow border p-2">
+    <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)"
+          class="border-b w-full pl-2 items-center justify-center">
       <div class="flex justify-evenly pb-5 items-center">
         @if (!add && !change) {
           <app-button title="Alterar Equipes" (click)="change = true">
@@ -50,15 +52,18 @@
         }
 
       </div>
-      <app-table class="min-h-96">
+      <app-table>
         <tr header>
           <th *ngIf="change"></th>
           <th hidden>Código</th>
-          <th>Nome</th>
-          <th>Usuário Responsável</th>
-          <th>Estado</th>
-          <th>Cidade</th>
-          <th>Região</th>
+          <th>Descrição</th>
+          <th class="max-w-52">Motorista</th>
+          <th class="max-w-52">Eletricista</th>
+          <th class="max-w-52">Integrantes Complementares</th>
+          <th>Placa do Veículo</th>
+          <th class="max-w-52">Estado</th>
+          <th class="max-w-52">Cidade</th>
+          <th class="min-w-52">Região</th>
         </tr>
 
         <tr *ngFor="let team of teams; let i = index" class="odd:bg-neutral-100" body>
@@ -92,25 +97,98 @@
               </div>
             </td>
             <td>
-              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.username }}</p>
+              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.driver.driverName }}</p>
               <div *ngIf="team.sel">
                 <select
                   class="select select-bordered select-xs"
-                  [(ngModel)]="team.userId"
+                  [(ngModel)]="team.driver.driverId"
                   [disabled]="!team.sel"
-                  name="userId{{i}}"
+                  name="driverId{{i}}"
                   required
-                  #userId="ngModel">
-                  <option value="" disabled>Selecione o usuário</option>
-                  @for (user of users; track user.userId) {
-                    <option [value]="user.userId" [selected]="user.userId === team.userId">{{ user.username }}</option>
+                  #driverId="ngModel">
+                  <option value="" disabled>Selecione o motorista</option>
+                  @for (driver of drivers; track driver.driverId) {
+                    <option [value]="driver.driverId"
+                            [selected]="driver.driverId === team.driver.driverId">{{ driver.driverName }}
+                    </option>
                   }
                 </select>
-                <div *ngIf="userId.invalid && (userId.touched || teamForm.submitted)">
-                  <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <div *ngIf="driverId.invalid && (driverId.touched || teamForm.submitted)">
+                  <small *ngIf="driverId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
                 </div>
               </div>
             </td>
+
+            <td>
+              <p *ngIf="!team.sel"
+                 class="input input-bordered input-xs input-disabled">{{ team.electrician.electricianName }}</p>
+              <div *ngIf="team.sel">
+                <select
+                  class="select select-bordered select-xs"
+                  [(ngModel)]="team.electrician.electricianId"
+                  [disabled]="!team.sel"
+                  name="electricianId{{i}}"
+                  required
+                  #electricianId="ngModel">
+                  <option value="" disabled>Selecione o Eletricista</option>
+                  @for (electrician of electricians; track electrician.electricianId) {
+                    <option [value]="electrician.electricianId"
+                            [selected]="electrician.electricianId === team.electrician.electricianId">{{ electrician.electricianName }}
+                    </option>
+                  }
+                </select>
+                <div *ngIf="electricianId.invalid && (electricianId.touched || teamForm.submitted)">
+                  <small *ngIf="electricianId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="dropdown dropdown-end flex-2 relative w-52" *ngIf="team.sel">
+                <div tabindex="0" role="button"
+                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
+                  <span
+                    class="text-xs poppins-regular pl-1 pr-10">  {{ (team.othersMembers?.length || 0) === 0 ? 'Selecionar membros' : team.othersMembers.length + ' selecionado(os)' }}</span>
+                </div>
+                <div
+                  tabindex="0"
+                  class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+                  <div class="max-h-40 overflow-y-auto p-2">
+                    <label *ngFor="let user of users"
+                           class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md">
+                      <input type="checkbox" [value]="user.userId" class="checkbox checkbox-xs"
+                             (change)="changeMember(i, user.userId)"
+                             [checked]="verifyMember(i, user.userId)">
+                      <span>{{ user.name + ' ' + user.lastname }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="dropdown dropdown-hover select select-disabled select-xs" *ngIf="!team.sel">
+                <div tabindex="0" role="button" class="flex items-center">{{team.othersMembers.length + ' colaboradores'}}</div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 m-2 shadow">
+                  @for (member of team.othersMembers; track member.memberName) {
+                    <li>{{ member.memberName }}</li>
+                  }
+                </ul>
+              </div>
+            </td>
+
+            <td>
+              <input required
+                     [disabled]="!team.sel"
+                     [(ngModel)]="team.plate"
+                     name="plate{{i}}"
+                     type="text"
+                     placeholder="Insira a placa do veículo"
+                     class="input input-bordered input-xs"
+                     #plate="ngModel"
+              >
+              <div *ngIf="plate.invalid && (plate.touched || teamForm.submitted)">
+                <small *ngIf="plate.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+              </div>
+            </td>
+
             <td>
               <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.UFName }}</p>
               <div *ngIf="team.sel">
@@ -159,10 +237,9 @@
             </td>
             <td>
               <div
-                [ngClass]="{'tooltip': !team.cityName, 'tooltip-bottom': !team.cityName}"
-                [attr.data-tip]="team.cityName ? '' : 'Selecione a Cidade'"
                 class="tooltip tooltip-bottom form-control w-full max-w-xs">
-                <p class="input input-xs input-disabled">{{ team.regionName }}</p>
+                <p
+                  class="input input-xs input-disabled">{{ team.regionName ? team.regionName : 'Selecione a Cidade' }}</p>
               </div>
             </td>
 
@@ -189,23 +266,98 @@
               </div>
             </td>
             <td>
-              <p *ngIf="team.idTeam" class="input input-bordered input-xs input-disabled">{{ team.username }}</p>
+              <p *ngIf="team.idTeam"
+                 class="input input-bordered input-xs input-disabled">{{ team.driver.driverName }}</p>
               <div *ngIf="!team.idTeam">
                 <select
                   class="select select-bordered select-xs"
-                  [(ngModel)]="team.userId"
+                  [(ngModel)]="team.driver.driverId"
                   [disabled]="team.idTeam !== ''"
-                  name="userId{{i}}"
+                  name="driverId{{i}}"
                   required
-                  #userId="ngModel">
-                  <option value="" disabled>{{ team.username ? team.username : 'Selecione o usuário' }}</option>
-                  @for (user of users; track user.userId) {
-                    <option [value]="user.userId">{{ user.username }}</option>
+                  #driverId="ngModel">
+                  <option value=""
+                          disabled>Selecione o Motorista
+                  </option>
+                  @for (driver of drivers; track driver.driverId) {
+                    <option [value]="driver.driverId"
+                            [selected]="driver.driverId === team.driver.driverId">{{ driver.driverName }}
+                    </option>
                   }
                 </select>
-                <div *ngIf="userId.invalid && (userId.touched || teamForm.submitted)">
-                  <small *ngIf="userId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <div *ngIf="driverId.invalid && (driverId.touched || teamForm.submitted)">
+                  <small *ngIf="driverId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
                 </div>
+              </div>
+            </td>
+            <td>
+              <p *ngIf="team.idTeam"
+                 class="input input-bordered input-xs input-disabled">{{ team.electrician.electricianName }}</p>
+              <div *ngIf="!team.idTeam">
+                <select
+                  class="select select-bordered select-xs"
+                  [(ngModel)]="team.electrician.electricianId"
+                  [disabled]="team.idTeam !== ''"
+                  name="electricianId{{i}}"
+                  required
+                  #electricianId="ngModel">
+                  <option value=""
+                          disabled>Selecione o Eletricista
+                  </option>
+                  @for (electrician of electricians; track electrician.electricianId) {
+                    <option [value]="electrician.electricianId">{{ electrician.electricianName }}</option>
+                  }
+                </select>
+                <div *ngIf="electricianId.invalid && (electricianId.touched || teamForm.submitted)">
+                  <small *ngIf="electricianId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="dropdown dropdown-end flex-2 relative w-52" *ngIf="team.idTeam === ''">
+                <div tabindex="0" role="button"
+                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
+                  <span
+                    class="text-xs poppins-regular pl-1 pr-10">
+                      {{ (team.othersMembers?.length || 0) === 0 ? 'Selecionar membros' : team.othersMembers.length + ' selecionado(os)' }}
+                  </span>
+                </div>
+                <div
+                  tabindex="0"
+                  class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+                  <div class="max-h-40 overflow-y-auto p-2">
+                    <label *ngFor="let user of users"
+                           class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md">
+                      <input type="checkbox" [value]="user.userId" class="checkbox checkbox-xs"
+                             (change)="changeMember(i, user.userId)"
+                             [checked]="verifyMember(i, user.userId)">
+                      <span>{{ user.name + ' ' + user.lastname }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="dropdown dropdown-hover select select-disabled select-xs" *ngIf="team.idTeam !== ''">
+                <div tabindex="0" role="button" class="flex items-center">{{team.othersMembers.length + ' colaboradores'}}</div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 m-2 shadow">
+                  @for (member of team.othersMembers; track member.memberName) {
+                    <li>{{ member.memberName }}</li>
+                  }
+                </ul>
+              </div>
+            </td>
+            <td>
+              <input required
+                     [disabled]="team.idTeam !== ''"
+                     [(ngModel)]="team.plate"
+                     name="plate{{i}}"
+                     type="text"
+                     placeholder="Insira a placa do veículo"
+                     class="input input-bordered input-xs"
+                     #plate="ngModel"
+              >
+              <div *ngIf="plate.invalid && (plate.touched || teamForm.submitted)">
+                <small *ngIf="plate.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
             </td>
             <td>
@@ -257,16 +409,28 @@
             </td>
             <td>
               <div
-                [ngClass]="{'tooltip': !team.cityName, 'tooltip-bottom': !team.cityName}"
-                [attr.data-tip]="team.cityName ? '' : 'Selecione a Cidade'"
                 class="tooltip tooltip-bottom form-control w-full max-w-xs">
-                <p class="input input-xs input-disabled">{{ team.regionName }}</p>
+                <p
+                  class="input input-xs input-disabled">{{ team.regionName ? team.regionName : 'Selecione a Cidade' }}</p>
               </div>
             </td>
           } @else {
             <td hidden disabled>{{ team.idTeam }}</td>
             <td>{{ team.teamName }}</td>
-            <td>{{ team.username }}</td>
+            <td>{{ team.driver.driverName }}</td>
+            <td>{{ team.electrician.electricianName }}</td>
+            <td>
+              <div class="dropdown dropdown-hover">
+                <div tabindex="0" role="button" class="flex items-center" (click)="debug(team, teams)">{{team.othersMembers.length + ' colaboradores'}}<span
+                  class="material-icons">arrow_drop_down_icon </span></div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 m-2 shadow">
+                  @for (member of team.othersMembers; track member.memberName) {
+                    <li>{{ member.memberName }}</li>
+                  }
+                </ul>
+              </div>
+            </td>
+            <td>{{ team.plate }}</td>
             <td>{{ team.UFName }}</td>
             <td>{{ team.cityName }}</td>
             <td>{{ team.regionName }}</td>

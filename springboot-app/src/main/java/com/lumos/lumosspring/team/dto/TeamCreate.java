@@ -1,5 +1,8 @@
 package com.lumos.lumosspring.team.dto;
 
 
-public record TeamCreate(long idTeam, String teamName, String userId, String UFName, String cityName, String regionName, boolean sel) {
+import java.util.List;
+import java.util.Map;
+
+public record TeamCreate(long idTeam, String teamName, Driver driver, Electrician electrician, List<Member> othersMembers, String UFName, String cityName, String regionName, String plate, boolean sel) {
 }

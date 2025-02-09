@@ -38,21 +38,23 @@ public class UserService {
         List<User> users = userRepository.findAll();
         List<UserResponse> userResponses = new ArrayList<>();
         for (User user : users) {
-            LocalDate dateOfBirth = user.getDateOfBirth();
-            userResponses.add(new UserResponse(
-                    user.getIdUser().toString(),
-                    user.getUsername(),
-                    user.getName(),
-                    user.getLastName(),
-                    user.getEmail(),
-                    user.getRoles().stream()
-                            .map(Role::getRoleName) // Pega apenas o nome de cada Role
-                            .collect(Collectors.toList()), // Coleta como uma lista
-                    dateOfBirth != null ? dateOfBirth.getYear() : null,
-                    dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
-                    dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
-                    user.getStatus()
-            ));
+            if (user.getStatus()) {
+                LocalDate dateOfBirth = user.getDateOfBirth();
+                userResponses.add(new UserResponse(
+                        user.getIdUser().toString(),
+                        user.getUsername(),
+                        user.getName(),
+                        user.getLastName(),
+                        user.getEmail(),
+                        user.getRoles().stream()
+                                .map(Role::getRoleName) // Pega apenas o nome de cada Role
+                                .collect(Collectors.toList()), // Coleta como uma lista
+                        dateOfBirth != null ? dateOfBirth.getYear() : null,
+                        dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
+                        dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
+                        user.getStatus()
+                ));
+            }
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(userResponses);

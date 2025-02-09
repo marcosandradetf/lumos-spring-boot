@@ -20,9 +20,21 @@ public class Team {
     @Column(columnDefinition = "TEXT")
     private String teamName;
 
-    @ManyToOne
-    @JoinColumn(nullable = false, name = "user_id")
-    private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id", nullable = false)
+    private User driver;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "electrician_id", nullable = false)
+    private User electrician;
+
+    @ManyToMany
+    @JoinTable(
+            name = "team_complementary_members",
+            joinColumns = @JoinColumn(name = "team_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> complementaryMembers;
 
 //    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
 //    @JoinTable(
@@ -31,6 +43,8 @@ public class Team {
 //            inverseJoinColumns = @JoinColumn(name = "id_measurement")
 //    )
 //    private List<PreMeasurement> preMeasurement;
+
+    private String plateVehicle;
 
     @Column(columnDefinition = "TEXT")
     private String UFName;
@@ -60,15 +74,39 @@ public class Team {
         this.teamName = teamName;
     }
 
-    public User getUser() {
-        return user;
+    public User getDriver() {
+        return driver;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setDriver(User driver) {
+        this.driver = driver;
     }
 
-//    public List<PreMeasurement> getPreMeasurement() {
+    public User getElectrician() {
+        return electrician;
+    }
+
+    public void setElectrician(User electrician) {
+        this.electrician = electrician;
+    }
+
+    public List<User> getComplementaryMembers() {
+        return complementaryMembers;
+    }
+
+    public void setComplementaryMembers(List<User> complementaryMembers) {
+        this.complementaryMembers = complementaryMembers;
+    }
+
+    public String getPlateVehicle() {
+        return plateVehicle;
+    }
+
+    public void setPlateVehicle(String plateVehicle) {
+        this.plateVehicle = plateVehicle;
+    }
+
+    //    public List<PreMeasurement> getPreMeasurement() {
 //        return preMeasurement;
 //    }
 //

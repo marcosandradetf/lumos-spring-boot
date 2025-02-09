@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import {SidebarComponent} from "../../shared/components/sidebar/sidebar.component";
+import {Component} from '@angular/core';
 import {Router} from '@angular/router';
 import {UserService} from '../user/user-service.service';
 import {UtilsService} from '../../core/service/utils.service';
@@ -20,7 +19,6 @@ import {AlertMessageComponent} from '../../shared/components/alert-message/alert
   selector: 'app-team',
   standalone: true,
   imports: [
-    SidebarComponent,
     ButtonComponent,
     FormsModule,
     NgForOf,
@@ -34,48 +32,92 @@ import {AlertMessageComponent} from '../../shared/components/alert-message/alert
   styleUrl: './team.component.scss'
 })
 export class TeamComponent {
-  sidebarLinks = [
-    {title: 'Início', path: '/configuracoes/dashboard', id: 'opt1'},
-    {title: 'Usuários', path: '/configuracoes/usuarios', id: 'opt2'},
-    {title: 'Equipes', path: '/configuracoes/equipes', id: 'opt3'},
-    {title: 'Minha Empresa', path: '/configuracoes/empresa', id: 'opt4'},
-  ];
   add: boolean = false;
   change: boolean = false;
   loading: boolean = false;
   formSubmitted: boolean = false;
+
   teams: {
-    idTeam: string,
-    teamName: string,
-    userId: string,
-    username: string,
-    UFName: string,
-    cityName: string,
-    regionName: string,
-    sel: boolean,
-  }[] = [];
+    idTeam: string;
+    teamName: string;
+    driver: { driverId: string; driverName: string };
+    electrician: { electricianId: string; electricianName: string };
+    othersMembers: { memberId: string; memberName: string }[];
+    UFName: string;
+    cityName: string;
+    regionName: string;
+    plate: string;
+    sel: boolean;
+  }[] = [
+    {
+      idTeam: '',
+      teamName: '',
+      driver: {driverId: '', driverName: ''},
+      electrician: {electricianId: '', electricianName: ''},
+      othersMembers: [
+      ],
+      UFName: '',
+      cityName: '',
+      regionName: '',
+      plate: '',
+      sel: false,
+    }
+  ];
+
   teamsBackup: {
-    idTeam: string,
-    teamName: string,
-    userId: string,
-    username: string,
-    UFName: string,
-    cityName: string,
-    regionName: string,
-    sel: boolean,
-  }[] = [];
+    idTeam: string;
+    teamName: string;
+    driver: { driverId: string; driverName: string };
+    electrician: { electricianId: string; electricianName: string };
+    othersMembers: { memberId: string; memberName: string }[];
+    UFName: string;
+    cityName: string;
+    regionName: string;
+    plate: string;
+    sel: boolean;
+  }[] = [
+    {
+      idTeam: '',
+      teamName: '',
+      driver: {driverId: '', driverName: ''},
+      electrician: {electricianId: '', electricianName: ''},
+      othersMembers: [
+      ],
+      UFName: '',
+      cityName: '',
+      regionName: '',
+      plate: '',
+      sel: false,
+    }
+  ];
+
   ufs: ufRequest[] = [];
   cities: citiesRequest[] = [];
+
   users: {
     userId: string,
-    username: string,
+    name: string,
+    lastname: string,
+    role: string[]
   }[] = [];
+
+  drivers: {
+    driverId: string,
+    driverName: string,
+  }[] = [];
+
+  electricians: {
+    electricianId: string,
+    electricianName: string,
+  }[] = [];
+
   serverMessage: string | null = null;
   alertType: string = '';
+  isMultiSelectVisible: boolean = false;
 
   constructor(protected router: Router, protected utils: UtilsService,
               protected authService: AuthService, private titleService: Title, private ibgeService: IbgeService,
-              private teamService : TeamService,) {
+              private teamService: TeamService,) {
     this.titleService.setTitle("Configurações - Equipes");
     this.ibgeService.getUfs().subscribe(
       response => {
@@ -85,7 +127,25 @@ export class TeamComponent {
 
     this.teamService.getUsers().subscribe(
       response => {
-        this.users = response;
+        response.forEach((user) => {
+          if (Array.isArray(user.role) && (user.role.includes('MOTORISTA') || user.role.includes('ELETRICISTA'))) {
+            this.users.push(user);
+          }
+        });
+
+        this.users.forEach((user) => {
+          if (Array.isArray(user.role) && user.role.includes('MOTORISTA')) {
+            this.drivers.push({
+              driverId: user.userId,
+              driverName: `${user.name} ${user.lastname}`,
+            });
+          } else if (Array.isArray(user.role) && user.role.includes('ELETRICISTA')) {
+            this.electricians.push({
+              electricianId: user.userId,
+              electricianName: `${user.name} ${user.lastname}`,
+            });
+          }
+        });
       }
     );
 
@@ -110,7 +170,10 @@ export class TeamComponent {
     console.log(this.teams[i]);
   }
 
-  submitTeams(form: NgForm) {
+  submitTeams(form
+              :
+              NgForm
+  ) {
     this.formSubmitted = true;
 
     if (form.invalid) {
@@ -144,13 +207,16 @@ export class TeamComponent {
   newTeam() {
     const team = {
       idTeam: '',
-      teamName: '',
-      userId: '',
-      username: '',
-      UFName: '',
-      cityName: '',
-      regionName: '',
-      sel: false
+        teamName: '',
+        driver: {driverId: '', driverName: ''},
+      electrician: {electricianId: '', electricianName: ''},
+      othersMembers: [
+      ],
+        UFName: '',
+        cityName: '',
+        regionName: '',
+        plate: '',
+        sel: false,
     };
     this.teams.push(team);
   }
@@ -162,13 +228,14 @@ export class TeamComponent {
     }
   }
 
-  private insertTeams() {
+
+  insertTeams() {
 
     this.teamService.insertTeams(this.teams).pipe(
       tap(r => {
         this.showMessage("Equipes criadas com sucesso!");
         this.alertType = "alert-success";
-        this.users = r;
+        this.teams = r;
         this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
         this.add = false;
       }),
@@ -181,7 +248,8 @@ export class TeamComponent {
 
   }
 
-  private updateTeams() {
+
+  updateTeams() {
     // Verifica se nenhum usuário foi selecionado
     const noneSelected = this.teams.every(t => !t.sel);
 
@@ -209,10 +277,62 @@ export class TeamComponent {
 
   }
 
-  private showMessage(message: string, timeout = 3000) {
+
+  showMessage(message
+              :
+              string, timeout = 3000
+  ) {
     this.serverMessage = message;
     setTimeout(() => {
       this.serverMessage = null;
     }, timeout);
+  }
+
+
+  changeMember(index
+               :
+               number, memberId
+               :
+               string
+  ) {
+    if (index === -1) {
+      console.log('Equipe não encontrada');
+      return;
+    }
+
+    let teams = this.teams[index];
+
+    let members = teams.othersMembers;
+    let memberExist = members.some(member => member.memberId === memberId)
+
+
+    if (memberExist) {
+      members = members.filter(m => m.memberId !== memberId);
+    } else {
+      members.push({memberId: memberId, memberName: ''});
+    }
+
+    teams.othersMembers = members;
+    this.teams[index] = teams;
+    console.log(this.teams);
+  }
+
+  verifyMember(index
+               :
+               number, memberId
+               :
+               string
+  ) {
+    let teams = this.teams[index];
+    let members = teams.othersMembers;
+
+    // Verifica se alguma role no array corresponde ao nomeRole fornecido
+    return members.some(m => m.memberId === memberId);
+
+  }
+
+  debug(team: any, teams: any) {
+    console.log(team)
+    console.log(teams)
   }
 }
