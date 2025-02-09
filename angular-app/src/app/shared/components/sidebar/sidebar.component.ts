@@ -8,7 +8,6 @@ import {RouterLink, RouterLinkActive} from '@angular/router';
     imports: [
         NgClass,
         RouterLink,
-        NgForOf,
         RouterLinkActive
     ],
   templateUrl: './sidebar.component.html',
@@ -20,9 +19,10 @@ export class SidebarComponent implements OnInit {
   @Output() menuToggle = new EventEmitter<boolean>();  // Emitir o estado do menu
 
   menuOpen = false;
-  bToggleExecution = true;
+  bToggleExecution = false;
   bToggleStock = true;
-  bToggleRequest = true;
+  bToggleRequest = false;
+  bToggleSettings: boolean = true;
 
   constructor() {}
 
@@ -44,6 +44,10 @@ export class SidebarComponent implements OnInit {
     if (savedMenuState !== null) {
       this.bToggleRequest = JSON.parse(savedMenuState); // Converte de volta para booleano
     }
+    savedMenuState = localStorage.getItem('toggleSettings');
+    if (savedMenuState !== null) {
+      this.bToggleSettings = JSON.parse(savedMenuState); // Converte de volta para booleano
+    }
   }
 
   toggleMenu() {
@@ -52,19 +56,20 @@ export class SidebarComponent implements OnInit {
     localStorage.setItem('menuOpen', JSON.stringify(this.menuOpen));
   }
 
-  toggleStock() {
-    this.bToggleStock = !this.bToggleStock;
-    localStorage.setItem('toggleStock', JSON.stringify(this.bToggleStock));
+  toggleStock(open: boolean) {
+    localStorage.setItem('toggleStock', JSON.stringify(open));
   }
 
   toggleExecution() {
-    this.bToggleExecution = !this.bToggleExecution;
     localStorage.setItem('toggleExecution', JSON.stringify(this.bToggleExecution));
   }
 
   toggleRequest() {
-    this.bToggleRequest = !this.bToggleRequest;
     localStorage.setItem('toggleRequest', JSON.stringify(this.bToggleRequest));
+  }
+
+  toggleSettings(open: boolean) {
+    localStorage.setItem('toggleSettings', JSON.stringify(open));
   }
 
 }

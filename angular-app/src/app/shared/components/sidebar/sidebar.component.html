@@ -82,7 +82,7 @@
           </ul>
         </details>
 
-        <details [open]="true">
+        <details [open]="bToggleStock" #stockMenu (toggle)="toggleStock(stockMenu.open)" >
           <summary class="font-semibold" >
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343">
               <path
@@ -114,7 +114,7 @@
           </ul>
         </details>
 
-        <details [open]="false">
+        <details [open]="bToggleSettings" #stockSettings  (toggle)="toggleSettings(stockSettings.open)">
           <summary class="font-semibold">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343">
               <path

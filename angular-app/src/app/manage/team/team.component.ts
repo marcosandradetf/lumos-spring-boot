@@ -113,7 +113,6 @@ export class TeamComponent {
 
   serverMessage: string | null = null;
   alertType: string = '';
-  isMultiSelectVisible: boolean = false;
 
   constructor(protected router: Router, protected utils: UtilsService,
               protected authService: AuthService, private titleService: Title, private ibgeService: IbgeService,
@@ -139,7 +138,8 @@ export class TeamComponent {
               driverId: user.userId,
               driverName: `${user.name} ${user.lastname}`,
             });
-          } else if (Array.isArray(user.role) && user.role.includes('ELETRICISTA')) {
+          }
+          if (Array.isArray(user.role) && user.role.includes('ELETRICISTA')) {
             this.electricians.push({
               electricianId: user.userId,
               electricianName: `${user.name} ${user.lastname}`,
