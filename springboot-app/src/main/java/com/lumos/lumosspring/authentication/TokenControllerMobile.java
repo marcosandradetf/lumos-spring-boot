@@ -52,6 +52,10 @@ public class TokenControllerMobile {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }
 
+        if (!user.get().getStatus()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado está inativo no sistema."));
+        }
+
         var allowedRoles = new HashSet<>(Set.of(Role.Values.OPERADOR.name(), Role.Values.ADMIN.name(), Role.Values.TECNICO.name()));
 
         var roles = user.get().getRoles();
