@@ -31,11 +31,11 @@ public class StockMovement {
     @ManyToOne(fetch = FetchType.LAZY)
     private User userFinished;
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private Double inputQuantity;
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
+    private double inputQuantity;
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private Double totalQuantity;
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
+    private double totalQuantity;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String buyUnit;
@@ -43,7 +43,7 @@ public class StockMovement {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String requestUnit;
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double quantityPackage;
 
     @Column(nullable = false)

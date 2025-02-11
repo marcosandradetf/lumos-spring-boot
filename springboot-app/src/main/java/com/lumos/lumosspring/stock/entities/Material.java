@@ -37,10 +37,10 @@ public class Material {
     private Type materialType;
 
     @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
-    private Double stockQuantity;
+    private double stockQuantity;
 
     @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
-    private Double stockAvailable;
+    private double stockAvailable;
 
     private BigDecimal costPerItem;
 

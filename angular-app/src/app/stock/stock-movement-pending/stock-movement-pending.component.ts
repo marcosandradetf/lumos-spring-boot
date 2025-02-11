@@ -64,6 +64,7 @@ export class StockMovementPendingComponent {
   submitAprovationMovement() {
     this.stockService.approveStockMovement(this.movementId).pipe(
       tap(response => {
+        this.stockMovement = this.stockMovement.filter(m => m.id !== this.movementId);
         this.closeAprovationModal();
         this.serverMessage = response;
         this.alertType = 'alert-success';

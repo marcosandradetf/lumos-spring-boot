@@ -117,4 +117,21 @@ ALTER TABLE tb_teams DROP COLUMN IF EXISTS user_id;
 
 COMMIT;
 
+BEGIN;
+-- 01.01
+ALTER TABLE tb_materials ALTER COLUMN stock_available SET DATA TYPE DOUBLE PRECISION;
+ALTER TABLE tb_materials ALTER COLUMN stock_available SET DEFAULT 0;
+ALTER TABLE tb_materials ALTER COLUMN stock_quantity SET DATA TYPE DOUBLE PRECISION;
+ALTER TABLE tb_materials ALTER COLUMN stock_quantity SET DEFAULT 0;
 
+ALTER TABLE tb_stock_movement ALTER COLUMN input_quantity SET DATA TYPE DOUBLE PRECISION;
+ALTER TABLE tb_stock_movement ALTER COLUMN input_quantity SET DEFAULT 0;
+ALTER TABLE tb_stock_movement ALTER COLUMN quantity_package SET DATA TYPE DOUBLE PRECISION;
+ALTER TABLE tb_stock_movement ALTER COLUMN quantity_package SET DEFAULT 0;
+ALTER TABLE tb_stock_movement ALTER COLUMN total_quantity SET DATA TYPE DOUBLE PRECISION;
+ALTER TABLE tb_stock_movement ALTER COLUMN total_quantity SET DEFAULT 0;
+
+
+INSERT INTO tb_version_control (version_script)
+SELECT '01.01' WHERE NOT EXISTS (SELECT 1 FROM tb_version_control WHERE version_script = '01.01');
+COMMIT;

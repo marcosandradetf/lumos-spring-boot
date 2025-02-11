@@ -54,7 +54,6 @@ export class StockMovementComponent {
     {Value: "T"},    // Tonelada
     {Value: "L"},    // Litro
     {Value: "ML"},   // Mililitro
-    {Value: "KV"},   // Quilovolt (para equipamentos elétricos)
     {Value: "KIT"},  // Conjunto de materiais
     {Value: "PAR"},  // Par (ex: lâmpadas)
   ];
@@ -140,7 +139,6 @@ export class StockMovementComponent {
     }
 
   }
-  openUpdateModal: boolean = false;
 
 
   handleConfirmMovement() {
@@ -151,15 +149,23 @@ export class StockMovementComponent {
 
   toggleSelection(item: MaterialResponse) {
     if (item.selected) {
-      this.selectedMaterials.push({idMaterial: item.idMaterial, materialName: item.materialName});
+      this.selectedMaterials.push({
+        idMaterial: item.idMaterial,
+        materialName: item.materialName,
+        materialPower: item.materialPower,
+        materialAmps: item.materialAmps,
+        materialLength: item.materialLength
+      });
       const newMovement: StockMovementDTO = {
         buyUnit: '',
+        requestUnit: '',
         description: '',
         inputQuantity: '',
         materialId: item.idMaterial,
-        pricePerItem: '',
+        priceTotal: '',
         quantityPackage: '',
-        supplierId: ""
+        supplierId: "",
+        totalQuantity: 0
       };
       this.sendMovement.push(newMovement);
     } else {
@@ -263,7 +269,26 @@ export class StockMovementComponent {
 
   getDescription(id: number): string {
     let material = this.selectedMaterials.find(m => m.idMaterial === id);
-    return material ? material.materialName : "";
+
+    if (!material) {
+      return ''; // Retorna string vazia se o material não for encontrado
+    }
+
+    console.log(material);
+
+    if (material.materialPower !== undefined) {
+      return `${material.materialName} - ${material.materialPower}`;
+    }
+
+    if (material.materialAmps !== undefined) {
+      return `${material.materialName} - ${material.materialAmps}`;
+    }
+
+    if (material.materialLength !== undefined) {
+      return `${material.materialName} - ${material.materialLength}`;
+    }
+
+    return material.materialName; // Garante que a função sempre retorna uma string
   }
 
 
@@ -285,13 +310,13 @@ export class StockMovementComponent {
 
     // Verifica se targetValue está vazio e define um valor padrão
     if (!targetValue) {
-      this.sendMovement[index].pricePerItem = ''; // ou "0,00" se preferir
+      this.sendMovement[index].priceTotal = ''; // ou "0,00" se preferir
       (event.target as HTMLInputElement).value = ''; // Atualiza o valor no campo de input
       return;
     }
 
     const value = this.utils.formatValue(targetValue);
-    this.sendMovement[index].pricePerItem = value;
+    this.sendMovement[index].priceTotal = value;
     (event.target as HTMLInputElement).value = value; // Exibe o valor formatado no campo de input
 
   }
@@ -301,21 +326,39 @@ export class StockMovementComponent {
     this.sendMovement.forEach(movement => {
       switch (movement.buyUnit.toUpperCase()) {
         case 'UN':
-          movement.quantityPackage = '1';
-          break;
         case 'PÇ':
-          movement.quantityPackage = '1';
-          break;
         case 'PAR':
-          movement.quantityPackage = '2';
-          break;
         case 'KIT':
+        case 'M':
+        case 'CM':
+        case 'KG':
+        case 'T':
+        case 'L':
+        case 'ML':
           movement.quantityPackage = '1';
           break;
         default:
           break;
       }
     });
+  }
+
+  getOption(movement: StockMovementDTO) {
+    switch (movement.buyUnit.toUpperCase()) {
+      case 'UN':
+      case 'PÇ':
+      case 'PAR':
+      case 'KIT':
+      case 'M':
+      case 'CM':
+      case 'KG':
+      case 'T':
+      case 'L':
+      case 'ML':
+        return false;
+      default:
+        return true;
+    }
   }
 
   filterDeposit(depositId
@@ -342,6 +385,14 @@ export class StockMovementComponent {
     }
   }
 
+  shouldShowTooltip(buyUnit
+                    :
+                    string
+  ):
+    boolean | string {
+    const unitsWithTooltip = ["CX", "ROLO"];
+    return buyUnit && unitsWithTooltip.includes(buyUnit.toUpperCase());
+  }
 
   getTooltipText(buyUnit
                  :
@@ -353,44 +404,53 @@ export class StockMovementComponent {
         return 'Informe a quantidade de itens por Caixa. Exemplo: 5 itens por caixa.';
       case 'Rolo':
         return 'Informe o tamanho por Rolo em Metro. Exemplo: 5 metros por rolo.';
-      case 'PÇ':
-        return 'Informe a quantidade de Peças. Exemplo: 10 peças.';
-      case 'UN':
-        return 'Unidade individual. Geralmente não precisa de multiplicação.';
-      case 'M':
-        return 'Informe o comprimento em Metros. Exemplo: 10 metros.';
-      case 'CM':
-        return 'Informe o comprimento em Centímetros. Exemplo: 100 cm.';
-      case 'KG':
-        return 'Informe o peso em Quilogramas. Exemplo: 2 kg.';
-      case 'T':
-        return 'Informe o peso em Toneladas. Exemplo: 1 tonelada.';
-      case 'L':
-        return 'Informe o volume em Litros. Exemplo: 5 litros.';
-      case 'ML':
-        return 'Informe o volume em Mililitros. Exemplo: 250 ml.';
-      case 'KV':
-        return 'Informe a capacidade em Quilovolts. Exemplo: 13.8 kV.';
-      case 'KIT':
-        return 'Informe a quantidade de Kits. Exemplo: 3 kits.';
-      case 'PAR':
-        return 'Informe a quantidade de Pares. Exemplo: 2 pares de lâmpadas.';
-      case 'Balde':
-        return 'Informe a quantidade de Baldes. Exemplo: 1 balde de cimento.';
       default:
         return '';
     }
   }
 
-
-  shouldShowTooltip(buyUnit
-                    :
-                    string
-  ):
-    boolean | string {
-    const unitsWithoutTooltip = ["UN", "PÇ", "PAR", "KIT"];
-    return buyUnit && !unitsWithoutTooltip.includes(buyUnit.toUpperCase());
+  calculateQuantity(movement: StockMovementDTO) {
+    switch (movement.requestUnit.toUpperCase()) {
+      case 'UN':
+      case 'PÇ':
+        movement.totalQuantity = Number(movement.inputQuantity) * Number(movement.quantityPackage);
+        break;
+      case 'CM':
+      case 'KG':
+        if (movement.buyUnit === 'CM' || movement.buyUnit === 'KG') {
+          movement.totalQuantity = Number(movement.inputQuantity) * 100;
+        } else if (movement.buyUnit === 'Rolo') {
+          movement.totalQuantity = Number(movement.inputQuantity) * (Number(movement.quantityPackage) * 100);
+        } else {
+          movement.totalQuantity = Number(movement.inputQuantity);
+        }
+        break;
+      case 'M':
+      case 'T':
+        if (movement.buyUnit === 'CM' || movement.buyUnit === 'KG') {
+          movement.totalQuantity = Number(movement.inputQuantity) / 100;
+        } else if (movement.buyUnit === 'Rolo') {
+          movement.totalQuantity = Number(movement.inputQuantity) * Number(movement.quantityPackage);
+        } else {
+          movement.totalQuantity = Number(movement.inputQuantity);
+        }
+        break;
+      default:
+        movement.totalQuantity = Number(movement.inputQuantity);
+        break;
+    }
   }
 
+  filterUnits(selectedUnit: string): string[] {
+    console.log(selectedUnit);
+    switch (selectedUnit.toUpperCase()) {
+      case 'CX':
+        return ["CX", "UN", "PÇ"]
+      case 'ROLO':
+        return ["Rolo", "M", "CM"]
+      default:
+        return [selectedUnit];
+    }
+  }
 
 }

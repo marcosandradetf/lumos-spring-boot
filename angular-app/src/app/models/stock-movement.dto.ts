@@ -3,7 +3,9 @@ export interface StockMovementDTO {
   materialId: number;
   inputQuantity: string;
   buyUnit: string;
+  requestUnit: string;
   quantityPackage: string;
-  pricePerItem: string;
+  priceTotal: string;
   supplierId: string;
+  totalQuantity: number;
 }

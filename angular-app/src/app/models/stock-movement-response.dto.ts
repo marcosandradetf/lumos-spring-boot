@@ -4,7 +4,7 @@ export interface StockMovementResponse {
   materialName: string;
   inputQuantity: number;
   buyUnit: string;
-  quantityPackage: number;
+  requestUnit: string;
   pricePerItem: string;
   supplierName: string;
   company: string;
