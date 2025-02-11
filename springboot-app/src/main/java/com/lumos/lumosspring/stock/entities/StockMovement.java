@@ -4,6 +4,7 @@ import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 
 @Entity
@@ -31,16 +32,25 @@ public class StockMovement {
     private User userFinished;
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private int inputQuantity;
+    private Double inputQuantity;
+
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private Double totalQuantity;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String buyUnit;
 
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String requestUnit;
+
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
-    private int quantityPackage;
+    private double quantityPackage;
 
     @Column(nullable = false)
     private BigDecimal pricePerItem;
+
+    @Column(nullable = false)
+    private BigDecimal priceTotal;
 
     @ManyToOne
     @JoinColumn(name = "supplier_id")
@@ -68,15 +78,15 @@ public class StockMovement {
             throw new IllegalArgumentException("Quantidade e embalagem devem ser maiores que zero.");
         }
 
-        int stockQuantity = switch (this.buyUnit) {
-            case "UN", "PÇ", "PAR", "KIT" -> this.inputQuantity; // Não multiplica
-            default -> this.inputQuantity * this.quantityPackage; // Multiplica normalmente
-        };
-
-        this.material.addStockQuantity(stockQuantity);
-        this.material.addStockAvailable(stockQuantity);
-        this.material.setCostPrice(this.pricePerItem);
+        this.material.addStockQuantity(this.totalQuantity);
+        this.material.addStockAvailable(this.totalQuantity);
+        this.material.setCostPerItem(this.pricePerItem);
+        this.material.setCostPrice(this.priceTotal);
+        this.material.setBuyUnit(this.buyUnit);
+        this.material.setRequestUnit(this.requestUnit);
     }
+
+
 
 
 
@@ -112,14 +122,6 @@ public class StockMovement {
         this.stockMovementRefresh = stockMovementRefresh;
     }
 
-    public int getInputQuantity() {
-        return inputQuantity;
-    }
-
-    public void setInputQuantity(int inputQuantity) {
-        this.inputQuantity = inputQuantity;
-    }
-
     public String getBuyUnit() {
         return buyUnit;
     }
@@ -128,11 +130,11 @@ public class StockMovement {
         this.buyUnit = buyUnit;
     }
 
-    public int getQuantityPackage() {
+    public double getQuantityPackage() {
         return quantityPackage;
     }
 
-    public void setQuantityPackage(int quantityPackage) {
+    public void setQuantityPackage(double quantityPackage) {
         this.quantityPackage = quantityPackage;
     }
 
@@ -148,8 +150,23 @@ public class StockMovement {
         return pricePerItem;
     }
 
-    public void setPricePerItem(BigDecimal pricePerItem) {
-        this.pricePerItem = pricePerItem;
+
+
+    public void setPricePerItem(BigDecimal priceTotal, double quantity) {
+        if (quantity != 0) {  // Verifica se a quantidade é diferente de 0
+            // Converte quantity para BigDecimal e faz a divisão com precisão
+            this.pricePerItem = priceTotal.divide(BigDecimal.valueOf(quantity), RoundingMode.HALF_UP);
+        } else {
+            this.pricePerItem = priceTotal;  // Se a quantidade for 0, mantém o preço total
+        }
+    }
+
+    public BigDecimal getPriceTotal() {
+        return priceTotal;
+    }
+
+    public void setPriceTotal(BigDecimal priceTotal) {
+        this.priceTotal = priceTotal;
     }
 
     public Status getStatus() {
@@ -176,4 +193,35 @@ public class StockMovement {
         this.userFinished = userFinished;
     }
 
+    public void setInputQuantity(double inputQuantity) {
+        this.inputQuantity = inputQuantity;
+    }
+
+    public Double getInputQuantity() {
+        return inputQuantity;
+    }
+
+    public void setInputQuantity(Double inputQuantity) {
+        this.inputQuantity = inputQuantity;
+    }
+
+    public Double getTotalQuantity() {
+        return totalQuantity;
+    }
+
+    public void setTotalQuantity(Double totalQuantity) {
+        this.totalQuantity = totalQuantity;
+    }
+
+    public String getRequestUnit() {
+        return requestUnit;
+    }
+
+    public void setBuyRequest(String requestUnit) {
+        this.requestUnit = requestUnit;
+    }
+
+    public void setPricePerItem(BigDecimal pricePerItem) {
+        this.pricePerItem = pricePerItem;
+    }
 }

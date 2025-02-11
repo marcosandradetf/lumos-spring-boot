@@ -1,16 +1,15 @@
-<div class="flex mt-[4rem] h-fit pl-2">
+<div class="flex mt-[4rem] h-fit pl-2 pr-2">
   <!--  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>-->
-  <div class="w-[85vw] xl:w-[60rem] 2xl:w-[75rem] mb-5 ">
-    <div class="breadcrumbs text-sm py-5">
-      <ul class="select-none">
-        <li><a href="/início">Início</a></li>
-        <li><a href="/estoque">Estoque</a></li>
-        <li>Movimentar Estoque</li>
-      </ul>
-    </div>
-
-    <div>
-      <h3 class="nunito-regular">Selecione os materiais desejados para movimentar o estoque</h3>
+  <div class="mb-5 w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a href="/início">Início</a></li>
+          <li><a href="/estoque">Estoque</a></li>
+          <li>Pendente de Aprovação</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Selecione os materiais desejados para movimentar o estoque</h3>
     </div>
 
     <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
@@ -51,10 +50,12 @@
           <th class="material-icons">call_received</th>
           <th>Codigo</th>
           <th>Nome</th>
+          <th>Marca</th>
+          <th>Potência</th>
+          <th>Corrente (A)</th>
+          <th>Tamanho</th>
           <th>UN Compra</th>
           <th>Estoque</th>
-          <th>Codigo</th>
-          <th>Codigo</th>
           <th>Empresa</th>
           <th>Almoxarifado</th>
         </tr>
@@ -70,10 +71,12 @@
           </td>
           <td>{{ row.idMaterial }}</td>
           <td>{{ row.materialName }}</td>
+          <td>{{ row.materialBrand }}</td>
+          <td>{{ row.materialPower }}</td>
+          <td>{{ row.materialAmps }}</td>
+          <td>{{ row.materialLength }}</td>
           <td>{{ row.buyUnit }}</td>
           <td>{{ row.stockQt }}</td>
-          <td>{{ row.materialType }}</td>
-          <td>{{ row.materialGroup }}</td>
           <td>{{ row.company }}</td>
           <td>{{ row.deposit }}</td>
         </tr>
@@ -88,18 +91,20 @@
     </div>
 
     <!--    modal change -->
-    <app-modal [modalOpen]="openMovementModal" (modalClose)="closeMovementModal()">
+    <app-modal [modalOpen]="openMovementModal" classModal="rounded-none" (modalClose)="closeMovementModal()">
       <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
         <app-table>
           <tr class="bg-indigo-700 text-white" header>
-            <th>Codigo*</th>
-            <th>Nome*</th>
+            <th>Codigo</th>
+            <th class="min-w-64">Descrição</th>
             <th>Quantidade*</th>
             <th>UN. Compra*</th>
-            <th>Qtde. por unidade*</th>
-            <th>Preço por item*</th>
+            <th>Qtde. p/ embalagem*</th>
+            <th>Preço total*</th>
             <th>Fornecedor*</th>
-            <th>Descricão</th>
+            <th>Comentário</th>
+            <th>UN. Requisição*</th>
+            <th>Qtde. Total</th>
           </tr>
           <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100" body>
             <td><input
@@ -111,13 +116,20 @@
               type="text"></td>
             <td>
               @if (openMovementModal) {
-                {{ getDescription(movement.materialId) }}
+                <input
+                  readonly
+                  [value]="getDescription(movement.materialId)"
+                  required
+                  class="input input-bordered input-xs min-w-64"
+                  name="materialId{{i}}"
+                  type="text">
               }
             </td>
 
             <td><input
               required
               [(ngModel)]="movement.inputQuantity"
+              (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
               name="inputQuantity{{i}}"
               type="text"
               (input)="this.utils.formatNumber($event)"
@@ -133,7 +145,7 @@
               <select
                 class="select select-bordered select-xs w-16"
                 [(ngModel)]="movement.buyUnit"
-                (change)="updateQuantityPackage()"
+                (change)="updateQuantityPackage(); movement.requestUnit = ''; movement.totalQuantity = 0;"
                 name="buyUnit{{i}}"
                 required
                 #buyUnit="ngModel">
@@ -150,29 +162,34 @@
             <td
               [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
               [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
-              <input
-                required
-                type="text"
-                (input)="this.utils.formatNumber($event)"
-                [(ngModel)]="movement.quantityPackage"
-                [disabled]="movement.buyUnit === ''"
-                [readOnly]="!shouldShowTooltip(movement.buyUnit)"
-                name="quantityPackage{{i}}"
-                placeholder="Digite aqui"
-                class="input input-bordered input-xs w-24"
-                #quantityPackage="ngModel"
-              />
-              <div *ngIf="quantityPackage.invalid && formSubmitted">
-                <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-              </div>
+              @if (getOption(movement)) {
+                <input
+                  required
+                  (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
+                  type="text"
+                  (input)="this.utils.formatNumber($event)"
+                  [(ngModel)]="movement.quantityPackage"
+                  [disabled]="movement.buyUnit === ''"
+                  [readOnly]="!shouldShowTooltip(movement.buyUnit)"
+                  name="quantityPackage{{i}}"
+                  placeholder="Digite aqui"
+                  class="input input-bordered input-xs w-24"
+                  #quantityPackage="ngModel"
+                />
+                <div *ngIf="quantityPackage.invalid && formSubmitted">
+                  <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento
+                    obrigatório.</small>
+                </div>
+              } @else {
+                <p class="input input-disabled input-xs">Não se aplica</p>
+              }
             </td>
             <td><input
               required
               type="text"
-              [(ngModel)]="movement.pricePerItem"
+              [(ngModel)]="movement.priceTotal"
               (input)="formatValue($event, i)"
-              name="pricePerItem{{i}}"
+              name="priceTotal{{i}}"
               placeholder="R$"
               class="input input-bordered input-xs w-24"
               #price="ngModel"
@@ -204,6 +221,31 @@
               placeholder="Digite aqui"
               class="input input-bordered input-xs  w-64 max-w-xs"
             />
+            </td>
+            <td>
+              <select
+                [disabled]="movement.buyUnit === ''"
+                class="select select-bordered select-xs w-16"
+                [(ngModel)]="movement.requestUnit"
+                (change)="calculateQuantity(movement)"
+                name="requestUnit{{i}}"
+                required
+                #requestUnit="ngModel">
+                @for (unit of filterUnits(movement.buyUnit); track unit) {
+                  <option [value]="unit" [selected]="movement.requestUnit === unit">{{ unit }}</option>
+                }
+              </select>
+              @if (requestUnit.invalid && formSubmitted) {
+                @if (requestUnit.errors?.['required']) {
+                  <small class="text-red-600">Preenchimento obrigatório.</small>
+                }
+              }
+            </td>
+            <td>
+              <p class="input input-bordered input-xs">
+                {{ movement.totalQuantity }}
+              </p>
+            </td>
           </tr>
         </app-table>
         <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">

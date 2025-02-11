@@ -42,7 +42,7 @@ public class Item {
     }
 
     private void removeStockAvailable() {
-        float qtStockAvailable = this.material.getStockAvailable();
+        double qtStockAvailable = this.material.getStockAvailable();
         if (qtStockAvailable > 0) {
             this.material.removeStockAvailable(this.itemQuantity);
         }

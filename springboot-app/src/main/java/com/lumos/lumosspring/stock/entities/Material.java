@@ -36,11 +36,13 @@ public class Material {
     @JoinColumn(name = "id_material_type", nullable = false)
     private Type materialType;
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private float stockQuantity;
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
+    private Double stockQuantity;
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private float stockAvailable;
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
+    private Double stockAvailable;
+
+    private BigDecimal costPerItem;
 
     private BigDecimal costPrice;
 
@@ -109,11 +111,11 @@ public class Material {
         this.requestUnit = unidadeRequisicao;
     }
 
-    public float getStockQuantity() {
+    public double getStockQuantity() {
         return stockQuantity;
     }
 
-    public void setStockQuantity(float qtdeEstoque) {
+    public void setStockQuantity(double qtdeEstoque) {
         this.stockQuantity = qtdeEstoque;
     }
 
@@ -133,11 +135,11 @@ public class Material {
         this.materialBrand = marcaMaterial;
     }
 
-    public void addStockQuantity(int quantityCompleted) {
+    public void addStockQuantity(double quantityCompleted) {
         this.stockQuantity += quantityCompleted;
     }
 
-    public void addStockAvailable(int quantityAvailable) {
+    public void addStockAvailable(double quantityAvailable) {
         this.stockAvailable += quantityAvailable;
     }
 
@@ -157,11 +159,11 @@ public class Material {
         this.materialPower = materialPower;
     }
 
-    public float getStockAvailable() {
+    public double getStockAvailable() {
         return stockAvailable;
     }
 
-    public void setStockAvailable(float stockAvailable) {
+    public void setStockAvailable(double stockAvailable) {
         this.stockAvailable = stockAvailable;
     }
 
@@ -187,6 +189,15 @@ public class Material {
 
     public void setMaterialLength(String materialLength) {
         this.materialLength = materialLength;
+    }
+
+
+    public BigDecimal getCostPerItem() {
+        return costPerItem;
+    }
+
+    public void setCostPerItem(BigDecimal costPerItem) {
+        this.costPerItem = costPerItem;
     }
 }
 

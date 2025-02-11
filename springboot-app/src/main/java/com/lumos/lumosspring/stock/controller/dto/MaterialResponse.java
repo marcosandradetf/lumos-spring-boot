@@ -5,7 +5,7 @@ import com.lumos.lumosspring.stock.entities.Material;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)  // Isso vai garantir que valores nulos não sejam serializados
 public record MaterialResponse(long idMaterial, String materialName, String materialBrand, String materialPower, String materialAmps, String materialLength,
-                               String buyUnit, String requestUnit, float stockQt, Boolean inactive, String materialType, String materialGroup,
+                               String buyUnit, String requestUnit, double stockQt, Boolean inactive, String materialType, String materialGroup,
                                String deposit, String company) {
     public MaterialResponse(Material material) {
         this(

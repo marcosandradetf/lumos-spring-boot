@@ -51,18 +51,38 @@ public class StockMovementService {
         List<StockMovementResponse> response = new ArrayList<>();
         for (StockMovement movement : pendingMovements) {
             // Formatação de preço para substituir ponto por vírgula
-            String formattedPrice = this.util.formatPrice(movement.getPricePerItem());
+            String formattedPrice = this.util.formatPrice(movement.getPriceTotal());
             String employee = movement.getUserCreated().getName().concat(" ")
                     .concat(movement.getUserCreated().getLastName());
+
+
+            // Marca do material (evitando NullPointerException)
+            String brand = movement.getMaterial().getMaterialBrand();
+            brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
+
+            // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
+            String description = movement.getMaterial().getMaterialPower();
+
+            if (description == null || description.isEmpty()) {
+                description = movement.getMaterial().getMaterialLength();
+            }
+
+            if (description == null || description.isEmpty()) {
+                description = movement.getMaterial().getMaterialAmps();
+            }
+
+            // Se ainda for null, define como string vazia
+            description = (description != null) ? " - " + description : "";
+
 
             // Adiciona o movimento de estoque na resposta
             response.add(new StockMovementResponse(
                     movement.getStockMovementId(),
                     movement.getStockMovementDescription(),
-                    movement.getMaterial().getMaterialName(),
-                    movement.getInputQuantity(),
+                    movement.getMaterial().getMaterialName().concat(description).concat(brand),
+                    movement.getTotalQuantity(),
                     movement.getBuyUnit(),
-                    movement.getInputQuantity(), // Note que este valor aparece duas vezes, verifique se é necessário
+                    movement.getRequestUnit(),
                     formattedPrice,
                     movement.getSupplier().getSupplierName(),
                     movement.getMaterial().getCompany().getCompanyName(),
@@ -96,15 +116,33 @@ public class StockMovementService {
 
     private ResponseEntity<String> convertToStockMovementAndSave(List<StockMovementDTO> stockMovement, UUID userUUID) {
         for (StockMovementDTO movement : stockMovement) {
+            var material = materialRepository.findById(movement.materialId());
+            if (material.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Material ".concat(movement.materialId().toString()).concat(" não encontrado."));
+            }
+
+            // Verificar se já existe um movimento de estoque para o material
+            var existingMovement = stockMovementRepository.findFirstByMaterial(material.get(), StockMovement.Status.APPROVED);
+            if (existingMovement.isPresent()) {
+                // Se o movimento existente tem um tipo de compra diferente, retorna erro
+                if (!existingMovement.get().getRequestUnit().equals(movement.requestUnit())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Não será possível criar o movimento para o material ".concat(movement.materialId().toString()).concat(" pois já existe histórico com a unidade de requisição ").concat(existingMovement.get().getRequestUnit()));
+                }
+            }
+
             var newMovement = new StockMovement(util.getDateTime());
 
             newMovement.setStockMovementDescription(movement.description());
             newMovement.setInputQuantity(movement.inputQuantity());
             newMovement.setBuyUnit(movement.buyUnit());
+            newMovement.setBuyRequest(movement.requestUnit());
             newMovement.setQuantityPackage(movement.quantityPackage());
-            newMovement.setPricePerItem(util.convertToBigDecimal(movement.pricePerItem()));
+            newMovement.setTotalQuantity(movement.totalQuantity());
+            newMovement.setPricePerItem(util.convertToBigDecimal(movement.priceTotal()), movement.totalQuantity());
+            newMovement.setPriceTotal(util.convertToBigDecimal(movement.priceTotal()));
             newMovement.setUserCreated(userRepository.findByIdUser(userUUID).orElse(null));
-            newMovement.setMaterial(materialRepository.findById(movement.materialId()).orElse(null));
+            newMovement.setMaterial(material.get());
             newMovement.setSupplier(supplierRepository.findById(Long.parseLong(movement.supplierId())).orElse(null));
             newMovement.setStatus(StockMovement.Status.PENDING);
             stockMovementRepository.save(newMovement);
@@ -129,7 +167,6 @@ public class StockMovementService {
         movement.materialUpdate();
         stockMovementRepository.save(movement);
         return ResponseEntity.status(HttpStatus.OK).body("Movimento aprovado com sucesso.");
-
     }
 
     public ResponseEntity<String> rejectStockMovement(long movementId, String refreshToken) {
@@ -179,15 +216,33 @@ public class StockMovementService {
             String formattedPrice = this.util.formatPrice(movement.getPricePerItem());
             String employee = movement.getUserFinished().getName().concat(" ")
                     .concat(movement.getUserCreated().getLastName());
+            // Marca do material (evitando NullPointerException)
+
+            String brand = movement.getMaterial().getMaterialBrand();
+            brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
+
+            // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
+            String description = movement.getMaterial().getMaterialPower();
+
+            if (description == null || description.isEmpty()) {
+                description = movement.getMaterial().getMaterialLength();
+            }
+
+            if (description == null || description.isEmpty()) {
+                description = movement.getMaterial().getMaterialAmps();
+            }
+
+            // Se ainda for null, define como string vazia
+            description = (description != null) ? " - " + description : "";
 
             // Adiciona o movimento de estoque na resposta
             response.add(new StockMovementResponse(
                     movement.getStockMovementId(),
                     movement.getStockMovementDescription(),
-                    movement.getMaterial().getMaterialName(),
-                    movement.getInputQuantity(),
+                    movement.getMaterial().getMaterialName().concat(description).concat(brand),
+                    movement.getTotalQuantity(),
                     movement.getBuyUnit(),
-                    movement.getInputQuantity(), // Note que este valor aparece duas vezes, verifique se é necessário
+                    movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
                     formattedPrice,
                     movement.getSupplier().getSupplierName(),
                     movement.getMaterial().getCompany().getCompanyName(),

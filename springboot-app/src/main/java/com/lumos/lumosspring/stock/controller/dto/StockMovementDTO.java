@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 
 public record StockMovementDTO(String description,
                                Long materialId,
-                               int inputQuantity,
+                               double inputQuantity,
                                String buyUnit,
-                               int quantityPackage,
-                               String pricePerItem,
-                               String supplierId) {
+                               String requestUnit,
+                               double quantityPackage,
+                               String priceTotal,
+                               String supplierId,
+                               double totalQuantity) {
 }
