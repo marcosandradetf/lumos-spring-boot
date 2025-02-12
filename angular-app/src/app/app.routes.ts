@@ -127,9 +127,15 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },
+  {
+    path: 'execucoes/lista-medicao',
+    loadComponent: () => import('./executions/measurement-list/measurement-list.component').then(p => p.MeasurementListComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+  },
   //end
 
-  // start executions path
+  // start request path
   {
     path: 'requisicoes/itens',
     loadComponent: () => import('./requests/request-items/request-items.component').then(r => r.RequestItemsComponent),
