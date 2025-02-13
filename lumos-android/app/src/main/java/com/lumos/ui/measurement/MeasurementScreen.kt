@@ -123,6 +123,8 @@ fun MeasurementScreen(
     var vLatitude by remember { mutableStateOf<Double?>(null) }
     var vLongitude by remember { mutableStateOf<Double?>(null) }
     var address by remember { mutableStateOf<String>("") }
+    var number by remember { mutableStateOf<String>("") }
+    var city by remember { mutableStateOf<String>("") }
 
     // Obtém o estado atual dos depósitos
     val deposits by stockViewModel.deposits
@@ -138,6 +140,8 @@ fun MeasurementScreen(
                 latitude = 0.0,
                 longitude = 0.0,
                 address = "",
+                number = "",
+                city = "",
                 depositId = 0,
                 deviceId = Settings.Secure.getString(
                     context.contentResolver,
@@ -155,8 +159,9 @@ fun MeasurementScreen(
             if (latitude != null && longitude != null) {
                 vLatitude = latitude
                 vLongitude = longitude
-                val addr = AddressService(context)
-                address = addr.execute(latitude, longitude)?.get(0).toString()
+                val addr = AddressService(context).execute(latitude, longitude)
+                address = addr?.get(0).toString()
+                city = "${addr?.get(1).toString()} - ${addr?.get(2).toString()}"
 
                 measurement.address = address ?: ""
                 measurement.latitude = vLatitude ?: 0.0

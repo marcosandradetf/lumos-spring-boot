@@ -18,6 +18,8 @@ public class PreMeasurement {
 
     private String address;
 
+    private String city;
+
     private double latitude;
 
     private double longitude;
@@ -95,5 +97,13 @@ public class PreMeasurement {
 
     public void setDeposit(Deposit deposit) {
         this.deposit = deposit;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 }
