@@ -285,8 +285,6 @@ export class UserComponent {
       return;
     }
 
-    console.log(this.rolesUser);
-
     // const user = this.users.find(u => u.userId === id);
     // if (!user) {
     //   console.log('Usuário não encontrado');
