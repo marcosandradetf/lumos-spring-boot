@@ -56,52 +56,14 @@ public class ItemService {
         return ResponseEntity.ok(items);
     }
 
-    // Método para extrair as partes do texto e os separadores dinamicamente
-    private void extractPartsAndSeparators(String original, List<String> parts, List<String> separators) {
-        Matcher matcher = Pattern.compile("([^\\s,\\-]+)([\\s,\\-]*)").matcher(original);
-
-        while (matcher.find()) {
-            parts.add(matcher.group(1));        // Captura o texto
-            separators.add(matcher.group(2));   // Captura o separador (incluindo espaços)
-        }
-    }
-
-    // Método para reconstruir a string original
-    private String reconstructAddress(List<String> parts, List<String> separators) {
-        StringBuilder restored = new StringBuilder();
-
-        for (int i = 0; i < parts.size(); i++) {
-            restored.append(parts.get(i));
-            if (i < separators.size()) {
-                restored.append(separators.get(i)); // Adiciona o separador original
-            }
-        }
-
-        return restored.toString();
-    }
 
     public ResponseEntity<?> saveMeasurement(MeasurementDTO measurementDTO) {
         PreMeasurement premeasurement = new PreMeasurement();
 
         var measurement = measurementDTO.measurement();
         var deposit = depositRepository.findById(measurement.depositId());
-        // Pegamos o endereço original antes do split
-        var address = measurement.address();
 
-        // Separar preservando os separadores
-        List<String> parts = new ArrayList<>();
-        List<String> separators = new ArrayList<>();
-
-        extractPartsAndSeparators(address, parts, separators);
-
-        // Adicionamos o número na primeira parte do endereço, se necessário
-        if (!measurement.number().isEmpty() && !parts.isEmpty()) {
-            parts.set(0, parts.getFirst().trim().concat(", ").concat(measurement.number()));
-            address = reconstructAddress(parts, separators);
-        }
-
-        premeasurement.setAddress(address);
-
+        premeasurement.setAddress(measurement.address());
         premeasurement.setCity(measurement.city());
         premeasurement.setLatitude(measurement.latitude());
         premeasurement.setLongitude(measurement.longitude());

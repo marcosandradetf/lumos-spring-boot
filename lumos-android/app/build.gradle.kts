@@ -21,6 +21,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    flavorDimensions("env")
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            buildConfigField("String", "API_URL", "\"http://192.168.3.2:8080\"")
+        }
+
+        create("prod") {
+            dimension = "env"
+            buildConfigField("String", "API_URL", "\"https://spring.thryon.com.br\"")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -39,6 +52,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     configurations {

@@ -15,17 +15,15 @@ class AddressService(private val context: Context) {
             }
 
             val address = addresses[0]
-            val street = address.thoroughfare ?: "" // Rua
-            val neighborhood = address.subLocality ?: "" // Bairro
-            val city = address.subAdminArea ?: "" // Cidade
-            val state = address.adminArea ?: "" // Estado
+            val street = address.thoroughfare ?: "Desconhecido" // Rua
+            val neighborhood = address.subLocality ?: "Desconhecido" // Bairro
+            val city = address.subAdminArea ?: "Desconhecido" // Cidade
+            val state = address.adminArea ?: "Desconhecido" // Estado
 
-            val logradouro = "$street - $neighborhood, $city - $state".trim().replace(Regex(" - ,| , "), ", ")
-            val cidade = address.locality ?: "Desconhecida"         // Cidade
-            val estado = address.adminArea ?: "Desconhecido"        // Estado
+            val streetAndNeighborhood = "$street - $neighborhood, $city - $state".trim().replace(Regex(" - ,| , "), ", ")
 
-
-            arrayOf(logradouro, cidade, estado)
+//            arrayOf(streetAndNeighborhood, city, state)
+            arrayOf(street, neighborhood, city, state)
         } catch (e: Exception) {
             null
         }

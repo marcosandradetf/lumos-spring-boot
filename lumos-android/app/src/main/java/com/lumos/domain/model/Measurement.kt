@@ -9,7 +9,7 @@ data class Measurement(
     var latitude: Double,
     var longitude: Double,
     var address: String?,
-    var number: String,
+    var number: String?,
     var city: String,
     var depositId: Long,
     val deviceId: String,

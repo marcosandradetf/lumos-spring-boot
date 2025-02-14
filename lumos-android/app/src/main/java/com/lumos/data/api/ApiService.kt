@@ -11,8 +11,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 class ApiService(
     private val secureStorage: SecureStorage,
 ) {
-//    private val baseUrl = "http://192.168.3.2:8080"
-    private val baseUrl = "https://spring.thryon.com.br"
+    private val baseUrl = "http://192.168.3.2:8080"
+//    private val baseUrl = "https://spring.thryon.com.br"
+//    val apiKey = BuildConfig.API_URL
+
 
     private fun getOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()

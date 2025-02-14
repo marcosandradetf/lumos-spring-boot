@@ -9,6 +9,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
@@ -40,8 +40,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
@@ -58,15 +56,12 @@ import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -75,9 +70,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -100,10 +96,8 @@ import com.lumos.domain.model.Measurement
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
-import com.lumos.navigation.Routes
 import com.lumos.ui.viewmodel.StockViewModel
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 
 @SuppressLint("HardwareIds")
 @Composable
@@ -119,12 +113,16 @@ fun MeasurementScreen(
 
     var finishMeasurement by remember { mutableStateOf(false) }
     var exitMeasurement by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var vLatitude by remember { mutableStateOf<Double?>(null) }
     var vLongitude by remember { mutableStateOf<Double?>(null) }
     var address by remember { mutableStateOf<String>("") }
+    var street by remember { mutableStateOf<String>("") }
     var number by remember { mutableStateOf<String>("") }
+    var neighborhood by remember { mutableStateOf<String>("") }
     var city by remember { mutableStateOf<String>("") }
+    var state by remember { mutableStateOf<String>("") }
 
     // Obtém o estado atual dos depósitos
     val deposits by stockViewModel.deposits
@@ -134,7 +132,7 @@ fun MeasurementScreen(
     var showModal by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    var measurement by remember {
+    val measurement by remember {
         mutableStateOf<Measurement>(
             Measurement(
                 latitude = 0.0,
@@ -160,10 +158,14 @@ fun MeasurementScreen(
                 vLatitude = latitude
                 vLongitude = longitude
                 val addr = AddressService(context).execute(latitude, longitude)
-                address = addr?.get(0).toString()
-                city = "${addr?.get(1).toString()} - ${addr?.get(2).toString()}"
 
-                measurement.address = address ?: ""
+                street = addr?.get(0).toString()
+                neighborhood = addr?.get(1).toString()
+                city = addr?.get(2).toString()
+                state = addr?.get(3).toString()
+
+                measurement.address = "$street, $number - $neighborhood, $city - $state"
+                measurement.city = city
                 measurement.latitude = vLatitude ?: 0.0
                 measurement.longitude = vLongitude ?: 0.0
 
@@ -234,7 +236,7 @@ fun MeasurementScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
-                        .padding(top = 10.dp),
+                        .padding(top = 20.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     Icon(
@@ -256,11 +258,19 @@ fun MeasurementScreen(
                         .padding(bottom = 50.dp)
                         .height(48.dp),
                     onClick = {
-                        if (items.isEmpty() || measurement.address == "") {
+                        if (items.isEmpty()) {
                             Toast
                                 .makeText(
                                     context,
                                     "Adicione os itens",
+                                    Toast.LENGTH_SHORT
+                                )
+                                .show()
+                        } else if (!validFields(street, number, neighborhood, city)) {
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Todos os campos são obrigatórios",
                                     Toast.LENGTH_SHORT
                                 )
                                 .show()
@@ -272,7 +282,10 @@ fun MeasurementScreen(
                                         finishMeasurement = true
                                     } catch (e: Exception) {
                                         finishMeasurement = false
-                                        Log.e("SaveError", "Erro ao salvar itens offline: ${e.message}")
+                                        Log.e(
+                                            "SaveError",
+                                            "Erro ao salvar itens offline: ${e.message}"
+                                        )
                                     }
 
                                 }
@@ -297,7 +310,13 @@ fun MeasurementScreen(
                         .padding(paddingValues)
                         .padding(10.dp)
                         .fillMaxSize()
-                        .background(Color(0xFFF5F5F5)) // Fundo moderno, cinza claro
+                        .background(Color(0xFFF5F5F5)) // Fundo cinza claro
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                // Fechar o teclado ao tocar em qualquer lugar da tela
+                                keyboardController?.hide()
+                            }
+                        }
                 ) {
                     // Conteúdo principal (coluna no topo)
 
@@ -326,13 +345,22 @@ fun MeasurementScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically // Certificando que os itens dentro da Row ficam alinhados verticalmente
                         ) {
-                            Text(
-                                text = "Pré-Medição",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF00308F) // Azul escuro
+                            Column {
+                                Text(
+                                    text = "Pré-Medição",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF00308F) // Azul escuro
+                                    )
                                 )
-                            )
+                                Text(
+                                    text = "$city - $state",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF00308F) // Azul escuro
+                                    )
+                                )
+                            }
 
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally // Alinha o conteúdo da coluna no centro
@@ -365,20 +393,93 @@ fun MeasurementScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        OutlinedTextField(
-                            textStyle = TextStyle(Color.Black),
-                            value = address,
-                            onValueChange = { address = it },
-                            label = {
-                                Text(
-                                    text = "Endereço:",
-                                    color = Color.Black
-                                )
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            maxLines = 1,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Row {
+                            OutlinedTextField(
+                                textStyle = TextStyle(Color.Black),
+                                value = street,
+                                onValueChange = {
+                                    street = it
+                                    measurement.address =
+                                        "$street, $number - $neighborhood, $city - $state"
+                                },
+                                label = {
+                                    Text(
+                                        text = "Rua:",
+                                        color = Color.Black
+                                    )
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.80f)
+                                    .padding(end = 10.dp)
+                            )
+
+                            OutlinedTextField(
+                                textStyle = TextStyle(Color.Black),
+                                value = number,
+                                onValueChange = {
+                                    number = it
+                                    measurement.address =
+                                        "$street, $number - $neighborhood, $city - $state"
+                                },
+                                label = {
+                                    Text(
+                                        text = "№:",
+                                        color = Color.Black
+                                    )
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                maxLines = 1,
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = number.isEmpty()
+                            )
+                        }
+
+                        Row {
+                            OutlinedTextField(
+                                textStyle = TextStyle(Color.Black),
+                                value = neighborhood,
+                                onValueChange = {
+                                    neighborhood = it
+                                    measurement.address =
+                                        "$street, $number - $neighborhood, $city - $state"
+                                },
+                                label = {
+                                    Text(
+                                        text = "Bairro:",
+                                        color = Color.Black
+                                    )
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.5f)
+                                    .padding(end = 10.dp)
+
+                            )
+
+                            OutlinedTextField(
+                                textStyle = TextStyle(Color.Black),
+                                value = city,
+                                onValueChange = {
+                                    city = it
+                                    measurement.city = it
+                                    measurement.address =
+                                        "$street, $number - $neighborhood, $it - $state"
+                                },
+                                label = {
+                                    Text(
+                                        text = "Cidade:",
+                                        color = Color.Black
+                                    )
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                                maxLines = 1,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
 
                         // Exibe um indicador de carregamento se os depósitos ainda não foram carregados
                         if (deposits.isEmpty()) {
@@ -578,6 +679,10 @@ fun MeasurementScreen(
 
 }
 
+fun validFields(street: String, number: String, neighborhood: String, city: String): Boolean {
+    return !(street.isEmpty() || number.isEmpty() || neighborhood.isEmpty() || city.isEmpty())
+}
+
 @Composable
 fun DialogExit(
     onDismissRequest: () -> Unit,
@@ -629,7 +734,7 @@ fun BottomSheetDialog(
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    var items = remember { mutableStateListOf<Item>() }
+    val items = remember { mutableStateListOf<Item>() }
     val filteredList = materials.filter {
         it.materialName?.contains(searchQuery, ignoreCase = true) ?: false ||
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
@@ -707,9 +812,9 @@ fun ItemIluminacaoRow(
     var selected by rememberSaveable { mutableStateOf(false) }
     var quantity by rememberSaveable { mutableIntStateOf(0) }
     val materialChar = if (material.materialLength != null) {
-        "Tamanho: ${material.materialLength ?: ""}"
+        "Tamanho: ${material.materialLength}"
     } else if (material.materialAmps != null) {
-        "Corrente: ${material.materialAmps ?: ""}"
+        "Corrente: ${material.materialAmps}"
     } else {
         "Potência: ${material.materialPower ?: ""}"
     }
@@ -755,7 +860,7 @@ fun ItemIluminacaoRow(
                         color = if (selected) Color.White else Color.Black
                     )
                     Text(
-                        text = "Em estoque: ${(material.stockQt.toString() ?: "")}",
+                        text = "Em estoque: ${material.stockQt.toString()}",
                         fontSize = 14.sp,
                         color = if (selected) Color.White else Color.Black
                     )
@@ -793,7 +898,7 @@ fun ItemIluminacaoRow(
             ) {
                 // Texto para o nome do material ou outros detalhes, se necessário
                 Text(
-                    text = "${material.materialName ?: ""} -  ${materialChar ?: ""}",
+                    text = "${material.materialName ?: ""} -  $materialChar",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color.White
