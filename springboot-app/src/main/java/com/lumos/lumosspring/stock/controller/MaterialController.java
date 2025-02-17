@@ -94,7 +94,7 @@ public class MaterialController {
         return ResponseEntity.ok(Objects.requireNonNullElse(name, ""));
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
     @PostMapping
     //public ResponseEntity<String>  create(@RequestBody Material material, @CookieValue("refreshToken") String refreshToken) {
     public ResponseEntity<?>  create(@RequestBody MaterialRequest material) {
@@ -102,7 +102,7 @@ public class MaterialController {
         return materialService.save(material);
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
     @PutMapping("{materialId}")
     public ResponseEntity<?> update(@RequestBody MaterialRequest material, @PathVariable Long materialId, @CookieValue("refreshToken") String refreshToken) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
@@ -114,7 +114,7 @@ public class MaterialController {
         return materialService.update(material, materialId, userUUID);
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_MANAGER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id, @CookieValue("refreshToken") String refreshToken) {
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);

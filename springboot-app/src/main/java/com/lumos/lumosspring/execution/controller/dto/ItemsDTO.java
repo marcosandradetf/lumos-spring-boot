@@ -4,5 +4,6 @@ public record ItemsDTO(Long itemId,
                        String materialId,
                        int materialQuantity,
                        String lastPower,
-                       Long measurementId) {
+                       Long measurementId,
+                       String material) {
 }

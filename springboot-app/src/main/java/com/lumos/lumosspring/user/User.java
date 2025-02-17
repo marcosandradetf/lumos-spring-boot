@@ -99,6 +99,10 @@ public class User {
         return name;
     }
 
+    public String getCompletedName() {
+        return name.concat(" ").concat(lastName);
+    }
+
     public void setName(String name) {
         this.name = name;
     }

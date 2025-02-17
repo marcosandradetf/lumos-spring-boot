@@ -2,12 +2,15 @@ package com.lumos.lumosspring.execution.entities;
 
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.team.Region;
+import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "tb_measurement")
+@Table(name = "tb_measurements")
 public class PreMeasurement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,8 +33,75 @@ public class PreMeasurement {
     @ManyToOne
     private Deposit deposit;
 
-    @OneToMany
-    List<Street> streets;
+    private Status status;
+
+    private String deviceId;
+
+    private Type typeMeasurement;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by_id_user")
+    private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_by_id_user")
+    private User assignedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "finished_by_id_user")
+    private User finishedBy;
+
+    private Instant createdAt;
+    private Instant assignedAt;
+    private Instant finishedAt;
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getAssignedAt() {
+        return assignedAt;
+    }
+
+    public void setAssignedAt(Instant assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
+    public Instant getFinishedAt() {
+        return finishedAt;
+    }
+
+    public void setFinishedAt(Instant finishedAt) {
+        this.finishedAt = finishedAt;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public User getAssignedBy() {
+        return assignedBy;
+    }
+
+    public void setAssignedBy(User assignedBy) {
+        this.assignedBy = assignedBy;
+    }
+
+    public User getFinishedBy() {
+        return finishedBy;
+    }
+
+    public void setFinishedBy(User finishedBy) {
+        this.finishedBy = finishedBy;
+    }
 
     public long getMeasurementId() {
         return measurementId;
@@ -48,8 +118,6 @@ public class PreMeasurement {
     public void setDescription(String description) {
         this.description = description;
     }
-
-
 
     public String getAddress() {
         return address;
@@ -83,14 +151,6 @@ public class PreMeasurement {
         this.region = region;
     }
 
-    public List<Street> getStreets() {
-        return streets;
-    }
-
-    public void setStreets(List<Street> streets) {
-        this.streets = streets;
-    }
-
     public Deposit getDeposit() {
         return deposit;
     }
@@ -105,5 +165,41 @@ public class PreMeasurement {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
+
+    public Type getTypeMeasurement() {
+        return typeMeasurement;
+    }
+
+    public void setTypeMeasurement(Type typeMeasurement) {
+        this.typeMeasurement = typeMeasurement;
+    }
+
+    public enum Status {
+        PENDING,
+        IN_PROGRESS,
+        CANCELLED,
+        FINISHED,
+    }
+
+    public enum Type {
+        INSTALLATION,
+        MAINTENANCE,
     }
 }
