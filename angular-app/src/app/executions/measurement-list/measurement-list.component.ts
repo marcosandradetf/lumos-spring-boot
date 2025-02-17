@@ -1,6 +1,7 @@
 import {Component} from '@angular/core';
 import {ExecutionService} from '../execution.service';
 import {KeyValuePipe, NgForOf} from '@angular/common';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-measurement-list',
@@ -40,7 +41,7 @@ export class MeasurementListComponent {
     }[]
   }[] = []
 
-  constructor(private executionService: ExecutionService,) {
+  constructor(private executionService: ExecutionService, protected router: Router) {
     this.executionService.getMeasurements().subscribe(
       d => {
         this.measurementDTO = d;
@@ -72,8 +73,41 @@ export class MeasurementListComponent {
   }
 
   getStreet(address: string) {
-    let street = address.split(',');
+    let street = address.split('-');
 
     return street[0];
   }
+
+  navigateToMeasurement(m: {
+    measurement: {
+      measurementId: number,
+      latitude: number,
+      longitude: number,
+      address: string,
+      city: string,
+      depositId: number,
+      deviceId: string,
+      depositName: string,
+      measurementType: string,
+      measurementStyle: string,
+      createdBy: string
+    },
+    items: {
+      materialId: string,
+      materialQuantity: number,
+      lastPower: string,
+      measurementId: number,
+      material: string
+    }[]
+  }) {
+    if (m?.measurement?.measurementId) {
+      this.router.navigate([`/execucoes/medicao/${m.measurement.measurementId}`], {
+        state: {measurement: m}
+      });
+    } else {
+      console.warn('Measurement ID não encontrado!', m);
+    }
+  }
+
+
 }

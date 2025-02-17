@@ -37,16 +37,16 @@
         <h2 class="text-lg font-medium mt-4">{{ city.key }}</h2>
 
         <ol class="flex flex-wrap">
-          <li *ngFor="let m of city.value; index as i;"
+          <li (click)="navigateToMeasurement(m)"  *ngFor="let m of city.value; index as i;"
               class="cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2">
             <div class="flex flex-col border rounded px-4 py-2">
           <span class="badge {{ m.measurement.measurementStyle }} rounded mb-4 mt-2">
             {{ getType(m.measurement.measurementType) }}
           </span>
-              <h3 class="text-sm">{{ getStreet(m.measurement.address) }}</h3>
-              <span class="text-xs font-light">Criado por {{ m.measurement.createdBy }}</span>
-              <span class="text-xs font-light"> 16 de fevereiro de 2025 00:00</span>
-              <span class="text-sm font-light">{{ m.items.length }} itens</span>
+              <h3 class="text-base font-normal text-neutral-700">{{ getStreet(m.measurement.address) }}</h3>
+              <span class="text-xs font-normal text-neutral-700">Criado por {{ m.measurement.createdBy }}</span>
+              <span class="text-xs font-normal text-neutral-700"> 16 de fevereiro de 2025 00:00</span>
+              <span class="text-sm font-light">{{ m.items.length }} item(s)</span>
             </div>
           </li>
         </ol>
