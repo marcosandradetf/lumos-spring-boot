@@ -9,7 +9,7 @@ import com.lumos.lumosspring.execution.repository.ItemRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,9 +36,11 @@ public class MeasurementService {
                                 entry.getKey().getDeposit().getIdDeposit(),
                                 entry.getKey().getDeviceId(),
                                 entry.getKey().getDeposit().getDepositName(),
-                                entry.getKey().getTypeMeasurement().name(),
-                                entry.getKey().getTypeMeasurement() == PreMeasurement.Type.INSTALLATION ?
-                                        "badge-primary" : "badge-neutral",
+//                                entry.getKey().getTypeMeasurement().name(),
+//                                entry.getKey().getTypeMeasurement() == PreMeasurement.Type.INSTALLATION ?
+//                                        "badge-primary" : "badge-neutral",
+                                PreMeasurement.Type.INSTALLATION.name(),
+                                "badge-primary",
                                 entry.getKey().getCreatedBy().getCompletedName()
 
                         ),
@@ -71,6 +73,32 @@ public class MeasurementService {
     public ResponseEntity<?> Delete(long id) {
 
         return ResponseEntity.ok().build();
+    }
+
+    public ResponseEntity<?> getCities() {
+        // Obtenha a lista de cidades
+        var cities = itemRepository.findCities(PreMeasurement.Status.PENDING);
+
+        // Mapeamento para armazenar os totais de cada cidade
+        Map<String, List<String>> citiesMap = new HashMap<>();  // Para armazenar como List<String>
+
+        // Iterar sobre as cidades para obter os totais
+        for (String city : cities) {
+            // Obtenha os totais para a cidade
+            var totals = itemRepository.getTotalByCity(PreMeasurement.Status.PENDING, city);
+
+            // Aqui assume-se que `totals` retorne uma lista de String com valores como "10.0,4"
+            String totalStr = totals.getFirst();  // Pega o primeiro item da lista de totais (esperado como String)
+
+            // Converte a string com valores separados por vírgula para um array
+            String[] totalsArray = totalStr.split(",");
+
+            // Armazena o array convertido como uma lista dentro do mapa
+            List<String> totalsList = Arrays.asList(totalsArray);
+            citiesMap.put(city, totalsList);  // Armazena no mapa, com a cidade como chave e a lista de totais como valor
+        }
+
+        return ResponseEntity.ok(citiesMap);
     }
 
 }

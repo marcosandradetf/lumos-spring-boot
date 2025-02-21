@@ -120,7 +120,7 @@ export const routes: Routes = [
   },
   // end
 
-  // start executions path
+  // start executions/pre-measurements path
   {
     path: 'execucoes/pre-medicao',
     loadComponent: () => import('./executions/pre-measurement/pre-measurement.component').then(p => p.PreMeasurementComponent),
@@ -128,7 +128,16 @@ export const routes: Routes = [
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
-    path: 'execucoes/lista-medicao',
+    path: 'execucoes/pre-medicao/relatorio',
+    loadComponent: () => import('./executions/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+  },
+  //
+
+  // start executions/executions path
+  {
+    path: 'execucoes/lista-medicoes',
     loadComponent: () => import('./executions/measurement-list/measurement-list.component').then(p => p.MeasurementListComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},

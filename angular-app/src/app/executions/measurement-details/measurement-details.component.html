@@ -3,32 +3,88 @@
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
-          <li><a>Início</a></li>
-          <li><a>Execuçoes</a></li>
-          <li>Lista</li>
+          <li><a href="/">Início</a></li>
+          <li><a href="/execucoes/lista-medicoes">Execuçoes pendentes</a></li>
+          <li>Medição </li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block">{{measurement.measurement.address}}</h3>
+      <h3 class="text-medium pr-5 hidden lg:block">{{ measurement.measurement.address }}</h3>
     </div>
 
 
-    <div class="border-b w-full pl-2 h-screen pt-2">
-      <div class="border-b pb-5">
-
-        <ol class="flex flex-wrap">
-          <li *ngFor="let i of measurement.items; index as index;"
-              class="cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2">
-            <div class="flex flex-col border rounded px-4 py-2">
-          <span class="badge badge-success text-white rounded mb-4 mt-2">
-            POSSUÍ ESTOQUE
-          </span>
-              <h3 class="text-base font-normal text-neutral-700">{{ i.material }}</h3>
-              <span class="text-sm font-normal text-neutral-600">Quantidade: {{ i.materialQuantity }}</span>
-              <span class="text-xs font-light">Estoque: 44</span>
-            </div>
+    <div class="w-full pl-2 lg:flex pb-2 pt-2">
+      <div class="w-1/2">
+        <ol>
+          <li class="flex justify-end border-b pb-2">
+            <span class="badge badge-primary mr-2 rounded">{{ measurement.measurement.latitude }}</span>
+            <span class="badge badge-primary mr-2 rounded">{{ measurement.measurement.longitude }}</span>
+          </li>
+          <li>
+            <div id="map" class="h-[400px]"></div>
+          </li>
+          <li class="flex border-b p-2 items-center">
+            <span class="material-icons mr-2 text-neutral-500 cursor-pointer select-none
+              transform transition-all duration-300 ease-in-out
+              hover:text-orange-600 hover:scale-110 hover:text-[1.75rem]"
+                  (click)="toggleButton(warning, warningText)"
+                  #warning>warning_amber</span>
+            <span #warningText class="text-xs">Sem prioridade</span>
+          </li>
+          <li class="flex border-b p-2 items-center">
+            <span #warningText class="text-xs">Nenhuma equipe selecionada</span>
+          </li>
+          <li class="flex border-b p-2 items-center">
+            <textarea class="w-full border text-xs p-2">
+              Adicionar comentario
+            </textarea>
+          </li>
+          <li class="flex border-b p-2 items-center">
+            <button
+              class="btn bg-indigo-600 text-white hover:bg-indigo-700 rounded-none shadow w-full transform transition-transform duration-300 hover:scale-5 hover:translate-y-2">
+              Selecionar Equipe
+            </button>
+          </li>
+          <li class="flex border-b p-2 items-center">
+            <button
+              class="btn bg-indigo-600 text-white hover:bg-indigo-700 rounded-none shadow w-full transform transition-transform duration-300 hover:scale-5 hover:translate-y-2">
+              Enviar Pedido
+            </button>
           </li>
         </ol>
       </div>
+
+
+      <div class="ml-2 pl-2 border-l w-1/2">
+        <div class="flex border-b items-center justify-between p-2">
+          <h3 class="text-base">ALMOXARIFADO GALPÃO BH</h3>
+          <span class="badge badge-success rounded text-neutral-100 select-none">
+          Todos os itens possuem estoque
+        </span>
+        </div>
+
+        <app-table [className]="'table table-zebra border-t mt-4'">
+          <tr header>
+            <th></th>
+            <th>Material</th>
+            <th>Potência</th>
+            <th>Corrente (A)</th>
+            <th>Tamanho</th>
+            <th>Quantidade</th>
+            <th>Qtde. Estoque</th>
+          </tr>
+          <tr body *ngFor="let i of measurement.items; index as index;">
+            <td>{{ index + 1 }}</td>
+            <td>{{ i.material }}</td>
+            <td>100W</td>
+            <td></td>
+            <td>100CM</td>
+            <td class="font-semibold text-blue-600">{{ i.materialQuantity }}</td>
+            <td class="font-semibold text-green-600">44</td>
+          </tr>
+
+        </app-table>
+      </div>
+
     </div>
 
 

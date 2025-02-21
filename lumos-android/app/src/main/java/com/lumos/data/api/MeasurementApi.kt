@@ -5,11 +5,12 @@ import com.lumos.domain.model.Item
 import com.lumos.domain.model.Measurement
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface MeasurementApi {
     @POST("/api/mobile/execution/insert-measurement")
-    suspend fun sendMeasurement(@Body measurement: MeasurementDto)
+    suspend fun sendMeasurement(@Body measurement: MeasurementDto, @Header("UUID") uuid: String)
 
 }
 

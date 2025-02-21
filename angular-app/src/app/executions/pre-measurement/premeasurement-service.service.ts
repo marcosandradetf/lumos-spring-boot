@@ -15,6 +15,10 @@ export class PreMeasurementService {
   constructor(private http: HttpClient) {
   }
 
+  getPreMeasurements(): Observable<{ [cityName: string]: [string, string] }> {
+    return this.http.get<{ [cityName: string]: [string, string] }>(`${this.endpoint + '/pre-measurement/get-cities'}`);
+  }
+
   getDeposits() {
     return this.http.get<Deposit[]>(`${environment.springboot + '/api/deposit'}`);
   }
@@ -86,4 +90,8 @@ export class PreMeasurementService {
       sel: boolean,
     }[]>(`${this.endpoint}/post-teams`, user);
   }
+
+
+
+
 }

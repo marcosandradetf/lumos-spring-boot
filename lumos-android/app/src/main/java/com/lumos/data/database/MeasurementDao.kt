@@ -21,7 +21,4 @@ interface MeasurementDao {
     @Query("SELECT * FROM items WHERE measurementId = :measurementId")
     suspend fun getItems(measurementId: Long): List<Item>
 
-//    @Query("SELECT * FROM measurements m INNER JOIN items i on i.measurementId = m.measurementId WHERE m.synced = 0")
-//    suspend fun getUnsyncedMeasurementsWithRelationship(): List<MeasurementWithItems>
-
 }

@@ -42,7 +42,7 @@ class MeasurementRepository(
                 measurement,
                 items
             )
-            api.sendMeasurement(dto)
+            api.sendMeasurement(dto, "d8511a21-b71d-4bdc-bf42-1f9ebb1098d3")
             true
         } catch (e: Exception) {
             false
@@ -71,7 +71,7 @@ class MeasurementRepository(
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .setRequiresBatteryNotLow(true)
+                    .setRequiresBatteryNotLow(false)
                     .build()
             )
             .build()
