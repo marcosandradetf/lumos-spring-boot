@@ -20,4 +20,9 @@ public class MeasurementController {
     public ResponseEntity<?> getMeasurements() {
         return measurementService.getAll();
     }
+
+    @GetMapping("/pre-measurement/get-cities")
+    public ResponseEntity<?> getCities() {
+        return measurementService.getCities();
+    }
 }
