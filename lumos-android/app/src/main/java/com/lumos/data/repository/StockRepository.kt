@@ -76,11 +76,11 @@ class StockRepository(
             // TODO handle the error
         }
 
-        if (localCountMaterials != remoteMaterials.count()) {
+//        if (localCountMaterials != remoteMaterials.count())
+            dao.deleteAll()
             remoteMaterials.forEach { material ->
                 dao.insertMaterial(material)
             }
-        }
     }
 
     suspend fun getMaterials(depositId: Long): List<Material> {

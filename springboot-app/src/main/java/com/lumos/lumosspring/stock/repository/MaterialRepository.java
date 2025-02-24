@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.repository;
 
+import com.lumos.lumosspring.execution.controller.dto.ItemsResponse;
 import com.lumos.lumosspring.stock.entities.Material;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,7 @@ import java.util.Optional;
 
 public interface MaterialRepository extends JpaRepository<Material, Long> {
     boolean existsByMaterialName(String materialName); // verificar duplicatas
+
     @Query("SELECT COUNT(m) > 0 FROM Material m WHERE m.materialName = :materialName AND m.deposit.idDeposit = :idDeposit AND m.materialBrand = :materialBrand")
     boolean existsMaterial(@Param("materialName") String materialName,
                            @Param("idDeposit") Long idDeposit,
@@ -39,9 +41,10 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
     @Query("SELECT 1 FROM Material m WHERE m.deposit.idDeposit = :id")
     Optional<Integer> existsDeposit(@Param("id") Long id);
 
-    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit = :depositIds")
-    List<Material> getByDeposit(@Param("depositIds") Long depositId);
+    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit = :depositId ORDER BY m.materialType.typeName, m.materialPower, m.materialLength")
+    List<Material> getByDeposit(@Param("depositId") Long depositId);
 
+    @Query("SELECT m FROM Material m WHERE UPPER(m.materialType.typeName) NOT IN ('RELE', 'CABO', 'RELÉ') ORDER BY m.materialType.typeName, m.materialPower, m.materialLength")
     List<Material> findAllByOrderByMaterialName();
 }
 

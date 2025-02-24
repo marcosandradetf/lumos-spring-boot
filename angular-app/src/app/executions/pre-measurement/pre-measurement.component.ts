@@ -16,27 +16,29 @@ import {Title} from '@angular/platform-browser';
 @Component({
   selector: 'app-pre-measurement',
   standalone: true,
-    imports: [
-        TableComponent,
-        NgClass,
-        NgForOf,
-        FormsModule,
-        ModalComponent,
-        ButtonComponent,
-        KeyValuePipe
-    ],
+  imports: [
+    NgForOf,
+    FormsModule,
+    KeyValuePipe
+  ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
 })
 export class PreMeasurementComponent {
   cities: { [cityName: string]: [string, string] } = {};
+  // formula: {
+  //   cable: string;
+  //   arm1_5: string;
+  //   arm2_5: string;
+  //   arm3_6: string;
+  //   led50: string;
+  // } = {};
 
 
   constructor(preMeasurementService: PreMeasurementService) {
     preMeasurementService.getPreMeasurements().subscribe(preMeasurements => {
       this.cities = preMeasurements;
     });
-
   }
 
 

@@ -65,6 +65,8 @@ class AuthInterceptor(
                     } else {
                         // Trata a falha na requisição (por exemplo, token de refresh inválido)
                         Log.e("Refresh Token Error", "Erro ao renovar o token: ${tokenResponse.code()}")
+                        authApi.logout(refreshToken = refreshToken)
+                        secureStorage.clearTokens()
                         null
                     }
                 } catch (e: Exception) {

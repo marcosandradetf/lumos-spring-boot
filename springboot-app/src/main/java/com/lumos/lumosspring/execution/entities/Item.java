@@ -19,10 +19,10 @@ public class Item {
     private Material material;
 
     @ManyToOne
-    @JoinColumn(name = "measurement_id")
-    private PreMeasurement measurement;
+    @JoinColumn(name = "pre_measurement_id")
+    private PreMeasurement preMeasurement;
 
-    private float itemQuantity;
+    private double itemQuantity;
     private BigDecimal itemValue = BigDecimal.ZERO;
     private BigDecimal itemTotalValue = BigDecimal.ZERO;
 
@@ -56,11 +56,11 @@ public class Item {
         this.itemId = itemId;
     }
 
-    public float getItemQuantity() {
+    public double getItemQuantity() {
         return itemQuantity;
     }
 
-    public void setItemQuantity(float itemQuantity) {
+    public void setItemQuantity(double itemQuantity) {
         this.itemQuantity = itemQuantity;
     }
 
@@ -97,10 +97,10 @@ public class Item {
     }
 
     public PreMeasurement getMeasurement() {
-        return measurement;
+        return preMeasurement;
     }
 
     public void setMeasurement(PreMeasurement measurement) {
-        this.measurement = measurement;
+        this.preMeasurement = measurement;
     }
 }

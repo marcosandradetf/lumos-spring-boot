@@ -28,7 +28,7 @@ public class MeasurementService {
                 .stream()
                 .map(entry -> new MeasurementDTO(
                         new PreMeasurementDTO(
-                                entry.getKey().getMeasurementId(),
+                                entry.getKey().getPreMeasurementId(),
                                 entry.getKey().getLatitude(),
                                 entry.getKey().getLongitude(),
                                 entry.getKey().getAddress(),
@@ -36,11 +36,9 @@ public class MeasurementService {
                                 entry.getKey().getDeposit().getIdDeposit(),
                                 entry.getKey().getDeviceId(),
                                 entry.getKey().getDeposit().getDepositName(),
-//                                entry.getKey().getTypeMeasurement().name(),
-//                                entry.getKey().getTypeMeasurement() == PreMeasurement.Type.INSTALLATION ?
-//                                        "badge-primary" : "badge-neutral",
-                                PreMeasurement.Type.INSTALLATION.name(),
-                                "badge-primary",
+                                entry.getKey().getTypeMeasurement().name(),
+                                entry.getKey().getTypeMeasurement() == PreMeasurement.Type.INSTALLATION ?
+                                        "badge-primary" : "badge-neutral",
                                 entry.getKey().getCreatedBy().getCompletedName()
 
                         ),
@@ -50,7 +48,7 @@ public class MeasurementService {
                                         String.valueOf(i.getMaterial().getIdMaterial()), // No need to cast
                                         ((int) i.getItemQuantity()), // No need to cast
                                         "",
-                                        i.getMeasurement().getMeasurementId(),
+                                        i.getMeasurement().getPreMeasurementId(),
                                         i.getMaterial().getMaterialName()
                                 ))
                                 .collect(Collectors.toList()) // Collect items into a list

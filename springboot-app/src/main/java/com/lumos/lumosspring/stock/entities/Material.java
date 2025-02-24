@@ -147,7 +147,7 @@ public class Material {
         this.stockQuantity -= quantityCompleted;
     }
 
-    public void removeStockAvailable(float quantityAvailable) {
+    public void removeStockAvailable(double quantityAvailable) {
         this.stockAvailable -= quantityAvailable;
     }
 

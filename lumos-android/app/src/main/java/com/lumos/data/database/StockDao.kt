@@ -21,15 +21,13 @@ interface StockDao {
     @Query("SELECT count(depositId) FROM deposits")
     suspend fun getCountDeposits(): Int
 
-    @Query("DELETE FROM deposits")
+    @Query("DELETE FROM materials")
     suspend fun deleteAll()
-
-
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMaterial(material: Material)
 
-    @Query("SELECT * FROM materials where depositId = :depositId")
+    @Query("SELECT * FROM materials where depositId = :depositId ORDER BY materialPower")
     suspend fun getMaterials(depositId: Long): List<Material>
 
     @Query("SELECT count(materialId) FROM materials")

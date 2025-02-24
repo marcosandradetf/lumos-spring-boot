@@ -17,7 +17,6 @@ import com.lumos.lumosspring.util.Util;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -72,6 +71,7 @@ public class PreMeasurementService {
         premeasurement.setLongitude(measurement.longitude());
         premeasurement.setDeposit(deposit.orElse(null));
         premeasurement.setStatus(PreMeasurement.Status.PENDING);
+        premeasurement.setTypeMeasurement(PreMeasurement.Type.INSTALLATION);
         premeasurement.setCreatedBy(user.orElse(null));
         premeasurement.setCreatedAt(util.getDateTime());
 
@@ -87,8 +87,86 @@ public class PreMeasurementService {
 
             itemRepository.save(newItem);
         });
+        var items = itemRepository.findItemsByPreMeasurement_PreMeasurementId(premeasurement.getPreMeasurementId());
+
+
+        // IMPORTANTE
+        // ADICIONAR AUTOMATICAMENTE CABO E RELE
+        for (Item item : items) {
+            if (item.getMaterial().getMaterialType().getTypeName().equalsIgnoreCase("CABO")) {
+                double cableQuantity = 0.0F;
+
+                // Filtra os materiais do tipo "BRAÇO"
+                var bracos = items.stream()
+                        .filter(b -> "BRAÇO".equalsIgnoreCase(b.getMaterial().getMaterialType().getTypeName()))
+                        .toList();
+
+                // Aplica os coeficientes da fórmula
+                for (Item braco : bracos) {
+                    String length = braco.getMaterial().getMaterialLength();
+
+                    if (length.contains("1,5")) cableQuantity += braco.getItemQuantity() * 2.5;
+
+                    if (length.contains("2,5")) cableQuantity += braco.getItemQuantity() * 8.5;
+
+                    if (length.contains("3,5"))   cableQuantity += braco.getItemQuantity() * 12.5;
+
+                }
+
+                item.setItemQuantity(cableQuantity);
+                itemRepository.save(item);
+            }
+        }
+
+
+
 
         return ResponseEntity.ok().body(new DefaultResponse("Medição salva com sucesso"));
     }
+
+    public ResponseEntity<?> getFields(long measurementId) {
+        var items = itemRepository.findItemsByPreMeasurement_PreMeasurementId(measurementId);
+        Map<String, Double> fields = new HashMap<>();
+
+        for (Item item : items) {
+            String description = item.getMaterial().getMaterialType().getTypeName();
+            //=SUM(F7*2.5)+(G7*8.5)+(H7*12.5)
+            switch (description) {
+                case "LED":
+                    fields.put(description.concat(" DE ").concat(item.getMaterial().getMaterialPower()), item.getItemQuantity());
+                    break;
+                case "BRAÇO":
+                    fields.put(description.concat(" DE ").concat(item.getMaterial().getMaterialLength()), item.getItemQuantity());
+                    break;
+                case "CABO":
+                    double cableQuantity = 0.0F;
+
+                    // Filtra os materiais do tipo "BRAÇO"
+                    var bracos = items.stream()
+                            .filter(b -> "BRAÇO".equalsIgnoreCase(b.getMaterial().getMaterialType().getTypeName()))
+                            .toList();
+
+                    // Aplica os coeficientes da fórmula
+                    for (Item braco : bracos) {
+                        String length = braco.getMaterial().getMaterialLength();
+
+                        if (length.contains("1,5")) cableQuantity += braco.getItemQuantity() * 2.5;
+
+                        if (length.contains("2,5")) cableQuantity += braco.getItemQuantity() * 8.5;
+
+                        if (length.contains("3,5"))   cableQuantity += braco.getItemQuantity() * 12.5;
+
+                    }
+                    fields.put(description, cableQuantity);
+                    break;
+                default:
+                    fields.put(description, item.getItemQuantity());
+                    break;
+            }
+        }
+
+        return ResponseEntity.ok(fields);
+    }
+
 
 }

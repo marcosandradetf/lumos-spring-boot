@@ -8,12 +8,12 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "tb_pre_measurements")
-public class PreMeasurement {
+@Table(name = "tb_measurements")
+public class Measurement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pre_measurement_id")
-    private long preMeasurementId;
+    @Column(name = "measurement_id")
+    private long measurementId;
 
     private String description;
 
@@ -101,12 +101,12 @@ public class PreMeasurement {
         this.finishedBy = finishedBy;
     }
 
-    public long getPreMeasurementId() {
-        return preMeasurementId;
+    public long getMeasurementId() {
+        return measurementId;
     }
 
-    public void setPreMeasurementId(long preMeasurementId) {
-        this.preMeasurementId = preMeasurementId;
+    public void setMeasurementId(long measurementId) {
+        this.measurementId = measurementId;
     }
 
     public String getDescription() {
