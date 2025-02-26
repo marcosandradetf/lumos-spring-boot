@@ -19,8 +19,8 @@ public class StockMovement {
     private String stockMovementDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "material_id", nullable = false)
-    private MaterialStock material;
+    @JoinColumn(name = "material_stock_id", nullable = false)
+    private MaterialStock materialStock;
 
     @Column(nullable = false)
     private Instant stockMovementRefresh;
@@ -78,17 +78,13 @@ public class StockMovement {
             throw new IllegalArgumentException("Quantidade e embalagem devem ser maiores que zero.");
         }
 
-        this.material.getMaterial().addStockQuantity(this.totalQuantity);
-        this.material.getMaterial().addStockAvailable(this.totalQuantity);
-        this.material.getMaterial().setCostPerItem(this.pricePerItem);
-        this.material.getMaterial().setCostPrice(this.priceTotal);
-        this.material.getMaterial().setBuyUnit(this.buyUnit);
-        this.material.getMaterial().setRequestUnit(this.requestUnit);
+        this.materialStock.addStockQuantity(this.totalQuantity);
+        this.materialStock.addStockAvailable(this.totalQuantity);
+        this.materialStock.setCostPerItem(this.pricePerItem);
+        this.materialStock.setCostPrice(this.priceTotal);
+        this.materialStock.setBuyUnit(this.buyUnit);
+        this.materialStock.setRequestUnit(this.requestUnit);
     }
-
-
-
-
 
     public Long getStockMovementId() {
         return stockMovementId;
@@ -106,12 +102,12 @@ public class StockMovement {
         this.stockMovementDescription = stockMovementDescription;
     }
 
-    public MaterialStock getMaterial() {
-        return material;
+    public MaterialStock getMaterialStock() {
+        return materialStock;
     }
 
-    public void setMaterial(MaterialStock material) {
-        this.material = material;
+    public void setMaterialStock(MaterialStock material) {
+        this.materialStock = material;
     }
 
     public Instant getStockMovementRefresh() {

@@ -35,7 +35,7 @@ export const routes: Routes = [
     path: 'estoque/tipos',
     loadComponent: () => import('./stock/types/types.component').then(m => m.TypesComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+    data: {role: ['ADMIN'], path: 'estoque'},
   },
   {
     path: 'estoque/movimento',

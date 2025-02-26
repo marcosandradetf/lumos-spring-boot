@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.execution.entities;
 
 import com.lumos.lumosspring.contract.entities.Contract;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
 import jakarta.persistence.*;
 
@@ -16,8 +15,8 @@ public class Item {
     private long itemId;
 
     @ManyToOne
-    @JoinColumn(name = "stock_material_id")
-    private MaterialStock material;
+    @JoinColumn(name = "material_stock_id")
+    private MaterialStock materialStock;
 
     @ManyToOne
     @JoinColumn(name = "pre_measurement_id")
@@ -43,9 +42,9 @@ public class Item {
     }
 
     private void removeStockAvailable() {
-        double qtStockAvailable = this.material.getMaterial().getStockAvailable();
+        double qtStockAvailable = this.materialStock.getStockAvailable();
         if (qtStockAvailable > 0) {
-            this.material.getMaterial().removeStockAvailable(this.itemQuantity);
+            this.materialStock.removeStockAvailable(this.itemQuantity);
         }
     }
 
@@ -89,12 +88,12 @@ public class Item {
         return contract;
     }
 
-    public MaterialStock getMaterial() {
-        return material;
+    public MaterialStock getMaterialStock() {
+        return materialStock;
     }
 
-    public void setMaterial(MaterialStock material) {
-        this.material = material;
+    public void setMaterialStock(MaterialStock material) {
+        this.materialStock = material;
     }
 
     public PreMeasurement getMeasurement() {

@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.execution.entities;
 
-import com.lumos.lumosspring.stock.entities.Material;
+import com.lumos.lumosspring.stock.entities.MaterialStock;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,7 +15,8 @@ public class MaterialReservation {
     private String stockReservationName;
 
     @ManyToOne
-    private Material material;
+    @JoinColumn(name = "material_stock_id")
+    private MaterialStock materialStock;
 
     @ManyToOne
     private Street street;
@@ -44,12 +45,12 @@ public class MaterialReservation {
         this.stockReservationName = stockReservationName;
     }
 
-    public Material getMaterial() {
-        return material;
+    public MaterialStock getMaterialStock() {
+        return materialStock;
     }
 
-    public void setMaterial(Material material) {
-        this.material = material;
+    public void setMaterialStock(MaterialStock material) {
+        this.materialStock = material;
     }
 
     public int getReservedQuantity() {
@@ -58,7 +59,7 @@ public class MaterialReservation {
 
     public void setReservedQuantity(int reservedQuantity) {
         this.reservedQuantity = reservedQuantity;
-        this.material.removeStockAvailable(reservedQuantity);
+        this.materialStock.removeStockAvailable(reservedQuantity);
     }
 
     public int getQuantityCompleted() {
@@ -67,7 +68,7 @@ public class MaterialReservation {
 
     public void setQuantityCompleted(int quantityCompleted) {
         this.quantityCompleted = quantityCompleted;
-        this.material.removeStockQuantity(quantityCompleted);
+        this.materialStock.removeStockQuantity(quantityCompleted);
     }
 
     public ReservationStatus getStatus() {

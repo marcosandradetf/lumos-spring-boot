@@ -45,11 +45,11 @@ public class MeasurementService {
                         entry.getValue().stream()
                                 .map(i -> new ItemsDTO(
                                         i.getItemId(),
-                                        String.valueOf(i.getMaterial().getMaterial().getIdMaterial()), // No need to cast
+                                        String.valueOf(i.getMaterialStock().getMaterial().getIdMaterial()), // No need to cast
                                         ((int) i.getItemQuantity()), // No need to cast
                                         "",
                                         i.getMeasurement().getPreMeasurementId(),
-                                        i.getMaterial().getMaterial().getMaterialName()
+                                        i.getMaterialStock().getMaterial().getMaterialName()
                                 ))
                                 .collect(Collectors.toList()) // Collect items into a list
                 ))

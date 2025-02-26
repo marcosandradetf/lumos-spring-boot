@@ -16,7 +16,7 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
     List<StockMovement> findApprovedBetweenDates(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
 
-    @Query("SELECT s FROM StockMovement s WHERE s.material = :material and s.status = :status")
+    @Query("SELECT s FROM StockMovement s WHERE s.materialStock = :material and s.status = :status")
     Optional<StockMovement> findFirstByMaterial(@Param("material") MaterialStock material, @Param("status") StockMovement.Status status);
 
 }

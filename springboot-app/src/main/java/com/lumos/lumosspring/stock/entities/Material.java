@@ -25,28 +25,10 @@ public class Material {
 
     private String materialLength;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String buyUnit;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String requestUnit;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_material_type", nullable = false)
     private Type materialType;
 
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
-    private double stockQuantity;
-
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
-    private double stockAvailable;
-
-    private BigDecimal costPerItem;
-
-    private BigDecimal costPrice;
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
-    private boolean inactive;
 
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "id_company", nullable = false)
@@ -97,37 +79,6 @@ public class Material {
         this.materialName = nomeMaterial;
     }
 
-    public String getBuyUnit() {
-        return buyUnit;
-    }
-
-    public void setBuyUnit(String unidadeCompra) {
-        this.buyUnit = unidadeCompra;
-    }
-
-    public String getRequestUnit() {
-        return requestUnit;
-    }
-
-    public void setRequestUnit(String unidadeRequisicao) {
-        this.requestUnit = unidadeRequisicao;
-    }
-
-    public double getStockQuantity() {
-        return stockQuantity;
-    }
-
-    public void setStockQuantity(double qtdeEstoque) {
-        this.stockQuantity = qtdeEstoque;
-    }
-
-    public boolean isInactive() {
-        return inactive;
-    }
-
-    public void setInactive(boolean inativo) {
-        this.inactive = inativo;
-    }
 
     public String getMaterialBrand() {
         return materialBrand;
@@ -137,21 +88,6 @@ public class Material {
         this.materialBrand = marcaMaterial;
     }
 
-    public void addStockQuantity(double quantityCompleted) {
-        this.stockQuantity += quantityCompleted;
-    }
-
-    public void addStockAvailable(double quantityAvailable) {
-        this.stockAvailable += quantityAvailable;
-    }
-
-    public void removeStockQuantity(int quantityCompleted) {
-        this.stockQuantity -= quantityCompleted;
-    }
-
-    public void removeStockAvailable(double quantityAvailable) {
-        this.stockAvailable -= quantityAvailable;
-    }
 
     public String getMaterialPower() {
         return materialPower;
@@ -161,21 +97,6 @@ public class Material {
         this.materialPower = materialPower;
     }
 
-    public double getStockAvailable() {
-        return stockAvailable;
-    }
-
-    public void setStockAvailable(double stockAvailable) {
-        this.stockAvailable = stockAvailable;
-    }
-
-    public BigDecimal getCostPrice() {
-        return costPrice;
-    }
-
-    public void setCostPrice(BigDecimal costPrice) {
-        this.costPrice = costPrice;
-    }
 
     public String getMaterialAmps() {
         return materialAmps;
@@ -191,15 +112,6 @@ public class Material {
 
     public void setMaterialLength(String materialLength) {
         this.materialLength = materialLength;
-    }
-
-
-    public BigDecimal getCostPerItem() {
-        return costPerItem;
-    }
-
-    public void setCostPerItem(BigDecimal costPerItem) {
-        this.costPerItem = costPerItem;
     }
 
     public Set<MaterialStock> getMaterialStocks() {

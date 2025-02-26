@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.stock.service;
 
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
-import com.lumos.lumosspring.stock.entities.MaterialStock;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementDTO;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementResponse;
@@ -58,18 +57,18 @@ public class StockMovementService {
 
 
             // Marca do material (evitando NullPointerException)
-            String brand = movement.getMaterial().getMaterial().getMaterialBrand();
+            String brand = movement.getMaterialStock().getMaterial().getMaterialBrand();
             brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
 
             // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
-            String description = movement.getMaterial().getMaterial().getMaterialPower();
+            String description = movement.getMaterialStock().getMaterial().getMaterialPower();
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterial().getMaterial().getMaterialLength();
+                description = movement.getMaterialStock().getMaterial().getMaterialLength();
             }
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterial().getMaterial().getMaterialAmps();
+                description = movement.getMaterialStock().getMaterial().getMaterialAmps();
             }
 
             // Se ainda for null, define como string vazia
@@ -80,14 +79,14 @@ public class StockMovementService {
             response.add(new StockMovementResponse(
                     movement.getStockMovementId(),
                     movement.getStockMovementDescription(),
-                    movement.getMaterial().getMaterial().getMaterialName().concat(description).concat(brand),
+                    movement.getMaterialStock().getMaterial().getMaterialName().concat(description).concat(brand),
                     movement.getTotalQuantity(),
                     movement.getBuyUnit(),
                     movement.getRequestUnit(),
                     formattedPrice,
                     movement.getSupplier().getSupplierName(),
-                    movement.getMaterial().getCompany().getCompanyName(),
-                    movement.getMaterial().getDeposit().getDepositName(),
+                    movement.getMaterialStock().getCompany().getCompanyName(),
+                    movement.getMaterialStock().getDeposit().getDepositName(),
                     employee
             ));
         }
@@ -143,7 +142,7 @@ public class StockMovementService {
             newMovement.setPricePerItem(util.convertToBigDecimal(movement.priceTotal()), movement.totalQuantity());
             newMovement.setPriceTotal(util.convertToBigDecimal(movement.priceTotal()));
             newMovement.setUserCreated(userRepository.findByIdUser(userUUID).orElse(null));
-            newMovement.setMaterial(material.get());
+            newMovement.setMaterialStock(material.get());
             newMovement.setSupplier(supplierRepository.findById(Long.parseLong(movement.supplierId())).orElse(null));
             newMovement.setStatus(StockMovement.Status.PENDING);
             stockMovementRepository.save(newMovement);
@@ -219,18 +218,18 @@ public class StockMovementService {
                     .concat(movement.getUserCreated().getLastName());
             // Marca do material (evitando NullPointerException)
 
-            String brand = movement.getMaterial().getMaterial().getMaterialBrand();
+            String brand = movement.getMaterialStock().getMaterial().getMaterialBrand();
             brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
 
             // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
-            String description = movement.getMaterial().getMaterial().getMaterialPower();
+            String description = movement.getMaterialStock().getMaterial().getMaterialPower();
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterial().getMaterial().getMaterialLength();
+                description = movement.getMaterialStock().getMaterial().getMaterialLength();
             }
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterial().getMaterial().getMaterialAmps();
+                description = movement.getMaterialStock().getMaterial().getMaterialAmps();
             }
 
             // Se ainda for null, define como string vazia
@@ -240,14 +239,14 @@ public class StockMovementService {
             response.add(new StockMovementResponse(
                     movement.getStockMovementId(),
                     movement.getStockMovementDescription(),
-                    movement.getMaterial().getMaterial().getMaterialName().concat(description).concat(brand),
+                    movement.getMaterialStock().getMaterial().getMaterialName().concat(description).concat(brand),
                     movement.getTotalQuantity(),
                     movement.getBuyUnit(),
                     movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
                     formattedPrice,
                     movement.getSupplier().getSupplierName(),
-                    movement.getMaterial().getCompany().getCompanyName(),
-                    movement.getMaterial().getDeposit().getDepositName(),
+                    movement.getMaterialStock().getCompany().getCompanyName(),
+                    movement.getMaterialStock().getDeposit().getDepositName(),
                     employee
             ));
         }

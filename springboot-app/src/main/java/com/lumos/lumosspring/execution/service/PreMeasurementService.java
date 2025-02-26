@@ -7,7 +7,6 @@ import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.repository.ItemRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.StreetRepository;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
@@ -50,7 +49,7 @@ public class PreMeasurementService {
             items.add(new ItemsResponse(
                     m.getMaterial().getIdMaterial(),
                     m.getMaterial().getMaterialName(),
-                    m.getMaterial().getStockQuantity()
+                    m.getStockQuantity()
             ));
         }
 
@@ -85,7 +84,7 @@ public class PreMeasurementService {
         measurementDTO.items().forEach(item -> {
             var newItem = new Item();
             var material = materialStockRepository.findById(Long.valueOf(item.materialId()));
-            newItem.setMaterial(material.orElse(null));
+            newItem.setMaterialStock(material.orElse(null));
             newItem.setItemQuantity(item.materialQuantity());
             newItem.setMeasurement(premeasurement);
 
@@ -97,12 +96,12 @@ public class PreMeasurementService {
         // IMPORTANTE
         // ADICIONAR AUTOMATICAMENTE CABO E RELE
         for (Item item : items) {
-            var material = item.getMaterial().getMaterial();
+            var material = item.getMaterialStock().getMaterial();
             if (material.getMaterialType().getTypeName().equalsIgnoreCase("CABO")) {
                 double cableQuantity = 0.0F;
 
                 for (Item i : items) {
-                    String braco = i.getMaterial().getMaterial().getMaterialType().getTypeName().toUpperCase();
+                    String braco = i.getMaterialStock().getMaterial().getMaterialType().getTypeName().toUpperCase();
                     if (braco.equalsIgnoreCase("BRAÇO 1,5")) cableQuantity += i.getItemQuantity() * 2.5;
 
                     if (braco.equalsIgnoreCase("BRAÇO 2,5")) cableQuantity += i.getItemQuantity() * 8.5;
@@ -118,7 +117,7 @@ public class PreMeasurementService {
                 double releQuantity = 0.0F;
 
                 for (Item i : items) {
-                    String braco = i.getMaterial().getMaterial().getMaterialType().getTypeName().toUpperCase();
+                    String braco = i.getMaterialStock().getMaterial().getMaterialType().getTypeName().toUpperCase();
                     if (braco.equalsIgnoreCase("LED")) releQuantity += i.getItemQuantity();
                 }
 
@@ -136,7 +135,7 @@ public class PreMeasurementService {
         Map<String, Double> fields = new HashMap<>();
 
         for (Item item : items) {
-            var material = item.getMaterial().getMaterial();
+            var material = item.getMaterialStock().getMaterial();
             String description = material.getMaterialType().getTypeName();
             //=SUM(F7*2.5)+(G7*8.5)+(H7*12.5)
             switch (description) {

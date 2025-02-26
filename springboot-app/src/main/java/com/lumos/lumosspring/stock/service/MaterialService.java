@@ -102,6 +102,8 @@ public class MaterialService {
                 materialStock.setMaterial(createMaterial(material, type));
                 materialStock.setCompany(company);
                 materialStock.setDeposit(deposit);
+                materialStock.setBuyUnit(material.buyUnit());
+                materialStock.setRequestUnit(material.requestUnit());
                 materialList.add(materialStock);
             }
         } else {
@@ -111,6 +113,8 @@ public class MaterialService {
             Deposit deposit = depositRepository.findById(material.deposit())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Almoxarifado não encontrado."));
             materialStock.setDeposit(deposit);
+            materialStock.setBuyUnit(material.buyUnit());
+            materialStock.setRequestUnit(material.requestUnit());
             materialList.add(materialStock);
         }
 
@@ -127,9 +131,7 @@ public class MaterialService {
         newMaterial.setMaterialPower(material.materialPower());
         newMaterial.setMaterialAmps(material.materialAmps());  // Corrigido
         newMaterial.setMaterialLength(material.materialLength());  // Corrigido
-        newMaterial.setBuyUnit(material.buyUnit());
-        newMaterial.setRequestUnit(material.requestUnit());
-//        newMaterial.setStockQuantity(material.stockQt());
+
         newMaterial.setMaterialType(type);
         return newMaterial;
     }
@@ -144,10 +146,10 @@ public class MaterialService {
                         ms.getMaterial().getMaterialPower(),
                         ms.getMaterial().getMaterialAmps(),
                         ms.getMaterial().getMaterialLength(),
-                        ms.getMaterial().getBuyUnit(),
-                        ms.getMaterial().getRequestUnit(),
-                        ms.getMaterial().getStockQuantity(),
-                        ms.getMaterial().isInactive(),
+                        ms.getBuyUnit(),
+                        ms.getRequestUnit(),
+                        ms.getStockQuantity(),
+                        ms.isInactive(),
                         ms.getMaterial().getMaterialType() != null ? ms.getMaterial().getMaterialType().getTypeName() : null,
                         ms.getMaterial().getMaterialType() != null && ms.getMaterial().getMaterialType().getGroup() != null
                                 ? ms.getMaterial().getMaterialType().getGroup().getGroupName()
@@ -166,7 +168,7 @@ public class MaterialService {
         var log = new Log();
 
         if (material.isPresent() && user.isPresent()) {
-            if (material.get().getMaterial().isInactive()) {
+            if (material.get().isInactive()) {
                 materialStockRepository.delete(material.get());
                 String logMessage = String.format("Usuário %s excluiu material %d com sucesso.",
                         user.get().getUsername(),
@@ -215,9 +217,9 @@ public class MaterialService {
         materialToUpdate.getMaterial().setMaterialAmps(material.materialAmps());
         materialToUpdate.getMaterial().setMaterialLength(material.materialLength());
 
-        materialToUpdate.getMaterial().setBuyUnit(material.buyUnit());
-        materialToUpdate.getMaterial().setRequestUnit(material.requestUnit());
-        materialToUpdate.getMaterial().setInactive(material.inactive());
+        materialToUpdate.setBuyUnit(material.buyUnit());
+        materialToUpdate.setRequestUnit(material.requestUnit());
+        materialToUpdate.setInactive(material.inactive());
         materialToUpdate.getMaterial().setMaterialType(typeRepository.findById(material.materialType()).orElse(null));
 
         materialStockRepository.save(materialToUpdate);
@@ -252,8 +254,8 @@ public class MaterialService {
                     m.getMaterial().getMaterialPower(),
                     m.getMaterial().getMaterialAmps(),
                     m.getMaterial().getMaterialLength(),
-                    m.getMaterial().getRequestUnit(),
-                    String.valueOf(m.getMaterial().getStockAvailable()),
+                    m.getRequestUnit(),
+                    String.valueOf(m.getStockAvailable()),
                     companyName,
                     depositId
             ));

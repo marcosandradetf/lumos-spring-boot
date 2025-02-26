@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.stock.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)  // Isso vai garantir que valores nulos não sejam serializados
@@ -16,10 +15,10 @@ public record MaterialResponse(long idMaterial, String materialName, String mate
                 material.getMaterial().getMaterialPower(),
                 material.getMaterial().getMaterialAmps(),
                 material.getMaterial().getMaterialLength(),
-                material.getMaterial().getBuyUnit(),
-                material.getMaterial().getRequestUnit(),
-                material.getMaterial().getStockQuantity(),
-                material.getMaterial().isInactive(),
+                material.getBuyUnit(),
+                material.getRequestUnit(),
+                material.getStockQuantity(),
+                material.isInactive(),
                 material.getMaterial().getMaterialType() != null ? material.getMaterial().getMaterialType().getTypeName() : null,
                 material.getMaterial().getMaterialType() != null ? material.getMaterial().getMaterialType().getGroup().getGroupName(): null,
                 material.getDeposit() != null ? material.getDeposit().getDepositName() : null,
