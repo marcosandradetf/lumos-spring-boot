@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.repository;
 
 import com.lumos.lumosspring.stock.entities.Material;
+import com.lumos.lumosspring.stock.entities.MaterialStock;
 import com.lumos.lumosspring.stock.entities.StockMovement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,6 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
 
 
     @Query("SELECT s FROM StockMovement s WHERE s.material = :material and s.status = :status")
-    Optional<StockMovement> findFirstByMaterial(@Param("material") Material material, @Param("status") StockMovement.Status status);
+    Optional<StockMovement> findFirstByMaterial(@Param("material") MaterialStock material, @Param("status") StockMovement.Status status);
 
 }

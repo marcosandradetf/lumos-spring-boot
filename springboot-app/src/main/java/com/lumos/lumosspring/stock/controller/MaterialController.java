@@ -3,6 +3,8 @@ package com.lumos.lumosspring.stock.controller;
 import java.util.List;
 import java.util.Objects;
 
+import com.lumos.lumosspring.stock.entities.MaterialStock;
+import com.lumos.lumosspring.stock.repository.ProductStockRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,12 +35,14 @@ import com.lumos.lumosspring.stock.service.MaterialService;
 public class MaterialController {
     private final MaterialService materialService;
     private final MaterialRepository materialRepository;
+    private final ProductStockRepository materialStockRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public MaterialController(MaterialService materialService, MaterialRepository materialRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder) {
+    public MaterialController(MaterialService materialService, MaterialRepository materialRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, ProductStockRepository materialStockRepository) {
         this.materialService = materialService;
         this.materialRepository = materialRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.materialStockRepository = materialStockRepository;
     }
 
     // Endpoint para retornar todos os materiais
@@ -46,7 +50,7 @@ public class MaterialController {
     public ResponseEntity<Page<MaterialResponse>> getAllMaterials(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        Page<Material> materials = materialService.findAll(page, size);
+        Page<MaterialStock> materials = materialService.findAll(page, size);
         Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
         return ResponseEntity.ok(materialsDTO);
     }
@@ -65,7 +69,7 @@ public class MaterialController {
             @RequestParam(value = "deposit") List<Long> depositId
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Material> materials = materialRepository.findByDeposit(pageable, depositId);
+        Page<MaterialStock> materials = materialStockRepository.findByDeposit(pageable, depositId);
         Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
         return ResponseEntity.ok(materialsDTO);
     }
@@ -79,7 +83,7 @@ public class MaterialController {
         Pageable pageable = PageRequest.of(page, size);  // Configura o Pageable para a paginação
 
         // Busca materiais que começam com 'name' (parâmetro passado na URL)
-        Page<Material> materials = materialRepository.findByMaterialNameOrTypeIgnoreAccent(pageable, name.toLowerCase());
+        Page<MaterialStock> materials = materialStockRepository.findByMaterialNameOrTypeIgnoreAccent(pageable, name.toLowerCase());
 
         // Converte a lista de materiais para o DTO MaterialResponse
         Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
@@ -90,7 +94,7 @@ public class MaterialController {
 
     @GetMapping("/{id}")
     public ResponseEntity<String>  getById(@PathVariable Long id) {
-        var name = materialRepository.GetNameById(id);
+        var name = materialStockRepository.GetNameById(id);
         return ResponseEntity.ok(Objects.requireNonNullElse(name, ""));
     }
 

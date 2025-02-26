@@ -2,6 +2,7 @@ package com.lumos.lumosspring.execution.entities;
 
 import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.stock.entities.Material;
+import com.lumos.lumosspring.stock.entities.MaterialStock;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -15,8 +16,8 @@ public class Item {
     private long itemId;
 
     @ManyToOne
-    @JoinColumn(name = "material_id")
-    private Material material;
+    @JoinColumn(name = "stock_material_id")
+    private MaterialStock material;
 
     @ManyToOne
     @JoinColumn(name = "pre_measurement_id")
@@ -42,9 +43,9 @@ public class Item {
     }
 
     private void removeStockAvailable() {
-        double qtStockAvailable = this.material.getStockAvailable();
+        double qtStockAvailable = this.material.getMaterial().getStockAvailable();
         if (qtStockAvailable > 0) {
-            this.material.removeStockAvailable(this.itemQuantity);
+            this.material.getMaterial().removeStockAvailable(this.itemQuantity);
         }
     }
 
@@ -88,11 +89,11 @@ public class Item {
         return contract;
     }
 
-    public Material getMaterial() {
+    public MaterialStock getMaterial() {
         return material;
     }
 
-    public void setMaterial(Material material) {
+    public void setMaterial(MaterialStock material) {
         this.material = material;
     }
 

@@ -8,8 +8,10 @@ import com.lumos.lumosspring.execution.repository.ItemRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.StreetRepository;
 import com.lumos.lumosspring.stock.entities.Material;
+import com.lumos.lumosspring.stock.entities.MaterialStock;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
+import com.lumos.lumosspring.stock.repository.ProductStockRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
@@ -23,14 +25,16 @@ import java.util.*;
 public class PreMeasurementService {
     private final PreMeasurementRepository preMeasurementRepository;
     private final MaterialRepository materialRepository;
+    private final ProductStockRepository materialStockRepository;
     private final DepositRepository depositRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final Util util;
 
-    public PreMeasurementService(PreMeasurementRepository preMeasurementRepository, ItemRepository repository, StreetRepository streetRepository, MaterialRepository materialRepository, DepositRepository depositRepository, ItemRepository itemRepository, UserRepository userRepository, Util util) {
+    public PreMeasurementService(PreMeasurementRepository preMeasurementRepository, ItemRepository repository, StreetRepository streetRepository, MaterialRepository materialRepository, ProductStockRepository materialStockRepository, DepositRepository depositRepository, ItemRepository itemRepository, UserRepository userRepository, Util util) {
         this.preMeasurementRepository = preMeasurementRepository;
         this.materialRepository = materialRepository;
+        this.materialStockRepository = materialStockRepository;
         this.depositRepository = depositRepository;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
@@ -39,14 +43,14 @@ public class PreMeasurementService {
 
 
     public ResponseEntity<?> getItems(Long depositId) {
-        List<Material> materials = materialRepository.getByDeposit(depositId);
+        List<MaterialStock> materials = materialStockRepository.getByDeposit(depositId);
         List<ItemsResponse> items = new ArrayList<>();
 
-        for (Material m : materials) {
+        for (MaterialStock m : materials) {
             items.add(new ItemsResponse(
-                    m.getIdMaterial(),
-                    m.getMaterialName(),
-                    m.getStockQuantity()
+                    m.getMaterial().getIdMaterial(),
+                    m.getMaterial().getMaterialName(),
+                    m.getMaterial().getStockQuantity()
             ));
         }
 
@@ -80,7 +84,7 @@ public class PreMeasurementService {
 
         measurementDTO.items().forEach(item -> {
             var newItem = new Item();
-            var material = materialRepository.findById(Long.valueOf(item.materialId()));
+            var material = materialStockRepository.findById(Long.valueOf(item.materialId()));
             newItem.setMaterial(material.orElse(null));
             newItem.setItemQuantity(item.materialQuantity());
             newItem.setMeasurement(premeasurement);
@@ -93,32 +97,35 @@ public class PreMeasurementService {
         // IMPORTANTE
         // ADICIONAR AUTOMATICAMENTE CABO E RELE
         for (Item item : items) {
-            if (item.getMaterial().getMaterialType().getTypeName().equalsIgnoreCase("CABO")) {
+            var material = item.getMaterial().getMaterial();
+            if (material.getMaterialType().getTypeName().equalsIgnoreCase("CABO")) {
                 double cableQuantity = 0.0F;
 
-                // Filtra os materiais do tipo "BRAÇO"
-                var bracos = items.stream()
-                        .filter(b -> "BRAÇO".equalsIgnoreCase(b.getMaterial().getMaterialType().getTypeName()))
-                        .toList();
+                for (Item i : items) {
+                    String braco = i.getMaterial().getMaterial().getMaterialType().getTypeName().toUpperCase();
+                    if (braco.equalsIgnoreCase("BRAÇO 1,5")) cableQuantity += i.getItemQuantity() * 2.5;
 
-                // Aplica os coeficientes da fórmula
-                for (Item braco : bracos) {
-                    String length = braco.getMaterial().getMaterialLength();
+                    if (braco.equalsIgnoreCase("BRAÇO 2,5")) cableQuantity += i.getItemQuantity() * 8.5;
 
-                    if (length.contains("1,5")) cableQuantity += braco.getItemQuantity() * 2.5;
-
-                    if (length.contains("2,5")) cableQuantity += braco.getItemQuantity() * 8.5;
-
-                    if (length.contains("3,5"))   cableQuantity += braco.getItemQuantity() * 12.5;
-
+                    if (braco.equalsIgnoreCase("BRAÇO 3,5")) cableQuantity += i.getItemQuantity() * 12.5;
                 }
 
                 item.setItemQuantity(cableQuantity);
                 itemRepository.save(item);
             }
+
+            if (material.getMaterialType().getTypeName().equalsIgnoreCase("RELÉ")) {
+                double releQuantity = 0.0F;
+
+                for (Item i : items) {
+                    String braco = i.getMaterial().getMaterial().getMaterialType().getTypeName().toUpperCase();
+                    if (braco.equalsIgnoreCase("LED")) releQuantity += i.getItemQuantity();
+                }
+
+                item.setItemQuantity(releQuantity);
+                itemRepository.save(item);
+            }
         }
-
-
 
 
         return ResponseEntity.ok().body(new DefaultResponse("Medição salva com sucesso"));
@@ -129,35 +136,15 @@ public class PreMeasurementService {
         Map<String, Double> fields = new HashMap<>();
 
         for (Item item : items) {
-            String description = item.getMaterial().getMaterialType().getTypeName();
+            var material = item.getMaterial().getMaterial();
+            String description = material.getMaterialType().getTypeName();
             //=SUM(F7*2.5)+(G7*8.5)+(H7*12.5)
             switch (description) {
                 case "LED":
-                    fields.put(description.concat(" DE ").concat(item.getMaterial().getMaterialPower()), item.getItemQuantity());
+                    fields.put(description.concat(" DE ").concat(material.getMaterialPower()), item.getItemQuantity());
                     break;
                 case "BRAÇO":
-                    fields.put(description.concat(" DE ").concat(item.getMaterial().getMaterialLength()), item.getItemQuantity());
-                    break;
-                case "CABO":
-                    double cableQuantity = 0.0F;
-
-                    // Filtra os materiais do tipo "BRAÇO"
-                    var bracos = items.stream()
-                            .filter(b -> "BRAÇO".equalsIgnoreCase(b.getMaterial().getMaterialType().getTypeName()))
-                            .toList();
-
-                    // Aplica os coeficientes da fórmula
-                    for (Item braco : bracos) {
-                        String length = braco.getMaterial().getMaterialLength();
-
-                        if (length.contains("1,5")) cableQuantity += braco.getItemQuantity() * 2.5;
-
-                        if (length.contains("2,5")) cableQuantity += braco.getItemQuantity() * 8.5;
-
-                        if (length.contains("3,5"))   cableQuantity += braco.getItemQuantity() * 12.5;
-
-                    }
-                    fields.put(description, cableQuantity);
+                    fields.put(description.concat(" DE ").concat(material.getMaterialLength()), item.getItemQuantity());
                     break;
                 default:
                     fields.put(description, item.getItemQuantity());

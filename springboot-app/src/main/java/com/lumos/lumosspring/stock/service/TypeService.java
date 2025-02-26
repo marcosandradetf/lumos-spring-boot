@@ -4,6 +4,7 @@ import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
 import com.lumos.lumosspring.stock.entities.Type;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
+import com.lumos.lumosspring.stock.repository.ProductStockRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,13 +19,13 @@ public class TypeService {
     private final TypeRepository tipoRepository;
     private final GroupRepository groupRepository;
     private final TypeRepository typeRepository;
-    private final MaterialRepository materialRepository;
+    private final ProductStockRepository materialStockRepository;
 
-    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository, MaterialRepository materialRepository) {
+    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository, MaterialRepository materialRepository, ProductStockRepository materialStockRepository) {
         this.tipoRepository = tipoRepository;
         this.groupRepository = groupRepository;
         this.typeRepository = typeRepository;
-        this.materialRepository = materialRepository;
+        this.materialStockRepository = materialStockRepository;
     }
 
     public List<Type> findAll() {
@@ -71,7 +72,7 @@ public class TypeService {
             return ResponseEntity.notFound().build();
         }
 
-        if (materialRepository.existsType(id).isPresent()) {
+        if (materialStockRepository.existsType(id).isPresent()) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais associados a este tipo."));
         }
 

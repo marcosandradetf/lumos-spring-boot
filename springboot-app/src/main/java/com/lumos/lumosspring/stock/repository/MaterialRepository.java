@@ -14,37 +14,38 @@ import java.util.Optional;
 public interface MaterialRepository extends JpaRepository<Material, Long> {
     boolean existsByMaterialName(String materialName); // verificar duplicatas
 
-    @Query("SELECT COUNT(m) > 0 FROM Material m WHERE m.materialName = :materialName AND m.deposit.idDeposit = :idDeposit AND m.materialBrand = :materialBrand")
-    boolean existsMaterial(@Param("materialName") String materialName,
-                           @Param("idDeposit") Long idDeposit,
-                           @Param("materialBrand") String materialBrand);
+//    @Query("SELECT COUNT(m) > 0 FROM Material m WHERE m.materialName = :materialName AND m.deposit.idDeposit = :idDeposit AND m.materialBrand = :materialBrand")
+//    boolean existsMaterial(@Param("materialName") String materialName,
+//                           @Param("idDeposit") Long idDeposit,
+//                           @Param("materialBrand") String materialBrand);
 
-    @Query(value = "SELECT * FROM tb_materials m " +
-            "INNER JOIN tb_types t ON t.id_type = m.id_material_type " +
-            "WHERE unaccent(LOWER(m.material_name)) LIKE unaccent(concat('%', :name, '%')) " +
-            "OR unaccent(LOWER(t.type_name)) LIKE unaccent(concat('%', :name, '%'))",
-            nativeQuery = true)
-    Page<Material> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
+//    @Query(value = "SELECT * FROM tb_material_stock ms" +
+//            "INNER JOIN tb_materials m on ms.material_id = m.id_material" +
+//            "INNER JOIN  tb_types t ON t.id_type = m.id_material_type " +
+//            "WHERE unaccent(LOWER(m.material_name)) LIKE unaccent(concat('%', :name, '%')) " +
+//            "OR unaccent(LOWER(t.type_name)) LIKE unaccent(concat('%', :name, '%'))",
+//            nativeQuery = true)
+//    Page<Material> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
 
-    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit IN :depositIds")
-    Page<Material> findByDeposit(Pageable pageable, @Param("depositIds") List<Long> depositIds);
+//    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit IN :depositIds")
+//    Page<Material> findByDeposit(Pageable pageable, @Param("depositIds") List<Long> depositIds);
 
-    @Query("SELECT m.materialName from Material m where m.idMaterial = :id")
-    String GetNameById(Long id);
-
-    @Query("select m from Material m order by m.idMaterial")
-    Page<Material> findAllOrderByIdMaterial(Pageable pageable);
-
-    @Query("SELECT 1 FROM Material m WHERE m.materialType.idType = :id")
-    Optional<Integer> existsType(@Param("id") Long id);
-
-    @Query("SELECT 1 FROM Material m WHERE m.deposit.idDeposit = :id")
-    Optional<Integer> existsDeposit(@Param("id") Long id);
-
-    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit = :depositId ORDER BY m.materialType.typeName, m.materialPower, m.materialLength")
-    List<Material> getByDeposit(@Param("depositId") Long depositId);
-
-    @Query("SELECT m FROM Material m WHERE UPPER(m.materialType.typeName) NOT IN ('RELE', 'CABO', 'RELÉ') ORDER BY m.materialType.typeName, m.materialPower, m.materialLength")
-    List<Material> findAllByOrderByMaterialName();
+//    @Query("SELECT m.materialName from Material m where m.idMaterial = :id")
+//    String GetNameById(Long id);
+//
+//    @Query("select m from Material m order by m.idMaterial")
+//    Page<Material> findAllOrderByIdMaterial(Pageable pageable);
+//
+//    @Query("SELECT 1 FROM Material m WHERE m.materialType.idType = :id")
+//    Optional<Integer> existsType(@Param("id") Long id);
+//
+//    @Query("SELECT 1 FROM Material m WHERE m.deposit.idDeposit = :id")
+//    Optional<Integer> existsDeposit(@Param("id") Long id);
+//
+//    @Query("SELECT m FROM Material m WHERE m.deposit.idDeposit = :depositId ORDER BY m.materialType.typeName, m.materialPower, m.materialLength")
+//    List<Material> getByDeposit(@Param("depositId") Long depositId);
+//
+//    @Query("SELECT m FROM Material m WHERE UPPER(m.materialType.typeName) NOT IN ('RELE', 'CABO', 'RELÉ') ORDER BY m.materialType.typeName, m.materialPower, m.materialLength")
+//    List<Material> findAllByOrderByMaterialName();
 }
 

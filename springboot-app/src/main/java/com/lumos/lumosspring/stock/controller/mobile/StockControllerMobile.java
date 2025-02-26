@@ -1,7 +1,5 @@
 package com.lumos.lumosspring.stock.controller.mobile;
 
-import com.lumos.lumosspring.execution.controller.dto.ItemsResponse;
-import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
 import com.lumos.lumosspring.stock.controller.dto.mobile.DepositResponseMobile;
 import com.lumos.lumosspring.stock.controller.dto.mobile.MaterialDTOMob;
 import com.lumos.lumosspring.stock.service.DepositService;

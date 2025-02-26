@@ -1,10 +1,9 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.contract.entities.Contract;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tb_materials")
@@ -49,29 +48,32 @@ public class Material {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inactive;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_company", nullable = false)
-    private Company company;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "id_company", nullable = false)
+//    private Company company;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "id_deposit", nullable = false)
+//    private Deposit deposit;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_deposit", nullable = false)
-    private Deposit deposit;
-
-    public Company getCompany() {
-        return company;
-    }
-
-    public void setCompany(Company company) {
-        this.company = company;
-    }
-
-    public Deposit getDeposit() {
-        return deposit;
-    }
-
-    public void setDeposit(Deposit almoxarifado) {
-        this.deposit = almoxarifado;
-    }
+    @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<MaterialStock> materialStocks;
+//
+//    public Company getCompany() {
+//        return company;
+//    }
+//
+//    public void setCompany(Company company) {
+//        this.company = company;
+//    }
+//
+//    public Deposit getDeposit() {
+//        return deposit;
+//    }
+//
+//    public void setDeposit(Deposit almoxarifado) {
+//        this.deposit = almoxarifado;
+//    }
 
     public Type getMaterialType() {
         return materialType;
@@ -198,6 +200,14 @@ public class Material {
 
     public void setCostPerItem(BigDecimal costPerItem) {
         this.costPerItem = costPerItem;
+    }
+
+    public Set<MaterialStock> getMaterialStocks() {
+        return materialStocks;
+    }
+
+    public void setMaterialStocks(Set<MaterialStock> productStocks) {
+        this.materialStocks = productStocks;
     }
 }
 

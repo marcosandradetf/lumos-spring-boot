@@ -1,16 +1,11 @@
 package com.lumos.lumosspring.stock.service;
 
 import com.lumos.lumosspring.stock.controller.dto.mobile.MaterialDTOMob;
-import com.lumos.lumosspring.stock.entities.Company;
-import com.lumos.lumosspring.stock.entities.Deposit;
-import com.lumos.lumosspring.stock.entities.Type;
+import com.lumos.lumosspring.stock.entities.*;
+import com.lumos.lumosspring.stock.repository.*;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
-import com.lumos.lumosspring.stock.entities.Material;
-import com.lumos.lumosspring.stock.repository.DepositRepository;
-import com.lumos.lumosspring.stock.repository.CompanyRepository;
-import com.lumos.lumosspring.stock.repository.TypeRepository;
 import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
 import jakarta.transaction.Transactional;
@@ -21,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -30,7 +24,7 @@ import java.util.UUID;
 
 @Service
 public class MaterialService {
-    private final MaterialRepository materialRepository;
+    private final ProductStockRepository materialStockRepository;
     private final UserRepository userRepository;
     private final LogRepository logRepository;
     private final TypeRepository tipoRepository;
@@ -38,8 +32,9 @@ public class MaterialService {
     private final CompanyRepository companyRepository;
     private final TypeRepository typeRepository;
 
-    public MaterialService(MaterialRepository materialRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository) {
-        this.materialRepository = materialRepository;
+    public MaterialService(ProductStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository) {
+
+        this.materialStockRepository = materialStockRepository;
         this.userRepository = userRepository;
         this.logRepository = logRepository;
         this.tipoRepository = tipoRepository;
@@ -48,9 +43,9 @@ public class MaterialService {
         this.typeRepository = typeRepository;
     }
 
-    public Page<Material> findAll(int page, int size) {
+    public Page<MaterialStock> findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return materialRepository.findAllOrderByIdMaterial(pageable);
+        return materialStockRepository.findAllOrderByIdMaterial(pageable);
     }
 
     @Transactional
@@ -65,7 +60,7 @@ public class MaterialService {
     }
 
     private ResponseEntity<String> validateMaterialRequest(MaterialRequest material) {
-        if (materialRepository.existsMaterial(
+        if (materialStockRepository.existsMaterial(
                 material.materialName(), material.deposit(), material.materialBrand())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Este material já existe no almoxarifado informado.");
@@ -88,8 +83,8 @@ public class MaterialService {
         return null; // Indica que não houve erros
     }
 
-    private List<Material> convertToMaterial(MaterialRequest material) {
-        List<Material> materialList = new ArrayList<>();
+    private List<MaterialStock> convertToMaterial(MaterialRequest material) {
+        List<MaterialStock> materialList = new ArrayList<>();
 
         Type type = tipoRepository.findById(material.materialType())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tipo informado não encontrado."));
@@ -103,21 +98,29 @@ public class MaterialService {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum almoxarifado encontrado.");
             }
             for (Deposit deposit : deposits) {
-                materialList.add(createMaterial(material, type, company, deposit));
+                MaterialStock materialStock = new MaterialStock();
+                materialStock.setMaterial(createMaterial(material, type));
+                materialStock.setCompany(company);
+                materialStock.setDeposit(deposit);
+                materialList.add(materialStock);
             }
         } else {
+            MaterialStock materialStock = new MaterialStock();
+            materialStock.setMaterial(createMaterial(material, type));
+            materialStock.setCompany(company);
             Deposit deposit = depositRepository.findById(material.deposit())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Almoxarifado não encontrado."));
-            materialList.add(createMaterial(material, type, company, deposit));
+            materialStock.setDeposit(deposit);
+            materialList.add(materialStock);
         }
 
         // Salvar todos os materiais de uma vez
-        materialRepository.saveAll(materialList);
+        materialStockRepository.saveAll(materialList);
 
         return materialList;
     }
 
-    private Material createMaterial(MaterialRequest material, Type type, Company company, Deposit deposit) {
+    private Material createMaterial(MaterialRequest material, Type type) {
         Material newMaterial = new Material();
         newMaterial.setMaterialName(material.materialName());
         newMaterial.setMaterialBrand(material.materialBrand());
@@ -128,31 +131,29 @@ public class MaterialService {
         newMaterial.setRequestUnit(material.requestUnit());
 //        newMaterial.setStockQuantity(material.stockQt());
         newMaterial.setMaterialType(type);
-        newMaterial.setDeposit(deposit);
-        newMaterial.setCompany(company);
         return newMaterial;
     }
 
 
-    private List<MaterialResponse> convertToMaterialResponse(List<Material> materialList) {
+    private List<MaterialResponse> convertToMaterialResponse(List<MaterialStock> materialList) {
         return materialList.stream()
-                .map(material -> new MaterialResponse(
-                        material.getIdMaterial(),
-                        material.getMaterialName(),
-                        material.getMaterialBrand(),
-                        material.getMaterialPower(),
-                        material.getMaterialAmps(),
-                        material.getMaterialLength(),
-                        material.getBuyUnit(),
-                        material.getRequestUnit(),
-                        material.getStockQuantity(),
-                        material.isInactive(),
-                        material.getMaterialType() != null ? material.getMaterialType().getTypeName() : null,
-                        material.getMaterialType() != null && material.getMaterialType().getGroup() != null
-                                ? material.getMaterialType().getGroup().getGroupName()
+                .map(ms -> new MaterialResponse(
+                        ms.getMaterialIdStock(),
+                        ms.getMaterial().getMaterialName(),
+                        ms.getMaterial().getMaterialBrand(),
+                        ms.getMaterial().getMaterialPower(),
+                        ms.getMaterial().getMaterialAmps(),
+                        ms.getMaterial().getMaterialLength(),
+                        ms.getMaterial().getBuyUnit(),
+                        ms.getMaterial().getRequestUnit(),
+                        ms.getMaterial().getStockQuantity(),
+                        ms.getMaterial().isInactive(),
+                        ms.getMaterial().getMaterialType() != null ? ms.getMaterial().getMaterialType().getTypeName() : null,
+                        ms.getMaterial().getMaterialType() != null && ms.getMaterial().getMaterialType().getGroup() != null
+                                ? ms.getMaterial().getMaterialType().getGroup().getGroupName()
                                 : null,
-                        material.getDeposit() != null ? material.getDeposit().getDepositName() : null,
-                        material.getCompany() != null ? material.getCompany().getCompanyName() : null
+                        ms.getDeposit() != null ? ms.getDeposit().getDepositName() : null,
+                        ms.getCompany() != null ? ms.getCompany().getCompanyName() : null
                 ))
                 .toList();
     }
@@ -161,15 +162,15 @@ public class MaterialService {
     @Transactional
     public ResponseEntity<?> deleteById(Long idMaterial, UUID idUsuario) {
         var user = userRepository.findById(idUsuario);
-        var material = materialRepository.findById(idMaterial);
+        var material = materialStockRepository.findById(idMaterial);
         var log = new Log();
 
         if (material.isPresent() && user.isPresent()) {
-            if (material.get().isInactive()) {
-                materialRepository.delete(material.get());
+            if (material.get().getMaterial().isInactive()) {
+                materialStockRepository.delete(material.get());
                 String logMessage = String.format("Usuário %s excluiu material %d com sucesso.",
                         user.get().getUsername(),
-                        material.get().getIdMaterial());
+                        material.get().getMaterial().getIdMaterial());
 
                 log.setMessage(logMessage);
                 log.setUser(user.get());
@@ -191,7 +192,7 @@ public class MaterialService {
     @Transactional
     public ResponseEntity<?> update(MaterialRequest material, Long materialId, UUID idUsuario) {
         var user = userRepository.findById(idUsuario);
-        var existingMaterial = materialRepository.findById(materialId);
+        var existingMaterial = materialStockRepository.findById(materialId);
 
         // Verifica se o material existe
         if (existingMaterial.isEmpty()) {
@@ -206,20 +207,20 @@ public class MaterialService {
         }
 
         // Atualiza os campos necessários do material existente
-        Material materialToUpdate = existingMaterial.get();
-        materialToUpdate.setMaterialName(material.materialName());
-        materialToUpdate.setMaterialBrand(material.materialBrand());
+        MaterialStock materialToUpdate = existingMaterial.get();
+        materialToUpdate.getMaterial().setMaterialName(material.materialName());
+        materialToUpdate.getMaterial().setMaterialBrand(material.materialBrand());
 
-        materialToUpdate.setMaterialPower(material.materialPower());
-        materialToUpdate.setMaterialAmps(material.materialAmps());
-        materialToUpdate.setMaterialLength(material.materialLength());
+        materialToUpdate.getMaterial().setMaterialPower(material.materialPower());
+        materialToUpdate.getMaterial().setMaterialAmps(material.materialAmps());
+        materialToUpdate.getMaterial().setMaterialLength(material.materialLength());
 
-        materialToUpdate.setBuyUnit(material.buyUnit());
-        materialToUpdate.setRequestUnit(material.requestUnit());
-        materialToUpdate.setInactive(material.inactive());
-        materialToUpdate.setMaterialType(typeRepository.findById(material.materialType()).orElse(null));
+        materialToUpdate.getMaterial().setBuyUnit(material.buyUnit());
+        materialToUpdate.getMaterial().setRequestUnit(material.requestUnit());
+        materialToUpdate.getMaterial().setInactive(material.inactive());
+        materialToUpdate.getMaterial().setMaterialType(typeRepository.findById(material.materialType()).orElse(null));
 
-        materialRepository.save(materialToUpdate);
+        materialStockRepository.save(materialToUpdate);
 
         // Cria e salva o log de atualização
         var log = new Log();
@@ -238,21 +239,21 @@ public class MaterialService {
 
 
     public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
-        var materials = materialRepository.findAllByOrderByMaterialName();
+        var materials = materialStockRepository.findAllByOrderByMaterialName();
         List<MaterialDTOMob> materialsDTO = new ArrayList<>();
 
-        for (Material m : materials) {
+        for (MaterialStock m : materials) {
             var companyName = m.getCompany() != null ? m.getCompany().getCompanyName() : "";
             var depositId = m.getDeposit() != null ? m.getDeposit().getIdDeposit() : 0;
             materialsDTO.add(new MaterialDTOMob(
-                    m.getIdMaterial(),
-                    m.getMaterialName(),
-                    m.getMaterialBrand(),
-                    m.getMaterialPower(),
-                    m.getMaterialAmps(),
-                    m.getMaterialLength(),
-                    m.getRequestUnit(),
-                    String.valueOf(m.getStockAvailable()),
+                    m.getMaterial().getIdMaterial(),
+                    m.getMaterial().getMaterialName(),
+                    m.getMaterial().getMaterialBrand(),
+                    m.getMaterial().getMaterialPower(),
+                    m.getMaterial().getMaterialAmps(),
+                    m.getMaterial().getMaterialLength(),
+                    m.getMaterial().getRequestUnit(),
+                    String.valueOf(m.getMaterial().getStockAvailable()),
                     companyName,
                     depositId
             ));

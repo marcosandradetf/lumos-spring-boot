@@ -28,6 +28,9 @@ public class Deposit {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
+    @OneToMany(mappedBy = "deposit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<MaterialStock> materialStocks;
+
     @ManyToOne
     @JoinColumn(name = "region_id")
     private Region region;
@@ -101,5 +104,13 @@ public class Deposit {
 
     public void setRegion(Region region) {
         this.region = region;
+    }
+
+    public Set<MaterialStock> getMaterialStocks() {
+        return materialStocks;
+    }
+
+    public void setMaterialStocks(Set<MaterialStock> productStocks) {
+        this.materialStocks = productStocks;
     }
 }

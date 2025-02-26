@@ -7,6 +7,7 @@ import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
+import com.lumos.lumosspring.stock.repository.ProductStockRepository;
 import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.team.RegionRepository;
 import com.lumos.lumosspring.team.TeamRepository;
@@ -27,7 +28,7 @@ public class DepositService {
     @Autowired
     private CompanyRepository comapanyRepository;
     @Autowired
-    private MaterialRepository materialRepository;
+    private ProductStockRepository materialStockRepository;
     @Autowired
     private RegionRepository regionRepository;
     @Autowired
@@ -145,7 +146,7 @@ public class DepositService {
             return ResponseEntity.notFound().build();
         }
 
-        if (materialRepository.existsDeposit(id).isPresent()) {
+        if (materialStockRepository.existsDeposit(id).isPresent()) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais associados a este almoxarifado."));
         }
 
