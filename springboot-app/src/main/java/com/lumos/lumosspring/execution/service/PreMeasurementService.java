@@ -132,26 +132,52 @@ public class PreMeasurementService {
 
     public ResponseEntity<?> getFields(long measurementId) {
         var items = itemRepository.findItemsByPreMeasurement_PreMeasurementId(measurementId);
-        Map<String, Double> fields = new HashMap<>();
+
+        // Record para armazenar os dados de um item
+        record ItemField(String description, double quantity) {
+        }
+
+        // Mapa para armazenar os itens por categoria
+        Map<String, List<ItemField>> itemsFields = new HashMap<>();
 
         for (Item item : items) {
             var material = item.getMaterialStock().getMaterial();
-            String description = material.getMaterialType().getTypeName();
-            //=SUM(F7*2.5)+(G7*8.5)+(H7*12.5)
-            switch (description) {
+            String type = material.getMaterialType().getTypeName().toUpperCase();
+            String description;
+
+            switch (type) {
                 case "LED":
-                    fields.put(description.concat(" DE ").concat(material.getMaterialPower()), item.getItemQuantity());
+                    description = "LED DE ".concat(material.getMaterialPower());
+                    itemsFields.computeIfAbsent("leds", k -> new ArrayList<>())
+                            .add(new ItemField(description, item.getItemQuantity()));
                     break;
                 case "BRAÇO":
-                    fields.put(description.concat(" DE ").concat(material.getMaterialLength()), item.getItemQuantity());
+                    description = "BRAÇO DE ".concat(material.getMaterialLength());
+                    itemsFields.computeIfAbsent("arms", k -> new ArrayList<>())
+                            .add(new ItemField(description, item.getItemQuantity()));
+                    break;
+                case "PARAFUSO":
+                    itemsFields.computeIfAbsent("screws", k -> new ArrayList<>())
+                            .add(new ItemField("PARAFUSO", item.getItemQuantity()));
+                    break;
+                case "CINTA":
+                    itemsFields.computeIfAbsent("straps", k -> new ArrayList<>())
+                            .add(new ItemField("CINTA", item.getItemQuantity()));
+                    break;
+                case "RELÉ":
+                    itemsFields.computeIfAbsent("relays", k -> new ArrayList<>())
+                            .add(new ItemField("RELÉ", item.getItemQuantity()));
+                    break;
+                case "SOQUETE":
+                    itemsFields.computeIfAbsent("sockets", k -> new ArrayList<>())
+                            .add(new ItemField("PERFURANTE", item.getItemQuantity()));
                     break;
                 default:
-                    fields.put(description, item.getItemQuantity());
                     break;
             }
         }
 
-        return ResponseEntity.ok(fields);
+        return ResponseEntity.ok(itemsFields);
     }
 
 

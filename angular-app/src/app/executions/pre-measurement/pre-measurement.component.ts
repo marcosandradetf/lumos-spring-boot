@@ -26,13 +26,63 @@ import {Title} from '@angular/platform-browser';
 })
 export class PreMeasurementComponent {
   cities: { [cityName: string]: [string, string] } = {};
-  // formula: {
-  //   cable: string;
-  //   arm1_5: string;
-  //   arm2_5: string;
-  //   arm3_6: string;
-  //   led50: string;
-  // } = {};
+  formula: {
+    leds: [
+      {
+        description: string
+        quantity: number;
+      }
+    ];
+    arms: [
+      {
+        description: string
+        quantity: number;
+      }
+    ];
+    screws: [
+      {
+        description: string
+        quantity: number;
+      }
+    ];
+    straps: [
+      {
+        description: string
+        quantity: number;
+      }
+    ];
+    relays: [
+      {
+        description: string
+        quantity: number;
+      }
+    ];
+    sockets: [
+      {
+        description: string
+        quantity: number;
+      }
+    ];
+  } = {
+    leds: [
+      {description: '', quantity: 0}
+    ],
+    arms: [
+      {description: '', quantity: 0}
+    ],
+    screws: [
+      {description: '', quantity: 0}
+    ],
+    straps: [
+      {description: '', quantity: 0}
+    ],
+    relays: [
+      {description: '', quantity: 0}
+    ],
+    sockets: [
+      {description: '', quantity: 0}
+    ],
+  };
 
 
   constructor(preMeasurementService: PreMeasurementService) {

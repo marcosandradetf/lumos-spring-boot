@@ -13,7 +13,7 @@ public class Material {
     @Column(name = "id_material")
     private long idMaterial;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false, unique = true)
     private String materialName;
 
     @Column(columnDefinition = "TEXT")
