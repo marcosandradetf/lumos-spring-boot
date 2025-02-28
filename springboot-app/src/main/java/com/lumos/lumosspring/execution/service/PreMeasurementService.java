@@ -147,14 +147,14 @@ public class PreMeasurementService {
 
             switch (type) {
                 case "LED":
-                    description = "LED DE ".concat(material.getMaterialPower());
+                    description = material.getMaterialPower();
                     itemsFields.computeIfAbsent("leds", k -> new ArrayList<>())
-                            .add(new ItemField(description, item.getItemQuantity()));
+                            .add(new ItemField(description.toUpperCase(), item.getItemQuantity()));
                     break;
                 case "BRAÇO":
-                    description = "BRAÇO DE ".concat(material.getMaterialLength());
+                    description = material.getMaterialLength();
                     itemsFields.computeIfAbsent("arms", k -> new ArrayList<>())
-                            .add(new ItemField(description, item.getItemQuantity()));
+                            .add(new ItemField(description.toUpperCase(), item.getItemQuantity()));
                     break;
                 case "PARAFUSO":
                     itemsFields.computeIfAbsent("screws", k -> new ArrayList<>())

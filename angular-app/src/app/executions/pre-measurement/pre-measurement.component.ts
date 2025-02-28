@@ -1,9 +1,9 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {Router, RouterLinkActive} from '@angular/router';
 import {PreMeasurementService} from './premeasurement-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {KeyValuePipe, NgClass, NgForOf} from '@angular/common';
+import {KeyValuePipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {Deposit} from '../../models/almoxarifado.model';
 import {ufRequest} from '../../core/uf-request.dto';
@@ -19,70 +19,89 @@ import {Title} from '@angular/platform-browser';
   imports: [
     NgForOf,
     FormsModule,
-    KeyValuePipe
+    KeyValuePipe,
+    TableComponent,
+    NgIf,
+    ModalComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
 })
-export class PreMeasurementComponent {
+export class PreMeasurementComponent implements OnInit {
   cities: { [cityName: string]: [string, string] } = {};
+  serviceQuantity: number = 0.0;
+  armsQuantity: number = 0.0;
+
   formula: {
-    leds: [
+    leds:
       {
-        description: string
+        description: string;
         quantity: number;
-      }
-    ];
-    arms: [
+      }[];
+    arms:
       {
-        description: string
+        description: string;
         quantity: number;
-      }
-    ];
+      }[];
     screws: [
       {
-        description: string
+        description: string;
         quantity: number;
       }
     ];
     straps: [
       {
-        description: string
+        description: string;
         quantity: number;
       }
     ];
     relays: [
       {
-        description: string
+        description: string;
         quantity: number;
       }
     ];
     sockets: [
       {
-        description: string
+        description: string;
+        quantity: number;
+      }
+    ];
+    cables: [
+      {
+        description: string;
         quantity: number;
       }
     ];
   } = {
     leds: [
-      {description: '', quantity: 0}
+      {description: '60W', quantity: 3},
+      {description: '70W', quantity: 4},
     ],
     arms: [
-      {description: '', quantity: 0}
+      {description: '2,5M', quantity: 1},
+      {description: '3,6M', quantity: 2}
     ],
     screws: [
-      {description: '', quantity: 0}
+      {description: '', quantity: 1}
     ],
     straps: [
-      {description: '', quantity: 0}
+      {description: '', quantity: 1}
     ],
     relays: [
-      {description: '', quantity: 0}
+      {description: '', quantity: 1}
     ],
     sockets: [
-      {description: '', quantity: 0}
+      {description: '', quantity: 1}
+    ],
+    cables: [
+      {description: '', quantity: 1}
     ],
   };
+
+  ngOnInit() {
+    console.log(this.formula.arms); // Verifique se os braços estão sendo carregados corretamente
+  }
 
 
   constructor(preMeasurementService: PreMeasurementService) {
@@ -93,4 +112,28 @@ export class PreMeasurementComponent {
 
 
   protected readonly parseInt = parseInt;
+  lineNumber: number = 1;
+  post: boolean = false;
+  openModal: boolean = false;
+
+  getServiceQuantity() {
+    this.formula.leds.forEach((l) => {
+      this.serviceQuantity += l.quantity;
+    });
+    return this.serviceQuantity;
+  }
+
+  getArmsQuantity() {
+    this.formula.arms.forEach((b) => {
+      this.armsQuantity += b.quantity;
+    });
+    return this.armsQuantity;
+  }
+
+  nextLine() {
+    this.lineNumber++;
+    return this.lineNumber;
+  }
+
+  protected readonly alert = alert;
 }

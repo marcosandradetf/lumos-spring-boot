@@ -13,20 +13,175 @@
 
     <div class="border-b w-full pl-2 h-screen pt-2">
 
-
       <ol class="flex flex-wrap">
         <li *ngFor="let city of cities | keyvalue; index as i;"
-            class="w-56 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2">
+            class="w-56 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2" (click)="openModal = true">
           <div class="flex flex-col border rounded px-4 py-2">
           <span class="badge badge-accent rounded mb-4 mt-2">
             {{ parseInt(city.value[0]) }} itens
           </span>
             <h3 class="text-base font-normal text-neutral-700">{{ city.key }}</h3>
-            <span class="text-xs">{{city.value[1]}} ruas</span>
+            <span class="text-xs">{{ city.value[1] }} ruas</span>
           </div>
         </li>
       </ol>
     </div>
+
+    <app-modal [modalOpen]="true" (modalClose)="openModal=false" classModal="rounded">
+      <h3 class="bg-[#096cb8] text-white text-sm text-center p-1 font-bold">VALORES  MEDIÇÃO  - CONCEIÇÃO DO MATO DENTRO (ATA ITAMBACURI)</h3>
+      <app-table>
+        <tr header class="bg-[#0b2d67] text-white">
+          <th>ITEM</th>
+          <th>DESCRIÇÃO</th>
+          <th>PREÇO UNITÁRIO</th>
+          <th>QUANTIDADE EXECUTADA</th>
+          <th>VALORES</th>
+        </tr>
+
+        <tr body *ngIf="formula.leds[0].quantity > 0">
+          <td>{{ lineNumber }}</td>
+          <td>SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED</td>
+          <td><input type="text" class="input input-bordered input-xs"></td>
+          <td class="bg-[#0090d0]">{{ getServiceQuantity()  }}</td>
+          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
+        </tr>
+        <tr body *ngIf="formula.leds[0].quantity > 0">
+          <td></td>
+          <td>SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS</td>
+          <td><input type="text" class="input input-bordered input-xs"></td>
+          <td class="bg-[#0090d0]">{{ getArmsQuantity() }}</td>
+          <td class="bg-[#fba81e]">{{ armsQuantity }}</td>
+        </tr>
+        <tr body *ngIf="formula.relays[0].quantity > 0">
+          <td></td>
+          <td>RELÉ FOTOELETRONICO 1000W 105-305V</td>
+          <td><input type="text" class="input input-bordered input-xs"></td>
+          <td class="bg-[#0090d0]">{{ serviceQuantity }}</td>
+          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
+        </tr>
+
+        <ng-container *ngFor="let socket of formula.sockets">
+          <tr *ngIf="socket.quantity > 0">
+            <td></td>
+            <td>CONECTOR PERFURANTE DERIVAÇÃO 10-35MM² TIPO CDP70</td>
+            <td><input type="text" class="input input-bordered input-xs"></td>
+            <td class="bg-[#0090d0]">{{ socket.quantity }}</td>
+            <td class="bg-[#fba81e]">{{ socket.quantity }}</td>
+          </tr>
+        </ng-container>
+
+        <ng-container *ngFor="let cable of formula.cables">
+          <tr *ngIf="cable.quantity > 0">
+            <td></td>
+            <td>CABO 1,5MM</td>
+            <td><input type="text" class="input input-bordered input-xs"></td>
+            <td class="bg-[#0090d0]">{{ cable.quantity }}</td>
+            <td class="bg-[#fba81e]">{{ cable.quantity }}</td>
+          </tr>
+        </ng-container>
+
+        <ng-container *ngFor="let screw of formula.screws">
+          <tr *ngIf="screw.quantity > 0">
+            <td></td>
+            <td>PARAFUSOS DE FIXAÇÃO DAS CINTAS E BRAÇOS</td>
+            <td><input type="text" class="input input-bordered input-xs"></td>
+            <td class="bg-[#0090d0]">{{ screw.quantity }}</td>
+            <td class="bg-[#fba81e]">{{ screw.quantity }}</td>
+          </tr>
+        </ng-container>
+
+        <ng-container *ngFor="let strap of formula.straps">
+          <tr *ngIf="strap.quantity > 0">
+            <td></td>
+            <td>CINTAS PARA FIXAÇÃO DE BRAÇOS</td>
+            <td><input type="text" class="input input-bordered input-xs"></td>
+            <td class="bg-[#0090d0]">{{ strap.quantity }}</td>
+            <td class="bg-[#fba81e]">{{ strap.quantity }}</td>
+          </tr>
+        </ng-container>
+
+        <ng-container *ngFor="let arm of formula.arms">
+          <tr *ngIf="arm.quantity > 0">
+            <td></td>
+            @switch (arm.description.toUpperCase()) {
+              @case ("1,5M") {
+                <td>BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 1,5M</td>
+              }
+              @case ("2,5M") {
+                <td>BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 2,5M</td>
+              }
+              @case ("3,6M") {
+                <td>BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 3,6M</td>
+              }
+            }
+            <td><input type="text" class="input input-bordered input-xs"></td>
+            <td class="bg-[#0090d0]">{{ arm.quantity }}</td>
+            <td class="bg-[#fba81e]">{{ arm.quantity }}</td>
+          </tr>
+        </ng-container>
+
+        <tr body *ngIf="formula.leds[0].quantity > 0">
+          <td></td>
+          <td>SERVIÇO DE EXECUÇÃO DE PROJETO POR IP</td>
+          <td><input type="text" class="input input-bordered input-xs"></td>
+          <td class="bg-[#0090d0]">{{ serviceQuantity }}</td>
+          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
+        </tr>
+
+        <ng-container *ngFor="let led of formula.leds">
+          <tr *ngIf="led.quantity > 0">
+            <td></td>
+            @switch (led.description.toUpperCase()) {
+              @case ("50W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 50W</td>
+              }
+              @case ("60W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 60W</td>
+              }
+              @case ("70W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 70W</td>
+              }
+              @case ("80W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 80W</td>
+              }
+              @case ("100W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 100W</td>
+              }
+              @case ("110W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 110W</td>
+              }
+              @case ("120W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 120W</td>
+              }
+              @case ("150W") {
+                <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 150W</td>
+              }
+            }
+            <td><input type="text" class="input input-bordered input-xs"></td>
+            <td class="bg-[#0090d0]">{{ led.quantity }}</td>
+            <td class="bg-[#fba81e]">{{ led.quantity }}</td>
+          </tr>
+        </ng-container>
+
+        <tr body *ngIf="post">
+          <td></td>
+          <td>
+            POSTE ORNAMENTAL FORNECIMENTO E INSTALAÇÃO DE POSTE ORNAMENTAL GALVANIZADO 8 M LIVRE, 4 PARA 3 1/2 COM
+            SUPORTE PARA (03) TRÊS LUMINÁRIAS PUBLICA DE LED 100W, CERTIFICADA
+            INMETRO – PORTARIA 20, INCLUINDO, MÃO DE OBRA ESPECIALIZADA, COM EQUIPAMENTOS DE SEGURANÇA INDIVIDUAL (EPI),
+            EQUIPAMENTOS DE SEGURANÇA COLETIVA (EPC) E TODO MATERIAL NECESSARIO PARA REALIZAÇÃO DO SERVIÇO, ASSENTAMENTO
+            E CAIXA DE PASSAGEM.
+          </td>
+          <td><input type="text" class="input input-bordered input-xs"></td>
+          <td class="bg-[#0090d0]">{{ serviceQuantity }}</td>
+          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
+        </tr>
+      </app-table>
+      <div class="flex w-full mt-10">
+        <button class="btn rounded-none w-1/2" (click)="openModal = false">CANCELAR</button>
+        <button class="btn  btn-warning rounded-none w-1/2">CONTINUAR</button>
+      </div>
+    </app-modal>
 
 
   </div>
