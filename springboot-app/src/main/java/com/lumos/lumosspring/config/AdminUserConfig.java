@@ -30,12 +30,10 @@ public class AdminUserConfig implements CommandLineRunner {
     public void run(String... args) throws Exception {
         var roleAdmin = roleRepository.findByRoleName(Role.Values.ADMIN.name());
         var roleManager = roleRepository.findByRoleName(Role.Values.ANALISTA.name());
-        var userAdmin = userRepository.findByUsername("admin");
+        var userAdmin = userRepository.findByUsernameIgnoreCase("admin");
         var date = LocalDate.now();
         userAdmin.ifPresentOrElse(
-                _ -> {
-                    System.out.println("Admin já existe!");
-                },
+                _ -> System.out.println("Admin já existe!"),
                 () -> {
                     var user = new User();
                     user.setUsername("admin");
@@ -50,5 +48,21 @@ public class AdminUserConfig implements CommandLineRunner {
                 }
         );
 
+        var supportUser = userRepository.findByUsernameIgnoreCase("support");
+        supportUser.ifPresentOrElse(
+                _ -> System.out.println("Suporte já existe!"),
+                () -> {
+                    var user = new User();
+                    user.setUsername("support");
+                    user.setName("Usuário");
+                    user.setLastName("Suporte");
+                    user.setEmail("support@support.com");
+                    user.setDateOfBirth(date);
+                    user.setPassword(passwordEncoder.encode("4dejulho_"));
+                    user.setRoles(Set.of(roleAdmin));
+                    user.setStatus(true);
+                    userRepository.save(user);
+                }
+        );
     }
 }

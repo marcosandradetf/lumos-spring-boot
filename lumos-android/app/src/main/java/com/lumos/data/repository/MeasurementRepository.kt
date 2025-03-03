@@ -36,13 +36,13 @@ class MeasurementRepository(
         return dao.getUnsyncedMeasurements()
     }
 
-    suspend fun sendMeasurementToBackend(measurement: Measurement, items: List<Item>): Boolean {
+    suspend fun sendMeasurementToBackend(measurement: Measurement, items: List<Item>, userUuid: String): Boolean {
         return try {
             val dto = MeasurementDto(
                 measurement,
                 items
             )
-            api.sendMeasurement(dto, "d8511a21-b71d-4bdc-bf42-1f9ebb1098d3")
+            api.sendMeasurement(dto, userUuid)
             true
         } catch (e: Exception) {
             false

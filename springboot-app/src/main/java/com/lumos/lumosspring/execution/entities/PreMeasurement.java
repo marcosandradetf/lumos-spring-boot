@@ -1,11 +1,14 @@
 package com.lumos.lumosspring.execution.entities;
 
-import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tb_pre_measurements")
@@ -15,43 +18,52 @@ public class PreMeasurement {
     @Column(name = "pre_measurement_id")
     private long preMeasurementId;
 
-    private String description;
-
-    private String address;
+    @OneToMany(mappedBy = "preMeasurement", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PreMeasurementStreet> streets = new HashSet<>();
 
     private String city;
 
-    private double latitude;
+    // Métodos auxiliares para garantir consistência no relacionamento
+    public void addStreet(PreMeasurementStreet street) {
+        streets.add(street);
+        street.setPreMeasurement(this);
+    }
 
-    private double longitude;
+    public void removeStreet(PreMeasurementStreet street) {
+        streets.remove(street);
+        street.setPreMeasurement(null);
+    }
 
     @ManyToOne
     private Region region;
 
-    @ManyToOne
-    private Deposit deposit;
-
     private Status status;
 
-    private String deviceId;
-
-    private Type typeMeasurement;
+    private Type typePreMeasurement;
 
     @ManyToOne
-    @JoinColumn(name = "created_by_id_user")
+    @JoinColumn(name = "created_by_user_id")
     private User createdBy;
 
     @ManyToOne
-    @JoinColumn(name = "assigned_by_id_user")
+    @JoinColumn(name = "assigned_by_user_id")
     private User assignedBy;
 
     @ManyToOne
-    @JoinColumn(name = "finished_by_id_user")
+    @JoinColumn(name = "finished_by_user_id")
     private User finishedBy;
 
     private Instant createdAt;
     private Instant assignedAt;
     private Instant finishedAt;
+
+    public long getPreMeasurementId() {
+        return preMeasurementId;
+    }
+
+    public void setPreMeasurementId(long preMeasurementId) {
+        this.preMeasurementId = preMeasurementId;
+    }
 
     public Instant getCreatedAt() {
         return createdAt;
@@ -101,46 +113,6 @@ public class PreMeasurement {
         this.finishedBy = finishedBy;
     }
 
-    public long getPreMeasurementId() {
-        return preMeasurementId;
-    }
-
-    public void setPreMeasurementId(long preMeasurementId) {
-        this.preMeasurementId = preMeasurementId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
     public Region getRegion() {
         return region;
     }
@@ -149,12 +121,13 @@ public class PreMeasurement {
         this.region = region;
     }
 
-    public Deposit getDeposit() {
-        return deposit;
+
+    public Status getStatus() {
+        return status;
     }
 
-    public void setDeposit(Deposit deposit) {
-        this.deposit = deposit;
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public String getCity() {
@@ -165,28 +138,20 @@ public class PreMeasurement {
         this.city = city;
     }
 
-    public Status getStatus() {
-        return status;
+    public Type getTypePreMeasurement() {
+        return typePreMeasurement;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setTypePreMeasurement(Type typePreMeasurement) {
+        this.typePreMeasurement = typePreMeasurement;
     }
 
-    public String getDeviceId() {
-        return deviceId;
+    public Set<PreMeasurementStreet> getStreets() {
+        return streets;
     }
 
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public Type getTypeMeasurement() {
-        return typeMeasurement;
-    }
-
-    public void setTypeMeasurement(Type typeMeasurement) {
-        this.typeMeasurement = typeMeasurement;
+    public void setStreets(Set<PreMeasurementStreet> streets) {
+        this.streets = streets;
     }
 
     public enum Status {

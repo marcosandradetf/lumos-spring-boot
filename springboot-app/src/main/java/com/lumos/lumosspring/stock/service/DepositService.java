@@ -6,8 +6,7 @@ import com.lumos.lumosspring.stock.controller.dto.mobile.DepositResponseMobile;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
-import com.lumos.lumosspring.stock.repository.MaterialRepository;
-import com.lumos.lumosspring.stock.repository.ProductStockRepository;
+import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.team.RegionRepository;
 import com.lumos.lumosspring.team.TeamRepository;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class DepositService {
@@ -28,7 +26,7 @@ public class DepositService {
     @Autowired
     private CompanyRepository comapanyRepository;
     @Autowired
-    private ProductStockRepository materialStockRepository;
+    private MaterialStockRepository materialStockRepository;
     @Autowired
     private RegionRepository regionRepository;
     @Autowired

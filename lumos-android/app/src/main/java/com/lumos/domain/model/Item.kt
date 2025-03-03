@@ -8,6 +8,5 @@ data class Item(
     @PrimaryKey(autoGenerate = true) val itemId: Long = 0,
     val materialId: String,
     val materialQuantity: Int,
-    val lastPower: String,
     var measurementId: Long,
 )

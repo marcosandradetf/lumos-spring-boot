@@ -24,15 +24,16 @@ import java.util.UUID;
 
 @Service
 public class MaterialService {
-    private final ProductStockRepository materialStockRepository;
+    private final MaterialStockRepository materialStockRepository;
     private final UserRepository userRepository;
     private final LogRepository logRepository;
     private final TypeRepository tipoRepository;
     private final DepositRepository depositRepository;
     private final CompanyRepository companyRepository;
     private final TypeRepository typeRepository;
+    private final MaterialRepository materialRepository;
 
-    public MaterialService(ProductStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository) {
+    public MaterialService(MaterialStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository, MaterialRepository materialRepository) {
 
         this.materialStockRepository = materialStockRepository;
         this.userRepository = userRepository;
@@ -41,6 +42,7 @@ public class MaterialService {
         this.depositRepository = depositRepository;
         this.companyRepository = companyRepository;
         this.typeRepository = typeRepository;
+        this.materialRepository = materialRepository;
     }
 
     public Page<MaterialStock> findAll(int page, int size) {
@@ -241,23 +243,17 @@ public class MaterialService {
 
 
     public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
-        var materials = materialStockRepository.findAllByOrderByMaterialName();
+        var materials = materialRepository.getMaterialsForInstallation();
         List<MaterialDTOMob> materialsDTO = new ArrayList<>();
 
-        for (MaterialStock m : materials) {
-            var companyName = m.getCompany() != null ? m.getCompany().getCompanyName() : "";
-            var depositId = m.getDeposit() != null ? m.getDeposit().getIdDeposit() : 0;
+        for (Material m : materials) {
             materialsDTO.add(new MaterialDTOMob(
-                    m.getMaterial().getIdMaterial(),
-                    m.getMaterial().getMaterialName(),
-                    m.getMaterial().getMaterialBrand(),
-                    m.getMaterial().getMaterialPower(),
-                    m.getMaterial().getMaterialAmps(),
-                    m.getMaterial().getMaterialLength(),
-                    m.getRequestUnit(),
-                    String.valueOf(m.getStockAvailable()),
-                    companyName,
-                    depositId
+                    m.getIdMaterial(),
+                    m.getMaterialName(),
+                    m.getMaterialBrand(),
+                    m.getMaterialPower(),
+                    m.getMaterialAmps(),
+                    m.getMaterialLength()
             ));
         }
 

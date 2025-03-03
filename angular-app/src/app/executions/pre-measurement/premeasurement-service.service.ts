@@ -15,83 +15,161 @@ export class PreMeasurementService {
   constructor(private http: HttpClient) {
   }
 
-  getPreMeasurements(): Observable<{ [cityName: string]: [string, string] }> {
-    return this.http.get<{ [cityName: string]: [string, string] }>(`${this.endpoint + '/pre-measurement/get-cities'}`);
+  getPreMeasurements(): Observable<
+    {
+      preMeasurementId: number;
+      city: string;
+      createdBy: string;
+      createdAt: string;
+      preMeasurementType: string;
+      preMeasurementStyle: string;
+      teamName: string;
+
+      streets: {
+        preMeasurementStreetId: number;
+        lastPower: string;
+        latitude: number;
+        longitude: number;
+        address: string;
+
+        items: {
+          preMeasurementStreetItemId: number;
+          materialId: number;
+          materialName: string;
+          materialType: string;
+          materialPower: string;
+          materialLength: string;
+          materialQuantity: number;
+        }[]
+
+      }[];
+
+    }[]> {
+    return this.http.get<
+      {
+        preMeasurementId: number;
+        city: string;
+        createdBy: string;
+        createdAt: string;
+        preMeasurementType: string;
+        preMeasurementStyle: string;
+        teamName: string;
+
+        streets: {
+          preMeasurementStreetId: number;
+          lastPower: string;
+          latitude: number;
+          longitude: number;
+          address: string;
+
+          items: {
+            preMeasurementStreetItemId: number;
+            materialId: number;
+            materialName: string;
+            materialType: string;
+            materialPower: string;
+            materialLength: string;
+            materialQuantity: number;
+          }[]
+
+        }[];
+
+      }[]>(`${this.endpoint + '/get-pre-measurements'}`);
   }
 
-  getDeposits() {
-    return this.http.get<Deposit[]>(`${environment.springboot + '/api/deposit'}`);
+  getFields(preMeasurementId: number) {
+    return this.http.get<
+      {
+        leds:
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }[];
+        ledService: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        piService: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        arms:
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }[];
+        armService: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        screws: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        straps: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        relays: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        connectors: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        cables: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+        posts: [
+          {
+            description: string;
+            quantity: number;
+            price: string;
+            priceTotal: string;
+          }
+        ];
+      }
+
+    >(`${this.endpoint + `/get-fields/${preMeasurementId}`}`);
   }
-
-  getItemsByDeposit(depositId: string): Observable<{ materialId: string; materialName: string; materialQuantity: string }[]> {
-    return this.http.get<{ materialId: string; materialName: string; materialQuantity: string }[]>(`${this.endpoint}/itens/${depositId}`);
-  }
-
-  public getTeams() {
-    return this.http.get<{
-      idTeam: string,
-      teamName: string,
-      userId: string,
-      username: string,
-      UFName: string,
-      cityName: string,
-      regionName: string,
-      sel: boolean,
-    }[]>(`${this.endpoint}/get-teams`);
-  }
-
-  public getUsers() {
-    return this.http.get<{
-      userId: string,
-      username: string,
-    }[]>(`${environment.springboot}/api/user/get-users`);
-  }
-
-  public updateTeams(user: {
-    idTeam: string,
-    teamName: string,
-    userId: string,
-    username: string,
-    UFName: string,
-    cityName: string,
-    regionName: string,
-    sel: boolean,
-  }[]) {
-    return this.http.post<{
-      idTeam: string,
-      teamName: string,
-      userId: string,
-      username: string,
-      UFName: string,
-      cityName: string,
-      regionName: string,
-      sel: boolean,
-    }[]>(`${this.endpoint}/update-teams`, user);
-  }
-
-  public insertTeams(user: {
-    idTeam: string,
-    teamName: string,
-    userId: string,
-    username: string,
-    UFName: string,
-    cityName: string,
-    regionName: string,
-    sel: boolean,
-  }[]) {
-    return this.http.post<{
-      idTeam: string,
-      teamName: string,
-      userId: string,
-      username: string,
-      UFName: string,
-      cityName: string,
-      regionName: string,
-      sel: boolean,
-    }[]>(`${this.endpoint}/post-teams`, user);
-  }
-
-
 
 
 }

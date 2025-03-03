@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.user;
 
-import com.lumos.lumosspring.authentication.RefreshToken;
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import com.lumos.lumosspring.notification.EmailService;
 import com.lumos.lumosspring.user.dto.CreateUserDto;
@@ -199,7 +198,7 @@ public class UserService {
             }
 
             // Verifica se o username já existe no sistema
-            Optional<User> userOptional = userRepository.findByUsername(u.username());
+            Optional<User> userOptional = userRepository.findByUsernameIgnoreCase(u.username());
             if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         new ErrorResponse(String.format("Username %s já existente no sistema.", u.username()))
@@ -207,7 +206,7 @@ public class UserService {
             }
 
             // Verifica se o e-mail já existe no banco de dados
-            userOptional = userRepository.findByEmail(u.email());
+            userOptional = userRepository.findByEmailIgnoreCase(u.email());
             if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         new ErrorResponse(String.format("Email %s já existente no sistema.", u.email()))
@@ -281,11 +280,11 @@ public class UserService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
             }
 
-            if (userRepository.findByUsername(u.username()).isPresent()) {
+            if (userRepository.findByUsernameIgnoreCase(u.username()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Username \{u.username()} já existente no sistema, recupere a senha ou utilize outro username."));
             }
 
-            if (userRepository.findByEmail(u.email()).isPresent()) {
+            if (userRepository.findByEmailIgnoreCase(u.email()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Email \{u.email()} já existente no sistema, recupere a senha ou utilize outro email."));
             }
 

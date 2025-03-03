@@ -40,7 +40,7 @@ public class TokenController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        var user = userRepository.findByUsernameOrEmail(loginRequest.username(), loginRequest.username());
+        var user = userRepository.findByUsernameOrEmailIgnoreCase(loginRequest.username(), loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }

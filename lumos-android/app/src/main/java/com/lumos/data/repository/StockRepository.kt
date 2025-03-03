@@ -83,8 +83,8 @@ class StockRepository(
             }
     }
 
-    suspend fun getMaterials(depositId: Long): List<Material> {
-        return dao.getMaterials(depositId)
+    suspend fun getMaterials(): List<Material> {
+        return dao.getMaterials()
     }
 
     suspend fun firstSync() {

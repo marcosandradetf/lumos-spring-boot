@@ -43,9 +43,12 @@ class AuthRepository(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    secureStorage.saveTokens(body.accessToken, body.refreshToken)
+                    secureStorage.saveTokens(body.accessToken, body.refreshToken, body.userUUID)
                     onSuccess()
-                } else {
+                }
+            } else {
+                val body = response.body()
+                if (body != null) {
                     val errorMessage = response.errorBody()?.string() ?: "Erro desconhecido"
                     showToast(errorMessage)
                     onFailure()

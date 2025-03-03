@@ -19,13 +19,13 @@ public class MaterialReservation {
     private MaterialStock materialStock;
 
     @ManyToOne
-    private Street street;
+    private PreMeasurementStreet street;
 
     @Column(nullable = false)
-    private int reservedQuantity;
+    private double reservedQuantity = 0.0;
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private int quantityCompleted;
+    @Column(nullable = false)
+    private double quantityCompleted = 0.0;
 
     private ReservationStatus status; // Pode ser "pendente", "coletado", "cancelado"
 
@@ -53,7 +53,7 @@ public class MaterialReservation {
         this.materialStock = material;
     }
 
-    public int getReservedQuantity() {
+    public double getReservedQuantity() {
         return reservedQuantity;
     }
 
@@ -62,13 +62,20 @@ public class MaterialReservation {
         this.materialStock.removeStockAvailable(reservedQuantity);
     }
 
-    public int getQuantityCompleted() {
+    public double getQuantityCompleted() {
         return quantityCompleted;
     }
 
     public void setQuantityCompleted(int quantityCompleted) {
         this.quantityCompleted = quantityCompleted;
         this.materialStock.removeStockQuantity(quantityCompleted);
+    }
+
+    private void removeStockAvailable() {
+        double qtStockAvailable = this.materialStock.getStockAvailable();
+        if (qtStockAvailable > 0) {
+            this.materialStock.removeStockAvailable(this.reservedQuantity);
+        }
     }
 
     public ReservationStatus getStatus() {

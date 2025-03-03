@@ -9,7 +9,6 @@ import com.lumos.lumosspring.user.RoleRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
-import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.security.oauth2.jwt.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,7 +45,7 @@ public class TokenControllerMobile {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginMobile(@RequestBody LoginRequest loginRequest) {
-        var user = userRepository.findByUsernameOrEmail(loginRequest.username(), loginRequest.email());
+        var user = userRepository.findByUsernameOrEmailIgnoreCase(loginRequest.username(), loginRequest.email());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }
@@ -100,7 +98,7 @@ public class TokenControllerMobile {
         refreshTokenRepository.save(refreshToken);
 
         // Ajuste: Retorna o refreshToken no corpo em vez de cookie
-        var responseBody = new LoginResponseMobile(accessTokenValue, expiresIn, scopes, refreshTokenValue);
+        var responseBody = new LoginResponseMobile(accessTokenValue, expiresIn, scopes, refreshTokenValue, user.get().getIdUser().toString());
 
         return ResponseEntity.ok(responseBody);
     }

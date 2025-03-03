@@ -1,17 +1,12 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
-import {Router, RouterLinkActive} from '@angular/router';
+import {Component, OnInit} from '@angular/core';
 import {PreMeasurementService} from './premeasurement-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {KeyValuePipe, NgClass, NgForOf, NgIf} from '@angular/common';
-import {FormsModule, NgForm} from '@angular/forms';
-import {Deposit} from '../../models/almoxarifado.model';
-import {ufRequest} from '../../core/uf-request.dto';
-import {IbgeService} from '../../core/service/ibge.service';
-import {citiesRequest} from '../../core/cities-request.dto';
+import {KeyValuePipe, NgForOf, NgIf} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {ButtonComponent} from '../../shared/components/button/button.component';
-import {Title} from '@angular/platform-browser';
+import * as Util from 'node:util';
+import {UtilsService} from '../../core/service/utils.service';
+import {startWith} from 'rxjs';
 
 @Component({
   selector: 'app-pre-measurement',
@@ -19,7 +14,6 @@ import {Title} from '@angular/platform-browser';
   imports: [
     NgForOf,
     FormsModule,
-    KeyValuePipe,
     TableComponent,
     NgIf,
     ModalComponent
@@ -28,7 +22,39 @@ import {Title} from '@angular/platform-browser';
   styleUrl: './pre-measurement.component.scss'
 })
 export class PreMeasurementComponent implements OnInit {
-  cities: { [cityName: string]: [string, string] } = {};
+  preMeasurements: {
+    preMeasurementId: number;
+    city: string;
+    createdBy: string;
+    createdAt: string;
+    preMeasurementType: string;
+    preMeasurementStyle: string;
+    teamName: string;
+
+    streets: {
+      preMeasurementStreetId: number;
+      lastPower: string;
+      latitude: number;
+      longitude: number;
+      address: string;
+
+      items: {
+        preMeasurementStreetItemId: number;
+        materialId: number;
+        materialName: string;
+        materialType: string;
+        materialPower: string;
+        materialLength: string;
+        materialQuantity: number;
+      }[]
+
+    }[];
+
+  }[] = [];
+
+
+  preMeasurementId: number = 0;
+  preMeasurementName: string = '';
   serviceQuantity: number = 0.0;
   armsQuantity: number = 0.0;
 
@@ -37,82 +63,150 @@ export class PreMeasurementComponent implements OnInit {
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
       }[];
+    ledService: [
+      {
+        description: string;
+        quantity: number;
+        price: string;
+        priceTotal: string;
+      }
+    ];
+    piService: [
+      {
+        description: string;
+        quantity: number;
+        price: string;
+        priceTotal: string;
+      }
+    ];
     arms:
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
       }[];
+    armService: [
+      {
+        description: string;
+        quantity: number;
+        price: string;
+        priceTotal: string;
+      }
+    ];
     screws: [
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
       }
     ];
     straps: [
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
       }
     ];
     relays: [
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
       }
     ];
-    sockets: [
+    connectors: [
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
       }
     ];
     cables: [
       {
         description: string;
         quantity: number;
+        price: string;
+        priceTotal: string;
+      }
+    ];
+    posts: [
+      {
+        description: string;
+        quantity: number;
+        price: string;
+        priceTotal: string;
       }
     ];
   } = {
     leds: [
-      {description: '60W', quantity: 3},
-      {description: '70W', quantity: 4},
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'},
+    ],
+    ledService: [
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
+    ],
+    piService: [
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
     arms: [
-      {description: '2,5M', quantity: 1},
-      {description: '3,6M', quantity: 2}
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'},
+    ],
+    armService: [
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
     screws: [
-      {description: '', quantity: 1}
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
     straps: [
-      {description: '', quantity: 1}
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
     relays: [
-      {description: '', quantity: 1}
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
-    sockets: [
-      {description: '', quantity: 1}
+    connectors: [
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
     cables: [
-      {description: '', quantity: 1}
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
+    ],
+    posts: [
+      {description: '', quantity: 0, price: '0,00', priceTotal: '0,00'}
     ],
   };
+  private loading: boolean = false;
 
   ngOnInit() {
-    console.log(this.formula.arms); // Verifique se os braços estão sendo carregados corretamente
+    this.getServiceQuantity();
+    this.getArmsQuantity();
   }
 
 
-  constructor(preMeasurementService: PreMeasurementService) {
+  constructor(private preMeasurementService: PreMeasurementService, public utils: UtilsService) {
     preMeasurementService.getPreMeasurements().subscribe(preMeasurements => {
-      this.cities = preMeasurements;
+      this.preMeasurements = preMeasurements;
+      console.log(this.preMeasurements);
     });
   }
 
 
   protected readonly parseInt = parseInt;
-  lineNumber: number = 1;
+  lineNumber = 1;
+
+  resetLineNumber() {
+    this.lineNumber = 1; // Reseta o contador sempre que necessário
+  }
+
+  nextLine() {
+    return this.lineNumber++
+  }
+
   post: boolean = false;
   openModal: boolean = false;
 
@@ -120,20 +214,61 @@ export class PreMeasurementComponent implements OnInit {
     this.formula.leds.forEach((l) => {
       this.serviceQuantity += l.quantity;
     });
-    return this.serviceQuantity;
   }
 
   getArmsQuantity() {
     this.formula.arms.forEach((b) => {
       this.armsQuantity += b.quantity;
     });
-    return this.armsQuantity;
   }
 
-  nextLine() {
-    this.lineNumber++;
-    return this.lineNumber;
+  formatValue(event: Event, index: number, attributeName: keyof typeof this.formula) {
+    // Obtém o valor diretamente do evento e remove todos os caracteres não numéricos
+    let targetValue = (event.target as HTMLInputElement).value.replace(/\D/g, '');
+
+    // Verifica se targetValue está vazio e define um valor padrão
+    if (!targetValue) {
+      this.formula[attributeName][index].price = '0,00';
+      this.formula[attributeName][index].priceTotal = '0,00';
+      (event.target as HTMLInputElement).value = '0,00'; // Atualiza o valor no campo de input
+      return;
+    }
+
+    const value = this.utils.formatValue(targetValue);
+    this.formula[attributeName][index].price = value;
+    this.formula[attributeName][index].priceTotal = this.utils.multiplyValue(targetValue, this.formula[attributeName][index].quantity).toString();
+    (event.target as HTMLInputElement).value = value; // Exibe o valor formatado no campo de input
+
   }
 
-  protected readonly alert = alert;
+
+  getItemsQuantity(preMeasurementId: number) {
+    let quantity: number = 0;
+    this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId)
+      ?.streets.forEach((street) => {
+      quantity += street.items.length;
+    });
+
+    return quantity;
+  }
+
+  provideValues(preMeasurementId: number) {
+    const preMeasurement = this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId);
+    if (!preMeasurement) {
+      return;
+    }
+
+    this.openModal = true;
+    this.loading = true;
+    this.preMeasurementId = preMeasurementId;
+    this.preMeasurementName = preMeasurement.city;
+
+    this.preMeasurementService.getFields(preMeasurementId).subscribe(fields => {
+      this.formula = fields;
+    });
+
+
+
+
+  }
 }

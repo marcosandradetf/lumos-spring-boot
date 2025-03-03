@@ -27,8 +27,8 @@ interface StockDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMaterial(material: Material)
 
-    @Query("SELECT * FROM materials where depositId = :depositId ORDER BY materialPower")
-    suspend fun getMaterials(depositId: Long): List<Material>
+    @Query("SELECT * FROM materials")
+    suspend fun getMaterials(): List<Material>
 
     @Query("SELECT count(materialId) FROM materials")
     suspend fun getCountMaterials(): Int

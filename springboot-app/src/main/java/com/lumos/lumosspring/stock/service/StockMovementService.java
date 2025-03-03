@@ -19,13 +19,13 @@ import java.util.*;
 
 @Service
 public class StockMovementService {
-    private final ProductStockRepository materialStockRepository;
+    private final MaterialStockRepository materialStockRepository;
     private final StockMovementRepository stockMovementRepository;
     private final SupplierRepository supplierRepository;
     private final UserRepository userRepository;
     private final Util util;
 
-    public StockMovementService(ProductStockRepository materialStockRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util) {
+    public StockMovementService(MaterialStockRepository materialStockRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util) {
         this.materialStockRepository = materialStockRepository1;
         this.stockMovementRepository = stockMovementRepository;
         this.supplierRepository = supplierRepository;

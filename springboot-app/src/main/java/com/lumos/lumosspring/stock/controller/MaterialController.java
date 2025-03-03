@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.lumos.lumosspring.stock.entities.MaterialStock;
-import com.lumos.lumosspring.stock.repository.ProductStockRepository;
+import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.service.MaterialService;
 
@@ -35,10 +34,10 @@ import com.lumos.lumosspring.stock.service.MaterialService;
 public class MaterialController {
     private final MaterialService materialService;
     private final MaterialRepository materialRepository;
-    private final ProductStockRepository materialStockRepository;
+    private final MaterialStockRepository materialStockRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public MaterialController(MaterialService materialService, MaterialRepository materialRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, ProductStockRepository materialStockRepository) {
+    public MaterialController(MaterialService materialService, MaterialRepository materialRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, MaterialStockRepository materialStockRepository) {
         this.materialService = materialService;
         this.materialRepository = materialRepository;
         this.refreshTokenRepository = refreshTokenRepository;

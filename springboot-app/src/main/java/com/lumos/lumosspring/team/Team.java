@@ -1,12 +1,9 @@
 package com.lumos.lumosspring.team;
 
-import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.execution.entities.Street;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
 import java.util.List;
-import java.util.Set;
 
 
 @Entity
@@ -54,9 +51,6 @@ public class Team {
 
     @ManyToOne
     private Region region;
-
-    @ManyToOne
-    private Street street;
 
     public long getIdTeam() {
         return idTeam;
@@ -138,11 +132,4 @@ public class Team {
         this.cityName = cityName;
     }
 
-    public Street getStreet() {
-        return street;
-    }
-
-    public void setStreet(Street street) {
-        this.street = street;
-    }
 }

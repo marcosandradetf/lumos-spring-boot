@@ -1,7 +1,8 @@
 package com.lumos.lumosspring.util;
 
-import com.lumos.lumosspring.stock.controller.dto.StockMovementDTO;
-import com.lumos.lumosspring.stock.entities.StockMovement;
+import java.text.Normalizer;
+import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -67,4 +68,16 @@ public class Util {
 
         return date.toInstant();
     }
+    public String normalizeWord(String word) {
+        return Normalizer.normalize(word, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toUpperCase(); // Remove caracteres diacríticos (acentos)
+    }
+
+    public String normalizeDate(Instant date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                .withZone(ZoneId.of("America/Sao_Paulo"));
+
+        return formatter.format(date);
+    }
+
 }

@@ -3,6 +3,7 @@ package com.lumos.lumosspring.stock.entities;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -29,33 +30,16 @@ public class Material {
     @JoinColumn(name = "id_material_type", nullable = false)
     private Type materialType;
 
-
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "id_company", nullable = false)
-//    private Company company;
-//
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "id_deposit", nullable = false)
-//    private Deposit deposit;
-
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<MaterialStock> materialStocks;
-//
-//    public Company getCompany() {
-//        return company;
-//    }
-//
-//    public void setCompany(Company company) {
-//        this.company = company;
-//    }
-//
-//    public Deposit getDeposit() {
-//        return deposit;
-//    }
-//
-//    public void setDeposit(Deposit almoxarifado) {
-//        this.deposit = almoxarifado;
-//    }
+
+    @ManyToMany
+    @JoinTable(
+            name = "tb_related_materials",
+            joinColumns = @JoinColumn(name = "material_id"),
+            inverseJoinColumns = @JoinColumn(name = "related_id")
+    )
+    private Set<Material> relatedMaterials = new HashSet<>();
 
     public Type getMaterialType() {
         return materialType;
@@ -120,6 +104,14 @@ public class Material {
 
     public void setMaterialStocks(Set<MaterialStock> productStocks) {
         this.materialStocks = productStocks;
+    }
+
+    public Set<Material> getRelatedMaterials() {
+        return relatedMaterials;
+    }
+
+    public void setRelatedMaterials(Set<Material> relatedMaterials) {
+        this.relatedMaterials = relatedMaterials;
     }
 }
 

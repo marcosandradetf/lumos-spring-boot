@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.contract.entities;
 
-import com.lumos.lumosspring.execution.entities.Item;
+import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -24,13 +24,13 @@ public class Contract {
     private String uf;
 
     // um contrato pode ter múltiplos itens
-    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Item> itemsContract = new ArrayList<>();
-
-    public void addItemContrato(Item item) {
-        itemsContract.add(item);
-        item.setContract(this);
-    }
+//    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<PreMeasurementStreetItem> itemsContract = new ArrayList<>();
+//
+//    public void addItemContrato(PreMeasurementStreetItem preMeasurementStreetItem) {
+//        itemsContract.add(preMeasurementStreetItem);
+////        preMeasurementStreetItem.setContract(this);
+//    }
 
     public long getIdContract() {
         return idContract;
@@ -71,14 +71,14 @@ public class Contract {
     public void setContractValue(BigDecimal valorContrato) {
         this.contractValue = valorContrato;
     }
-
-    public List<Item> getItemsContract() {
-        return itemsContract;
-    }
-
-    public void setItemsContract(List<Item> contratoItens) {
-        this.itemsContract = contratoItens;
-    }
+//
+//    public List<PreMeasurementStreetItem> getItemsContract() {
+//        return itemsContract;
+//    }
+//
+//    public void setItemsContract(List<PreMeasurementStreetItem> contratoItens) {
+//        this.itemsContract = contratoItens;
+//    }
 
     public String getCity() {
         return city;

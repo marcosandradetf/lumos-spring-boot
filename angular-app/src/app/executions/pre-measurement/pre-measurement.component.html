@@ -14,21 +14,27 @@
     <div class="border-b w-full pl-2 h-screen pt-2">
 
       <ol class="flex flex-wrap">
-        <li *ngFor="let city of cities | keyvalue; index as i;"
-            class="w-56 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2" (click)="openModal = true">
+        <li *ngFor="let p of preMeasurements; index as i;"
+            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
+            (click)="provideValues(p.preMeasurementId)">
           <div class="flex flex-col border rounded px-4 py-2">
-          <span class="badge badge-accent rounded mb-4 mt-2">
-            {{ parseInt(city.value[0]) }} itens
-          </span>
-            <h3 class="text-base font-normal text-neutral-700">{{ city.key }}</h3>
-            <span class="text-xs">{{ city.value[1] }} ruas</span>
+            <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
+                {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
+            </span>
+
+            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
+              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ p.city }}</h3>
+            <span class="text-sm text-neutral-600 flex items-center">Por {{ p.createdBy }}<span
+              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+            <span class="text-xs">{{ p.createdAt }} em {{ p.city }}</span>
           </div>
         </li>
       </ol>
     </div>
 
-    <app-modal [modalOpen]="true" (modalClose)="openModal=false" classModal="rounded">
-      <h3 class="bg-[#096cb8] text-white text-sm text-center p-1 font-bold">VALORES  MEDIÇÃO  - CONCEIÇÃO DO MATO DENTRO (ATA ITAMBACURI)</h3>
+    <app-modal [modalOpen]="openModal" (modalClose)="openModal=false" classModal="rounded sm:w-[60rem]">
+      <h3 class="bg-[#096cb8] text-white text-sm text-center p-1 font-bold">VALORES MEDIÇÃO
+        EM {{ preMeasurementName.toUpperCase() }}</h3>
       <app-table>
         <tr header class="bg-[#0b2d67] text-white">
           <th>ITEM</th>
@@ -37,72 +43,70 @@
           <th>QUANTIDADE EXECUTADA</th>
           <th>VALORES</th>
         </tr>
+        {{ resetLineNumber() }}
+        <ng-container *ngFor="let relay of formula.relays; index as i;" body>
+          <tr *ngIf="relay.quantity > 0">
+            <td>{{ nextLine() }}</td>
+            <td>RELÉ FOTOELETRONICO 1000W 105-305V</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'relays')"></td>
+            <td>{{ relay.quantity }}</td>
+            <td>R$ {{ relay.priceTotal }}</td>
+          </tr>
+        </ng-container>
 
-        <tr body *ngIf="formula.leds[0].quantity > 0">
-          <td>{{ lineNumber }}</td>
-          <td>SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED</td>
-          <td><input type="text" class="input input-bordered input-xs"></td>
-          <td class="bg-[#0090d0]">{{ getServiceQuantity()  }}</td>
-          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
-        </tr>
-        <tr body *ngIf="formula.leds[0].quantity > 0">
-          <td></td>
-          <td>SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS</td>
-          <td><input type="text" class="input input-bordered input-xs"></td>
-          <td class="bg-[#0090d0]">{{ getArmsQuantity() }}</td>
-          <td class="bg-[#fba81e]">{{ armsQuantity }}</td>
-        </tr>
-        <tr body *ngIf="formula.relays[0].quantity > 0">
-          <td></td>
-          <td>RELÉ FOTOELETRONICO 1000W 105-305V</td>
-          <td><input type="text" class="input input-bordered input-xs"></td>
-          <td class="bg-[#0090d0]">{{ serviceQuantity }}</td>
-          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
-        </tr>
-
-        <ng-container *ngFor="let socket of formula.sockets">
-          <tr *ngIf="socket.quantity > 0">
-            <td></td>
+        <ng-container *ngFor="let connector of formula.connectors; index as i" body>
+          <tr *ngIf="connector.quantity > 0">
+            <td>{{ nextLine() }}</td>
             <td>CONECTOR PERFURANTE DERIVAÇÃO 10-35MM² TIPO CDP70</td>
-            <td><input type="text" class="input input-bordered input-xs"></td>
-            <td class="bg-[#0090d0]">{{ socket.quantity }}</td>
-            <td class="bg-[#fba81e]">{{ socket.quantity }}</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'connectors')"></td>
+            <td>{{ connector.quantity }}</td>
+            <td>R$ {{ connector.priceTotal }}</td>
           </tr>
         </ng-container>
 
-        <ng-container *ngFor="let cable of formula.cables">
+        <ng-container *ngFor="let cable of formula.cables; index as i" body>
           <tr *ngIf="cable.quantity > 0">
-            <td></td>
+            <td>{{ nextLine() }}</td>
             <td>CABO 1,5MM</td>
-            <td><input type="text" class="input input-bordered input-xs"></td>
-            <td class="bg-[#0090d0]">{{ cable.quantity }}</td>
-            <td class="bg-[#fba81e]">{{ cable.quantity }}</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'cables')"></td>
+            <td>{{ cable.quantity }}</td>
+            <td>R$ {{ cable.priceTotal }}</td>
           </tr>
         </ng-container>
 
-        <ng-container *ngFor="let screw of formula.screws">
+        <ng-container *ngFor="let screw of formula.screws; index as i;" body>
           <tr *ngIf="screw.quantity > 0">
-            <td></td>
+            <td>{{ nextLine() }}</td>
             <td>PARAFUSOS DE FIXAÇÃO DAS CINTAS E BRAÇOS</td>
-            <td><input type="text" class="input input-bordered input-xs"></td>
-            <td class="bg-[#0090d0]">{{ screw.quantity }}</td>
-            <td class="bg-[#fba81e]">{{ screw.quantity }}</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'screws')"></td>
+            <td>{{ screw.quantity }}</td>
+            <td>R$ {{ screw.priceTotal }}</td>
           </tr>
         </ng-container>
 
-        <ng-container *ngFor="let strap of formula.straps">
+        <ng-container *ngFor="let strap of formula.straps; index as i;" body>
           <tr *ngIf="strap.quantity > 0">
-            <td></td>
+            <td>{{ nextLine() }}</td>
             <td>CINTAS PARA FIXAÇÃO DE BRAÇOS</td>
-            <td><input type="text" class="input input-bordered input-xs"></td>
-            <td class="bg-[#0090d0]">{{ strap.quantity }}</td>
-            <td class="bg-[#fba81e]">{{ strap.quantity }}</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'straps')"></td>
+            <td>{{ strap.quantity }}</td>
+            <td>R$ {{ strap.priceTotal }}</td>
           </tr>
         </ng-container>
 
-        <ng-container *ngFor="let arm of formula.arms">
+        <ng-container *ngFor="let arm of formula.arms; index as i;" body>
           <tr *ngIf="arm.quantity > 0">
-            <td></td>
+            <td>{{ nextLine() }}</td>
             @switch (arm.description.toUpperCase()) {
               @case ("1,5M") {
                 <td>BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 1,5M</td>
@@ -114,23 +118,28 @@
                 <td>BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 3,6M</td>
               }
             }
-            <td><input type="text" class="input input-bordered input-xs"></td>
-            <td class="bg-[#0090d0]">{{ arm.quantity }}</td>
-            <td class="bg-[#fba81e]">{{ arm.quantity }}</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'arms')"></td>
+            <td>{{ arm.quantity }}</td>
+            <td>R$ {{ arm.priceTotal }}</td>
+          </tr>
+        </ng-container>
+        <ng-container *ngFor="let ars of formula.armService; index as i;" body>
+          <tr *ngIf="ars.quantity > 0">
+            <td>{{ nextLine() }}</td>
+            <td>SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'armService')"></td>
+            <td>{{ ars.quantity }}</td>
+            <td>R$ {{ ars.priceTotal }}</td>
           </tr>
         </ng-container>
 
-        <tr body *ngIf="formula.leds[0].quantity > 0">
-          <td></td>
-          <td>SERVIÇO DE EXECUÇÃO DE PROJETO POR IP</td>
-          <td><input type="text" class="input input-bordered input-xs"></td>
-          <td class="bg-[#0090d0]">{{ serviceQuantity }}</td>
-          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
-        </tr>
-
-        <ng-container *ngFor="let led of formula.leds">
+        <ng-container *ngFor="let led of formula.leds; index as i;" body>
           <tr *ngIf="led.quantity > 0">
-            <td></td>
+            <td>{{ nextLine() }}</td>
             @switch (led.description.toUpperCase()) {
               @case ("50W") {
                 <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 50W</td>
@@ -157,25 +166,57 @@
                 <td>LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 150W</td>
               }
             }
-            <td><input type="text" class="input input-bordered input-xs"></td>
-            <td class="bg-[#0090d0]">{{ led.quantity }}</td>
-            <td class="bg-[#fba81e]">{{ led.quantity }}</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'leds')"></td>
+            <td>{{ led.quantity }}</td>
+            <td>R$ {{ led.priceTotal }}</td>
+          </tr>
+        </ng-container>
+        <ng-container *ngFor="let pi of formula.piService; index as i;" body>
+          <tr *ngIf="pi.quantity > 0">
+            <td>{{ nextLine() }}</td>
+            <td>SERVIÇO DE EXECUÇÃO DE PROJETO POR IP</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'piService')"></td>
+            <td>{{ pi.quantity }}</td>
+            <td>R$ {{ pi.priceTotal }}</td>
           </tr>
         </ng-container>
 
-        <tr body *ngIf="post">
-          <td></td>
-          <td>
-            POSTE ORNAMENTAL FORNECIMENTO E INSTALAÇÃO DE POSTE ORNAMENTAL GALVANIZADO 8 M LIVRE, 4 PARA 3 1/2 COM
-            SUPORTE PARA (03) TRÊS LUMINÁRIAS PUBLICA DE LED 100W, CERTIFICADA
-            INMETRO – PORTARIA 20, INCLUINDO, MÃO DE OBRA ESPECIALIZADA, COM EQUIPAMENTOS DE SEGURANÇA INDIVIDUAL (EPI),
-            EQUIPAMENTOS DE SEGURANÇA COLETIVA (EPC) E TODO MATERIAL NECESSARIO PARA REALIZAÇÃO DO SERVIÇO, ASSENTAMENTO
-            E CAIXA DE PASSAGEM.
-          </td>
-          <td><input type="text" class="input input-bordered input-xs"></td>
-          <td class="bg-[#0090d0]">{{ serviceQuantity }}</td>
-          <td class="bg-[#fba81e]">{{ serviceQuantity }}</td>
-        </tr>
+        <ng-container *ngFor="let ls of formula.ledService; index as i;" body>
+          <tr *ngIf="ls.quantity > 0">
+            <td>{{ nextLine() }}</td>
+            <td>SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED</td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'ledService')"></td>
+            <td>{{ ls.quantity }}</td>
+            <td>R$ {{ ls.priceTotal }}</td>
+          </tr>
+        </ng-container>
+
+        <ng-container *ngFor="let post of formula.posts; index as i;" body>
+          <tr *ngIf="post.quantity > 0">
+            <td>{{ nextLine() }}</td>
+            <td>
+              POSTE ORNAMENTAL FORNECIMENTO E INSTALAÇÃO DE POSTE ORNAMENTAL GALVANIZADO 8 M LIVRE, 4 PARA 3 1/2 COM
+              SUPORTE PARA (03) TRÊS LUMINÁRIAS PUBLICA DE LED 100W, CERTIFICADA
+              INMETRO – PORTARIA 20, INCLUINDO, MÃO DE OBRA ESPECIALIZADA, COM EQUIPAMENTOS DE SEGURANÇA INDIVIDUAL
+              (EPI),
+              EQUIPAMENTOS DE SEGURANÇA COLETIVA (EPC) E TODO MATERIAL NECESSARIO PARA REALIZAÇÃO DO SERVIÇO,
+              ASSENTAMENTO
+              E CAIXA DE PASSAGEM.
+            </td>
+            <td><input type="text" class="input input-bordered input-xs"
+                       placeholder="Insira o preço (R$)"
+                       (input)="formatValue($event, i, 'posts')"></td>
+            <td>{{ post.quantity }}</td>
+            <td>R$ {{ post.priceTotal }}</td>
+          </tr>
+        </ng-container>
+
       </app-table>
       <div class="flex w-full mt-10">
         <button class="btn rounded-none w-1/2" (click)="openModal = false">CANCELAR</button>

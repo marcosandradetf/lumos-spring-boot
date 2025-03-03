@@ -4,9 +4,8 @@ import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
 import com.lumos.lumosspring.stock.entities.Type;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
-import com.lumos.lumosspring.stock.repository.ProductStockRepository;
+import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,9 +18,9 @@ public class TypeService {
     private final TypeRepository tipoRepository;
     private final GroupRepository groupRepository;
     private final TypeRepository typeRepository;
-    private final ProductStockRepository materialStockRepository;
+    private final MaterialStockRepository materialStockRepository;
 
-    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository, MaterialRepository materialRepository, ProductStockRepository materialStockRepository) {
+    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository, MaterialRepository materialRepository, MaterialStockRepository materialStockRepository) {
         this.tipoRepository = tipoRepository;
         this.groupRepository = groupRepository;
         this.typeRepository = typeRepository;

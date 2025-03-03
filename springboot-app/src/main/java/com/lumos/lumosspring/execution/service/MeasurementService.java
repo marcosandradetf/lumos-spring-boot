@@ -1,11 +1,9 @@
 package com.lumos.lumosspring.execution.service;
 
-import com.lumos.lumosspring.execution.controller.dto.ItemsDTO;
-import com.lumos.lumosspring.execution.controller.dto.MeasurementDTO;
-import com.lumos.lumosspring.execution.controller.dto.PreMeasurementDTO;
-import com.lumos.lumosspring.execution.entities.Item;
-import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.execution.repository.ItemRepository;
+
+import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
+import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
+import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,89 +12,106 @@ import java.util.stream.Collectors;
 
 @Service
 public class MeasurementService {
-    private final ItemRepository itemRepository;
+    private final PreMeasurementRepository preMeasurementRepository;
+    private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
 
-    public MeasurementService(ItemRepository itemRepository) {
-        this.itemRepository = itemRepository;
+    public MeasurementService(PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository) {
+        this.preMeasurementRepository = preMeasurementRepository;
+        this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
     }
 
-    public ResponseEntity<?> getAll() {
-        List<MeasurementDTO> measurements = itemRepository.findItemsByMeasurement_Status(PreMeasurement.Status.PENDING)
-                .stream()
-                .collect(Collectors.groupingBy(Item::getMeasurement)) // Group items by their measurement
-                .entrySet()
-                .stream()
-                .map(entry -> new MeasurementDTO(
-                        new PreMeasurementDTO(
-                                entry.getKey().getPreMeasurementId(),
-                                entry.getKey().getLatitude(),
-                                entry.getKey().getLongitude(),
-                                entry.getKey().getAddress(),
-                                entry.getKey().getCity(),
-                                entry.getKey().getDeposit().getIdDeposit(),
-                                entry.getKey().getDeviceId(),
-                                entry.getKey().getDeposit().getDepositName(),
-                                entry.getKey().getTypeMeasurement().name(),
-                                entry.getKey().getTypeMeasurement() == PreMeasurement.Type.INSTALLATION ?
-                                        "badge-primary" : "badge-neutral",
-                                entry.getKey().getCreatedBy().getCompletedName()
 
-                        ),
-                        entry.getValue().stream()
-                                .map(i -> new ItemsDTO(
-                                        i.getItemId(),
-                                        String.valueOf(i.getMaterialStock().getMaterial().getIdMaterial()), // No need to cast
-                                        ((int) i.getItemQuantity()), // No need to cast
-                                        "",
-                                        i.getMeasurement().getPreMeasurementId(),
-                                        i.getMaterialStock().getMaterial().getMaterialName()
-                                ))
-                                .collect(Collectors.toList()) // Collect items into a list
-                ))
-                .toList();
+    public ResponseEntity<?> getFields(long measurementId) {
+        var preMeasurement = preMeasurementRepository.findById(measurementId);
+        if (preMeasurement.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var items = preMeasurementStreetItemRepository.findAllByPreMeasurementStreetItemId(measurementId);
 
-        return ResponseEntity.ok().body(measurements);
-    }
-
-    public ResponseEntity<?> Post(MeasurementDTO dto) {
-
-        return ResponseEntity.ok().build();
-    }
-
-    public ResponseEntity<?> Update(MeasurementDTO dto) {
-
-        return ResponseEntity.ok().build();
-    }
-
-    public ResponseEntity<?> Delete(long id) {
-
-        return ResponseEntity.ok().build();
-    }
-
-    public ResponseEntity<?> getCities() {
-        // Obtenha a lista de cidades
-        var cities = itemRepository.findCities(PreMeasurement.Status.PENDING);
-
-        // Mapeamento para armazenar os totais de cada cidade
-        Map<String, List<String>> citiesMap = new HashMap<>();  // Para armazenar como List<String>
-
-        // Iterar sobre as cidades para obter os totais
-        for (String city : cities) {
-            // Obtenha os totais para a cidade
-            var totals = itemRepository.getTotalByCity(PreMeasurement.Status.PENDING, city);
-
-            // Aqui assume-se que `totals` retorne uma lista de String com valores como "10.0,4"
-            String totalStr = totals.getFirst();  // Pega o primeiro item da lista de totais (esperado como String)
-
-            // Converte a string com valores separados por vírgula para um array
-            String[] totalsArray = totalStr.split(",");
-
-            // Armazena o array convertido como uma lista dentro do mapa
-            List<String> totalsList = Arrays.asList(totalsArray);
-            citiesMap.put(city, totalsList);  // Armazena no mapa, com a cidade como chave e a lista de totais como valor
+        // Record para armazenar os dados de um item
+        record ItemField(String description, double quantity) {
         }
 
-        return ResponseEntity.ok(citiesMap);
+        Map<String, Map<String, Double>> groupedItems = new HashMap<>();
+
+        for (var street : preMeasurement.get().getStreets()) {
+            for (PreMeasurementStreetItem preMeasurementStreetItem : street.getItems()) {
+                var material = preMeasurementStreetItem.getMaterial();
+                String type = material.getMaterialType().getTypeName().toUpperCase();
+                String description;
+
+                switch (type) {
+                    case "LED":
+                    case "LEDS":
+                        description = material.getMaterialPower().toUpperCase();
+                        groupedItems.computeIfAbsent("leds", k -> new HashMap<>())
+                                .merge(description, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        groupedItems.computeIfAbsent("ledService", k -> new HashMap<>())
+                                .merge(type, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        groupedItems.computeIfAbsent("piService", k -> new HashMap<>())
+                                .merge(type, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    case "BRAÇO":
+                    case "BRACO":
+                    case "BRAÇOS":
+                    case "BRACOS":
+                        description = material.getMaterialLength().toUpperCase();
+                        groupedItems.computeIfAbsent("arms", k -> new HashMap<>())
+                                .merge(description, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        groupedItems.computeIfAbsent("armService", k -> new HashMap<>())
+                                .merge(type, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    case "PARAFUSO":
+                    case "PARAFUSOS":
+                        groupedItems.computeIfAbsent("screws", k -> new HashMap<>())
+                                .merge("PARAFUSO", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    case "CINTA":
+                    case "CINTAS":
+                        groupedItems.computeIfAbsent("straps", k -> new HashMap<>())
+                                .merge("CINTA", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    case "RELÉ":
+                    case "RELE":
+                    case "RELÉS":
+                    case "RELES":
+                        groupedItems.computeIfAbsent("relays", k -> new HashMap<>())
+                                .merge("RELÉ", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    case "CONECTOR":
+                    case "CONECTORES":
+                        groupedItems.computeIfAbsent("connectors", k -> new HashMap<>())
+                                .merge("PERFURANTE", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    case "CABO":
+                    case "CABOS":
+                        groupedItems.computeIfAbsent("cables", k -> new HashMap<>())
+                                .merge("CABO", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                    case "POSTE":
+                    case "POSTES":
+                    case "POSTE ORNAMENTAL":
+                        groupedItems.computeIfAbsent("posts", k -> new HashMap<>())
+                                .merge("POSTE ORNAMENTAL", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+// Converter `groupedItems` para o formato desejado
+        Map<String, List<ItemField>> itemsFields = new HashMap<>();
+
+        groupedItems.forEach((key, value) -> {
+            List<ItemField> itemList = value.entrySet().stream()
+                    .map(entry -> new ItemField(entry.getKey(), entry.getValue()))
+                    .toList();
+            itemsFields.put(key, itemList);
+        });
+
+
+
+        return ResponseEntity.ok(itemsFields);
     }
 
 }

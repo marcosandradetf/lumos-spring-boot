@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.execution.entities;
 
-import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
@@ -15,43 +14,31 @@ public class Measurement {
     @Column(name = "measurement_id")
     private long measurementId;
 
-    private String description;
-
-    private String address;
-
-    private String city;
-
-    private double latitude;
-
-    private double longitude;
+    @ManyToOne
+    @JoinColumn(name = "pre_measurement_id")
+    private PreMeasurement preMeasurementStreet;
 
     @ManyToOne
     private Region region;
 
-    @ManyToOne
-    private Deposit deposit;
-
     private Status status;
 
-    private String deviceId;
-
-    private Type typeMeasurement;
-
     @ManyToOne
-    @JoinColumn(name = "created_by_id_user")
+    @JoinColumn(name = "created_by_user_id")
     private User createdBy;
 
     @ManyToOne
-    @JoinColumn(name = "assigned_by_id_user")
+    @JoinColumn(name = "assigned_by_user_id")
     private User assignedBy;
 
     @ManyToOne
-    @JoinColumn(name = "finished_by_id_user")
+    @JoinColumn(name = "finished_by_user_id")
     private User finishedBy;
 
     private Instant createdAt;
     private Instant assignedAt;
     private Instant finishedAt;
+
 
     public Instant getCreatedAt() {
         return createdAt;
@@ -109,38 +96,6 @@ public class Measurement {
         this.measurementId = measurementId;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
     public Region getRegion() {
         return region;
     }
@@ -149,21 +104,6 @@ public class Measurement {
         this.region = region;
     }
 
-    public Deposit getDeposit() {
-        return deposit;
-    }
-
-    public void setDeposit(Deposit deposit) {
-        this.deposit = deposit;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
 
     public Status getStatus() {
         return status;
@@ -171,22 +111,6 @@ public class Measurement {
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public Type getTypeMeasurement() {
-        return typeMeasurement;
-    }
-
-    public void setTypeMeasurement(Type typeMeasurement) {
-        this.typeMeasurement = typeMeasurement;
     }
 
     public enum Status {

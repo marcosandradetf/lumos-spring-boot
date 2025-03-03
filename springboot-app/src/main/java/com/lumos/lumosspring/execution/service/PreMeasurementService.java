@@ -1,16 +1,17 @@
 package com.lumos.lumosspring.execution.service;
 
-import com.lumos.lumosspring.execution.controller.dto.ItemsResponse;
-import com.lumos.lumosspring.execution.controller.dto.MeasurementDTO;
-import com.lumos.lumosspring.execution.entities.Item;
+import com.lumos.lumosspring.execution.controller.dto.response.PreMeasurementStreetItemResponseDTO;
+import com.lumos.lumosspring.execution.controller.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.execution.controller.dto.response.PreMeasurementResponseDTO;
+import com.lumos.lumosspring.execution.controller.dto.response.PreMeasurementStreetResponseDTO;
 import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.execution.repository.ItemRepository;
+import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
+import com.lumos.lumosspring.execution.entities.PreMeasurementStreet;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
-import com.lumos.lumosspring.execution.repository.StreetRepository;
-import com.lumos.lumosspring.stock.entities.MaterialStock;
-import com.lumos.lumosspring.stock.repository.DepositRepository;
+import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.execution.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
-import com.lumos.lumosspring.stock.repository.ProductStockRepository;
+import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
@@ -22,162 +23,152 @@ import java.util.*;
 
 @Service
 public class PreMeasurementService {
-    private final PreMeasurementRepository preMeasurementRepository;
+    private final PreMeasurementStreetRepository preMeasurementStreetRepository;
     private final MaterialRepository materialRepository;
-    private final ProductStockRepository materialStockRepository;
-    private final DepositRepository depositRepository;
-    private final ItemRepository itemRepository;
+    private final PreMeasurementRepository preMeasurementRepository;
+    private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
     private final UserRepository userRepository;
     private final Util util;
 
-    public PreMeasurementService(PreMeasurementRepository preMeasurementRepository, ItemRepository repository, StreetRepository streetRepository, MaterialRepository materialRepository, ProductStockRepository materialStockRepository, DepositRepository depositRepository, ItemRepository itemRepository, UserRepository userRepository, Util util) {
-        this.preMeasurementRepository = preMeasurementRepository;
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util) {
+        this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.materialRepository = materialRepository;
-        this.materialStockRepository = materialStockRepository;
-        this.depositRepository = depositRepository;
-        this.itemRepository = itemRepository;
+        this.preMeasurementRepository = preMeasurementRepository;
+        this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
         this.userRepository = userRepository;
         this.util = util;
     }
 
 
-    public ResponseEntity<?> getItems(Long depositId) {
-        List<MaterialStock> materials = materialStockRepository.getByDeposit(depositId);
-        List<ItemsResponse> items = new ArrayList<>();
-
-        for (MaterialStock m : materials) {
-            items.add(new ItemsResponse(
-                    m.getMaterial().getIdMaterial(),
-                    m.getMaterial().getMaterialName(),
-                    m.getStockQuantity()
-            ));
-        }
-
-        return ResponseEntity.ok(items);
-    }
-
-
-    public ResponseEntity<?> saveMeasurement(MeasurementDTO measurementDTO, String userUUID) {
+    public ResponseEntity<?> saveMeasurement(PreMeasurementDTO measurementDTO, String userUUID) {
         if (userUUID == null || userUUID.isBlank()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("user UUID is required"));
         }
 
-        PreMeasurement premeasurement = new PreMeasurement();
-
         var measurement = measurementDTO.measurement();
-        var deposit = depositRepository.findById(measurement.depositId());
         var user = userRepository.findByIdUser(UUID.fromString(userUUID));
 
-        premeasurement.setAddress(measurement.address());
-        premeasurement.setCity(measurement.city());
-        premeasurement.setLatitude(measurement.latitude());
-        premeasurement.setLongitude(measurement.longitude());
-        premeasurement.setDeposit(deposit.orElse(null));
-        premeasurement.setStatus(PreMeasurement.Status.PENDING);
-        premeasurement.setTypeMeasurement(PreMeasurement.Type.INSTALLATION);
-        premeasurement.setCreatedBy(user.orElse(null));
-        premeasurement.setCreatedAt(util.getDateTime());
+        PreMeasurement preMeasurement = preMeasurementRepository.getTopByCityAndStatusOrderByCreatedAtDesc(
+                        measurement.city(), PreMeasurement.Status.PENDING)
+                .orElse(null);
+        PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
 
-        preMeasurementRepository.save(premeasurement);
+        if (preMeasurement == null) {
+            preMeasurement = new PreMeasurement();
+            preMeasurement.setCreatedBy(user.orElse(null));
+            preMeasurement.setCreatedAt(util.getDateTime());
+            preMeasurement.setTypePreMeasurement(PreMeasurement.Type.INSTALLATION);
+            preMeasurement.setStatus(PreMeasurement.Status.PENDING);
+            preMeasurement.setCity(measurement.city());
+            preMeasurementRepository.save(preMeasurement);
+        }
 
-
-        measurementDTO.items().forEach(item -> {
-            var newItem = new Item();
-            var material = materialStockRepository.findById(Long.valueOf(item.materialId()));
-            newItem.setMaterialStock(material.orElse(null));
-            newItem.setItemQuantity(item.materialQuantity());
-            newItem.setMeasurement(premeasurement);
-
-            itemRepository.save(newItem);
-        });
-        var items = itemRepository.findItemsByPreMeasurement_PreMeasurementId(premeasurement.getPreMeasurementId());
+        preMeasurementStreet.setPreMeasurement(preMeasurement);
+        preMeasurementStreet.setAddress(measurement.address());
+        preMeasurementStreet.setLatitude(measurement.latitude());
+        preMeasurementStreet.setLongitude(measurement.longitude());
+        preMeasurementStreet.setLastPower(measurement.lastPower());
+        preMeasurementStreet.setStatus(PreMeasurementStreet.Status.PENDING);
+        preMeasurementStreetRepository.save(preMeasurementStreet);
 
 
         // IMPORTANTE
         // ADICIONAR AUTOMATICAMENTE CABO E RELE
-        for (Item item : items) {
-            var material = item.getMaterialStock().getMaterial();
-            if (material.getMaterialType().getTypeName().equalsIgnoreCase("CABO")) {
-                double cableQuantity = 0.0F;
+        measurementDTO.items().forEach(item -> {
+            materialRepository.findById(Long.valueOf(item.materialId())).ifPresent(material -> {
+                var newItem = new PreMeasurementStreetItem();
+                newItem.setMaterial(material);
+                newItem.setItemQuantity(item.materialQuantity());
+                preMeasurementStreet.addItem(newItem);
+                preMeasurementStreetItemRepository.save(newItem);
 
-                for (Item i : items) {
-                    String braco = i.getMaterialStock().getMaterial().getMaterialType().getTypeName().toUpperCase();
-                    if (braco.equalsIgnoreCase("BRAÇO 1,5")) cableQuantity += i.getItemQuantity() * 2.5;
+                material.getRelatedMaterials().stream()
+                        .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("RELE"))
+                        .findFirst().ifPresent(rm -> {
+                            preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet).stream()
+                                    .filter(i -> i.getMaterial().getIdMaterial() == rm.getIdMaterial())
+                                    .findFirst().ifPresentOrElse(
+                                            existingRelay -> {
+                                                existingRelay.addItemQuantity(item.materialQuantity());
+                                                preMeasurementStreetItemRepository.save(existingRelay);
+                                            },
+                                            () -> {
+                                                var newRelay = new PreMeasurementStreetItem();
+                                                newRelay.setMaterial(rm);
+                                                newRelay.addItemQuantity(item.materialQuantity());
+                                                preMeasurementStreet.addItem(newRelay);
+                                                preMeasurementStreetItemRepository.save(newRelay);
+                                            }
+                                    );
+                        });
 
-                    if (braco.equalsIgnoreCase("BRAÇO 2,5")) cableQuantity += i.getItemQuantity() * 8.5;
-
-                    if (braco.equalsIgnoreCase("BRAÇO 3,5")) cableQuantity += i.getItemQuantity() * 12.5;
-                }
-
-                item.setItemQuantity(cableQuantity);
-                itemRepository.save(item);
-            }
-
-            if (material.getMaterialType().getTypeName().equalsIgnoreCase("RELÉ")) {
-                double releQuantity = 0.0F;
-
-                for (Item i : items) {
-                    String braco = i.getMaterialStock().getMaterial().getMaterialType().getTypeName().toUpperCase();
-                    if (braco.equalsIgnoreCase("LED")) releQuantity += i.getItemQuantity();
-                }
-
-                item.setItemQuantity(releQuantity);
-                itemRepository.save(item);
-            }
-        }
+                material.getRelatedMaterials().stream()
+                        .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("CABO"))
+                        .findFirst().ifPresent(rm -> {
+                            preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet).stream()
+                                    .filter(i -> i.getMaterial().getIdMaterial() == rm.getIdMaterial())
+                                    .findFirst().ifPresentOrElse(
+                                            existingCable -> {
+                                                if(material.getMaterialLength().startsWith("1")) existingCable.addItemQuantity(item.materialQuantity() * 2.5);
+                                                if(material.getMaterialLength().startsWith("2")) existingCable.addItemQuantity(item.materialQuantity() * 8.5);
+                                                if(material.getMaterialLength().startsWith("3")) existingCable.addItemQuantity(item.materialQuantity() * 12.5);
+                                                preMeasurementStreetItemRepository.save(existingCable);
+                                            },
+                                            () -> {
+                                                var newCable = new PreMeasurementStreetItem();
+                                                newCable.setMaterial(rm);
+                                                if(material.getMaterialLength().startsWith("1")) newCable.addItemQuantity(item.materialQuantity() * 2.5);
+                                                if(material.getMaterialLength().startsWith("2")) newCable.addItemQuantity(item.materialQuantity() * 8.5);
+                                                if(material.getMaterialLength().startsWith("3")) newCable.addItemQuantity(item.materialQuantity() * 12.5);
+                                                preMeasurementStreet.addItem(newCable);
+                                                preMeasurementStreetItemRepository.save(newCable);
+                                            }
+                                    );
+                        });
+            });
+        });
 
 
         return ResponseEntity.ok().body(new DefaultResponse("Medição salva com sucesso"));
     }
 
-    public ResponseEntity<?> getFields(long measurementId) {
-        var items = itemRepository.findItemsByPreMeasurement_PreMeasurementId(measurementId);
 
-        // Record para armazenar os dados de um item
-        record ItemField(String description, double quantity) {
-        }
+    public ResponseEntity<?> getAll() {
+        List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
+                .findAllByStatusOrderByCreatedAtAsc(PreMeasurement.Status.PENDING)
+                .stream()
+                .map(p -> new PreMeasurementResponseDTO(
+                        p.getPreMeasurementId(),
+                        p.getCity(),
+                        p.getCreatedBy() != null ? p.getCreatedBy().getCompletedName() : "Desconhecido",
+                        util.normalizeDate(p.getCreatedAt()),
+                        "",
+                        p.getTypePreMeasurement().name(),
+                        p.getTypePreMeasurement() == PreMeasurement.Type.INSTALLATION ?
+                                "badge-primary" : "badge-neutral",
+                        p.getTypePreMeasurement().name(),
+                        p.getStreets().stream()
+                                .map(s -> new PreMeasurementStreetResponseDTO(
+                                        s.getPreMeasurementStreetId(),
+                                        s.getLastPower(),
+                                        s.getLatitude(),
+                                        s.getLongitude(),
+                                        s.getAddress(),
+                                        s.getItems() != null ? s.getItems().stream()
+                                                .map(i -> new PreMeasurementStreetItemResponseDTO(
+                                                        i.getPreMeasurementStreetItemId(),
+                                                        i.getMaterial().getIdMaterial(),
+                                                        i.getMaterial().getMaterialName(),
+                                                        i.getMaterial().getMaterialType().getTypeName(),
+                                                        i.getMaterial().getMaterialPower(),
+                                                        i.getMaterial().getMaterialLength(),
+                                                        i.getItemQuantity()
+                                                )).toList()
+                                                : List.of() // Retorna lista vazia se `s.getItems()` for null
+                                )).toList()
+                )).toList();
 
-        // Mapa para armazenar os itens por categoria
-        Map<String, List<ItemField>> itemsFields = new HashMap<>();
-
-        for (Item item : items) {
-            var material = item.getMaterialStock().getMaterial();
-            String type = material.getMaterialType().getTypeName().toUpperCase();
-            String description;
-
-            switch (type) {
-                case "LED":
-                    description = material.getMaterialPower();
-                    itemsFields.computeIfAbsent("leds", k -> new ArrayList<>())
-                            .add(new ItemField(description.toUpperCase(), item.getItemQuantity()));
-                    break;
-                case "BRAÇO":
-                    description = material.getMaterialLength();
-                    itemsFields.computeIfAbsent("arms", k -> new ArrayList<>())
-                            .add(new ItemField(description.toUpperCase(), item.getItemQuantity()));
-                    break;
-                case "PARAFUSO":
-                    itemsFields.computeIfAbsent("screws", k -> new ArrayList<>())
-                            .add(new ItemField("PARAFUSO", item.getItemQuantity()));
-                    break;
-                case "CINTA":
-                    itemsFields.computeIfAbsent("straps", k -> new ArrayList<>())
-                            .add(new ItemField("CINTA", item.getItemQuantity()));
-                    break;
-                case "RELÉ":
-                    itemsFields.computeIfAbsent("relays", k -> new ArrayList<>())
-                            .add(new ItemField("RELÉ", item.getItemQuantity()));
-                    break;
-                case "SOQUETE":
-                    itemsFields.computeIfAbsent("sockets", k -> new ArrayList<>())
-                            .add(new ItemField("PERFURANTE", item.getItemQuantity()));
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        return ResponseEntity.ok(itemsFields);
+        return ResponseEntity.ok().body(measurements);
     }
 
 

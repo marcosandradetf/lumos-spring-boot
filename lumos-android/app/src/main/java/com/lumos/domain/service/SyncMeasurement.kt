@@ -17,10 +17,10 @@ class SyncMeasurement(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
     private val repository: MeasurementRepository
     private var address: String? = null
+    private val secureStorage: SecureStorage = SecureStorage(appContext)
 
 
     init {
-        val secureStorage = SecureStorage(appContext)
         val api = ApiService(secureStorage)
         val measurementApi = api.createApi(MeasurementApi::class.java)
 
@@ -42,7 +42,7 @@ class SyncMeasurement(appContext: Context, workerParams: WorkerParameters) :
                         updatedMeasurement = measurement.copy(address = address)
                     }
                     val items = repository.getItems(measurement.measurementId)
-                    if (repository.sendMeasurementToBackend(updatedMeasurement, items)) {
+                    if (repository.sendMeasurementToBackend(updatedMeasurement, items, secureStorage.getUserUuid()!!)) {
                         repository.markAsSynced(measurement.measurementId)
                         Result.success()
                     } else {

@@ -34,10 +34,10 @@ class StockViewModel(
         }
     }
 
-    fun loadMaterials(depositId: Long) {
+    fun loadMaterials() {
         viewModelScope.launch {
             try {
-                val fetched = repository.getMaterials(depositId)
+                val fetched = repository.getMaterials()
                 _materials.value = fetched // atualiza o estado com os dados obtidos
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())

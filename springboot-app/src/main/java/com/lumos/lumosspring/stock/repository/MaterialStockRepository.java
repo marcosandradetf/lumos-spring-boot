@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.stock.repository;
 
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProductStockRepository extends JpaRepository<MaterialStock, Long> {
+public interface MaterialStockRepository extends JpaRepository<MaterialStock, Long> {
     @Query("SELECT COUNT(ms) > 0 FROM MaterialStock ms WHERE ms.material.materialName = :materialName AND ms.deposit.idDeposit = :idDeposit AND ms.material.materialBrand = :materialBrand")
     boolean existsMaterial(@Param("materialName") String materialName,
                            @Param("idDeposit") Long idDeposit,

@@ -1,15 +1,9 @@
 package com.lumos.lumosspring.execution.controller.dto;
 
+import java.util.List;
+
 public record PreMeasurementDTO(
-        long measurementId,
-        double latitude,
-        double longitude,
-        String address,
-        String city,
-        long depositId,
-        String deviceId,
-        String depositName,
-        String measurementType,
-        String measurementStyle,
-        String createdBy) {
+        PreMeasurementStreetDTO measurement,
+        List<PreMeasurementStreetItemDTO> items
+) {
 }
