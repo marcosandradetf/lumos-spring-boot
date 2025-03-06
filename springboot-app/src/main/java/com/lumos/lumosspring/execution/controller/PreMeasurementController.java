@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.execution.controller;
 
 import com.lumos.lumosspring.execution.controller.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.service.PreMeasurementService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,10 +29,40 @@ public class PreMeasurementController {
         return preMeasurementService.saveMeasurement(measurementDTO, userUUID);
     }
 
-    @GetMapping("/execution/get-pre-measurements")
+    @GetMapping("/execution/get-pre-measurements/pending")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
     public ResponseEntity<?> getMeasurements() {
-        return preMeasurementService.getAll();
+        return preMeasurementService.getAll(PreMeasurement.Status.PENDING);
+    }
+
+    @GetMapping("/execution/get-pre-measurements/{preMeasurementId}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getPreMeasurement(@PathVariable long preMeasurementId) {
+        return preMeasurementService.getPreMeasurement(preMeasurementId);
+    }
+
+    @GetMapping("/execution/get-pre-measurements/validating")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getValidatingMeasurements() {
+        return preMeasurementService.getAll(PreMeasurement.Status.VALIDATING);
+    }
+
+    @GetMapping("/execution/get-pre-measurements/waiting")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getWaitingMeasurements() {
+        return preMeasurementService.getAll(PreMeasurement.Status.WAITING);
+    }
+
+    @GetMapping("/execution/get-pre-measurements/validated")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getValidatedMeasurements() {
+        return preMeasurementService.getAll(PreMeasurement.Status.VALIDATED);
+    }
+
+    @GetMapping("/execution/get-pre-measurements/in-progress")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getInProgressMeasurements() {
+        return preMeasurementService.getAll(PreMeasurement.Status.IN_PROGRESS);
     }
 
 }

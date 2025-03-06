@@ -26,96 +26,78 @@
             <th style="border-bottom: 1px solid black; padding: 10px;"></th>
             <th style="border-bottom: 1px solid black; padding: 10px;">ENDEREÇO</th>
             <th style="border-bottom: 1px solid black; padding: 5px;">POTÊNCIA ATUAL</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">CABO</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">BRAÇOS de 1,5</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">BRAÇOS de 2,5</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">BRAÇOS de 3,5</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">LED 60W</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">LED 70W</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">LED 100W</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">LED 120W</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">LED 150W</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">TROCA DE PONTO</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">CINTAS</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">PARAF. E ARRUELAS</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">PERFUR.</th>
-            <th style="border-bottom: 1px solid black; padding: 5px;">RELÉ</th>
-            <th style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white">PROJETO</th>
-            <th style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white">SERVIÇO</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('cabo')">CABO</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('1')">BRAÇOS de 1,5</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('2')">BRAÇOS de 2,5</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('3')">BRAÇOS de 3,5</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('60')">LED 60W</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('70')" >LED 70W</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('100')">LED 100W</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('120')">LED 120W</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('150')">LED 150W</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('braço')">TROCA DE PONTO</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('cinta')">CINTAS</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('parafuso')">PARAF. E ARRUELAS</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('conector')">PERFUR.</th>
+            <th style="border-bottom: 1px solid black; padding: 5px;" *ngIf="condition('relé')">RELÉ</th>
+            <th style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white" *ngIf="condition('led')">PROJETO</th>
+            <th style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white" *ngIf="condition('led')">SERVIÇO</th>
           </tr>
           </thead>
           <tbody>
-          <tr>
+          <tr *ngFor="let s of preMeasurement.streets">
             <td style="border-left: 1px solid black; padding: 5px; text-align: center; font-weight: bold">1</td>
-            <td style="border: 1px solid black; padding: 5px;">RUA, 213 - GARÇAS</td>
-            <td style="border: 1px solid black; padding: 5px;">60W</td>
-            <td style="border: 1px solid black; padding: 5px;">0</td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;">4</td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;">0</td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;">4</td>
-            <td style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white">4</td>
-            <td style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white">4</td>
-          </tr>
-          <tr>
-            <td style="width: 30px; border-left: 1px solid black; padding: 5px; text-align: center; font-weight: bold">2</td>
-            <td style="border: 1px solid black; padding: 5px;">RUA DONA TINA, 251 - PALMEIRAS</td>
-            <td style="border: 1px solid black; padding: 5px;">100W</td>
-            <td style="border: 1px solid black; padding: 5px;">0</td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;">4</td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;">10</td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;"></td>
-            <td style="border: 1px solid black; padding: 5px;">10</td>
-            <td style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white">10</td>
-            <td style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white">10</td>
+            <td style="border: 1px solid black; padding: 5px;">{{s.address}}</td>
+            <td style="border: 1px solid black; padding: 5px;">{{s.lastPower}}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('cabo')">{{ getItem('cabo', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('1')">{{ getItem('1', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('2')">{{ getItem('2', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('3')">{{ getItem('3', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('60')">{{ getItem('60', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('70')">{{ getItem('70', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('100')">{{ getItem('100', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('120')">{{ getItem('120', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('150')">{{ getItem('150', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('braço')">{{ getItem('braço', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('cinta')">{{ getItem('cinta', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('parafuso')">{{ getItem('parafuso', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('conector')">{{ getItem('conector', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px;" *ngIf="condition('relé')">{{ getItem('relé', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white" *ngIf="condition('led')">{{ getItem('led', s) }}</td>
+            <td style="border: 1px solid black; padding: 5px; background-color: #008cd0; color: white" *ngIf="condition('led')">{{ getItem('led', s) }}</td>
           </tr>
           </tbody>
           <tfoot>
           <tr style="background: #FFDF23; color: black;">
-            <td style="border: 1px solid black; padding: 3px; font-weight: bold; text-align: center" colspan="3">SOMA TOTAL:</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">4</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">10</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">0</td>
-            <td style="border: 1px solid black; padding: 3px;">14</td>
-            <td style="border: 1px solid black; padding: 3px;">14</td>
-            <td style="border: 1px solid black; padding: 3px;">14</td>
+            <td style="border: 1px solid black; padding: 3px; font-weight: bold; text-align: center" colspan="3">SOMA
+              TOTAL:
+            </td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('cabo')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('1')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('2')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('3')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('60')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('70')">4</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('100')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('120')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('150')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('braço')">10</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('cinta')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('parafuso')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('conector')">0</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('relé')">14</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('led')">14</td>
+            <td style="border: 1px solid black; padding: 3px;" *ngIf="condition('led')">14</td>
           </tr>
 
           </tfoot>
         </table>
 
-        <table style="table-layout: fixed; border-collapse: collapse; margin-left: 50px; border: 2px solid black; margin-top: 20px;">
+        <table
+          style="table-layout: fixed; border-collapse: collapse; margin-left: 50px; border: 2px solid black; margin-top: 20px;">
           <tr style="background-color: #400112; color: white;">
             <td style="width: 150px; height: 35px">R$</td>
-            <td>10.100,00</td>
+            <td>{{utils.formatValue(preMeasurement.totalPrice) }}</td>
           </tr>
         </table>
 

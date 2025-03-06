@@ -16,6 +16,7 @@ export class ModalComponent {
   @Input() confirmation: boolean = false; // Recebe a variável do pai
   @Output() modalClose = new EventEmitter<void>(); // Emite evento quando o modal é fechado
   @Input() classModal!: any;
+  @Input() styleElement!: any;
 
 
   // Método para detectar clique fora do modal e fechar

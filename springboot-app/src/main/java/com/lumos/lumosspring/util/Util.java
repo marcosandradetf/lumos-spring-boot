@@ -1,7 +1,9 @@
 package com.lumos.lumosspring.util;
 
 import java.text.Normalizer;
+import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.authentication.RefreshTokenRepository;
@@ -30,8 +32,11 @@ public class Util {
             return null;
         }
         try {
-            var newValue = value.replace(",", ".");
-            return new BigDecimal(newValue);
+            NumberFormat nf = NumberFormat.getInstance(Locale.of("pt", "BR"));
+            Number number = nf.parse(value);
+
+            // Converter para BigDecimal
+            return new BigDecimal(number.toString());
         } catch (Exception e) {
             return null;
         }

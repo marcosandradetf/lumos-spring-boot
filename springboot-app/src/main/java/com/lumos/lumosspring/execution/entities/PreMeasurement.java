@@ -4,6 +4,7 @@ import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,6 +57,8 @@ public class PreMeasurement {
     private Instant createdAt;
     private Instant assignedAt;
     private Instant finishedAt;
+
+    private BigDecimal totalPrice = BigDecimal.ZERO;
 
     public long getPreMeasurementId() {
         return preMeasurementId;
@@ -154,10 +157,25 @@ public class PreMeasurement {
         this.streets = streets;
     }
 
+    public void sumTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = this.totalPrice.add(totalPrice);
+    }
+
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
     public enum Status {
         PENDING,
-        IN_PROGRESS,
+        VALIDATING,
+        WAITING,
+        VALIDATED,
         CANCELLED,
+        IN_PROGRESS,
         FINISHED,
     }
 

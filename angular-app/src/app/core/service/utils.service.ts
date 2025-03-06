@@ -40,6 +40,34 @@ export class UtilsService {
     }).format(result);
   }
 
+  sumValue(value: string, sum: string): string {
+
+    // Converte o valor para número e multiplica
+    const numericValue = parseFloat(value.replace(/\D/g, '')) / 100;
+    const sumValue = parseFloat(sum.replace(/\D/g, '')) / 100;
+    const result = numericValue + sumValue;
+
+    // Retorna o resultado formatado
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(result);
+  }
+
+  subValue(value: string, sub: string): string {
+
+    // Converte o valor para número e multiplica
+    const numericValue = parseFloat(value.replace(/\D/g, '')) / 100;
+    const subValue = parseFloat(sub.replace(/\D/g, '')) / 100;
+    const result = numericValue - subValue;
+
+    // Retorna o resultado formatado
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(result);
+  }
+
   formatNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
   }

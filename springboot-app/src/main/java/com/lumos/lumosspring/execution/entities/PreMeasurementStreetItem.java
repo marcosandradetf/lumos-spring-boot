@@ -50,6 +50,10 @@ public class PreMeasurementStreetItem {
 
     public void setUnitPrice(BigDecimal itemValue) {
         this.unitPrice = itemValue;
+        if (itemValue != null) {
+            setTotalPrice(itemValue.multiply(BigDecimal.valueOf(itemQuantity)));
+            preMeasurementStreet.getPreMeasurement().sumTotalPrice(totalPrice);
+        }
     }
 
     public BigDecimal getTotalPrice() {

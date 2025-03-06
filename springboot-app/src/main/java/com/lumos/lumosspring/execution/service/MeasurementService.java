@@ -1,12 +1,19 @@
 package com.lumos.lumosspring.execution.service;
 
 
+import com.lumos.lumosspring.execution.controller.dto.MeasurementValuesDTO;
+import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.util.DefaultResponse;
+import com.lumos.lumosspring.util.ErrorResponse;
+import com.lumos.lumosspring.util.Util;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,10 +21,12 @@ import java.util.stream.Collectors;
 public class MeasurementService {
     private final PreMeasurementRepository preMeasurementRepository;
     private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
+    private final Util util;
 
-    public MeasurementService(PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository) {
+    public MeasurementService(PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, Util util) {
         this.preMeasurementRepository = preMeasurementRepository;
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
+        this.util = util;
     }
 
 
@@ -81,7 +90,7 @@ public class MeasurementService {
                     case "CONECTOR":
                     case "CONECTORES":
                         groupedItems.computeIfAbsent("connectors", k -> new HashMap<>())
-                                .merge("PERFURANTE", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                                .merge("CONECTOR", preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         break;
                     case "CABO":
                     case "CABOS":
@@ -91,7 +100,7 @@ public class MeasurementService {
                     case "POSTES":
                     case "POSTE ORNAMENTAL":
                         groupedItems.computeIfAbsent("posts", k -> new HashMap<>())
-                                .merge("POSTE ORNAMENTAL", preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                                .merge("POSTE", preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         break;
                     default:
                         break;
@@ -110,8 +119,46 @@ public class MeasurementService {
         });
 
 
-
         return ResponseEntity.ok(itemsFields);
     }
+
+    public ResponseEntity<?> saveMeasurementValues(Map<String, List<MeasurementValuesDTO>> valuesDTO, Long preMeasurementId) {
+        var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
+        if (preMeasurement.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            preMeasurement.get().getStreets().forEach(street -> {
+                street.getItems().forEach(item -> {
+                    valuesDTO.forEach((category, values) -> {
+                        values.forEach(value -> {
+                            var material = item.getMaterial();
+                            if (Objects.equals(material.getMaterialLength(), value.description())) {
+                                item.setUnitPrice(util.convertToBigDecimal(value.price()));
+                            }
+
+                            if (Objects.equals(material.getMaterialPower(), value.description())) {
+                                item.setUnitPrice(util.convertToBigDecimal(value.price()));
+                            }
+
+                            if (Objects.equals(material.getMaterialType().getTypeName(), value.description())) {
+                                item.setUnitPrice(util.convertToBigDecimal(value.price()));
+                            }
+                        });
+                    });
+                });
+            });
+
+            preMeasurement.get().setStatus(PreMeasurement.Status.VALIDATING);
+            preMeasurementRepository.save(preMeasurement.get());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new ErrorResponse(e.getMessage()));
+        }
+
+
+        return ResponseEntity.ok().body(new DefaultResponse("OK"));
+    }
+
 
 }

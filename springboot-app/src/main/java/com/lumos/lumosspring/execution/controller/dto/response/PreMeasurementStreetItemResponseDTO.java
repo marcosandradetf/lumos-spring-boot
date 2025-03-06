@@ -7,5 +7,6 @@ public record PreMeasurementStreetItemResponseDTO(
         String materialType,
         String materialPower,
         String materialLength,
-        double materialQuantity) {
+        double materialQuantity
+) {
 }

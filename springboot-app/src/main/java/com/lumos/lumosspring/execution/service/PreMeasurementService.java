@@ -109,17 +109,23 @@ public class PreMeasurementService {
                                     .filter(i -> i.getMaterial().getIdMaterial() == rm.getIdMaterial())
                                     .findFirst().ifPresentOrElse(
                                             existingCable -> {
-                                                if(material.getMaterialLength().startsWith("1")) existingCable.addItemQuantity(item.materialQuantity() * 2.5);
-                                                if(material.getMaterialLength().startsWith("2")) existingCable.addItemQuantity(item.materialQuantity() * 8.5);
-                                                if(material.getMaterialLength().startsWith("3")) existingCable.addItemQuantity(item.materialQuantity() * 12.5);
+                                                if (material.getMaterialLength().startsWith("1"))
+                                                    existingCable.addItemQuantity(item.materialQuantity() * 2.5);
+                                                if (material.getMaterialLength().startsWith("2"))
+                                                    existingCable.addItemQuantity(item.materialQuantity() * 8.5);
+                                                if (material.getMaterialLength().startsWith("3"))
+                                                    existingCable.addItemQuantity(item.materialQuantity() * 12.5);
                                                 preMeasurementStreetItemRepository.save(existingCable);
                                             },
                                             () -> {
                                                 var newCable = new PreMeasurementStreetItem();
                                                 newCable.setMaterial(rm);
-                                                if(material.getMaterialLength().startsWith("1")) newCable.addItemQuantity(item.materialQuantity() * 2.5);
-                                                if(material.getMaterialLength().startsWith("2")) newCable.addItemQuantity(item.materialQuantity() * 8.5);
-                                                if(material.getMaterialLength().startsWith("3")) newCable.addItemQuantity(item.materialQuantity() * 12.5);
+                                                if (material.getMaterialLength().startsWith("1"))
+                                                    newCable.addItemQuantity(item.materialQuantity() * 2.5);
+                                                if (material.getMaterialLength().startsWith("2"))
+                                                    newCable.addItemQuantity(item.materialQuantity() * 8.5);
+                                                if (material.getMaterialLength().startsWith("3"))
+                                                    newCable.addItemQuantity(item.materialQuantity() * 12.5);
                                                 preMeasurementStreet.addItem(newCable);
                                                 preMeasurementStreetItemRepository.save(newCable);
                                             }
@@ -133,9 +139,9 @@ public class PreMeasurementService {
     }
 
 
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getAll(PreMeasurement.Status status) {
         List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
-                .findAllByStatusOrderByCreatedAtAsc(PreMeasurement.Status.PENDING)
+                .findAllByStatusOrderByCreatedAtAsc(status)
                 .stream()
                 .map(p -> new PreMeasurementResponseDTO(
                         p.getPreMeasurementId(),
@@ -147,6 +153,7 @@ public class PreMeasurementService {
                         p.getTypePreMeasurement() == PreMeasurement.Type.INSTALLATION ?
                                 "badge-primary" : "badge-neutral",
                         p.getTypePreMeasurement().name(),
+                        p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
                         p.getStreets().stream()
                                 .map(s -> new PreMeasurementStreetResponseDTO(
                                         s.getPreMeasurementStreetId(),
@@ -172,4 +179,42 @@ public class PreMeasurementService {
     }
 
 
+    public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
+        PreMeasurement p = preMeasurementRepository
+                .findByPreMeasurementIdAndStatus(preMeasurementId, PreMeasurement.Status.VALIDATING);
+
+        var preMeasurement = new PreMeasurementResponseDTO(
+                p.getPreMeasurementId(),
+                p.getCity(),
+                p.getCreatedBy() != null ? p.getCreatedBy().getCompletedName() : "Desconhecido",
+                util.normalizeDate(p.getCreatedAt()),
+                "",
+                p.getTypePreMeasurement().name(),
+                p.getTypePreMeasurement() == PreMeasurement.Type.INSTALLATION ?
+                        "badge-primary" : "badge-neutral",
+                p.getTypePreMeasurement().name(),
+                p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
+                p.getStreets().stream()
+                        .map(s -> new PreMeasurementStreetResponseDTO(
+                                s.getPreMeasurementStreetId(),
+                                s.getLastPower(),
+                                s.getLatitude(),
+                                s.getLongitude(),
+                                s.getAddress(),
+                                s.getItems() != null ? s.getItems().stream()
+                                        .map(i -> new PreMeasurementStreetItemResponseDTO(
+                                                i.getPreMeasurementStreetItemId(),
+                                                i.getMaterial().getIdMaterial(),
+                                                i.getMaterial().getMaterialName(),
+                                                i.getMaterial().getMaterialType().getTypeName(),
+                                                i.getMaterial().getMaterialPower(),
+                                                i.getMaterial().getMaterialLength(),
+                                                i.getItemQuantity()
+                                        )).toList()
+                                        : List.of() // Retorna lista vazia se `s.getItems()` for null
+                        )).toList()
+        );
+
+        return ResponseEntity.ok().body(preMeasurement);
+    }
 }

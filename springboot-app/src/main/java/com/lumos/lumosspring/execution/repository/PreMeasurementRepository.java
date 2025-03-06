@@ -19,4 +19,6 @@ public interface PreMeasurementRepository extends JpaRepository<PreMeasurement, 
 
     @EntityGraph(attributePaths = {"createdBy", "streets.items"})
     List<PreMeasurement> findAllByStatusOrderByCreatedAtAsc(PreMeasurement.Status status);
+
+    PreMeasurement findByPreMeasurementIdAndStatus(Long preMeasurementId, PreMeasurement.Status status);
 }

@@ -31,6 +31,39 @@
           Dashboard
         </summary>
 
+        <details [open]="bTogglePreMeasurement" #preMeasurement (toggle)="togglePreMeasurement(preMeasurement.open)">
+          <summary class="font-semibold" >
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343"><path d="M208-120q-37 0-62.5-25.5T120-208v-548q0-29 27-40.5t47 8.5l90 90-54 54 28 28 54-54 104 104-54 54 28 28 54-54 104 104-54 54 28 28 54-54 104 104-54 54 28 28 54-54 80 80q20 20 8.5 47T756-120H208Zm32-120h332L240-572v332Z"/></svg>
+            Pré-Medições
+          </summary>
+          <ul>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['pre-medicao/pendente']">
+                Pendente
+              </a>
+            </li>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['pre-medicao/validando']">
+                Validando
+              </a>
+            </li>
+          </ul>
+          <ul>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['pre-medicao/aguardando']">
+                Aguardando Retorno
+              </a>
+            </li>
+          </ul>
+          <ul>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['pre-medicao/validado']">
+                Validado
+              </a>
+            </li>
+          </ul>
+        </details>
+
         <details [open]="false">
           <summary class="font-semibold" >
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343">
@@ -40,21 +73,14 @@
             Execuções
           </summary>
           <ul>
-            <li [routerLink]="['execucoes/pre-medicao']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
-                Pré-medição
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['execucoes/pre-medicao']">
+                Em progresso
               </a>
             </li>
-            <li [routerLink]="['execucoes/lista-medicoes']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
-                Execuções pendentes
-              </a>
-            </li>
-          </ul>
-          <ul>
-            <li [routerLink]="['execucoes/em-andamento']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
-                Em andamento
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['execucoes/lista-medicoes']">
+                Finalizada
               </a>
             </li>
           </ul>
@@ -69,8 +95,8 @@
             Requisições
           </summary>
           <ul>
-            <li [routerLink]="['requisicoes/itens']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['requisicoes/itens']">
                 Itens para execução
               </a>
             </li>
@@ -79,15 +105,12 @@
 
         <details [open]="false">
           <summary class="font-semibold" >
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343">
-              <path
-                d="M200-200v-560 454-85 191Zm0 80q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v320h-80v-320H200v560h280v80H200Zm494 40L552-222l57-56 85 85 170-170 56 57L694-80ZM320-440q17 0 28.5-11.5T360-480q0-17-11.5-28.5T320-520q-17 0-28.5 11.5T280-480q0 17 11.5 28.5T320-440Zm0-160q17 0 28.5-11.5T360-640q0-17-11.5-28.5T320-680q-17 0-28.5 11.5T280-640q0 17 11.5 28.5T320-600Zm120 160h240v-80H440v80Zm0-160h240v-80H440v80Z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343"><path d="M240-80q-50 0-85-35t-35-85v-120h120v-560h600v680q0 50-35 85t-85 35H240Zm480-80q17 0 28.5-11.5T760-200v-600H320v480h360v120q0 17 11.5 28.5T720-160ZM360-600v-80h360v80H360Zm0 120v-80h360v80H360ZM240-160h360v-80H200v40q0 17 11.5 28.5T240-160Zm0 0h-40 400-360Z"/></svg>
             Contratos
           </summary>
           <ul>
-            <li [routerLink]="['contratos/criar']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['contratos/criar']">
                 Novo contrato
               </a>
             </li>
@@ -103,23 +126,23 @@
             Estoque
           </summary>
           <ul>
-            <li [routerLink]="['estoque/movimento/']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['estoque/movimento/']">
                 Movimentar Estoque
               </a>
             </li>
-            <li [routerLink]="['estoque/movimento-pendente']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['estoque/movimento-pendente']">
                 Movimentações Pendentes
               </a>
             </li>
-            <li [routerLink]="['estoque/materiais']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['estoque/materiais']">
                 Gerenciar Materiais
               </a>
             </li>
-            <li [routerLink]="['estoque/almoxarifados']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['estoque/almoxarifados']">
                 Gerenciar Almoxarifados
               </a>
             </li>
@@ -135,23 +158,23 @@
             Configurações
           </summary>
           <ul>
-            <li [routerLink]="['configuracoes/usuarios']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['configuracoes/usuarios']">
                 Usuários
               </a>
             </li>
-            <li [routerLink]="['configuracoes/conta']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['configuracoes/conta']">
                 Minha Conta
               </a>
             </li>
-            <li [routerLink]="['configuracoes/equipes']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['configuracoes/equipes']">
                 Equipes Operacionais
               </a>
             </li>
-            <li [routerLink]="['configuracoes/importar-planilha']" routerLinkActive="bg-neutral-200 font-medium">
-              <a>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['configuracoes/importar-planilha']">
                 Importar Planilha (.xlsx)
               </a>
             </li>

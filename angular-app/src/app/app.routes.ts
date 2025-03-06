@@ -122,13 +122,19 @@ export const routes: Routes = [
 
   // start executions/pre-measurements path
   {
-    path: 'execucoes/pre-medicao',
-    loadComponent: () => import('./executions/pre-measurement/pre-measurement.component').then(p => p.PreMeasurementComponent),
+    path: 'pre-medicao/pendente',
+    loadComponent: () => import('./executions/pre-measurement-pending/pre-measurement.component').then(p => p.PreMeasurementComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
-    path: 'execucoes/pre-medicao/relatorio',
+    path: 'pre-medicao/validando',
+    loadComponent: () => import('./executions/measurement-list/measurement-list.component').then(p => p.MeasurementListComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+  },
+  {
+    path: 'pre-medicao/relatorio/:id',
     loadComponent: () => import('./executions/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},

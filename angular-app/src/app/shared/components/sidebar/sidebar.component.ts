@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {NgClass, NgForOf} from '@angular/common';
+import {NgClass} from '@angular/common';
 import {RouterLink, RouterLinkActive} from '@angular/router';
 
 @Component({
@@ -19,6 +19,7 @@ export class SidebarComponent implements OnInit {
   @Output() menuToggle = new EventEmitter<boolean>();  // Emitir o estado do menu
 
   menuOpen = false;
+  bTogglePreMeasurement = false;
   bToggleExecution = false;
   bToggleStock = true;
   bToggleRequest = false;
@@ -35,6 +36,10 @@ export class SidebarComponent implements OnInit {
     savedMenuState = localStorage.getItem('toggleStock');
     if (savedMenuState !== null) {
       this.bToggleStock = JSON.parse(savedMenuState); // Converte de volta para booleano
+    }
+    savedMenuState = localStorage.getItem('togglePreMeasurement');
+    if (savedMenuState !== null) {
+      this.bTogglePreMeasurement = JSON.parse(savedMenuState); // Converte de volta para booleano
     }
     savedMenuState = localStorage.getItem('toggleExecution');
     if (savedMenuState !== null) {
@@ -58,6 +63,10 @@ export class SidebarComponent implements OnInit {
 
   toggleStock(open: boolean) {
     localStorage.setItem('toggleStock', JSON.stringify(open));
+  }
+
+  togglePreMeasurement(open: boolean) {
+    localStorage.setItem('togglePreMeasurement', JSON.stringify(open));
   }
 
   toggleExecution() {

@@ -12,6 +12,7 @@ public record PreMeasurementResponseDTO(
         String preMeasurementType,
         String preMeasurementStyle,
         String teamName,
+        String totalPrice,
         List<PreMeasurementStreetResponseDTO> streets
 ) {
 }

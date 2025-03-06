@@ -1,27 +1,25 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {PreMeasurementService} from './premeasurement-service.service';
-import {TableComponent} from '../../shared/components/table/table.component';
-import {KeyValuePipe, NgForOf, NgIf} from '@angular/common';
+import { NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import * as Util from 'node:util';
 import {UtilsService} from '../../core/service/utils.service';
-import {startWith} from 'rxjs';
+import {catchError, tap, throwError} from 'rxjs';
+import {Router} from '@angular/router';
 
 @Component({
-  selector: 'app-pre-measurement',
+  selector: 'app-pre-measurement-pending',
   standalone: true,
   imports: [
     NgForOf,
     FormsModule,
-    TableComponent,
     NgIf,
     ModalComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
 })
-export class PreMeasurementComponent implements OnInit {
+export class PreMeasurementComponent {
   preMeasurements: {
     preMeasurementId: number;
     city: string;
@@ -55,8 +53,7 @@ export class PreMeasurementComponent implements OnInit {
 
   preMeasurementId: number = 0;
   preMeasurementName: string = '';
-  serviceQuantity: number = 0.0;
-  armsQuantity: number = 0.0;
+  totalPrice: string = '0,00';
 
   formula: {
     leds:
@@ -182,16 +179,10 @@ export class PreMeasurementComponent implements OnInit {
   };
   private loading: boolean = false;
 
-  ngOnInit() {
-    this.getServiceQuantity();
-    this.getArmsQuantity();
-  }
 
-
-  constructor(private preMeasurementService: PreMeasurementService, public utils: UtilsService) {
-    preMeasurementService.getPreMeasurements().subscribe(preMeasurements => {
+  constructor(private preMeasurementService: PreMeasurementService, public utils: UtilsService, private router: Router) {
+    preMeasurementService.getPreMeasurements('pending').subscribe(preMeasurements => {
       this.preMeasurements = preMeasurements;
-      console.log(this.preMeasurements);
     });
   }
 
@@ -210,19 +201,8 @@ export class PreMeasurementComponent implements OnInit {
   post: boolean = false;
   openModal: boolean = false;
 
-  getServiceQuantity() {
-    this.formula.leds.forEach((l) => {
-      this.serviceQuantity += l.quantity;
-    });
-  }
 
-  getArmsQuantity() {
-    this.formula.arms.forEach((b) => {
-      this.armsQuantity += b.quantity;
-    });
-  }
-
-  formatValue(event: Event, index: number, attributeName: keyof typeof this.formula) {
+  setPrice(event: Event, index: number, attributeName: keyof typeof this.formula) {
     // Obtém o valor diretamente do evento e remove todos os caracteres não numéricos
     let targetValue = (event.target as HTMLInputElement).value.replace(/\D/g, '');
 
@@ -237,8 +217,20 @@ export class PreMeasurementComponent implements OnInit {
     const value = this.utils.formatValue(targetValue);
     this.formula[attributeName][index].price = value;
     this.formula[attributeName][index].priceTotal = this.utils.multiplyValue(targetValue, this.formula[attributeName][index].quantity).toString();
+
     (event.target as HTMLInputElement).value = value; // Exibe o valor formatado no campo de input
 
+  }
+
+  removeTotalPrice(index: number, attributeName: keyof typeof this.formula) {
+    if(this.formula[attributeName][index].priceTotal !== undefined) {
+      this.totalPrice = this.utils.subValue(this.totalPrice, this.formula[attributeName][index].priceTotal);
+    }
+
+  }
+
+  setTotalPrice(index: number, attributeName: keyof typeof this.formula) {
+    if(this.formula[attributeName][index].priceTotal !== undefined) this.totalPrice = this.utils.sumValue(this.formula[attributeName][index].priceTotal, this.totalPrice);
   }
 
 
@@ -265,10 +257,59 @@ export class PreMeasurementComponent implements OnInit {
 
     this.preMeasurementService.getFields(preMeasurementId).subscribe(fields => {
       this.formula = fields;
+      console.log(this.formula);
     });
 
+  }
+
+  sendValues() {
+    const hasEmptyPrice = Object.keys(this.formula).some(attributeName =>
+      this.formula[attributeName as keyof typeof this.formula]
+        .some((item) => item.price === "" || item.price === undefined)
+    );
+
+    if (hasEmptyPrice) {
+      console.log("tropa");
+      return;
+    }
 
 
+    this.preMeasurementService.savePremeasurementValues(this.formula, this.preMeasurementId).pipe(
+      tap(preMeasurement => {
+        this.router.navigate(['pre-medicao/relatorio/' + this.preMeasurementId]);
+      }),
+      catchError((err) => {
+        console.error('Erro ao salvar valores:', err);
+        return throwError(() => err); // Correção: use throwError para lidar com o erro corretamente
+      })
+    ).subscribe();
 
   }
+
+  autoTabTimeout: any;
+
+  startAutoTab(event: FocusEvent) {
+    this.clearAutoTab(); // Evita múltiplos timeouts
+    this.autoTabTimeout = setTimeout(() => {
+      (event.target as HTMLInputElement).blur(); // Remove o foco do input
+      this.focusNextInput(event.target as HTMLInputElement); // Foca no próximo input
+    }, 3000); // Tempo em milissegundos (2 segundos)
+  }
+
+  clearAutoTab() {
+    clearTimeout(this.autoTabTimeout); // Cancela o timeout se necessário
+  }
+
+  focusNextInput(currentInput: HTMLInputElement) {
+    const inputs = Array.from(document.querySelectorAll('.auto-tab-input')) as HTMLInputElement[];
+    const currentIndex = inputs.indexOf(currentInput);
+
+    if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
+      inputs[currentIndex + 1].focus(); // Foca no próximo input
+    } else {
+      document.getElementById('submitBtn')?.focus(); // Foca no botão se for o último input
+    }
+  }
+
+
 }

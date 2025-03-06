@@ -1,27 +1,110 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 
-import {NgForOf, NgOptimizedImage} from '@angular/common';
+import {NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
+import {PreMeasurementService} from '../pre-measurement-pending/premeasurement-service.service';
+import {ActivatedRoute} from '@angular/router';
+import {UtilsService} from '../../core/service/utils.service';
 
 @Component({
-  selector: 'app-pre-measurement-report',
+  selector: 'app-pre-measurement-pending-report',
   standalone: true,
   imports: [
     NgForOf,
-    NgOptimizedImage
+    NgOptimizedImage,
+    NgIf
   ],
   templateUrl: './pre-measurement-report.component.html',
   styleUrl: './pre-measurement-report.component.scss'
 })
 export class PreMeasurementReportComponent {
-  items = [
-    { material: 'Luminária LED', quantity: 10, location: 'Estoque 1' },
-    { material: 'Cabo Elétrico', quantity: 5, location: 'Estoque 2' },
-    { material: 'Transformador', quantity: 2, location: 'Estoque 3' }
-  ];
+  preMeasurement: {
+    preMeasurementId: number;
+    city: string;
+    createdBy: string;
+    createdAt: string;
+    preMeasurementType: string;
+    preMeasurementStyle: string;
+    teamName: string;
+    totalPrice: string;
 
+    streets: {
+      preMeasurementStreetId: number;
+      lastPower: string;
+      latitude: number;
+      longitude: number;
+      address: string;
+
+      items: {
+        preMeasurementStreetItemId: number;
+        materialId: number;
+        materialName: string;
+        materialType: string;
+        materialPower: string;
+        materialLength: string;
+        materialQuantity: number;
+      }[]
+
+    }[];
+
+  } = {
+    preMeasurementId: 0,
+    city: '',
+    createdBy: '',
+    createdAt: '',
+    preMeasurementType: '',
+    preMeasurementStyle: '',
+    teamName: '',
+    totalPrice: '',
+    streets: []
+  };
+
+  constructor(private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, protected utils: UtilsService) {
+    const measurementId = this.route.snapshot.paramMap.get('id');
+    if (measurementId) {
+      this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
+        this.preMeasurement = preMeasurement;
+      });
+    }
+  }
 
   generatePDF(content: HTMLDivElement): void {
 
   }
+
+  getItem(attributeName: string, street: {
+    preMeasurementStreetId: number;
+    lastPower: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+
+    items: {
+      preMeasurementStreetItemId: number;
+      materialId: number;
+      materialName: string;
+      materialType: string;
+      materialPower: string;
+      materialLength: string;
+      materialQuantity: number;
+    }[]
+  }) {
+    return street.items.find(item =>
+      (item.materialLength?.toLowerCase().startsWith(attributeName) ||
+        item.materialPower?.toLowerCase().startsWith(attributeName) ||
+        item.materialType?.toLowerCase().startsWith(attributeName))
+    )?.materialQuantity || 0;
+  }
+
+  condition(attributeName: string): boolean {
+    return this.preMeasurement.streets.some(street =>
+      street.items.some(item =>
+        item.materialLength?.toLowerCase().startsWith(attributeName) ||
+        item.materialPower?.toLowerCase().startsWith(attributeName) ||
+        item.materialType?.toLowerCase().startsWith(attributeName)
+      )
+    );
+  }
+
+
 
 }
