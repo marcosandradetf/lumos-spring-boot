@@ -134,15 +134,25 @@ public class MeasurementService {
                     valuesDTO.forEach((category, values) -> {
                         values.forEach(value -> {
                             var material = item.getMaterial();
-                            if (Objects.equals(material.getMaterialLength(), value.description())) {
+                            var service = item.getService();
+                            var description = value.description().toUpperCase();
+
+                            if (service != null) {
+                                if (service.getPreMeasurementServiceName().startsWith(description)
+                                        || service.getPreMeasurementServiceDescription().startsWith(description)) {
+                                    item.getService().setUnitPrice(util.convertToBigDecimal(value.price()), item);
+                                }
+                            }
+
+                            if (material.getMaterialLength().startsWith(description)) {
                                 item.setUnitPrice(util.convertToBigDecimal(value.price()));
                             }
 
-                            if (Objects.equals(material.getMaterialPower(), value.description())) {
+                            if (material.getMaterialPower().startsWith(description)) {
                                 item.setUnitPrice(util.convertToBigDecimal(value.price()));
                             }
 
-                            if (Objects.equals(material.getMaterialType().getTypeName(), value.description())) {
+                            if (material.getMaterialType().getTypeName().toUpperCase().startsWith(description)) {
                                 item.setUnitPrice(util.convertToBigDecimal(value.price()));
                             }
                         });

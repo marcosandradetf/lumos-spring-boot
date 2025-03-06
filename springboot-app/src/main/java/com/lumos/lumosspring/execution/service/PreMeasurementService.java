@@ -7,8 +7,10 @@ import com.lumos.lumosspring.execution.controller.dto.response.PreMeasurementStr
 import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
 import com.lumos.lumosspring.execution.entities.PreMeasurementStreet;
+import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItemService;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemServiceRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
@@ -16,6 +18,7 @@ import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
+import org.springframework.data.domain.Limit;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -27,14 +30,16 @@ public class PreMeasurementService {
     private final MaterialRepository materialRepository;
     private final PreMeasurementRepository preMeasurementRepository;
     private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
+    private final PreMeasurementStreetItemServiceRepository preMeasurementStreetItemServiceRepository;
     private final UserRepository userRepository;
     private final Util util;
 
-    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util) {
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, PreMeasurementStreetItemServiceRepository preMeasurementStreetItemServiceRepository, UserRepository userRepository, Util util) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.materialRepository = materialRepository;
         this.preMeasurementRepository = preMeasurementRepository;
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
+        this.preMeasurementStreetItemServiceRepository = preMeasurementStreetItemServiceRepository;
         this.userRepository = userRepository;
         this.util = util;
     }
@@ -81,6 +86,17 @@ public class PreMeasurementService {
                 newItem.setItemQuantity(item.materialQuantity());
                 preMeasurementStreet.addItem(newItem);
                 preMeasurementStreetItemRepository.save(newItem);
+
+                if (material.getMaterialType().getTypeName().toUpperCase().startsWith("LED")){
+                    var service = preMeasurementStreetItemServiceRepository.findByPreMeasurementServiceName("", Limit.of(1));
+                    if (service.isEmpty()){
+                        service = Optional.of(new PreMeasurementStreetItemService());
+                        service.get().setServiceQuantity(item.materialQuantity());
+                        // continua
+                    }
+
+                    newItem.setService(service.get());
+                }
 
                 material.getRelatedMaterials().stream()
                         .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("RELE"))

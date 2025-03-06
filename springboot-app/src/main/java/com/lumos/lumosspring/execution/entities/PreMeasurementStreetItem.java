@@ -28,6 +28,9 @@ public class PreMeasurementStreetItem {
     private BigDecimal unitPrice = BigDecimal.ZERO;
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
+    @ManyToOne
+    private PreMeasurementStreetItemService service;
+
     public long getPreMeasurementStreetItemId() {
         return preMeasurementStreetItemId;
     }
@@ -92,10 +95,27 @@ public class PreMeasurementStreetItem {
         this.itemQuantity += v;
     }
 
+    public PreMeasurementStreet getPreMeasurementStreet() {
+        return preMeasurementStreet;
+    }
+
+    public void setPreMeasurementStreet(PreMeasurementStreet preMeasurementStreet) {
+        this.preMeasurementStreet = preMeasurementStreet;
+    }
+
+    public PreMeasurementStreetItemService getService() {
+        return service;
+    }
+
+    public void setService(PreMeasurementStreetItemService service) {
+        this.service = service;
+    }
+
     public enum Status {
         PENDING,
         CANCELLED,
         APPROVED,
     }
+
 
 }

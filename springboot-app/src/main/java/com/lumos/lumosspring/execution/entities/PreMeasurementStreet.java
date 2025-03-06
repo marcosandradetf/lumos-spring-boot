@@ -40,6 +40,7 @@ public class PreMeasurementStreet {
     public void removeItem(PreMeasurementStreetItem item) {
         items.remove(item);
         item.setPreMeasurement(null);
+        item.setService(null);
     }
 
     @ManyToOne
