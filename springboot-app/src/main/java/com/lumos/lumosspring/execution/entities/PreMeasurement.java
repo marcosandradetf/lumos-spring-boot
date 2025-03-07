@@ -23,6 +23,7 @@ public class PreMeasurement {
     private Set<PreMeasurementStreet> streets = new HashSet<>();
 
     private String city;
+    private String htmlReport;
 
     // Métodos auxiliares para garantir consistência no relacionamento
     public void addStreet(PreMeasurementStreet street) {
@@ -167,6 +168,14 @@ public class PreMeasurement {
 
     public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public String getHtmlReport() {
+        return htmlReport;
+    }
+
+    public void setHtmlReport(String htmlReport) {
+        this.htmlReport = htmlReport;
     }
 
     public enum Status {

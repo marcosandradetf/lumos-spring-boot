@@ -33,7 +33,7 @@
     </div>
 
     <app-modal [modalOpen]="openModal" (modalClose)="openModal=false" classModal="rounded sm:w-[60rem]">
-      <div class="report-base">
+      <div class="report-base" #reportBase>
         <h3>
           VALORES MEDIÇÃO EM {{ preMeasurementName.toUpperCase() }}
         </h3>
@@ -253,11 +253,11 @@
 
       <div class="flex w-full mt-10">
         <button class="btn rounded-none w-1/2" (click)="openModal = false">CANCELAR</button>
-        <button class="btn  btn-warning rounded-none w-1/2" (click)="sendValues()" #submitBtn>CONTINUAR</button>
+        <button class="btn  btn-warning rounded-none w-1/2" (click)="sendValues(reportBase)" #submitBtn>CONTINUAR</button>
       </div>
 
     </app-modal>
-
-
   </div>
+
+  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"></app-screen-message>
 </div>

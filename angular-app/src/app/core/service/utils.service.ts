@@ -4,6 +4,8 @@ import {Injectable} from '@angular/core';
   providedIn: 'root'
 })
 export class UtilsService {
+  serverMessage: string | null = null;
+  alertType: string = "";
 
   constructor() { }
 
@@ -70,6 +72,14 @@ export class UtilsService {
 
   formatNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
+  }
+
+  showMessage(message: string, error: boolean, timeout = 3000) {
+    this.serverMessage = message;
+    error ? this.alertType = 'alert-error' : this.alertType = 'alert-success';
+    setTimeout(() => {
+      this.serverMessage = null;
+    }, timeout);
   }
 
 }

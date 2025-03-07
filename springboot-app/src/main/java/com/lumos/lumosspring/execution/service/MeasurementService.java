@@ -12,6 +12,7 @@ import com.lumos.lumosspring.stock.service.MaterialService;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -174,4 +175,15 @@ public class MeasurementService {
     }
 
 
+    public ResponseEntity<?> saveHtmlReport(String html, Long preMeasurementId) {
+        var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
+        if (preMeasurement.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Pré-medição não foi encontrada."));
+        }
+
+        preMeasurement.get().setHtmlReport(html);
+        preMeasurementRepository.save(preMeasurement.get());
+
+        return ResponseEntity.ok().build();
+    }
 }

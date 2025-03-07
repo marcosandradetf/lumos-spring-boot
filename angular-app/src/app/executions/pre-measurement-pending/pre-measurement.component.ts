@@ -1,11 +1,12 @@
 import {Component} from '@angular/core';
 import {PreMeasurementService} from './premeasurement-service.service';
-import { NgForOf, NgIf} from '@angular/common';
+import {NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {UtilsService} from '../../core/service/utils.service';
 import {catchError, tap, throwError} from 'rxjs';
 import {Router} from '@angular/router';
+import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 
 @Component({
   selector: 'app-pre-measurement-pending',
@@ -14,7 +15,8 @@ import {Router} from '@angular/router';
     NgForOf,
     FormsModule,
     NgIf,
-    ModalComponent
+    ModalComponent,
+    ScreenMessageComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
@@ -185,9 +187,6 @@ export class PreMeasurementComponent {
       this.preMeasurements = preMeasurements;
     });
   }
-
-
-  protected readonly parseInt = parseInt;
   lineNumber = 1;
 
   resetLineNumber() {
@@ -223,14 +222,14 @@ export class PreMeasurementComponent {
   }
 
   removeTotalPrice(index: number, attributeName: keyof typeof this.formula) {
-    if(this.formula[attributeName][index].priceTotal !== undefined) {
+    if (this.formula[attributeName][index].priceTotal !== undefined) {
       this.totalPrice = this.utils.subValue(this.totalPrice, this.formula[attributeName][index].priceTotal);
     }
 
   }
 
   setTotalPrice(index: number, attributeName: keyof typeof this.formula) {
-    if(this.formula[attributeName][index].priceTotal !== undefined) this.totalPrice = this.utils.sumValue(this.formula[attributeName][index].priceTotal, this.totalPrice);
+    if (this.formula[attributeName][index].priceTotal !== undefined) this.totalPrice = this.utils.sumValue(this.formula[attributeName][index].priceTotal, this.totalPrice);
   }
 
 
@@ -262,25 +261,35 @@ export class PreMeasurementComponent {
 
   }
 
-  sendValues() {
+  sendValues(reportBase: HTMLDivElement) {
     const hasEmptyPrice = Object.keys(this.formula).some(attributeName =>
       this.formula[attributeName as keyof typeof this.formula]
         .some((item) => item.price === "" || item.price === undefined)
     );
 
     if (hasEmptyPrice) {
-      console.log("tropa");
+      this.utils.showMessage("Todos os campos devem ser preenchidos", true);
       return;
     }
 
 
     this.preMeasurementService.savePremeasurementValues(this.formula, this.preMeasurementId).pipe(
-      tap(preMeasurement => {
-        this.router.navigate(['pre-medicao/relatorio/' + this.preMeasurementId]);
+      tap(() => {
+        this.preMeasurementService.saveHTMLReport(reportBase.toString(), this.preMeasurementId).pipe(
+          tap(() => {
+            void this.router.navigate(['pre-medicao/relatorio/' + this.preMeasurementId]);
+          }),
+          catchError((err) => {
+            console.error('Erro ao salvar relatório:', err.message);
+            this.utils.showMessage("Ocorreu um erro no servidor ao tentar salvar o relatório", true);
+            return throwError(() => err);
+          })
+        ).subscribe();
       }),
       catchError((err) => {
-        console.error('Erro ao salvar valores:', err);
-        return throwError(() => err); // Correção: use throwError para lidar com o erro corretamente
+        console.error('Erro ao salvar valores:', err.message);
+        this.utils.showMessage("Ocorreu um erro no servidor ao tentar salvar os valores", true);
+        return throwError(() => err);
       })
     ).subscribe();
 

@@ -159,5 +159,10 @@ public class MeasurementController {
         return measurementService.saveMeasurementValues(valuesDTO, preMeasurementId);
     }
 
+    @PostMapping("/save-pre-measurement-html-report/{preMeasurementId}")
+    public ResponseEntity<?> saveHTMLReport(@RequestBody String html, @PathVariable Long preMeasurementId) {
+        return measurementService.saveHtmlReport(html, preMeasurementId);
+    }
+
 
 }
