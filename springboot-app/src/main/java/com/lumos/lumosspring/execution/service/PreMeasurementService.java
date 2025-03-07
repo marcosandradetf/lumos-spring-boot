@@ -12,8 +12,9 @@ import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemServiceRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetRepository;
+import com.lumos.lumosspring.stock.entities.MaterialService;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
-import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
+import com.lumos.lumosspring.stock.repository.ServiceRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
@@ -31,15 +32,17 @@ public class PreMeasurementService {
     private final PreMeasurementRepository preMeasurementRepository;
     private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
     private final PreMeasurementStreetItemServiceRepository preMeasurementStreetItemServiceRepository;
+    private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
     private final Util util;
 
-    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, PreMeasurementStreetItemServiceRepository preMeasurementStreetItemServiceRepository, UserRepository userRepository, Util util) {
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, PreMeasurementStreetItemServiceRepository preMeasurementStreetItemServiceRepository, ServiceRepository serviceRepository, UserRepository userRepository, Util util) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.materialRepository = materialRepository;
         this.preMeasurementRepository = preMeasurementRepository;
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
         this.preMeasurementStreetItemServiceRepository = preMeasurementStreetItemServiceRepository;
+        this.serviceRepository = serviceRepository;
         this.userRepository = userRepository;
         this.util = util;
     }
@@ -87,16 +90,47 @@ public class PreMeasurementService {
                 preMeasurementStreet.addItem(newItem);
                 preMeasurementStreetItemRepository.save(newItem);
 
-                if (material.getMaterialType().getTypeName().toUpperCase().startsWith("LED")){
-                    var service = preMeasurementStreetItemServiceRepository.findByPreMeasurementServiceName("", Limit.of(1));
-                    if (service.isEmpty()){
-                        service = Optional.of(new PreMeasurementStreetItemService());
-                        service.get().setServiceQuantity(item.materialQuantity());
-                        // continua
+                if (material.getMaterialType().getTypeName().toUpperCase().startsWith("LED")) {
+                    var ledService = serviceRepository
+                            .findByServiceName("SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED", Limit.of(1));
+                    if (ledService.isEmpty()){
+                        ledService = Optional.of(new MaterialService());
+                        ledService.get().setServiceName("SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED");
+                        serviceRepository.save(ledService.get());
                     }
 
-                    newItem.setService(service.get());
+                    var projectForPi = serviceRepository
+                            .findByServiceName("SERVIÇO DE EXECUÇÃO DE PROJETO POR IP", Limit.of(1));
+                    if (projectForPi.isEmpty()) {
+                        projectForPi = Optional.of(new MaterialService());
+                        projectForPi.get().setServiceName("SERVIÇO DE EXECUÇÃO DE PROJETO POR IP");
+                        serviceRepository.save(projectForPi.get());
+                    }
+
+                    var itemService = new PreMeasurementStreetItemService();
+                    itemService.addServiceQuantity(item.materialQuantity());
+                    itemService.setService(ledService.get());
+                    newItem.addService(itemService);
+
+                    itemService.addServiceQuantity(item.materialQuantity());
+                    itemService.setService(projectForPi.get());
+                    newItem.addService(itemService);
+                } else if (material.getMaterialType().getTypeName().toUpperCase().startsWith("BRA")) {
+                    var armService = serviceRepository
+                            .findByServiceName("SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS", Limit.of(1));
+                    if (armService.isEmpty()){
+                        armService = Optional.of(new MaterialService());
+                        armService.get().setServiceName("SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS");
+                        serviceRepository.save(armService.get());
+                    }
+
+                    var itemService = new PreMeasurementStreetItemService();
+                    itemService.addServiceQuantity(item.materialQuantity());
+                    itemService.setService(armService.get());
+                    newItem.addService(itemService);
                 }
+
+
 
                 material.getRelatedMaterials().stream()
                         .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("RELE"))

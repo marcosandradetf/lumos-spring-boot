@@ -4,8 +4,11 @@ package com.lumos.lumosspring.execution.service;
 import com.lumos.lumosspring.execution.controller.dto.MeasurementValuesDTO;
 import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
+import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItemService;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.stock.service.DepositService;
+import com.lumos.lumosspring.stock.service.MaterialService;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
@@ -56,9 +59,9 @@ public class MeasurementService {
                         groupedItems.computeIfAbsent("leds", k -> new HashMap<>())
                                 .merge(description, preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         groupedItems.computeIfAbsent("ledService", k -> new HashMap<>())
-                                .merge(type, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                                .merge("SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED", preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         groupedItems.computeIfAbsent("piService", k -> new HashMap<>())
-                                .merge(type, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                                .merge("SERVIÇO DE EXECUÇÃO DE PROJETO POR IP", preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         break;
                     case "BRAÇO":
                     case "BRACO":
@@ -68,7 +71,7 @@ public class MeasurementService {
                         groupedItems.computeIfAbsent("arms", k -> new HashMap<>())
                                 .merge(description, preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         groupedItems.computeIfAbsent("armService", k -> new HashMap<>())
-                                .merge(type, preMeasurementStreetItem.getItemQuantity(), Double::sum);
+                                .merge("SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS", preMeasurementStreetItem.getItemQuantity(), Double::sum);
                         break;
                     case "PARAFUSO":
                     case "PARAFUSOS":
@@ -129,39 +132,39 @@ public class MeasurementService {
         }
 
         try {
-            preMeasurement.get().getStreets().forEach(street -> {
-                street.getItems().forEach(item -> {
-                    valuesDTO.forEach((category, values) -> {
-                        values.forEach(value -> {
-                            var material = item.getMaterial();
-                            var service = item.getService();
-                            var description = value.description().toUpperCase();
+            valuesDTO.forEach((category, values) -> {
+                values.forEach(value -> {
+                    preMeasurement.ifPresent(measurement -> {
+                        measurement.getStreets().forEach(street -> {
+                            street.getItems().stream()
+                                    .filter(item -> {
+                                        var material = item.getMaterial();
+                                        return material != null && (
+                                                Objects.toString(material.getMaterialLength(), "").startsWith(value.description()) ||
+                                                        Objects.toString(material.getMaterialPower(), "").startsWith(value.description()) ||
+                                                        Objects.equals(material.getMaterialType().getTypeName().toUpperCase(), value.description()) ||
+                                                        Optional.ofNullable(item.getService(value.description())).isPresent()
+                                        );
+                                    })
+                                    .forEach(item -> {
+                                        var service = Optional.ofNullable(item.getService(value.description()));
 
-                            if (service != null) {
-                                if (service.getPreMeasurementServiceName().startsWith(description)
-                                        || service.getPreMeasurementServiceDescription().startsWith(description)) {
-                                    item.getService().setUnitPrice(util.convertToBigDecimal(value.price()), item);
-                                }
-                            }
+                                        if (service.isPresent()) {
+                                            service.get().setUnitPrice(util.convertToBigDecimal(value.price()));
+                                        } else {
+                                            item.setUnitPrice(util.convertToBigDecimal(value.price()));
+                                        }
 
-                            if (material.getMaterialLength().startsWith(description)) {
-                                item.setUnitPrice(util.convertToBigDecimal(value.price()));
-                            }
-
-                            if (material.getMaterialPower().startsWith(description)) {
-                                item.setUnitPrice(util.convertToBigDecimal(value.price()));
-                            }
-
-                            if (material.getMaterialType().getTypeName().toUpperCase().startsWith(description)) {
-                                item.setUnitPrice(util.convertToBigDecimal(value.price()));
-                            }
+                                    });
                         });
                     });
                 });
             });
 
+
             preMeasurement.get().setStatus(PreMeasurement.Status.VALIDATING);
             preMeasurementRepository.save(preMeasurement.get());
+
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ErrorResponse(e.getMessage()));
         }

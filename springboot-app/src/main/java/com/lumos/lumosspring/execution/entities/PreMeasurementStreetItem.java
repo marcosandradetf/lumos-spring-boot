@@ -4,6 +4,8 @@ import com.lumos.lumosspring.stock.entities.Material;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "tb_pre_measurements_streets_items")
@@ -28,8 +30,8 @@ public class PreMeasurementStreetItem {
     private BigDecimal unitPrice = BigDecimal.ZERO;
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    @ManyToOne
-    private PreMeasurementStreetItemService service;
+    @OneToMany(mappedBy = "preMeasurementStreetItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PreMeasurementStreetItemService> services = new HashSet<>();
 
     public long getPreMeasurementStreetItemId() {
         return preMeasurementStreetItemId;
@@ -103,19 +105,32 @@ public class PreMeasurementStreetItem {
         this.preMeasurementStreet = preMeasurementStreet;
     }
 
-    public PreMeasurementStreetItemService getService() {
-        return service;
+    public void addService(PreMeasurementStreetItemService service) {
+        this.services.add(service);
     }
 
-    public void setService(PreMeasurementStreetItemService service) {
-        this.service = service;
+    public void removeService(String serviceName) {
+        this.services.stream()
+                .filter(s -> s.getService().getServiceName().equals(serviceName))
+                .findFirst()
+                .ifPresent(s -> {
+                    this.services.remove(s);
+                });
     }
+
+    public PreMeasurementStreetItemService getService(String serviceName) {
+        return this.services.stream()
+                .filter(s -> s.getService().getServiceName().equals(serviceName))
+                .findFirst()
+                .orElse(null);
+    }
+
+
 
     public enum Status {
         PENDING,
         CANCELLED,
         APPROVED,
     }
-
 
 }

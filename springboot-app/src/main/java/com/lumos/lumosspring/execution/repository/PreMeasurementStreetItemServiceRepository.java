@@ -10,6 +10,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PreMeasurementStreetItemServiceRepository extends JpaRepository<PreMeasurementStreetItemService, Long> {
-    Optional<PreMeasurementStreetItemService> findByPreMeasurementServiceName(String preMeasurementServiceName, Limit limit);
 
 }
