@@ -182,7 +182,7 @@ export class PreMeasurementComponent {
   private loading: boolean = false;
 
 
-  constructor(private preMeasurementService: PreMeasurementService, public utils: UtilsService, private router: Router) {
+  constructor(private preMeasurementService: PreMeasurementService, public utils: UtilsService, protected router: Router) {
     preMeasurementService.getPreMeasurements('pending').subscribe(preMeasurements => {
       this.preMeasurements = preMeasurements;
     });
@@ -275,7 +275,7 @@ export class PreMeasurementComponent {
 
     this.preMeasurementService.savePremeasurementValues(this.formula, this.preMeasurementId).pipe(
       tap(() => {
-        this.preMeasurementService.saveHTMLReport(reportBase.toString(), this.preMeasurementId).pipe(
+        this.preMeasurementService.saveHTMLReport(reportBase.outerHTML, this.preMeasurementId).pipe(
           tap(() => {
             void this.router.navigate(['pre-medicao/relatorio/' + this.preMeasurementId]);
           }),
@@ -295,19 +295,7 @@ export class PreMeasurementComponent {
 
   }
 
-  autoTabTimeout: any;
-
-  startAutoTab(event: FocusEvent) {
-    this.clearAutoTab(); // Evita múltiplos timeouts
-    this.autoTabTimeout = setTimeout(() => {
-      (event.target as HTMLInputElement).blur(); // Remove o foco do input
-      this.focusNextInput(event.target as HTMLInputElement); // Foca no próximo input
-    }, 3000); // Tempo em milissegundos (2 segundos)
-  }
-
-  clearAutoTab() {
-    clearTimeout(this.autoTabTimeout); // Cancela o timeout se necessário
-  }
+  submit: boolean = false;
 
   focusNextInput(currentInput: HTMLInputElement) {
     const inputs = Array.from(document.querySelectorAll('.auto-tab-input')) as HTMLInputElement[];

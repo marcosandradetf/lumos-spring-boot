@@ -1,5 +1,5 @@
 <div class="toast toast-end z-50">
-  <div [className]="'alert' + alertType">
+  <div class="alert" [ngClass]="alertType">
     @if (alertType === 'alert-warning') {
       <svg
         xmlns="http://www.w3.org/2000/svg"

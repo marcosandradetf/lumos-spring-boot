@@ -4,55 +4,41 @@
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/">Início</a></li>
-          <li><a>Execuçoes</a></li>
-          <li>Lista</li>
+          <li><a>Pré-medição</a></li>
+          <li>Validando</li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block">Lista de Pendentes</h3>
+      <h3 class="text-medium pr-5 hidden lg:block">Selecione uma cidade</h3>
     </div>
 
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-end text-xs font-medium">
-      Ordenar por
+    <div class="flex w-full justify-center p-5">
+      <div role="tablist" class="tabs tabs-bordered">
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90" aria-label="Pendente" (click)="router.navigate(['/pre-medicao/pendente'])"/>
+        <input type="radio" class="tab" aria-label="Validando" checked/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90" aria-label="Aguardando Retorno" (click)="router.navigate(['/pre-medicao/aguardando-retorno'])"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90" aria-label="Validado" (click)="router.navigate(['/pre-medicao/validado'])"/>
+      </div>
     </div>
 
     <div class="border-b w-full pl-2 h-screen pt-2">
-<!--      <div *ngFor="let m of measurementDTO; index as i;">-->
-<!--        <h2 class="text-lg font-bold mt-4">{{ m.city }}</h2>-->
-<!--        <ol class="flex flex-wrap">-->
-<!--          <li *ngFor="let i of m.items; index as j;"-->
-<!--              class="cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2">-->
-<!--            <div class="flex flex-col border rounded px-4 py-2">-->
-<!--                <span-->
-<!--                  class="badge {{ m.measurement.measurementStyle }} rounded mb-4 mt-2"> {{ getType(m.measurement.measurementType) }} </span>-->
-<!--&lt;!&ndash;              <span class="font-semibold">{{ m.measurement.city }}</span>&ndash;&gt;-->
-<!--              <h3 class="text-sm">{{ m.measurement.address }}</h3>-->
-<!--              <span class="text-xs font-light">Criado por {{ m.measurement.createdBy }}</span>-->
-<!--              <span class="text-sm font-light">{{ m.items.length }} itens</span>-->
-<!--            </div>-->
-<!--          </li>-->
+      <ol class="flex flex-wrap">
+        <li *ngFor="let p of preMeasurements; index as i;"
+            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
+            (click)="router.navigate(['pre-medicao/relatorio/' + p.preMeasurementId])">
+          <div class="flex flex-col border rounded px-4 py-2 card-execution">
+            <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
+                {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
+            </span>
 
-<!--        </ol>-->
-<!--      </div>-->
-      <div *ngFor="let city of groupedMeasurements | keyvalue" class="border-b pb-5">
-        <h2 class="text-lg font-medium mt-4">{{ city.key }}</h2>
-
-        <ol class="flex flex-wrap">
-          <li (click)="navigateToMeasurement(m)"  *ngFor="let m of city.value; index as i;"
-              class="cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2">
-            <div class="flex flex-col border rounded px-4 py-2">
-          <span class="badge {{ m.measurement.measurementStyle }} rounded mb-4 mt-2">
-            {{ getType(m.measurement.measurementType) }}
-          </span>
-              <h3 class="text-base font-normal text-neutral-700">{{ getStreet(m.measurement.address) }}</h3>
-              <span class="text-xs font-normal text-neutral-700">Criado por {{ m.measurement.createdBy }}</span>
-              <span class="text-xs font-normal text-neutral-700"> 16 de fevereiro de 2025 00:00</span>
-              <span class="text-sm font-light">{{ m.items.length }} item(s)</span>
-            </div>
-          </li>
-        </ol>
-      </div>
+            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
+              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ p.city }}</h3>
+            <span class="text-sm text-neutral-600 flex items-center">Por {{ p.createdBy }}<span
+              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+            <span class="text-xs">{{ p.createdAt }} em {{ p.city }}</span>
+          </div>
+        </li>
+      </ol>
     </div>
-
 
   </div>
 </div>

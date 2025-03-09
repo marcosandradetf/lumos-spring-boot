@@ -23,6 +23,8 @@ public class PreMeasurement {
     private Set<PreMeasurementStreet> streets = new HashSet<>();
 
     private String city;
+
+    @Column(columnDefinition = "TEXT")
     private String htmlReport;
 
     // Métodos auxiliares para garantir consistência no relacionamento

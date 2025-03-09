@@ -1,9 +1,7 @@
-.report-base h3 {
+.report-base-header {
   background-color: #096cb8;
   color: white;
-  text-align: center;
-  padding: 1em;
-  font-weight: bold;
+  text-align: left;
 }
 
 .report-base table {
@@ -11,6 +9,7 @@
   font-size: 0.7em;
   font-family: sans-serif;
   width: 100%;
+  border: 2px solid #ddd;
 }
 
 .report-base table th,

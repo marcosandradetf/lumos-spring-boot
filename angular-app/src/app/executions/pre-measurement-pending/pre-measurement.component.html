@@ -11,8 +11,19 @@
       <h3 class="text-medium pr-5 hidden lg:block">Selecione uma cidade</h3>
     </div>
 
-    <div class="border-b w-full pl-2 h-screen pt-2">
+    <div class="flex w-full justify-center p-5">
+      <div role="tablist" class="tabs tabs-bordered">
+        <input type="radio" class="tab" aria-label="Pendente" checked/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+               aria-label="Validando" (click)="router.navigate(['/pre-medicao/validando'])"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+               aria-label="Aguardando Retorno" (click)="router.navigate(['/pre-medicao/aguardando-retorno'])"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+               aria-label="Validado" (click)="router.navigate(['/pre-medicao/validado'])"/>
+      </div>
+    </div>
 
+    <div class="border-b w-full pl-2 h-screen pt-2">
       <ol class="flex flex-wrap">
         <li *ngFor="let p of preMeasurements; index as i;"
             class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
@@ -33,13 +44,12 @@
     </div>
 
     <app-modal [modalOpen]="openModal" (modalClose)="openModal=false" classModal="rounded sm:w-[60rem]">
+      <h3 class="text-center p-2">
+        VALORES MEDIÇÃO EM {{ preMeasurementName.toUpperCase() }}
+      </h3>
       <div class="report-base" #reportBase>
-        <h3>
-          VALORES MEDIÇÃO EM {{ preMeasurementName.toUpperCase() }}
-        </h3>
-
         <table>
-          <tr>
+          <tr class="report-base-header">
             <th>ITEM</th>
             <th>DESCRIÇÃO</th>
             <th>PREÇO UNITÁRIO</th>
@@ -53,13 +63,14 @@
             <tr *ngIf="relay.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>RELÉ FOTOELETRONICO 1000W 105-305V</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'relays')"
                        (blur)="setTotalPrice(i, 'relays')"
-                       (focus)="removeTotalPrice(i, 'relays')">
+                       (focus)="removeTotalPrice(i, 'relays')"/>
               </td>
+              <td *ngIf="submit">R$ {{ relay.price }}</td>
               <td>{{ relay.quantity }}</td>
               <td>R$ {{ relay.priceTotal }}</td>
             </tr>
@@ -69,13 +80,14 @@
             <tr *ngIf="connector.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>CONECTOR PERFURANTE DERIVAÇÃO 10-35MM² TIPO CDP70</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'connectors')"
                        (blur)="setTotalPrice(i, 'connectors')"
-                       (focus)="removeTotalPrice(i, 'connectors')">
+                       (focus)="removeTotalPrice(i, 'connectors')"/>
               </td>
+              <td *ngIf="submit">R$ {{ connector.price }}</td>
               <td>{{ connector.quantity }}</td>
               <td>R$ {{ connector.priceTotal }}</td>
             </tr>
@@ -85,13 +97,14 @@
             <tr *ngIf="cable.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>CABO 1,5MM</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'cables')"
                        (blur)="setTotalPrice(i, 'cables')"
-                       (focus)="removeTotalPrice(i, 'cables')">
+                       (focus)="removeTotalPrice(i, 'cables')"/>
               </td>
+              <td *ngIf="submit">R$ {{ cable.price }}</td>
               <td>{{ cable.quantity }}</td>
               <td>R$ {{ cable.priceTotal }}</td>
             </tr>
@@ -101,13 +114,14 @@
             <tr *ngIf="screw.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>PARAFUSOS DE FIXAÇÃO DAS CINTAS E BRAÇOS</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'screws')"
                        (blur)="setTotalPrice(i, 'screws')"
-                       (focus)="removeTotalPrice(i, 'screws')">
+                       (focus)="removeTotalPrice(i, 'screws')"/>
               </td>
+              <td *ngIf="submit">R$ {{ screw.price }}</td>
               <td>{{ screw.quantity }}</td>
               <td>R$ {{ screw.priceTotal }}</td>
             </tr>
@@ -117,13 +131,14 @@
             <tr *ngIf="strap.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>CINTAS PARA FIXAÇÃO DE BRAÇOS</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'straps')"
                        (blur)="setTotalPrice(i, 'straps')"
-                       (focus)="removeTotalPrice(i, 'straps')">
+                       (focus)="removeTotalPrice(i, 'straps')"/>
               </td>
+              <td *ngIf="submit">R$ {{ strap.price }}</td>
               <td>{{ strap.quantity }}</td>
               <td>R$ {{ strap.priceTotal }}</td>
             </tr>
@@ -137,13 +152,14 @@
                 <span *ngIf="arm.description.toUpperCase() === '2,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 2,5M</span>
                 <span *ngIf="arm.description.toUpperCase() === '3,6M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 3,6M</span>
               </td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'arms')"
                        (blur)="setTotalPrice(i, 'arms')"
-                       (focus)="removeTotalPrice(i, 'arms')">
+                       (focus)="removeTotalPrice(i, 'arms')"/>
               </td>
+              <td *ngIf="submit">R$ {{ arm.price }}</td>
               <td>{{ arm.quantity }}</td>
               <td>R$ {{ arm.priceTotal }}</td>
             </tr>
@@ -153,13 +169,14 @@
             <tr *ngIf="ars.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'armService')"
                        (blur)="setTotalPrice(i, 'armService')"
-                       (focus)="removeTotalPrice(i, 'armService')">
+                       (focus)="removeTotalPrice(i, 'armService')"/>
               </td>
+              <td *ngIf="submit">R$ {{ ars.price }}</td>
               <td>{{ ars.quantity }}</td>
               <td>R$ {{ ars.priceTotal }}</td>
             </tr>
@@ -178,13 +195,14 @@
                 <span *ngIf="led.description.toUpperCase() === '120W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 120W</span>
                 <span *ngIf="led.description.toUpperCase() === '150W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 150W</span>
               </td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'leds')"
                        (blur)="setTotalPrice(i, 'leds')"
-                       (focus)="removeTotalPrice(i, 'leds')">
+                       (focus)="removeTotalPrice(i, 'leds')"/>
               </td>
+              <td *ngIf="submit">R$ {{ led.price }}</td>
               <td>{{ led.quantity }}</td>
               <td>R$ {{ led.priceTotal }}</td>
             </tr>
@@ -194,13 +212,14 @@
             <tr *ngIf="pi.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>SERVIÇO DE EXECUÇÃO DE PROJETO POR IP</td>
-              <td>
+              <td *ngIf="!submit">
                 <input type="text"
                        placeholder="Insira o preço (R$)"
                        (input)="setPrice($event, i, 'piService')"
                        (blur)="setTotalPrice(i, 'piService')"
-                       (focus)="removeTotalPrice(i, 'piService')">
+                       (focus)="removeTotalPrice(i, 'piService')"/>
               </td>
+              <td *ngIf="submit">R$ {{ pi.price }}</td>
               <td>{{ pi.quantity }}</td>
               <td>R$ {{ pi.priceTotal }}</td>
             </tr>
@@ -210,10 +229,12 @@
             <tr *ngIf="ls.quantity > 0">
               <td>{{ nextLine() }}</td>
               <td>SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED</td>
-              <td><input type="text"
-                         placeholder="Insira o preço (R$)"
-                         (input)="setPrice($event, i, 'ledService')" (blur)="setTotalPrice(i, 'ledService'); clearAutoTab()"
-                         (focus)="removeTotalPrice(i, 'ledService'); startAutoTab($event)"></td>
+              <td *ngIf="!submit"><input type="text"
+                                         placeholder="Insira o preço (R$)"
+                                         (input)="setPrice($event, i, 'ledService')"
+                                         (blur)="setTotalPrice(i, 'ledService')"
+                                         (focus)="removeTotalPrice(i, 'ledService')"/></td>
+              <td *ngIf="submit">R$ {{ ls.price }}</td>
               <td>{{ ls.quantity }}</td>
               <td>R$ {{ ls.priceTotal }}</td>
             </tr>
@@ -231,10 +252,11 @@
                 ASSENTAMENTO
                 E CAIXA DE PASSAGEM.
               </td>
-              <td><input type="text"
-                         placeholder="Insira o preço (R$)"
-                         (input)="setPrice($event, i, 'posts')" (blur)="setTotalPrice(i, 'posts'); clearAutoTab()"
-                         (focus)="removeTotalPrice(i, 'posts'); startAutoTab($event)"></td>
+              <td *ngIf="!submit"><input type="text"
+                                         placeholder="Insira o preço (R$)"
+                                         (input)="setPrice($event, i, 'posts')" (blur)="setTotalPrice(i, 'posts')"
+                                         (focus)="removeTotalPrice(i, 'posts')"/></td>
+              <td *ngIf="submit">R$ {{ post.price }}</td>
               <td>{{ post.quantity }}</td>
               <td>R$ {{ post.priceTotal }}</td>
             </tr>
@@ -250,14 +272,18 @@
 
         </table>
       </div>
-
       <div class="flex w-full mt-10">
-        <button class="btn rounded-none w-1/2" (click)="openModal = false">CANCELAR</button>
-        <button class="btn  btn-warning rounded-none w-1/2" (click)="sendValues(reportBase)" #submitBtn>CONTINUAR</button>
+        <button class="btn rounded-none w-1/2" (click)="openModal = false" *ngIf="!submit">CANCELAR</button>
+        <button class="btn rounded-none w-1/2" (click)="submit = false" *ngIf="submit">VOLTAR</button>
+        <button class="btn  btn-warning rounded-none w-1/2" (click)="sendValues(reportBase)" *ngIf="submit" #submitBtn>
+          CONTINUAR
+        </button>
+        <button class="btn  btn-warning rounded-none w-1/2" (click)="submit = true" *ngIf="!submit">PRONTO</button>
       </div>
 
     </app-modal>
   </div>
 
-  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"></app-screen-message>
+  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
+                      class="absolute right-0"></app-screen-message>
 </div>

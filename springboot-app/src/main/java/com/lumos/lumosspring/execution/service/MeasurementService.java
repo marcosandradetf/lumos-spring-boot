@@ -12,10 +12,11 @@ import com.lumos.lumosspring.stock.service.MaterialService;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
+
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -32,7 +33,6 @@ public class MeasurementService {
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
         this.util = util;
     }
-
 
     public ResponseEntity<?> getFields(long measurementId) {
         var preMeasurement = preMeasurementRepository.findById(measurementId);
@@ -133,6 +133,7 @@ public class MeasurementService {
         }
 
         try {
+            preMeasurement.get().setTotalPrice(BigDecimal.valueOf(0));
             valuesDTO.forEach((category, values) -> {
                 values.forEach(value -> {
                     preMeasurement.ifPresent(measurement -> {
@@ -162,8 +163,6 @@ public class MeasurementService {
                 });
             });
 
-
-            preMeasurement.get().setStatus(PreMeasurement.Status.VALIDATING);
             preMeasurementRepository.save(preMeasurement.get());
 
         } catch (Exception e) {
@@ -174,7 +173,7 @@ public class MeasurementService {
         return ResponseEntity.ok().body(new DefaultResponse("OK"));
     }
 
-
+    @Transactional
     public ResponseEntity<?> saveHtmlReport(String html, Long preMeasurementId) {
         var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
         if (preMeasurement.isEmpty()) {
@@ -182,8 +181,10 @@ public class MeasurementService {
         }
 
         preMeasurement.get().setHtmlReport(html);
+        preMeasurement.get().setStatus(PreMeasurement.Status.VALIDATING);
         preMeasurementRepository.save(preMeasurement.get());
 
         return ResponseEntity.ok().build();
     }
+
 }

@@ -1,0 +1,43 @@
+.report table {
+  border-collapse: collapse;
+  font-size: 0.7em;
+  font-family: sans-serif;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.report table th,
+.report table td {
+  padding: 12px 15px;
+}
+
+.report table tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.report table tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.report-total-sum {
+  background-color: #108cc8;
+  color: white;
+  font-weight: bold;
+}
+
+.report-total-price {
+  font-family: Georgia, serif;
+  font-size: 1em;
+  margin-top: 10px;
+  width: fit-content;
+}
+
+.report-header {
+  background-color: #096cb8;
+  color: white;
+  text-align: left;
+}
+
+table {
+  border: 2px solid #dddddd;
+}
