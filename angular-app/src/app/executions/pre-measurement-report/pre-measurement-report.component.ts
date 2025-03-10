@@ -2,8 +2,13 @@ import {Component} from '@angular/core';
 
 import {NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
 import {PreMeasurementService} from '../pre-measurement-pending/premeasurement-service.service';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {UtilsService} from '../../core/service/utils.service';
+import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {FormsModule} from '@angular/forms';
+import {UserService} from '../../manage/user/user-service.service';
+import {AuthService} from '../../core/auth/auth.service';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-pre-measurement-pending-report',
@@ -11,7 +16,9 @@ import {UtilsService} from '../../core/service/utils.service';
   imports: [
     NgForOf,
     NgOptimizedImage,
-    NgIf
+    NgIf,
+    ModalComponent,
+    FormsModule
   ],
   templateUrl: './pre-measurement-report.component.html',
   styleUrl: './pre-measurement-report.component.scss'
@@ -57,14 +64,54 @@ export class PreMeasurementReportComponent {
     totalPrice: '',
     streets: []
   };
+  openModal: boolean = false;
+  openModalData: boolean = false;
+  contract: {
+    number: string;
+    socialReason: string;
+    cnpj: string;
+    address: string;
+    phoneContractor: string;
+    departmentResponsible: string;
+    phoneResponsible: string;
+  } = {
+    number: '',
+    socialReason: '',
+    cnpj: '',
+    address: '',
+    phoneContractor: '',
+    departmentResponsible: '',
+    phoneResponsible: ''
+  }
 
-  constructor(private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, protected utils: UtilsService) {
+  user: {
+    name: string,
+    lastname: string,
+    email: string,
+  } = {
+    name: '',
+    lastname: '',
+    email: '',
+  };
+
+  constructor(protected router: Router, private userService: UserService, protected utils: UtilsService,
+              protected authService: AuthService, private titleService: Title, private preMeasurementService: PreMeasurementService, private route: ActivatedRoute,) {
+
     const measurementId = this.route.snapshot.paramMap.get('id');
+    this.titleService.setTitle("Relatório de Pré-medição");
+    const uuid = authService.getUser().uuid;
+
     if (measurementId) {
       this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
         this.preMeasurement = preMeasurement;
       });
     }
+
+    this.userService.getUser(uuid).subscribe(
+      user => {
+        this.user = user;
+      });
+
   }
 
   generatePDF(content: HTMLDivElement): void {
@@ -106,5 +153,17 @@ export class PreMeasurementReportComponent {
   }
 
 
-
+  getTotalQuantity(attributeName: string) {
+    let quantity = 0;
+    this.preMeasurement.streets.forEach((street) => {
+      street.items.forEach((item) => {
+        if (item.materialLength?.toLowerCase().startsWith(attributeName) ||
+          item.materialPower?.toLowerCase().startsWith(attributeName) ||
+          item.materialType?.toLowerCase().startsWith(attributeName)) {
+          quantity += item.materialQuantity;
+        }
+      })
+    })
+    return quantity;
+  }
 }

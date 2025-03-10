@@ -11,107 +11,265 @@
       <h3 class="text-medium pr-5 hidden lg:block">{{ preMeasurement.city }}</h3>
     </div>
 
-    <div class="border-b w-full pl-2 p-2 flex flex-col justify-center">
-      <h2 class="mb-4 text-center">
-        Pré-medição de {{ preMeasurement.city }}
-      </h2>
-      <div #content class="report">
-        <table>
-          <thead>
-          <tr class="report-header">
-            <th></th>
-            <th>ENDEREÇO</th>
-            <th>POTÊNCIA ATUAL</th>
-            <th *ngIf="condition('cabo')">CABO</th>
-            <th *ngIf="condition('1')">BRAÇOS de 1,5</th>
-            <th *ngIf="condition('2')">BRAÇOS de 2,5</th>
-            <th *ngIf="condition('3')">BRAÇOS de 3,5</th>
-            <th *ngIf="condition('60')">LED 60W</th>
-            <th *ngIf="condition('70')">LED 70W</th>
-            <th *ngIf="condition('100')">LED 100W</th>
-            <th *ngIf="condition('120')">LED 120W</th>
-            <th *ngIf="condition('150')">LED 150W</th>
-            <th *ngIf="condition('braço')">TROCA DE PONTO</th>
-            <th *ngIf="condition('cinta')">CINTAS</th>
-            <th *ngIf="condition('parafuso')">PARAF. E ARRUELAS</th>
-            <th *ngIf="condition('conector')">PERFUR.</th>
-            <th *ngIf="condition('relé')">RELÉ</th>
-            <th *ngIf="condition('led')">PROJETO</th>
-            <th *ngIf="condition('led')">SERVIÇO</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let s of preMeasurement.streets">
-            <td>1</td>
-            <td>{{ s.address }}</td>
-            <td>{{ s.lastPower }}</td>
-            <td *ngIf="condition('cabo')">{{ getItem('cabo', s) }}</td>
-            <td *ngIf="condition('1')">{{ getItem('1', s) }}</td>
-            <td *ngIf="condition('2')">{{ getItem('2', s) }}</td>
-            <td *ngIf="condition('3')">{{ getItem('3', s) }}</td>
-            <td *ngIf="condition('60')">{{ getItem('60', s) }}</td>
-            <td *ngIf="condition('70')">{{ getItem('70', s) }}</td>
-            <td *ngIf="condition('100')">{{ getItem('100', s) }}</td>
-            <td *ngIf="condition('120')">{{ getItem('120', s) }}</td>
-            <td *ngIf="condition('150')">{{ getItem('150', s) }}</td>
-            <td *ngIf="condition('braço')">{{ getItem('braço', s) }}</td>
-            <td *ngIf="condition('cinta')">{{ getItem('cinta', s) }}</td>
-            <td *ngIf="condition('parafuso')">{{ getItem('parafuso', s) }}</td>
-            <td *ngIf="condition('conector')">{{ getItem('conector', s) }}</td>
-            <td *ngIf="condition('relé')">{{ getItem('relé', s) }}</td>
-            <td *ngIf="condition('led')">{{ getItem('led', s) }}</td>
-            <td *ngIf="condition('led')">{{ getItem('led', s) }}</td>
-          </tr>
-          </tbody>
-          <tfoot>
-          <tr class="report-total-sum">
-            <td></td>
-            <td colspan="2">SOMA
-              TOTAL:
-            </td>
-            <td *ngIf="condition('cabo')">0</td>
-            <td *ngIf="condition('1')">0</td>
-            <td *ngIf="condition('2')">0</td>
-            <td *ngIf="condition('3')">0</td>
-            <td *ngIf="condition('60')">0</td>
-            <td *ngIf="condition('70')">4</td>
-            <td *ngIf="condition('100')">0</td>
-            <td *ngIf="condition('120')">0</td>
-            <td *ngIf="condition('150')">0</td>
-            <td *ngIf="condition('braço')">10</td>
-            <td *ngIf="condition('cinta')">0</td>
-            <td *ngIf="condition('parafuso')">0</td>
-            <td *ngIf="condition('conector')">0</td>
-            <td *ngIf="condition('relé')">14</td>
-            <td *ngIf="condition('led')">14</td>
-            <td *ngIf="condition('led')">14</td>
-          </tr>
-          </tfoot>
-        </table>
-
-
-        <div class="report-total-price">
+    <div class="border-b w-full pl-2 p-2 flex flex-col justify-center generate-report">
+      <div class="button-report">
+        <button (click)="openModal = true"
+                class="material-icons p-2 transform transition-transform duration-300 text-2xl hover:text-red-300">
+          cancel
+        </button>
+        <button (click)="openModalData = true"
+                class="material-icons p-2 transform transition-transform duration-300 text-2xl hover:text-blue-300">
+          download
+        </button>
+      </div>
+      <div class="download-report">
+        <h2 class="mb-4 text-center text-white">
+          Pré-medição de {{ preMeasurement.city }}
+        </h2>
+        <div #content class="report">
+          <table>
+            <thead>
+            <tr class="report-header">
+              <th>RUA</th>
+              <th>ENDEREÇO</th>
+              <th>POTÊNCIA ATUAL</th>
+              <th *ngIf="condition('cabo')">CABO</th>
+              <th *ngIf="condition('1')">BRAÇOS de 1,5</th>
+              <th *ngIf="condition('2')">BRAÇOS de 2,5</th>
+              <th *ngIf="condition('3')">BRAÇOS de 3,5</th>
+              <th *ngIf="condition('60')">LED 60W</th>
+              <th *ngIf="condition('70')">LED 70W</th>
+              <th *ngIf="condition('100')">LED 100W</th>
+              <th *ngIf="condition('120')">LED 120W</th>
+              <th *ngIf="condition('150')">LED 150W</th>
+              <th *ngIf="condition('braço')">TROCA DE PONTO</th>
+              <th *ngIf="condition('cinta')">CINTAS</th>
+              <th *ngIf="condition('parafuso')">PARAF. E ARRUELAS</th>
+              <th *ngIf="condition('conector')">PERFUR.</th>
+              <th *ngIf="condition('relé')">RELÉ</th>
+              <th *ngIf="condition('led')">PROJETO</th>
+              <th *ngIf="condition('led')">SERVIÇO</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let s of preMeasurement.streets">
+              <td>1</td>
+              <td>{{ s.address }}</td>
+              <td>{{ s.lastPower }}</td>
+              <td *ngIf="condition('cabo')">{{ getItem('cabo', s) }}</td>
+              <td *ngIf="condition('1')">{{ getItem('1', s) }}</td>
+              <td *ngIf="condition('2')">{{ getItem('2', s) }}</td>
+              <td *ngIf="condition('3')">{{ getItem('3', s) }}</td>
+              <td *ngIf="condition('60')">{{ getItem('60', s) }}</td>
+              <td *ngIf="condition('70')">{{ getItem('70', s) }}</td>
+              <td *ngIf="condition('100')">{{ getItem('100', s) }}</td>
+              <td *ngIf="condition('120')">{{ getItem('120', s) }}</td>
+              <td *ngIf="condition('150')">{{ getItem('150', s) }}</td>
+              <td *ngIf="condition('braço')">{{ getItem('braço', s) }}</td>
+              <td *ngIf="condition('cinta')">{{ getItem('cinta', s) }}</td>
+              <td *ngIf="condition('parafuso')">{{ getItem('parafuso', s) }}</td>
+              <td *ngIf="condition('conector')">{{ getItem('conector', s) }}</td>
+              <td *ngIf="condition('relé')">{{ getItem('relé', s) }}</td>
+              <td *ngIf="condition('led')">{{ getItem('led', s) }}</td>
+              <td *ngIf="condition('led')">{{ getItem('led', s) }}</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr class="report-total-sum">
+              <td colspan="3">SOMA
+                TOTAL:
+              </td>
+              <td *ngIf="condition('cabo')">{{ getTotalQuantity("cabo") }}</td>
+              <td *ngIf="condition('1')">{{ getTotalQuantity("1") }}</td>
+              <td *ngIf="condition('2')">{{ getTotalQuantity("2") }}</td>
+              <td *ngIf="condition('3')">{{ getTotalQuantity("3") }}</td>
+              <td *ngIf="condition('60')">{{ getTotalQuantity("60") }}</td>
+              <td *ngIf="condition('70')">{{ getTotalQuantity("70") }}</td>
+              <td *ngIf="condition('100')">{{ getTotalQuantity("100") }}</td>
+              <td *ngIf="condition('120')">{{ getTotalQuantity("120") }}</td>
+              <td *ngIf="condition('150')">{{ getTotalQuantity("150") }}</td>
+              <td *ngIf="condition('braço')">1{{ getTotalQuantity("braço") }}</td>
+              <td *ngIf="condition('cinta')">{{ getTotalQuantity("cinta") }}</td>
+              <td *ngIf="condition('parafuso')">{{ getTotalQuantity("parafuso") }}</td>
+              <td *ngIf="condition('conector')">{{ getTotalQuantity("conector") }}</td>
+              <td *ngIf="condition('relé')">{{ getTotalQuantity("relé") }}</td>
+              <td *ngIf="condition('led')">{{ getTotalQuantity("led") }}</td>
+              <td *ngIf="condition('led')">{{ getTotalQuantity("led") }}</td>
+            </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="mt-4 text-center">
           <p>Total Geral: R$ {{ preMeasurement.totalPrice.replace(".", ',') }}</p>
         </div>
-
-<!--        <table-->
-<!--          style="table-layout: fixed; border-collapse: collapse; margin-left: 50px; border: 2px solid black; margin-top: 20px;">-->
-<!--          <tr style="background-color: #400112; color: white;">-->
-<!--            <td style="width: 150px; height: 35px">R$</td>-->
-<!--            <td>{{ preMeasurement.totalPrice.replace(".", ',') }}</td>-->
-<!--          </tr>-->
-<!--        </table>-->
-
-
       </div>
-
-    </div>
-
-    <div class="border-b w-full p-2 flex justify-center">
-      <button (click)="generatePDF(content)" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700">
-        Gerar PDF
-      </button>
     </div>
 
   </div>
+
+  <app-modal [modalOpen]="openModal" (modalClose)="openModal=false"
+             classModal="rounded p-4 w-[30%] flex flex-col  justify-center ">
+    <h2 class="text-center mb-10">Essa ação volta o status dessa pré-medição para pendente, deseja prosseguir?</h2>
+    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2">NÃO</button>
+    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2">SIM</button>
+  </app-modal>
+
+  <app-modal [modalOpen]="openModalData" (modalClose)="openModalData=false"
+             classModal="rounded">
+    <div class="bg-neutral-800 text-white p-2 text-center mb-2">
+      <h2>Informações Complementares Necessárias</h2>
+    </div>
+
+    <h2 class="pl-2">Informações da contratante</h2>
+    <div class="flex space-x-4 flex-wrap text-neutral-700">
+      <label class="form-control w-full max-w-xs pl-4">
+        <div class="label">
+          <span class="label-text">Nº: contrato</span>
+        </div>
+        <input type="text"
+               name="number"
+               [(ngModel)]="contract.number"
+               required
+               minlength="3"
+               #number="ngModel"
+               placeholder="Ex.: 10/2025" class="input input-bordered w-full max-w-xs"/>
+        <div *ngIf="number.invalid && number.touched">
+          <small *ngIf="number.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Razão Social</span>
+        </div>
+        <input type="text"
+               name="nomeMaterial"
+               [(ngModel)]="contract.socialReason"
+               required
+               minlength="3"
+               #socialReason="ngModel"
+               placeholder="Ex.: Prefeitura de Belo Horizonte" class="input input-bordered w-full max-w-xs"/>
+        <div *ngIf="socialReason.invalid && socialReason.touched">
+          <small *ngIf="socialReason.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">CNPJ</span>
+        </div>
+        <input type="text"
+               name="nomeMaterial"
+               [(ngModel)]="contract.cnpj"
+               required
+               minlength="3"
+               #cnpj="ngModel"
+               placeholder="Ex.: 75.550.879/0001-44" class="input input-bordered w-full max-w-xs"/>
+        <div *ngIf="cnpj.invalid && cnpj.touched">
+          <small *ngIf="cnpj.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+      <label class="form-control w-full max-w-2xl">
+        <div class="label">
+          <span class="label-text">Endereço</span>
+        </div>
+        <input type="text"
+               name="nomeMaterial"
+               [(ngModel)]="contract.address"
+               required
+               minlength="3"
+               #address="ngModel"
+               placeholder="Insira o Endereço" class="input input-bordered w-full"/>
+        <div *ngIf="address.invalid && address.touched">
+          <small *ngIf="address.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Telefone</span>
+        </div>
+        <input type="text"
+               name="phoneContractor"
+               [(ngModel)]="contract.phoneContractor"
+               required
+               minlength="3"
+               #phoneContractor="ngModel"
+               placeholder="Ex. (31) 99999-9090" class="input input-bordered w-full max-w-xs"/>
+        <div *ngIf="phoneContractor.invalid && phoneContractor.touched">
+          <small *ngIf="phoneContractor.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+    </div>
+    <h2 class="mt-4 pl-2">Informações do responsável</h2>
+    <div class="flex space-x-4 flex-wrap text-neutral-700 pl-2">
+
+      <label class="form-control w-full max-w-xs pl-4">
+        <div class="label">
+          <span class="label-text">Nome</span>
+        </div>
+        <input type="text"
+               name="nomeMaterial"
+               [value]="user.name + ' ' + user.lastname" disabled class="input input-bordered w-full max-w-xs" />
+      </label>
+
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Email</span>
+        </div>
+        <input type="text"
+               name="nomeMaterial"
+               [value]="user.email" disabled class="input input-bordered w-full max-w-xs" />
+      </label>
+
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Cargo</span>
+        </div>
+        <select
+          class="select select-bordered"
+          [(ngModel)]="contract.departmentResponsible"
+          name="departmentResponsible"
+          required
+          #departmentResponsible="ngModel">
+          <option disabled selected>Selecione um Cargo</option>
+          <option value="Auxiliar Administrativo">Auxiliar Administrativo</option>
+          <option value="Diretor(a) Administrativo">Diretor(a) Administrativo</option>
+          <option value="Gerente">Gerente</option>
+          <option value="Licitações/Jurídico">Licitações/Jurídico</option>
+          <option value="Supervisor Operacional">Supervisor Operacional</option>
+        </select>
+        <div *ngIf="departmentResponsible.invalid && departmentResponsible.touched">
+          <small *ngIf="departmentResponsible.errors?.['required']" class="text-red-600">Preenchimento
+            obrigatório.</small>
+        </div>
+      </label>
+      <label class="form-control w-full max-w-xs">
+        <div class="label">
+          <span class="label-text">Telefone</span>
+        </div>
+        <input type="text"
+               name="phoneContractor"
+               [(ngModel)]="contract.phoneResponsible"
+               required
+               minlength="3"
+               #phoneResponsible="ngModel"
+               placeholder="Ex. (31) 99999-9090" class="input input-bordered w-full max-w-xs"/>
+        <div *ngIf="phoneResponsible.invalid && phoneResponsible.touched">
+          <small *ngIf="phoneResponsible.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+        </div>
+      </label>
+    </div>
+
+
+    <div class="flex justify-end">
+      <button type="submit" class="btn material-icons bg-rose-950 text-white hover:bg-rose-900 m-2 text-xl"
+              (click)="openModalData=false">
+        close
+        <span class="text-xs">Sair</span>
+      </button>
+      <button type="submit" class="btn material-icons bg-rose-950 text-white hover:bg-rose-900 m-2 text-xl"
+              (click)="generatePDF(content)">
+        save
+        <span class="text-xs">Salvar</span>
+      </button>
+    </div>
+  </app-modal>
 </div>

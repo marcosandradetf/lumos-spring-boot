@@ -1,43 +1,51 @@
-.report table {
-  border-collapse: collapse;
-  font-size: 0.7em;
-  font-family: sans-serif;
+table {
   width: 100%;
-  border-radius: 10px;
+  border-collapse: collapse;
+  font-size: 0.6em;
+  font-family: sans-serif;
 }
 
-.report table th,
-.report table td {
-  padding: 12px 15px;
-}
-
-.report table tr {
-  border-bottom: 1px solid #dddddd;
-}
-
-.report table tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
-
-.report-total-sum {
-  background-color: #108cc8;
-  color: white;
-  font-weight: bold;
-}
-
-.report-total-price {
-  font-family: Georgia, serif;
-  font-size: 1em;
-  margin-top: 10px;
-  width: fit-content;
-}
-
-.report-header {
-  background-color: #096cb8;
-  color: white;
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 10px;
   text-align: left;
 }
 
-table {
-  border: 2px solid #dddddd;
+th {
+  background-color: #044686;
+  color: white;
 }
+
+.report-total-sum, .report-base-total {
+  font-weight: bold;
+  background-color: #eee;
+}
+
+.footer {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.generate-report {
+  width: 100%;
+  background-color: #292a2d;
+  padding-inline: 30px;
+  min-height: calc(100vh - 110px);
+  max-height: calc(100vh - 110px);
+}
+
+.download-report {
+  background-color: white;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+  border-radius: 5px;
+  padding-inline: 30px;
+}
+
+.button-report {
+  color: white;
+  display: flex;
+  justify-content: end;
+}
+
