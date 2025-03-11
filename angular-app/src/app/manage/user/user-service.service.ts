@@ -45,6 +45,8 @@ export class UserService {
       year: string;
       role: string[],
       status: boolean,
+      phone: string,
+      department: string,
       sel: boolean
     }>(`${this.endpoint}/get-user/${uuid}`);
   }

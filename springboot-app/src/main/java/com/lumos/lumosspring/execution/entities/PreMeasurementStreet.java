@@ -1,11 +1,7 @@
 package com.lumos.lumosspring.execution.entities;
 
-import com.lumos.lumosspring.team.Region;
 import jakarta.persistence.*;
-
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -21,6 +17,7 @@ public class PreMeasurementStreet {
     private String lastPower;
 
     private String address;
+    private String street;
 
     private double latitude;
 
@@ -118,10 +115,19 @@ public class PreMeasurementStreet {
         this.items = items;
     }
 
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
     public enum Status {
         PENDING,
         IN_PROGRESS,
         CANCELLED,
         FINISHED,
     }
+
 }

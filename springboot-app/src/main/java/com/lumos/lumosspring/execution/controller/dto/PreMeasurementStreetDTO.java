@@ -6,7 +6,7 @@ public record PreMeasurementStreetDTO(
         double latitude,
         double longitude,
         String address,
-        String number,
+        String street,
         String city,
         long depositId,
         String deviceId,

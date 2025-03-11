@@ -1,0 +1,199 @@
+<div class="flex mt-[3rem] h-fit" #top>
+  <div class="w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a href="/">Início</a></li>
+          <li><a>Pré-medição</a></li>
+          <li>Validando</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Selecione uma cidade</h3>
+    </div>
+
+    <div class="flex w-full justify-center p-5">
+      <div role="tablist" class="tabs tabs-bordered">
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90" aria-label="Pendente" (click)="router.navigate(['/pre-medicao/pendente'])"/>
+        <input type="radio" class="tab" aria-label="Validando" checked/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90" aria-label="Aguardando Retorno" (click)="router.navigate(['/pre-medicao/aguardando-retorno'])"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90" aria-label="Validado" (click)="router.navigate(['/pre-medicao/validado'])"/>
+      </div>
+    </div>
+
+    <div class="border-b w-full pl-2 h-screen pt-2">
+      <ol class="flex flex-wrap">
+        <li *ngFor="let p of preMeasurements; index as i;"
+            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
+            (click)="openModal = true">
+          <div class="flex flex-col border rounded px-4 py-2 card-execution">
+            <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
+                {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
+            </span>
+
+            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
+              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ p.city }}</h3>
+            <span class="text-sm text-neutral-600 flex items-center">Por {{ p.createdBy }}<span
+              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+            <span class="text-xs">{{ p.createdAt }} em {{ p.city }}</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <app-modal [modalOpen]="openModal" (modalClose)="openModal=false"
+               classModal="rounded">
+      <div class="bg-neutral-800 text-white p-2 text-center mb-2">
+        <h2>Informações Complementares Necessárias</h2>
+      </div>
+
+      <h2 class="pl-2">Informações da contratante</h2>
+      <div class="flex space-x-4 flex-wrap text-neutral-700">
+        <label class="form-control w-full max-w-xs pl-4">
+          <div class="label">
+            <span class="label-text">Nº: contrato</span>
+          </div>
+          <input type="text"
+                 name="number"
+                 [(ngModel)]="contract.number"
+                 required
+                 minlength="3"
+                 #number="ngModel"
+                 placeholder="Ex.: 10/2025" class="input input-bordered w-full max-w-xs"/>
+          <div *ngIf="number.invalid && number.touched">
+            <small *ngIf="number.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+          </div>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Razão Social</span>
+          </div>
+          <input type="text"
+                 name="nomeMaterial"
+                 [(ngModel)]="contract.socialReason"
+                 required
+                 minlength="3"
+                 #socialReason="ngModel"
+                 placeholder="Ex.: Prefeitura de Belo Horizonte" class="input input-bordered w-full max-w-xs"/>
+          <div *ngIf="socialReason.invalid && socialReason.touched">
+            <small *ngIf="socialReason.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+          </div>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">CNPJ</span>
+          </div>
+          <input type="text"
+                 name="nomeMaterial"
+                 [(ngModel)]="contract.cnpj"
+                 required
+                 minlength="3"
+                 #cnpj="ngModel"
+                 placeholder="Ex.: 75.550.879/0001-44" class="input input-bordered w-full max-w-xs"/>
+          <div *ngIf="cnpj.invalid && cnpj.touched">
+            <small *ngIf="cnpj.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+          </div>
+        </label>
+        <label class="form-control w-full max-w-2xl">
+          <div class="label">
+            <span class="label-text">Endereço</span>
+          </div>
+          <input type="text"
+                 name="nomeMaterial"
+                 [(ngModel)]="contract.address"
+                 required
+                 minlength="3"
+                 #address="ngModel"
+                 placeholder="Insira o Endereço" class="input input-bordered w-full"/>
+          <div *ngIf="address.invalid && address.touched">
+            <small *ngIf="address.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+          </div>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Telefone</span>
+          </div>
+          <input type="text"
+                 name="phoneContractor"
+                 [(ngModel)]="contract.phone"
+                 required
+                 minlength="3"
+                 #phoneContractor="ngModel"
+                 placeholder="Ex. (31) 99999-9090" class="input input-bordered w-full max-w-xs"/>
+          <div *ngIf="phoneContractor.invalid && phoneContractor.touched">
+            <small *ngIf="phoneContractor.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+          </div>
+        </label>
+      </div>
+      <h2 class="mt-4 pl-2">Informações do responsável</h2>
+      <div class="flex space-x-4 flex-wrap text-neutral-700 pl-2">
+
+        <label class="form-control w-full max-w-xs pl-4">
+          <div class="label">
+            <span class="label-text">Nome</span>
+          </div>
+          <input type="text"
+                 name="nomeMaterial"
+                 [value]="user.name + ' ' + user.lastname" disabled class="input input-bordered w-full max-w-xs" />
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Email</span>
+          </div>
+          <input type="text"
+                 name="nomeMaterial"
+                 [value]="user.email" disabled class="input input-bordered w-full max-w-xs" />
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Cargo</span>
+          </div>
+          <select
+            class="select select-bordered"
+            [(ngModel)]="user.department"
+            name="departmentResponsible"
+            required
+            #departmentResponsible="ngModel">
+            <option disabled selected>Selecione um Cargo</option>
+            <option value="Auxiliar Administrativo">Auxiliar Administrativo</option>
+            <option value="Diretor(a) Administrativo">Diretor(a) Administrativo</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Licitações/Jurídico">Licitações/Jurídico</option>
+            <option value="Supervisor Operacional">Supervisor Operacional</option>
+          </select>
+          <div *ngIf="departmentResponsible.invalid && departmentResponsible.touched">
+            <small *ngIf="departmentResponsible.errors?.['required']" class="text-red-600">Preenchimento
+              obrigatório.</small>
+          </div>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Telefone</span>
+          </div>
+          <input type="text"
+                 name="phoneContractor"
+                 [(ngModel)]="user.phone"
+                 required
+                 minlength="3"
+                 #phoneResponsible="ngModel"
+                 placeholder="Ex. (31) 99999-9090" class="input input-bordered w-full max-w-xs"/>
+          <div *ngIf="phoneResponsible.invalid && phoneResponsible.touched">
+            <small *ngIf="phoneResponsible.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+          </div>
+        </label>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="btn material-icons bg-rose-950 text-white hover:bg-rose-900 m-2 text-xl"
+                (click)="openModal=false">
+          close
+          <span class="text-xs">Sair</span>
+        </button>
+        <button type="submit" class="btn material-icons bg-rose-950 text-white hover:bg-rose-900 m-2 text-xl"
+                (click)="submit()">
+          save
+          <span class="text-xs">Salvar</span>
+        </button>
+      </div>
+    </app-modal>
+  </div>
+</div>

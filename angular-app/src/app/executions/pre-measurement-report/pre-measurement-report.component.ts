@@ -65,41 +65,15 @@ export class PreMeasurementReportComponent {
     streets: []
   };
   openModal: boolean = false;
-  openModalData: boolean = false;
-  contract: {
-    number: string;
-    socialReason: string;
-    cnpj: string;
-    address: string;
-    phoneContractor: string;
-    departmentResponsible: string;
-    phoneResponsible: string;
-  } = {
-    number: '',
-    socialReason: '',
-    cnpj: '',
-    address: '',
-    phoneContractor: '',
-    departmentResponsible: '',
-    phoneResponsible: ''
-  }
 
-  user: {
-    name: string,
-    lastname: string,
-    email: string,
-  } = {
-    name: '',
-    lastname: '',
-    email: '',
-  };
 
-  constructor(protected router: Router, private userService: UserService, protected utils: UtilsService,
-              protected authService: AuthService, private titleService: Title, private preMeasurementService: PreMeasurementService, private route: ActivatedRoute,) {
+
+
+  constructor(protected router: Router,  protected utils: UtilsService, private titleService: Title,
+              private preMeasurementService: PreMeasurementService, private route: ActivatedRoute,) {
 
     const measurementId = this.route.snapshot.paramMap.get('id');
     this.titleService.setTitle("Relatório de Pré-medição");
-    const uuid = authService.getUser().uuid;
 
     if (measurementId) {
       this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
@@ -107,10 +81,6 @@ export class PreMeasurementReportComponent {
       });
     }
 
-    this.userService.getUser(uuid).subscribe(
-      user => {
-        this.user = user;
-      });
 
   }
 

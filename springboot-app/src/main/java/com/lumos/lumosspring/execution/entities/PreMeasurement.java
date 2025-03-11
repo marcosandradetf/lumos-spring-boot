@@ -1,14 +1,13 @@
 package com.lumos.lumosspring.execution.entities;
 
+import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -26,6 +25,10 @@ public class PreMeasurement {
 
     @Column(columnDefinition = "TEXT")
     private String htmlReport;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Contract contract;
+
 
     // Métodos auxiliares para garantir consistência no relacionamento
     public void addStreet(PreMeasurementStreet street) {
@@ -194,4 +197,13 @@ public class PreMeasurement {
         INSTALLATION,
         MAINTENANCE,
     }
+
+    public Contract getContract() {
+        return contract;
+    }
+
+    public void setContract(Contract contract) {
+        this.contract = contract;
+    }
+
 }

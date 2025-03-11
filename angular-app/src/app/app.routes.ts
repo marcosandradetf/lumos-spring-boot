@@ -129,7 +129,7 @@ export const routes: Routes = [
   },
   {
     path: 'pre-medicao/validando',
-    loadComponent: () => import('./executions/measurement-list/measurement-list.component').then(p => p.MeasurementListComponent),
+    loadComponent: () => import('./executions/pre-measurement-validating/measurement-list.component').then(p => p.MeasurementListComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },
@@ -144,7 +144,7 @@ export const routes: Routes = [
   // start executions/executions path
   {
     path: 'execucoes/lista-medicoes',
-    loadComponent: () => import('./executions/measurement-list/measurement-list.component').then(p => p.MeasurementListComponent),
+    loadComponent: () => import('./executions/pre-measurement-validating/measurement-list.component').then(p => p.MeasurementListComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },

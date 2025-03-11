@@ -73,6 +73,7 @@ public class PreMeasurementService {
 
         preMeasurementStreet.setPreMeasurement(preMeasurement);
         preMeasurementStreet.setAddress(measurement.address());
+        preMeasurementStreet.setStreet(measurement.street());
         preMeasurementStreet.setLatitude(measurement.latitude());
         preMeasurementStreet.setLongitude(measurement.longitude());
         preMeasurementStreet.setLastPower(measurement.lastPower());
@@ -193,6 +194,7 @@ public class PreMeasurementService {
         List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
                 .findAllByStatusOrderByCreatedAtAsc(status)
                 .stream()
+                .sorted(Comparator.comparing(PreMeasurement::getPreMeasurementId))
                 .map(p -> new PreMeasurementResponseDTO(
                         p.getPreMeasurementId(),
                         p.getCity(),
@@ -205,13 +207,15 @@ public class PreMeasurementService {
                         p.getTypePreMeasurement().name(),
                         p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
                         p.getStreets().stream()
+                                .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                                 .map(s -> new PreMeasurementStreetResponseDTO(
                                         s.getPreMeasurementStreetId(),
                                         s.getLastPower(),
                                         s.getLatitude(),
                                         s.getLongitude(),
-                                        s.getAddress(),
+                                        s.getStreet(),
                                         s.getItems() != null ? s.getItems().stream()
+                                                .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
                                                 .map(i -> new PreMeasurementStreetItemResponseDTO(
                                                         i.getPreMeasurementStreetItemId(),
                                                         i.getMaterial().getIdMaterial(),
@@ -245,13 +249,15 @@ public class PreMeasurementService {
                 p.getTypePreMeasurement().name(),
                 p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
                 p.getStreets().stream()
+                        .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                         .map(s -> new PreMeasurementStreetResponseDTO(
                                 s.getPreMeasurementStreetId(),
                                 s.getLastPower(),
                                 s.getLatitude(),
                                 s.getLongitude(),
-                                s.getAddress(),
+                                s.getStreet(),
                                 s.getItems() != null ? s.getItems().stream()
+                                        .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
                                         .map(i -> new PreMeasurementStreetItemResponseDTO(
                                                 i.getPreMeasurementStreetItemId(),
                                                 i.getMaterial().getIdMaterial(),

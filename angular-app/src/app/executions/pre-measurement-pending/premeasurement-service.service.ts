@@ -302,4 +302,8 @@ export class PreMeasurementService {
   saveHTMLReport(html: string, preMeasurementId: number) {
     return this.http.post(`${this.endpoint + `/save-pre-measurement-html-report/${preMeasurementId}`}`, html);
   }
+
+  getContract(preMeasurementId: number) {
+
+  }
 }
