@@ -5,9 +5,8 @@ import {Injectable} from '@angular/core';
 })
 export class UtilsService {
   serverMessage: string | null = null;
-  alertType: string = "";
+  alertType: string | null = null;
 
-  constructor() { }
 
   formatValue(value: string): string {
     // Verifica se targetValue está vazio e define um valor padrão
@@ -79,6 +78,7 @@ export class UtilsService {
     error ? this.alertType = 'alert-error' : this.alertType = 'alert-success';
     setTimeout(() => {
       this.serverMessage = null;
+      this.alertType = null;
     }, timeout);
   }
 

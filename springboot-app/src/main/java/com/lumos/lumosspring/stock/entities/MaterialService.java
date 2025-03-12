@@ -2,6 +2,9 @@ package com.lumos.lumosspring.stock.entities;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "tb_materials_services")
 public class MaterialService {
@@ -11,6 +14,9 @@ public class MaterialService {
     private long serviceId;
     @Column(columnDefinition = "TEXT", nullable = false, unique = true)
     private String serviceName;
+
+    @ManyToMany(mappedBy = "materialServices")
+    private Set<Material> materials = new HashSet<>();
 
     public long getServiceId() {
         return serviceId;
@@ -28,6 +34,12 @@ public class MaterialService {
         this.serviceName = serviceName;
     }
 
+    public Set<Material> getMaterials() {
+        return materials;
+    }
 
+    public void setMaterials(Set<Material> materials) {
+        this.materials = materials;
+    }
 }
 

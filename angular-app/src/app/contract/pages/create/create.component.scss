@@ -1,0 +1,27 @@
+table input {
+  max-width: 120px;
+  background-color: inherit;
+  color: #242424;
+  padding: .15rem .5rem;
+  min-height: 25px;
+  border-radius: 4px;
+  outline: none;
+  border: none;
+  line-height: 1.15;
+  box-shadow: 0 10px 20px -18px;
+}
+
+table input:focus {
+  border-bottom: 2px solid #5b5fc7;
+  border-radius: 4px 4px 2px 2px;
+}
+
+table input:hover {
+  outline: 1px solid lightgrey;
+}
+
+.fade-out {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  opacity: 0;
+  transform: scale(0.8);
+}

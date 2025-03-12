@@ -7,7 +7,6 @@ import java.time.Instant
 @Entity
 @Table(name = "tb_contracts")
 class Contract {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var contractId: Long = 0
@@ -19,12 +18,7 @@ class Contract {
     var creationDate : Instant? = null
     var contractValue : BigDecimal = BigDecimal.ZERO;
 
-    @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    @JoinTable(
-        name = "tb_contracts_contracts_items",
-        joinColumns = [JoinColumn(name = "contract_id")],
-        inverseJoinColumns = [JoinColumn(name = "contract_item_id")]
-    )
+    @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var contractItems: Set<ContractItem> = hashSetOf()
 
     fun sumTotalPrice(totalPrice: BigDecimal?) {

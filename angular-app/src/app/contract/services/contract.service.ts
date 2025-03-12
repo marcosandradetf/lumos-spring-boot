@@ -9,27 +9,26 @@ import {environment} from '../../../environments/environment';
   providedIn: 'root'
 })
 export class ContractService {
-  private endpoint:string = environment.springboot + '/api';
-  sidebarLinks = [
-    { title: 'Dashboard', path: '/contratos/dashboard', id: 'opt1' },
-    { title: 'Criar novo', path: '/contratos/criar', id: 'opt2' },
-    { title: 'Executar', path: '/estoque/importar', id: 'opt3' },
-    { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt4' }
-  ];
+  private endpoint:string = environment.springboot + '/api/contracts';
 
   constructor(private http: HttpClient) { }
 
   createContract(contract: Contract) {
-    return this.http.post(this.endpoint + "/contrato", contract);
+    return this.http.post(this.endpoint + "/create", contract);
   }
 
-  getAllItens(page: string, size: string){
-    let params = new HttpParams().set('page', page).set('size', size);
-    return this.http.get<{content: any[], totalPages: number, currentPage: number }>(this.endpoint + "/material", { params });
+  getItems(){
+    return this.http.get<{
+      id: number;
+      type: string;
+      length: string;
+      power: string;
+      quantity: number;
+      price: string;
+      services: [];
+    }[]>(this.endpoint + "/get-items");
   }
 
-  getSidebarLinks() {
-    return this.sidebarLinks;
-  }
+
 
 }

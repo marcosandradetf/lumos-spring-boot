@@ -14,5 +14,5 @@ import {NgClass, NgForOf, NgIf} from "@angular/common";
 })
 export class ScreenMessageComponent {
   @Input() message: string | null  = null;
-  @Input() alertType:string = "";
+  @Input() alertType:string | null  = null;
 }

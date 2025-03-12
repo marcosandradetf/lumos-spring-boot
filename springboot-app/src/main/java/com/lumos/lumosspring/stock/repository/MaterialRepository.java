@@ -23,7 +23,7 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
     Optional<Material> findFirstByMaterialType_TypeNameOrMaterialType_TypeName(
             String typeName, String typeName2);
 
-    @Query("SELECT m FROM Material m WHERE UPPER(m.materialType.typeName) IN ('LED', 'CINTA', 'POSTE') OR UPPER(m.materialType.typeName) LIKE('BRA%')")
+    @Query("SELECT m FROM Material m WHERE UPPER(m.materialType.typeName) IN ('LED', 'CINTA', 'POSTE', 'RELÉ', 'CABO') OR UPPER(m.materialType.typeName) LIKE('BRA%')")
     List<Material> findAllMaterialsExcludingScrewAndConnector();
 
     @Query("SELECT m FROM Material m  WHERE UPPER(m.materialType.typeName)  IN ('PARAFUSO', 'CONECTOR') AND m.idMaterial = " +

@@ -41,6 +41,14 @@ public class Material {
     )
     private Set<Material> relatedMaterials = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "tb_materials_services_materials",
+            joinColumns = @JoinColumn(name = "material_id"),
+            inverseJoinColumns = @JoinColumn(name = "material_service_id")
+    )
+    private Set<MaterialService> materialServices = new HashSet<>();
+
     public Type getMaterialType() {
         return materialType;
     }
@@ -63,7 +71,6 @@ public class Material {
         this.materialName = nomeMaterial;
     }
 
-
     public String getMaterialBrand() {
         return materialBrand;
     }
@@ -72,7 +79,6 @@ public class Material {
         this.materialBrand = marcaMaterial;
     }
 
-
     public String getMaterialPower() {
         return materialPower;
     }
@@ -80,7 +86,6 @@ public class Material {
     public void setMaterialPower(String materialPower) {
         this.materialPower = materialPower;
     }
-
 
     public String getMaterialAmps() {
         return materialAmps;
@@ -112,6 +117,14 @@ public class Material {
 
     public void setRelatedMaterials(Set<Material> relatedMaterials) {
         this.relatedMaterials = relatedMaterials;
+    }
+
+    public Set<MaterialService> getMaterialServices() {
+        return materialServices;
+    }
+
+    public void setMaterialServices(Set<MaterialService> materialServices) {
+        this.materialServices = materialServices;
     }
 }
 

@@ -3,6 +3,7 @@ package com.lumos.lumosspring.contract.entities
 import com.lumos.lumosspring.stock.entities.Material
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.util.HashSet
 
 @Entity
 @Table(name = "tb_contracts_items")
@@ -11,23 +12,30 @@ class ContractItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var contractItemId : Long = 0
 
-    var description : String? = null
-    var type : String? = null
-    var category : String? = null
+    @ManyToOne
+    @JoinColumn(name = "material_id")
+    var material : Material = Material()
 
-    @ManyToMany(mappedBy = "contractItems")
-    var contracts: Set<Contract> = hashSetOf()
+    @ManyToOne
+    var contract: Contract = Contract()
 
-    var itemQuantity : Double = 0.0
+    @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @JoinTable(
+        name = "tb_contracts_items_contracts_services",
+        joinColumns = [JoinColumn(name = "contract_item_id")],
+        inverseJoinColumns = [JoinColumn(name = "contract_service_id")]
+    )
+    var contractsServices: MutableSet<ContractService> = HashSet()
+
+    var contractedQuantity : Double = 0.0
 
     var unitPrice : BigDecimal = BigDecimal.ZERO;
     var totalPrice : BigDecimal = BigDecimal.ZERO;
 
-    fun setPrices(itemValue: BigDecimal, contractId : Long) {
+    fun setPrices(itemValue: BigDecimal) {
         unitPrice = itemValue
-        totalPrice = itemValue.multiply(BigDecimal.valueOf(itemQuantity))
-        contracts.find { it.contractId == contractId }
-            ?.sumTotalPrice(totalPrice)
+        totalPrice = itemValue.multiply(BigDecimal.valueOf(contractedQuantity))
+        contract.sumTotalPrice(totalPrice)
     }
 
 }

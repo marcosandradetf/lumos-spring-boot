@@ -12,17 +12,21 @@ import {ContractService} from '../../services/contract.service';
 import {EstoqueService} from '../../../stock/services/estoque.service';
 import {IbgeService} from '../../../core/service/ibge.service';
 import {catchError, tap, throwError} from 'rxjs';
+import {UtilsService} from '../../../core/service/utils.service';
+import {ScreenMessageComponent} from '../../../shared/components/screen-message/screen-message.component';
+import {ModalComponent} from '../../../shared/components/modal/modal.component';
 
 
 @Component({
   selector: 'app-create',
   standalone: true,
   imports: [
-    SidebarComponent,
     FormsModule,
     NgIf,
     NgForOf,
-    NgClass
+    NgClass,
+    ScreenMessageComponent,
+    ModalComponent
   ],
   templateUrl: './create.component.html',
   styleUrl: './create.component.scss'
@@ -39,129 +43,38 @@ export class CreateComponent {
     qtde: [],
     valor: []
   }
-  allItens: ItemRequest[] = [];
-  itensRequest: ItemRequest[] = [];
-  formSubmitted: boolean = false;
-  almoxarifados: Deposit[] = [];
-  tipos: Type[] = [];
-  ufs: ufRequest[] = [];
-  cities: citiesRequest[] = [];
-  private searchFilter: string = '';
-  private almoxarifadoFilter: string = '';
-  private typeFilter: string = '';
-  selectedRegion: string = '';
-  currentPage: string = "0";
-  totalPages: number = 0;
-  pages: number[] = [];
 
-  constructor(protected contractService: ContractService,
-              private estoqueService: EstoqueService,
-              private ibgeService: IbgeService,) {
+  items: {
+    id: number;
+    type: string;
+    length: string;
+    power: string;
+    quantity: number;
+    price: string;
+    services: [];
+  }[] = []
+  totalValue: string = "0,00";
+  totalItems: number = 0;
+  removingIndex: number | null = null;
+  changeValue: boolean = false;
 
-    this.loadItens(this.currentPage);
-
-    this.estoqueService.getDeposits().subscribe((almoxarifados: Deposit[]) => {
-      this.almoxarifados = almoxarifados;
-    });
-    this.estoqueService.getTypes().subscribe((tipos: Type[]) => {
-      this.tipos = tipos;
-    });
-
-    this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {
-      this.ufs = ufs;
-    });
-  }
-
-  getCities(uf: string) {
-    this.ibgeService.getCities(uf).subscribe(cities => {
-      this.cities = cities;
-    })
-  }
-
-  // Busca a cidade completa e atualiza a região
-  updateRegion(selectedCityName: string): void {
-    const selectedCity = this.cities.find(city => city.nome === selectedCityName);
-    this.selectedRegion = selectedCity ? selectedCity.microrregiao.nome : '';
-  }
-
-  filterType(value: string) {
-    this.typeFilter = value.toLowerCase();
-    this.applyCombinedFilters();
-  }
-
-  // Atualiza o filtro de pesquisa e aplica os filtros combinados
-  filterSearch(value: string): void {
-    this.searchFilter = value.toLowerCase(); // Armazena o filtro de pesquisa
-    this.applyCombinedFilters(); // Aplica ambos os filtros
-  }
-
-// Atualiza o filtro de almoxarifado e aplica os filtros combinados
-  filterAlmoxarifado(value: string): void {
-    this.almoxarifadoFilter = value.toLowerCase(); // Armazena o filtro de almoxarifado
-    this.applyCombinedFilters(); // Aplica ambos os filtros
-  }
-
-// Aplica os filtros combinados (almoxarifado e pesquisa)
-  applyCombinedFilters(): void {
-    this.itensRequest = this.allItens.filter(item => {
-      const matchesAlmoxarifado = this.almoxarifadoFilter
-        ? item.almoxarifado.toLowerCase() === this.almoxarifadoFilter
-        : true; // Retorna true se não houver filtro de almoxarifado
-
-      const matchesSearch = this.searchFilter
-        ? item.nomeMaterial.toLowerCase().includes(this.searchFilter) ||
-        item.marcaMaterial.toLowerCase().includes(this.searchFilter)
-        : true; // Retorna true se não houver filtro de pesquisa
-
-      const matchesType = this.typeFilter
-        ? item.tipoMaterial.toLowerCase().includes(this.typeFilter)
-        : true;
-
-      return matchesAlmoxarifado && matchesSearch && matchesType; // Retorna apenas se ambos os filtros corresponderem
-    });
-  }
-
-  toggleSelection(item: ItemRequest) {
-    // Atualiza os arrays de `idMaterial`, `qtde` e `valor` com base no status do checkbox
-    if (item.selected) {
-      this.contract.idMaterial.push(item.idMaterial);
-      this.contract.qtde.push(item.qtdeEstoque || 0);
-      this.contract.valor.push(item.valor);
-    } else {
-      const index = this.contract.idMaterial.indexOf(item.idMaterial);
-      if (index !== -1) {
-        this.contract.idMaterial.splice(index, 1);
-        this.contract.qtde.splice(index, 1);
-        this.contract.valor.splice(index, 1);
+  constructor(protected contractService: ContractService, protected utils: UtilsService) {
+    this.contractService.getItems().subscribe(
+      items => {
+        this.items = items;
       }
-    }
+    )
   }
+
 
   submitContrato(form: any) {
-    this.formSubmitted = true;
 
     if (form.invalid) {
       console.log('Formulário inválido');
       return;
     }
 
-    // Prepara o contrato para envio ao backend
-    const contratoRequest: Contract = {
-      ...this.contract,
-      idMaterial: this.contract.idMaterial.filter((_, i) => this.itensRequest[i].selected),
-      qtde: this.contract.qtde.filter((_, i) => this.itensRequest[i].selected),
-      valor: this.contract.valor.filter((_, i) => this.itensRequest[i].selected)
-    };
 
-    this.contractService.createContract(contratoRequest).pipe(
-      tap(response => {
-        console.log(response);
-      }),
-      catchError(err => {
-        console.log(err);
-        return throwError(() => err);
-      })
-    ).subscribe()
   }
 
 
@@ -189,11 +102,31 @@ export class CreateComponent {
     (event.target as HTMLInputElement).value = formattedValue; // Exibe o valor formatado no campo de input
   }
 
-  private loadItens(page: string) {
-    this.contractService.getAllItens(page, "20")
-      .subscribe(response => {
-      this.allItens = response.content.filter(i => !i.inactive); // Armazena todos os itens recebidos
-      this.itensRequest.filter(item => item.almoxarifado === '');
-    });
+
+  searchItem(value: string) {
+
+  }
+
+  addItem(
+    item: { id: number; type: string; length: string; power: string; quantity: number; price: string; services: [] }
+    , index: number) {
+    if (item.price === '0,00' || item.quantity === 0) {
+      this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", true);
+      return;
+    }
+
+
+
+    this.removingIndex = index;
+    this.changeValue = true;
+    // Aguarda a animação antes de remover o item
+    setTimeout(() => {
+      this.items = this.items.filter(i => i.id !== item.id);
+      this.totalValue = this.utils.sumValue(this.totalValue, this.utils.multiplyValue(item.price, item.quantity));
+      this.totalItems += item.quantity;
+      this.removingIndex = null;
+      this.changeValue = false;
+    }, 900); // Tempo igual à transição no CSS
+
   }
 }
