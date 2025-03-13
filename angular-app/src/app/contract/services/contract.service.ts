@@ -25,7 +25,12 @@ export class ContractService {
       power: string;
       quantity: number;
       price: string;
-      services: [];
+      services: {
+        id: number;
+        name: string;
+        quantity: number;
+        price: string;
+      }[];
     }[]>(this.endpoint + "/get-items");
   }
 

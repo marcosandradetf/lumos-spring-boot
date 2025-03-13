@@ -1,20 +1,11 @@
 import {Component} from '@angular/core';
-import {SidebarComponent} from '../../../shared/components/sidebar/sidebar.component';
 import {FormsModule} from '@angular/forms';
-import {NgClass, NgForOf, NgIf} from '@angular/common';
-import {Contract} from '../../contract-response.dto';
-import {ItemRequest} from '../../itens-request.dto';
-import {Deposit} from '../../../models/almoxarifado.model';
-import {Type} from '../../../models/tipo.model';
-import {ufRequest} from '../../../core/uf-request.dto';
-import {citiesRequest} from '../../../core/cities-request.dto';
+import { NgForOf, NgIf} from '@angular/common';
 import {ContractService} from '../../services/contract.service';
-import {EstoqueService} from '../../../stock/services/estoque.service';
-import {IbgeService} from '../../../core/service/ibge.service';
-import {catchError, tap, throwError} from 'rxjs';
 import {UtilsService} from '../../../core/service/utils.service';
 import {ScreenMessageComponent} from '../../../shared/components/screen-message/screen-message.component';
 import {ModalComponent} from '../../../shared/components/modal/modal.component';
+import {TableComponent} from '../../../shared/components/table/table.component';
 
 
 @Component({
@@ -24,24 +15,37 @@ import {ModalComponent} from '../../../shared/components/modal/modal.component';
     FormsModule,
     NgIf,
     NgForOf,
-    NgClass,
     ScreenMessageComponent,
-    ModalComponent
+    ModalComponent,
+    TableComponent
   ],
   templateUrl: './create.component.html',
   styleUrl: './create.component.scss'
 })
 export class CreateComponent {
 
-  contract: Contract = {
-    numeroContrato: '',
-    contratante: '',
-    city: '',
-    uf: '',
-    region: '',
-    idMaterial: [],
-    qtde: [],
-    valor: []
+  contract: {
+    number: string,
+    socialReason: string,
+    address: string,
+    phone: string,
+    cnpj: string,
+    items: {
+      id: number;
+      type: string;
+      length: string;
+      power: string;
+      quantity: number;
+      price: string;
+      services: [];
+    }[]
+  } = {
+    number: '',
+    socialReason: '',
+    address: '',
+    phone: '',
+    cnpj: '',
+    items: []
   }
 
   items: {
@@ -51,12 +55,19 @@ export class CreateComponent {
     power: string;
     quantity: number;
     price: string;
-    services: [];
-  }[] = []
+    services: {
+      id: number;
+      name: string;
+      quantity: number;
+      price: string;
+    }[];
+  }[] = [];
+
   totalValue: string = "0,00";
   totalItems: number = 0;
   removingIndex: number | null = null;
   changeValue: boolean = false;
+  openModal: boolean = false;
 
   constructor(protected contractService: ContractService, protected utils: UtilsService) {
     this.contractService.getItems().subscribe(
@@ -84,7 +95,7 @@ export class CreateComponent {
 
     // Verifica se targetValue está vazio e define um valor padrão
     if (!targetValue) {
-      this.contract.valor[index] = ''; // ou "0,00" se preferir
+      // this.items[index].price = ''; // ou "0,00" se preferir
       (event.target as HTMLInputElement).value = ''; // Atualiza o valor no campo de input
       return;
     }
@@ -98,7 +109,7 @@ export class CreateComponent {
     }).format(parseFloat(targetValue) / 100);
 
     // Atualiza o valor no modelo e no campo de input
-    this.contract.valor[index] = formattedValue;
+    // this.contract.valor[index] = formattedValue;
     (event.target as HTMLInputElement).value = formattedValue; // Exibe o valor formatado no campo de input
   }
 
@@ -108,7 +119,15 @@ export class CreateComponent {
   }
 
   addItem(
-    item: { id: number; type: string; length: string; power: string; quantity: number; price: string; services: [] }
+    item: {
+      id: number;
+      type: string;
+      length: string;
+      power: string;
+      quantity: number;
+      price: string;
+      services: { id: number; name: string; quantity: number; price: string }[]
+    }
     , index: number) {
     if (item.price === '0,00' || item.quantity === 0) {
       this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", true);
@@ -127,6 +146,21 @@ export class CreateComponent {
       this.removingIndex = null;
       this.changeValue = false;
     }, 900); // Tempo igual à transição no CSS
+    this.contract.items.push(item);
 
+  }
+
+  protected readonly open = open;
+  showItems: boolean = false;
+
+
+  removingIndexContract: number | null = null;
+  removeItem(ci: {id: number; type: string; length: string; power: string; quantity: number; price: string; services: []}, index: number) {
+    this.removingIndexContract = index;
+    setTimeout(() => {
+      this.removingIndexContract = null;
+      this.items.push(ci);
+      this.contract.items = this.contract.items.filter(i => i.id !== ci.id);
+    }, 900); // Tempo igual à transição no CSS
   }
 }

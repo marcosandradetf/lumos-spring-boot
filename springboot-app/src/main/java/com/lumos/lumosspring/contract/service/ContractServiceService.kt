@@ -32,12 +32,13 @@ class ContractServiceService(
         val contractItemsResponse = mutableListOf<ContractItemsDTO>()
 
         // Pega todos os materiais, excluindo "PARAFUSO" e "CONECTOR"
-        materials.addAll(materialRepository.findAllMaterialsExcludingScrewAndConnector())
+        materials.addAll(materialRepository.findAllMaterialsExcludingScrewStrapAndConnector())
 
         // Pega um material de cada tipo "PARAFUSO" e "CONECTOR"
-        materials.addAll(materialRepository.findOneScrewAndConnector())
-
-        for (material in materials) {
+        materials.addAll(materialRepository.findOneScrewStrapAndConnector())
+        var bLed = false
+        var bArm = false
+        for (material in materials.sortedWith(compareBy({ it.materialName }, { extractNumber(it.materialLength) }, {extractNumber(it.materialPower)}))) {
             contractItemsResponse.add(
                 ContractItemsDTO(
                     material.idMaterial,
@@ -46,20 +47,38 @@ class ContractServiceService(
                     material.materialPower?.uppercase(),
                     0.0,
                     "0,00",
-                    material.materialServices?.map {
-                        ContractServicesDTO(
-                            it.serviceId,
-                            it.serviceName,
-                            0.0,
-                            "0,00"
-                        )
-                    }
+                    if (material.materialType.typeName.uppercase() == "LED" && !bLed) {
+                        bLed = true
+                        material.materialServices?.map {
+                            ContractServicesDTO(
+                                it.serviceId,
+                                it.serviceName,
+                                0.0,
+                                "0,00"
+                            )
+                        }
+                    } else if (material.materialType.typeName.uppercase() == "BRAÇO" && !bArm) {
+                        bArm = true
+                        material.materialServices?.map {
+                            ContractServicesDTO(
+                                it.serviceId,
+                                it.serviceName,
+                                0.0,
+                                "0,00"
+                            )
+                        }
+                    } else null
                 )
             )
         }
 
         return ResponseEntity.ok().body(contractItemsResponse)
     }
+
+    private fun extractNumber(value: String?): Double {
+        return value?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: 0.0
+    }
+
 
     fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         val contract = Contract().apply {
