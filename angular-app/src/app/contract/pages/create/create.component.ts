@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import { NgForOf, NgIf} from '@angular/common';
+import {NgForOf, NgIf} from '@angular/common';
 import {ContractService} from '../../services/contract.service';
 import {UtilsService} from '../../../core/service/utils.service';
 import {ScreenMessageComponent} from '../../../shared/components/screen-message/screen-message.component';
@@ -31,16 +31,11 @@ export class CreateComponent {
     phone: string,
     cnpj: string,
     items: {
-      id: number;
+      contractReferenceItemId: number;
+      description: string;
+      completeDescription: string;
       type: string;
-      length: string;
-      power: string;
-      quantity: number;
-      price: string;
-    }[],
-    services: {
-      id: number;
-      name: string;
+      linking: string;
       quantity: number;
       price: string;
     }[]
@@ -51,22 +46,16 @@ export class CreateComponent {
     phone: '',
     cnpj: '',
     items: [],
-    services: []
   }
 
   items: {
-    id: number;
+    contractReferenceItemId: number;
+    description: string;
+    completeDescription: string;
     type: string;
-    length: string;
-    power: string;
+    linking: string;
     quantity: number;
     price: string;
-    services: {
-      id: number;
-      name: string;
-      quantity: number;
-      price: string;
-    }[];
   }[] = [];
 
   totalValue: string = "0,00";
@@ -74,28 +63,11 @@ export class CreateComponent {
   removingIndex: number | null = null;
   changeValue: boolean = false;
   openModal: boolean = false;
-  services: { id: number; name: string; quantity: number; price: string; type: string }[] = [];
 
   constructor(protected contractService: ContractService, protected utils: UtilsService) {
     this.contractService.getItems().subscribe(
       items => {
         this.items = items;
-        items.forEach(item => {
-          if (item.services !== null) {
-            item.services.forEach(s => {
-              this.services.push(
-                {
-                  id: s.id,
-                  name: s.name,
-                  quantity: s.quantity,
-                  price: s.price,
-                  type: item.type
-                }
-              );
-            })
-            console.log(item.services)
-          }
-        })
       }
     )
   }
@@ -143,13 +115,13 @@ export class CreateComponent {
 
   addItem(
     item: {
-      id: number;
+      contractReferenceItemId: number;
+      description: string;
+      completeDescription: string;
       type: string;
-      length: string;
-      power: string;
+      linking: string;
       quantity: number;
       price: string;
-      services: { id: number; name: string; quantity: number; price: string }[]
     }
     , index: number) {
     if (item.price === '0,00' || item.quantity === 0) {
@@ -157,13 +129,11 @@ export class CreateComponent {
       return;
     }
 
-
-
     this.removingIndex = index;
     this.changeValue = true;
     // Aguarda a animação antes de remover o item
     setTimeout(() => {
-      this.items = this.items.filter(i => i.id !== item.id);
+      this.items = this.items.filter(i => i.contractReferenceItemId !== item.contractReferenceItemId);
       this.totalValue = this.utils.sumValue(this.totalValue, this.utils.multiplyValue(item.price, item.quantity));
       this.totalItems += 1;
       this.removingIndex = null;
@@ -173,75 +143,42 @@ export class CreateComponent {
 
   }
 
-  addService(
-      service: { id: number; name: string; quantity: number; price: string },
-      index: number) {
-    if (service.price === '0,00' || service.quantity === 0) {
-      this.utils.showMessage("Para adicionar este serviço preencha o valor.", true);
-      return;
-    }
-
-
-
-    this.removingIndex = index;
-    this.changeValue = true;
-    // Aguarda a animação antes de remover o item
-    setTimeout(() => {
-      this.services = this.services.filter(s => s.id !== service.id);
-      this.totalValue = this.utils.sumValue(this.totalValue, this.utils.multiplyValue(service.price, service.quantity));
-      this.totalItems += 1;
-      this.removingIndex = null;
-      this.changeValue = false;
-    }, 900); // Tempo igual à transição no CSS
-    this.contract.services.push(service);
-
-  }
-
   protected readonly open = open;
   showItems: boolean = false;
 
-
   removingIndexContract: number | null = null;
 
-  removeItem(ci: {
-    id: number;
+  removeItem(item: {
+    contractReferenceItemId: number;
+    description: string;
+    completeDescription: string;
     type: string;
-    length: string;
-    power: string;
+    linking: string;
     quantity: number;
-    price: string
+    price: string;
   }, index: number) {
+
     this.removingIndexContract = index;
-    const item = {
-      id: ci.id,
-      type: ci.type,
-      length: ci.length,
-      power: ci.power,
-      quantity: ci.quantity,
-      price: ci.price,
-      services: []
-    };
     setTimeout(() => {
       this.removingIndexContract = null;
       this.items.push(item);
-      this.contract.items = this.contract.items.filter(i => i.id !== ci.id);
-    }, 900); // Tempo igual à transição no CSS
-  }
-  removeService(service: {id: number; name: string; quantity: number; price: string; type: string}, index: number) {
-    this.removingIndexContract = index;
-    setTimeout(() => {
-      this.removingIndexContract = null;
-      this.services.push(service);
-      this.contract.services = this.contract.services.filter(s => s.id !== service.id);
+      this.contract.items = this.contract.items.filter(i => i.contractReferenceItemId !== item.contractReferenceItemId);
     }, 900); // Tempo igual à transição no CSS
   }
 
-  setServiceQuantity(item: {id: number; type: string; length: string; power: string; quantity: number; price: string; services: {id: number; name: string; quantity: number; price: string}[]}) {
-    this.services.filter(s => s.type = item.type)
+
+  setServiceQuantity(item: {
+    contractReferenceItemId: number;
+    description: string;
+    completeDescription: string;
+    type: string;
+    linking: string;
+    quantity: number;
+    price: string;
+  }) {
+    this.items.filter(s => s.type === item.type && s.description.includes('SERVIÇO'))
       .forEach((i) => {
-        console.log(item.type)
-        console.log(i)
-        i.quantity = item.quantity;
+        i.quantity += item.quantity;
       });
   }
 }

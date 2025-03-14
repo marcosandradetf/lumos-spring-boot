@@ -19,18 +19,13 @@ export class ContractService {
 
   getItems(){
     return this.http.get<{
-      id: number;
+      contractReferenceItemId: number;
+      description: string;
+      completeDescription: string;
       type: string;
-      length: string;
-      power: string;
+      linking: string;
       quantity: number;
       price: string;
-      services: {
-        id: number;
-        name: string;
-        quantity: number;
-        price: string;
-      }[];
     }[]>(this.endpoint + "/get-items");
   }
 

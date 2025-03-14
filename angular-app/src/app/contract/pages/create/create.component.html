@@ -169,30 +169,7 @@
                     </span>
                   </td>
 
-                  <td *ngIf="item.type === 'POSTE'">POSTE ORNAMENTAL FORNECIMENTO E INSTALAÇÃO DE POSTE ORNAMENTAL
-                    GALVANIZADO 8 M LIVRE, 4 PARA 3 1/2 COM SUPORTE PARA (03) TRÊS LUMINÁRIAS PUBLICA DE LED 100W,
-                    CERTIFICADA
-                    INMETRO – PORTARIA 20, INCLUINDO, MÃO DE OBRA ESPECIALIZADA, COM EQUIPAMENTOS DE SEGURANÇA
-                    INDIVIDUAL (EPI), EQUIPAMENTOS DE SEGURANÇA COLETIVA (EPC) E TODO MATERIAL NECESSARIO PARA
-                    REALIZAÇÃO DO SERVIÇO, ASSENTAMENTO E CAIXA DE PASSAGEM.
-                  </td>
-                  <td *ngIf="item.type === 'PARAFUSO'">PARAFUSOS DE FIXAÇÃO DAS CINTAS E BRAÇOS</td>
-                  <td *ngIf="item.type === 'CONECTOR'">CONECTOR PERFURANTE DERIVAÇÃO 10-35MM² TIPO CDP70</td>
-                  <td *ngIf="item.type === 'RELÉ'">RELÉ FOTOELETRONICO1000W 105-305V</td>
-                  <td *ngIf="item.type === 'CINTA'">CINTAS PARA FIXAÇÃO DE BRAÇOS</td>
-                  <td *ngIf="item.length === '1,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 1,5M</td>
-                  <td *ngIf="item.length === '3,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 3,6M</td>
-                  <td *ngIf="item.length === '2,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 2,5M</td>
-                  <td *ngIf="item.type === 'CABO'">CABO 1,5MM</td>
-                  <td *ngIf="item.power === '50W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 50W</td>
-                  <td *ngIf="item.power === '60W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 60W</td>
-                  <td *ngIf="item.power === '70W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 70W</td>
-                  <td *ngIf="item.power === '80W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 80W</td>
-                  <td *ngIf="item.power === '100W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 100W</td>
-                  <td *ngIf="item.power === '110W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 110W</td>
-                  <td *ngIf="item.power === '120W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 120W</td>
-                  <td *ngIf="item.power === '150W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 150W</td>
-                  <td *ngIf="item.power === '200W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 200W</td>
+                  <td>{{item.description}}</td>
                   <td>
                     <input
                       type="text"
@@ -213,6 +190,7 @@
                       type="number"
                       placeholder="Ex.: 2"
                       [(ngModel)]="item.quantity"
+                      [disabled]="item.description.includes('SERVIÇO')"
                       (blur)="setServiceQuantity(item)"
                       name="quantity{{i}}"
                       #ngQtde='ngModel'
@@ -241,34 +219,6 @@
                   <!--                    </div>-->
                   <!--                  </td>-->
                 </tr>
-                <tr *ngFor="let service of services; let i = index" [class.fade-out]="removingIndex === i">
-                    <td>
-                      <span
-                        class="material-icons btn btn-neutral transition-transform transform hover:scale-110 active:rotate-90"
-                        (click)="addService(service, i)">
-                        add
-                      </span>
-                    </td>
-                    <td>{{ service.name }}</td>
-                    <td>
-                      <input
-                        type="text"
-                        (input)="formatValue($event, i)"
-                        placeholder="R$"
-                        [(ngModel)]="service.price"
-                        name="sp{{i}}"
-                        #sp="ngModel"
-                        required
-                      />
-                      <div *ngIf="sp.invalid && myForm.submitted">
-                        <small *ngIf="sp.errors?.['required']" class="text-red-600">Preenchimento
-                          obrigatório.</small>
-                      </div>
-                    </td>
-                    <td>
-                      {{service.quantity}}
-                    </td>
-                  </tr>
                 </tbody>
               </table>
 
@@ -310,46 +260,9 @@
       </tr>
       <tr body *ngFor="let item of contract.items; let i = index" [class.fade-out]="removingIndexContract === i">
         <td class="material-icons btn btn-error" (click)="removeItem(item, i)">remove</td>
-
-        <td *ngIf="item.type === 'POSTE'">POSTE ORNAMENTAL FORNECIMENTO E INSTALAÇÃO DE POSTE ORNAMENTAL
-          GALVANIZADO 8 M LIVRE, 4 PARA 3 1/2 COM SUPORTE PARA (03) TRÊS LUMINÁRIAS PUBLICA DE LED 100W,
-          CERTIFICADA
-          INMETRO – PORTARIA 20, INCLUINDO, MÃO DE OBRA ESPECIALIZADA, COM EQUIPAMENTOS DE SEGURANÇA
-          INDIVIDUAL (EPI), EQUIPAMENTOS DE SEGURANÇA COLETIVA (EPC) E TODO MATERIAL NECESSARIO PARA
-          REALIZAÇÃO DO SERVIÇO, ASSENTAMENTO E CAIXA DE PASSAGEM.
-        </td>
-        <td *ngIf="item.type === 'PARAFUSO'">PARAFUSOS DE FIXAÇÃO DAS CINTAS E BRAÇOS</td>
-        <td *ngIf="item.type === 'CONECTOR'">CONECTOR PERFURANTE DERIVAÇÃO 10-35MM² TIPO CDP70</td>
-        <td *ngIf="item.type === 'RELÉ'">RELÉ FOTOELETRONICO1000W 105-305V</td>
-        <td *ngIf="item.type === 'CINTA'">CINTAS PARA FIXAÇÃO DE BRAÇOS</td>
-        <td *ngIf="item.length === '1,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 1,5M</td>
-        <td *ngIf="item.length === '3,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 3,6M</td>
-        <td *ngIf="item.length === '2,5M'">BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 2,5M</td>
-        <td *ngIf="item.type === 'CABO'">CABO 1,5MM</td>
-        <td *ngIf="item.power === '50W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 50W</td>
-        <td *ngIf="item.power === '60W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 60W</td>
-        <td *ngIf="item.power === '70W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 70W</td>
-        <td *ngIf="item.power === '80W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 80W</td>
-        <td *ngIf="item.power === '100W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 100W</td>
-        <td *ngIf="item.power === '110W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 110W</td>
-        <td *ngIf="item.power === '120W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 120W</td>
-        <td *ngIf="item.power === '150W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 150W</td>
-        <td *ngIf="item.power === '200W'">LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 200W</td>
-      </tr>
-      <tr body *ngFor="let s of services; let i = index" [class.fade-out]="removingIndexContract === i">
-        <td class="material-icons btn btn-error" (click)="removeService(s, i)">remove</td>
-        <td>{{s.name }}</td>
-        <td>{{ s.price }}</td>
-        <td>
-          <input
-            disabled
-            type="number"
-            placeholder="Ex.: 2"
-            [(ngModel)]="s.quantity"
-            name="quantity{{i}}"
-            required
-          />
-        </td>
+        <td>{{item.description}}</td>
+        <td>{{item.price}}</td>
+        <td>{{item.quantity}}</td>
       </tr>
     </app-table>
   </app-modal>

@@ -19,7 +19,7 @@ class Contract {
     var contractValue : BigDecimal = BigDecimal.ZERO;
 
     @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    var contractItems: Set<ContractItem> = hashSetOf()
+    var contractItemQuantitatives: Set<ContractItemsQuantitative> = hashSetOf()
 
     fun sumTotalPrice(totalPrice: BigDecimal?) {
         this.contractValue = this.contractValue.add(totalPrice)

@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.contract.controller.dto
+package com.lumos.lumosspring.contract.dto
 
 import java.math.BigDecimal
 

@@ -8,6 +8,7 @@ import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
 import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
+import com.lumos.lumosspring.util.Util;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,8 +34,9 @@ public class MaterialService {
     private final CompanyRepository companyRepository;
     private final TypeRepository typeRepository;
     private final MaterialRepository materialRepository;
+    private final Util util;
 
-    public MaterialService(MaterialStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository, MaterialRepository materialRepository) {
+    public MaterialService(MaterialStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository, MaterialRepository materialRepository, Util util) {
 
         this.materialStockRepository = materialStockRepository;
         this.userRepository = userRepository;
@@ -43,6 +46,7 @@ public class MaterialService {
         this.companyRepository = companyRepository;
         this.typeRepository = typeRepository;
         this.materialRepository = materialRepository;
+        this.util = util;
     }
 
     public Page<MaterialStock> findAll(int page, int size) {
@@ -245,6 +249,12 @@ public class MaterialService {
     public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
         var materials = materialRepository.getMaterialsForInstallation();
         List<MaterialDTOMob> materialsDTO = new ArrayList<>();
+
+        materials.sort(Comparator
+                .comparing(Material::getMaterialName)
+                .thenComparing(m -> util.extractNumber(m.getMaterialLength()))
+                .thenComparing(m -> util.extractNumber(m.getMaterialPower()))
+        );
 
         for (Material m : materials) {
             materialsDTO.add(new MaterialDTOMob(
