@@ -24,6 +24,7 @@ export class ContractService {
       completeDescription: string;
       type: string;
       linking: string;
+      itemDependency: string;
       quantity: number;
       price: string;
     }[]>(this.endpoint + "/get-items");

@@ -36,6 +36,7 @@ export class CreateComponent {
       completeDescription: string;
       type: string;
       linking: string;
+      itemDependency: string;
       quantity: number;
       price: string;
     }[]
@@ -54,6 +55,7 @@ export class CreateComponent {
     completeDescription: string;
     type: string;
     linking: string;
+    itemDependency: string;
     quantity: number;
     price: string;
   }[] = [];
@@ -120,6 +122,7 @@ export class CreateComponent {
       completeDescription: string;
       type: string;
       linking: string;
+      itemDependency: string;
       quantity: number;
       price: string;
     }
@@ -154,6 +157,7 @@ export class CreateComponent {
     completeDescription: string;
     type: string;
     linking: string;
+    itemDependency: string;
     quantity: number;
     price: string;
   }, index: number) {
@@ -173,12 +177,20 @@ export class CreateComponent {
     completeDescription: string;
     type: string;
     linking: string;
+    itemDependency: string;
     quantity: number;
     price: string;
   }) {
-    this.items.filter(s => s.type === item.type && s.description.includes('SERVIÇO'))
-      .forEach((i) => {
-        i.quantity += item.quantity;
-      });
+    const quantity = this.items
+      .filter(s => s.type === item.type && !s.description.includes("SERVIÇO"))
+      .reduce((sum, i) => sum + i.quantity, 0);
+
+    this.items
+      .filter(s => (s.itemDependency === item.type))
+      .forEach(i => i.quantity = quantity);
+  }
+
+  removeLeadingZeros(input: HTMLInputElement) {
+    input.value = input.value.replace(/^0+/, '');
   }
 }

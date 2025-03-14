@@ -2,13 +2,9 @@ package com.lumos.lumosspring.contract.service
 
 import com.lumos.lumosspring.contract.dto.ContractDTO
 import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
-import com.lumos.lumosspring.contract.entities.Contract
-import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative
-import com.lumos.lumosspring.contract.entities.ContractReferenceItem
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
-import com.lumos.lumosspring.stock.repository.MaterialRepository
 import com.lumos.lumosspring.stock.repository.MaterialServiceRepository
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.Util
@@ -35,6 +31,9 @@ class ContractService(
                 item.completeDescription,
                 item.type,
                 item.linking,
+                item.itemDependency,
+                0.0,
+                "0,00"
             ))
         }
 

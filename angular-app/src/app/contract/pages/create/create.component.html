@@ -189,8 +189,11 @@
                     <input
                       type="number"
                       placeholder="Ex.: 2"
+                      #inputField
+                      (input)="removeLeadingZeros(inputField)"
                       [(ngModel)]="item.quantity"
-                      [disabled]="item.description.includes('SERVIÇO')"
+                      [disabled]="item.description.includes('SERVIÇO') || item.type === 'RELÉ'"
+                      [title]="item.description.includes('SERVIÇO') || item.type === 'RELÉ' ? 'A quantitade será definida automaticamente para este item' : ''"
                       (blur)="setServiceQuantity(item)"
                       name="quantity{{i}}"
                       #ngQtde='ngModel'

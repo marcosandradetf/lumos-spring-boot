@@ -131,6 +131,8 @@ FROM (VALUES ('SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED', 'SERVIÇO DE INST
 WHERE NOT EXISTS (SELECT 1
                   FROM tb_contract_reference_items);
 
+-- adicionar relacionamentos de itens -> importante
+
 -- Criação da tabela
 CREATE TABLE IF NOT EXISTS tb_version_control
 (

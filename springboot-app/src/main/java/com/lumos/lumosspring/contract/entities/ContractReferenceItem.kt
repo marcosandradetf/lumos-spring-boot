@@ -1,8 +1,6 @@
 package com.lumos.lumosspring.contract.entities
 
-import com.lumos.lumosspring.stock.entities.MaterialService
 import jakarta.persistence.*
-import java.math.BigDecimal
 import java.util.HashSet
 
 @Entity
@@ -16,6 +14,7 @@ class ContractReferenceItem {
     var completeDescription : String? = null
     var type : String? = null
     var linking : String? = null
+    var itemDependency : String? = null
 
     @OneToMany(mappedBy = "referenceItem", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var contractsItems: MutableSet<ContractItemsQuantitative> = HashSet()

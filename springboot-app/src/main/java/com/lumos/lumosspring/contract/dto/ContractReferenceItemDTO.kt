@@ -8,4 +8,7 @@ data class ContractReferenceItemDTO(
     var completeDescription : String?,
     var type : String?,
     var linking : String?,
+    var itemDependency : String?,
+    var quantity : Double?,
+    var price : String?,
 )
