@@ -14,6 +14,8 @@ public class Company {
     private Long idCompany;
     @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String companyName;
+    private String bucketFileName;
+
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

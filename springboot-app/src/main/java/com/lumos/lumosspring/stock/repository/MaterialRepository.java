@@ -12,7 +12,7 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     @Query("SELECT m FROM Material m " +
             "INNER JOIN m.materialType mt " +
-            "WHERE UPPER(mt.typeName) IN ('LED', 'CINTA', 'PARAFUSO', 'CONECTOR', 'POSTE') " +
+            "WHERE UPPER(mt.typeName) IN ('LED', 'CINTA', 'PARAFUSO', 'CONECTOR', 'POSTE', 'REFLETOR') " +
             "OR UPPER(mt.typeName) LIKE('BRA%')" +
             "ORDER BY mt.typeName, " +
             "CAST(FUNCTION('REGEXP_REPLACE', m.materialPower, '[^0-9]+', '', 'g') AS integer), " +

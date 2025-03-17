@@ -1,4 +1,4 @@
-<div class="flex mt-[3rem] h-fit" #top>
+<div class="flex mt-[3rem] h-fit" #top xmlns="http://www.w3.org/1999/html">
   <div class="w-full">
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
@@ -11,31 +11,12 @@
       <h3 class="text-medium pr-5 hidden lg:block">Novo Contrato</h3>
     </div>
 
-    <div class="border-b w-full pl-2 flex">
+    <div class="border-b w-full pl-2 flex pb-4" #contractData>
       <form
-        #myForm="ngForm" (ngSubmit)="submitContrato(myForm)"
-        class="p-2 flex flex-col">
+        #myForm="ngForm" (ngSubmit)="submitContrato(myForm, contractData, contractItems)"
+        class="p-2 flex flex-col w-full">
         <div class="flex justify-between">
-          <p class="select-none lower-text text-orange-700">Informe os dados do contrato e os itens</p>
-
-          <div
-            class="absolute border shadow rounded p-4 right-5 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2"
-            (click)="contract.items.length > 0
-                  ? showItems = true : utils.showMessage('Para visualizar os itens, é necessário adicionar pelo menos um item. ', true)">
-            <div class="stats ">
-              <div class="stat overflow-hidden">
-                <div class="stat-title text-rose-900">Itens Adicionados</div>
-                <div class="stat-value text-rose-900" [class.animate-pulse]="changeValue">{{ totalItems }}</div>
-              </div>
-            </div>
-            <div class="stats">
-              <div class="stat overflow-hidden">
-                <div class="stat-title text-rose-900">Valor Total</div>
-                <div class="stat-value text-rose-900" [class.animate-pulse]="changeValue">R$ {{ totalValue }}</div>
-              </div>
-            </div>
-          </div>
-
+          <p class="select-none text-blue-700">Informe os dados do contrato</p>
         </div>
 
         <div class="flex space-x-4 flex-wrap mt-5 w-[70%]">
@@ -43,16 +24,17 @@
             <div class="label">
               <span class="label-text">N.º Contrato</span>
             </div>
-            <input type="number"
-                   name="nomeMaterial"
+            <input type="text"
+                   name="number"
                    class="input input-sm input-bordered w-full max-w-xs"
                    placeholder="Insira o Número"
                    required
                    [(ngModel)]="contract.number"
-                   #ngNumeroContrato="ngModel"/>
-            <div *ngIf="ngNumeroContrato.invalid && myForm.submitted ">
-              <div *ngIf="ngNumeroContrato.invalid && myForm.submitted">
-                <small *ngIf="ngNumeroContrato.errors?.['required']" class="text-red-600">Preenchimento
+                   (input)="utils.formatNumber($event)"
+                   #number="ngModel"/>
+            <div *ngIf="number.invalid && myForm.submitted ">
+              <div *ngIf="number.invalid && myForm.submitted">
+                <small *ngIf="number.errors?.['required']" class="text-red-600">Preenchimento
                   obrigatório.</small>
               </div>
             </div>
@@ -63,15 +45,15 @@
               <span class="label-text">Contratante</span>
             </div>
             <input type="text"
-                   name="nomeMaterial"
+                   name="socialReason"
                    class="input input-sm input-bordered w-full max-w-xs"
-                   placeholder="Cidade ou Prefeitura"
+                   placeholder="Ex. Prefeitura de Belo Horizonte"
                    required
                    [(ngModel)]="contract.socialReason"
-                   #ngContratante="ngModel"/>
-            <div *ngIf="ngContratante.invalid && myForm.submitted">
-              <div *ngIf="ngContratante.invalid && myForm.submitted">
-                <small *ngIf="ngContratante.errors?.['required']" class="text-red-600">Preenchimento
+                   #socialReason="ngModel"/>
+            <div *ngIf="socialReason.invalid && myForm.submitted">
+              <div *ngIf="socialReason.invalid && myForm.submitted">
+                <small *ngIf="socialReason.errors?.['required']" class="text-red-600">Preenchimento
                   obrigatório.</small>
               </div>
             </div>
@@ -79,18 +61,18 @@
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
-              <span class="label-text">Endereço</span>
+              <span class="label-text">Endereço da Contratante</span>
             </div>
             <input type="text"
-                   name="nomeMaterial"
+                   name="address"
                    class="input input-sm input-bordered w-full max-w-xs"
-                   placeholder="Cidade ou Prefeitura"
+                   placeholder="Endereço"
                    required
-                   [(ngModel)]="contract.socialReason"
-                   #ngContratante="ngModel"/>
-            <div *ngIf="ngContratante.invalid && myForm.submitted">
-              <div *ngIf="ngContratante.invalid && myForm.submitted">
-                <small *ngIf="ngContratante.errors?.['required']" class="text-red-600">Preenchimento
+                   [(ngModel)]="contract.address"
+                   #address="ngModel"/>
+            <div *ngIf="address.invalid && myForm.submitted">
+              <div *ngIf="address.invalid && myForm.submitted">
+                <small *ngIf="address.errors?.['required']" class="text-red-600">Preenchimento
                   obrigatório.</small>
               </div>
             </div>
@@ -98,176 +80,193 @@
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
-              <span class="label-text">Telefone</span>
+              <span class="label-text">Telefone da Contratante</span>
             </div>
             <input type="text"
                    name="nomeMaterial"
                    class="input input-sm input-bordered w-full max-w-xs"
-                   placeholder="Cidade ou Prefeitura"
+                   placeholder="(31) 99999-9999"
                    required
-                   [(ngModel)]="contract.socialReason"
-                   #ngContratante="ngModel"/>
-            <div *ngIf="ngContratante.invalid && myForm.submitted">
-              <div *ngIf="ngContratante.invalid && myForm.submitted">
-                <small *ngIf="ngContratante.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-              </div>
+                   (input)="utils.formatPhone($event)"
+                   minlength="14"
+                   maxlength="15"
+                   [(ngModel)]="contract.phone"
+                   #phone="ngModel"/>
+            <div *ngIf="phone.invalid && myForm.submitted">
+              <small *ngIf="phone.errors?.['required']" class="text-red-600">Preenchimento
+                obrigatório.</small>
+              <small *ngIf="phone.errors?.['minlength']" class="text-red-600">Telefone Inválido.</small>
             </div>
           </label>
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
-              <span class="label-text">CNPJ</span>
+              <span class="label-text">CNPJ da Contratante</span>
             </div>
             <input type="text"
-                   name="nomeMaterial"
+                   name="cnpj"
                    class="input input-sm input-bordered w-full max-w-xs"
-                   placeholder="Cidade ou Prefeitura"
+                   placeholder="99.997.090/0001-99"
+                   minlength="18"
+                   maxlength="18"
+                   (input)="utils.formatCNPJ($event)"
                    required
-                   [(ngModel)]="contract.socialReason"
-                   #ngContratante="ngModel"/>
-            <div *ngIf="ngContratante.invalid && myForm.submitted">
-              <div *ngIf="ngContratante.invalid && myForm.submitted">
-                <small *ngIf="ngContratante.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-              </div>
+                   [(ngModel)]="contract.cnpj"
+                   #cnpj="ngModel"/>
+            <div *ngIf="cnpj.invalid && myForm.submitted">
+              <small *ngIf="cnpj.errors?.['required']" class="text-red-600">Preenchimento
+                obrigatório.</small>
+              <small *ngIf="cnpj.errors?.['minlength']" class="text-red-600">CNPJ Inválido.</small>
             </div>
           </label>
+
+          <input type="file" class="file-input file-input-sm" accept=".pdf" #inputFile (change)="onFileChange($event)"/>
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
               <span class="label-text">Edital</span>
             </div>
-            <input type="file" class="file-input file-input-sm" accept=".pdf"/>
+            <span type="button" class="btn btn-outline btn-sm text-xs" (click)="inputFile.click()"><span class="material-icons"
+                                                                                             *ngIf="contract.edital.length === 0">cloud_upload</span>{{ textContent }}</span>
           </label>
 
-        </div>
-
-        <div class="mt-4">
-          <h4 class="poppins-regular select-none text-blue-700 mb-4">
-            Selecione os Itens do Contrato
-          </h4>
-
-          <div class="h-[calc(100vh-450px)] overflow-auto">
-            <div class="overflow-x-auto">
-              <table class="table table-auto table-xs">
-                <thead>
-                <tr>
-                  <th>Adicionar</th>
-                  <th>Descrição</th>
-                  <th class="w-96">Valor unitário*</th>
-                  <th>Quantidade*</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr *ngFor="let item of items; let i = index" [class.fade-out]="removingIndex === i">
-                  <td>
-                    <span
-                      class="material-icons btn btn-neutral transition-transform transform hover:scale-110 active:rotate-90"
-                      (click)="addItem(item, i)">
-                      add
-                    </span>
-                  </td>
-
-                  <td>{{item.description}}</td>
-                  <td>
-                    <input
-                      type="text"
-                      (input)="formatValue($event, i)"
-                      placeholder="R$"
-                      [(ngModel)]="item.price"
-                      name="price{{i}}"
-                      #ngValor="ngModel"
-                      required
-                    />
-                    <div *ngIf="ngValor.invalid && myForm.submitted">
-                      <small *ngIf="ngValor.errors?.['required']" class="text-red-600">Preenchimento
-                        obrigatório.</small>
-                    </div>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      placeholder="Ex.: 2"
-                      #inputField
-                      (input)="removeLeadingZeros(inputField)"
-                      [(ngModel)]="item.quantity"
-                      [disabled]="item.description.includes('SERVIÇO') || item.type === 'RELÉ'"
-                      [title]="item.description.includes('SERVIÇO') || item.type === 'RELÉ' ? 'A quantitade será definida automaticamente para este item' : ''"
-                      (blur)="setServiceQuantity(item)"
-                      name="quantity{{i}}"
-                      #ngQtde='ngModel'
-                      required
-                    />
-                    <div *ngIf="ngQtde.invalid && myForm.submitted">
-                      <small *ngIf="ngQtde.errors?.['required']" class="text-red-600">Preenchimento
-                        obrigatório.</small>
-                    </div>
-                  </td>
-
-                  <!--                  <td>-->
-                  <!--                    <input-->
-                  <!--                      type="number"-->
-                  <!--                      placeholder="Ex.: 2"-->
-                  <!--                      class="input input-bordered input-sm w-16"-->
-                  <!--                      [(ngModel)]="contract.qtde[i]"-->
-                  <!--                      name="qtde{{i}}"-->
-                  <!--                      [disabled]="!material.selected"-->
-                  <!--                      title="{{!material.selected ? 'Necessário selecionar o Item' : ''}}"-->
-                  <!--                      #ngQtde='ngModel'-->
-                  <!--                      required-->
-                  <!--                    />-->
-                  <!--                    <div *ngIf="ngQtde.invalid && myForm.submitted && material.selected">-->
-                  <!--                      <small *ngIf="ngQtde.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>-->
-                  <!--                    </div>-->
-                  <!--                  </td>-->
-                </tr>
-                </tbody>
-              </table>
-
+          <label class="form-control w-full max-w-xs">
+            <div class="label">
+              <span class="label-text">Serviço Unificado</span>
             </div>
+            <span type="button" class="btn btn-sm text-xs btn-outline" #unify
+                  (click)="styleField(unify)">
+              Clique para ativar serviço unificado</span>
+          </label>
 
 
-          </div>
-          <button type="submit" class="btn btn-block bg-blue-700 text-neutral-100 mt-4 hover:bg-blue-900">
-            Criar Contrato
+        </div>
+        <div class="w-full flex justify-end">
+          <button
+            #submitForm
+            type="submit"
+            class="poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+            Adicionar Itens<span class="material-icons ml-2">arrow_forward</span>
           </button>
         </div>
       </form>
-
-    </div>
-  </div>
-
-  <div *ngIf="utils.serverMessage">
-    <app-screen-message [message]="utils.serverMessage" [alertType]="utils.alertType"></app-screen-message>
-  </div>
-
-  <app-modal [confirmation]="true" [modalOpen]="openModal" (modalClose)="openModal = false">
-    <h2 class="text-center text-xl font-bold">Salvar contrato</h2>
-    <p class="my-5 text-center">Confirma o salvamento do contrato?</p>
-    <div class="flex justify-end space-x-4">
-      <button class="btn btn-neutral material-icons text-xl">close<span class="text-xs">Cancelar</span></button>
-      <button class="btn btn-primary material-icons text-xl">save<span class="text-xs">Salvar</span></button>
     </div>
 
-  </app-modal>
+    <div class="border-b w-full pl-2 flex flex-col pb-4 hidden" #contractItems>
+      <div class="flex items-center justify-between">
+        <span
+          (click)="contractData.classList.remove('hidden'); contractItems.classList.add('hidden')"
+          class="p-2 mb-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+          <span class="material-icons mr-2">arrow_back</span>Rever dados do contrato
+        </span>
+      </div>
 
-  <app-modal [modalOpen]="showItems" (modalClose)="showItems = false"
-             classModal="sm:w-[70%] overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
-    <app-table [large]="true">
-      <tr header>
-        <th>Adicionar</th>
-        <th>Descrição</th>
-        <th class="w-96">Valor unitário</th>
-        <th>Quantidade</th>
-      </tr>
-      <tr body *ngFor="let item of contract.items; let i = index" [class.fade-out]="removingIndexContract === i">
-        <td class="material-icons btn btn-error" (click)="removeItem(item, i)">remove</td>
-        <td>{{item.description}}</td>
-        <td>{{item.price}}</td>
-        <td>{{item.quantity}}</td>
-      </tr>
-    </app-table>
-  </app-modal>
+      <div>
+        <table class="table table-auto table-xs">
+          <thead>
+          <tr>
+            <th>Adicionar</th>
+            <th>Descrição</th>
+            <th class="w-96">Valor unitário*</th>
+            <th>Quantidade*</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of items; let i = index" [class.fade-out]="removingIndex === i"
+              [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
+              [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''">
+            <td>
+                    <span
+                      class="material-icons btn btn-xs btn-neutral transition-transform transform hover:scale-110 active:rotate-90"
+                      (click)="addItem(item, i)">
+                      add
+                    </span>
+            </td>
 
+            <td>{{ item.description }}</td>
+            <td>
+              <input
+                type="text"
+                (input)="formatValue($event, i)"
+                placeholder="R$"
+                [(ngModel)]="item.price"
+                name="price{{i}}"
+                #ngValor="ngModel"
+                required
+              />
+              <div *ngIf="ngValor.invalid && myForm.submitted">
+                <small *ngIf="ngValor.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+              </div>
+            </td>
+            <td>
+              <input
+                type="text"
+                placeholder="Ex.: 2"
+                #inputField
+                (input)="removeLeadingZeros(inputField)"
+                [(ngModel)]="item.quantity"
+                name="quantity{{i}}"
+                #ngQtde='ngModel'
+                required
+              />
+              <div *ngIf="ngQtde.invalid && myForm.submitted">
+                <small *ngIf="ngQtde.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+        <div class="flex w-full justify-end pr-2">
+          <span
+            (click)="reviewItems(contractItems, steepFinal)"
+            class="mt-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+              Revisar itens adicionados<span class="material-icons ml-2">arrow_forward</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-b w-full pl-2 flex-col pb-4 hidden" #steepFinal>
+       <span
+         (click)="contractItems.classList.remove('hidden'); steepFinal.classList.add('hidden')"
+         class="p-2 mb-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+        <span class="material-icons mr-2">arrow_back</span>Adiconar mais itens
+      </span>
+
+      <app-table>
+        <tr header>
+          <th>Adicionar</th>
+          <th>Descrição</th>
+          <th class="w-96">Valor unitário</th>
+          <th>Quantidade</th>
+        </tr>
+        <tr body *ngFor="let item of contract.items; let i = index" [class.fade-out]="removingIndexContract === i">
+          <td class="material-icons btn btn-xs btn-error" (click)="removeItem(item, i)">remove</td>
+          <td>{{ item.description }}</td>
+          <td>{{ item.price }}</td>
+          <td>{{ item.quantity }}</td>
+        </tr>
+      </app-table>
+
+      <div class="flex w-full justify-end">
+        <button class="btn btn-primary material-icons text-xl">save<span class="text-xs">Salvar</span></button>
+      </div>
+    </div>
+
+    <div *ngIf="utils.serverMessage">
+      <app-screen-message [message]="utils.serverMessage" [alertType]="utils.alertType"></app-screen-message>
+    </div>
+
+    <app-modal [confirmation]="true" [modalOpen]="openModal" (modalClose)="openModal = false">
+      <h2 class="text-center text-xl font-bold">Salvar contrato</h2>
+      <p class="my-5 text-center">Confirma o salvamento do contrato?</p>
+      <div class="flex justify-end space-x-4">
+        <button class="btn btn-neutral material-icons text-xl">close<span class="text-xs">Cancelar</span></button>
+        <button class="btn btn-primary material-icons text-xl">save<span class="text-xs">Salvar</span></button>
+      </div>
+    </app-modal>
+
+  </div>
 </div>

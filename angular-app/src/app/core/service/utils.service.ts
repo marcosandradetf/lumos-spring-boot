@@ -73,6 +73,40 @@ export class UtilsService {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
   }
 
+  formatCPF(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+    value = value.replace(/\D/g, ''); // Remove tudo que não for número
+    value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Adiciona o primeiro ponto
+    value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Adiciona o segundo ponto
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Adiciona o traço antes dos últimos dois dígitos
+    (event.target as HTMLInputElement).value = value;
+  }
+
+  formatCNPJ(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+    value = value.replace(/\D/g, ''); // Remove tudo que não for número
+    value = value.replace(/(\d{2})(\d)/, '$1.$2'); // Adiciona o primeiro ponto
+    value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Adiciona o segundo ponto
+    value = value.replace(/(\d{3})(\d)/, '$1/$2'); // Adiciona a barra
+    value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2'); // Adiciona o traço antes dos últimos dois dígitos
+    (event.target as HTMLInputElement).value = value;
+  }
+
+  formatPhone(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+    value = value.replace(/\D/g, ''); // Remove tudo que não for número
+
+    if (value.length > 10) {
+      // Formato para celular (XX) XXXXX-XXXX
+      value = value.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    } else {
+      // Formato para telefone fixo (XX) XXXX-XXXX
+      value = value.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+    }
+
+    (event.target as HTMLInputElement).value = value;
+  }
+
   showMessage(message: string, error: boolean, timeout = 3000) {
     this.serverMessage = message;
     error ? this.alertType = 'alert-error' : this.alertType = 'alert-success';

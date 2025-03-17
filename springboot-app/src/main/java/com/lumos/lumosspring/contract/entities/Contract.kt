@@ -17,6 +17,7 @@ class Contract {
     var phone : String? = null
     var creationDate : Instant? = null
     var contractValue : BigDecimal = BigDecimal.ZERO;
+    var unifyServices : Boolean = false
 
     @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var contractItemQuantitatives: Set<ContractItemsQuantitative> = hashSetOf()

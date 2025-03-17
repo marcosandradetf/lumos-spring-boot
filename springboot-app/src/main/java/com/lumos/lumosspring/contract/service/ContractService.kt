@@ -24,7 +24,7 @@ class ContractService(
         val referenceItems = contractReferenceItemRepository.findAll()
         val referenceItemsResponse: MutableList<ContractReferenceItemDTO> = mutableListOf()
 
-        for (item in referenceItems) {
+        for (item in referenceItems.sortedBy { it.contractReferenceItemId }) {
             referenceItemsResponse.add(ContractReferenceItemDTO(
                 item.contractReferenceItemId,
                 item.description,
