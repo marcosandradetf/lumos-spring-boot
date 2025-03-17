@@ -31,6 +31,17 @@
         <kotlin.version>2.1.10</kotlin.version>
     </properties>
     <dependencies>
+        <!-- MinIO SDK -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.7</version>
+        </dependency>
+        <!-- Jackson para suporte a JSON no Kotlin -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+        </dependency>
         <!-- Dependências do Kotlin -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
