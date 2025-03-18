@@ -30,7 +30,7 @@
                    placeholder="Insira o Número"
                    required
                    [(ngModel)]="contract.number"
-                   (input)="utils.formatNumber($event)"
+                   (input)="utils.formatContractNumber($event)"
                    #number="ngModel"/>
             <div *ngIf="number.invalid && myForm.submitted ">
               <div *ngIf="number.invalid && myForm.submitted">
@@ -120,29 +120,29 @@
             </div>
           </label>
 
-          <input type="file" class="file-input file-input-sm" accept=".pdf" #inputFile (change)="onFileSelected($event, typeSelect)"/>
+          <input type="file" class="file-input file-input-sm hidden" accept=".pdf" #inputFile (change)="onFileSelected($event, typeSelect)"/>
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
               <span class="label-text">Edital</span>
             </div>
-            <span type="button" class="btn btn-outline btn-sm text-xs" (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
-                                                                                             *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name }}</span>
+            <span type="button" [class.btn-outline]="!noticeFile" class="btn btn-accent btn-sm text-xs" (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
+                                                                                             *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name || 'Clique para selecionar' }}</span>
           </label>
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
               <span class="label-text">Contrato</span>
             </div>
-            <span type="button" class="btn btn-outline btn-sm text-xs" (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
-                                                                                                         *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name }}</span>
+            <span type="button" [class.btn-outline]="!contractFile" class="btn btn-accent btn-sm text-xs" (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
+                                                                                                                                                              *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name || 'Clique para selecionar' }}</span>
           </label>
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
               <span class="label-text">Serviço Unificado</span>
             </div>
-            <span type="button" class="btn btn-sm text-xs btn-outline" #unify
+            <span type="button" class="btn btn-sm text-xs btn-outline btn-primary" #unify
                   (click)="styleField(unify)">
               Clique para ativar serviço unificado</span>
           </label>

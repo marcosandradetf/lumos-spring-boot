@@ -7,6 +7,7 @@ import {ScreenMessageComponent} from '../../../shared/components/screen-message/
 import {ModalComponent} from '../../../shared/components/modal/modal.component';
 import {TableComponent} from '../../../shared/components/table/table.component';
 import {DomUtil} from 'leaflet';
+import {FileService} from '../../../core/service/file-service.service';
 
 
 @Component({
@@ -70,7 +71,7 @@ export class CreateComponent {
   removingIndex: number | null = null;
   openModal: boolean = false;
 
-  constructor(protected contractService: ContractService, protected utils: UtilsService) {
+  constructor(protected contractService: ContractService, protected utils: UtilsService, private fileService: FileService) {
     this.contractService.getItems().subscribe(
       items => {
         this.items = items;
@@ -88,9 +89,13 @@ export class CreateComponent {
     if (this.contract.items.length === 0) {
       contractData.classList.add('hidden');
       contractItems.classList.remove('hidden')
+    } else {
+      if (this.contractFile)
+        this.fileService.sendFile(this.contractFile).subscribe({
+            next: response => response,
+            error: error => error,
+          });
     }
-
-
 
   }
 
@@ -255,12 +260,10 @@ export class CreateComponent {
   styleField(unify: HTMLSpanElement) {
     if(unify.classList.contains('btn-outline')) {
       unify.classList.remove('btn-outline');
-      unify.classList.add('btn-primary');
       unify.innerText = 'Desativar Serviço Unificado';
       this.contract.unifyServices = true;
     } else {
       unify.classList.add('btn-outline');
-      unify.classList.remove('btn-primary');
       this.contract.unifyServices = false;
       unify.innerText = 'Clique para Ativar Serviço Unificado';
     }

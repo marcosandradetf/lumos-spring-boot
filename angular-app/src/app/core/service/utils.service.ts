@@ -7,7 +7,6 @@ export class UtilsService {
   serverMessage: string | null = null;
   alertType: string | null = null;
 
-
   formatValue(value: string): string {
     // Verifica se targetValue está vazio e define um valor padrão
     if (!value) {
@@ -72,6 +71,11 @@ export class UtilsService {
   formatNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
   }
+
+  formatContractNumber(event: Event) {
+    (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^0-9,./-]/g, '');
+  }
+
 
   formatCPF(event: Event) {
     let value = (event.target as HTMLInputElement).value;
