@@ -24,14 +24,12 @@ import {DomUtil} from 'leaflet';
   styleUrl: './create.component.scss'
 })
 export class CreateComponent {
-
   contract: {
     number: string,
-    socialReason: string,
+    contractor: string,
     address: string,
     phone: string,
     cnpj: string,
-    edital: string;
     unifyServices: boolean;
     items: {
       contractReferenceItemId: number;
@@ -45,14 +43,16 @@ export class CreateComponent {
     }[]
   } = {
     number: '',
-    socialReason: '',
+    contractor: '',
     address: '',
     phone: '',
     cnpj: '',
-    edital: '',
     unifyServices: false,
     items: [],
   }
+
+  noticeFile: File | null = null;
+  contractFile: File | null = null;
 
   items: {
     contractReferenceItemId: number;
@@ -120,10 +120,6 @@ export class CreateComponent {
   }
 
 
-  searchItem(value: string) {
-
-  }
-
   addItem(
     item: {
       contractReferenceItemId: number;
@@ -157,6 +153,7 @@ export class CreateComponent {
 
   removingIndexContract: number | null = null;
   textContent: string = 'Clique para selecionar';
+  typeSelect: string = '';
 
   removeItem(item: {
     contractReferenceItemId: number;
@@ -246,21 +243,13 @@ export class CreateComponent {
     }
   }
 
-  onFileChange(event: any) {
-    const file = event.target.files[0]; // Obtém o arquivo selecionado
-    if (!file) return;
-
-    this.textContent = file.name;
-
-    // Converte o arquivo para Base64 (opcional, pode ser apenas o nome do arquivo)
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      this.contract.edital = reader.result as string; // Armazena o Base64 no atributo 'edital'
-    };
-
-    // Caso prefira apenas armazenar o nome do arquivo:
-    // this.contract.edital = file.name;
+  onFileSelected(event: any, fileType: string) {
+    const file = event.target.files[0];
+    if (fileType === 'notice') {
+      this.noticeFile = file;
+    } else if (fileType === 'contract')  {
+      this.contractFile = file;
+    }
   }
 
   styleField(unify: HTMLSpanElement) {

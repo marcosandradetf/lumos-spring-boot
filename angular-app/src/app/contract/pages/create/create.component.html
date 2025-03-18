@@ -49,7 +49,7 @@
                    class="input input-sm input-bordered w-full max-w-xs"
                    placeholder="Ex. Prefeitura de Belo Horizonte"
                    required
-                   [(ngModel)]="contract.socialReason"
+                   [(ngModel)]="contract.contractor"
                    #socialReason="ngModel"/>
             <div *ngIf="socialReason.invalid && myForm.submitted">
               <div *ngIf="socialReason.invalid && myForm.submitted">
@@ -120,14 +120,22 @@
             </div>
           </label>
 
-          <input type="file" class="file-input file-input-sm" accept=".pdf" #inputFile (change)="onFileChange($event)"/>
+          <input type="file" class="file-input file-input-sm" accept=".pdf" #inputFile (change)="onFileSelected($event, typeSelect)"/>
 
           <label class="form-control w-full max-w-xs">
             <div class="label">
               <span class="label-text">Edital</span>
             </div>
-            <span type="button" class="btn btn-outline btn-sm text-xs" (click)="inputFile.click()"><span class="material-icons"
-                                                                                             *ngIf="contract.edital.length === 0">cloud_upload</span>{{ textContent }}</span>
+            <span type="button" class="btn btn-outline btn-sm text-xs" (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
+                                                                                             *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name }}</span>
+          </label>
+
+          <label class="form-control w-full max-w-xs">
+            <div class="label">
+              <span class="label-text">Contrato</span>
+            </div>
+            <span type="button" class="btn btn-outline btn-sm text-xs" (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
+                                                                                                         *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name }}</span>
           </label>
 
           <label class="form-control w-full max-w-xs">

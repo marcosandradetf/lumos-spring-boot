@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.contract.entities
 
+import com.lumos.lumosspring.user.User
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
@@ -11,16 +12,21 @@ class Contract {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var contractId: Long = 0
     var contractNumber: String? = null
-    var socialReason : String? = null
+    var contractor : String? = null
     var cnpj : String? = null
     var address : String? = null
     var phone : String? = null
     var creationDate : Instant? = null
-    var contractValue : BigDecimal = BigDecimal.ZERO;
+    @ManyToOne
+    @JoinColumn(name = "created_by_id_user")
+    var createdBy : User? = null
+    private var contractValue : BigDecimal = BigDecimal.ZERO;
     var unifyServices : Boolean = false
+    var noticeFile : String? = null
+    var contractFile : String? = null
 
     @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    var contractItemQuantitatives: Set<ContractItemsQuantitative> = hashSetOf()
+    var contractItemsQuantitative: Set<ContractItemsQuantitative> = hashSetOf()
 
     fun sumTotalPrice(totalPrice: BigDecimal?) {
         this.contractValue = this.contractValue.add(totalPrice)
