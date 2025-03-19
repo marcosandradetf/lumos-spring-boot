@@ -8,6 +8,9 @@ import {ModalComponent} from '../../../shared/components/modal/modal.component';
 import {TableComponent} from '../../../shared/components/table/table.component';
 import {DomUtil} from 'leaflet';
 import {FileService} from '../../../core/service/file-service.service';
+import {forkJoin} from 'rxjs';
+import {AuthService} from '../../../core/auth/auth.service';
+import {Router} from '@angular/router';
 
 
 @Component({
@@ -32,6 +35,9 @@ export class CreateComponent {
     phone: string,
     cnpj: string,
     unifyServices: boolean;
+    noticeFile: string;
+    contractFile: string;
+    userUUID: string;
     items: {
       contractReferenceItemId: number;
       description: string;
@@ -49,6 +55,9 @@ export class CreateComponent {
     phone: '',
     cnpj: '',
     unifyServices: false,
+    noticeFile: '',
+    contractFile: '',
+    userUUID: '',
     items: [],
   }
 
@@ -71,7 +80,8 @@ export class CreateComponent {
   removingIndex: number | null = null;
   openModal: boolean = false;
 
-  constructor(protected contractService: ContractService, protected utils: UtilsService, private fileService: FileService) {
+  constructor(protected contractService: ContractService, protected utils: UtilsService, private fileService: FileService, private auth: AuthService, protected router: Router) {
+    this.contract.userUUID = this.auth.getUser().uuid;
     this.contractService.getItems().subscribe(
       items => {
         this.items = items;
@@ -80,7 +90,7 @@ export class CreateComponent {
   }
 
 
-  submitContrato(form: any, contractData: HTMLDivElement, contractItems: HTMLDivElement) {
+  submitContract(form: any, contractData: HTMLDivElement, contractItems: HTMLDivElement) {
 
     if (form.invalid) {
       return;
@@ -90,23 +100,90 @@ export class CreateComponent {
       contractData.classList.add('hidden');
       contractItems.classList.remove('hidden')
     } else {
-      if (this.contractFile)
-        this.fileService.sendFile(this.contractFile).subscribe({
-            next: response => response,
-            error: error => error,
-          });
-    }
+      this.loading = true;
+      const files: File[] = [];
 
+      if (this.contractFile) {
+        files.push(this.contractFile);
+      }
+
+      if (this.noticeFile) {
+        files.push(this.noticeFile);
+      }
+
+      if (files.length > 0) {
+        this.fileService.sendFiles(files).subscribe({
+          next: responses => {
+            let responseIndex = 0;
+
+            if (this.contractFile && responseIndex < responses.length) {
+              this.contract.contractFile = responses[responseIndex];
+              responseIndex++;
+            }
+
+            if (this.noticeFile && responseIndex < responses.length) {
+              this.contract.noticeFile = responses[responseIndex];
+            }
+
+            this.sendContract(); // Envia o formulário após o envio dos arquivos
+          },
+          error: error => {
+            this.loading = false;
+            this.utils.showMessage(error as string, true);
+          }
+        });
+      } else {
+        this.loading = true;
+        this.sendContract();
+      }
+    }
   }
 
+  sendContract() {
+    this.contractService.createContract(this.contract).subscribe({
+      next: response => this.resetForm(),
+      error: error => {
+        this.openModal = false;
+        this.utils.showMessage(error.message as string, true);
+        this.loading = false;
+      },
+    });
+  }
 
-  formatValue(event: Event, index: number) {
+  resetForm() {
+    this.loading = false;
+    this.openModal = false;
+    this.contract = {
+      number: '',
+      contractor: '',
+      address: '',
+      phone: '',
+      cnpj: '',
+      unifyServices: false,
+      noticeFile: '',
+      contractFile: '',
+      userUUID: '',
+      items: [],
+    };
+
+    this.finish = true;
+  }
+
+  loading: boolean = false;
+  finish: boolean = false;
+
+
+  formatValue(event: Event, itemId: number) {
     // Obtém o valor diretamente do evento e remove todos os caracteres não numéricos
     let targetValue = (event.target as HTMLInputElement).value.replace(/\D/g, '');
+    const item = this.items.find(i => i.contractReferenceItemId === itemId);
+    if (!item) {
+      return;
+    }
 
     // Verifica se targetValue está vazio e define um valor padrão
     if (!targetValue) {
-      // this.items[index].price = ''; // ou "0,00" se preferir
+      item.price = '0,00';
       (event.target as HTMLInputElement).value = ''; // Atualiza o valor no campo de input
       return;
     }
@@ -120,8 +197,9 @@ export class CreateComponent {
     }).format(parseFloat(targetValue) / 100);
 
     // Atualiza o valor no modelo e no campo de input
-    // this.contract.valor[index] = formattedValue;
+    item.price = formattedValue;
     (event.target as HTMLInputElement).value = formattedValue; // Exibe o valor formatado no campo de input
+    console.log(this.items);
   }
 
 
@@ -252,13 +330,13 @@ export class CreateComponent {
     const file = event.target.files[0];
     if (fileType === 'notice') {
       this.noticeFile = file;
-    } else if (fileType === 'contract')  {
+    } else if (fileType === 'contract') {
       this.contractFile = file;
     }
   }
 
   styleField(unify: HTMLSpanElement) {
-    if(unify.classList.contains('btn-outline')) {
+    if (unify.classList.contains('btn-outline')) {
       unify.classList.remove('btn-outline');
       unify.innerText = 'Desativar Serviço Unificado';
       this.contract.unifyServices = true;

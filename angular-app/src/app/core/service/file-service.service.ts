@@ -17,7 +17,14 @@ export class FileService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post(this.endpoint + '/upload', formData);
+    return this.http.post(this.endpoint + '/upload-file', formData);
+  }
+
+  sendFiles(files: File[]) {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+
+    return this.http.post<string[]>(this.endpoint + '/upload-files', formData);
   }
 
 }

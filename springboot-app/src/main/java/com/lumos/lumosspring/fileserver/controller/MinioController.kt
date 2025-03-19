@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.fileserver.controller
 
 import com.lumos.lumosspring.fileserver.service.MinioService
+import com.lumos.lumosspring.util.DefaultResponse
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -20,6 +21,17 @@ class MinioController(private val minioService: MinioService) {
         val response = minioService.uploadFile(file, "scl-construtora")
         return ResponseEntity.ok(response)
     }
+
+    @PostMapping("/upload-files")
+    fun uploadFiles(@RequestParam("files") files: List<MultipartFile>): ResponseEntity<Any> {
+        val responses = files.map { file ->
+            minioService.uploadFile(file, "scl-construtora")
+        }
+
+
+        return ResponseEntity.ok(responses)
+    }
+
 
     @GetMapping("/download/{fileName}")
     fun downloadFile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> {
