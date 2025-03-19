@@ -1,20 +1,20 @@
 package com.lumos.data.database
 
 import android.content.Context
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.Material
 import com.lumos.domain.model.Measurement
 
 @Database(
-    entities = [(Measurement::class), (Deposit::class), (Item::class), (Material::class)],
-    version = 3,
+    entities = [(Measurement::class), (Deposit::class), (Item::class), (Material::class), (Contract::class)],
+    version = 4,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun measurementDao(): MeasurementDao
@@ -73,7 +73,18 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Criação das novas tabelas com a estrutura corrigida
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS contracts " +
+                            "(contractId INTEGER PRIMARY KEY NOT NULL, " +
+                            "contractor TEXT NOT NULL, " +
+                            "contractFile TEXT, " +
+                            "status TEXT NOT NULL )"
+                )
+            }
+        }
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -84,7 +95,8 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         MIGRATION_1_2,
-                        MIGRATION_2_3
+                        MIGRATION_2_3,
+                        MIGRATION_3_4
                     ) // Certifique-se de que ambas estão aqui
                     .build()
                 INSTANCE = instance

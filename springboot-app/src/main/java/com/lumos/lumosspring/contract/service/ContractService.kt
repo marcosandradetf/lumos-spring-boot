@@ -76,4 +76,27 @@ class ContractService(
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }
 
+    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
+        data class ContractForPreMeasurementDTO(
+            val contractId: Long,
+            val contractor: String,
+            val contractFile: String?,
+            val status: String,
+        )
+
+        val contractList = mutableListOf<ContractForPreMeasurementDTO>()
+
+        contractRepository.findAll().forEach {
+            val contract = ContractForPreMeasurementDTO(
+                contractId = it.contractId,
+                contractor = it.contractor!!,
+                contractFile = it.contractFile,
+                status = ""
+            )
+            contractList.add(contract)
+        }
+
+        return ResponseEntity.ok(contractList)
+    }
+
 }

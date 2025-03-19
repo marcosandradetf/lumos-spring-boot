@@ -10,19 +10,24 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/contracts")
+@RequestMapping("/api")
 class ContractController(
     private val contractService: ContractService
 ) {
 
-    @GetMapping("/get-items")
+    @GetMapping("/contracts/get-items")
     fun getItems() : ResponseEntity<Any> {
         return contractService.getReferenceItems()
     }
 
-    @PostMapping("/insert-contract")
+    @PostMapping("/contracts/insert-contract")
     fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> {
         return contractService.saveContract(contractDTO)
+    }
+
+    @GetMapping("/mobile/contracts/get-contracts")
+    fun getContracts(): ResponseEntity<Any> {
+        return contractService.getContractsForPreMeasurement()
     }
 
 
