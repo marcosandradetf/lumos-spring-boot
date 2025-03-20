@@ -100,11 +100,11 @@ fun AppLayout(
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.White, // Cor do ícone selecionado
+                            selectedIconColor = Color(0xFF007AFF), // Cor do ícone selecionado
                             unselectedIconColor = Color(0xFF000000), // Cor do ícone não selecionado
                             selectedTextColor = Color(0xFF007AFF),  // Cor do texto selecionado
                             unselectedTextColor = Color(0xFF000000), // Cor do texto não selecionado
-                            indicatorColor = Color(0xFF007AFF)       // Background do item selecionado
+                            indicatorColor = Color.White      // Background do item selecionado
                         )
                     )
                 }

@@ -91,7 +91,7 @@ class ContractService(
                 contractId = it.contractId,
                 contractor = it.contractor!!,
                 contractFile = it.contractFile,
-                status = ""
+                status = it.status.name
             )
             contractList.add(contract)
         }

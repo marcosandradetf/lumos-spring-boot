@@ -43,7 +43,7 @@ class ContractViewModel(
     }
 
 
-    fun syncMaterials() {
+    fun syncContracts() {
         viewModelScope.launch {
             try {
                 repository.syncContracts()
