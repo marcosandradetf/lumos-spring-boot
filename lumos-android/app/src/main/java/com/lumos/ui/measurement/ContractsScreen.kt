@@ -165,7 +165,7 @@ fun ContractsScreenContent(
                             )
                             Text(
                                 modifier = Modifier.padding(start = 5.dp),
-                                text = "Criado por Gabriela há 10 minutos",
+                                text = contract.createdAt,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Light,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -233,12 +233,21 @@ fun PrevContract() {
                 contractId = 1,
                 contractor = "Prefeitura Municipal de Belo Horizonte",
                 contractFile = "arquivo.pdf",
+                createdAt = "Criado por Gabriela há 10m",
                 status = ""
             ),
             Contract(
                 contractId = 1,
                 contractor = "Prefeitura Municipal de Ibirité",
                 contractFile = "arquivo.pdf",
+                createdAt = "Criado por Renato há 1h",
+                status = ""
+            ),
+            Contract(
+                contractId = 1,
+                contractor = "Prefeitura Municipal de Poté",
+                contractFile = "arquivo.pdf",
+                createdAt = "Criado por Daniel há 2d",
                 status = ""
             )
         )

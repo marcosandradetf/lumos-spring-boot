@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "contracts")
 data class Contract(
     @PrimaryKey val contractId: Long,
-    var contractor: String,
-    var contractFile: String?,
+    val contractor: String,
+    val contractFile: String?,
+    val createdAt: String,
     var status: String,
 )

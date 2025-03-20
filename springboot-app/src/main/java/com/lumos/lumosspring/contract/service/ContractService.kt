@@ -7,6 +7,7 @@ import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
+import com.lumos.lumosspring.notification.service.WebSocketNotificationService
 import com.lumos.lumosspring.stock.repository.MaterialServiceRepository
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.DefaultResponse
@@ -24,7 +25,8 @@ class ContractService(
     private val contractReferenceItemRepository: ContractReferenceItemRepository,
     private val materialServiceRepository: MaterialServiceRepository,
     private val util: Util,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val webSocketNotificationService: WebSocketNotificationService
 ) {
 
     fun getReferenceItems(): ResponseEntity<Any> {
@@ -73,6 +75,11 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
+        webSocketNotificationService.sendNotificationToRole(
+            "RESPONSAVEL_TECNICO",
+            "Novo contrato disponível para pré-medição: ${contract.contractNumber}"
+        )
+
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }
 
@@ -81,6 +88,7 @@ class ContractService(
             val contractId: Long,
             val contractor: String,
             val contractFile: String?,
+            val createdAt: String?,
             val status: String,
         )
 
@@ -91,6 +99,7 @@ class ContractService(
                 contractId = it.contractId,
                 contractor = it.contractor!!,
                 contractFile = it.contractFile,
+                createdAt = "Criado por ${it.createdBy?.name} há ${util.timeSinceCreation(it.creationDate!!)}",
                 status = it.status.name
             )
             contractList.add(contract)

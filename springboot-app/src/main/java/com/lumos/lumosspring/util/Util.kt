@@ -8,6 +8,7 @@ import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.Normalizer
 import java.text.NumberFormat
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -78,5 +79,15 @@ class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepositor
 
     fun extractNumber(value: String?): Double {
         return value?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: 0.0
+    }
+
+    fun timeSinceCreation(createdAt: Instant): String {
+        val duration = Duration.between(createdAt, dateTime)
+
+        return when {
+            duration.toDays() > 0 -> "${duration.toDays()}d"
+            duration.toHours() > 0 -> "${duration.toHours()}h"
+            else -> "${duration.toMinutes()}min"
+        }
     }
 }

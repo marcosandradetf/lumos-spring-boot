@@ -1,17 +1,12 @@
 package com.lumos
 
-import android.app.Activity
 import android.app.Application
-import android.os.Bundle
 import androidx.room.Room
-import androidx.work.Configuration
-import androidx.work.WorkManager
 import com.lumos.data.api.AuthApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.midleware.AuthInterceptor
 import com.lumos.midleware.SecureStorage
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit

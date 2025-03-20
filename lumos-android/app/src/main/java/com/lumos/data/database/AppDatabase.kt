@@ -81,6 +81,7 @@ abstract class AppDatabase : RoomDatabase() {
                             "(contractId INTEGER PRIMARY KEY NOT NULL, " +
                             "contractor TEXT NOT NULL, " +
                             "contractFile TEXT, " +
+                            "createdAt TEXT NOT NULL, " +
                             "status TEXT NOT NULL )"
                 )
             }
