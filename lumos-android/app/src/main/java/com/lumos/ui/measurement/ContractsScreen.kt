@@ -5,6 +5,7 @@ import android.widget.ScrollView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.content.MediaType.Companion.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,9 +20,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -61,6 +64,8 @@ import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
+import com.lumos.utils.Utils
+import java.time.Instant
 
 @Composable
 fun ContractsScreen(
@@ -116,6 +121,12 @@ fun ContractsScreenContent(
             verticalArrangement = Arrangement.spacedBy(5.dp) // Espaço entre os cards
         ) {
             items(contracts) { contract -> // Iteração na lista
+                val createdAt = "Criado por ${contract.createdBy} há ${
+                    Utils.timeSinceCreation(
+                        Instant.parse(contract.createdAt)
+                    )
+                }"
+                val expand = remember { mutableStateOf(false) }
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -133,9 +144,11 @@ fun ContractsScreenContent(
                     ) {
                         // Primeira linha (Nome + Ícone Expand)
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth()
+                                .clickable { expand.value = true },
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+
                         ) {
                             Text(
                                 text = contract.contractor,
@@ -158,60 +171,60 @@ fun ContractsScreenContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.AccessTime,
+                                imageVector = Icons.Default.AccessTimeFilled,
                                 contentDescription = "Horário",
                                 tint = Color.Black,
                                 modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
                             )
                             Text(
                                 modifier = Modifier.padding(start = 5.dp),
-                                text = contract.createdAt,
+                                text = createdAt,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Light,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
-
+                        if (!expand.value)
                         // Linha inferior (Contrato + Ações)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 25.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally, // Centraliza os itens horizontalmente
-                                verticalArrangement = Arrangement.Center // Mantém o alinhamento vertical
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 25.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Contrato",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 2.dp) // Pequeno espaço entre o texto e o ícone
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally, // Centraliza os itens horizontalmente
+                                    verticalArrangement = Arrangement.Center // Mantém o alinhamento vertical
+                                ) {
+                                    Text(
+                                        text = "Contrato",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(bottom = 2.dp) // Pequeno espaço entre o texto e o ícone
+                                    )
 
-                                Icon(
-                                    imageVector = Icons.Default.Downloading,
-                                    contentDescription = "Baixar Contrato",
-                                    tint = Color(0xFF007AFF),
-                                    modifier = Modifier.size(24.dp) // Ajuste do tamanho do ícone
-                                )
+                                    Icon(
+                                        imageVector = Icons.Default.Downloading,
+                                        contentDescription = "Baixar Contrato",
+                                        tint = Color(0xFF007AFF),
+                                        modifier = Modifier.size(24.dp) // Ajuste do tamanho do ícone
+                                    )
 
+                                }
+
+
+                                TextButton(onClick = { /* Ação */ }) {
+                                    Text(
+                                        text = "Iniciar Pré-Medição",
+                                        color = Color(0xFFFF2F55),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        textDecoration = TextDecoration.Underline
+                                    )
+                                }
                             }
-
-
-                            TextButton(onClick = { /* Ação */ }) {
-                                Text(
-                                    text = "Iniciar Pré-Medição",
-                                    color = Color(0xFFFF2F55),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    textDecoration = TextDecoration.Underline
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -233,21 +246,24 @@ fun PrevContract() {
                 contractId = 1,
                 contractor = "Prefeitura Municipal de Belo Horizonte",
                 contractFile = "arquivo.pdf",
-                createdAt = "Criado por Gabriela há 10m",
+                createdBy = "Gabriela",
+                createdAt = Instant.parse("2025-03-20T20:00:50.765Z").toString(),
                 status = ""
             ),
             Contract(
                 contractId = 1,
                 contractor = "Prefeitura Municipal de Ibirité",
                 contractFile = "arquivo.pdf",
-                createdAt = "Criado por Renato há 1h",
+                createdBy = "Renato",
+                createdAt = Instant.parse("2025-03-19T23:29:50.765Z").toString(),
                 status = ""
             ),
             Contract(
                 contractId = 1,
                 contractor = "Prefeitura Municipal de Poté",
                 contractFile = "arquivo.pdf",
-                createdAt = "Criado por Daniel há 2d",
+                createdBy = "Daniela",
+                createdAt = Instant.parse("2025-03-18T23:29:50.765Z").toString(),
                 status = ""
             )
         )

@@ -31,6 +31,20 @@
         <kotlin.version>2.1.10</kotlin.version>
     </properties>
     <dependencies>
+        <!-- Coroutines Core -->
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+
+        <!-- Coroutines para Spring (opcional, mas recomendado) -->
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-reactor</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+
         <!--        Web Socket-->
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-messaging -->
         <dependency>

@@ -16,10 +16,10 @@ class Contract {
     var cnpj : String? = null
     var address : String? = null
     var phone : String? = null
-    var creationDate : Instant? = null
+    var creationDate : Instant = Instant.now()
     @ManyToOne
     @JoinColumn(name = "created_by_id_user")
-    var createdBy : User? = null
+    var createdBy : User = User()
     private var contractValue : BigDecimal = BigDecimal.ZERO;
     var unifyServices : Boolean = false
     var noticeFile : String? = null

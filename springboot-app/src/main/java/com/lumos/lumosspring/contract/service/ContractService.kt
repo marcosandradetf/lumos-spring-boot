@@ -5,18 +5,18 @@ import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.entities.Contract
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
-import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
-import com.lumos.lumosspring.notification.service.WebSocketNotificationService
+import com.lumos.lumosspring.contract.repository.ContractRepository
+import com.lumos.lumosspring.notification.service.NotificationService
 import com.lumos.lumosspring.stock.repository.MaterialServiceRepository
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.Util
-import org.springframework.data.repository.findByIdOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 @Service
 class ContractService(
@@ -26,7 +26,7 @@ class ContractService(
     private val materialServiceRepository: MaterialServiceRepository,
     private val util: Util,
     private val userRepository: UserRepository,
-    private val webSocketNotificationService: WebSocketNotificationService
+    private val notificationService: NotificationService
 ) {
 
     fun getReferenceItems(): ResponseEntity<Any> {
@@ -34,33 +34,39 @@ class ContractService(
         val referenceItemsResponse: MutableList<ContractReferenceItemDTO> = mutableListOf()
 
         for (item in referenceItems.sortedBy { it.contractReferenceItemId }) {
-            referenceItemsResponse.add(ContractReferenceItemDTO(
-                item.contractReferenceItemId,
-                item.description,
-                item.completeDescription,
-                item.type,
-                item.linking,
-                item.itemDependency,
-                0.0,
-                "0,00"
-            ))
+            referenceItemsResponse.add(
+                ContractReferenceItemDTO(
+                    item.contractReferenceItemId,
+                    item.description,
+                    item.completeDescription,
+                    item.type,
+                    item.linking,
+                    item.itemDependency,
+                    0.0,
+                    "0,00"
+                )
+            )
         }
 
         return ResponseEntity.ok().body(referenceItemsResponse)
     }
 
-    fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
+    suspend fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         val contract = Contract()
         contract.contractNumber = contractDTO.number
         contract.contractor = contractDTO.contractor
         contract.cnpj = contractDTO.cnpj
         contract.address = contractDTO.address
         contract.creationDate = util.dateTime
-        contract.createdBy = userRepository.findByIdOrNull(UUID.fromString(contractDTO.userUUID))
+        contract.createdBy = withContext(Dispatchers.IO) {
+            userRepository.findByIdUser(UUID.fromString(contractDTO.userUUID))
+        }.orElseThrow()
         contract.unifyServices = contractDTO.unifyServices
         contract.noticeFile = if ((contractDTO.noticeFile?.length ?: 0) > 0) contractDTO.noticeFile else null
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
-        contractRepository.save(contract)
+        withContext(Dispatchers.IO) {
+            contractRepository.save(contract)
+        }
 
         contractDTO.items.forEach { item ->
             val ci = ContractItemsQuantitative()
@@ -75,10 +81,18 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
-        webSocketNotificationService.sendNotificationToRole(
-            "RESPONSAVEL_TECNICO",
-            "Novo contrato disponível para pré-medição: ${contract.contractNumber}"
-        )
+        val roleNames = setOf("RESPONSAVEL_TECNICO")
+        val userIds: Optional<List<UUID>> = withContext(Dispatchers.IO) {
+            userRepository.findAllByRoleNames(roleNames)
+        }
+
+        if (!userIds.isEmpty)
+            notificationService.sendNotificationToMultipleUsersAsync(
+                userIds = userIds.get(),
+                title = "",
+                body = "",
+                action = ""
+            )
 
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }
@@ -88,7 +102,8 @@ class ContractService(
             val contractId: Long,
             val contractor: String,
             val contractFile: String?,
-            val createdAt: String?,
+            val createdBy: String,
+            val createdAt: String,
             val status: String,
         )
 
@@ -99,7 +114,8 @@ class ContractService(
                 contractId = it.contractId,
                 contractor = it.contractor!!,
                 contractFile = it.contractFile,
-                createdAt = "Criado por ${it.createdBy?.name} há ${util.timeSinceCreation(it.creationDate!!)}",
+                createdBy = it.createdBy.name,
+                createdAt = it.creationDate.toString(),
                 status = it.status.name
             )
             contractList.add(contract)
