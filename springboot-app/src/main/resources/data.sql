@@ -47,6 +47,7 @@ INSERT INTO tb_roles (role_name)
 SELECT role_name
 FROM (VALUES ('ADMIN'),
              ('ANALISTA'),
+             ('OPERADOR'),
              ('RESPONSAVEL_TECNICO'),
              ('ELETRICISTA'),
              ('MOTORISTA'),

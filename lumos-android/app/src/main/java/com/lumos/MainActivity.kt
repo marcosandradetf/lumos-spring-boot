@@ -5,19 +5,24 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.lumos.navigation.AppNavigation
 import com.lumos.ui.theme.LumosTheme
 
 
 class MainActivity : ComponentActivity() {
-//    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    //    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,14 +36,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val app = application as MyApp
 
-        // Configure o tema e a navegação do Jetpack Compose
         setContent {
+            val actionState = remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }
+
+            // Observa mudanças de intent (caso o app já esteja aberto)
+            LaunchedEffect(Unit) {
+                intent?.getStringExtra("action")?.let {
+                    actionState.value = it
+                }
+            }
+
             LumosTheme {
                 AppNavigation(
                     database = app.database,
                     retrofit = app.retrofit,
                     secureStorage = app.secureStorage,
-                    context = this
+                    context = this,
+                    actionState = actionState
                 )
             }
         }
@@ -48,8 +62,13 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (!isGranted) {
-            // Permissão negada, exiba um alerta e feche o app
-            showPermissionRationale()
+            if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // O usuário marcou "Não perguntar novamente"
+                showSettingsDialog()
+            } else {
+                showPermissionRationale("LOCATION")
+            }
+
         }
     }
 
@@ -64,7 +83,7 @@ class MainActivity : ComponentActivity() {
             }
 
             (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) -> {
-                showPermissionRationale()
+                showPermissionRationale("LOCATION")
             }
 
             else -> {
@@ -72,20 +91,53 @@ class MainActivity : ComponentActivity() {
             }
 
         }
+
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                return
+            }
+
+            (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) -> {
+                showPermissionRationale("NOTIFICATIONS")
+            }
+
+        }
     }
 
-    private fun showPermissionRationale() {
-        AlertDialog.Builder(this)
-            .setTitle("Permissão Necessária")
-            .setMessage("O aplicativo precisa de permissão de localização para funcionar corretamente. Por favor, permita o acesso.")
-            .setPositiveButton("Permitir") { _, _ ->
-                requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    private fun showPermissionRationale(type: String) {
+        when (type) {
+            "LOCATION" -> {
+                AlertDialog.Builder(this) // Se for Fragment, use requireContext()
+                    .setTitle("Permissão Necessária")
+                    .setMessage("O aplicativo precisa de permissão de localização para funcionar corretamente. Por favor, permita o acesso.")
+                    .setPositiveButton("Permitir") { _, _ ->
+                        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                    .setNegativeButton("Cancelar") { _, _ ->
+                        finish() // Feche o app se a permissão for crucial
+                    }
+                    .setCancelable(false)
+                    .show()
             }
-            .setNegativeButton("Cancelar") { _, _ ->
-                finish() // Feche o app se a permissão for crucial
+
+            "NOTIFICATIONS" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
+                    AlertDialog.Builder(this) // Se for Fragment, use requireContext()
+                        .setTitle("Permissão de Notificações")
+                        .setMessage("Para receber notificações, o app precisa da sua permissão. Deseja permitir?")
+                        .setPositiveButton("Permitir") { _, _ ->
+                            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                }
             }
-            .setCancelable(false)
-            .show()
+
+            else -> throw IllegalArgumentException("Tipo de permissão inválido: $type")
+        }
     }
 
 

@@ -30,4 +30,5 @@ interface AuthApi {
         @Header("Content-Type") contentType: String = "application/json",
         @Header("Authorization") refreshToken: String? // Token passado no header
     ): Response<Void>
+
 }

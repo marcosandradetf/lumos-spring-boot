@@ -31,11 +31,12 @@ public class Role {
     public enum Values {
         ADMIN(1L),
         ANALISTA(2L),
-        RESPONSAVEL_TECNICO(3L),
-        ELETRICISTA(4L),
-        MOTORISTA(5L),
-        ESTOQUISTA(6L),
-        ESTOQUISTA_CHEFE(7L);
+        OPERADOR(3L),
+        RESPONSAVEL_TECNICO(4L),
+        ELETRICISTA(5L),
+        MOTORISTA(6L),
+        ESTOQUISTA(7L),
+        ESTOQUISTA_CHEFE(8L);
 
 
         final long roleId;

@@ -115,5 +115,11 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+
+    implementation("com.squareup.moshi:moshi-kotlin:1.14.0") // Para converter JSON
+    implementation("androidx.core:core-ktx:1.9.0") // Para notificações
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21") // RxJava 2
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1") // RxAndroid 2
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6") // Biblioteca STOMP
 }
 

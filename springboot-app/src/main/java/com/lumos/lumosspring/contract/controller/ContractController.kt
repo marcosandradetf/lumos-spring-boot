@@ -16,12 +16,12 @@ class ContractController(
 ) {
 
     @GetMapping("/contracts/get-items")
-    fun getItems() : ResponseEntity<Any> {
+    suspend fun getItems() : ResponseEntity<Any> {
         return contractService.getReferenceItems()
     }
 
     @PostMapping("/contracts/insert-contract")
-    fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> {
+    suspend fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> {
         return contractService.saveContract(contractDTO)
     }
 

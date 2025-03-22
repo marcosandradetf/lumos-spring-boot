@@ -1,11 +1,16 @@
 package com.lumos.lumosspring.notification.service
 
-import com.lumos.lumosspring.config.WebSocketSessionManager
-import kotlinx.coroutines.*
-import org.springframework.messaging.simp.SimpMessagingTemplate
-import org.springframework.stereotype.Service
 import com.fasterxml.jackson.databind.ObjectMapper
-import java.util.UUID
+import com.lumos.lumosspring.config.WebSocketSessionManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.messaging.simp.SimpMessagingTemplate
+import org.springframework.stereotype.Controller
+import org.springframework.stereotype.Service
+import java.util.*
+
 
 data class NotificationMessage(
     val title: String,
@@ -33,5 +38,17 @@ class NotificationService(
             val jsonMessage = objectMapper.writeValueAsString(notification) // Converte para JSON
             messagingTemplate.convertAndSend("/topic/$userId", jsonMessage)
         }
+    }
+}
+
+@Controller
+class NotificationController {
+    @Autowired
+    private val messagingTemplate: SimpMessagingTemplate? = null // Usado para enviar mensagens
+
+    // Método para enviar notificações para o tópico "/topic/notifications"
+    fun sendNotification(message: String) {
+        // Aqui, estamos enviando uma mensagem para todos os clientes conectados ao tópico "/topic/notifications"
+        messagingTemplate!!.convertAndSend("/topic/notifications", "Nova notificação: $message")
     }
 }

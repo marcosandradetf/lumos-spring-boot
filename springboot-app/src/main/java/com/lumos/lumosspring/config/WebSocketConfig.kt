@@ -1,35 +1,53 @@
 package com.lumos.lumosspring.config
 
+import org.springframework.context.annotation.Configuration
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
+import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtException
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.WebSocketHandler
-import org.springframework.web.socket.server.HandshakeInterceptor
-
-import org.springframework.context.annotation.Configuration
-import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
+import org.springframework.web.socket.server.HandshakeInterceptor
 import java.util.concurrent.ConcurrentHashMap
+
+//
+//@Configuration
+//@EnableWebSocketMessageBroker
+//open class WebSocketConfig(private val jwtHandshakeInterceptor: JwtHandshakeInterceptor) : WebSocketMessageBrokerConfigurer {
+//
+//    override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+//        registry.addEndpoint("/ws") // Endpoint WebSocket
+////            .addInterceptors(jwtHandshakeInterceptor) // Adiciona o interceptor JWT
+//            .setAllowedOrigins("*")
+////            .withSockJS() // Compatibilidade com navegadores antigos
+//    }
+//
+//    override fun configureMessageBroker(config: MessageBrokerRegistry) {
+//        config.enableSimpleBroker("/topic")
+//            .setHeartbeatValue(longArrayOf(30000, 30000)) // 30s cliente -> servidor e vice-versa
+//        config.setApplicationDestinationPrefixes("/app")
+//    }
+//}
 
 @Configuration
 @EnableWebSocketMessageBroker
-open class WebSocketConfig(private val jwtHandshakeInterceptor: JwtHandshakeInterceptor) : WebSocketMessageBrokerConfigurer {
+open class WebSocketConfig : WebSocketMessageBrokerConfigurer {
+    override fun configureMessageBroker(config: MessageBrokerRegistry) {
+        config.enableSimpleBroker("/topic") // Prefix for broadcasting messages
+        config.setApplicationDestinationPrefixes("/app") // Prefix for client-to-server communication
+    }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/ws") // Endpoint WebSocket
-            .addInterceptors(jwtHandshakeInterceptor) // Adiciona o interceptor JWT
-            .withSockJS() // Compatibilidade com navegadores antigos
-    }
-
-    override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        registry.enableSimpleBroker("/topic") // Para envio de mensagens em tempo real
-        registry.setApplicationDestinationPrefixes("/app") // Prefixo para requisições WebSocket
+        registry.addEndpoint("/ws") // This is the WebSocket endpoint
+            .setAllowedOrigins("*") // Allow frontend origin (localhost:63342)
+            .withSockJS() // Enable SockJS for fallback support
     }
 }
+
 
 @Component
 class JwtHandshakeInterceptor(
@@ -43,27 +61,29 @@ class JwtHandshakeInterceptor(
         wsHandler: WebSocketHandler,
         attributes: MutableMap<String, Any>
     ): Boolean {
-        val token = request.headers.getFirst("Authorization")?.replace("Bearer ", "")
+        val token = request.headers.getFirst("Authorization")?.removePrefix("Bearer ")
+        if (token.isNullOrEmpty()) {
+            System.out.println("WebSocket: Token não encontrado ou inválido")
+            return false
+        }
+
+        System.out.println("WebSocket: Token extraído: $token") // Adicione um log para verificar o token
 
         return try {
-            if (token != null) {
-                val jwt = jwtDecoder.decode(token)
-                val userId = jwt.subject
+            val jwt = jwtDecoder.decode(token)
+            val userId = jwt.subject
 
-                // Obtém o sessionId do STOMP/WebSocket
-                val sessionId = attributes["sessionId"]?.toString() ?: userId // Se não houver sessionId, usa o próprio userId
+            val sessionId = attributes["sessionId"]?.toString() ?: userId
 
-                // Armazena no SessionManager
-                sessionManager.addSession(sessionId, userId)
-                attributes["userId"] = userId
-                true
-            } else {
-                false
-            }
+            sessionManager.addSession(sessionId, userId)
+            attributes["userId"] = userId
+            true
         } catch (e: JwtException) {
+            System.out.println("WebSocket: Erro ao decodificar o token JWT $e")
             false
         }
     }
+
 
     override fun afterHandshake(
         request: ServerHttpRequest,
@@ -74,6 +94,7 @@ class JwtHandshakeInterceptor(
         // Nada a fazer aqui
     }
 }
+
 
 
 

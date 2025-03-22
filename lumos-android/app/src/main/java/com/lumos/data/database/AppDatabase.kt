@@ -19,6 +19,7 @@ import com.lumos.domain.model.Measurement
 abstract class AppDatabase : RoomDatabase() {
     abstract fun measurementDao(): MeasurementDao
     abstract fun stockDao(): StockDao
+    abstract fun contractDao(): ContractDao
 
     companion object {
         @Volatile

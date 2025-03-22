@@ -29,7 +29,7 @@ class ContractService(
     private val notificationService: NotificationService
 ) {
 
-    fun getReferenceItems(): ResponseEntity<Any> {
+    suspend fun getReferenceItems(): ResponseEntity<Any> {
         val referenceItems = contractReferenceItemRepository.findAll()
         val referenceItemsResponse: MutableList<ContractReferenceItemDTO> = mutableListOf()
 
@@ -47,6 +47,20 @@ class ContractService(
                 )
             )
         }
+
+        val roleNames = setOf("ADMIN")
+        val userIds: Optional<List<UUID>> = withContext(Dispatchers.IO) {
+            userRepository.findAllByRoleNames(roleNames)
+        }
+
+        if (!userIds.isEmpty)
+            notificationService.sendNotificationToMultipleUsersAsync(
+                userIds = userIds.get(),
+                title = "Novo Contrato disponível para pré-medição",
+                body = "Contrato de ",
+                action = "open_contracts"
+            )
+
 
         return ResponseEntity.ok().body(referenceItemsResponse)
     }
@@ -81,7 +95,8 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
-        val roleNames = setOf("RESPONSAVEL_TECNICO")
+//        val roleNames = setOf("RESPONSAVEL_TECNICO")
+        val roleNames = setOf("ADMIN")
         val userIds: Optional<List<UUID>> = withContext(Dispatchers.IO) {
             userRepository.findAllByRoleNames(roleNames)
         }
@@ -89,9 +104,9 @@ class ContractService(
         if (!userIds.isEmpty)
             notificationService.sendNotificationToMultipleUsersAsync(
                 userIds = userIds.get(),
-                title = "",
-                body = "",
-                action = ""
+                title = "Novo Contrato disponível para pré-medição",
+                body = "Contrato de ${contract.contractor} criado por ${contract.createdBy.name}",
+                action = "open_contracts"
             )
 
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))

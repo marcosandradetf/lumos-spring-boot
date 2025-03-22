@@ -54,7 +54,7 @@ public class TokenControllerMobile {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado está inativo no sistema."));
         }
 
-        var allowedRoles = new HashSet<>(Set.of(Role.Values.OPERADOR.name(), Role.Values.ADMIN.name(), Role.Values.TECNICO.name()));
+        var allowedRoles = new HashSet<>(Set.of(Role.Values.OPERADOR.name(), Role.Values.ADMIN.name(), Role.Values.RESPONSAVEL_TECNICO.name()));
 
         var roles = user.get().getRoles();
         boolean hasAccess = roles.stream().anyMatch(roleName -> allowedRoles.contains(roleName.getRoleName()));
