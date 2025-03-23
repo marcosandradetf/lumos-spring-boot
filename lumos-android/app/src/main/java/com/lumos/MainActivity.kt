@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import com.lumos.navigation.AppNavigation
 import com.lumos.ui.theme.LumosTheme
 
@@ -35,6 +36,15 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         val app = application as MyApp
+
+        FirebaseMessaging.getInstance().subscribeToTopic("RESPONSAVEL_TECNICO")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    println("✅ Inscrição no tópico realizada com sucesso!")
+                } else {
+                    println("❌ Falha ao se inscrever no tópico.")
+                }
+            }
 
         setContent {
             val actionState = remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }

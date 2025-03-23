@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 //    id("kotlin-kapt")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 
 }
 
@@ -12,7 +13,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.lumos"
+        applicationId = "com.thryon.lumos"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
@@ -121,5 +122,15 @@ dependencies {
     implementation("io.reactivex.rxjava2:rxjava:2.2.21") // RxJava 2
     implementation("io.reactivex.rxjava2:rxandroid:2.1.1") // RxAndroid 2
     implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6") // Biblioteca STOMP
+
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
+
+    // Add the dependencies for the Firebase Cloud Messaging and Analytics libraries
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
+
+
 }
 

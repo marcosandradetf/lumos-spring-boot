@@ -1,13 +1,16 @@
 package com.lumos.navigation
 
 import android.content.Context
-import androidx.compose.animation.*
+import android.util.Log
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,19 +31,19 @@ import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.MeasurementRepository
 import com.lumos.data.repository.StockRepository
-import com.lumos.data.ws.WebSocketManager
 import com.lumos.midleware.SecureStorage
 import com.lumos.service.DepositService
-import com.lumos.ui.viewmodel.AuthViewModel
-import com.lumos.ui.menu.MenuScreen
+import com.lumos.service.FCMService
 import com.lumos.ui.auth.Login
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.measurement.ContractsScreen
 import com.lumos.ui.measurement.MeasurementHome
 import com.lumos.ui.measurement.MeasurementScreen
+import com.lumos.ui.measurement.MeasurementViewModel
+import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen
-import com.lumos.ui.measurement.MeasurementViewModel
+import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
@@ -61,6 +64,8 @@ fun AppNavigation(
     context: Context,
     actionState: MutableState<String?>
 ) {
+    val actionState by FCMService.actionState.collectAsState()
+
     val navController = rememberNavController()
     var isLoading by remember { mutableStateOf(true) }
 
@@ -106,28 +111,25 @@ fun AppNavigation(
 
     val isAuthenticated by authViewModel.isAuthenticated
 
-    val webSocketManager = remember { WebSocketManager(
-        secureStorage,
-        context
-    ) }
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) {
             isLoading = false
-            webSocketManager.startWebSocketConnection(secureStorage.getUserUuid()!!)
         } else {
-            webSocketManager.stopWebSocketConnection()
+            isLoading = false
             authViewModel.authenticate(context)
         }
     }
 
-    LaunchedEffect(actionState.value) {
-        when (actionState.value) {
-            "open_contracts" -> {
-                navController.navigate(Routes.CONTRACT_SCREEN)
-                actionState.value = null // Reset to avoid unintended navigation
+    LaunchedEffect(actionState, isLoading) {
+        Log.d("Navigation", "🔥 isLoading: $isLoading, actionState: $actionState")
+
+        if (!isLoading && actionState != null) {
+            navController.navigate(Routes.CONTRACT_SCREEN) {
+                popUpTo(Routes.HOME) { inclusive = false }
             }
         }
+        FCMService._actionState.value = null // Reset da ação para evitar loops infinitos
     }
 
     // Rotas protegidas
@@ -160,13 +162,10 @@ fun AppNavigation(
             }
 
             navigation(startDestination = Routes.HOME, route = Routes.MAIN) {
-                composable(Routes.MENU,
-                    enterTransition = { slideInHorizontally(initialOffsetX = { 25000 }) },
-                    exitTransition = { slideOutHorizontally(targetOffsetX = { -25000 }) }
-                ) {
+                composable(Routes.MENU) {
                     MenuScreen(
                         onNavigateToHome = {
-                            navController.navigate("homeFromMenu") {
+                            navController.navigate(Routes.HOME) {
                                 popUpTo(Routes.MENU) { inclusive = true }
                             }
                         },
@@ -185,10 +184,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.HOME,
-                    enterTransition = { slideInHorizontally(initialOffsetX = { 25000 }) },
-                    exitTransition = { slideOutHorizontally(targetOffsetX = { -25000 }) }
-                ) {
+                composable(Routes.HOME) {
                     HomeScreen(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MENU) {
@@ -209,34 +205,8 @@ fun AppNavigation(
                     )
                 }
 
-                composable("homeFromMenu",
-                    enterTransition = { slideInHorizontally(initialOffsetX = { -25000 }) },
-                    exitTransition = { slideOutHorizontally(targetOffsetX = { 25000 }) }
-                ) {
-                    HomeScreen(
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MENU) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
-                        navController = navController
-                    )
-                }
 
-                composable(Routes.NOTIFICATIONS,
-                    enterTransition = { slideInHorizontally(initialOffsetX = { -25000 }) },
-                    exitTransition = { slideOutHorizontally(targetOffsetX = { 25000 }) }
-                ) {
+                composable(Routes.NOTIFICATIONS) {
                     NotificationsScreen(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MENU) {
@@ -258,35 +228,8 @@ fun AppNavigation(
                     )
                 }
 
-                composable("notificationsFromProfile",
-                    enterTransition = { slideInHorizontally(initialOffsetX = { 25000 }) },
-                    exitTransition = { slideOutHorizontally(targetOffsetX = { -25000 }) }
-                ) {
-                    NotificationsScreen(
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MENU) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
-                        navController = navController,
-                        context = context
-                    )
-                }
 
-                composable(Routes.PROFILE,
-                    enterTransition = { slideInHorizontally(initialOffsetX = { -25000 }) },
-                    exitTransition = { slideOutHorizontally(targetOffsetX = { 25000 }) }
-                ) {
+                composable(Routes.PROFILE) {
                     ProfileScreen(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MENU) {
@@ -299,7 +242,7 @@ fun AppNavigation(
                             }
                         },
                         onNavigateToNotifications = {
-                            navController.navigate("notificationsFromProfile") {
+                            navController.navigate(Routes.NOTIFICATIONS) {
                                 popUpTo(Routes.PROFILE) { inclusive = true }
                             }
                         },

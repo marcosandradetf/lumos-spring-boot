@@ -31,6 +31,11 @@
         <kotlin.version>2.1.10</kotlin.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.4.3</version>
+        </dependency>
         <!-- Coroutines Core -->
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>

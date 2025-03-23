@@ -8,7 +8,9 @@ import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeReposi
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.notification.service.NotificationService
+import com.lumos.lumosspring.notification.service.Routes
 import com.lumos.lumosspring.stock.repository.MaterialServiceRepository
+import com.lumos.lumosspring.user.Role
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.Util
@@ -48,18 +50,12 @@ class ContractService(
             )
         }
 
-        val roleNames = setOf("ADMIN")
-        val userIds: Optional<List<UUID>> = withContext(Dispatchers.IO) {
-            userRepository.findAllByRoleNames(roleNames)
-        }
-
-        if (!userIds.isEmpty)
-            notificationService.sendNotificationToMultipleUsersAsync(
-                userIds = userIds.get(),
-                title = "Novo Contrato disponível para pré-medição",
-                body = "Contrato de ",
-                action = "open_contracts"
-            )
+        notificationService.sendNotificationForRole(
+            title = "📄 Novo Contrato Criado",
+            body = "Um novo contrato foi criado e está aguardando sua análise.",
+            action = "",
+            role = Role.Values.RESPONSAVEL_TECNICO
+        )
 
 
         return ResponseEntity.ok().body(referenceItemsResponse)
@@ -101,13 +97,14 @@ class ContractService(
             userRepository.findAllByRoleNames(roleNames)
         }
 
-        if (!userIds.isEmpty)
-            notificationService.sendNotificationToMultipleUsersAsync(
-                userIds = userIds.get(),
-                title = "Novo Contrato disponível para pré-medição",
-                body = "Contrato de ${contract.contractor} criado por ${contract.createdBy.name}",
-                action = "open_contracts"
-            )
+        notificationService.sendNotificationForRole(
+            title = "📄 Novo Contrato Criado",
+            body = "Um novo contrato foi criado e está aguardando sua análise.",
+            action = Routes.CONTRACT_SCREEN,
+            role = Role.Values.RESPONSAVEL_TECNICO
+        )
+
+
 
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }
