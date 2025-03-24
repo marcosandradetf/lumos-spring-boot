@@ -3,9 +3,10 @@ package com.lumos.domain.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "measurements")
-data class Measurement(
-    @PrimaryKey(autoGenerate = true) val measurementId: Long = 0,
+@Entity(tableName = "preMeasurementStreets")
+data class PreMeasurementStreet(
+    @PrimaryKey(autoGenerate = true) val preMeasurementStreetId: Long = 0,
+    val preMeasurementId: Long,
     var lastPower: String?,
     var latitude: Double,
     var longitude: Double,
@@ -13,5 +14,4 @@ data class Measurement(
     var number: String?,
     var city: String,
     val deviceId: String,
-    val synced: Boolean = false,
 )

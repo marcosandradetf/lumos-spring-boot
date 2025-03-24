@@ -1,4 +1,4 @@
-package com.lumos.ui.measurement
+package com.lumos.ui.preMeasurement
 
 import android.content.Context
 import androidx.compose.foundation.clickable
@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,36 +41,31 @@ import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils
 import java.time.Instant
 
 @Composable
-fun ContractsScreen(
+fun PreMeasurementScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     context: Context,
-    contractViewModel: ContractViewModel,
+    preMeasurementViewModel: PreMeasurementViewModel,
     connection: ConnectivityUtils,
     navController: NavHostController,
     notificationsBadge: String,
 
     ) {
-    val contracts by contractViewModel.contracts
-    var internet by remember { mutableStateOf(true) }
+    val preMeasurements by preMeasurementViewModel.preMeasurements
 
     LaunchedEffect(Unit) {
-        if (connection.isConnectedToInternet(context)) contractViewModel.syncContracts()
-        else internet = false
-
-        contractViewModel.loadContracts()
+        preMeasurementViewModel.loadPreMeasurements()
     }
 
-    ContractsScreenContent(
-        contracts = contracts,
+    PMContent(
+        contracts = preMeasurements,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
         onNavigateToProfile = onNavigateToProfile,
@@ -83,7 +77,7 @@ fun ContractsScreen(
 }
 
 @Composable
-fun ContractsScreenContent(
+fun PMContent(
     contracts: List<Contract>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -233,7 +227,7 @@ fun ContractsScreenContent(
 
 @Preview(showBackground = true)
 @Composable
-fun PrevContract() {
+fun PrevPM() {
     // Criando um contexto fake para a preview
     val fakeContext = LocalContext.current
     val values =
@@ -265,7 +259,7 @@ fun PrevContract() {
         )
 
 
-    ContractsScreenContent(
+    PMContent(
         contracts = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },

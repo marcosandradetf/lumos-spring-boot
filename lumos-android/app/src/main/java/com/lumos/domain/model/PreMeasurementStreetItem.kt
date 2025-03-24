@@ -3,10 +3,10 @@ package com.lumos.domain.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "items")
-data class Item(
+@Entity(tableName = "preMeasurementsStreetItems")
+data class PreMeasurementStreetItem(
     @PrimaryKey(autoGenerate = true) val itemId: Long = 0,
-    val materialId: String,
+    var preMeasurementStreetId: Long,
+    val materialId: Long,
     val materialQuantity: Int,
-    var measurementId: Long,
 )

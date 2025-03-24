@@ -34,10 +34,10 @@ import com.lumos.service.FCMService
 import com.lumos.service.NotificationsBadge
 import com.lumos.ui.auth.Login
 import com.lumos.ui.home.HomeScreen
-import com.lumos.ui.measurement.ContractsScreen
-import com.lumos.ui.measurement.MeasurementHome
-import com.lumos.ui.measurement.MeasurementScreen
-import com.lumos.ui.measurement.MeasurementViewModel
+import com.lumos.ui.preMeasurement.ContractsScreen
+import com.lumos.ui.preMeasurement.MeasurementHome
+import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
+import com.lumos.ui.preMeasurement.PreMeasurementViewModel
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen
@@ -85,12 +85,12 @@ fun AppNavigation(
     }
 
 
-    val measurementViewModel: MeasurementViewModel = viewModel {
+    val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
         val measurementDao = database.measurementDao()
         val api = retrofit.create(MeasurementApi::class.java)
 
         val measurementRepository = MeasurementRepository(measurementDao, api, context)
-        MeasurementViewModel(measurementRepository)
+        PreMeasurementViewModel(measurementRepository)
     }
 
     val contractViewModel: ContractViewModel = viewModel {
@@ -287,14 +287,14 @@ fun AppNavigation(
                 }
 
                 composable(Routes.MEASUREMENT_SCREEN) {
-                    MeasurementScreen(
+                    PreMeasurementStreetScreen(
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
                         },
                         navController = navController,
                         context = context,
                         stockViewModel,
-                        measurementViewModel
+                        preMeasurementViewModel
                     )
                 }
 

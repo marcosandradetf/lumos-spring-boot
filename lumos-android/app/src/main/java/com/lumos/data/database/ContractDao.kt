@@ -2,7 +2,6 @@ package com.lumos.data.database
 
 import androidx.room.*
 import com.lumos.domain.model.Contract
-import com.lumos.domain.model.Item
 
 @Dao
 interface ContractDao {

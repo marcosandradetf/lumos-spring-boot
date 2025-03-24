@@ -11,8 +11,10 @@ import androidx.work.WorkManager
 import com.lumos.data.api.MeasurementApi
 import com.lumos.data.api.MeasurementDto
 import com.lumos.data.database.MeasurementDao
-import com.lumos.domain.model.Item
-import com.lumos.domain.model.Measurement
+import com.lumos.domain.model.PreMeasurement
+import com.lumos.domain.model.PreMeasurementStreetItem
+import com.lumos.domain.model.PreMeasurementStreet
+import com.lumos.domain.model.Status
 import com.lumos.domain.service.SyncMeasurement
 import java.util.concurrent.TimeUnit
 
@@ -23,24 +25,24 @@ class MeasurementRepository(
 ) {
 
 
-    suspend fun saveMeasurement(measurement: Measurement): Long? {
+    suspend fun saveMeasurement(preMeasurementStreet: PreMeasurementStreet): Long? {
         return try {
-            dao.insertMeasurement(measurement)
+            dao.insertStreet(preMeasurementStreet)
         } catch (e: Exception) {
             Log.e("Error saveMeasurement", e.message.toString())
             null
         }
     }
 
-    suspend fun getUnsyncedMeasurements(): List<Measurement> {
-        return dao.getUnsyncedMeasurements()
+    suspend fun getUnSyncedMeasurements(): List<PreMeasurementStreet> {
+        return dao.getUnSyncedPreMeasurements()
     }
 
-    suspend fun sendMeasurementToBackend(measurement: Measurement, items: List<Item>, userUuid: String): Boolean {
+    suspend fun sendMeasurementToBackend(preMeasurementStreet: PreMeasurementStreet, preMeasurementStreetItems: List<PreMeasurementStreetItem>, userUuid: String): Boolean {
         return try {
             val dto = MeasurementDto(
-                measurement,
-                items
+                preMeasurementStreet,
+                preMeasurementStreetItems
             )
             api.sendMeasurement(dto, userUuid)
             true
@@ -53,11 +55,11 @@ class MeasurementRepository(
         dao.markAsSynced(id)
     }
 
-    suspend fun saveItem(item: Item) {
-        dao.insertItem(item)
+    suspend fun saveItem(preMeasurementStreetItem: PreMeasurementStreetItem) {
+        dao.insertItem(preMeasurementStreetItem)
     }
 
-    suspend fun getItems(measurementId: Long): List<Item> {
+    suspend fun getItems(measurementId: Long): List<PreMeasurementStreetItem> {
         return dao.getItems(measurementId)
     }
 
@@ -81,6 +83,18 @@ class MeasurementRepository(
             ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
             workRequest
         )
+    }
+
+    suspend fun savePreMeasurement(preMeasurement: PreMeasurement): Long {
+        return dao.insertPreMeasurement(preMeasurement)
+    }
+
+    suspend fun getPreMeasurements(status: Status): List<PreMeasurement> {
+        return dao.getPreMeasurements(status)
+    }
+
+    suspend fun getPreMeasurement(preMeasurementId: Long): PreMeasurement {
+        return dao.getPreMeasurement(preMeasurementId)
     }
 
 }

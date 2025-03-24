@@ -1,10 +1,8 @@
 package com.lumos.data.api
 
-import com.lumos.domain.model.Deposit
-import com.lumos.domain.model.Item
-import com.lumos.domain.model.Measurement
+import com.lumos.domain.model.PreMeasurementStreetItem
+import com.lumos.domain.model.PreMeasurementStreet
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
@@ -15,6 +13,6 @@ interface MeasurementApi {
 }
 
 data class MeasurementDto(
-    val measurement: Measurement,
-    val items: List<Item>
+    val preMeasurementStreet: PreMeasurementStreet,
+    val preMeasurementStreetItems: List<PreMeasurementStreetItem>
 )

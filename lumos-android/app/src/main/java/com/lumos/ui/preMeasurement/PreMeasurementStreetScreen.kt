@@ -1,4 +1,4 @@
-package com.lumos.ui.measurement
+package com.lumos.ui.preMeasurement
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -13,7 +13,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -30,8 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Remove
@@ -45,14 +42,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -89,10 +83,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
-import com.lumos.domain.model.Deposit
-import com.lumos.domain.model.Item
+import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.Material
-import com.lumos.domain.model.Measurement
+import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
@@ -101,12 +94,12 @@ import java.util.concurrent.TimeUnit
 
 @SuppressLint("HardwareIds")
 @Composable
-fun MeasurementScreen(
+fun PreMeasurementStreetScreen(
     onNavigateToHome: () -> Unit,
     navController: NavHostController,
     context: Context,
     stockViewModel: StockViewModel,
-    measurementViewModel: MeasurementViewModel
+    preMeasurementViewModel: PreMeasurementViewModel
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coord = CoordinatesService(context, fusedLocationProvider)
@@ -130,9 +123,9 @@ fun MeasurementScreen(
     var showModal by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val measurement by remember {
-        mutableStateOf<Measurement>(
-            Measurement(
+    val preMeasurementStreet by remember {
+        mutableStateOf<PreMeasurementStreet>(
+            PreMeasurementStreet(
                 lastPower = "",
                 latitude = 0.0,
                 longitude = 0.0,
@@ -147,7 +140,7 @@ fun MeasurementScreen(
             )
         )
     }
-    var items by remember { mutableStateOf<List<Item>>(emptyList()) }
+    var preMeasurementStreetItems by remember { mutableStateOf<List<PreMeasurementStreetItem>>(emptyList()) }
 
     // Execute a função assíncrona
     LaunchedEffect(Unit) {
@@ -162,10 +155,10 @@ fun MeasurementScreen(
                 city = addr?.get(2).toString()
                 state = addr?.get(3).toString()
 
-                measurement.address = "$street, $number - $neighborhood, $city - $state"
-                measurement.city = city
-                measurement.latitude = vLatitude ?: 0.0
-                measurement.longitude = vLongitude ?: 0.0
+                preMeasurementStreet.address = "$street, $number - $neighborhood, $city - $state"
+                preMeasurementStreet.city = city
+                preMeasurementStreet.latitude = vLatitude ?: 0.0
+                preMeasurementStreet.longitude = vLongitude ?: 0.0
 
             } else {
                 Log.e("GET Address", "Latitude ou Longitude são nulos.")
@@ -257,7 +250,7 @@ fun MeasurementScreen(
                         .padding(bottom = 50.dp)
                         .height(48.dp),
                     onClick = {
-                        if (items.isEmpty()) {
+                        if (preMeasurementStreetItems.isEmpty()) {
                             Toast
                                 .makeText(
                                     context,
@@ -274,10 +267,10 @@ fun MeasurementScreen(
                                 )
                                 .show()
                         } else {
-                            measurementViewModel.saveMeasurementOffline(measurement) { measurementId ->
+                            preMeasurementViewModel.saveMeasurementOffline(preMeasurementStreet) { measurementId ->
                                 if (measurementId != null) {
                                     try {
-                                        measurementViewModel.saveItensOffline(items, measurementId)
+                                        preMeasurementViewModel.saveItemsOffline(preMeasurementStreetItems, measurementId)
                                         finishMeasurement = true
                                     } catch (e: Exception) {
                                         finishMeasurement = false
@@ -377,7 +370,7 @@ fun MeasurementScreen(
                                             containerColor = Color.Red,
                                             contentColor = Color.White
                                         ) {
-                                            Text(items.size.toString()) // Evitei o uso de `items.size.toString() ?: ""`, já que `items.size.toString()` é sempre seguro
+                                            Text(preMeasurementStreetItems.size.toString()) // Evitei o uso de `items.size.toString() ?: ""`, já que `items.size.toString()` é sempre seguro
                                         }
                                     }
                                 ) {
@@ -405,7 +398,7 @@ fun MeasurementScreen(
                                 value = street,
                                 onValueChange = {
                                     street = it
-                                    measurement.address =
+                                    preMeasurementStreet.address =
                                         "$street, $number - $neighborhood, $city - $state"
                                 },
                                 label = {
@@ -426,7 +419,7 @@ fun MeasurementScreen(
                                 value = number,
                                 onValueChange = {
                                     number = it
-                                    measurement.address =
+                                    preMeasurementStreet.address =
                                         "$street, $number - $neighborhood, $city - $state"
                                 },
                                 label = {
@@ -448,7 +441,7 @@ fun MeasurementScreen(
                                 value = neighborhood,
                                 onValueChange = {
                                     neighborhood = it
-                                    measurement.address =
+                                    preMeasurementStreet.address =
                                         "$street, $number - $neighborhood, $city - $state"
                                 },
                                 label = {
@@ -470,8 +463,8 @@ fun MeasurementScreen(
                                 value = city,
                                 onValueChange = {
                                     city = it
-                                    measurement.city = it
-                                    measurement.address =
+                                    preMeasurementStreet.city = it
+                                    preMeasurementStreet.address =
                                         "$street, $number - $neighborhood, $it - $state"
                                 },
                                 label = {
@@ -487,13 +480,13 @@ fun MeasurementScreen(
                         }
 
                         Row {
-                            measurement.lastPower?.isEmpty()?.let { empty ->
+                            preMeasurementStreet.lastPower?.isEmpty()?.let { empty ->
                                 OutlinedTextField(
                                     textStyle = TextStyle(Color.Black),
                                     value = lastPower,
                                     onValueChange = {
                                         lastPower = if (it.endsWith("W")) it else it + "W"
-                                        measurement.lastPower = lastPower
+                                        preMeasurementStreet.lastPower = lastPower
                                     },
                                     label = {
                                         Text(
@@ -519,7 +512,7 @@ fun MeasurementScreen(
                                 modifier = Modifier
                                     .size(50.dp) // Tamanho maior para um botão redondo
                                     .clickable {
-                                        items = emptyList()
+                                        preMeasurementStreetItems = emptyList()
                                         showModal = true
                                     }, // Adiciona interação de clique
                                 shape = CircleShape, // Formato circular
@@ -558,7 +551,7 @@ fun MeasurementScreen(
                 if (showModal) {
                     BottomSheetDialog(
                         onDismissRequest = { selected ->
-                            items = selected
+                            preMeasurementStreetItems = selected
                             showModal = false
                         },
                         materials = materials,
@@ -566,7 +559,7 @@ fun MeasurementScreen(
                 }
 
                 if (finishMeasurement) {
-                    items = emptyList()
+                    preMeasurementStreetItems = emptyList()
                     Toast
                         .makeText(
                             context,
@@ -636,12 +629,12 @@ fun DialogExit(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheetDialog(
-    onDismissRequest: (List<Item>) -> Unit,
+    onDismissRequest: (List<PreMeasurementStreetItem>) -> Unit,
     materials: List<Material>,
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val items = remember { mutableStateListOf<Item>() }
+    val preMeasurementStreetItems = remember { mutableStateListOf<PreMeasurementStreetItem>() }
     val filteredList = materials.filter {
         it.materialName?.contains(searchQuery, ignoreCase = true) ?: false ||
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
@@ -651,7 +644,7 @@ fun BottomSheetDialog(
         colorScheme = lightColorScheme() // Força o modo claro dentro do BottomSheet
     ) {
         ModalBottomSheet(
-            onDismissRequest = { onDismissRequest(items) },
+            onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
             modifier = Modifier.fillMaxSize()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -681,20 +674,20 @@ fun BottomSheetDialog(
                             material = material,
                             onItemSelected = { m ->
 
-                                if (items.find { item -> item.materialId == m.materialId.toString() } == null) {
-                                    items.add(
-                                        Item(
+                                if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId.toString() } == null) {
+                                    preMeasurementStreetItems.add(
+                                        PreMeasurementStreetItem(
                                             materialId = m.materialId.toString(),
                                             materialQuantity = 0,
                                             measurementId = 1
                                         )
                                     )
                                 } else {
-                                    items.removeAll { item -> item.materialId == m.materialId.toString() }
+                                    preMeasurementStreetItems.removeAll { item -> item.materialId == m.materialId.toString() }
                                 }
                             },
                             onQuantidadeChange = { materialId, quantity ->
-                                items.replaceAll {
+                                preMeasurementStreetItems.replaceAll {
                                     if (it.materialId == materialId.toString()) it.copy(
                                         materialQuantity = quantity
                                     ) else it
