@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -19,7 +20,11 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -40,6 +45,7 @@ import com.lumos.navigation.BottomBar
 fun AppLayout(
     title: String,
     pSelected: Int = 1,
+    notificationsBadge: String,
     sliderNavigateToMenu: (() -> Unit?)? = null,
     sliderNavigateToHome: (() -> Unit?)? = null,
     sliderNavigateToNotifications: (() -> Unit?)? = null,
@@ -66,7 +72,7 @@ fun AppLayout(
             Icons.Outlined.Person
         )
     Scaffold(
-        containerColor = Color(0xFFF5F5F7),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
                 NetworkStatusBar(context = context)
@@ -78,15 +84,34 @@ fun AppLayout(
         },
         bottomBar = {
             NavigationBar(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.primary
             ) {
                 items.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = {
-                            Icon(
-                                if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
-                                contentDescription = item
-                            )
+                            if (item == "Notificações")
+                                BadgedBox(
+                                    badge = {
+                                        Badge(
+                                            containerColor = Color(0xFFF55159),
+                                            contentColor = Color.White
+                                        ) { Text(notificationsBadge) }
+                                    } // Verifique se o Badge é suportado
+                                ) {
+                                    if (index in selectedIcons.indices && index in unselectedIcons.indices) {
+                                        Icon(
+                                            imageVector = if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
+                                            contentDescription = item
+                                        )
+                                    }
+                                } else
+                                if (index in selectedIcons.indices && index in unselectedIcons.indices) {
+                                    Icon(
+                                        imageVector = if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
+                                        contentDescription = item
+                                    )
+                                }
                         },
                         label = { Text(item) },
                         selected = pSelected == index,
@@ -99,13 +124,6 @@ fun AppLayout(
                                 sliderNavigateToProfile
                             )
                         },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF007AFF), // Cor do ícone selecionado
-                            unselectedIconColor = Color(0xFF000000), // Cor do ícone não selecionado
-                            selectedTextColor = Color(0xFF007AFF),  // Cor do texto selecionado
-                            unselectedTextColor = Color(0xFF000000), // Cor do texto não selecionado
-                            indicatorColor = Color.White      // Background do item selecionado
-                        )
                     )
                 }
             }
@@ -115,7 +133,7 @@ fun AppLayout(
                 pContent(
                     Modifier
                         .padding(10.dp)
-                        .background(Color(0xFFF5F5F7))
+                        .fillMaxSize()
                 )
             }
         },
@@ -135,15 +153,19 @@ fun handleNavigation(
         BottomBar.MENU.value -> if (sliderNavigateToMenu != null) {
             sliderNavigateToMenu()
         }
+
         BottomBar.HOME.value -> if (sliderNavigateToHome != null) {
             sliderNavigateToHome()
         }
+
         BottomBar.NOTIFICATIONS.value -> if (sliderNavigateToNotifications != null) {
             sliderNavigateToNotifications()
         }
+
         BottomBar.PROFILE.value -> if (sliderNavigateToProfile != null) {
             sliderNavigateToProfile()
         }
+
         else -> println("Ação desconhecida")
     }
 }

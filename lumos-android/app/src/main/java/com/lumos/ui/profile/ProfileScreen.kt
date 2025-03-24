@@ -14,16 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
 @Composable
 fun ProfileScreen(
@@ -33,7 +29,8 @@ fun ProfileScreen(
     navController: NavHostController,
     context: Context,
     onLogoutSuccess: () -> Unit,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    notificationsBadge: String
 ) {
     val coroutineScope = rememberCoroutineScope()
     AppLayout(
@@ -43,7 +40,8 @@ fun ProfileScreen(
         sliderNavigateToHome = onNavigateToHome,
         sliderNavigateToNotifications = onNavigateToNotifications,
         navController = navController,
-        context = context
+        context = context,
+        notificationsBadge = notificationsBadge
     ) { modifier ->
         Column(
             modifier = modifier

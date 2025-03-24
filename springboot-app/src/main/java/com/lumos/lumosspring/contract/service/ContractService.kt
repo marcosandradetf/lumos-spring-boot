@@ -31,7 +31,7 @@ class ContractService(
     private val notificationService: NotificationService
 ) {
 
-    suspend fun getReferenceItems(): ResponseEntity<Any> {
+    fun getReferenceItems(): ResponseEntity<Any> {
         val referenceItems = contractReferenceItemRepository.findAll()
         val referenceItemsResponse: MutableList<ContractReferenceItemDTO> = mutableListOf()
 
@@ -49,14 +49,6 @@ class ContractService(
                 )
             )
         }
-
-        notificationService.sendNotificationForRole(
-            title = "📄 Novo Contrato Criado",
-            body = "Um novo contrato foi criado e está aguardando sua análise.",
-            action = "",
-            role = Role.Values.RESPONSAVEL_TECNICO
-        )
-
 
         return ResponseEntity.ok().body(referenceItemsResponse)
     }
@@ -91,20 +83,14 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
-//        val roleNames = setOf("RESPONSAVEL_TECNICO")
-        val roleNames = setOf("ADMIN")
-        val userIds: Optional<List<UUID>> = withContext(Dispatchers.IO) {
-            userRepository.findAllByRoleNames(roleNames)
-        }
-
         notificationService.sendNotificationForRole(
-            title = "📄 Novo Contrato Criado",
-            body = "Um novo contrato foi criado e está aguardando sua análise.",
+            title = "Novo contrato pendente para Pré-Medição",
+            body = "Colaboradora ${contract.createdBy.name} criou o contrato de ${contract.contractor}",
             action = Routes.CONTRACT_SCREEN,
-            role = Role.Values.RESPONSAVEL_TECNICO
+            role = Role.Values.RESPONSAVEL_TECNICO,
+            time = util.dateTime,
+            type = "Contract"
         )
-
-
 
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }

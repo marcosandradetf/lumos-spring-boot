@@ -16,7 +16,7 @@ class ContractController(
 ) {
 
     @GetMapping("/contracts/get-items")
-    suspend fun getItems() : ResponseEntity<Any> {
+    fun getItems() : ResponseEntity<Any> {
         return contractService.getReferenceItems()
     }
 

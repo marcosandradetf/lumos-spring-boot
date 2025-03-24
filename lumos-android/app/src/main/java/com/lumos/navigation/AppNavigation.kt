@@ -1,15 +1,11 @@
 package com.lumos.navigation
 
 import android.content.Context
-import android.util.Log
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,10 +26,12 @@ import com.lumos.data.database.StockDao
 import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.MeasurementRepository
+import com.lumos.data.repository.NotificationRepository
 import com.lumos.data.repository.StockRepository
 import com.lumos.midleware.SecureStorage
 import com.lumos.service.DepositService
 import com.lumos.service.FCMService
+import com.lumos.service.NotificationsBadge
 import com.lumos.ui.auth.Login
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.measurement.ContractsScreen
@@ -45,6 +43,7 @@ import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
+import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
 import retrofit2.Retrofit
@@ -61,10 +60,9 @@ fun AppNavigation(
     database: AppDatabase,
     retrofit: Retrofit,
     secureStorage: SecureStorage,
-    context: Context,
-    actionState: MutableState<String?>
+    context: Context
 ) {
-    val actionState by FCMService.actionState.collectAsState()
+    val notificationItem by FCMService.notificationItem.collectAsState()
 
     val navController = rememberNavController()
     var isLoading by remember { mutableStateOf(true) }
@@ -111,25 +109,40 @@ fun AppNavigation(
 
     val isAuthenticated by authViewModel.isAuthenticated
 
+    val notificationViewModel: NotificationViewModel = viewModel {
+        val notificationDao = database.notificationDao()
+
+        val notificationRepository = NotificationRepository(
+            dao = notificationDao,
+        )
+        NotificationViewModel(
+            repository = notificationRepository
+        )
+    }
+
+
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) {
             isLoading = false
+            NotificationsBadge._notificationBadge.value = notificationViewModel.countNotifications()
         } else {
             isLoading = false
             authViewModel.authenticate(context)
         }
     }
 
-    LaunchedEffect(actionState, isLoading) {
-        Log.d("Navigation", "🔥 isLoading: $isLoading, actionState: $actionState")
-
-        if (!isLoading && actionState != null) {
-            navController.navigate(Routes.CONTRACT_SCREEN) {
-                popUpTo(Routes.HOME) { inclusive = false }
-            }
+    LaunchedEffect(notificationItem) {
+        if (notificationItem != null) {
+            NotificationsBadge._notificationBadge.value = notificationViewModel.insert(notificationItem!!)
+            FCMService._notificationItem.value = null
         }
-        FCMService._actionState.value = null // Reset da ação para evitar loops infinitos
+    }
+
+    val notifications by notificationViewModel.notifications
+
+    LaunchedEffect(Unit, notifications) {
+        notificationViewModel.loadNotifications()
     }
 
     // Rotas protegidas
@@ -180,7 +193,8 @@ fun AppNavigation(
                             }
                         },
                         navController = navController,
-                        context = context
+                        context = context,
+                        notificationsBadge = notifications.size.toString()
                     )
                 }
 
@@ -201,7 +215,8 @@ fun AppNavigation(
                                 popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
                             }
                         },
-                        navController = navController
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString()
                     )
                 }
 
@@ -224,7 +239,9 @@ fun AppNavigation(
                             }
                         },
                         navController = navController,
-                        context = context
+                        context = context,
+                        notificationViewModel = notificationViewModel,
+
                     )
                 }
 
@@ -253,7 +270,8 @@ fun AppNavigation(
                                 popUpTo(Routes.PROFILE) { inclusive = true }
                             }
                         },
-                        authViewModel = authViewModel
+                        authViewModel = authViewModel,
+                        notificationsBadge = notifications.size.toString()
                     )
                 }
 
@@ -297,7 +315,8 @@ fun AppNavigation(
                         context = context,
                         contractViewModel = contractViewModel,
                         connection = ConnectivityUtils,
-                        navController = navController
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString()
                     )
                 }
 

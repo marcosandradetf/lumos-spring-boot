@@ -44,10 +44,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.ContextCompat
+import com.lumos.service.NotificationsBadge
 
 @Composable
 fun HomeScreen(
@@ -55,12 +57,15 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     navController: NavHostController,
+    notificationsBadge: String
 ) {
     val context = LocalContext.current
+
 
     AppLayout(
         title = "Início",
         pSelected = BottomBar.HOME.value,
+        notificationsBadge = notificationsBadge,
         sliderNavigateToMenu = onNavigateToMenu,
         sliderNavigateToNotifications = onNavigateToNotifications,
         sliderNavigateToProfile = onNavigateToProfile,
@@ -69,7 +74,7 @@ fun HomeScreen(
     ) { modifier ->
         Column(
             modifier = modifier
-                .padding(16.dp)
+                .padding(2.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             // Cards Minimalistas
@@ -92,18 +97,19 @@ fun MaintenanceStatusCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Ícone ilustrativo
             Icon(
                 imageVector = Icons.Outlined.Assignment, // Ícone de "tarefa"
-                contentDescription = "Nenhuma execução",
+                contentDescription = "Execuçoes ícone",
                 modifier = Modifier.size(48.dp),
-                tint = Color.LightGray
+                tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -111,7 +117,7 @@ fun MaintenanceStatusCard() {
             Text(
                 text = "Status das Execuções",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -119,7 +125,7 @@ fun MaintenanceStatusCard() {
             Text(
                 text = "Nenhuma execução alocada no momento.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         }
@@ -131,7 +137,7 @@ fun AlertsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -139,13 +145,13 @@ fun AlertsCard() {
             Text(
                 text = "Alertas",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.secondary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Nenhum alerta no momento.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }
@@ -156,9 +162,9 @@ fun ReportProblemButton() {
     Button(
         onClick = { /* Ação para reportar problema */ },
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)) // Azul
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer) // Azul
     ) {
-        Text(text = "Reportar Problema")
+        Text(text = "Reportar Problema", color = MaterialTheme.colorScheme.secondary)
     }
 }
 
@@ -170,7 +176,7 @@ fun RecentActivitiesList() {
         Text(
             text = "Atividades Recentes",
             style = MaterialTheme.typography.titleMedium,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.secondary
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -202,5 +208,6 @@ fun PrevHome() {
         {},
         {},
         rememberNavController(),
+        "12"
     )
 }

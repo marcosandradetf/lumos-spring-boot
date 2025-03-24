@@ -4,17 +4,20 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.lumos.lumosspring.user.Role.Values
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class NotificationService {
 
-    fun sendNotificationForRole(title: String, body: String, action: String, role: Values) {
+    fun sendNotificationForRole(title: String, body: String, action: String, role: Values, time: Instant, type: String) {
         // Criar a mensagem para o tópico
         val message = Message.builder()
             .setTopic(role.name)  // Nome do tópico
             .putData("title", title)  // 🔹 Agora a notificação será tratada no onMessageReceived
             .putData("body", body)
             .putData("action", action)
+            .putData("time", time.toString())
+            .putData("type", type)
             .build()
 
         // Enviar a notificação

@@ -11,15 +11,17 @@ import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.Material
 import com.lumos.domain.model.Measurement
+import com.lumos.service.NotificationItem
 
 @Database(
-    entities = [(Measurement::class), (Deposit::class), (Item::class), (Material::class), (Contract::class)],
-    version = 4,
+    entities = [(Measurement::class), (Deposit::class), (Item::class), (Material::class), (Contract::class), (NotificationItem::class)],
+    version = 5,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun measurementDao(): MeasurementDao
     abstract fun stockDao(): StockDao
     abstract fun contractDao(): ContractDao
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         @Volatile
@@ -89,6 +91,21 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Criação das novas tabelas com a estrutura corrigida
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS notificationsItems " +
+                            "(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "title TEXT NOT NULL, " +
+                            "body TEXT NOT NUL, " +
+                            "action TEXT NOT NULL, " +
+                            "time TEXT NOT NULL, " +
+                            "type TEXT NOT NULL )"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -99,7 +116,8 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(
                         MIGRATION_1_2,
                         MIGRATION_2_3,
-                        MIGRATION_3_4
+                        MIGRATION_3_4,
+                        MIGRATION_4_5,
                     ) // Certifique-se de que ambas estão aqui
                     .build()
                 INSTANCE = instance

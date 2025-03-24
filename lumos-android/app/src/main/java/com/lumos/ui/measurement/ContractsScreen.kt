@@ -1,38 +1,25 @@
 package com.lumos.ui.measurement
 
 import android.content.Context
-import android.widget.ScrollView
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.content.MediaType.Companion.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccessTimeFilled
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,11 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,14 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.R
-import com.lumos.data.repository.ContractRepository
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils
 import java.time.Instant
@@ -77,9 +57,18 @@ fun ContractsScreen(
     contractViewModel: ContractViewModel,
     connection: ConnectivityUtils,
     navController: NavHostController,
+    notificationsBadge: String,
 
     ) {
     val contracts by contractViewModel.contracts
+    var internet by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        if (connection.isConnectedToInternet(context)) contractViewModel.syncContracts()
+        else internet = false
+
+        contractViewModel.loadContracts()
+    }
 
     ContractsScreenContent(
         contracts = contracts,
@@ -88,7 +77,8 @@ fun ContractsScreen(
         onNavigateToProfile = onNavigateToProfile,
         onNavigateToNotifications = onNavigateToNotifications,
         context = context,
-        navController = navController
+        navController = navController,
+        notificationsBadge = notificationsBadge
     )
 }
 
@@ -101,6 +91,7 @@ fun ContractsScreenContent(
     onNavigateToNotifications: () -> Unit,
     context: Context,
     navController: NavHostController,
+    notificationsBadge: String
 ) {
     AppLayout(
         title = "Contratos",
@@ -111,14 +102,15 @@ fun ContractsScreenContent(
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
         navigateBack = onNavigateToMenu,
-        context = context
+        context = context,
+        notificationsBadge = notificationsBadge
     ) {
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp) // Espaço entre os cards
+                .padding(2.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
         ) {
             items(contracts) { contract -> // Iteração na lista
                 val createdAt = "Criado por ${contract.createdBy} há ${
@@ -130,11 +122,11 @@ fun ContractsScreenContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .padding(6.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.onSecondary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Column(
@@ -142,54 +134,58 @@ fun ContractsScreenContent(
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        // Primeira linha (Nome + Ícone Expand)
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .clickable { expand.value = true },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expand.value = !expand.value },
                         ) {
-                            Text(
-                                text = contract.contractor,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
 
-                            IconButton(onClick = { /* Ação do ícone */ }) {
+                                ) {
+                                Text(
+                                    text = contract.contractor,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                                 Icon(
                                     imageVector = Icons.Default.ExpandMore,
                                     contentDescription = "Expandir",
                                     tint = MaterialTheme.colorScheme.primary
                                 )
+
+                            }
+
+                            // Informação extra
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTimeFilled,
+                                    contentDescription = "Horário",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
+                                )
+                                Text(
+                                    modifier = Modifier.padding(start = 5.dp),
+                                    text = createdAt,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Light,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
 
-                        // Informação extra
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccessTimeFilled,
-                                contentDescription = "Horário",
-                                tint = Color.Black,
-                                modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
-                            )
-                            Text(
-                                modifier = Modifier.padding(start = 5.dp),
-                                text = createdAt,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Light,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        if (!expand.value)
+                        if (expand.value)
                         // Linha inferior (Contrato + Ações)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable {  }
                                     .padding(top = 25.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -276,7 +272,8 @@ fun PrevContract() {
         onNavigateToProfile = { },
         onNavigateToNotifications = { },
         context = fakeContext,
-        navController = rememberNavController()
+        navController = rememberNavController(),
+        "12"
     )
 }
 

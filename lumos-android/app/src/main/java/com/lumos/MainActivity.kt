@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.lumos.navigation.AppNavigation
@@ -61,8 +60,7 @@ class MainActivity : ComponentActivity() {
                     database = app.database,
                     retrofit = app.retrofit,
                     secureStorage = app.secureStorage,
-                    context = this,
-                    actionState = actionState
+                    context = this
                 )
             }
         }

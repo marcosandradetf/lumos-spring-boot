@@ -1,10 +1,8 @@
 package com.lumos.ui.menu
 
 import android.content.Context
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,33 +11,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.Contacts
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -57,7 +42,8 @@ fun MenuScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     navController: NavHostController,
-    context: Context
+    context: Context,
+    notificationsBadge: String
 ) {
     AppLayout(
         title = "Menu",
@@ -66,7 +52,8 @@ fun MenuScreen(
         sliderNavigateToNotifications = onNavigateToNotifications,
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
-        context = context
+        context = context,
+        notificationsBadge = notificationsBadge
     ) {
         CategoryMenu(navController = navController)
     }
@@ -80,7 +67,7 @@ fun CategoryMenu(navController: NavHostController) {
             "Pré-medição",
             listOf("Contratos", "Pré-medições em andamento"),
             action = listOf(Routes.CONTRACT_SCREEN, Routes.MEASUREMENT_HOME),
-            icons = listOf(Icons.Default.AttachMoney, Icons.Default.Calculate)
+            icons = listOf(Icons.Default.Mail, Icons.Default.Map)
         ),
     )
 
@@ -100,19 +87,19 @@ fun CategoryMenu(navController: NavHostController) {
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Info, // Exemplo de ícone
-                        contentDescription = "Título",
-                        tint = Color.Blue,
-                        modifier = Modifier.size(24.dp) // Ajusta o tamanho do ícone
-                    )
-                    Spacer(modifier = Modifier.width(8.dp)) // Espaço entre o ícone e o título
                     Text(
                         text = category.title, // Texto do título
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold, // Aumenta a força do texto
-                            color = MaterialTheme.colorScheme.onSurface, // Cor do título
+                            color = MaterialTheme.colorScheme.primary, // Cor do título
                         ),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp)) // Espaço entre o ícone e o título
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown, // Exemplo de ícone
+                        contentDescription = "Icone Titulo",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp) // Ajusta o tamanho do ícone
                     )
                 }
             }
@@ -125,8 +112,8 @@ fun CategoryMenu(navController: NavHostController) {
                         .clickable { navController.navigate(category.action[index]) },
                     elevation = CardDefaults.cardElevation(4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.onSecondary,
+                        contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Row(
@@ -138,7 +125,7 @@ fun CategoryMenu(navController: NavHostController) {
                         Icon(
                             imageVector = category.icons[index],
                             contentDescription = "Descrição",
-                            tint = Color.Gray,
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             text = category.cards[index], // Exemplo de texto dinâmico para cada item
@@ -169,6 +156,7 @@ fun PrevMenuScreen() {
         {},
         {},
         rememberNavController(),
-        LocalContext.current
+        LocalContext.current,
+        "12"
     )
 }
