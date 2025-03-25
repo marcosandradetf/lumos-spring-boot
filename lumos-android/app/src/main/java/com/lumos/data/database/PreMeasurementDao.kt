@@ -1,13 +1,13 @@
 package com.lumos.data.database
 
 import androidx.room.*
+import com.lumos.data.repository.Status
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
-import com.lumos.domain.model.Status
 
 @Dao
-interface MeasurementDao {
+interface PreMeasurementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPreMeasurement(preMeasurement: PreMeasurement): Long
 
@@ -17,22 +17,22 @@ interface MeasurementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(preMeasurementStreetItem: PreMeasurementStreetItem)
 
-    @Query("SELECT * FROM preMeasurements WHERE synced = 0")
-    suspend fun getUnSyncedPreMeasurements(id : Long): List<PreMeasurement>
+    @Query("SELECT * FROM pre_measurements WHERE synced = 0 and status = :status")
+    suspend fun getUnSyncedPreMeasurements(status : String = Status.FINISHED): List<PreMeasurement>
 
-    @Query("SELECT * FROM preMeasurements WHERE status = :status")
-    suspend fun getPreMeasurements(status: Status): List<PreMeasurement>
+    @Query("SELECT * FROM pre_measurements WHERE status = :status")
+    suspend fun getPreMeasurements(status: String): List<PreMeasurement>
 
-    @Query("SELECT * FROM preMeasurements WHERE preMeasurementId = :preMeasurementId")
+    @Query("SELECT * FROM pre_measurements WHERE preMeasurementId = :preMeasurementId")
     suspend fun getPreMeasurement(preMeasurementId: Long): PreMeasurement
 
-    @Query("SELECT * FROM preMeasurementStreets WHERE preMeasurementId = :preMeasurementId")
+    @Query("SELECT * FROM pre_measurement_streets WHERE preMeasurementId = :preMeasurementId")
     suspend fun getStreets(preMeasurementId : Long): List<PreMeasurementStreet>
 
-    @Query("SELECT * FROM preMeasurementsStreetItems WHERE preMeasurementStreetId = :preMeasurementStreetId")
+    @Query("SELECT * FROM pre_measurement_street_items WHERE preMeasurementStreetId = :preMeasurementStreetId")
     suspend fun getItems(preMeasurementStreetId: Long): List<PreMeasurementStreetItem>
 
-    @Query("UPDATE preMeasurements SET synced = 1 WHERE preMeasurementId = :preMeasurementId")
+    @Query("UPDATE pre_measurements SET synced = 1 WHERE preMeasurementId = :preMeasurementId")
     suspend fun markAsSynced(preMeasurementId: Long)
 
 }

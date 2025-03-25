@@ -11,16 +11,16 @@ interface NotificationDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertNotification(notification: NotificationItem)
 
-    @Query("SELECT COUNT(id) FROM notificationsItems")
+    @Query("SELECT COUNT(id) FROM notifications_items")
     suspend fun getNotificationCount(): Int
 
-    @Query("SELECT * FROM notificationsItems")
+    @Query("SELECT * FROM notifications_items")
     suspend fun getNotifications(): List<NotificationItem>
 
-    @Query("DELETE FROM notificationsItems")
+    @Query("DELETE FROM notifications_items")
     suspend fun deleteAll()
 
-    @Query("DELETE FROM notificationsItems where id = :id")
+    @Query("DELETE FROM notifications_items where id = :id")
     suspend fun delete(id: Long)
 
 }

@@ -9,23 +9,23 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.lumos.data.api.MeasurementApi
-import com.lumos.data.api.MeasurementDto
-import com.lumos.data.database.MeasurementDao
+import com.lumos.data.api.PreMeasurementDto
+import com.lumos.data.api.PreMeasurementStreetDto
+import com.lumos.data.database.PreMeasurementDao
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
-import com.lumos.domain.model.Status
 import com.lumos.domain.service.SyncMeasurement
 import java.util.concurrent.TimeUnit
 
 class MeasurementRepository(
-    private val dao: MeasurementDao,
+    private val dao: PreMeasurementDao,
     private val api: MeasurementApi,
     private val context: Context
 ) {
 
 
-    suspend fun saveMeasurement(preMeasurementStreet: PreMeasurementStreet): Long? {
+    suspend fun saveStreet(preMeasurementStreet: PreMeasurementStreet): Long? {
         return try {
             dao.insertStreet(preMeasurementStreet)
         } catch (e: Exception) {
@@ -34,15 +34,33 @@ class MeasurementRepository(
         }
     }
 
-    suspend fun getUnSyncedMeasurements(): List<PreMeasurementStreet> {
+    suspend fun getUnSyncedMeasurements(): List<PreMeasurement> {
         return dao.getUnSyncedPreMeasurements()
     }
 
-    suspend fun sendMeasurementToBackend(preMeasurementStreet: PreMeasurementStreet, preMeasurementStreetItems: List<PreMeasurementStreetItem>, userUuid: String): Boolean {
+    suspend fun sendMeasurementToBackend(
+        preMeasurement: PreMeasurement,
+        preMeasurementStreet: List<PreMeasurementStreet>,
+        preMeasurementStreetItems: List<PreMeasurementStreetItem>,
+        userUuid: String
+    ): Boolean {
         return try {
-            val dto = MeasurementDto(
-                preMeasurementStreet,
-                preMeasurementStreetItems
+            val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
+            val itemsByStreetId = preMeasurementStreetItems.groupBy { it.preMeasurementStreetId }
+
+            preMeasurementStreet.forEach { street ->
+                val items = itemsByStreetId[street.preMeasurementStreetId] ?: emptyList()
+                streets.add(
+                    PreMeasurementStreetDto(
+                        street = street,
+                        items = items
+                    )
+                )
+            }
+
+            val dto = PreMeasurementDto(
+                contractId = preMeasurement.contractID,
+                streets = streets
             )
             api.sendMeasurement(dto, userUuid)
             true
@@ -89,7 +107,7 @@ class MeasurementRepository(
         return dao.insertPreMeasurement(preMeasurement)
     }
 
-    suspend fun getPreMeasurements(status: Status): List<PreMeasurement> {
+    suspend fun getPreMeasurements(status: String): List<PreMeasurement> {
         return dao.getPreMeasurements(status)
     }
 
@@ -97,4 +115,14 @@ class MeasurementRepository(
         return dao.getPreMeasurement(preMeasurementId)
     }
 
+    suspend fun getStreets(preMeasurementId: Long): List<PreMeasurementStreet> {
+        return dao.getStreets(preMeasurementId)
+    }
+
+}
+
+object Status {
+    const val PENDING = "PEDING"
+    const val IN_PROGRESS = "IN_PROGRESS"
+    const val FINISHED = "FINISHED"
 }

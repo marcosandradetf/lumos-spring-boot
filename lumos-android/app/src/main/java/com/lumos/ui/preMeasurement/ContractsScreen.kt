@@ -19,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.lumos.data.repository.Status
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
@@ -66,7 +68,7 @@ fun ContractsScreen(
         if (connection.isConnectedToInternet(context)) contractViewModel.syncContracts()
         else internet = false
 
-        contractViewModel.loadContracts()
+        contractViewModel.loadContracts(Status.PENDING)
     }
 
     ContractsScreenContent(
@@ -104,7 +106,6 @@ fun ContractsScreenContent(
         context = context,
         notificationsBadge = notificationsBadge
     ) {
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()

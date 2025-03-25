@@ -23,7 +23,7 @@ class SyncMeasurement(appContext: Context, workerParams: WorkerParameters) :
         val measurementApi = api.createApi(MeasurementApi::class.java)
 
         repository = MeasurementRepository(
-            AppDatabase.getInstance(appContext).measurementDao(),
+            AppDatabase.getInstance(appContext).preMeasurementDao(),
             measurementApi,
             appContext
         )
@@ -34,18 +34,24 @@ class SyncMeasurement(appContext: Context, workerParams: WorkerParameters) :
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
                 val unsyncedData = repository.getUnSyncedMeasurements()
                 unsyncedData.forEach { measurement ->
-                    var updatedMeasurement = measurement
-                    if (measurement.address == null) {
-                        setAddress(measurement)
-                        updatedMeasurement = measurement.copy(address = address)
+                    val streets = repository.getStreets(measurement.preMeasurementId).map {
+                        if (it.address == null) {
+                            setAddress(it)
+                            it.copy(address = address) // Retorna uma cópia com o endereço atualizado
+                        } else {
+                            it
+                        }
                     }
-                    val items = repository.getItems(measurement.preMeasurementStreetId)
-                    if (repository.sendMeasurementToBackend(updatedMeasurement, items, secureStorage.getUserUuid()!!)) {
-                        repository.markAsSynced(measurement.preMeasurementStreetId)
-                        Result.success()
-                    } else {
-                        Result.retry()
+                    streets.forEach {street ->
+                        val items = repository.getItems(street.preMeasurementStreetId)
+                        if (repository.sendMeasurementToBackend(measurement, streets, items, secureStorage.getUserUuid()!!)) {
+                            repository.markAsSynced(measurement.preMeasurementId)
+                            Result.success()
+                        } else {
+                            Result.retry()
+                        }
                     }
+
                 }
                 Result.success()
             } else Result.retry()

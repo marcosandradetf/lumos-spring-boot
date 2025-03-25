@@ -1,17 +1,11 @@
 package com.lumos.lumosspring.execution.controller;
 
-import com.lumos.lumosspring.execution.controller.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.execution.dto.PreMeasurementDTO;
 import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.service.PreMeasurementService;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.ByteArrayOutputStream;
-
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 
 
 @RestController

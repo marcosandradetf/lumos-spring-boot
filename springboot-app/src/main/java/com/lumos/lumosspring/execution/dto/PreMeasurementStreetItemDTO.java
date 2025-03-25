@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.execution.controller.dto;
+package com.lumos.lumosspring.execution.dto;
 
 public record PreMeasurementStreetItemDTO(Long itemId,
                                           String materialId,

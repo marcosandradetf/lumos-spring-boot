@@ -3,7 +3,7 @@ package com.lumos.domain.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "preMeasurementStreets")
+@Entity(tableName = "pre_measurement_streets")
 data class PreMeasurementStreet(
     @PrimaryKey(autoGenerate = true) val preMeasurementStreetId: Long = 0,
     val preMeasurementId: Long,

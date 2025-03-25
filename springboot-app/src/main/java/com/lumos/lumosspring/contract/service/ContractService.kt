@@ -114,7 +114,7 @@ class ContractService(
                 contractFile = it.contractFile,
                 createdBy = it.createdBy.name,
                 createdAt = it.creationDate.toString(),
-                status = it.status.name
+                status = "PENDING"
             )
             contractList.add(contract)
         }

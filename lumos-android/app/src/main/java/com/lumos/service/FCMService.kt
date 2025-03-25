@@ -16,7 +16,7 @@ import com.lumos.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-@Entity(tableName = "notificationsItems")
+@Entity(tableName = "notifications_items")
 data class NotificationItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,

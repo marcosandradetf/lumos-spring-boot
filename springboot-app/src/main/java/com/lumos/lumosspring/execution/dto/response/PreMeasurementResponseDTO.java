@@ -1,6 +1,5 @@
-package com.lumos.lumosspring.execution.controller.dto.response;
+package com.lumos.lumosspring.execution.dto.response;
 
-import java.time.Instant;
 import java.util.List;
 
 public record PreMeasurementResponseDTO(

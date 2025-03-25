@@ -6,25 +6,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.ContractRepository
-import com.lumos.data.repository.StockRepository
 import com.lumos.domain.model.Contract
-import com.lumos.domain.model.Deposit
-import com.lumos.domain.model.Material
-import com.lumos.service.DepositService
 import kotlinx.coroutines.launch
 
 class ContractViewModel(
     private val repository: ContractRepository,
 
-) : ViewModel() {
+    ) : ViewModel() {
     private val _contracts = mutableStateOf<List<Contract>>(emptyList()) // estado da lista
     val contracts: State<List<Contract>> = _contracts // estado acessível externamente
 
 
-    fun loadContracts() {
+    fun loadContracts(status: String) {
         viewModelScope.launch {
             try {
-                val fetched = repository.getContracts()
+                val fetched = repository.getContracts(status)
                 _contracts.value = fetched // atualiza o estado com os dados obtidos
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
@@ -51,6 +47,10 @@ class ContractViewModel(
                 // Tratar erros aqui
             }
         }
+    }
+
+    fun getContract(contractId: Long): Contract? {
+        return repository.getContract(contractId)
     }
 
 

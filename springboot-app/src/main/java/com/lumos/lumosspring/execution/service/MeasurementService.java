@@ -1,14 +1,11 @@
 package com.lumos.lumosspring.execution.service;
 
 
-import com.lumos.lumosspring.execution.controller.dto.MeasurementValuesDTO;
+import com.lumos.lumosspring.execution.dto.MeasurementValuesDTO;
 import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
-import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItemService;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
-import com.lumos.lumosspring.stock.service.DepositService;
-import com.lumos.lumosspring.stock.service.MaterialService;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
@@ -20,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class MeasurementService {

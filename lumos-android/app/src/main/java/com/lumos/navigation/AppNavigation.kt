@@ -35,9 +35,9 @@ import com.lumos.service.NotificationsBadge
 import com.lumos.ui.auth.Login
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.preMeasurement.ContractsScreen
-import com.lumos.ui.preMeasurement.MeasurementHome
-import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
-import com.lumos.ui.preMeasurement.PreMeasurementViewModel
+//import com.lumos.ui.preMeasurement.MeasurementHome
+//import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
+//import com.lumos.ui.preMeasurement.PreMeasurementViewModel
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.profile.ProfileScreen
@@ -85,13 +85,13 @@ fun AppNavigation(
     }
 
 
-    val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
-        val measurementDao = database.measurementDao()
-        val api = retrofit.create(MeasurementApi::class.java)
-
-        val measurementRepository = MeasurementRepository(measurementDao, api, context)
-        PreMeasurementViewModel(measurementRepository)
-    }
+//    val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
+//        val measurementDao = database.preMeasurementDao()
+//        val api = retrofit.create(MeasurementApi::class.java)
+//
+//        val measurementRepository = MeasurementRepository(measurementDao, api, context)
+//        PreMeasurementViewModel(measurementRepository)
+//    }
 
     val contractViewModel: ContractViewModel = viewModel {
         val contractDao = database.contractDao()
@@ -276,27 +276,27 @@ fun AppNavigation(
                 }
 
                 // measurement
-                composable(Routes.MEASUREMENT_HOME) {
-                    MeasurementHome(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        navController = navController,
-                        context = context
-                    )
-                }
-
-                composable(Routes.MEASUREMENT_SCREEN) {
-                    PreMeasurementStreetScreen(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        navController = navController,
-                        context = context,
-                        stockViewModel,
-                        preMeasurementViewModel
-                    )
-                }
+//                composable(Routes.MEASUREMENT_HOME) {
+//                    MeasurementHome(
+//                        onNavigateToHome = {
+//                            navController.navigate(Routes.HOME)
+//                        },
+//                        navController = navController,
+//                        context = context
+//                    )
+//                }
+//
+//                composable(Routes.MEASUREMENT_SCREEN) {
+//                    PreMeasurementStreetScreen(
+//                        onNavigateToHome = {
+//                            navController.navigate(Routes.HOME)
+//                        },
+//                        navController = navController,
+//                        context = context,
+//                        stockViewModel,
+//                        preMeasurementViewModel
+//                    )
+//                }
 
                 composable(Routes.CONTRACT_SCREEN) {
                     ContractsScreen(

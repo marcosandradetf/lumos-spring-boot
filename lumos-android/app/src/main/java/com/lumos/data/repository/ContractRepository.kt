@@ -33,12 +33,16 @@ class ContractRepository(
 
     }
 
-    suspend fun getContracts() : List<Contract> {
-        return dao.getContracts()
+    suspend fun getContracts(status: String) : List<Contract> {
+        return dao.getContracts(status)
     }
 
     suspend fun markAsMeasured(contractId: Long) {
         dao.markAsMeasured(contractId)
+    }
+
+    fun getContract(contractId: Long): Contract {
+        return dao.getContract(contractId)
     }
 
 }

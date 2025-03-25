@@ -8,11 +8,16 @@ import retrofit2.http.POST
 
 interface MeasurementApi {
     @POST("/api/mobile/execution/insert-measurement")
-    suspend fun sendMeasurement(@Body measurement: MeasurementDto, @Header("UUID") uuid: String)
+    suspend fun sendMeasurement(@Body preMeasurementDto: PreMeasurementDto, @Header("UUID") uuid: String)
 
 }
 
-data class MeasurementDto(
-    val preMeasurementStreet: PreMeasurementStreet,
-    val preMeasurementStreetItems: List<PreMeasurementStreetItem>
+data class PreMeasurementDto(
+    val contractId: Long,
+    val streets: List<PreMeasurementStreetDto>,
+)
+
+data class PreMeasurementStreetDto(
+    val street: PreMeasurementStreet,
+    val items: List<PreMeasurementStreetItem>
 )
