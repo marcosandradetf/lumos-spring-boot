@@ -17,7 +17,14 @@ import com.lumos.service.NotificationItem
 import java.util.concurrent.Executors
 
 @Database(
-    entities = [(PreMeasurement::class), (PreMeasurementStreetItem::class), (Deposit::class), (PreMeasurementStreet::class), (Material::class), (Contract::class), (NotificationItem::class)],
+    entities = [
+        (PreMeasurement::class),
+        (PreMeasurementStreetItem::class),
+        (Deposit::class),
+        (PreMeasurementStreet::class),
+        (Material::class),
+        (Contract::class),
+        (NotificationItem::class)],
     version = 6,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -123,7 +130,7 @@ abstract class AppDatabase : RoomDatabase() {
                             "contractID INTEGER NOT NULL, " +
                             "deviceId TEXT NOT NULL, " +
                             "status TEXT NOT NULL, " +
-                            "synced INTEGER NOT NULL)"
+                            "synced INTEGER NOT NULL DEFAULT 0)"
                 )
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS pre_measurement_streets " +
@@ -153,6 +160,7 @@ abstract class AppDatabase : RoomDatabase() {
                             "time TEXT NOT NULL, " +
                             "type TEXT NOT NULL)"
                 )
+                throw RuntimeException("MIGRATION 5_6 FOI CHAMADA")
             }
         }
 

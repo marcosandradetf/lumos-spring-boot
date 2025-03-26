@@ -40,6 +40,11 @@ import com.lumos.ui.preMeasurement.ContractsScreen
 //import com.lumos.ui.preMeasurement.PreMeasurementViewModel
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.notifications.NotificationsScreen
+import com.lumos.ui.preMeasurement.MeasurementHome
+import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
+import com.lumos.ui.preMeasurement.PreMeasurementScreen
+import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
+import com.lumos.ui.preMeasurement.PreMeasurementViewModel
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
@@ -85,13 +90,13 @@ fun AppNavigation(
     }
 
 
-//    val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
-//        val measurementDao = database.preMeasurementDao()
-//        val api = retrofit.create(MeasurementApi::class.java)
-//
-//        val measurementRepository = MeasurementRepository(measurementDao, api, context)
-//        PreMeasurementViewModel(measurementRepository)
-//    }
+    val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
+        val measurementDao = database.preMeasurementDao()
+        val api = retrofit.create(MeasurementApi::class.java)
+
+        val measurementRepository = MeasurementRepository(measurementDao, api, context)
+        PreMeasurementViewModel(measurementRepository)
+    }
 
     val contractViewModel: ContractViewModel = viewModel {
         val contractDao = database.contractDao()
@@ -134,7 +139,8 @@ fun AppNavigation(
 
     LaunchedEffect(notificationItem) {
         if (notificationItem != null) {
-            NotificationsBadge._notificationBadge.value = notificationViewModel.insert(notificationItem!!)
+            NotificationsBadge._notificationBadge.value =
+                notificationViewModel.insert(notificationItem!!)
             FCMService._notificationItem.value = null
         }
     }
@@ -242,7 +248,7 @@ fun AppNavigation(
                         context = context,
                         notificationViewModel = notificationViewModel,
 
-                    )
+                        )
                 }
 
 
@@ -276,27 +282,27 @@ fun AppNavigation(
                 }
 
                 // measurement
-//                composable(Routes.MEASUREMENT_HOME) {
-//                    MeasurementHome(
-//                        onNavigateToHome = {
-//                            navController.navigate(Routes.HOME)
-//                        },
-//                        navController = navController,
-//                        context = context
-//                    )
-//                }
-//
-//                composable(Routes.MEASUREMENT_SCREEN) {
-//                    PreMeasurementStreetScreen(
-//                        onNavigateToHome = {
-//                            navController.navigate(Routes.HOME)
-//                        },
-//                        navController = navController,
-//                        context = context,
-//                        stockViewModel,
-//                        preMeasurementViewModel
-//                    )
-//                }
+                composable(Routes.MEASUREMENT_HOME) {
+                    MeasurementHome(
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        navController = navController,
+                        context = context
+                    )
+                }
+
+                composable(Routes.MEASUREMENT_SCREEN) {
+                    PreMeasurementStreetScreen(
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        navController = navController,
+                        context = context,
+                        stockViewModel,
+                        preMeasurementViewModel
+                    )
+                }
 
                 composable(Routes.CONTRACT_SCREEN) {
                     ContractsScreen(
@@ -312,9 +318,61 @@ fun AppNavigation(
                         onNavigateToNotifications = {
                             navController.navigate(Routes.NOTIFICATIONS)
                         },
+                        onNavigateToPreMeasurement = {
+                            navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
+                        },
                         context = context,
                         contractViewModel = contractViewModel,
                         connection = ConnectivityUtils,
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString()
+                    )
+                }
+
+                composable(Routes.PRE_MEASUREMENT_PROGRESS + "/{contractId}") { backStackEntry ->
+                    val contractId = backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                    PreMeasurementProgressScreen(
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        onNavigateToPreMeasurements = {
+                            navController.navigate(Routes.PRE_MEASUREMENTS)
+                        },
+                        context = context,
+                        contractViewModel = contractViewModel,
+                        preMeasurementViewModel = preMeasurementViewModel,
+                        connection = ConnectivityUtils,
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        contractId = contractId
+                    )
+                }
+
+                composable(Routes.PRE_MEASUREMENTS) {
+                    PreMeasurementScreen(
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        context = context,
+                        contractViewModel = contractViewModel,
                         navController = navController,
                         notificationsBadge = notifications.size.toString()
                     )
@@ -336,8 +394,9 @@ object Routes {
     const val MENU = "menu"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
+    const val PRE_MEASUREMENTS = "pre-measurements"
+    const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
     const val MEASUREMENT_HOME = "measurement-home"
     const val MEASUREMENT_SCREEN = "measurement-screen"
     const val CONTRACT_SCREEN = "contract-screen"
-
 }

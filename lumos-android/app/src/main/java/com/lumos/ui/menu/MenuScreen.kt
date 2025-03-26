@@ -66,7 +66,7 @@ fun CategoryMenu(navController: NavHostController) {
         Category(
             "Pré-medição",
             listOf("Contratos", "Pré-medições em andamento"),
-            action = listOf(Routes.CONTRACT_SCREEN, Routes.MEASUREMENT_HOME),
+            action = listOf(Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS),
             icons = listOf(Icons.Default.Mail, Icons.Default.Map)
         ),
     )

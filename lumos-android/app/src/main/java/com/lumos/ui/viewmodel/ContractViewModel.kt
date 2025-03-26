@@ -7,7 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.ContractRepository
 import com.lumos.domain.model.Contract
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ContractViewModel(
     private val repository: ContractRepository,
@@ -28,17 +30,6 @@ class ContractViewModel(
         }
     }
 
-    fun markAsMeasured(contractId: Long) {
-        viewModelScope.launch {
-            try {
-                repository.markAsMeasured(contractId)
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-            }
-        }
-    }
-
-
     fun syncContracts() {
         viewModelScope.launch {
             try {
@@ -49,8 +40,30 @@ class ContractViewModel(
         }
     }
 
-    fun getContract(contractId: Long): Contract? {
-        return repository.getContract(contractId)
+    suspend fun getContract(contractId: Long): Contract? {
+        return withContext(Dispatchers.IO) {
+            try {
+                repository.getContract(contractId)
+            } catch (e: Exception) {
+                Log.e("Error loadMaterials", e.message.toString())
+                null  // Retorna null em caso de erro
+            }
+        }
+    }
+
+
+    fun setStatus(contractId: Long, status: String) {
+        viewModelScope.launch {
+            try {
+                repository.setStatus(contractId, status)
+            } catch (e: Exception) {
+                Log.e("Error loadMaterials", e.message.toString())
+            }
+        }
+    }
+
+    fun downloadContract(contractId: Long) {
+        TODO("Not yet implemented")
     }
 
 

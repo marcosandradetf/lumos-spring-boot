@@ -13,8 +13,8 @@ import com.lumos.data.api.PreMeasurementDto
 import com.lumos.data.api.PreMeasurementStreetDto
 import com.lumos.data.database.PreMeasurementDao
 import com.lumos.domain.model.PreMeasurement
-import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
+import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.service.SyncMeasurement
 import java.util.concurrent.TimeUnit
 
@@ -122,7 +122,7 @@ class MeasurementRepository(
 }
 
 object Status {
-    const val PENDING = "PEDING"
+    const val PENDING = "PENDING"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
 }

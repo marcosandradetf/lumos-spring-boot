@@ -1,6 +1,7 @@
 package com.lumos.ui.preMeasurement
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,12 +54,12 @@ fun ContractsScreen(
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToPreMeasurement: (Long) -> Unit,
     context: Context,
     contractViewModel: ContractViewModel,
     connection: ConnectivityUtils,
     navController: NavHostController,
     notificationsBadge: String,
-
     ) {
     val contracts by contractViewModel.contracts
     var internet by remember { mutableStateOf(true) }
@@ -79,7 +79,14 @@ fun ContractsScreen(
         onNavigateToNotifications = onNavigateToNotifications,
         context = context,
         navController = navController,
-        notificationsBadge = notificationsBadge
+        notificationsBadge = notificationsBadge,
+        start = {
+            contractViewModel.setStatus(it, Status.IN_PROGRESS)
+            onNavigateToPreMeasurement(it)
+        },
+        download = {
+            contractViewModel.downloadContract(it)
+        }
     )
 }
 
@@ -92,7 +99,9 @@ fun ContractsScreenContent(
     onNavigateToNotifications: () -> Unit,
     context: Context,
     navController: NavHostController,
-    notificationsBadge: String
+    notificationsBadge: String,
+    start: (Long) -> Unit,
+    download: (Long) -> Unit
 ) {
     AppLayout(
         title = "Contratos",
@@ -180,19 +189,22 @@ fun ContractsScreenContent(
                             }
                         }
 
-                        if (expand.value)
-                        // Linha inferior (Contrato + Ações)
+                        AnimatedVisibility(visible = expand.value) {
+                            // Linha inferior (Contrato + Ações)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {  }
+                                    .clickable { }
                                     .padding(top = 25.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally, // Centraliza os itens horizontalmente
-                                    verticalArrangement = Arrangement.Center // Mantém o alinhamento vertical
+                                    verticalArrangement = Arrangement.Center, // Mantém o alinhamento vertical
+                                    modifier = Modifier.clickable {
+                                        download(contract.contractId)
+                                    }
                                 ) {
                                     Text(
                                         text = "Contrato",
@@ -211,7 +223,9 @@ fun ContractsScreenContent(
                                 }
 
 
-                                TextButton(onClick = { /* Ação */ }) {
+                                TextButton(onClick = {
+                                    start(contract.contractId)
+                                }) {
                                     Text(
                                         text = "Iniciar Pré-Medição",
                                         color = Color(0xFFFF2F55),
@@ -221,6 +235,7 @@ fun ContractsScreenContent(
                                     )
                                 }
                             }
+                        }
                     }
                 }
             }
@@ -273,7 +288,9 @@ fun PrevContract() {
         onNavigateToNotifications = { },
         context = fakeContext,
         navController = rememberNavController(),
-        "12"
+        "12",
+        start = {},
+        download = {}
     )
 }
 

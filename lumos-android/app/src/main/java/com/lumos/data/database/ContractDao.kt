@@ -14,9 +14,9 @@ interface ContractDao {
     suspend fun getContracts(status: String): List<Contract>
 
     @Query("UPDATE contracts SET status = :status WHERE contractId = :contractId")
-    suspend fun markAsMeasured(contractId: Long, status: String = Status.FINISHED)
+    suspend fun setStatus(contractId: Long, status: String)
 
     @Query("SELECT * FROM contracts WHERE contractId = :contractId")
-    fun getContract(contractId: Long): Contract
+    suspend fun getContract(contractId: Long): Contract
 
 }

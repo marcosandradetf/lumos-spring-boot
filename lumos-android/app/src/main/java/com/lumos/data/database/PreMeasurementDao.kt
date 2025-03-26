@@ -3,8 +3,8 @@ package com.lumos.data.database
 import androidx.room.*
 import com.lumos.data.repository.Status
 import com.lumos.domain.model.PreMeasurement
-import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
+import com.lumos.domain.model.PreMeasurementStreetItem
 
 @Dao
 interface PreMeasurementDao {
