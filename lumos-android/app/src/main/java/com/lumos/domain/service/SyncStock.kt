@@ -5,8 +5,6 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.lumos.data.api.ApiService
-import com.lumos.data.api.AuthApi
-import com.lumos.data.api.RetrofitClient
 import com.lumos.data.api.StockApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.repository.StockRepository
