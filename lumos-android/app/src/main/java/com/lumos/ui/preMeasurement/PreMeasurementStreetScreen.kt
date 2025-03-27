@@ -7,7 +7,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -54,7 +53,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,7 +60,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -96,14 +93,12 @@ import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
 import com.lumos.ui.viewmodel.StockViewModel
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 @SuppressLint("HardwareIds")
 @Composable
 fun PreMeasurementStreetScreen(
-    onNavigateToHome: () -> Unit,
-    navController: NavHostController,
+    back: (Long) -> Unit,
     context: Context,
     stockViewModel: StockViewModel,
     preMeasurementViewModel: PreMeasurementViewModel,
@@ -126,13 +121,15 @@ fun PreMeasurementStreetScreen(
     val preMeasurementStreet by remember {
         mutableStateOf(
             PreMeasurementStreet(
-                preMeasurementId = 0,
+                preMeasurementId = contractId,
                 lastPower = "",
                 latitude = 0.0,
                 longitude = 0.0,
-                address = "",
+                street = "",
+                neighborhood = "",
                 number = "",
                 city = "",
+                state = "",
                 deviceId = Settings.Secure.getString(
                     context.contentResolver,
                     Settings.Secure.ANDROID_ID
@@ -160,18 +157,17 @@ fun PreMeasurementStreetScreen(
                 val city = addr?.get(2).toString()
                 val state = addr?.get(3).toString()
 
-//                preMeasurementStreet.street = street
-//                preMeasurementStreet.neighborhood = neighborhood
-//                preMeasurementStreet.city = city
-//                preMeasurementStreet.state = state
-//                preMeasurementStreet.latitude = vLatitude ?: 0.0
-//                preMeasurementStreet.longitude = vLongitude ?: 0.0
+                preMeasurementStreet.street = street
+                preMeasurementStreet.neighborhood = neighborhood
+                preMeasurementStreet.city = city
+                preMeasurementStreet.state = state
+                preMeasurementStreet.latitude = vLatitude ?: 0.0
+                preMeasurementStreet.longitude = vLongitude ?: 0.0
 
             } else {
                 Log.e("GET Address", "Latitude ou Longitude são nulos.")
             }
         }
-
 
 
         // Agendar o Worker assim que a tela for aberta
@@ -236,12 +232,12 @@ fun PreMeasurementStreetScreen(
             saveStreet = {
                 preMeasurementViewModel.saveStreetOffline(
                     preMeasurementStreet,
-                    callback = { preMeasurementId ->
-                        if (preMeasurementId !== null)
+                    callback = { preMeasurementStreetId ->
+                        if (preMeasurementStreetId !== null)
                             try {
                                 preMeasurementViewModel.saveItemsOffline(
                                     preMeasurementStreetItems,
-                                    preMeasurementId
+                                    preMeasurementStreetId
                                 )
                                 finishMeasurement = true
                             } catch (e: Exception) {
@@ -251,18 +247,24 @@ fun PreMeasurementStreetScreen(
                 )
 
             },
-            onNavigateToHome = onNavigateToHome,
-            onValueChange = { street, number, neighborhood, city, state ->
-                preMeasurementStreet.address = "$street, $number - $neighborhood, $city - $state"
+            back = {
+                back(it)
             },
-            vLatitude = vLatitude ?: 0.0,
-            vLongitude = vLongitude ?: 0.0,
-            clearItems = {
-                preMeasurementStreetItems = emptyList()
+            onValueChange = { field, value ->
+                when (field) {
+                    "street" -> preMeasurementStreet.street = value
+                    "number" -> preMeasurementStreet.number = value
+                    "neighborhood" -> preMeasurementStreet.neighborhood = value
+                    "city" -> preMeasurementStreet.city = value
+                    "state" -> preMeasurementStreet.state = value
+                    "lastPower" -> preMeasurementStreet.lastPower = value
+                }
+
             },
             showModal = {
                 showModal = true
-            }
+            },
+            pStreet = preMeasurementStreet
 
         )
     }
@@ -301,26 +303,22 @@ fun PMSContent(
     context: Context,
     preMeasurementStreetItems: List<PreMeasurementStreetItem>,
     saveStreet: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onValueChange: (String, String, String, String, String) -> Unit,
-    vLatitude: Double,
-    vLongitude: Double,
-    clearItems: () -> Unit,
+    back: (Long) -> Unit,
+    onValueChange: (String, String) -> Unit,
     showModal: () -> Unit,
+    pStreet: PreMeasurementStreet
 ) {
 
 
     val keyboardController = LocalSoftwareKeyboardController.current
-
     var exitMeasurement by remember { mutableStateOf(false) }
 
-    var address by remember { mutableStateOf<String>("") }
-    var street by remember { mutableStateOf<String>("") }
+    var street by remember { mutableStateOf<String>(pStreet.street) }
     var number by remember { mutableStateOf<String>("") }
-    var neighborhood by remember { mutableStateOf<String>("") }
-    var city by remember { mutableStateOf<String>("") }
+    var neighborhood by remember { mutableStateOf<String>(pStreet.neighborhood) }
+    var city by remember { mutableStateOf<String>(pStreet.city) }
+    var state by remember { mutableStateOf<String>(pStreet.state ?: "") }
     var lastPower by remember { mutableStateOf<String>("") }
-    var state by remember { mutableStateOf<String>("") }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -369,6 +367,7 @@ fun PMSContent(
                             .show()
                     } else {
                         saveStreet()
+                        back(pStreet.preMeasurementId)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
@@ -403,7 +402,7 @@ fun PMSContent(
                             exitMeasurement = false
                         }, // Fecha o diálogo ao cancelar
                         onConfirmation = {
-                            onNavigateToHome()
+                            back(pStreet.preMeasurementId)
                         }, // Ação ao confirmar
                         dialogTitle = "Confirmação de saída", // Título do diálogo
                         dialogText = "Você tem certeza que deseja cancelar a pré-medição atual?", // Texto do diálogo
@@ -431,7 +430,7 @@ fun PMSContent(
                                 )
                             )
                             Text(
-                                text = "$vLatitude, $vLongitude",
+                                text = "${pStreet.latitude}, ${pStreet.longitude}",
                                 style = MaterialTheme.typography.titleSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary // Azul escuro
@@ -487,7 +486,7 @@ fun PMSContent(
                             value = street,
                             onValueChange = {
                                 street = it
-                                onValueChange(street, number, neighborhood, city, state)
+                                onValueChange("street", street)
                             },
                             label = {
                                 Text(
@@ -507,7 +506,7 @@ fun PMSContent(
                             value = number,
                             onValueChange = {
                                 number = it
-                                onValueChange(street, number, neighborhood, city, state)
+                                onValueChange("number", number)
                             },
                             label = {
                                 Text(
@@ -528,7 +527,7 @@ fun PMSContent(
                             value = neighborhood,
                             onValueChange = {
                                 neighborhood = it
-                                onValueChange(street, number, neighborhood, city, state)
+                                onValueChange("neighborhood", neighborhood)
                             },
                             label = {
                                 Text(
@@ -549,7 +548,7 @@ fun PMSContent(
                             value = city,
                             onValueChange = {
                                 city = it
-                                onValueChange(street, number, neighborhood, city, state)
+                                onValueChange("city", city)
                             },
                             label = {
                                 Text(
@@ -564,26 +563,26 @@ fun PMSContent(
                     }
 
                     Row {
-//                        preMeasurementStreet.lastPower?.isEmpty()?.let { empty ->
-//                            OutlinedTextField(
-//                                textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-//                                value = lastPower,
-//                                onValueChange = {
-//                                    lastPower = if (it.endsWith("W")) it else it + "W"
-//                                    preMeasurementStreet.lastPower = lastPower
-//                                },
-//                                label = {
-//                                    Text(
-//                                        text = "Potência atual:",
-//                                        color = MaterialTheme.colorScheme.onBackground
-//                                    )
-//                                },
-//                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-//                                maxLines = 1,
-//                                modifier = Modifier.fillMaxWidth(),
-//                                isError = empty
-//                            )
-//                        }
+                        pStreet.lastPower?.isEmpty()?.let { empty ->
+                            OutlinedTextField(
+                                textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                                value = lastPower,
+                                onValueChange = {
+                                    lastPower = if (it.endsWith("W")) it else it + "W"
+                                    onValueChange("lastPower", lastPower)
+                                },
+                                label = {
+                                    Text(
+                                        text = "Potência atual:",
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                maxLines = 1,
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = empty
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(200.dp))
@@ -596,7 +595,6 @@ fun PMSContent(
                             modifier = Modifier
                                 .size(50.dp) // Tamanho maior para um botão redondo
                                 .clickable {
-                                    clearItems()
                                     showModal()
                                 }, // Adiciona interação de clique
                             shape = CircleShape, // Formato circular
@@ -700,6 +698,17 @@ fun BottomSheetDialog(
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
     }
 
+    data class MaterialCheckResult(val selected: Boolean, val quantity: Int)
+
+    fun checkMaterial(material: Material): MaterialCheckResult {
+        preMeasurementStreetItems.forEach {
+            if (material.materialId == it.materialId)
+                return MaterialCheckResult(true, it.materialQuantity)
+        }
+        return MaterialCheckResult(false, 0)
+    }
+
+
     ModalBottomSheet(
         onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
         modifier = Modifier.fillMaxSize()
@@ -727,8 +736,11 @@ fun BottomSheetDialog(
 
             LazyColumn {
                 items(filteredList) { material ->
-                    ItemIluminacaoRow(
+                    val result = checkMaterial(material)
+                    ItemLightRow(
                         material = material,
+                        preSelected = result.selected,
+                        preQuantity = result.quantity,
                         onItemSelected = { m ->
 
                             if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
@@ -743,7 +755,7 @@ fun BottomSheetDialog(
                                 preMeasurementStreetItems.removeAll { item -> item.materialId == m.materialId }
                             }
                         },
-                        onQuantidadeChange = { materialId, quantity ->
+                        onQuantityChange = { materialId, quantity ->
                             preMeasurementStreetItems.replaceAll {
                                 if (it.materialId == materialId) it.copy(
                                     materialQuantity = quantity
@@ -760,15 +772,16 @@ fun BottomSheetDialog(
 }
 
 @Composable
-fun ItemIluminacaoRow(
+fun ItemLightRow(
     material: Material,
     onItemSelected: (Material) -> Unit,
-    onQuantidadeChange: (Long, Int) -> Unit,
-    context: Context
+    onQuantityChange: (Long, Int) -> Unit,
+    context: Context,
+    preSelected: Boolean,
+    preQuantity: Int
 ) {
-
-    var selected by rememberSaveable { mutableStateOf(false) }
-    var quantity by rememberSaveable { mutableIntStateOf(0) }
+    var selected by rememberSaveable { mutableStateOf(preSelected) }
+    var quantity by rememberSaveable { mutableIntStateOf(preQuantity) }
     val materialChar = if (material.materialLength != null) {
         "Tamanho: ${material.materialLength}"
     } else if (material.materialAmps != null) {
@@ -781,7 +794,7 @@ fun ItemIluminacaoRow(
 
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.background,
-         label = ""
+        label = ""
     )
 
 
@@ -886,11 +899,13 @@ fun ItemIluminacaoRow(
                 ) {
                     IconButton(
                         onClick = {
-                            quantity -= 1
-                            if (quantity > 0) onQuantidadeChange(
-                                material.materialId,
-                                quantity
-                            )
+                            if (quantity > 0) {
+                                quantity -= 1
+                                onQuantityChange(
+                                    material.materialId,
+                                    quantity
+                                )
+                            }
                         },
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
@@ -917,7 +932,7 @@ fun ItemIluminacaoRow(
                     IconButton(
                         onClick = {
                             quantity += 1
-                            onQuantidadeChange(material.materialId, quantity)
+                            onQuantityChange(material.materialId, quantity)
                         },
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
@@ -968,24 +983,34 @@ fun PrevStreet() {
         )
     )
 
-//    PMSContent(
-//        context = LocalContext.current,
-//        preMeasurementStreetItems = list,
-//        saveStreet = { },
-//        onNavigateToHome = { },
-//        onValueChange = { _, _, _, _, _ -> },
-//        vLatitude = 1.1,
-//        vLongitude = 2.2,
-//        clearItems = { },
-//        showModal = { },
-//    )
-
-    BottomSheetDialog(
-        onDismissRequest = { },
-        materials = materials,
-        preMeasurementStreetId = 1,
-        LocalContext.current,
+    PMSContent(
+        context = LocalContext.current,
+        preMeasurementStreetItems = list,
+        saveStreet = { },
+        back = { _ -> },
+        onValueChange = { _, _ -> },
+        showModal = { },
+        pStreet = PreMeasurementStreet(
+            preMeasurementStreetId = 1,
+            preMeasurementId = 1,
+            lastPower = "",
+            latitude = 1.1,
+            longitude = 2.2,
+            street = "",
+            neighborhood = "",
+            number = "",
+            city = "",
+            state = "",
+            deviceId = ""
+        )
     )
+
+//    BottomSheetDialog(
+//        onDismissRequest = { },
+//        materials = materials,
+//        preMeasurementStreetId = 1,
+//        LocalContext.current,
+//    )
 
 
 }

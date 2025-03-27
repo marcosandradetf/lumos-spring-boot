@@ -31,7 +31,7 @@ import com.lumos.data.database.AppDatabase
 import com.lumos.data.database.StockDao
 import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
-import com.lumos.data.repository.MeasurementRepository
+import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.data.repository.NotificationRepository
 import com.lumos.data.repository.StockRepository
 import com.lumos.midleware.SecureStorage
@@ -97,8 +97,8 @@ fun AppNavigation(
         val measurementDao = database.preMeasurementDao()
         val api = retrofit.create(MeasurementApi::class.java)
 
-        val measurementRepository = MeasurementRepository(measurementDao, api, context)
-        PreMeasurementViewModel(measurementRepository)
+        val preMeasurementRepository = PreMeasurementRepository(measurementDao, api, context)
+        PreMeasurementViewModel(preMeasurementRepository)
     }
 
     val contractViewModel: ContractViewModel = viewModel {
@@ -381,10 +381,9 @@ fun AppNavigation(
                 composable(Routes.PRE_MEASUREMENT_STREET+ "/{contractId}") { backStackEntry ->
                     val contractId = backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
                     PreMeasurementStreetScreen(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
+                        back = {
+                            navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
                         },
-                        navController = navController,
                         context = context,
                         stockViewModel,
                         preMeasurementViewModel,

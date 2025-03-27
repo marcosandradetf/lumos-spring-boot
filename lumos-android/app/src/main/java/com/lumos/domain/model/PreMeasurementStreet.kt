@@ -10,8 +10,11 @@ data class PreMeasurementStreet(
     var lastPower: String?,
     var latitude: Double,
     var longitude: Double,
-    var address: String?,
+    var street: String,
+    var neighborhood: String,
+//    var address: String?,
     var number: String?,
     var city: String,
+    var state: String?,
     val deviceId: String,
 )

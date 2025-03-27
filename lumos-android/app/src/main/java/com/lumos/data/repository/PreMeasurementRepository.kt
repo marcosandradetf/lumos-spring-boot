@@ -18,7 +18,7 @@ import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.service.SyncMeasurement
 import java.util.concurrent.TimeUnit
 
-class MeasurementRepository(
+class PreMeasurementRepository(
     private val dao: PreMeasurementDao,
     private val api: MeasurementApi,
     private val context: Context
