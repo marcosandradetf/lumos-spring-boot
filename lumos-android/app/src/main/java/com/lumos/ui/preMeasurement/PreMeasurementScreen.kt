@@ -108,7 +108,7 @@ fun PMContent(
             verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
         ) {
             items(contracts) { contract -> // Iteração na lista
-                val createdAt = "Criado por ${contract.createdBy} há ${
+                val createdAt = "Iniciado há ${
                     Utils.timeSinceCreation(
                         Instant.parse(contract.createdAt)
                     )

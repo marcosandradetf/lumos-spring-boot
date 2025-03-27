@@ -1,9 +1,12 @@
 package com.lumos.navigation
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -11,13 +14,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.lumos.R
 import com.lumos.data.api.ContractApi
 import com.lumos.data.api.MeasurementApi
 import com.lumos.data.api.StockApi
@@ -34,12 +40,9 @@ import com.lumos.service.FCMService
 import com.lumos.service.NotificationsBadge
 import com.lumos.ui.auth.Login
 import com.lumos.ui.home.HomeScreen
-import com.lumos.ui.preMeasurement.ContractsScreen
-//import com.lumos.ui.preMeasurement.MeasurementHome
-//import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
-//import com.lumos.ui.preMeasurement.PreMeasurementViewModel
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.notifications.NotificationsScreen
+import com.lumos.ui.preMeasurement.ContractsScreen
 import com.lumos.ui.preMeasurement.MeasurementHome
 import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
@@ -157,9 +160,15 @@ fun AppNavigation(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF1E1F22))
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
         ) {
-            // Aqui você pode mostrar algo, como um ícone de carregamento, caso queira
+            Image(
+                painter = painterResource(id = R.drawable.ic_lumos), // Agora no drawable
+                contentDescription = "Ícone do App",
+                modifier = Modifier.size(50.dp)
+            )
+
         }
     } else {
 
@@ -281,29 +290,7 @@ fun AppNavigation(
                     )
                 }
 
-                // measurement
-                composable(Routes.MEASUREMENT_HOME) {
-                    MeasurementHome(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        navController = navController,
-                        context = context
-                    )
-                }
-
-                composable(Routes.MEASUREMENT_SCREEN) {
-                    PreMeasurementStreetScreen(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        navController = navController,
-                        context = context,
-                        stockViewModel,
-                        preMeasurementViewModel
-                    )
-                }
-
+                // pre-measurement
                 composable(Routes.CONTRACT_SCREEN) {
                     ContractsScreen(
                         onNavigateToHome = {
@@ -347,6 +334,9 @@ fun AppNavigation(
                         onNavigateToPreMeasurements = {
                             navController.navigate(Routes.PRE_MEASUREMENTS)
                         },
+                        onNavigateToStreet = {
+                            navController.navigate(Routes.PRE_MEASUREMENT_STREET + "/$it")
+                        },
                         context = context,
                         contractViewModel = contractViewModel,
                         preMeasurementViewModel = preMeasurementViewModel,
@@ -378,6 +368,30 @@ fun AppNavigation(
                     )
                 }
 
+                composable(Routes.PRE_MEASUREMENT_STREET_HOME) {
+                    MeasurementHome(
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        navController = navController,
+                        context = context
+                    )
+                }
+
+                composable(Routes.PRE_MEASUREMENT_STREET+ "/{contractId}") { backStackEntry ->
+                    val contractId = backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                    PreMeasurementStreetScreen(
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        navController = navController,
+                        context = context,
+                        stockViewModel,
+                        preMeasurementViewModel,
+                        contractId = contractId
+                    )
+                }
+
                 //
 
 
@@ -394,9 +408,10 @@ object Routes {
     const val MENU = "menu"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
+    const val CONTRACT_SCREEN = "contract-screen"
     const val PRE_MEASUREMENTS = "pre-measurements"
     const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
-    const val MEASUREMENT_HOME = "measurement-home"
-    const val MEASUREMENT_SCREEN = "measurement-screen"
-    const val CONTRACT_SCREEN = "contract-screen"
+    const val PRE_MEASUREMENT_STREET_HOME = "pre-measurement-home"
+    const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
+    const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
 }

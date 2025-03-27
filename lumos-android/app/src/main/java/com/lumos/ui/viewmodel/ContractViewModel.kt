@@ -1,6 +1,7 @@
 package com.lumos.ui.viewmodel
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -62,8 +63,18 @@ class ContractViewModel(
         }
     }
 
+    fun setDate(contractId: Long, updated: String) {
+        viewModelScope.launch {
+            try {
+                repository.setDate(contractId, updated)
+            } catch (e: Exception) {
+                Log.e("Error loadMaterials", e.message.toString())
+            }
+        }
+    }
+
     fun downloadContract(contractId: Long) {
-        TODO("Not yet implemented")
+        return
     }
 
 

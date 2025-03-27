@@ -5,6 +5,7 @@ import android.content.Context
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
@@ -60,6 +62,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,10 +70,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -83,6 +88,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
+import com.lumos.data.api.UserExperience
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.Material
 import com.lumos.domain.model.PreMeasurementStreet
@@ -90,6 +96,7 @@ import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
 import com.lumos.ui.viewmodel.StockViewModel
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 @SuppressLint("HardwareIds")
@@ -99,32 +106,25 @@ fun PreMeasurementStreetScreen(
     navController: NavHostController,
     context: Context,
     stockViewModel: StockViewModel,
-    preMeasurementViewModel: PreMeasurementViewModel
+    preMeasurementViewModel: PreMeasurementViewModel,
+    contractId: Long
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coord = CoordinatesService(context, fusedLocationProvider)
-
-    var finishMeasurement by remember { mutableStateOf(false) }
-    var exitMeasurement by remember { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     var vLatitude by remember { mutableStateOf<Double?>(null) }
     var vLongitude by remember { mutableStateOf<Double?>(null) }
-    var address by remember { mutableStateOf<String>("") }
-    var street by remember { mutableStateOf<String>("") }
-    var number by remember { mutableStateOf<String>("") }
-    var neighborhood by remember { mutableStateOf<String>("") }
-    var city by remember { mutableStateOf<String>("") }
-    var lastPower by remember { mutableStateOf<String>("") }
-    var state by remember { mutableStateOf<String>("") }
+    var showModal by remember { mutableStateOf(false) }
+    var finishMeasurement by remember { mutableStateOf(false) }
+
 
     // Obtém o estado atual dos depósitos
     val materials by stockViewModel.materials
-    var showModal by remember { mutableStateOf(false) }
-    val lifecycleOwner = LocalLifecycleOwner.current
+
 
     val preMeasurementStreet by remember {
-        mutableStateOf<PreMeasurementStreet>(
+        mutableStateOf(
             PreMeasurementStreet(
                 preMeasurementId = 0,
                 lastPower = "",
@@ -140,7 +140,12 @@ fun PreMeasurementStreetScreen(
             )
         )
     }
-    var preMeasurementStreetItems by remember { mutableStateOf<List<PreMeasurementStreetItem>>(emptyList()) }
+
+    var preMeasurementStreetItems by remember {
+        mutableStateOf<List<PreMeasurementStreetItem>>(
+            emptyList()
+        )
+    }
 
     // Execute a função assíncrona
     LaunchedEffect(Unit) {
@@ -150,20 +155,24 @@ fun PreMeasurementStreetScreen(
                 vLongitude = longitude
                 val addr = AddressService(context).execute(latitude, longitude)
 
-                street = addr?.get(0).toString()
-                neighborhood = addr?.get(1).toString()
-                city = addr?.get(2).toString()
-                state = addr?.get(3).toString()
+                val street = addr?.get(0).toString()
+                val neighborhood = addr?.get(1).toString()
+                val city = addr?.get(2).toString()
+                val state = addr?.get(3).toString()
 
-                preMeasurementStreet.address = "$street, $number - $neighborhood, $city - $state"
-                preMeasurementStreet.city = city
-                preMeasurementStreet.latitude = vLatitude ?: 0.0
-                preMeasurementStreet.longitude = vLongitude ?: 0.0
+//                preMeasurementStreet.street = street
+//                preMeasurementStreet.neighborhood = neighborhood
+//                preMeasurementStreet.city = city
+//                preMeasurementStreet.state = state
+//                preMeasurementStreet.latitude = vLatitude ?: 0.0
+//                preMeasurementStreet.longitude = vLongitude ?: 0.0
 
             } else {
                 Log.e("GET Address", "Latitude ou Longitude são nulos.")
             }
         }
+
+
 
         // Agendar o Worker assim que a tela for aberta
         val workRequest = OneTimeWorkRequestBuilder<SyncStock>()
@@ -203,7 +212,7 @@ fun PreMeasurementStreetScreen(
             Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .background(Color(0xFFF5F5F7)),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -216,368 +225,416 @@ fun PreMeasurementStreetScreen(
                 text = "Carregando coordenadas...",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
     } else {
-        Scaffold(
-            containerColor = Color(0xFFF5F5F7),
-            topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = "Fechar",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clickable { exitMeasurement = true },
-                        tint = Color(0xFF757575) // Cor moderna para o ícone
-                    )
-                }
+        PMSContent(
+            context = context,
+            preMeasurementStreetItems = preMeasurementStreetItems,
+            saveStreet = {
+                preMeasurementViewModel.saveStreetOffline(
+                    preMeasurementStreet,
+                    callback = { preMeasurementId ->
+                        if (preMeasurementId !== null)
+                            try {
+                                preMeasurementViewModel.saveItemsOffline(
+                                    preMeasurementStreetItems,
+                                    preMeasurementId
+                                )
+                                finishMeasurement = true
+                            } catch (e: Exception) {
+                                Log.e("SaveError", "Erro ao salvar itens offline: ${e.message}")
+                            }
+                    }
+                )
+
             },
-            bottomBar = {
-                // Botão fixado no fim da tela
-                ElevatedButton(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .padding(bottom = 50.dp)
-                        .height(48.dp),
-                    onClick = {
-                        if (preMeasurementStreetItems.isEmpty()) {
-                            Toast
-                                .makeText(
-                                    context,
-                                    "Adicione os itens",
-                                    Toast.LENGTH_SHORT
-                                )
-                                .show()
-                        } else if (!validFields(street, number, neighborhood, city)) {
-                            Toast
-                                .makeText(
-                                    context,
-                                    "Todos os campos são obrigatórios",
-                                    Toast.LENGTH_SHORT
-                                )
-                                .show()
-                        } else {
-                            preMeasurementViewModel.saveStreetOffline(preMeasurementStreet) { measurementId ->
-                                if (measurementId != null) {
-                                    try {
-                                        preMeasurementViewModel.saveItemsOffline(preMeasurementStreetItems, measurementId)
-                                        finishMeasurement = true
-                                    } catch (e: Exception) {
-                                        finishMeasurement = false
-                                        Log.e(
-                                            "SaveError",
-                                            "Erro ao salvar itens offline: ${e.message}"
-                                        )
-                                    }
-
-                                }
-                            }
-
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
-                    shape = RoundedCornerShape(8.dp) // Botão com cantos menos arredondados
-                ) {
-                    Text(
-                        text = "Salvar",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
-            }, content = { paddingValues ->
-                Box(
-                    modifier = Modifier
-                        .padding(paddingValues)
-                        .padding(10.dp)
-                        .fillMaxSize()
-                        .background(Color(0xFFF5F5F5)) // Fundo cinza claro
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                // Fechar o teclado ao tocar em qualquer lugar da tela
-                                keyboardController?.hide()
-                            }
-                        }
-                ) {
-                    // Conteúdo principal (coluna no topo)
-
-                    if (exitMeasurement) {
-                        DialogExit(
-                            onDismissRequest = {
-                                exitMeasurement = false
-                            }, // Fecha o diálogo ao cancelar
-                            onConfirmation = {
-                                onNavigateToHome()
-                            }, // Ação ao confirmar
-                            dialogTitle = "Confirmação de saída", // Título do diálogo
-                            dialogText = "Você tem certeza que deseja cancelar a pré-medição atual?", // Texto do diálogo
-                            icon = Icons.Filled.Warning // Ícone do Material Design
-                        )
-                    }
-
-                    Column(
-                        Modifier.fillMaxWidth(),
-                    ) {
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically // Certificando que os itens dentro da Row ficam alinhados verticalmente
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Pré-Medição",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF00308F) // Azul escuro
-                                    )
-                                )
-                                Text(
-                                    text = "$vLatitude, $vLongitude",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF00308F) // Azul escuro
-                                    )
-                                )
-                                Text(
-                                    text = city,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF00308F) // Azul escuro
-                                    )
-                                )
-                            }
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally // Alinha o conteúdo da coluna no centro
-                            ) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(
-                                            containerColor = Color.Red,
-                                            contentColor = Color.White
-                                        ) {
-                                            Text(preMeasurementStreetItems.size.toString()) // Evitei o uso de `items.size.toString() ?: ""`, já que `items.size.toString()` é sempre seguro
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Lightbulb,
-                                        contentDescription = "Shopping cart",
-                                    )
-                                }
-
-                                Text(
-                                    text = "Itens adicionados",
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 10.sp,
-                                    color = Color.Black,
-                                )
-                            }
-                        }
-
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Row {
-                            OutlinedTextField(
-                                textStyle = TextStyle(Color.Black),
-                                value = street,
-                                onValueChange = {
-                                    street = it
-                                    preMeasurementStreet.address =
-                                        "$street, $number - $neighborhood, $city - $state"
-                                },
-                                label = {
-                                    Text(
-                                        text = "Rua:",
-                                        color = Color.Black
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                maxLines = 1,
-                                modifier = Modifier
-                                    .fillMaxWidth(0.80f)
-                                    .padding(end = 10.dp)
-                            )
-
-                            OutlinedTextField(
-                                textStyle = TextStyle(Color.Black),
-                                value = number,
-                                onValueChange = {
-                                    number = it
-                                    preMeasurementStreet.address =
-                                        "$street, $number - $neighborhood, $city - $state"
-                                },
-                                label = {
-                                    Text(
-                                        text = "№:",
-                                        color = Color.Black
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                maxLines = 1,
-                                modifier = Modifier.fillMaxWidth(),
-                                isError = number.isEmpty()
-                            )
-                        }
-
-                        Row {
-                            OutlinedTextField(
-                                textStyle = TextStyle(Color.Black),
-                                value = neighborhood,
-                                onValueChange = {
-                                    neighborhood = it
-                                    preMeasurementStreet.address =
-                                        "$street, $number - $neighborhood, $city - $state"
-                                },
-                                label = {
-                                    Text(
-                                        text = "Bairro:",
-                                        color = Color.Black
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                maxLines = 1,
-                                modifier = Modifier
-                                    .fillMaxWidth(0.5f)
-                                    .padding(end = 10.dp)
-
-                            )
-
-                            OutlinedTextField(
-                                textStyle = TextStyle(Color.Black),
-                                value = city,
-                                onValueChange = {
-                                    city = it
-                                    preMeasurementStreet.city = it
-                                    preMeasurementStreet.address =
-                                        "$street, $number - $neighborhood, $it - $state"
-                                },
-                                label = {
-                                    Text(
-                                        text = "Cidade:",
-                                        color = Color.Black
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                maxLines = 1,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        Row {
-                            preMeasurementStreet.lastPower?.isEmpty()?.let { empty ->
-                                OutlinedTextField(
-                                    textStyle = TextStyle(Color.Black),
-                                    value = lastPower,
-                                    onValueChange = {
-                                        lastPower = if (it.endsWith("W")) it else it + "W"
-                                        preMeasurementStreet.lastPower = lastPower
-                                    },
-                                    label = {
-                                        Text(
-                                            text = "Potência anterior:",
-                                            color = Color.Black
-                                        )
-                                    },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    maxLines = 1,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    isError = empty
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(200.dp))
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Card redondo para o botão
-                            Card(
-                                modifier = Modifier
-                                    .size(50.dp) // Tamanho maior para um botão redondo
-                                    .clickable {
-                                        preMeasurementStreetItems = emptyList()
-                                        showModal = true
-                                    }, // Adiciona interação de clique
-                                shape = CircleShape, // Formato circular
-                                elevation = CardDefaults.cardElevation(10.dp), // Sombra
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF2E8146) // Cor de fundo do botão
-                                )
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Add,
-                                        contentDescription = "Adicionar",
-                                        tint = Color.White, // Cor do ícone
-                                        modifier = Modifier.size(30.dp) // Tamanho do ícone
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp)) // Espaço entre o botão e o texto
-                            Text(
-                                text = "Adicionar Itens",
-                                color = Color(0xFF1E1F22), // Cor do texto
-                                fontSize = 16.sp, // Tamanho da fonte
-                                fontWeight = FontWeight.Medium // Peso da fonte
-                            )
-                        }
-
-
-                    }
-
-                }
-
-                // Abrir o BottomSheetDialog quando isDialogOpen for true
-                if (showModal) {
-                    BottomSheetDialog(
-                        onDismissRequest = { selected ->
-                            preMeasurementStreetItems = selected
-                            showModal = false
-                        },
-                        materials = materials,
-                        preMeasurementStreetId = preMeasurementStreet.preMeasurementStreetId
-                    )
-                }
-
-                if (finishMeasurement) {
-                    preMeasurementStreetItems = emptyList()
-                    Toast
-                        .makeText(
-                            context,
-                            "Medição salva com sucesso!",
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
-                    finishMeasurement = false
-                }
-
+            onNavigateToHome = onNavigateToHome,
+            onValueChange = { street, number, neighborhood, city, state ->
+                preMeasurementStreet.address = "$street, $number - $neighborhood, $city - $state"
+            },
+            vLatitude = vLatitude ?: 0.0,
+            vLongitude = vLongitude ?: 0.0,
+            clearItems = {
+                preMeasurementStreetItems = emptyList()
+            },
+            showModal = {
+                showModal = true
             }
-
 
         )
     }
 
+    // Abrir o BottomSheetDialog quando isDialogOpen for true
+    if (showModal) {
+        BottomSheetDialog(
+            onDismissRequest = { selected ->
+                preMeasurementStreetItems = selected
+                showModal = false
+            },
+            materials = materials,
+            preMeasurementStreetId = preMeasurementStreet.preMeasurementStreetId,
+            context = context
+        )
+    }
 
+    if (finishMeasurement) {
+        preMeasurementStreetItems = emptyList()
+        Toast
+            .makeText(
+                context,
+                "Medição salva com sucesso!",
+                Toast.LENGTH_SHORT
+            )
+            .show()
+        finishMeasurement = false
+    }
+
+
+}
+
+
+@Composable
+fun PMSContent(
+    context: Context,
+    preMeasurementStreetItems: List<PreMeasurementStreetItem>,
+    saveStreet: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onValueChange: (String, String, String, String, String) -> Unit,
+    vLatitude: Double,
+    vLongitude: Double,
+    clearItems: () -> Unit,
+    showModal: () -> Unit,
+) {
+
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var exitMeasurement by remember { mutableStateOf(false) }
+
+    var address by remember { mutableStateOf<String>("") }
+    var street by remember { mutableStateOf<String>("") }
+    var number by remember { mutableStateOf<String>("") }
+    var neighborhood by remember { mutableStateOf<String>("") }
+    var city by remember { mutableStateOf<String>("") }
+    var lastPower by remember { mutableStateOf<String>("") }
+    var state by remember { mutableStateOf<String>("") }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+                    .padding(top = 20.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Fechar",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { exitMeasurement = true },
+                    tint = MaterialTheme.colorScheme.error // Cor moderna para o ícone
+                )
+            }
+        },
+        bottomBar = {
+            // Botão fixado no fim da tela
+            ElevatedButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+                    .padding(bottom = 50.dp)
+                    .height(48.dp),
+                onClick = {
+                    if (preMeasurementStreetItems.isEmpty()) {
+                        Toast
+                            .makeText(
+                                context,
+                                "Adicione os itens",
+                                Toast.LENGTH_SHORT
+                            )
+                            .show()
+                    } else if (!validFields(street, number, neighborhood, city)) {
+                        Toast
+                            .makeText(
+                                context,
+                                "Todos os campos são obrigatórios",
+                                Toast.LENGTH_SHORT
+                            )
+                            .show()
+                    } else {
+                        saveStreet()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                shape = RoundedCornerShape(8.dp) // Botão com cantos menos arredondados
+            ) {
+                Text(
+                    text = "Salvar",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondary
+                    )
+                )
+            }
+        }, content = { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .padding(10.dp)
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            // Fechar o teclado ao tocar em qualquer lugar da tela
+                            keyboardController?.hide()
+                        }
+                    }
+            ) {
+                // Conteúdo principal (coluna no topo)
+
+                if (exitMeasurement) {
+                    DialogExit(
+                        onDismissRequest = {
+                            exitMeasurement = false
+                        }, // Fecha o diálogo ao cancelar
+                        onConfirmation = {
+                            onNavigateToHome()
+                        }, // Ação ao confirmar
+                        dialogTitle = "Confirmação de saída", // Título do diálogo
+                        dialogText = "Você tem certeza que deseja cancelar a pré-medição atual?", // Texto do diálogo
+                        icon = Icons.Filled.Warning // Ícone do Material Design
+                    )
+                }
+
+                Column(
+                    Modifier.fillMaxWidth(),
+                ) {
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically // Certificando que os itens dentro da Row ficam alinhados verticalmente
+                    ) {
+                        Column {
+                            Text(
+                                text = "Pré-Medição",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary // Azul escuro
+                                )
+                            )
+                            Text(
+                                text = "$vLatitude, $vLongitude",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary // Azul escuro
+                                )
+                            )
+                            Text(
+                                text = city,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary // Azul escuro
+                                )
+                            )
+                        }
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally // Alinha o conteúdo da coluna no centro
+                        ) {
+                            BadgedBox(
+                                badge = {
+                                    Badge(
+                                        containerColor = Color.Red,
+                                        contentColor = MaterialTheme.colorScheme.onSecondary
+                                    ) {
+                                        Text(
+                                            text = preMeasurementStreetItems.size.toString(),
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Lightbulb,
+                                    contentDescription = "Shopping cart",
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+
+                            Text(
+                                text = "Itens adicionados",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+                    }
+
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row {
+                        OutlinedTextField(
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            value = street,
+                            onValueChange = {
+                                street = it
+                                onValueChange(street, number, neighborhood, city, state)
+                            },
+                            label = {
+                                Text(
+                                    text = "Rua:",
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            maxLines = 1,
+                            modifier = Modifier
+                                .fillMaxWidth(0.80f)
+                                .padding(end = 10.dp)
+                        )
+
+                        OutlinedTextField(
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            value = number,
+                            onValueChange = {
+                                number = it
+                                onValueChange(street, number, neighborhood, city, state)
+                            },
+                            label = {
+                                Text(
+                                    text = "№:",
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = number.isEmpty()
+                        )
+                    }
+
+                    Row {
+                        OutlinedTextField(
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            value = neighborhood,
+                            onValueChange = {
+                                neighborhood = it
+                                onValueChange(street, number, neighborhood, city, state)
+                            },
+                            label = {
+                                Text(
+                                    text = "Bairro:",
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            maxLines = 1,
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .padding(end = 10.dp)
+
+                        )
+
+                        OutlinedTextField(
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            value = city,
+                            onValueChange = {
+                                city = it
+                                onValueChange(street, number, neighborhood, city, state)
+                            },
+                            label = {
+                                Text(
+                                    text = "Cidade:",
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Row {
+//                        preMeasurementStreet.lastPower?.isEmpty()?.let { empty ->
+//                            OutlinedTextField(
+//                                textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+//                                value = lastPower,
+//                                onValueChange = {
+//                                    lastPower = if (it.endsWith("W")) it else it + "W"
+//                                    preMeasurementStreet.lastPower = lastPower
+//                                },
+//                                label = {
+//                                    Text(
+//                                        text = "Potência atual:",
+//                                        color = MaterialTheme.colorScheme.onBackground
+//                                    )
+//                                },
+//                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//                                maxLines = 1,
+//                                modifier = Modifier.fillMaxWidth(),
+//                                isError = empty
+//                            )
+//                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(200.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Card redondo para o botão
+                        Card(
+                            modifier = Modifier
+                                .size(50.dp) // Tamanho maior para um botão redondo
+                                .clickable {
+                                    clearItems()
+                                    showModal()
+                                }, // Adiciona interação de clique
+                            shape = CircleShape, // Formato circular
+                            elevation = CardDefaults.cardElevation(10.dp), // Sombra
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer // Cor de fundo do botão
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Add,
+                                    contentDescription = "Adicionar",
+                                    tint = MaterialTheme.colorScheme.onBackground, // Cor do ícone
+                                    modifier = Modifier.size(30.dp) // Tamanho do ícone
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp)) // Espaço entre o botão e o texto
+                        Text(
+                            text = "Adicionar Itens",
+                            color = MaterialTheme.colorScheme.onBackground, // Cor do texto
+                            fontSize = 16.sp, // Tamanho da fonte
+                            fontWeight = FontWeight.Medium // Peso da fonte
+                        )
+                    }
+
+
+                }
+
+            }
+
+        }
+
+
+    )
 }
 
 fun validFields(street: String, number: String, neighborhood: String, city: String): Boolean {
@@ -594,7 +651,7 @@ fun DialogExit(
 ) {
     AlertDialog(
         icon = {
-            Icon(icon, contentDescription = "Example Icon")
+            Icon(icon, contentDescription = "Icon")
         },
         title = {
             Text(text = dialogTitle)
@@ -632,7 +689,8 @@ fun DialogExit(
 fun BottomSheetDialog(
     onDismissRequest: (List<PreMeasurementStreetItem>) -> Unit,
     materials: List<Material>,
-    preMeasurementStreetId: Long
+    preMeasurementStreetId: Long,
+    context: Context
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -642,72 +700,71 @@ fun BottomSheetDialog(
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
     }
 
-    MaterialTheme(
-        colorScheme = lightColorScheme() // Força o modo claro dentro do BottomSheet
+    ModalBottomSheet(
+        onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
+        modifier = Modifier.fillMaxSize()
     ) {
-        ModalBottomSheet(
-            onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Selecione os itens:", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Selecione os itens:", fontWeight = FontWeight.Bold, fontSize = 18.sp)
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                // Barra de pesquisa
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Buscar") },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Pesquiar"
-                        )
-                    }
-                )
+            // Barra de pesquisa
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Buscar") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Pesquisar"
+                    )
+                }
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn {
-                    items(filteredList) { material ->
-                        ItemIluminacaoRow(
-                            material = material,
-                            onItemSelected = { m ->
+            LazyColumn {
+                items(filteredList) { material ->
+                    ItemIluminacaoRow(
+                        material = material,
+                        onItemSelected = { m ->
 
-                                if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
-                                    preMeasurementStreetItems.add(
-                                        PreMeasurementStreetItem(
-                                            preMeasurementStreetId = preMeasurementStreetId,
-                                            materialId = m.materialId,
-                                            materialQuantity = 0,
-                                        )
+                            if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
+                                preMeasurementStreetItems.add(
+                                    PreMeasurementStreetItem(
+                                        preMeasurementStreetId = preMeasurementStreetId,
+                                        materialId = m.materialId,
+                                        materialQuantity = 0,
                                     )
-                                } else {
-                                    preMeasurementStreetItems.removeAll { item -> item.materialId == m.materialId }
-                                }
-                            },
-                            onQuantidadeChange = { materialId, quantity ->
-                                preMeasurementStreetItems.replaceAll {
-                                    if (it.materialId == materialId) it.copy(
-                                        materialQuantity = quantity
-                                    ) else it
-                                }
+                                )
+                            } else {
+                                preMeasurementStreetItems.removeAll { item -> item.materialId == m.materialId }
                             }
-                        )
-                    }
+                        },
+                        onQuantidadeChange = { materialId, quantity ->
+                            preMeasurementStreetItems.replaceAll {
+                                if (it.materialId == materialId) it.copy(
+                                    materialQuantity = quantity
+                                ) else it
+                            }
+                        },
+                        context = context
+                    )
                 }
             }
         }
     }
+
 }
 
 @Composable
 fun ItemIluminacaoRow(
     material: Material,
     onItemSelected: (Material) -> Unit,
-    onQuantidadeChange: (Long, Int) -> Unit
+    onQuantidadeChange: (Long, Int) -> Unit,
+    context: Context
 ) {
 
     var selected by rememberSaveable { mutableStateOf(false) }
@@ -723,26 +780,31 @@ fun ItemIluminacaoRow(
     }
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (selected) Color(0xFF6BA3F2) else Color(0xFFFFFFFF),
-        animationSpec = tween(durationMillis = 300)
+        targetValue = if (selected) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.background,
+         label = ""
     )
 
 
-    if (!selected) {
+    AnimatedVisibility(!selected) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .clickable {
-                    selected = !selected
-                    onItemSelected(material)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            UserExperience.vibrate(context = context, 10)
+                            selected = !selected
+                            onItemSelected(material)
+                        }
+                    )
                 },
             elevation = CardDefaults.cardElevation(10.dp),
             colors = CardColors(
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onSecondary,
                 containerColor = backgroundColor,
-                disabledContainerColor = Color.White,
-                disabledContentColor = Color.White
+                disabledContainerColor = MaterialTheme.colorScheme.onSecondary,
+                disabledContentColor = MaterialTheme.colorScheme.onSecondary
             )
         ) {
             Row(
@@ -755,37 +817,49 @@ fun ItemIluminacaoRow(
                         text = material.materialName ?: "",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = if (selected) Color.White else Color.Black,
+                        color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
                     )
                     if (materialChar.isNotEmpty()) {
                         Text(
                             text = materialChar,
                             fontSize = 14.sp,
-                            color = if (selected) Color.White else Color.Black
+                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground
                         )
                     }
                     // Só mostra o controle de quantidade se o item estiver selecionado
 
                 }
+                Icon(
+                    imageVector = Icons.Default.Fingerprint,
+                    contentDescription = "Pressione e segure",
+                    modifier = Modifier.padding(top = 8.dp),
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
 
         }
-    } else {
+    }
+
+    AnimatedVisibility(selected) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .clickable {
-                    selected = !selected
-                    onItemSelected(material)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            UserExperience.vibrate(context = context, 10)
+                            selected = !selected
+                            onItemSelected(material)
+                        }
+                    )
                 },
-
             elevation = CardDefaults.cardElevation(10.dp),
             colors = CardColors(
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onError,
                 containerColor = backgroundColor,
-                disabledContainerColor = Color.White,
-                disabledContentColor = Color.White
+                disabledContainerColor = MaterialTheme.colorScheme.onError,
+                disabledContentColor = MaterialTheme.colorScheme.onError
             )
         ) {
             Column(
@@ -800,7 +874,7 @@ fun ItemIluminacaoRow(
                     text = "${material.materialName ?: ""} -  $materialChar",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
 
                 Spacer(modifier = Modifier.height(8.dp)) // Espaçamento entre os itens
@@ -819,13 +893,13 @@ fun ItemIluminacaoRow(
                             )
                         },
                         modifier = Modifier
-                            .background(Color(0xFFE0E0E0), shape = CircleShape)
+                            .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
                             .padding(5.dp)
                     ) {
                         Icon(
                             Icons.Default.Remove,
                             contentDescription = "Diminuir",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
 
@@ -835,7 +909,7 @@ fun ItemIluminacaoRow(
                         text = quantity.toString(),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onSecondary
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -846,13 +920,13 @@ fun ItemIluminacaoRow(
                             onQuantidadeChange(material.materialId, quantity)
                         },
                         modifier = Modifier
-                            .background(Color(0xFFE0E0E0), shape = CircleShape)
+                            .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
                             .padding(5.dp)
                     ) {
                         Icon(
                             Icons.Default.Add,
                             contentDescription = "Aumentar",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -862,7 +936,7 @@ fun ItemIluminacaoRow(
                 Text(
                     text = "Quantidade",
                     fontSize = 12.sp,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSecondary,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -871,3 +945,71 @@ fun ItemIluminacaoRow(
 
 }
 
+
+@Preview
+@Composable
+fun PrevStreet() {
+
+    val list = listOf(
+        PreMeasurementStreetItem(
+            preMeasurementStreetId = 1,
+            materialId = 1,
+            materialQuantity = 1
+        )
+    )
+
+    val materials = listOf(
+        Material(
+            materialId = 1,
+            materialName = "LED",
+            materialPower = "100W",
+            materialAmps = null,
+            materialLength = null
+        )
+    )
+
+//    PMSContent(
+//        context = LocalContext.current,
+//        preMeasurementStreetItems = list,
+//        saveStreet = { },
+//        onNavigateToHome = { },
+//        onValueChange = { _, _, _, _, _ -> },
+//        vLatitude = 1.1,
+//        vLongitude = 2.2,
+//        clearItems = { },
+//        showModal = { },
+//    )
+
+    BottomSheetDialog(
+        onDismissRequest = { },
+        materials = materials,
+        preMeasurementStreetId = 1,
+        LocalContext.current,
+    )
+
+
+}
+
+@Composable
+fun PressableBox() {
+    var pressed by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .size(150.dp)
+            .background(if (pressed) Color.DarkGray else Color.Gray)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+//                        it.tryAwaitRelease() // Espera até o usuário soltar o botão
+                        pressed = false
+                    }
+                )
+            }
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = "Pressione aqui", color = Color.White)
+    }
+}

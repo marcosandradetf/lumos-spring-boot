@@ -1,6 +1,7 @@
 package com.lumos.ui.preMeasurement
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,10 +83,12 @@ fun ContractsScreen(
         notificationsBadge = notificationsBadge,
         start = {
             contractViewModel.setStatus(it, Status.IN_PROGRESS)
+            contractViewModel.setDate(it, Utils.dateTime.toString())
             onNavigateToPreMeasurement(it)
         },
         download = {
             contractViewModel.downloadContract(it)
+            Toast.makeText(context, "Recurso de download não implementado", Toast.LENGTH_SHORT).show()
         }
     )
 }

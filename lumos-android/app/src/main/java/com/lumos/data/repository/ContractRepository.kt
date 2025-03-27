@@ -45,4 +45,8 @@ class ContractRepository(
         dao.setStatus(contractId, status)
     }
 
+    suspend fun setDate(contractId: Long, updated: String) {
+        dao.setDate(contractId, updated)
+    }
+
 }

@@ -70,6 +70,7 @@ fun PreMeasurementProgressScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToPreMeasurements: () -> Unit,
+    onNavigateToStreet: (Long) -> Unit,
     context: Context,
     contractViewModel: ContractViewModel,
     preMeasurementViewModel: PreMeasurementViewModel,
@@ -97,6 +98,9 @@ fun PreMeasurementProgressScreen(
             onNavigateToProfile = onNavigateToProfile,
             onNavigateToNotifications = onNavigateToNotifications,
             onNavigateToPreMeasurements = onNavigateToPreMeasurements,
+            onNavigateToStreet= {
+                onNavigateToStreet(it)
+            },
             context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
@@ -152,6 +156,7 @@ fun PMPContent(
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToPreMeasurements: () -> Unit,
+    onNavigateToStreet: (Long) -> Unit,
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
@@ -250,7 +255,9 @@ fun PMPContent(
                             .align(Alignment.BottomCenter)
                     ) {
                         Button(
-                            onClick = { /* Ação para reportar problema */ },
+                            onClick = {
+                                onNavigateToStreet(contract.contractId)
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary) // Azul
                         ) {
@@ -309,7 +316,8 @@ fun Streets(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(10.dp)
                     .padding(bottom = if (expanded) 20.dp else 0.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -600,6 +608,7 @@ fun PrevPMP() {
         onNavigateToProfile = { },
         onNavigateToNotifications = { },
         onNavigateToPreMeasurements = { },
+        onNavigateToStreet = { },
         context = fakeContext,
         navController = rememberNavController(),
         "12",

@@ -10,7 +10,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.lumos.data.api.ApiService
 import com.lumos.data.api.DownloadApi
-import com.lumos.data.api.NotificationClient
+import com.lumos.data.api.UserExperience
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.ConnectivityUtils
 import java.io.File
@@ -81,7 +81,7 @@ class DownloadWorker(
         )
 
         // Envio da notificação
-        NotificationClient.sendNotification(
+        UserExperience.sendNotification(
             context = applicationContext, // Deve usar o contexto adequado
             title = "Download Finalizado",
             body = "Clique para abrir o arquivo",

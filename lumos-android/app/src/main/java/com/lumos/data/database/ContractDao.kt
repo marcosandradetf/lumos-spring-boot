@@ -16,6 +16,9 @@ interface ContractDao {
     @Query("UPDATE contracts SET status = :status WHERE contractId = :contractId")
     suspend fun setStatus(contractId: Long, status: String)
 
+    @Query("UPDATE contracts SET createdAt = :updated WHERE contractId = :contractId")
+    suspend fun setDate(contractId: Long, updated: String)
+
     @Query("SELECT * FROM contracts WHERE contractId = :contractId")
     suspend fun getContract(contractId: Long): Contract
 

@@ -67,7 +67,7 @@ fun MeasurementHome(
                     .padding(10.dp)
                     .padding(bottom = 50.dp)
                     .height(48.dp),
-                onClick = { navController.navigate(Routes.MEASUREMENT_SCREEN) },
+                onClick = { navController.navigate(Routes.PRE_MEASUREMENT_STREET) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
                 shape = RoundedCornerShape(8.dp) // Botão com cantos menos arredondados
             ) {

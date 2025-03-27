@@ -3,10 +3,13 @@ package com.lumos.data.api
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.lumos.R
 
-object NotificationClient {
+object UserExperience {
     fun sendNotification(
         context: Context,
         title: String,
@@ -32,5 +35,18 @@ object NotificationClient {
 
         // Exibe a notificação
         notificationManager.notify(0, builder.build()) // 0 é o ID da notificação
+    }
+
+    fun vibrate(context: Context, duration: Long) {
+        val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            manager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+
+        vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+
     }
 }

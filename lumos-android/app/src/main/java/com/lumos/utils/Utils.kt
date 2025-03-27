@@ -6,7 +6,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 object Utils {
-    private val dateTime: Instant
+    val dateTime: Instant
         get() {
             val date = ZonedDateTime.now(
                 ZoneId.of("America/Sao_Paulo")
