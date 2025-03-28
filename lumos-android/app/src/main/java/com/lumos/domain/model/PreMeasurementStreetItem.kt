@@ -9,4 +9,5 @@ data class PreMeasurementStreetItem(
     var preMeasurementStreetId: Long,
     val materialId: Long,
     val materialQuantity: Int,
+    val contractId: Long,
 )

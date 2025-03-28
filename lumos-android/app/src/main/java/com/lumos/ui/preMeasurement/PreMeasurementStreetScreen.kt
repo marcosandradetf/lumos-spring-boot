@@ -1,8 +1,6 @@
 package com.lumos.ui.preMeasurement
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -76,7 +74,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavHostController
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -86,16 +83,15 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
 import com.lumos.data.api.UserExperience
-import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.Material
 import com.lumos.domain.model.PreMeasurementStreet
+import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
 import com.lumos.ui.viewmodel.StockViewModel
 import java.util.concurrent.TimeUnit
 
-@SuppressLint("HardwareIds")
 @Composable
 fun PreMeasurementStreetScreen(
     back: (Long) -> Unit,
@@ -121,7 +117,7 @@ fun PreMeasurementStreetScreen(
     val preMeasurementStreet by remember {
         mutableStateOf(
             PreMeasurementStreet(
-                preMeasurementId = contractId,
+                contractId = contractId,
                 lastPower = "",
                 latitude = 0.0,
                 longitude = 0.0,
@@ -130,10 +126,6 @@ fun PreMeasurementStreetScreen(
                 number = "",
                 city = "",
                 state = "",
-                deviceId = Settings.Secure.getString(
-                    context.contentResolver,
-                    Settings.Secure.ANDROID_ID
-                ),
             )
         )
     }
@@ -278,6 +270,7 @@ fun PreMeasurementStreetScreen(
             },
             materials = materials,
             preMeasurementStreetId = preMeasurementStreet.preMeasurementStreetId,
+            contractId = contractId,
             context = context
         )
     }
@@ -313,12 +306,12 @@ fun PMSContent(
     val keyboardController = LocalSoftwareKeyboardController.current
     var exitMeasurement by remember { mutableStateOf(false) }
 
-    var street by remember { mutableStateOf<String>(pStreet.street) }
-    var number by remember { mutableStateOf<String>("") }
-    var neighborhood by remember { mutableStateOf<String>(pStreet.neighborhood) }
-    var city by remember { mutableStateOf<String>(pStreet.city) }
-    var state by remember { mutableStateOf<String>(pStreet.state ?: "") }
-    var lastPower by remember { mutableStateOf<String>("") }
+    var street by remember { mutableStateOf(pStreet.street) }
+    var number by remember { mutableStateOf("") }
+    var neighborhood by remember { mutableStateOf(pStreet.neighborhood) }
+    var city by remember { mutableStateOf(pStreet.city) }
+    var state by remember { mutableStateOf(pStreet.state ?: "") }
+    var lastPower by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -367,7 +360,7 @@ fun PMSContent(
                             .show()
                     } else {
                         saveStreet()
-                        back(pStreet.preMeasurementId)
+                        back(pStreet.contractId)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
@@ -402,7 +395,7 @@ fun PMSContent(
                             exitMeasurement = false
                         }, // Fecha o diálogo ao cancelar
                         onConfirmation = {
-                            back(pStreet.preMeasurementId)
+                            back(pStreet.contractId)
                         }, // Ação ao confirmar
                         dialogTitle = "Confirmação de saída", // Título do diálogo
                         dialogText = "Você tem certeza que deseja cancelar a pré-medição atual?", // Texto do diálogo
@@ -688,6 +681,7 @@ fun BottomSheetDialog(
     onDismissRequest: (List<PreMeasurementStreetItem>) -> Unit,
     materials: List<Material>,
     preMeasurementStreetId: Long,
+    contractId: Long,
     context: Context
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -697,17 +691,6 @@ fun BottomSheetDialog(
         it.materialName?.contains(searchQuery, ignoreCase = true) ?: false ||
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
     }
-
-    data class MaterialCheckResult(val selected: Boolean, val quantity: Int)
-
-    fun checkMaterial(material: Material): MaterialCheckResult {
-        preMeasurementStreetItems.forEach {
-            if (material.materialId == it.materialId)
-                return MaterialCheckResult(true, it.materialQuantity)
-        }
-        return MaterialCheckResult(false, 0)
-    }
-
 
     ModalBottomSheet(
         onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
@@ -736,19 +719,18 @@ fun BottomSheetDialog(
 
             LazyColumn {
                 items(filteredList) { material ->
-                    val result = checkMaterial(material)
                     ItemLightRow(
                         material = material,
-                        preSelected = result.selected,
-                        preQuantity = result.quantity,
+                        preSelected = preMeasurementStreetItems.find { it.materialId == material.materialId } != null,
+                        preQuantity = preMeasurementStreetItems.find { it.materialId == material.materialId }?.materialQuantity ?: 0,
                         onItemSelected = { m ->
-
                             if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
                                 preMeasurementStreetItems.add(
                                     PreMeasurementStreetItem(
                                         preMeasurementStreetId = preMeasurementStreetId,
                                         materialId = m.materialId,
                                         materialQuantity = 0,
+                                        contractId = contractId
                                     )
                                 )
                             } else {
@@ -969,7 +951,8 @@ fun PrevStreet() {
         PreMeasurementStreetItem(
             preMeasurementStreetId = 1,
             materialId = 1,
-            materialQuantity = 1
+            materialQuantity = 1,
+            contractId = 1
         )
     )
 
@@ -992,7 +975,7 @@ fun PrevStreet() {
         showModal = { },
         pStreet = PreMeasurementStreet(
             preMeasurementStreetId = 1,
-            preMeasurementId = 1,
+            contractId = 1,
             lastPower = "",
             latitude = 1.1,
             longitude = 2.2,
@@ -1001,7 +984,6 @@ fun PrevStreet() {
             number = "",
             city = "",
             state = "",
-            deviceId = ""
         )
     )
 

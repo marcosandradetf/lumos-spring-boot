@@ -33,7 +33,6 @@ class SyncStock(appContext: Context, workerParams: WorkerParameters) :
         return try {
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
                 Log.e("SyncStock", "Internet")
-                repository.syncDeposits()
                 repository.syncMaterials()
                 Result.success()
             } else {
@@ -42,7 +41,7 @@ class SyncStock(appContext: Context, workerParams: WorkerParameters) :
             }
         } catch (e: Exception) {
             Log.e("SyncStock", "Erro ao sincronizar: ${e.message}")
-            Result.retry() // Retenta em caso de falha
+            Result.failure() // Retenta em caso de falha
         }
     }
 

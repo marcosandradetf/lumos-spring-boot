@@ -1,6 +1,8 @@
 package com.lumos.ui.preMeasurement
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -49,6 +51,7 @@ import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils
 import java.time.Instant
 
+@SuppressLint("HardwareIds")
 @Composable
 fun ContractsScreen(
     onNavigateToHome: () -> Unit,
@@ -64,6 +67,10 @@ fun ContractsScreen(
     ) {
     val contracts by contractViewModel.contracts
     var internet by remember { mutableStateOf(true) }
+    val deviceId = Settings.Secure.getString(
+        context.contentResolver,
+        Settings.Secure.ANDROID_ID
+    )
 
     LaunchedEffect(Unit) {
         if (connection.isConnectedToInternet(context)) contractViewModel.syncContracts()
@@ -82,8 +89,7 @@ fun ContractsScreen(
         navController = navController,
         notificationsBadge = notificationsBadge,
         start = {
-            contractViewModel.setStatus(it, Status.IN_PROGRESS)
-            contractViewModel.setDate(it, Utils.dateTime.toString())
+            contractViewModel.startPreMeasurement(it, deviceId)
             onNavigateToPreMeasurement(it)
         },
         download = {

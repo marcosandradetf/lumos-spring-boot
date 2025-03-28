@@ -1,13 +1,14 @@
 package com.lumos.ui.viewmodel
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.ContractRepository
+import com.lumos.data.repository.Status
 import com.lumos.domain.model.Contract
+import com.lumos.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,18 +64,20 @@ class ContractViewModel(
         }
     }
 
-    fun setDate(contractId: Long, updated: String) {
+    fun downloadContract(contractId: Long) {
+        return
+    }
+
+    fun startPreMeasurement(contractId: Long, deviceId: String) {
         viewModelScope.launch {
             try {
-                repository.setDate(contractId, updated)
+                repository.setStatus(contractId, Status.IN_PROGRESS)
+                repository.startAt(contractId, Utils.dateTime.toString(), deviceId)
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
             }
         }
-    }
 
-    fun downloadContract(contractId: Long) {
-        return
     }
 
 

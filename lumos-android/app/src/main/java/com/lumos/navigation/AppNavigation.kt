@@ -95,9 +95,10 @@ fun AppNavigation(
 
     val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
         val measurementDao = database.preMeasurementDao()
+        val contractDao = database.contractDao()
         val api = retrofit.create(MeasurementApi::class.java)
 
-        val preMeasurementRepository = PreMeasurementRepository(measurementDao, api, context)
+        val preMeasurementRepository = PreMeasurementRepository(measurementDao, contractDao, api, context)
         PreMeasurementViewModel(preMeasurementRepository)
     }
 

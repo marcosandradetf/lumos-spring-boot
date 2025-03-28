@@ -12,4 +12,6 @@ data class Contract(
     val createdBy: String,
     val createdAt: String,
     var status: String,
+    val startAt: String? = null,
+    val deviceId: String? = null,
 )

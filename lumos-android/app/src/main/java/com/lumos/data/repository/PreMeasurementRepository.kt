@@ -8,18 +8,21 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.lumos.data.api.MeasurementApi
 import com.lumos.data.api.PreMeasurementDto
 import com.lumos.data.api.PreMeasurementStreetDto
+import com.lumos.data.database.ContractDao
 import com.lumos.data.database.PreMeasurementDao
-import com.lumos.domain.model.PreMeasurement
+import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.domain.service.SyncMeasurement
+import com.lumos.domain.service.SyncPreMeasurement
 import java.util.concurrent.TimeUnit
 
 class PreMeasurementRepository(
-    private val dao: PreMeasurementDao,
+    private val preMeasurementDao: PreMeasurementDao,
+    private val contractDao: ContractDao,
     private val api: MeasurementApi,
     private val context: Context
 ) {
@@ -27,19 +30,23 @@ class PreMeasurementRepository(
 
     suspend fun saveStreet(preMeasurementStreet: PreMeasurementStreet): Long? {
         return try {
-            dao.insertStreet(preMeasurementStreet)
+            preMeasurementDao.insertStreet(preMeasurementStreet)
         } catch (e: Exception) {
             Log.e("Error saveMeasurement", e.message.toString())
             null
         }
     }
 
-    suspend fun getUnSyncedMeasurements(): List<PreMeasurement> {
-        return dao.getUnSyncedPreMeasurements()
+    suspend fun getFinishedPreMeasurements(): List<Contract> {
+        return contractDao.getContracts(Status.FINISHED)
+    }
+
+    suspend fun getPreMeasurement(contractId: Long): Contract {
+        return contractDao.getContract(contractId)
     }
 
     suspend fun sendMeasurementToBackend(
-        preMeasurement: PreMeasurement,
+        contract: Contract,
         preMeasurementStreet: List<PreMeasurementStreet>,
         preMeasurementStreetItems: List<PreMeasurementStreetItem>,
         userUuid: String
@@ -59,7 +66,7 @@ class PreMeasurementRepository(
             }
 
             val dto = PreMeasurementDto(
-                contractId = preMeasurement.contractID,
+                contractId = contract.contractId,
                 streets = streets
             )
             api.sendMeasurement(dto, userUuid)
@@ -69,21 +76,26 @@ class PreMeasurementRepository(
         }
     }
 
-    suspend fun markAsSynced(id: Long) {
-        dao.markAsSynced(id)
+    suspend fun finishPreMeasurement(contractId: Long) {
+        contractDao.deleteContract(contractId)
+        preMeasurementDao.deleteStreets(contractId)
+        preMeasurementDao.deleteItems(contractId)
     }
 
     suspend fun saveItem(preMeasurementStreetItem: PreMeasurementStreetItem) {
-        dao.insertItem(preMeasurementStreetItem)
+        preMeasurementDao.insertItem(preMeasurementStreetItem)
     }
 
-    suspend fun getItems(measurementId: Long): List<PreMeasurementStreetItem> {
-        return dao.getItems(measurementId)
+    suspend fun getItems(contractId: Long): List<PreMeasurementStreetItem> {
+        return preMeasurementDao.getItems(contractId)
     }
 
-    fun syncMeasurement() {
+    fun syncMeasurement(contractId: Long) {
         // Agendar o Worker assim que a medição for adicionada
-        val workRequest = OneTimeWorkRequestBuilder<SyncMeasurement>()
+        val inputData = workDataOf("contract_id" to contractId) // Criando os parâmetros
+
+        val workRequest = OneTimeWorkRequestBuilder<SyncPreMeasurement>()
+            .setInputData(inputData) // Passando os dados
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
                 30, TimeUnit.MINUTES
@@ -97,26 +109,14 @@ class PreMeasurementRepository(
             .build()
 
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "sync_measurements", // Nome único para o trabalho
+            "Sync $contractId", // Nome único para o trabalho
             ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
             workRequest
         )
     }
 
-    suspend fun savePreMeasurement(preMeasurement: PreMeasurement): Long {
-        return dao.insertPreMeasurement(preMeasurement)
-    }
-
-    suspend fun getPreMeasurements(status: String): List<PreMeasurement> {
-        return dao.getPreMeasurements(status)
-    }
-
-    suspend fun getPreMeasurement(preMeasurementId: Long): PreMeasurement {
-        return dao.getPreMeasurement(preMeasurementId)
-    }
-
-    suspend fun getStreets(preMeasurementId: Long): List<PreMeasurementStreet> {
-        return dao.getStreets(preMeasurementId)
+    suspend fun getStreets(contractId: Long): List<PreMeasurementStreet> {
+        return preMeasurementDao.getStreets(contractId)
     }
 
 }

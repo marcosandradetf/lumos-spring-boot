@@ -57,7 +57,6 @@ class StockRepository(
     }
 
     suspend fun syncMaterials() {
-        val localCountMaterials: Int = dao.getCountMaterials()
         var remoteMaterials: List<Material> = emptyList()
 
         try {
@@ -76,7 +75,6 @@ class StockRepository(
             // TODO handle the error
         }
 
-//        if (localCountMaterials != remoteMaterials.count())
             dao.deleteAll()
             remoteMaterials.forEach { material ->
                 dao.insertMaterial(material)

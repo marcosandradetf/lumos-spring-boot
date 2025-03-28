@@ -3,8 +3,8 @@ package com.lumos.ui.preMeasurement
 import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,7 +32,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,16 +43,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.R
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar
@@ -82,14 +76,13 @@ fun PreMeasurementProgressScreen(
     ) {
     var internet by remember { mutableStateOf(true) }
     var contract by remember { mutableStateOf<Contract?>(null) }
+    val streets = emptyList<PreMeasurementStreet>()
 
     LaunchedEffect(contractId) {
         Log.e("e", "$contractId")
         contract = contractViewModel.getContract(contractId)
     }
 
-
-    val streets = emptyList<PreMeasurementStreet>()
     if (contract != null)
         PMPContent(
             contract = contract!!,
@@ -98,13 +91,27 @@ fun PreMeasurementProgressScreen(
             onNavigateToProfile = onNavigateToProfile,
             onNavigateToNotifications = onNavigateToNotifications,
             onNavigateToPreMeasurements = onNavigateToPreMeasurements,
-            onNavigateToStreet= {
+            onNavigateToStreet = {
                 onNavigateToStreet(it)
             },
             context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
-            streets = streets
+            streets = streets,
+            sendPreMeasurement = {
+                if (!streets.isEmpty()) {
+                    preMeasurementViewModel.sendPreMeasurementSync(contractId)
+                } else {
+                    Toast
+                        .makeText(
+                            context,
+                            "Não é permitido enviar sem adicionar pelo menos uma rua!",
+                            Toast.LENGTH_SHORT
+                        )
+                        .show()
+                }
+
+            }
         )
     else
         Loading(
@@ -160,7 +167,8 @@ fun PMPContent(
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
-    streets: List<PreMeasurementStreet>
+    streets: List<PreMeasurementStreet>,
+    sendPreMeasurement: () -> Unit
 ) {
     AppLayout(
         title = "Pré-medição",
@@ -261,7 +269,10 @@ fun PMPContent(
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary) // Azul
                         ) {
-                            Text(text = "Adicionar rua", color = MaterialTheme.colorScheme.onSecondary)
+                            Text(
+                                text = "Adicionar rua",
+                                color = MaterialTheme.colorScheme.onSecondary
+                            )
                             Spacer(Modifier.width(5.dp))
                             Icon(
                                 imageVector = Icons.Default.AddCircle,
@@ -285,7 +296,7 @@ fun PMPContent(
             ) {
                 FinishPreMeasurementButton(
                     onClick = {
-                        // Lógica do botão (por exemplo, finalizar pré-medições)
+                        sendPreMeasurement()
                     }
                 )
             }
@@ -360,7 +371,7 @@ fun Streets(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = street.address ?: "Endereço indisponível",
+                                text = street.street,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -424,179 +435,195 @@ fun PrevPMP() {
         listOf(
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
-                preMeasurementId = 1,
+                contractId = 1,
                 lastPower = "",
                 latitude = 1.9,
                 longitude = 2.2,
-                address = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
                 number = "",
+                neighborhood = "",
                 city = "",
-                deviceId = ""
+                state = ""
             ),
         )
 
@@ -613,6 +640,7 @@ fun PrevPMP() {
         navController = rememberNavController(),
         "12",
         streets,
+        { }
     )
 
 //    Loading(
