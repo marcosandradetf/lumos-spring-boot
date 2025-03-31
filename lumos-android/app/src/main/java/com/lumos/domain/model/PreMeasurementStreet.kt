@@ -15,4 +15,5 @@ data class PreMeasurementStreet(
     var neighborhood: String,
     var city: String,
     var state: String?,
+    var photoUri: String
 )

@@ -3,6 +3,7 @@ package com.lumos.data.repository
 import com.lumos.data.api.ContractApi
 import com.lumos.data.database.ContractDao
 import com.lumos.domain.model.Contract
+import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 
 class ContractRepository(
@@ -19,7 +20,7 @@ class ContractRepository(
                 val body = response.body()
                 remoteContracts = body!!
                 if (remoteContracts.isNotEmpty())
-                    remoteContracts.forEach{ dao.insertContract(it) }
+                    remoteContracts.forEach { dao.insertContract(it) }
 
             } else {
                 val code = response.code()
@@ -33,9 +34,9 @@ class ContractRepository(
 
     }
 
-    suspend fun getContracts(status: String) : List<Contract> {
-        return dao.getContracts(status)
-    }
+    fun getFlowContracts(status: String): Flow<List<Contract>> =
+        dao.getFlowContracts(status)
+
 
     suspend fun getContract(contractId: Long): Contract {
         return dao.getContract(contractId)

@@ -6,6 +6,7 @@ import com.lumos.lumosspring.execution.entities.PreMeasurement;
 import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
 import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.util.ContractStatus;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
@@ -177,7 +178,7 @@ public class MeasurementService {
         }
 
         preMeasurement.get().setHtmlReport(html);
-        preMeasurement.get().setStatus(PreMeasurement.Status.VALIDATING);
+        preMeasurement.get().setStatus(ContractStatus.VALIDATING);
         preMeasurementRepository.save(preMeasurement.get());
 
         return ResponseEntity.ok().build();

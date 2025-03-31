@@ -33,8 +33,11 @@ class SyncStock(appContext: Context, workerParams: WorkerParameters) :
         return try {
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
                 Log.e("SyncStock", "Internet")
-                repository.syncMaterials()
-                Result.success()
+                val response = repository.syncMaterials()
+                when (response) {
+                    true -> Result.success()
+                    false -> Result.retry()
+                }
             } else {
                 Log.e("SyncStock", "Sem Internet")
                 Result.retry()

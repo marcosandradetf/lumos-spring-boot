@@ -1,13 +1,12 @@
 import {Component} from '@angular/core';
 
-import {NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
+import {NgForOf, NgIf} from '@angular/common';
 import {PreMeasurementService} from '../pre-measurement-pending/premeasurement-service.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {UtilsService} from '../../core/service/utils.service';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {FormsModule} from '@angular/forms';
 import {UserService} from '../../manage/user/user-service.service';
-import {AuthService} from '../../core/auth/auth.service';
 import {Title} from '@angular/platform-browser';
 
 @Component({
@@ -15,7 +14,6 @@ import {Title} from '@angular/platform-browser';
   standalone: true,
   imports: [
     NgForOf,
-    NgOptimizedImage,
     NgIf,
     ModalComponent,
     FormsModule
@@ -26,6 +24,7 @@ import {Title} from '@angular/platform-browser';
 export class PreMeasurementReportComponent {
   preMeasurement: {
     preMeasurementId: number;
+    contractId: number;
     city: string;
     createdBy: string;
     createdAt: string;
@@ -55,6 +54,7 @@ export class PreMeasurementReportComponent {
 
   } = {
     preMeasurementId: 0,
+    contractId: 0,
     city: '',
     createdBy: '',
     createdAt: '',
@@ -64,10 +64,9 @@ export class PreMeasurementReportComponent {
     totalPrice: '',
     streets: []
   };
+
+  contract : any;
   openModal: boolean = false;
-
-
-
 
   constructor(protected router: Router,  protected utils: UtilsService, private titleService: Title,
               private preMeasurementService: PreMeasurementService, private route: ActivatedRoute,) {
@@ -78,10 +77,11 @@ export class PreMeasurementReportComponent {
     if (measurementId) {
       this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
         this.preMeasurement = preMeasurement;
+        this.preMeasurementService.getContract(preMeasurement.contractId).subscribe(contract => {
+          this.contract = contract;
+        })
       });
     }
-
-
   }
 
   generatePDF(content: HTMLDivElement): void {

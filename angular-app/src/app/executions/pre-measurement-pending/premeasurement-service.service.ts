@@ -19,6 +19,7 @@ export class PreMeasurementService {
     return this.http.get<
       {
         preMeasurementId: number;
+        contractId: number;
         city: string;
         createdBy: string;
         createdAt: string;
@@ -303,7 +304,7 @@ export class PreMeasurementService {
     return this.http.post(`${this.endpoint + `/save-pre-measurement-html-report/${preMeasurementId}`}`, html);
   }
 
-  getContract(preMeasurementId: number) {
-
+  getContract(contractId: number) {
+    return this.http.get(`${this.endpoint + `/get-contract/${contractId}`}`);
   }
 }

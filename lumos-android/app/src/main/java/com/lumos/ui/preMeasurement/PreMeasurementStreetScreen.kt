@@ -1,10 +1,15 @@
 package com.lumos.ui.preMeasurement
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.layout.WindowInsets
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -19,7 +24,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -27,12 +34,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -49,22 +57,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
@@ -73,6 +84,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -81,15 +93,22 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
 import com.lumos.data.api.UserExperience
+import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Material
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.domain.service.SyncStock
+import com.lumos.ui.components.NetworkStatusBar
+import com.lumos.ui.components.TopBar
+import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.StockViewModel
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 @Composable
@@ -98,7 +117,8 @@ fun PreMeasurementStreetScreen(
     context: Context,
     stockViewModel: StockViewModel,
     preMeasurementViewModel: PreMeasurementViewModel,
-    contractId: Long
+    contractId: Long,
+    contractViewModel: ContractViewModel,
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coord = CoordinatesService(context, fusedLocationProvider)
@@ -108,11 +128,10 @@ fun PreMeasurementStreetScreen(
     var vLongitude by remember { mutableStateOf<Double?>(null) }
     var showModal by remember { mutableStateOf(false) }
     var finishMeasurement by remember { mutableStateOf(false) }
-
+    var contract by remember { mutableStateOf<Contract?>(null) }
 
     // Obtém o estado atual dos depósitos
-    val materials by stockViewModel.materials
-
+    val materials by stockViewModel.materials.collectAsState()
 
     val preMeasurementStreet by remember {
         mutableStateOf(
@@ -126,6 +145,7 @@ fun PreMeasurementStreetScreen(
                 number = "",
                 city = "",
                 state = "",
+                photoUri = ""
             )
         )
     }
@@ -134,6 +154,51 @@ fun PreMeasurementStreetScreen(
         mutableStateOf<List<PreMeasurementStreetItem>>(
             emptyList()
         )
+    }
+
+    LaunchedEffect(contractId) {
+        contract = contractViewModel.getContract(contractId)
+        preMeasurementViewModel.loadStreets(contractId)
+
+        contract?.let { loadedContract ->
+            val powersList = loadedContract.powers
+                ?.split("#")?.map { it.trim() } ?: emptyList()
+            val lengthsList = loadedContract.lengths
+                ?.split("#")?.map { it.trim() } ?: emptyList()
+
+            Log.e("DEBUG", "contract.powers: ${loadedContract.powers}")
+            Log.e("powersList", powersList.toString())
+            Log.e("lengthsList", lengthsList.toString())
+
+            // Agendar o Worker assim que a tela for aberta
+            val workRequest = OneTimeWorkRequestBuilder<SyncStock>()
+                .setBackoffCriteria(
+                    BackoffPolicy.EXPONENTIAL,
+                    30, TimeUnit.MINUTES
+                )
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .setRequiresBatteryNotLow(true)
+                        .build()
+                )
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "sync_stock", // Nome único para o trabalho
+                ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
+                workRequest
+            )
+
+            val workManager = WorkManager.getInstance(context)
+            workManager.getWorkInfoByIdLiveData(workRequest.id)
+                .observe(lifecycleOwner) { workInfo ->
+                    if (workInfo?.state == WorkInfo.State.SUCCEEDED) {
+                        Log.e("syncStock screen street", "carregando materiais pos-worker")
+                        stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
+                    }
+                }
+        }
     }
 
     // Execute a função assíncrona
@@ -160,38 +225,9 @@ fun PreMeasurementStreetScreen(
                 Log.e("GET Address", "Latitude ou Longitude são nulos.")
             }
         }
-
-
-        // Agendar o Worker assim que a tela for aberta
-        val workRequest = OneTimeWorkRequestBuilder<SyncStock>()
-            .setBackoffCriteria(
-                BackoffPolicy.EXPONENTIAL,
-                30, TimeUnit.MINUTES
-            )
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .setRequiresBatteryNotLow(true)
-                    .build()
-            )
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            "sync_stock", // Nome único para o trabalho
-            ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
-            workRequest
-        )
-
-        stockViewModel.loadMaterials()
-
-        val workManager = WorkManager.getInstance(context)
-        workManager.getWorkInfoByIdLiveData(workRequest.id).observe(lifecycleOwner) { workInfo ->
-            if (workInfo != null && workInfo.state == WorkInfo.State.SUCCEEDED) {
-                // Somente chama loadMaterials() quando o Worker terminar com sucesso
-                stockViewModel.loadMaterials()
-            }
-        }
     }
+
+
 
 
 
@@ -256,8 +292,10 @@ fun PreMeasurementStreetScreen(
             showModal = {
                 showModal = true
             },
-            pStreet = preMeasurementStreet
-
+            pStreet = preMeasurementStreet,
+            takePhoto = {
+                preMeasurementStreet.photoUri = it.toString()
+            },
         )
     }
 
@@ -268,6 +306,7 @@ fun PreMeasurementStreetScreen(
                 preMeasurementStreetItems = selected
                 showModal = false
             },
+            preList = preMeasurementStreetItems,
             materials = materials,
             preMeasurementStreetId = preMeasurementStreet.preMeasurementStreetId,
             contractId = contractId,
@@ -299,7 +338,8 @@ fun PMSContent(
     back: (Long) -> Unit,
     onValueChange: (String, String) -> Unit,
     showModal: () -> Unit,
-    pStreet: PreMeasurementStreet
+    pStreet: PreMeasurementStreet,
+    takePhoto: (uri: Uri) -> Unit,
 ) {
 
 
@@ -313,23 +353,45 @@ fun PMSContent(
     var state by remember { mutableStateOf(pStreet.state ?: "") }
     var lastPower by remember { mutableStateOf("") }
 
+    val fileUri =
+        remember { mutableStateOf<Uri?>(Uri.parse("content://com.thryon.lumos.provider/my_images/photo_1743345161984.jpg")) }
+    val imageSaved = remember { mutableStateOf(false) }
+    val createFile: () -> Uri = {
+        val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
+        file.createNewFile() // Garante que o arquivo seja criado
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+
+        Log.d("ImageDebug", "URI criada: $uri") // 📌 Adiciona log aqui
+
+        uri
+    }
+
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) {
+                Log.d(
+                    "ImageDebug",
+                    "Foto tirada com sucesso! URI: ${fileUri.value}"
+                ) // 🔍 Verifica se foi salvo
+                fileUri.value?.let { uri ->
+                    takePhoto(uri)
+                    imageSaved.value = true
+                }
+            } else {
+                Log.e("ImageDebug", "Erro ao tirar foto.")
+            }
+        }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .padding(top = 20.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = "Fechar",
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { exitMeasurement = true },
-                    tint = MaterialTheme.colorScheme.error // Cor moderna para o ícone
+            Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+                NetworkStatusBar(context = context)
+                TopBar(
+                    navigateBack = {
+                        exitMeasurement = true
+                    },
+                    title = "Voltar"
                 )
             }
         },
@@ -407,7 +469,6 @@ fun PMSContent(
                     Modifier.fillMaxWidth(),
                 ) {
 
-                    Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -578,7 +639,64 @@ fun PMSContent(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(200.dp))
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp)
+                            .clickable {
+                                val newUri = createFile() // Gera um novo Uri
+                                fileUri.value = newUri // Atualiza o estado
+                                launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
+                            }
+                    ) {
+
+                        Card(
+                            modifier = Modifier.padding(end = 5.dp),
+                            shape = RoundedCornerShape(10.dp), // Formato
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer // Cor de fundo do botão
+                            )
+                        ) {
+
+                            AnimatedVisibility(visible = imageSaved.value) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        ImageRequest.Builder(LocalContext.current)
+                                            .data(fileUri.value)
+                                            .crossfade(true) // Para um fade suave
+                                            .build()
+                                    ),
+                                    contentDescription = "Imagem da foto",
+                                    modifier = Modifier
+                                        .size(50.dp)
+                                        .padding(0.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            AnimatedVisibility(visible = !imageSaved.value) {
+                                Icon(
+                                    modifier = Modifier
+                                        .padding(10.dp)
+                                        .size(30.dp),
+                                    imageVector = Icons.Outlined.PhotoCamera,
+                                    contentDescription = "Foto",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                        Text(
+                            modifier = Modifier.padding(top = 5.dp),
+                            text = "Tirar foto",
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                            fontStyle = MaterialTheme.typography.bodyLarge.fontStyle
+                        )
+                    }
+
+
+                    Spacer(modifier = Modifier.height(120.dp))
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -590,8 +708,8 @@ fun PMSContent(
                                 .clickable {
                                     showModal()
                                 }, // Adiciona interação de clique
-                            shape = CircleShape, // Formato circular
-                            elevation = CardDefaults.cardElevation(10.dp), // Sombra
+                            shape = RoundedCornerShape(10.dp), // Formato circular
+                            elevation = CardDefaults.cardElevation(5.dp), // Sombra
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer // Cor de fundo do botão
                             )
@@ -616,7 +734,6 @@ fun PMSContent(
                             fontWeight = FontWeight.Medium // Peso da fonte
                         )
                     }
-
 
                 }
 
@@ -680,24 +797,68 @@ fun DialogExit(
 fun BottomSheetDialog(
     onDismissRequest: (List<PreMeasurementStreetItem>) -> Unit,
     materials: List<Material>,
+    preList: List<PreMeasurementStreetItem>,
     preMeasurementStreetId: Long,
     contractId: Long,
     context: Context
 ) {
     var searchQuery by remember { mutableStateOf("") }
-
     val preMeasurementStreetItems = remember { mutableStateListOf<PreMeasurementStreetItem>() }
     val filteredList = materials.filter {
         it.materialName?.contains(searchQuery, ignoreCase = true) ?: false ||
                 it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
     }
 
+    LaunchedEffect(preList) {
+        if (preList.isNotEmpty()) {
+            preMeasurementStreetItems.clear()
+            // Adiciona os itens de preList à lista reativa
+            preMeasurementStreetItems.addAll(preList)
+        }
+    }
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = {
+            it != SheetValue.Hidden
+        }
+    )
+
     ModalBottomSheet(
         onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
-        modifier = Modifier.fillMaxSize()
+        dragHandle = null,
+        modifier = Modifier.fillMaxSize(),
+        sheetState = sheetState
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Selecione os itens:", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Selecione os itens", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                TextButton(
+                    onClick = {
+                        onDismissRequest(
+                            preMeasurementStreetItems
+                        )
+                    }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Concluir", fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                            modifier = Modifier.padding(end = 5.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Outlined.Done,
+                            contentDescription = "Icone Concluir"
+                        )
+                    }
+
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -719,10 +880,12 @@ fun BottomSheetDialog(
 
             LazyColumn {
                 items(filteredList) { material ->
+                    // Passando diretamente o estado de 'selected' e 'quantity' do Composable 1
                     ItemLightRow(
                         material = material,
-                        preSelected = preMeasurementStreetItems.find { it.materialId == material.materialId } != null,
-                        preQuantity = preMeasurementStreetItems.find { it.materialId == material.materialId }?.materialQuantity ?: 0,
+                        preSelected = preList.firstOrNull { it.materialId == material.materialId } != null,
+                        preQuantity = preList.firstOrNull { it.materialId == material.materialId }?.materialQuantity
+                            ?: 0,
                         onItemSelected = { m ->
                             if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
                                 preMeasurementStreetItems.add(
@@ -762,8 +925,9 @@ fun ItemLightRow(
     preSelected: Boolean,
     preQuantity: Int
 ) {
-    var selected by rememberSaveable { mutableStateOf(preSelected) }
-    var quantity by rememberSaveable { mutableIntStateOf(preQuantity) }
+    var selected by remember { mutableStateOf(preSelected) }
+    var quantity by remember { mutableIntStateOf(preQuantity) }
+
     val materialChar = if (material.materialLength != null) {
         "Tamanho: ${material.materialLength}"
     } else if (material.materialAmps != null) {
@@ -778,7 +942,6 @@ fun ItemLightRow(
         targetValue = if (selected) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.background,
         label = ""
     )
-
 
     AnimatedVisibility(!selected) {
         Card(
@@ -956,15 +1119,15 @@ fun PrevStreet() {
         )
     )
 
-    val materials = listOf(
-        Material(
-            materialId = 1,
-            materialName = "LED",
-            materialPower = "100W",
-            materialAmps = null,
-            materialLength = null
-        )
-    )
+//    val materials = listOf(
+//        Material(
+//            materialId = 1,
+//            materialName = "LED",
+//            materialPower = "100W",
+//            materialAmps = null,
+//            materialLength = null
+//        )
+//    )
 
     PMSContent(
         context = LocalContext.current,
@@ -984,7 +1147,9 @@ fun PrevStreet() {
             number = "",
             city = "",
             state = "",
-        )
+            photoUri = ""
+        ),
+        takePhoto = { },
     )
 
 //    BottomSheetDialog(
@@ -995,28 +1160,4 @@ fun PrevStreet() {
 //    )
 
 
-}
-
-@Composable
-fun PressableBox() {
-    var pressed by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .size(150.dp)
-            .background(if (pressed) Color.DarkGray else Color.Gray)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        pressed = true
-//                        it.tryAwaitRelease() // Espera até o usuário soltar o botão
-                        pressed = false
-                    }
-                )
-            }
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "Pressione aqui", color = Color.White)
-    }
 }

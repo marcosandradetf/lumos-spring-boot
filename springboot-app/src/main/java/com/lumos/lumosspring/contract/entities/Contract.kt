@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.contract.entities
 
 import com.lumos.lumosspring.user.User
+import com.lumos.lumosspring.util.ContractStatus
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
@@ -24,17 +25,12 @@ class Contract {
     var unifyServices : Boolean = false
     var noticeFile : String? = null
     var contractFile : String? = null
-    var status : Status = Status.PRE_MEASUREMENT_PROGRESS
+    var status : String = ContractStatus.PENDING
 
-    @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true, mappedBy = "contract")
     var contractItemsQuantitative: Set<ContractItemsQuantitative> = hashSetOf()
 
     fun sumTotalPrice(totalPrice: BigDecimal?) {
         this.contractValue = this.contractValue.add(totalPrice)
-    }
-
-    enum class Status {
-        PRE_MEASUREMENT_PROGRESS,
-        PRE_MEASUREMENT_FINISHED
     }
 }

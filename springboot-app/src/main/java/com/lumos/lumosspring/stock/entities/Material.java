@@ -33,7 +33,7 @@ public class Material {
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<MaterialStock> materialStocks;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "tb_related_materials",
             joinColumns = @JoinColumn(name = "material_id"),

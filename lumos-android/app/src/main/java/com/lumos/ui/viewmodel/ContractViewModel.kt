@@ -10,6 +10,9 @@ import com.lumos.data.repository.Status
 import com.lumos.domain.model.Contract
 import com.lumos.utils.Utils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -17,15 +20,16 @@ class ContractViewModel(
     private val repository: ContractRepository,
 
     ) : ViewModel() {
-    private val _contracts = mutableStateOf<List<Contract>>(emptyList()) // estado da lista
-    val contracts: State<List<Contract>> = _contracts // estado acessível externamente
+    private val _contracts = MutableStateFlow<List<Contract>>(emptyList()) // estado da lista
+    val contracts: StateFlow<List<Contract>> = _contracts // estado acessível externamente
 
 
-    fun loadContracts(status: String) {
+    fun loadFlowContracts(status: String) {
         viewModelScope.launch {
             try {
-                val fetched = repository.getContracts(status)
-                _contracts.value = fetched // atualiza o estado com os dados obtidos
+                repository.getFlowContracts(status).collectLatest { fetched ->
+                    _contracts.value = fetched // atualiza o estado com os dados obtidos
+                }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
             }

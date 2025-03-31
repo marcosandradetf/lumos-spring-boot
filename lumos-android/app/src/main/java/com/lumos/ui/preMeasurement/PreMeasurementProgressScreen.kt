@@ -68,19 +68,17 @@ fun PreMeasurementProgressScreen(
     context: Context,
     contractViewModel: ContractViewModel,
     preMeasurementViewModel: PreMeasurementViewModel,
-    connection: ConnectivityUtils,
     navController: NavHostController,
     notificationsBadge: String,
     contractId: Long,
 
     ) {
-    var internet by remember { mutableStateOf(true) }
     var contract by remember { mutableStateOf<Contract?>(null) }
-    val streets = emptyList<PreMeasurementStreet>()
+    val streets by preMeasurementViewModel.streets
 
     LaunchedEffect(contractId) {
-        Log.e("e", "$contractId")
         contract = contractViewModel.getContract(contractId)
+        preMeasurementViewModel.loadStreets(contractId)
     }
 
     if (contract != null)
@@ -99,7 +97,7 @@ fun PreMeasurementProgressScreen(
             notificationsBadge = notificationsBadge,
             streets = streets,
             sendPreMeasurement = {
-                if (!streets.isEmpty()) {
+                if (streets.isNotEmpty()) {
                     preMeasurementViewModel.sendPreMeasurementSync(contractId)
                 } else {
                     Toast
@@ -443,7 +441,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -455,7 +454,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -467,7 +467,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -479,7 +480,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -491,7 +493,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -503,7 +506,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -515,7 +519,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -527,7 +532,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -539,7 +545,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -551,7 +558,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -563,7 +571,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -575,7 +584,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -587,7 +597,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -599,7 +610,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -611,7 +623,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -623,7 +636,8 @@ fun PrevPMP() {
                 number = "",
                 neighborhood = "",
                 city = "",
-                state = ""
+                state = "",
+                photoUri = ""
             ),
         )
 

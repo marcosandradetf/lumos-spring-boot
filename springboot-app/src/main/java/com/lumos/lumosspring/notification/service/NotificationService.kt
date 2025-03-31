@@ -38,8 +38,10 @@ object Routes {
     const val MENU = "menu"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
-    const val MEASUREMENT_HOME = "measurement-home"
-    const val MEASUREMENT_SCREEN = "measurement-screen"
     const val CONTRACT_SCREEN = "contract-screen"
-
+    const val PRE_MEASUREMENTS = "pre-measurements"
+    const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
+    const val PRE_MEASUREMENT_STREET_HOME = "pre-measurement-home"
+    const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
+    const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
 }

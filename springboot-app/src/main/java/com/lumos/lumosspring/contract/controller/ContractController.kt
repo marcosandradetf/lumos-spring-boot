@@ -3,11 +3,7 @@ package com.lumos.lumosspring.contract.controller
 import com.lumos.lumosspring.contract.dto.ContractDTO
 import com.lumos.lumosspring.contract.service.ContractService
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api")
@@ -30,5 +26,8 @@ class ContractController(
         return contractService.getContractsForPreMeasurement()
     }
 
+    @GetMapping("/contracts/get-contract/{contractId}")
+    fun getContract(@PathVariable contractId: String): ResponseEntity<Any> =
+         contractService.getContract(contractId)
 
 }

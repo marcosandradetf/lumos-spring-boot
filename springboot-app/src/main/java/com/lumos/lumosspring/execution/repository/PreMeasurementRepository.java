@@ -13,12 +13,12 @@ import java.util.Optional;
 public interface PreMeasurementRepository extends JpaRepository<PreMeasurement, Long> {
     PreMeasurement findFirstByCityAndCreatedAt(String city, Instant createdAt);
 
-    Optional<PreMeasurement> getTopByCityAndStatusOrderByCreatedAtDesc(String city, PreMeasurement.Status status);
+    Optional<PreMeasurement> getTopByCityAndStatusOrderByCreatedAtDesc(String city, String status);
 
     List<PreMeasurement> findByCity(String city);
 
     @EntityGraph(attributePaths = {"createdBy", "streets.items"})
-    List<PreMeasurement> findAllByStatusOrderByCreatedAtAsc(PreMeasurement.Status status);
+    List<PreMeasurement> findAllByStatusOrderByCreatedAtAsc(String status);
 
-    PreMeasurement findByPreMeasurementIdAndStatus(Long preMeasurementId, PreMeasurement.Status status);
+    PreMeasurement findByPreMeasurementIdAndStatus(Long preMeasurementId, String status);
 }

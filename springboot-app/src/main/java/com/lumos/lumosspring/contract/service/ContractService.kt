@@ -13,11 +13,13 @@ import com.lumos.lumosspring.stock.repository.MaterialServiceRepository
 import com.lumos.lumosspring.user.Role
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.DefaultResponse
+import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.util.*
 
 @Service
@@ -89,7 +91,7 @@ class ContractService(
             action = Routes.CONTRACT_SCREEN,
             role = Role.Values.RESPONSAVEL_TECNICO,
             time = util.dateTime,
-            type = "Contract"
+            type = NotificationType.CONTRACT
         )
 
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
@@ -103,23 +105,73 @@ class ContractService(
             val createdBy: String,
             val createdAt: String,
             val status: String,
+            val powers: String? = null,
+            val lengths: String? = null,
         )
 
         val contractList = mutableListOf<ContractForPreMeasurementDTO>()
 
-        contractRepository.findAll().forEach {
-            val contract = ContractForPreMeasurementDTO(
-                contractId = it.contractId,
-                contractor = it.contractor!!,
-                contractFile = it.contractFile,
-                createdBy = it.createdBy.name,
-                createdAt = it.creationDate.toString(),
-                status = "PENDING"
+        contractRepository.findAll().forEach { contract ->
+            val powers = StringBuilder()
+            val lengths = StringBuilder()
+
+            contract.contractItemsQuantitative.forEach { item ->
+                val linking = item.referenceItem.linking
+
+                if (!linking.isNullOrEmpty()) {
+                    val powerList = linking.split("#")
+
+                    when (item.referenceItem.type) {
+                        "LED" -> {
+                            if (powers.isNotEmpty()) {
+                                powers.append("#")
+                            }
+                            powers.append(powerList.joinToString("#"))
+                        }
+                        "BRAÇO" -> {
+                            if (lengths.isNotEmpty()) {
+                                lengths.append("#")
+                            }
+                            lengths.append(powerList.joinToString("#"))
+                        }
+                    }
+                }
+            }
+
+
+            contractList.add(
+                ContractForPreMeasurementDTO(
+                    contractId = contract.contractId,
+                    contractor = contract.contractor!!,
+                    contractFile = contract.contractFile,
+                    createdBy = contract.createdBy.name,
+                    createdAt = contract.creationDate.toString(),
+                    status = contract.status,
+                    powers = "$powers",
+                    lengths = "$lengths",
+                )
             )
-            contractList.add(contract)
         }
 
         return ResponseEntity.ok(contractList)
+    }
+
+    fun getContract(contractId: Long): ResponseEntity<Any> {
+        data class ItemsForReport(
+            val number: Int,
+            val description: String,
+            val unitPrice: BigDecimal,
+        )
+        data class ContractForReport(
+            val contractId: Long,
+            val contractor: String,
+            val contractFile: String?,
+            val createdBy: String,
+            val createdAt: String,
+            val items: List<ItemsForReport>,
+        )
+
+        return ResponseEntity.ok().build()
     }
 
 }

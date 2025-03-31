@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,7 +66,7 @@ fun ContractsScreen(
     navController: NavHostController,
     notificationsBadge: String,
     ) {
-    val contracts by contractViewModel.contracts
+    val contracts by contractViewModel.contracts.collectAsState()
     var internet by remember { mutableStateOf(true) }
     val deviceId = Settings.Secure.getString(
         context.contentResolver,
@@ -76,7 +77,7 @@ fun ContractsScreen(
         if (connection.isConnectedToInternet(context)) contractViewModel.syncContracts()
         else internet = false
 
-        contractViewModel.loadContracts(Status.PENDING)
+        contractViewModel.loadFlowContracts(Status.PENDING)
     }
 
     ContractsScreenContent(

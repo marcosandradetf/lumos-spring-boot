@@ -3,6 +3,7 @@ package com.lumos.data.database
 import androidx.room.*
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.Material
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StockDao {
@@ -27,8 +28,16 @@ interface StockDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMaterial(material: Material)
 
-    @Query("SELECT * FROM materials")
-    suspend fun getMaterials(): List<Material>
+    @Query("""
+        SELECT * FROM materials 
+        WHERE ((materialPower IN (:powers) OR materialPower IS NULL) 
+        AND (materialLength IN (:lengths) OR materialLength IS NULL))
+        OR materialName LIKE ('PARAFUSO%')
+        OR materialName LIKE ('CONECTOR%')
+        OR materialName LIKE ('CINTA%')
+    """)
+    fun getMaterialsOfContract(powers: List<String>, lengths: List<String>): Flow<List<Material>>
+
 
     @Query("SELECT count(materialId) FROM materials")
     suspend fun getCountMaterials(): Int

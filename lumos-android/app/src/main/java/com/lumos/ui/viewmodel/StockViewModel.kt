@@ -9,6 +9,9 @@ import com.lumos.data.repository.StockRepository
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.Material
 import com.lumos.service.DepositService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class StockViewModel(
@@ -19,8 +22,8 @@ class StockViewModel(
     private val _deposits = mutableStateOf<List<Deposit>>(emptyList()) // estado da lista
     val deposits: State<List<Deposit>> = _deposits // estado acessível externamente
 
-    private val _materials = mutableStateOf<List<Material>>(emptyList()) // estado da lista
-    val materials: State<List<Material>> = _materials
+    private val _materials = MutableStateFlow<List<Material>>(emptyList()) // estado da lista
+    val materials: StateFlow<List<Material>> = _materials
 
     // Função para carregar os depósitos
     fun loadDeposits() {
@@ -34,11 +37,12 @@ class StockViewModel(
         }
     }
 
-    fun loadMaterials() {
+    fun loadMaterialsOfContract(powers: List<String>, lengths: List<String>) {
         viewModelScope.launch {
             try {
-                val fetched = repository.getMaterials()
-                _materials.value = fetched // atualiza o estado com os dados obtidos
+                repository.getMaterialsOfContract(powers, lengths).collectLatest {
+                    entity -> _materials.value = entity
+                }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
             }

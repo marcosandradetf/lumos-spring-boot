@@ -50,3 +50,12 @@ object UserExperience {
 
     }
 }
+
+object NotificationType {
+    const val CONTRACT ="CONTRACT"
+    const val UPDATE ="UPDATE"
+    const val EVENT ="EVENT"
+    const val WARNING ="ALERT"
+    const val CASH ="CASH"
+    const val ALERT ="ALERT"
+}

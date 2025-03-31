@@ -4,6 +4,7 @@ import java.util.List;
 
 public record PreMeasurementResponseDTO(
         long preMeasurementId,
+        long contractId,
         String city,
         String createdBy,
         String createdAt,

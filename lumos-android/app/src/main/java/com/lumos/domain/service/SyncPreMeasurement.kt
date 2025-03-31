@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.lumos.data.api.ApiService
-import com.lumos.data.api.MeasurementApi
+import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.api.UserExperience
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.repository.PreMeasurementRepository
@@ -22,12 +22,12 @@ class SyncPreMeasurement(
 
     init {
         val api = ApiService(secureStorage)
-        val measurementApi = api.createApi(MeasurementApi::class.java)
+        val preMeasurementApi = api.createApi(PreMeasurementApi::class.java)
 
         repository = PreMeasurementRepository(
             AppDatabase.getInstance(appContext).preMeasurementDao(),
             AppDatabase.getInstance(appContext).contractDao(),
-            measurementApi,
+            preMeasurementApi,
             appContext
         )
     }

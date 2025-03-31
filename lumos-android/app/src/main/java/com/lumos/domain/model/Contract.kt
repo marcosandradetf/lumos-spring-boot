@@ -14,4 +14,6 @@ data class Contract(
     var status: String,
     val startAt: String? = null,
     val deviceId: String? = null,
+    val powers: String? = null,
+    val lengths: String? = null,
 )

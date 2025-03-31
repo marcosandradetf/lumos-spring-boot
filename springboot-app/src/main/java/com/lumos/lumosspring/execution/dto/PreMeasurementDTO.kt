@@ -1,9 +1,32 @@
-package com.lumos.lumosspring.execution.dto;
+package com.lumos.lumosspring.execution.dto
 
-import java.util.List;
+data class PreMeasurementDTO(
+    val contractId: Long,
+    val streets: List<PreMeasurementStreetItemsDTO>,
+)
 
-public record PreMeasurementDTO(
-        PreMeasurementStreetDTO measurement,
-        List<PreMeasurementStreetItemDTO> items
-) {
-}
+data class PreMeasurementStreetItemsDTO(
+    val street: PreMeasurementStreetDTO,
+    val items: List<PreMeasurementStreetItem>
+)
+
+data class PreMeasurementStreetDTO(
+    val preMeasurementStreetId: Long,
+    val contractId: Long,
+    var lastPower: String?,
+    var latitude: Double,
+    var longitude: Double,
+    var street: String,
+    var number: String?,
+    var neighborhood: String,
+    var city: String,
+    var state: String?,
+)
+
+data class PreMeasurementStreetItem(
+    val preMeasurementItemId: Long = 0,
+    var preMeasurementStreetId: Long,
+    val materialId: Long,
+    val materialQuantity: Int,
+    val contractId: Long,
+)

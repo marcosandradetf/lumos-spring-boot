@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.execution.entities;
 
+import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.stock.entities.Material;
 import jakarta.persistence.*;
 
@@ -20,12 +21,16 @@ public class PreMeasurementStreetItem {
     private Material material;
 
     @ManyToOne
+    @JoinColumn(name = "contract_item_id")
+    private ContractItemsQuantitative contractItem;
+
+    @ManyToOne
     @JoinColumn(name = "pre_measurement_street_id")
     private PreMeasurementStreet preMeasurementStreet;
 
     private double itemQuantity;
 
-    private Status itemStatus;
+    private String itemStatus;
 
     private BigDecimal unitPrice = BigDecimal.ZERO;
     private BigDecimal totalPrice = BigDecimal.ZERO;
@@ -77,19 +82,11 @@ public class PreMeasurementStreetItem {
         this.material = material;
     }
 
-    public PreMeasurementStreet getPreMeasurement() {
-        return preMeasurementStreet;
-    }
-
-    public void setPreMeasurement(PreMeasurementStreet measurement) {
-        this.preMeasurementStreet = measurement;
-    }
-
-    public Status getItemStatus() {
+    public String getItemStatus() {
         return itemStatus;
     }
 
-    public void setItemStatus(Status itemStatus) {
+    public void setItemStatus(String itemStatus) {
         this.itemStatus = itemStatus;
     }
 
@@ -125,12 +122,13 @@ public class PreMeasurementStreetItem {
                 .orElse(null);
     }
 
+    public ContractItemsQuantitative getContractItem() {
+        return contractItem;
+    }
 
-
-    public enum Status {
-        PENDING,
-        CANCELLED,
-        APPROVED,
+    public void setContractItem(ContractItemsQuantitative contractItem) {
+        this.contractItem = contractItem;
+        this.setUnitPrice(contractItem.getUnitPrice());
     }
 
 }

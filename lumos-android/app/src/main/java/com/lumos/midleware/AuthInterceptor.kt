@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.compose.runtime.rememberCoroutineScope
 import com.lumos.data.api.AuthApi
 import com.lumos.domain.model.RefreshTokenRequest
+import com.lumos.utils.ConnectivityUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -64,7 +66,10 @@ class AuthInterceptor(
                         tokenResponse.body()?.accessToken
                     } else {
                         // Trata a falha na requisição (por exemplo, token de refresh inválido)
-                        Log.e("Refresh Token Error", "Erro ao renovar o token: ${tokenResponse.code()}")
+                        Log.e(
+                            "Refresh Token Error",
+                            "Erro ao renovar o token: ${tokenResponse.code()}"
+                        )
                         authApi.logout(refreshToken = refreshToken)
                         secureStorage.clearTokens()
                         null
@@ -80,13 +85,11 @@ class AuthInterceptor(
             if (newAccessToken != null) {
                 secureStorage.saveAccessToken(newAccessToken)
 
-                // Retenta a requisição com o novo token
-                val newRequest = request.newBuilder()
+                // Aqui, fazemos a chamada novamente com o novo token
+                val newRequest = chain.request().newBuilder()
                     .addHeader("Authorization", "Bearer $newAccessToken")
                     .build()
-
-                // Aqui, fazemos a chamada novamente com o novo token
-                response = chain.proceed(newRequest)
+                return chain.proceed(newRequest)
             }
         }
 

@@ -1,10 +1,10 @@
 package com.lumos.data.repository
 
-import android.util.Log
 import com.lumos.data.database.StockDao
 import com.lumos.domain.model.Deposit
 import com.lumos.data.api.StockApi
 import com.lumos.domain.model.Material
+import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 
 class StockRepository(
@@ -56,7 +56,7 @@ class StockRepository(
         return dao.getDeposits()
     }
 
-    suspend fun syncMaterials() {
+    suspend fun syncMaterials(): Boolean {
         var remoteMaterials: List<Material> = emptyList()
 
         try {
@@ -67,23 +67,25 @@ class StockRepository(
 
             } else {
                 val code = response.code()
-                // TODO handle the error
             }
         } catch (e: HttpException) {
             val response = e.response()
             val errorCode = e.code()
-            // TODO handle the error
         }
 
+        if(remoteMaterials.isNotEmpty()) {
             dao.deleteAll()
             remoteMaterials.forEach { material ->
                 dao.insertMaterial(material)
             }
+            return true
+        }
+        return false
     }
 
-    suspend fun getMaterials(): List<Material> {
-        return dao.getMaterials()
-    }
+    fun getMaterialsOfContract(powers: List<String>, lengths: List<String>): Flow<List<Material>> =
+        dao.getMaterialsOfContract(powers, lengths)
+
 
     suspend fun firstSync() {
         if (dao.getCountDeposits() == 0 || dao.getCountMaterials() == 0) {

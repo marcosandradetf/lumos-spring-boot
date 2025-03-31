@@ -91,3 +91,34 @@ class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepositor
         }
     }
 }
+
+object ContractStatus {
+    const val PENDING = "PENDING"
+    const val VALIDATING = "VALIDATING"
+    const val WAITING  = "WAITING"
+    const val VALIDATED = "VALIDATED"
+    const val IN_PROGRESS = "IN_PROGRESS"
+    const val FINISHED = "FINISHED"
+}
+
+object ContractType {
+    const val INSTALLATION = "INSTALLATION"
+    const val MAINTENANCE = "MAINTENANCE"
+}
+
+object ItemStatus {
+    const val PENDING = "PENDING"
+    const val CANCELLED = "CANCELLED"
+    const val APPROVED = "APPROVED"
+    const val IN_PROGRESS = "IN_PROGRESS"
+    const val FINISHED = "FINISHED"
+}
+
+object NotificationType {
+    const val CONTRACT ="CONTRACT"
+    const val UPDATE ="UPDATE"
+    const val EVENT ="EVENT"
+    const val WARNING ="ALERT"
+    const val CASH ="CASH"
+    const val ALERT ="CASH"
+}

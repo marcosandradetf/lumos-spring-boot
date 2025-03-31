@@ -16,14 +16,17 @@ public class PreMeasurementStreet {
 
     private String lastPower;
 
-    private String address;
     private String street;
+    private String number;
+    private String neighborhood;
+    private String city;
+    private String state;
 
     private double latitude;
 
     private double longitude;
 
-    private Status status;
+    private String streetStatus;
 
     @OneToMany(mappedBy = "preMeasurementStreet", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PreMeasurementStreetItem> items = new HashSet<>();
@@ -31,12 +34,12 @@ public class PreMeasurementStreet {
     // Métodos auxiliares para garantir consistência no relacionamento
     public void addItem(PreMeasurementStreetItem item) {
         items.add(item);
-        item.setPreMeasurement(this);
+        item.setPreMeasurementStreet(this);
     }
 
     public void removeItem(PreMeasurementStreetItem item) {
         items.remove(item);
-        item.setPreMeasurement(null);
+        item.setPreMeasurementStreet(null);
     }
 
     @ManyToOne
@@ -59,12 +62,36 @@ public class PreMeasurementStreet {
         this.description = description;
     }
 
-    public String getAddress() {
-        return address;
+    public String getNumber() {
+        return number;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public String getNeighborhood() {
+        return neighborhood;
+    }
+
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public double getLatitude() {
@@ -83,12 +110,12 @@ public class PreMeasurementStreet {
         this.longitude = longitude;
     }
 
-    public Status getStatus() {
-        return status;
+    public String getStreetStatus() {
+        return streetStatus;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setStreetStatus(String status) {
+        this.streetStatus = status;
     }
 
     public PreMeasurement getPreMeasurement() {
@@ -121,13 +148,6 @@ public class PreMeasurementStreet {
 
     public void setStreet(String street) {
         this.street = street;
-    }
-
-    public enum Status {
-        PENDING,
-        IN_PROGRESS,
-        CANCELLED,
-        FINISHED,
     }
 
 }

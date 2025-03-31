@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,10 +60,10 @@ fun PreMeasurementScreen(
     notificationsBadge: String,
 
     ) {
-    val contracts by contractViewModel.contracts
+    val contracts by contractViewModel.contracts.collectAsState()
 
     LaunchedEffect(Unit) {
-        contractViewModel.loadContracts(Status.IN_PROGRESS)
+        contractViewModel.loadFlowContracts(Status.IN_PROGRESS)
     }
 
     PMContent(

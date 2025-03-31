@@ -27,7 +27,7 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let p of preMeasurements; index as i;"
             class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="provideValues(p.preMeasurementId)">
+            (click)="router.navigate(['pre-medicao/relatorio/' + p.preMeasurementId])">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
             <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
                 {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}

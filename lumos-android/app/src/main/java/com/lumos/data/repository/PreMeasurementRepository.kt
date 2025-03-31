@@ -9,7 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.lumos.data.api.MeasurementApi
+import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.api.PreMeasurementDto
 import com.lumos.data.api.PreMeasurementStreetDto
 import com.lumos.data.database.ContractDao
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
 class PreMeasurementRepository(
     private val preMeasurementDao: PreMeasurementDao,
     private val contractDao: ContractDao,
-    private val api: MeasurementApi,
+    private val api: PreMeasurementApi,
     private val context: Context
 ) {
 
@@ -69,7 +69,7 @@ class PreMeasurementRepository(
                 contractId = contract.contractId,
                 streets = streets
             )
-            api.sendMeasurement(dto, userUuid)
+            api.sendPreMeasurement(dto, userUuid)
             true
         } catch (e: Exception) {
             false

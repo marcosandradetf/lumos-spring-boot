@@ -6,9 +6,9 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
-interface MeasurementApi {
-    @POST("/api/mobile/execution/insert-measurement")
-    suspend fun sendMeasurement(@Body preMeasurementDto: PreMeasurementDto, @Header("UUID") uuid: String)
+interface PreMeasurementApi {
+    @POST("/api/mobile/execution/insert-pre-measurement")
+    suspend fun sendPreMeasurement(@Body preMeasurementDto: PreMeasurementDto, @Header("UUID") uuid: String)
 
 }
 

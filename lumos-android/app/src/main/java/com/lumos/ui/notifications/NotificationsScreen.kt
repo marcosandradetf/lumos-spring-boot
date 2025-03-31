@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.lumos.data.api.NotificationType
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.service.NotificationItem
@@ -180,11 +181,11 @@ fun NotificationCard(
     onNavigate: (String) -> Unit
 ) {
     val icon: ImageVector = when (notification.type) {
-        "Contract" -> Icons.Default.Mail
-        "Update" -> Icons.Default.Update
-        "Event" -> Icons.Default.Event
-        "Alert" -> Icons.Default.Warning
-        "Cash" -> Icons.Default.AttachMoney
+        NotificationType.CONTRACT -> Icons.Default.Mail
+        NotificationType.UPDATE -> Icons.Default.Update
+        NotificationType.EVENT -> Icons.Default.Event
+        NotificationType.WARNING -> Icons.Default.Warning
+        NotificationType.CASH -> Icons.Default.AttachMoney
 
         else -> Icons.Default.Texture
     }

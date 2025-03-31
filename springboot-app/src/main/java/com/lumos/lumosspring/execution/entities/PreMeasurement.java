@@ -44,9 +44,9 @@ public class PreMeasurement {
     @ManyToOne
     private Region region;
 
-    private Status status;
+    private String status;
 
-    private Type typePreMeasurement;
+    private String typePreMeasurement;
 
     @ManyToOne
     @JoinColumn(name = "created_by_user_id")
@@ -131,11 +131,11 @@ public class PreMeasurement {
     }
 
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
@@ -147,11 +147,11 @@ public class PreMeasurement {
         this.city = city;
     }
 
-    public Type getTypePreMeasurement() {
+    public String getTypePreMeasurement() {
         return typePreMeasurement;
     }
 
-    public void setTypePreMeasurement(Type typePreMeasurement) {
+    public void setTypePreMeasurement(String typePreMeasurement) {
         this.typePreMeasurement = typePreMeasurement;
     }
 
@@ -183,21 +183,6 @@ public class PreMeasurement {
         this.htmlReport = htmlReport;
     }
 
-    public enum Status {
-        PENDING,
-        VALIDATING,
-        WAITING,
-        VALIDATED,
-        CANCELLED,
-        IN_PROGRESS,
-        FINISHED,
-    }
-
-    public enum Type {
-        INSTALLATION,
-        MAINTENANCE,
-    }
-
     public Contract getContract() {
         return contract;
     }
@@ -207,3 +192,5 @@ public class PreMeasurement {
     }
 
 }
+
+

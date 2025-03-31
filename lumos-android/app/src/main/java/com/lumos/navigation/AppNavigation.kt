@@ -25,7 +25,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.lumos.R
 import com.lumos.data.api.ContractApi
-import com.lumos.data.api.MeasurementApi
+import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.api.StockApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.database.StockDao
@@ -96,7 +96,7 @@ fun AppNavigation(
     val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
         val measurementDao = database.preMeasurementDao()
         val contractDao = database.contractDao()
-        val api = retrofit.create(MeasurementApi::class.java)
+        val api = retrofit.create(PreMeasurementApi::class.java)
 
         val preMeasurementRepository = PreMeasurementRepository(measurementDao, contractDao, api, context)
         PreMeasurementViewModel(preMeasurementRepository)
@@ -341,7 +341,6 @@ fun AppNavigation(
                         context = context,
                         contractViewModel = contractViewModel,
                         preMeasurementViewModel = preMeasurementViewModel,
-                        connection = ConnectivityUtils,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
                         contractId = contractId
@@ -388,7 +387,8 @@ fun AppNavigation(
                         context = context,
                         stockViewModel,
                         preMeasurementViewModel,
-                        contractId = contractId
+                        contractId = contractId,
+                        contractViewModel
                     )
                 }
 
