@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.execution.dto.response;
+package com.lumos.lumosspring.pre_measurement.dto.response;
 
 import java.util.List;
 
@@ -13,6 +13,7 @@ public record PreMeasurementResponseDTO(
         String preMeasurementStyle,
         String teamName,
         String totalPrice,
+        String status,
         List<PreMeasurementStreetResponseDTO> streets
 ) {
 }

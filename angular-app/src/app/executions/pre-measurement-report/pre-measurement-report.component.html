@@ -16,11 +16,7 @@
     } @else {
       <div class="border-b w-full pl-2 p-2 flex flex-col justify-center generate-report">
         <div class="button-report">
-          <button (click)="openModal = true"
-                  class="material-icons p-2 transform transition-transform duration-300 text-2xl hover:text-red-300">
-            cancel
-          </button>
-          <button (click)="openModal = true"
+          <button (click)="generatePDF(content)"
                   class="material-icons p-2 transform transition-transform duration-300 text-2xl hover:text-blue-300">
             download
           </button>
@@ -208,11 +204,15 @@
 
   </div>
 
-  <app-modal [modalOpen]="openModal" (modalClose)="openModal=false"
+  <app-modal [modalOpen]="!openModal" (modalClose)="openModal=false"
              classModal="rounded p-4 w-[30%] flex flex-col  justify-center ">
-    <h2 class="text-center mb-10">Essa ação volta o status dessa pré-medição para pendente, deseja prosseguir?</h2>
-    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2">NÃO</button>
-    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2">SIM</button>
+    <h2 class="text-center mb-10">Download concluído!!! <span class="material-icons text-green-600">check_circle</span>
+    </h2>
+    <h4 class="text-center mb-10">Acesse o arquivo a partir do botão downloads do navegador ou da pasta de downloads<span class="material-icons">download</span></h4>
+    <p>O relatório deverá ser enviado a prefeitura para iniciar o processo de validação dos itens e ruas.</p>
+    <p>Após o retorno da prefeitura, você poderá validar os itens e ruas dessa pré-medição na opção Aguardando Retorno</p>
+    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2" (click)="router.navigate([''])" >Me leve para lá!</button>
+    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2">Ok</button>
   </app-modal>
 
 

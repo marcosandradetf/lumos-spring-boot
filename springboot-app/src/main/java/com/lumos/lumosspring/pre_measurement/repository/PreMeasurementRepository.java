@@ -1,10 +1,8 @@
-package com.lumos.lumosspring.execution.repository;
+package com.lumos.lumosspring.pre_measurement.repository;
 
-import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.execution.entities.PreMeasurementStreet;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +20,7 @@ public interface PreMeasurementRepository extends JpaRepository<PreMeasurement, 
 
     @EntityGraph(attributePaths = {"createdBy", "streets.items"})
     PreMeasurement findByPreMeasurementIdAndStatus(Long preMeasurementId, String status);
+
 
 
 }

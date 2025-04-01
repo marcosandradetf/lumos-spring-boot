@@ -1,10 +1,8 @@
-package com.lumos.lumosspring.execution.repository;
+package com.lumos.lumosspring.pre_measurement.repository;
 
-import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
-import com.lumos.lumosspring.execution.entities.PreMeasurementStreet;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 

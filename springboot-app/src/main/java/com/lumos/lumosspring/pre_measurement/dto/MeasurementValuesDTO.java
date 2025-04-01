@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.execution.dto;
+package com.lumos.lumosspring.pre_measurement.dto;
 
 
 public record MeasurementValuesDTO(

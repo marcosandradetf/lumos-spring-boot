@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.execution.dto.response;
+package com.lumos.lumosspring.pre_measurement.dto.response;
 
 public record PreMeasurementStreetItemResponseDTO(
         long preMeasurementStreetItemId,

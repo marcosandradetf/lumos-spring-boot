@@ -9,6 +9,7 @@ import {FormsModule} from '@angular/forms';
 import {Title} from '@angular/platform-browser';
 import {UserService} from '../../manage/user/user-service.service';
 import {AuthService} from '../../core/auth/auth.service';
+import {ReportService} from '../../core/service/report-service';
 
 @Component({
   selector: 'app-pre-measurement-pending-report',
@@ -34,6 +35,7 @@ export class PreMeasurementReportComponent {
     preMeasurementStyle: string;
     teamName: string;
     totalPrice: string;
+    status: string;
 
     streets: {
       number: number;
@@ -66,6 +68,7 @@ export class PreMeasurementReportComponent {
     preMeasurementStyle: '',
     teamName: '',
     totalPrice: '',
+    status: '',
     streets: []
   };
 
@@ -119,7 +122,8 @@ export class PreMeasurementReportComponent {
   };
 
   constructor(protected router: Router, protected utils: UtilsService, private titleService: Title,
-              private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, private authService: AuthService, private userService: UserService) {
+              private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, authService: AuthService,
+              private userService: UserService, private reportService: ReportService) {
 
     const measurementId = this.route.snapshot.paramMap.get('id');
     this.titleService.setTitle("Relatório de Pré-medição");
@@ -141,8 +145,21 @@ export class PreMeasurementReportComponent {
     }
   }
 
-  generatePDF(content: HTMLDivElement): void {
+  generatePDF(htmlContent: HTMLDivElement): void {
+    if (htmlContent.innerText.length === 0) {
+      return
+    }
 
+    this.reportService.generateReportPdf(htmlContent.innerText, this.contract.contractor).subscribe({
+      error: (error) => {
+        this.utils.showMessage(error.message, true)
+      },
+      complete: () => {
+        if(this.preMeasurement.status === "PENDING") {
+          this.openModal = true;
+        }
+      }
+    });
   }
 
   getItem(attributeName: string, street: {

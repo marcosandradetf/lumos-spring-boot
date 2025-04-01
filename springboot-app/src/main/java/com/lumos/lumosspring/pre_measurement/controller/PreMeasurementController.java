@@ -1,12 +1,13 @@
-package com.lumos.lumosspring.execution.controller;
+package com.lumos.lumosspring.pre_measurement.controller;
 
-import com.lumos.lumosspring.execution.dto.PreMeasurementDTO;
-import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.execution.service.PreMeasurementService;
+import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.pre_measurement.service.PreMeasurementService;
 import com.lumos.lumosspring.util.ContractStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -30,7 +31,7 @@ public class PreMeasurementController {
         return preMeasurementService.getAll(ContractStatus.PENDING);
     }
 
-    @GetMapping("/execution/get-pre-measurements/{preMeasurementId}")
+    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
     public ResponseEntity<?> getPreMeasurement(@PathVariable long preMeasurementId) {
         return preMeasurementService.getPreMeasurement(preMeasurementId);
@@ -58,6 +59,16 @@ public class PreMeasurementController {
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
     public ResponseEntity<?> getInProgressMeasurements() {
         return preMeasurementService.getAll(ContractStatus.IN_PROGRESS);
+    }
+
+    @PostMapping("/pre-measurement/evolve-status/{id}")
+    public ResponseEntity<?> evolveStatus(@PathVariable Long id) {
+        var state =  preMeasurementService.setStatus(id);
+        if(state) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }

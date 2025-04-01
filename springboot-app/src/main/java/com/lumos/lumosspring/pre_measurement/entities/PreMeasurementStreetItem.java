@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.execution.entities;
+package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.stock.entities.Material;

@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.execution.entities;
+package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;

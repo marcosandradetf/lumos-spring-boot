@@ -27,6 +27,7 @@ export class PreMeasurementService {
         preMeasurementStyle: string;
         teamName: string;
         totalPrice: string;
+        status: string;
 
         streets: {
           number: number;
@@ -48,7 +49,7 @@ export class PreMeasurementService {
           }[]
 
         }[];
-      }>(`${this.endpoint + `/get-pre-measurements/${preMeasurementId}`}`);
+      }>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
   }
 
   getPreMeasurements(status: string): Observable<

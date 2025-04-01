@@ -1,16 +1,16 @@
-package com.lumos.lumosspring.execution.service;
+package com.lumos.lumosspring.pre_measurement.service;
 
 import com.lumos.lumosspring.contract.repository.ContractRepository;
-import com.lumos.lumosspring.execution.dto.response.PreMeasurementStreetItemResponseDTO;
-import com.lumos.lumosspring.execution.dto.PreMeasurementDTO;
-import com.lumos.lumosspring.execution.dto.response.PreMeasurementResponseDTO;
-import com.lumos.lumosspring.execution.dto.response.PreMeasurementStreetResponseDTO;
-import com.lumos.lumosspring.execution.entities.PreMeasurement;
-import com.lumos.lumosspring.execution.entities.PreMeasurementStreetItem;
-import com.lumos.lumosspring.execution.entities.PreMeasurementStreet;
-import com.lumos.lumosspring.execution.repository.PreMeasurementRepository;
-import com.lumos.lumosspring.execution.repository.PreMeasurementStreetItemRepository;
-import com.lumos.lumosspring.execution.repository.PreMeasurementStreetRepository;
+import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
+import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
+import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetResponseDTO;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository;
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.notification.service.NotificationService;
 import com.lumos.lumosspring.notification.service.Routes;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
@@ -47,6 +47,34 @@ public class PreMeasurementService {
         this.notificationService = notificationService;
     }
 
+    public boolean setStatus(Long preMeasurementId) {
+        var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
+
+        if (preMeasurement.isEmpty()) {
+            return false;
+        }
+
+        switch (preMeasurement.get().getStatus()) {
+            case(ContractStatus.PENDING):
+                preMeasurement.get().setStatus(ContractStatus.WAITING);
+                break;
+            case(ContractStatus.WAITING):
+                preMeasurement.get().setStatus(ContractStatus.VALIDATING);
+                break;
+            case(ContractStatus.VALIDATING):
+                preMeasurement.get().setStatus(ContractStatus.VALIDATED);
+                break;
+            case(ContractStatus.VALIDATED):
+                preMeasurement.get().setStatus(ContractStatus.IN_PROGRESS);
+                break;
+            case(ContractStatus.IN_PROGRESS):
+                preMeasurement.get().setStatus(ContractStatus.FINISHED);
+                break;
+        }
+
+        preMeasurementRepository.save(preMeasurement.get());
+        return true;
+    }
 
     @Transactional
     public ResponseEntity<?> saveMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
@@ -240,6 +268,7 @@ public class PreMeasurementService {
                                 "badge-primary" : "badge-neutral",
                         p.getTypePreMeasurement(),
                         p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
+                        p.getStatus(),
                         p.getStreets().stream()
                                 .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                                 .map(s -> new PreMeasurementStreetResponseDTO(
@@ -288,6 +317,7 @@ public class PreMeasurementService {
                         "badge-primary" : "badge-neutral",
                 p.getTypePreMeasurement(),
                 p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
+                p.getStatus(),
                 p.getStreets().stream()
                         .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                         .map(s -> new PreMeasurementStreetResponseDTO(
