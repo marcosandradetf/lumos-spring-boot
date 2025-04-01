@@ -27,7 +27,7 @@ class ContractController(
     }
 
     @GetMapping("/contracts/get-contract/{contractId}")
-    fun getContract(@PathVariable contractId: String): ResponseEntity<Any> =
+    fun getContract(@PathVariable contractId: Long): ResponseEntity<Any> =
          contractService.getContract(contractId)
 
 }

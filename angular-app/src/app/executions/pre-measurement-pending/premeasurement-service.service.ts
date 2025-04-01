@@ -29,6 +29,7 @@ export class PreMeasurementService {
         totalPrice: string;
 
         streets: {
+          number: number;
           preMeasurementStreetId: number;
           lastPower: string;
           latitude: number;
@@ -38,6 +39,7 @@ export class PreMeasurementService {
           items: {
             preMeasurementStreetItemId: number;
             materialId: number;
+            contractItemId: number;
             materialName: string;
             materialType: string;
             materialPower: string;
@@ -305,6 +307,26 @@ export class PreMeasurementService {
   }
 
   getContract(contractId: number) {
-    return this.http.get(`${this.endpoint + `/get-contract/${contractId}`}`);
+    return this.http.get<
+      {
+        contractId: number,
+        contractNumber: string,
+        contractor: string,
+        cnpj: string,
+        phone: string,
+        address: string,
+        contractFile: string,
+        createdBy: string,
+        createdAt: string,
+        items: {
+          number: number,
+          contractItemId: number,
+          description: string,
+          unitPrice: string,
+          contractedQuantity: number,
+          linking: string,
+        }[]
+      }
+    >(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
   }
 }

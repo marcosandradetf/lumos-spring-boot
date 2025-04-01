@@ -128,6 +128,7 @@ class ContractService(
                             }
                             powers.append(powerList.joinToString("#"))
                         }
+
                         "BRAÇO" -> {
                             if (lengths.isNotEmpty()) {
                                 lengths.append("#")
@@ -159,19 +160,58 @@ class ContractService(
     fun getContract(contractId: Long): ResponseEntity<Any> {
         data class ItemsForReport(
             val number: Int,
+            val contractItemId: Long,
             val description: String,
             val unitPrice: BigDecimal,
+            val contractedQuantity: Double,
+            val linking: String?,
         )
+
         data class ContractForReport(
             val contractId: Long,
+            val contractNumber: String,
             val contractor: String,
+            val cnpj: String,
+            val phone: String,
+            val address: String,
             val contractFile: String?,
             val createdBy: String,
             val createdAt: String,
             val items: List<ItemsForReport>,
         )
 
-        return ResponseEntity.ok().build()
+        val items = mutableListOf<ItemsForReport>()
+
+        val contract = contractRepository.findContractByContractId(contractId).orElseThrow()
+        var number = 1
+        contract.contractItemsQuantitative.forEach { item ->
+            items.add(
+                ItemsForReport(
+                    number = number,
+                    contractItemId = item.contractItemId,
+                    description = item.referenceItem.description ?: "",
+                    unitPrice = item.unitPrice,
+                    contractedQuantity = item.contractedQuantity,
+                    linking = item.referenceItem.linking,
+                )
+            )
+            number += 1
+        }
+
+        return ResponseEntity.ok(
+            ContractForReport(
+                contractId = contract.contractId,
+                contractNumber = contract.contractNumber ?: "",
+                contractor = contract.contractor ?: "",
+                cnpj = contract.cnpj ?: "",
+                phone = contract.phone ?: "",
+                address = contract.address ?: "",
+                contractFile = contract.contractFile,
+                createdBy = contract.createdBy.completedName,
+                createdAt = contract.creationDate.toString(),
+                items = items
+            )
+        )
     }
 
 }

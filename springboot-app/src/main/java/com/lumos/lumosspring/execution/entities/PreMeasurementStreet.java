@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.execution.entities;
 
+import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class PreMeasurementStreet {
 
     private double longitude;
 
-    private String streetStatus;
+    private String streetStatus = ItemStatus.PENDING;
 
     @OneToMany(mappedBy = "preMeasurementStreet", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PreMeasurementStreetItem> items = new HashSet<>();

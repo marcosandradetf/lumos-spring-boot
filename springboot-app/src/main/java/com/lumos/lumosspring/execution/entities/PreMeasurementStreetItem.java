@@ -2,6 +2,7 @@ package com.lumos.lumosspring.execution.entities;
 
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.stock.entities.Material;
+import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -30,7 +31,7 @@ public class PreMeasurementStreetItem {
 
     private double itemQuantity;
 
-    private String itemStatus;
+    private String itemStatus = ItemStatus.PENDING;
 
     private BigDecimal unitPrice = BigDecimal.ZERO;
     private BigDecimal totalPrice = BigDecimal.ZERO;

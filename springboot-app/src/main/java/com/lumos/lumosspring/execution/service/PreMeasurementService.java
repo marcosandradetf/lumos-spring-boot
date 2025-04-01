@@ -21,7 +21,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class PreMeasurementService {
@@ -122,6 +124,22 @@ public class PreMeasurementService {
                     newItem.setItemStatus(ItemStatus.PENDING);
                     newItem.setItemQuantity(item.getMaterialQuantity());
                     newItem.setContractItem(contractItem.get());
+                    if(Objects.equals(material.getMaterialType().getTypeName(), "LED")) {
+                        contract.getContractItemsQuantitative().stream()
+                                .filter(i -> Objects.equals(i.getReferenceItem().getType(), "SERVIÇO"))
+                                .filter(i -> Objects.equals(i.getReferenceItem().getItemDependency(), "LED"))
+                                .forEach(i -> {
+                                    newItem.getPreMeasurementStreet().getPreMeasurement().sumTotalPrice(i.getUnitPrice().multiply(BigDecimal.valueOf(i.getContractedQuantity())));
+                                });
+
+                    } else if (Objects.equals(material.getMaterialType().getTypeName(), "BRAÇO")) {
+                        contract.getContractItemsQuantitative().stream()
+                                .filter(i -> Objects.equals(i.getReferenceItem().getType(), "SERVIÇO"))
+                                .filter(i -> Objects.equals(i.getReferenceItem().getItemDependency(), "BRAÇO"))
+                                .forEach(i -> {
+                                    newItem.getPreMeasurementStreet().getPreMeasurement().sumTotalPrice(i.getUnitPrice().multiply(BigDecimal.valueOf(i.getContractedQuantity())));
+                                });
+                    }
                     preMeasurementStreetItemRepository.save(newItem);
 
                     material.getRelatedMaterials().stream()
@@ -136,8 +154,19 @@ public class PreMeasurementService {
                                                 },
                                                 () -> {
                                                     var newRelay = new PreMeasurementStreetItem();
+                                                    var contractRelay = contract.getContractItemsQuantitative().stream()
+                                                            .filter(i -> Objects.equals(i.getReferenceItem().getType(), material.getMaterialType().getTypeName()))
+                                                            .filter(i -> {
+                                                                var linking = i.getReferenceItem().getLinking();
+                                                                return linking == null || Objects.equals(linking, material.getMaterialPower()) || Objects.equals(linking, material.getMaterialLength());
+                                                            })
+                                                            .findFirst();
+                                                    if(contractRelay.isEmpty()) {
+                                                        throw new RuntimeException("Relé do Contrato não encontrado");
+                                                    }
                                                     newRelay.setMaterial(rm);
                                                     newRelay.addItemQuantity(item.getMaterialQuantity());
+                                                    newRelay.setContractItem(contractRelay.get());
                                                     preMeasurementStreet.addItem(newRelay);
                                                     preMeasurementStreetItemRepository.save(newRelay);
                                                 }
@@ -161,7 +190,18 @@ public class PreMeasurementService {
                                                 },
                                                 () -> {
                                                     var newCable = new PreMeasurementStreetItem();
+                                                    var contractCable = contract.getContractItemsQuantitative().stream()
+                                                            .filter(i -> Objects.equals(i.getReferenceItem().getType(), material.getMaterialType().getTypeName()))
+                                                            .filter(i -> {
+                                                                var linking = i.getReferenceItem().getLinking();
+                                                                return linking == null || Objects.equals(linking, material.getMaterialPower()) || Objects.equals(linking, material.getMaterialLength());
+                                                            })
+                                                            .findFirst();
+                                                    if(contractCable.isEmpty()) {
+                                                        throw new RuntimeException("Cabo do Contrato não encontrado");
+                                                    }
                                                     newCable.setMaterial(rm);
+                                                    newCable.setContractItem(contractCable.get());
                                                     if (material.getMaterialLength().startsWith("1"))
                                                         newCable.addItemQuantity(item.getMaterialQuantity() * 2.5);
                                                     if (material.getMaterialLength().startsWith("2"))
@@ -182,6 +222,8 @@ public class PreMeasurementService {
 
 
     public ResponseEntity<?> getAll(String status) {
+        AtomicInteger number = new AtomicInteger(1);
+
         List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
                 .findAllByStatusOrderByCreatedAtAsc(status)
                 .stream()
@@ -201,6 +243,7 @@ public class PreMeasurementService {
                         p.getStreets().stream()
                                 .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                                 .map(s -> new PreMeasurementStreetResponseDTO(
+                                        number.getAndIncrement(),
                                         s.getPreMeasurementStreetId(),
                                         s.getLastPower(),
                                         s.getLatitude(),
@@ -211,6 +254,7 @@ public class PreMeasurementService {
                                                 .map(i -> new PreMeasurementStreetItemResponseDTO(
                                                         i.getPreMeasurementStreetItemId(),
                                                         i.getMaterial().getIdMaterial(),
+                                                        i.getContractItem().getContractItemId(),
                                                         i.getMaterial().getMaterialName(),
                                                         i.getMaterial().getMaterialType().getTypeName(),
                                                         i.getMaterial().getMaterialPower(),
@@ -227,7 +271,10 @@ public class PreMeasurementService {
 
     public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
         PreMeasurement p = preMeasurementRepository
-                .findByPreMeasurementIdAndStatus(preMeasurementId, ContractStatus.VALIDATING);
+                .findByPreMeasurementIdAndStatus(preMeasurementId, ContractStatus.PENDING);
+
+
+        AtomicInteger number = new AtomicInteger(1);
 
         var preMeasurement = new PreMeasurementResponseDTO(
                 p.getPreMeasurementId(),
@@ -244,6 +291,7 @@ public class PreMeasurementService {
                 p.getStreets().stream()
                         .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                         .map(s -> new PreMeasurementStreetResponseDTO(
+                                number.getAndIncrement(),
                                 s.getPreMeasurementStreetId(),
                                 s.getLastPower(),
                                 s.getLatitude(),
@@ -254,6 +302,7 @@ public class PreMeasurementService {
                                         .map(i -> new PreMeasurementStreetItemResponseDTO(
                                                 i.getPreMeasurementStreetItemId(),
                                                 i.getMaterial().getIdMaterial(),
+                                                i.getContractItem().getContractItemId(),
                                                 i.getMaterial().getMaterialName(),
                                                 i.getMaterial().getMaterialType().getTypeName(),
                                                 i.getMaterial().getMaterialPower(),

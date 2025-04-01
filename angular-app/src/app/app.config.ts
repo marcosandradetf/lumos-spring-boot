@@ -3,18 +3,17 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
 import {
-  HTTP_INTERCEPTORS, HttpHandlerFn, HttpInterceptorFn, HttpRequest,
-  provideHttpClient,
+  HTTP_INTERCEPTORS, provideHttpClient,
   withFetch,
-  withInterceptors,
   withInterceptorsFromDi
 } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {AuthInterceptor} from './core/interceptors/auth.interceptor';
-import {AuthService} from './core/auth/auth.service';
+import {LOCALE_ID, DEFAULT_CURRENCY_CODE} from '@angular/core';
+import localePt from '@angular/common/locales/pt';
+import {registerLocaleData} from '@angular/common';
 
-
-
+registerLocaleData(localePt, 'pt');
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -26,6 +25,17 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimationsAsync(),
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
+    {
+      provide: LOCALE_ID,
+      useValue: 'pt'
+    },
+
+    /* if you don't provide the currency symbol in the pipe,
+    this is going to be the default symbol (R$) ... */
+    {
+      provide:  DEFAULT_CURRENCY_CODE,
+      useValue: 'BRL'
+    },
   ],
 };
 
