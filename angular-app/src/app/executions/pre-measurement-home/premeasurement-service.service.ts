@@ -36,6 +36,7 @@ export class PreMeasurementService {
           latitude: number;
           longitude: number;
           address: string;
+          status: string;
 
           items: {
             preMeasurementStreetItemId: number;
@@ -46,6 +47,7 @@ export class PreMeasurementService {
             materialPower: string;
             materialLength: string;
             materialQuantity: number;
+            status: string;
           }[]
 
         }[];
