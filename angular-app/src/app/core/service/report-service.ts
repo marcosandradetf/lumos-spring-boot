@@ -14,8 +14,11 @@ export class ReportService {
   }
 
   generateReportPdf(html: string, title: string) {
-    return this.http.post(`${this.endpoint + `/pdf/generate/${title}`}`, html);
+    return this.http.post(`${this.endpoint}/pdf/generate/${title}`, html, {
+      responseType: 'blob' // Garante que a resposta seja tratada como um arquivo
+    });
   }
+
 
 
 }

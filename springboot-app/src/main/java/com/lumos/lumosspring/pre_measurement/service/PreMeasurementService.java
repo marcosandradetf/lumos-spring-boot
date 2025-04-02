@@ -62,9 +62,9 @@ public class PreMeasurementService {
                 preMeasurement.get().setStatus(ContractStatus.VALIDATING);
                 break;
             case(ContractStatus.VALIDATING):
-                preMeasurement.get().setStatus(ContractStatus.VALIDATED);
+                preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
                 break;
-            case(ContractStatus.VALIDATED):
+            case(ContractStatus.AVAILABLE):
                 preMeasurement.get().setStatus(ContractStatus.IN_PROGRESS);
                 break;
             case(ContractStatus.IN_PROGRESS):
@@ -300,7 +300,7 @@ public class PreMeasurementService {
 
     public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
         PreMeasurement p = preMeasurementRepository
-                .findByPreMeasurementIdAndStatus(preMeasurementId, ContractStatus.PENDING);
+                .findByPreMeasurementId(preMeasurementId);
 
 
         AtomicInteger number = new AtomicInteger(1);

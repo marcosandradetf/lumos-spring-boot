@@ -12,7 +12,9 @@
     </div>
 
     @if (loading) {
-      <span class="loading loading-infinity loading-xl"></span>
+      <div class="flex justify-center items-center p-96">
+        <span class="loading loading-infinity loading-lg"></span>
+      </div>
     } @else {
       <div class="border-b w-full pl-2 p-2 flex flex-col justify-center generate-report">
         <div class="button-report">
@@ -23,6 +25,9 @@
         </div>
         <div class="download-report">
           <div #content class="report">
+            <div>
+              <img [src]="environment.minio + '/scl-construtora/logo_scl.jpg'" alt="logo" width="150">
+            </div>
             <h3 style="text-align: center;">PRÉ-MEDIÇÃO INSTALAÇÃO DE LED - {{ preMeasurement.city.toUpperCase() }}</h3>
             <h5 style="text-align: center;">Contrato Nº: {{ contract.contractNumber }}</h5>
 
@@ -39,17 +44,17 @@
                   SCL CONSTRUTORA E ENERGIA LTDA
                 </td>
                 <td>
-                  <strong>CNPJ</strong><br/>
+                  <strong>CNPJ</strong><br />
                   26.777.222/0001-09
                 </td>
               </tr>
               <tr></tr>
               <td>
-                <strong>Telefone</strong><br/>
+                <strong>Telefone</strong><br />
                 (31) 9 8511-2231
               </td>
               <td>
-                <strong>Endereço</strong><br/>
+                <strong>Endereço</strong><br />
                 Av. Raja Gabáglia, 4859 - Santa Lúcia, Belo Horizonte - MG
               </td>
               </tbody>
@@ -64,7 +69,7 @@
               <tbody>
               <tr>
                 <td>
-                  <strong>Razão Social</strong><br/>
+                  <strong>Razão Social</strong><br />
                   {{ contract.contractor }}
                 </td>
                 <td>
@@ -74,11 +79,11 @@
               </tr>
               <tr></tr>
               <td>
-                <strong>Telefone</strong><br/>
+                <strong>Telefone</strong><br />
                 {{ contract.phone }}
               </td>
               <td>
-                <strong>Endereço</strong><br/>
+                <strong>Endereço</strong><br />
                 {{ contract.address }}
               </td>
               </tbody>
@@ -91,14 +96,14 @@
                 <th>ENDEREÇO</th>
                 <th>POTÊNCIA ATUAL</th>
                 <th *ngIf="condition('cabo')">CABO</th>
-                <th *ngIf="condition('1')">BRAÇOS de 1,5</th>
-                <th *ngIf="condition('2')">BRAÇOS de 2,5</th>
-                <th *ngIf="condition('3')">BRAÇOS de 3,5</th>
-                <th *ngIf="condition('60')">LED 60W</th>
-                <th *ngIf="condition('70')">LED 70W</th>
-                <th *ngIf="condition('100')">LED 100W</th>
-                <th *ngIf="condition('120')">LED 120W</th>
-                <th *ngIf="condition('150')">LED 150W</th>
+                <th *ngIf="condition('1,5M')">BRAÇOS DE 1,5</th>
+                <th *ngIf="condition('2,5M')">BRAÇOS DE 2,5</th>
+                <th *ngIf="condition('3,6M')">BRAÇOS DE 3,5</th>
+                <th *ngIf="condition('60W')">LED 60W</th>
+                <th *ngIf="condition('70W')">LED 70W</th>
+                <th *ngIf="condition('100W')">LED 100W</th>
+                <th *ngIf="condition('120W')">LED 120W</th>
+                <th *ngIf="condition('150W')">LED 150W</th>
                 <th *ngIf="condition('braço')">TROCA DE PONTO</th>
                 <th *ngIf="condition('cinta')">CINTAS</th>
                 <th *ngIf="condition('parafuso')">PARAF. E ARRUELAS</th>
@@ -106,6 +111,7 @@
                 <th *ngIf="condition('relé')">RELÉ</th>
                 <th *ngIf="condition('led')">PROJETO</th>
                 <th *ngIf="condition('led')">SERVIÇO</th>
+<!--                <th *ngFor="let i of getPreMeasurementItems()">{{ i.materialName }}</th>-->
               </tr>
               </thead>
               <tbody>
@@ -145,7 +151,7 @@
                 <td *ngIf="condition('100W')">{{ getTotalQuantity("100W") }}</td>
                 <td *ngIf="condition('120W')">{{ getTotalQuantity("120W") }}</td>
                 <td *ngIf="condition('150W')">{{ getTotalQuantity("150W") }}</td>
-                <td *ngIf="condition('braço')">1{{ getTotalQuantity("braço") }}</td>
+                <td *ngIf="condition('braço')">{{ getTotalQuantity("braço") }}</td>
                 <td *ngIf="condition('cinta')">{{ getTotalQuantity("cinta") }}</td>
                 <td *ngIf="condition('parafuso')">{{ getTotalQuantity("parafuso") }}</td>
                 <td *ngIf="condition('conector')">{{ getTotalQuantity("conector") }}</td>
@@ -188,9 +194,7 @@
               <p>Solicitamos análise e aprovação do presente orçamento. Em caso de aprovação parcial, solicitamos
                 indicação dos
                 itens aprovados.</p>
-              <br/>
               <p><strong>Atenciosamente,</strong></p>
-              <br/>
               <p>{{ user.name + " " + user.lastname }}<br>
               <p>Cargo: Analista de Licitação</p>
               <p>Scl Construtora e Energia Ltda</p>
@@ -204,15 +208,18 @@
 
   </div>
 
-  <app-modal [modalOpen]="!openModal" (modalClose)="openModal=false"
+  <app-modal [modalOpen]="openModal" (modalClose)="openModal=false"
              classModal="rounded p-4 w-[30%] flex flex-col  justify-center ">
-    <h2 class="text-center mb-10">Download concluído!!! <span class="material-icons text-green-600">check_circle</span>
+    <h2 class="justify-center mb-10 flex font-semibold">Download concluído!!! <span
+      class="material-icons text-indigo-800 self-center pl-2">check_circle</span>
     </h2>
-    <h4 class="text-center mb-10">Acesse o arquivo a partir do botão downloads do navegador ou da pasta de downloads<span class="material-icons">download</span></h4>
-    <p>O relatório deverá ser enviado a prefeitura para iniciar o processo de validação dos itens e ruas.</p>
-    <p>Após o retorno da prefeitura, você poderá validar os itens e ruas dessa pré-medição na opção Aguardando Retorno</p>
-    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2" (click)="router.navigate([''])" >Me leve para lá!</button>
-    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2">Ok</button>
+    <h4 class="text-center mb-5 flex justify-center flex-col bg-neutral-300 rounded p-1">Acesse o arquivo a partir do botão downloads do navegador ou da pasta de
+      downloads<span class="material-icons text-blue-900">download</span></h4>
+    <p class="pb-5">O relatório deverá ser enviado a prefeitura para iniciar o processo de validação dos itens e ruas. Após o retorno
+      da prefeitura, você poderá retomar este processo na opção <span class="badge badge-primary rounded">Aguardando Retorno</span></p>
+    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2" (click)="router.navigate(['/pre-medicao/aguardando-retorno'])">Me leve para lá!
+    </button>
+    <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2" (click)="openModal = false">Ok</button>
   </app-modal>
 
 

@@ -6,7 +6,8 @@ export const environment = {
   production: false,
   springboot: "http://localhost:8080",
   goFileserver: "http://localhost:8081",
-  goStock: "http://localhost:8082"
+  goStock: "http://localhost:8082",
+  minio: "http://localhost:9000",
 };
 
 /*

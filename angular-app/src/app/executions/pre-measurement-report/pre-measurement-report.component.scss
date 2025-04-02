@@ -24,7 +24,6 @@ th {
 
 .footer {
   margin-top: 20px;
-  margin-bottom: 20px;
   font-size: 14px;
   display: flex;
   flex-direction: column;
@@ -44,7 +43,7 @@ th {
   height: calc(100vh - 110px);
   overflow-y: auto;
   border-radius: 5px;
-  padding-inline: 30px;
+  padding: 30px;
 }
 
 .button-report {

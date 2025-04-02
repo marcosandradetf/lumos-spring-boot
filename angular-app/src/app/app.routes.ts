@@ -122,14 +122,8 @@ export const routes: Routes = [
 
   // start executions/pre-measurements path
   {
-    path: 'pre-medicao/pendente',
-    loadComponent: () => import('./executions/pre-measurement-pending/pre-measurement.component').then(p => p.PreMeasurementComponent),
-    canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
-  },
-  {
-    path: 'pre-medicao/validando',
-    loadComponent: () => import('./executions/pre-measurement-validating/measurement-list.component').then(p => p.MeasurementListComponent),
+    path: 'pre-medicao/:status',
+    loadComponent: () => import('./executions/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },
@@ -142,12 +136,6 @@ export const routes: Routes = [
   //
 
   // start executions/executions path
-  {
-    path: 'execucoes/lista-medicoes',
-    loadComponent: () => import('./executions/pre-measurement-validating/measurement-list.component').then(p => p.MeasurementListComponent),
-    canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
-  },
   {
     path: 'execucoes/medicao/:id',
     loadComponent: () => import('./executions/measurement-details/measurement-details.component').then(m => m.MeasurementDetailsComponent),

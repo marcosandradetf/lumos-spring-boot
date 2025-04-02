@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 
 import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
-import {PreMeasurementService} from '../pre-measurement-pending/premeasurement-service.service';
+import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {UtilsService} from '../../core/service/utils.service';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
@@ -10,9 +10,10 @@ import {Title} from '@angular/platform-browser';
 import {UserService} from '../../manage/user/user-service.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {ReportService} from '../../core/service/report-service';
+import {environment} from '../../../environments/environment';
 
 @Component({
-  selector: 'app-pre-measurement-pending-report',
+  selector: 'app-pre-measurement-home-report',
   standalone: true,
   imports: [
     NgForOf,
@@ -146,21 +147,53 @@ export class PreMeasurementReportComponent {
   }
 
   generatePDF(htmlContent: HTMLDivElement): void {
-    if (htmlContent.innerText.length === 0) {
-      return
+    this.loading = true;
+    const contentText = htmlContent.outerHTML.trim();
+
+    if (!contentText) {
+      this.utils.showMessage("O conteúdo do relatório está vazio.", true);
+      return;
     }
 
-    this.reportService.generateReportPdf(htmlContent.innerText, this.contract.contractor).subscribe({
+    this.utils.showMessage("Gerando PDF...", false); // Mensagem de carregamento
+
+    this.reportService.generateReportPdf(contentText, this.contract.contractor).subscribe({
+      next: (response) => {
+        const blob = new Blob([response], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `relatorio-${this.contract.contractor}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        this.utils.showMessage("PDF gerado com sucesso!", false);
+      },
       error: (error) => {
-        this.utils.showMessage(error.message, true)
+        console.error("Erro ao gerar PDF:", error);
+        this.utils.showMessage("Erro ao gerar PDF: " + (error.message || "Erro desconhecido"), true);
       },
       complete: () => {
-        if(this.preMeasurement.status === "PENDING") {
-          this.openModal = true;
+        if (this.preMeasurement.status === "PENDING") {
+          // Possível mudança de status ou exibição de modal
+          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId).subscribe({
+            error: (error: any) => {
+              this.utils.showMessage("Erro ao atualizar o status:", error);
+            },
+            complete: () => {
+              this.loading = false;
+              this.openModal = true;
+            }
+          })
+        } else {
+          this.loading = false;
         }
       }
     });
   }
+
 
   getItem(attributeName: string, street: {
     preMeasurementStreetId: number;
@@ -318,4 +351,6 @@ export class PreMeasurementReportComponent {
   }
 
   protected readonly parseFloat = parseFloat;
+
+  protected readonly environment = environment;
 }

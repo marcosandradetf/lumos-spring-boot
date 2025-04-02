@@ -96,7 +96,7 @@ object ContractStatus {
     const val PENDING = "PENDING"
     const val VALIDATING = "VALIDATING"
     const val WAITING  = "WAITING"
-    const val VALIDATED = "VALIDATED"
+    const val AVAILABLE = "AVAILABLE"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
 }

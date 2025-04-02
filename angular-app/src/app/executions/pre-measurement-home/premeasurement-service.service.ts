@@ -330,4 +330,8 @@ export class PreMeasurementService {
       }
     >(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
   }
+
+  evolveStatus(preMeasurementId: number) {
+    return this.http.post(environment.springboot + "/api/pre-measurement/evolve-status/" + preMeasurementId, null);
+  }
 }

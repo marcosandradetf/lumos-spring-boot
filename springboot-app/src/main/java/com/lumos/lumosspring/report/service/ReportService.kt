@@ -1,153 +1,197 @@
 package com.lumos.lumosspring.report.service
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.stereotype.Service
-import java.io.ByteArrayOutputStream
+import java.io.BufferedWriter
+import java.io.OutputStreamWriter
 
 @Service
 class ReportService {
+//    fun generatePdf(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
+//        try {
+//            var html = """
+//                     <!DOCTYPE html>
+//                     <html lang="pt">
+//                     <head>
+//                         <meta charset="UTF-8" />
+//                         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+//                         <title>$title</title>
+//
+//                         <style>
+//                              @page {
+//                                  size: 35cm 29.7cm;
+//                                  /* Largura maior que um A4 padrão */
+//                                  margin: 0;
+//                                }
+//
+//                                body {
+//                                  font-family: Arial, sans-serif;
+//                                  margin: 20px;
+//                                  padding: 0;
+//                                  background-color: #f9f9f9;
+//                                }
+//
+//                                h1,
+//                                h2 {
+//                                  color: #333;
+//                                }
+//
+//                                table {
+//                                  width: 100%;
+//                                  border-collapse: collapse;
+//                                  font-size: 0.6em;
+//                                  font-family: sans-serif;
+//                                }
+//
+//                                th,
+//                                td {
+//                                  border: 1px solid #ddd;
+//                                  padding: 10px;
+//                                  text-align: left;
+//                                }
+//
+//                                th {
+//                                  background-color: #044686;
+//                                  color: white;
+//                                }
+//
+//                                .report-total-sum, .report-base-total {
+//                                  font-weight: bold;
+//                                  background-color: #eee;
+//                                }
+//
+//                                .footer {
+//                                  margin-top: 20px;
+//                                  font-size: 14px;
+//                                }
+//                            </style>
+//                     </head>
+//                     <body>
+//
+//                      """.trimIndent()
+//            html += htmlRequest
+//            html = "$html</body></html>"
+//
+//            // Criar um OutputStream para armazenar o PDF
+//            val outputStream = ByteArrayOutputStream()
+//
+//            // Criar o builder do OpenHTMLtoPDF e configurar a conversão
+//            val builder = PdfRendererBuilder()
+//
+//            builder.withHtmlContent(html, "") // Usa o HTML enviado na requisição
+//            builder.toStream(outputStream) // Define o OutputStream como destino
+//            builder.run() // Executa a conversão
+//
+//            // Obter os bytes do PDF gerado
+//            val pdfContent = outputStream.toByteArray()
+//
+//            // Configurar os cabeçalhos para resposta HTTP
+//            val headers = HttpHeaders()
+//            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-$title.pdf")
+//            headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf")
+//
+//
+//            return ResponseEntity(pdfContent, headers, HttpStatus.OK)
+//        } catch (e: Exception) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null)
+//        }
+//    }
+
+
     fun generatePdf(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
-        try {
-            var html = """
-                     <!DOCTYPE html>
-                     <html lang="pt">
-                     <head>
-                         <meta charset="UTF-8" />
-                         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                         <title>$title</title>
-                     
-                         <style>
-                              @page {
-                                size: 35cm 29.7cm;
-                                /* Largura maior que um A4 padrão */
-                                margin: 0;
-                              }
-                              .header {
-                                width: 100%;
-                                padding: 10px;
-                                margin-bottom: 20px;
-                                border-bottom: 2px solid darkorange;
-                                font-family: sans-serif;
-                              }
-                              .header p {
-                                font-weight: bold;
-                                font-size: 0.9em;
-                                 display: inline-block;
-                                 width: 45%;
-                                 margin: 5px;
-                                 vertical-align: top;
-                              }
-                              .report,
-                              .report-base {
-                                padding: 0 50px 0 50px;
-                              }
-                              .titleReportBase {
-                                page-break-before: always;
-                                margin-top: 20px;
-                              }
-                              body {
-                                margin: 0;
-                                padding: 0;
-                              }
-                              table {
-                                border-collapse: collapse;
-                                font-size: 0.7em;
-                                font-family: sans-serif;
-                                width: 100%;
-                                border-radius: 10px;
-                              }
-                              table th,
-                              table td {
-                                padding: 12px 15px;
-                              }
-                              table tr {
-                                border-bottom: 1px solid #dddddd;
-                              }
-                              table tr:nth-child(even) {
-                                   background-color: #f3f3f3;
-                              }
-                              .report-total-sum {
-                                background-color: #108cc8;
-                                color: white;
-                                font-weight: bold;
-                              }
-                              .report-total-price {
-                                font-family: Georgia, serif;
-                                font-size: 1em;
-                                margin-top: 10px;
-                                width: fit-content;
-                              }
-                              .report-header {
-                                background-color: #096cb8;
-                                color: white;
-                                text-align: left;
-                              }
-                              table {
-                                border: 2px solid #dddddd;
-                              }
-                              .report-base-header {
-                                background-color: #096cb8;
-                                color: white;
-                                text-align: left;
-                              }
-                              .report-base-total {
-                                font-weight: bold;
-                                background-color: #8be78b;
-                              }
-                              .report-base-total-price {
-                                width: 120px;
-                              }
-                              div {
-                                padding: 20px 0 20px 0;
-                              }
-                              p {
-                                font-family: sans-serif;
-                                margin: 0;
-                                padding: 0 20px 0 20px;
-                              }
-                              h2 {
-                                font-size: 1.1em;
-                                font-family: sans-serif;
-                                margin: 0;
-                                padding: 0 20px 10px 20px;
-                              }
-                              .assign{
-                                font-size: 0.8em;
-                                margin-top: auto;
-                              }
-                            </style>
-                     </head>
-                     <body>
-                      
-                      """.trimIndent()
-            html += htmlRequest
-            html = "$html</body></html>"
+        return try {
+            val html = """
+            <!DOCTYPE html>
+            <html lang="pt">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>$title</title>
+            
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 12px;
+                        background-color: #ffffff;
+                    }
+                
+                    h1, h2 {
+                        color: #333;
+                    }
+                
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 0.9em;
+                    }
+                
+                    th, td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: left;
+                    }
+                
+                    th {
+                        background-color: #044686;
+                        color: white;
+                    }
+                
+                    .report-total-sum, .report-base-total {
+                        font-weight: bold;
+                        background-color: #eee;
+                    }
+                
+                    .footer {
+                        margin-top: 20px;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+            $htmlRequest
+            </body></html>
+        """.trimIndent()
 
-            // Criar um OutputStream para armazenar o PDF
-            val outputStream = ByteArrayOutputStream()
+            // Criar processo para executar wkhtmltopdf
+            val processBuilder = ProcessBuilder(
+                "wkhtmltopdf",
+                "--quiet",
+                "--enable-smart-shrinking",
+                "--dpi", "300",
+                "--page-width", "252mm",  // 20% maior que A4
+                "--page-height", "297mm", // Altura padrão do A4
+                "--print-media-type",     // Garante que o background apareça
+                "--margin-top", "10mm",
+                "--margin-right", "5mm",
+                "--margin-bottom", "10mm",
+                "--margin-left", "5mm",
+                "-", "-"
+            )
 
-            // Criar o builder do OpenHTMLtoPDF e configurar a conversão
-            val builder = PdfRendererBuilder()
+            val process = processBuilder.start()
 
-            builder.withHtmlContent(html, "") // Usa o HTML enviado na requisição
-            builder.toStream(outputStream) // Define o OutputStream como destino
-            builder.run() // Executa a conversão
+            // Enviar HTML via entrada padrão (stdin)
+            BufferedWriter(OutputStreamWriter(process.outputStream)).use { writer ->
+                writer.write(html)
+                writer.flush()
+            }
 
-            // Obter os bytes do PDF gerado
-            val pdfContent = outputStream.toByteArray()
+            // Capturar saída do wkhtmltopdf (PDF gerado)
+            val pdfBytes = process.inputStream.readBytes()
 
-            // Configurar os cabeçalhos para resposta HTTP
+            // Esperar o processo terminar e verificar sucesso
+            if (process.waitFor() != 0) {
+                throw RuntimeException("Erro ao gerar PDF com wkhtmltopdf")
+            }
+
+            // Configurar cabeçalhos da resposta
             val headers = HttpHeaders()
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-$title.pdf")
-            headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf")
+            headers.contentType = MediaType.APPLICATION_PDF
+            headers.setContentDisposition(ContentDisposition.attachment().filename("relatorio-$title.pdf").build())
 
-
-            return ResponseEntity(pdfContent, headers, HttpStatus.OK)
+            ResponseEntity(pdfBytes, headers, HttpStatus.OK)
         } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null)
         }
     }
 }

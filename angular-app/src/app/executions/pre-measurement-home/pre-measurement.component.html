@@ -1,0 +1,70 @@
+<div class="flex mt-[3rem] h-fit" #top>
+  <div class="w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a href="/">Início</a></li>
+          <li><a>Execuçoes</a></li>
+          <li>Pré-medição</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Selecione uma cidade</h3>
+    </div>
+
+    <div class="flex w-full justify-center p-5">
+      <div role="tablist" class="tabs tabs-bordered">
+        <input type="radio" class="tab" aria-label="Pendente" [checked]="status === 'pendente'"
+               (click)="router.navigate(['/pre-medicao/pendente'])"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+               aria-label="Aguardando Retorno" (click)="router.navigate(['/pre-medicao/aguardando-retorno'])"
+               [checked]="status === 'aguardando-retorno'"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+               aria-label="Validando" (click)="router.navigate(['/pre-medicao/validando'])"
+               [checked]="status === 'validando'"/>
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+               aria-label="Disponível" (click)="router.navigate(['/pre-medicao/disponivel'])"
+               [checked]="status === 'disponivel'"/>
+      </div>
+    </div>
+
+    <div class="border-b w-full pl-2 h-screen pt-2">
+      <ol class="flex flex-wrap">
+        <li *ngFor="let p of preMeasurements; index as i;"
+            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
+            (click)="navigateTo(p.preMeasurementId)">
+          <div class="flex flex-col border rounded px-4 py-2 card-execution">
+            <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
+                {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
+            </span>
+
+            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
+              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ p.city }}</h3>
+            <span class="text-sm text-neutral-600 flex items-center">Por {{ p.createdBy }}<span
+              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+            <span class="text-xs">{{ p.createdAt }} em {{ p.city }}</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
+                      class="absolute right-0"></app-screen-message>
+
+  <app-modal [modalOpen]="openModal" (modalClose)="openModal=false"
+             classModal="rounded p-4 w-[30%] flex flex-col  justify-center">
+    <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+      <span class="material-icons text-error">warning</span>
+      <h2 class="text-center font-semibold">Atenção durante esse processo</h2>
+    </div>
+
+
+    <p class="pb-5 text-center">Qual ação deverá ser executada a partir do retorno após pré-medição do contrato referente à  {{ getPreMeasurement(preMeasurementId)?.city }}?</p>
+    <button class="btn btn-primary m-2"
+            (click)="router.navigate(['/pre-medicao/aguardando-retorno'])">Editar os itens
+      <span class="material-icons">edit</span>
+    </button>
+    <button class="btn btn-error m-2" (click)="openModal = false">Todos os itens foram
+      aprovados <span class="material-icons">warning</span></button>
+  </app-modal>
+</div>
