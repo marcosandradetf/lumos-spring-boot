@@ -9,6 +9,7 @@ public record PreMeasurementStreetResponseDTO(
         double latitude,
         double longitude,
         String address,
+        String status,
         List<PreMeasurementStreetItemResponseDTO> items
 ) {
 }

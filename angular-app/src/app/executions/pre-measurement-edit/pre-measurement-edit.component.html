@@ -4,31 +4,43 @@
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/">Início</a></li>
-          <li><a href="/">Pré-medição</a></li>
+          <li><a [href]="'/pre-medicao/relatorio/' + preMeasurement.preMeasurementId">Pré-medição</a></li>
           <li>Editar itens</li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block">Editando {{ contract.contractor }}</h3>
+      <h3 class="text-medium pr-5 hidden lg:block">
+        Editando {{ streets.classList.contains('hidden') ? getStreetName(streetId) : contract.contractor }}</h3>
     </div>
 
-    <div class="flex w-full justify-center p-5">
-      <div role="tablist" class="tabs tabs-bordered">
-        <input type="radio" class="tab" aria-label="Ruas" checked
-               (click)="router.navigate(['/'])"/>
-        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
-               aria-label="Itens"
-               (click)="router.navigate(['/'])"/>
-      </div>
-    </div>
+    <!--    <div class="flex w-full justify-center p-5">-->
+    <!--      <div role="tablist" class="tabs tabs-bordered">-->
+    <!--        <input type="radio" class="tab" aria-label="Ruas" checked-->
+    <!--               (click)="router.navigate(['/'])"/>-->
+    <!--        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"-->
+    <!--               aria-label="Itens"-->
+    <!--               (click)="router.navigate(['/'])"/>-->
+    <!--      </div>-->
+    <!--    </div>-->
 
     <div class="border-b w-full pl-2 h-screen pt-2" #streets>
       <ol class="flex flex-wrap">
+        <li
+          class="w-[23rem] m-2">
+          <button class="btn btn-success text-white w-[23rem]"
+                  (click)="conclude()">
+            <span class="material-icons">save</span>
+            Concluir processo
+          </button>
+        </li>
+      </ol>
+
+      <ol class="flex flex-wrap">
         <li *ngFor="let s of preMeasurement.streets; index as i;"
-            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="edit('street', s.preMeasurementStreetId)">
+            class="w-[23rem]  cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
+            (click)="edit('street', s.preMeasurementStreetId, streets, items)">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge {{preMeasurement.preMeasurementStyle}} rounded mb-4 mt-2">
-                {{ preMeasurement.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
+            <span class="badge rounded mb-4 mt-2" [ngClass]="s.status == 'PENDING' ? 'badge-primary' : 'badge-error'">
+                {{ s.status === "PENDING" ? "ATIVA" : "CANCELADA" }}
             </span>
 
             <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">{{ s.address }}</h3>
@@ -43,19 +55,59 @@
 
     <div class="border-b w-full pl-2 h-screen pt-2 hidden" #items>
       <ol class="flex flex-wrap">
-        <li *ngFor="let s of preMeasurement.streets; index as i;"
-            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="streets.hidden = true">
-          <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge {{preMeasurement.preMeasurementStyle}} rounded mb-4 mt-2">
-                {{ preMeasurement.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
-            </span>
+        <li
+          class="w-[23rem] m-2">
+          <button
+            class="btn bg-[#ffffff] hover:bg-[#ffffff] border-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] w-[23rem]"
+            (click)="changeFromTo(items, streets)">
+            <span class="material-icons">arrow_back</span>
+            Visão geral
+          </button>
+        </li>
 
-            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">{{ s.address }}</h3>
-            <span class="text-sm text-neutral-600 flex items-center">Essa rua contém {{ s.items.length }} itens<span
-              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
-            <span class="text-sm text-neutral-600 flex items-center">{{ s.latitude + " , " + s.longitude }}<span
-              class="material-icons text-sm ml-1 text-blue-500">location</span></span>
+        <li
+          class="w-[23rem] m-2">
+          @if (isNotActive('street', streetId)) {
+            <button class="btn bg-[#47698F] hover:bg-[#30698F] w-[23rem] text-white border-[#35567b] mb-2"
+                    (click)="cancelStreet(streetId, false)">
+              <span class="material-icons">restore</span>
+              Reativar rua com todos os itens
+            </button>
+          } @else {
+            <button class="btn bg-[#FF9900] hover:bg-[#FF8800] w-[23rem] text-black border-[#e17d00]"
+                    (click)="cancelStreet(streetId, true)">
+              <span class="material-icons">delete_forever</span>
+              Cancelar rua com todos os itens
+            </button>
+          }
+
+        </li>
+      </ol>
+
+      <ol class="flex flex-wrap">
+        <li *ngFor="let i of streetItems; index as index;"
+            class="w-[23rem] m-2">
+          <div class="flex justify-between border rounded px-4 py-2 shadow h-36" [class.bg-neutral-100]="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')">
+            <div class="relative w-full">
+              <span class="badge rounded mb-4 mt-2" [ngClass]="i.status == 'PENDING' ? 'badge-primary' : 'badge-error'">
+                {{ i.status === "PENDING" ? "ATIVO" : "CANCELADO" }}
+            </span>
+              <h3 class="text-lg text-neutral-800 leading-[1.15rem] font-light">{{ i.materialName }}</h3>
+              <span class="text-sm text-neutral-600 flex items-center">{{ i.materialPower ? i.materialPower : i.materialLength }}</span>
+              <span *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+                [ngClass]="i.status === 'PENDING' ? 'text-red-600' : 'text-primary'" class="material-icons text-2xl ml-1 absolute bottom-0 cursor-pointer rounded hover:border p-1" (click)="edit('item', i.preMeasurementStreetItemId, streets, items)">{{i.status === "PENDING" ? 'delete' : 'restore'}}</span>
+              <span *ngIf="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')" class="absolute bottom-0 text-xs border-t min-w-full pt-1 select-none">Controlado automaticamente</span>
+            </div>
+            <div
+              *ngIf="i.status === 'PENDING' && !i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+              class="flex flex-col justify-center items-center  border rounded  p-1 border-b-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] min-w-fit">
+              <span
+                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:-translate-y-2 select-none" (click)="changeValue(i.preMeasurementStreetItemId, 'increment')">expand_less</span>
+              <span class="text-sm text-neutral-600 flex items-center">{{ i.materialQuantity }}</span>
+              <span
+                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-y-2 select-none" (click)="changeValue(i.preMeasurementStreetItemId, 'decrement')">expand_more</span>
+              <p class="text-xs p-1">Qtde.</p>
+            </div>
           </div>
         </li>
       </ol>
@@ -71,33 +123,20 @@
     @if (itemId > 0) {
 
     } @else if (streetId > 0) {
-      @if(isNotActive('street', streetId)) {
-        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
-          <span class="material-icons text-error">warning</span>
-          <h2 class="text-center font-semibold">Uma ação de cancelamento foi executada nesta rua, como deseja prosseguir?</h2>
-        </div>
-        <button class="btn bg-[#47698F] text-white border-[#35567b]">
-          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f"><path d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"/></svg>
-          Reativar rua
-        </button>
-        <button class="btn bg-[#FF9900] text-black border-[#e17d00]">
-          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f"><path d="M144-348v-72h288v72H144Zm0-150v-72h432v72H144Zm0-150v-72h432v72H144Zm499 408L508-376l51-51 84 85 170-170 51 51-221 221Z"/></svg>
-          Ok, manter
-        </button>
-      } @else {
-        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
-          <span class="material-icons text-error">warning</span>
-          <h2 class="text-center font-semibold">Essa rua está registrada como ativa, qual ação deseja executar?</h2>
-        </div>
-        <button class="btn bg-[#47698F] text-white border-[#35567b]" (click)="cancelStreet('street', streetId)">
-          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f"><path d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"/></svg>
-          Cancelar rua com todos os itens
-        </button>
-        <button class="btn bg-[#FF9900] text-black border-[#e17d00]" (click)="changeFromTo(streets, items)">
-          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f"><path d="M144-348v-72h288v72H144Zm0-150v-72h432v72H144Zm0-150v-72h432v72H144Zm499 408L508-376l51-51 84 85 170-170 51 51-221 221Z"/></svg>
-          Editar os itens dessa rua
-        </button>
-      }
+      <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <span class="material-icons text-error">warning</span>
+        <h2 class="text-center font-semibold">Uma ação de cancelamento foi executada nesta rua, como deseja
+          prosseguir?</h2>
+      </div>
+      <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+              (click)="cancelStreet(streetId, false)">
+        <span class="material-icons">restore</span>
+        Reativar rua com todos os itens
+      </button>
+      <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]" (click)="openModal = false">
+        <span class="material-icons">check</span>
+        Ok, manter
+      </button>
     }
   </app-modal>
 

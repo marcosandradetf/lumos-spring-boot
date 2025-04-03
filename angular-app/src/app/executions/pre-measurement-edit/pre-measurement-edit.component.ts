@@ -7,7 +7,7 @@ import {AuthService} from '../../core/auth/auth.service';
 import {UserService} from '../../manage/user/user-service.service';
 import {ReportService} from '../../core/service/report-service';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
-import {NgForOf, NgIf} from '@angular/common';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 
 @Component({
@@ -17,7 +17,8 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
     ScreenMessageComponent,
     NgForOf,
     NgIf,
-    ModalComponent
+    ModalComponent,
+    NgClass
   ],
   templateUrl: './pre-measurement-edit.component.html',
   styleUrl: './pre-measurement-edit.component.scss'
@@ -53,7 +54,7 @@ export class PreMeasurementEditComponent {
         materialPower: string;
         materialLength: string;
         materialQuantity: number;
-        status: string
+        status: string;
       }[]
 
     }[];
@@ -160,19 +161,22 @@ export class PreMeasurementEditComponent {
   streetId: number = 0;
   itemId: number = 0;
 
-  edit(entity: string, id: number) {
+  edit(entity: string, id: number, divElementOrigin: HTMLDivElement, divElementDest: HTMLDivElement) {
     switch (entity) {
       case 'street':
         this.streetId = id;
         this.itemId = 0;
         const items = this.preMeasurement.streets.find(s => s.preMeasurementStreetId == id)?.items;
         if (items) this.streetItems = items
-        this.openModal = true;
+        if (this.isNotActive(entity, id)) {
+          this.openModal = true;
+        } else {
+          this.changeFromTo(divElementOrigin, divElementDest);
+        }
         break;
       case 'item':
-        this.streetId = 0;
         this.itemId = id;
-        this.openModal = true;
+        this.cancelItem(id);
         break;
     }
   }
@@ -180,9 +184,9 @@ export class PreMeasurementEditComponent {
   isNotActive(entity: string, id: number): boolean {
     switch (entity) {
       case "street":
-        return this.preMeasurement.streets.find(s => s.preMeasurementStreetId === id)?.status !== "CANCELLED";
+        return this.preMeasurement.streets.find(s => s.preMeasurementStreetId === id)?.status === "CANCELLED";
       case "item":
-        return this.streetItems.find(i => i.preMeasurementStreetItemId == id)?.status !== "CANCELLED";
+        return this.streetItems.find(i => i.preMeasurementStreetItemId == id)?.status === "CANCELLED";
       default:
         return true;
     }
@@ -191,6 +195,7 @@ export class PreMeasurementEditComponent {
   changeFromTo(divElementOrigin: HTMLDivElement, divElementDest: HTMLDivElement) {
     divElementOrigin.classList.add("hidden");
     divElementDest.classList.remove("hidden");
+    this.openModal = false;
   }
 
   cancelledStreets: {
@@ -200,33 +205,112 @@ export class PreMeasurementEditComponent {
     streetId: number;
     itemId: number;
   }[] = [];
+  changedItems: {
+    streetId: number;
+    itemId: number;
+    quantity: number;
+  }[] = [];
 
-  cancelStreet(id: number, cancel: boolean) {
-    let index = this.preMeasurement.streets.findIndex(s => s.preMeasurementStreetId == id);
-    if (index === -1) {
+  cancelItem(id: number) {
+    let itemIndex = this.streetItems.findIndex(i => i.preMeasurementStreetItemId == id);
+    if (itemIndex === -1) {
       return
     }
-    let street = this.preMeasurement.streets[index];
+    let item = this.streetItems[itemIndex];
+    let canceled = this.cancelledItems.some(ci => ci.itemId == id);
+    switch (canceled) {
+      case false:
+        item.status = "CANCELLED";
+        this.streetItems[itemIndex] = item;
+        this.cancelledItems.push({itemId: id, streetId: this.streetId});
+        this.utils.showMessage("ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " CANCELADO", false);
+        console.log(this.cancelledStreets)
+        console.log(this.cancelledItems)
+        break;
+      case true:
+        item.status = "PENDING";
+        this.streetItems[itemIndex] = item;
+        this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== id);
+        this.utils.showMessage("ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " ATIVADO", false);
+        console.log(this.cancelledStreets)
+        console.log(this.cancelledItems)
+        break;
+    }
+  }
+
+  cancelStreet(id: number, cancel: boolean) {
+    let streetIndex = this.preMeasurement.streets.findIndex(s => s.preMeasurementStreetId == id);
+    if (streetIndex === -1) {
+      return
+    }
+    let street = this.preMeasurement.streets[streetIndex];
     switch (cancel) {
       case true:
         street.status = "CANCELLED";
         street.items.forEach((item) => {
           if (item) item.status = "CANCELLED";
         });
-        this.preMeasurement.streets[index] = street;
+        this.preMeasurement.streets[streetIndex] = street;
         this.cancelledStreets.push({streetId: id});
-        this.utils.showMessage("Todos os itens da rua foram cancelados", false);
+        this.openModal = false;
+        this.utils.showMessage("Todos os itens da rua " + street.address + " foram cancelados", false);
         break;
       case false:
         street.status = "PENDING";
         street.items.forEach((item) => {
           if (item) item.status = "PENDING";
         });
-        this.preMeasurement.streets[index] = street;
-        index = this.cancelledStreets.findIndex(s => s.streetId == id);
-        // remover continua...
-        this.utils.showMessage("Todos os itens da rua foram reativados", false);
+        this.preMeasurement.streets[streetIndex] = street;
+        this.cancelledStreets = this.cancelledStreets.filter(cs => cs.streetId !== id);
+        this.openModal = false;
+        this.utils.showMessage("Todos os itens da rua " + street.address + " foram reativados", false);
         break;
+    }
+  }
+
+  getStreetName(streetId: number) {
+    return this.preMeasurement.streets.find(s => s.preMeasurementStreetId == streetId)?.address;
+  }
+
+  finish: boolean = false;
+
+  conclude() {
+    this.utils.showMessage("Não é permitido salvar uma edição com nenhuma rua/item modificado", true);
+    this.finish = true;
+  }
+
+  changeValue(preMeasurementStreetItemId: number, action: 'increment' | 'decrement') {
+    if (action === 'increment') {
+      let index = this.streetItems.findIndex(i => i.preMeasurementStreetItemId === preMeasurementStreetItemId);
+      if (index !== -1) {
+        this.streetItems[index].materialQuantity += 1;
+      }
+    } else if (action === 'decrement') {
+      let index = this.streetItems.findIndex(i => i.preMeasurementStreetItemId === preMeasurementStreetItemId);
+      if (index !== -1) {
+        if (this.streetItems[index].materialQuantity > 0) this.streetItems[index].materialQuantity -= 1;
+        this.changedItems.push({
+          itemId: this.streetItems[index].preMeasurementStreetItemId,
+          streetId: this.streetId,
+          quantity: this.streetItems[index].materialQuantity
+        });
+
+        if (this.streetItems[index].materialType.toUpperCase() === 'LED') {
+          let relayIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'RELÉ');
+          // adicionar validacao de rua
+          this.streetItems[relayIndex].materialQuantity -= 1;
+          this.changedItems.push({
+            itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
+            streetId: this.streetId,
+            quantity: this.streetItems[relayIndex].materialQuantity
+          });
+        }
+
+        if (this.streetItems[index].materialType.toUpperCase() === 'BRAÇO') {
+          // implementar para cabos
+        }
+
+      }
     }
   }
 }

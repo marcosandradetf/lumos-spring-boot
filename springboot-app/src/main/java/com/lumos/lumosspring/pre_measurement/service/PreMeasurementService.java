@@ -278,6 +278,7 @@ public class PreMeasurementService {
                                         s.getLatitude(),
                                         s.getLongitude(),
                                         s.getStreet(),
+                                        s.getStreetStatus(),
                                         s.getItems() != null ? s.getItems().stream()
                                                 .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
                                                 .map(i -> new PreMeasurementStreetItemResponseDTO(
@@ -288,7 +289,8 @@ public class PreMeasurementService {
                                                         i.getMaterial().getMaterialType().getTypeName(),
                                                         i.getMaterial().getMaterialPower(),
                                                         i.getMaterial().getMaterialLength(),
-                                                        i.getItemQuantity()
+                                                        i.getItemQuantity(),
+                                                        i.getItemStatus()
                                                 )).toList()
                                                 : List.of() // Retorna lista vazia se `s.getItems()` for null
                                 )).toList()
@@ -327,6 +329,7 @@ public class PreMeasurementService {
                                 s.getLatitude(),
                                 s.getLongitude(),
                                 s.getStreet(),
+                                s.getStreetStatus(),
                                 s.getItems() != null ? s.getItems().stream()
                                         .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
                                         .map(i -> new PreMeasurementStreetItemResponseDTO(
@@ -337,7 +340,8 @@ public class PreMeasurementService {
                                                 i.getMaterial().getMaterialType().getTypeName(),
                                                 i.getMaterial().getMaterialPower(),
                                                 i.getMaterial().getMaterialLength(),
-                                                i.getItemQuantity()
+                                                i.getItemQuantity(),
+                                                i.getItemStatus()
                                         )).toList()
                                         : List.of() // Retorna lista vazia se `s.getItems()` for null
                         )).toList()
