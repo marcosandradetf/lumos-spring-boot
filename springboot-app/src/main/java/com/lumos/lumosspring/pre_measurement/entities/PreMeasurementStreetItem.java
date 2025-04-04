@@ -95,6 +95,14 @@ public class PreMeasurementStreetItem {
         this.itemQuantity += v;
     }
 
+    public void addItemQuantity(double v, boolean updateValue) {
+        this.itemQuantity += v;
+        if (updateValue) {
+            setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(v)));
+            preMeasurementStreet.getPreMeasurement().sumTotalPrice(totalPrice);
+        }
+    }
+
     public PreMeasurementStreet getPreMeasurementStreet() {
         return preMeasurementStreet;
     }

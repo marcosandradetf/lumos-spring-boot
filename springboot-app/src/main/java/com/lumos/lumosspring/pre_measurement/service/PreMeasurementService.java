@@ -1,5 +1,7 @@
 package com.lumos.lumosspring.pre_measurement.service;
 
+import com.lumos.lumosspring.contract.entities.Contract;
+import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
 import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
@@ -13,6 +15,7 @@ import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItem
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.notification.service.NotificationService;
 import com.lumos.lumosspring.notification.service.Routes;
+import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.user.Role;
 import com.lumos.lumosspring.user.UserRepository;
@@ -55,19 +58,19 @@ public class PreMeasurementService {
         }
 
         switch (preMeasurement.get().getStatus()) {
-            case(ContractStatus.PENDING):
+            case (ContractStatus.PENDING):
                 preMeasurement.get().setStatus(ContractStatus.WAITING);
                 break;
-            case(ContractStatus.WAITING):
+            case (ContractStatus.WAITING):
                 preMeasurement.get().setStatus(ContractStatus.VALIDATING);
                 break;
-            case(ContractStatus.VALIDATING):
+            case (ContractStatus.VALIDATING):
                 preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
                 break;
-            case(ContractStatus.AVAILABLE):
+            case (ContractStatus.AVAILABLE):
                 preMeasurement.get().setStatus(ContractStatus.IN_PROGRESS);
                 break;
-            case(ContractStatus.IN_PROGRESS):
+            case (ContractStatus.IN_PROGRESS):
                 preMeasurement.get().setStatus(ContractStatus.FINISHED);
                 break;
         }
@@ -76,6 +79,8 @@ public class PreMeasurementService {
         return true;
     }
 
+    //    analisar se duplicata ocorre novamente
+//    corrigir soma de valores da pre-medicao
     @Transactional
     public ResponseEntity<?> saveMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
         if (userUUID == null || userUUID.isBlank()) {
@@ -101,9 +106,11 @@ public class PreMeasurementService {
                     util.getDateTime(),
                     NotificationType.WARNING
             );
-            return ResponseEntity.badRequest().body(new ErrorResponse("Já foi enviada uma pré-medição anterior para este contrato."));
+            return ResponseEntity.ok().body(new ErrorResponse("Já foi enviada uma pré-medição anterior para este contrato."));
         }
 
+        contract.setStatus(ContractStatus.VALIDATING);
+        contractRepository.save(contract);
         PreMeasurement preMeasurement = new PreMeasurement();
         var streets = preMeasurementDTO.getStreets();
 
@@ -134,15 +141,8 @@ public class PreMeasurementService {
                 // IMPORTANTE
                 // ADICIONAR AUTOMATICAMENTE CABO E RELE
                 materialRepository.findByIdWithGraphType(item.getMaterialId()).ifPresent(material -> {
-                    var contractItem = contract.getContractItemsQuantitative().stream()
-                            .filter(i -> Objects.equals(i.getReferenceItem().getType(), material.getMaterialType().getTypeName()))
-                            .filter(i -> {
-                                var linking = i.getReferenceItem().getLinking();
-                                return linking == null || Objects.equals(linking, material.getMaterialPower()) || Objects.equals(linking, material.getMaterialLength());
-                            })
-                            .findFirst();
-
-                    if(contractItem.isEmpty()) {
+                    var contractItem = searchContractItem(contract, material);
+                    if (contractItem.isEmpty()) {
                         throw new RuntimeException("Item do Contrato não encontrado");
                     }
 
@@ -151,8 +151,13 @@ public class PreMeasurementService {
                     newItem.setMaterial(material);
                     newItem.setItemStatus(ItemStatus.PENDING);
                     newItem.setItemQuantity(item.getMaterialQuantity());
+                    preMeasurementStreetItemRepository.save(newItem);
+                    preMeasurementStreetItemRepository.flush();
                     newItem.setContractItem(contractItem.get());
-                    if(Objects.equals(material.getMaterialType().getTypeName(), "LED")) {
+                    //    analisar se duplicata ocorre novamente
+//    corrigir soma de valores da pre-medicao
+                    preMeasurementStreetItemRepository.save(newItem); // Salvar a relação
+                    if (Objects.equals(material.getMaterialType().getTypeName(), "LED")) {
                         contract.getContractItemsQuantitative().stream()
                                 .filter(i -> Objects.equals(i.getReferenceItem().getType(), "SERVIÇO"))
                                 .filter(i -> Objects.equals(i.getReferenceItem().getItemDependency(), "LED"))
@@ -168,78 +173,17 @@ public class PreMeasurementService {
                                     newItem.getPreMeasurementStreet().getPreMeasurement().sumTotalPrice(i.getUnitPrice().multiply(BigDecimal.valueOf(i.getContractedQuantity())));
                                 });
                     }
-                    preMeasurementStreetItemRepository.save(newItem);
 
                     material.getRelatedMaterials().stream()
                             .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("REL"))
                             .findFirst().ifPresent(rm -> {
-                                preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet).stream()
-                                        .filter(i -> i.getMaterial().getIdMaterial() == rm.getIdMaterial())
-                                        .findFirst().ifPresentOrElse(
-                                                existingRelay -> {
-                                                    existingRelay.addItemQuantity(item.getMaterialQuantity());
-                                                    preMeasurementStreetItemRepository.save(existingRelay);
-                                                },
-                                                () -> {
-                                                    var newRelay = new PreMeasurementStreetItem();
-                                                    var contractRelay = contract.getContractItemsQuantitative().stream()
-                                                            .filter(i -> Objects.equals(i.getReferenceItem().getType(), material.getMaterialType().getTypeName()))
-                                                            .filter(i -> {
-                                                                var linking = i.getReferenceItem().getLinking();
-                                                                return linking == null || Objects.equals(linking, material.getMaterialPower()) || Objects.equals(linking, material.getMaterialLength());
-                                                            })
-                                                            .findFirst();
-                                                    if(contractRelay.isEmpty()) {
-                                                        throw new RuntimeException("Relé do Contrato não encontrado");
-                                                    }
-                                                    newRelay.setMaterial(rm);
-                                                    newRelay.addItemQuantity(item.getMaterialQuantity());
-                                                    newRelay.setContractItem(contractRelay.get());
-                                                    preMeasurementStreet.addItem(newRelay);
-                                                    preMeasurementStreetItemRepository.save(newRelay);
-                                                }
-                                        );
+                                insertOrUpdateRelay(preMeasurementStreet, rm, item.getMaterialQuantity(), contract);
                             });
 
                     material.getRelatedMaterials().stream()
                             .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("CAB"))
                             .findFirst().ifPresent(rm -> {
-                                preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet).stream()
-                                        .filter(i -> i.getMaterial().getIdMaterial() == rm.getIdMaterial())
-                                        .findFirst().ifPresentOrElse(
-                                                existingCable -> {
-                                                    if (material.getMaterialLength().startsWith("1"))
-                                                        existingCable.addItemQuantity(item.getMaterialQuantity() * 2.5);
-                                                    if (material.getMaterialLength().startsWith("2"))
-                                                        existingCable.addItemQuantity(item.getMaterialQuantity() * 8.5);
-                                                    if (material.getMaterialLength().startsWith("3"))
-                                                        existingCable.addItemQuantity(item.getMaterialQuantity() * 12.5);
-                                                    preMeasurementStreetItemRepository.save(existingCable);
-                                                },
-                                                () -> {
-                                                    var newCable = new PreMeasurementStreetItem();
-                                                    var contractCable = contract.getContractItemsQuantitative().stream()
-                                                            .filter(i -> Objects.equals(i.getReferenceItem().getType(), material.getMaterialType().getTypeName()))
-                                                            .filter(i -> {
-                                                                var linking = i.getReferenceItem().getLinking();
-                                                                return linking == null || Objects.equals(linking, material.getMaterialPower()) || Objects.equals(linking, material.getMaterialLength());
-                                                            })
-                                                            .findFirst();
-                                                    if(contractCable.isEmpty()) {
-                                                        throw new RuntimeException("Cabo do Contrato não encontrado");
-                                                    }
-                                                    newCable.setMaterial(rm);
-                                                    newCable.setContractItem(contractCable.get());
-                                                    if (material.getMaterialLength().startsWith("1"))
-                                                        newCable.addItemQuantity(item.getMaterialQuantity() * 2.5);
-                                                    if (material.getMaterialLength().startsWith("2"))
-                                                        newCable.addItemQuantity(item.getMaterialQuantity() * 8.5);
-                                                    if (material.getMaterialLength().startsWith("3"))
-                                                        newCable.addItemQuantity(item.getMaterialQuantity() * 12.5);
-                                                    preMeasurementStreet.addItem(newCable);
-                                                    preMeasurementStreetItemRepository.save(newCable);
-                                                }
-                                        );
+                                insertOrUpdateCable(preMeasurementStreet, rm, material.getMaterialLength(), item.getMaterialQuantity(), contract);
                             });
                 });
             });
@@ -248,66 +192,120 @@ public class PreMeasurementService {
         return ResponseEntity.ok().body(new DefaultResponse("Pré-Medição salva com sucesso"));
     }
 
+    @Transactional
+    public void insertOrUpdateRelay(PreMeasurementStreet preMeasurementStreet, Material rm, int quantity, Contract contract) {
+        var existingRelay = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
+                .stream()
+                .filter(i -> i.getMaterial().getIdMaterial().equals(rm.getIdMaterial()))
+                .findFirst();
+
+        if (existingRelay.isPresent()) {
+            existingRelay.get().addItemQuantity(quantity, true);
+            preMeasurementStreetItemRepository.save(existingRelay.get());
+        } else {
+            var contractRelay = searchContractItem(contract, rm);
+            if (contractRelay.isEmpty()) {
+                throw new RuntimeException("Relé do Contrato não encontrado");
+            }
+            var newRelay = new PreMeasurementStreetItem();
+            newRelay.setMaterial(rm);
+            newRelay.addItemQuantity(quantity);
+            preMeasurementStreet.addItem(newRelay);
+            preMeasurementStreetItemRepository.save(newRelay);
+
+            // Agora que o objeto foi salvo, podemos definir a relação e salvar novamente
+            newRelay.setContractItem(contractRelay.get());
+            preMeasurementStreetItemRepository.save(newRelay);
+        }
+    }
+
+    @Transactional
+    public void insertOrUpdateCable(PreMeasurementStreet preMeasurementStreet, Material cable, String armLength, int quantity, Contract contract) {
+        var existingCable = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
+                .stream()
+                .filter(i -> i.getMaterial().getIdMaterial().equals(cable.getIdMaterial()))
+                .findFirst();
+
+        if (existingCable.isPresent()) {
+            double multiplier = getCableMultiplier(armLength);
+            existingCable.get().addItemQuantity(quantity * multiplier, true);
+            preMeasurementStreetItemRepository.save(existingCable.get());
+        } else {
+            var contractCable = searchContractItem(contract, cable);
+            if (contractCable.isEmpty()) {
+                throw new RuntimeException("Cabo do Contrato não encontrado");
+            }
+            var newCable = new PreMeasurementStreetItem();
+            newCable.setMaterial(cable);
+            preMeasurementStreet.addItem(newCable);
+
+            double multiplier = getCableMultiplier(armLength);
+            newCable.addItemQuantity(quantity * multiplier);
+            preMeasurementStreetItemRepository.save(newCable);
+
+            // Definir a relação e salvar novamente
+            newCable.setContractItem(contractCable.get());
+            preMeasurementStreetItemRepository.save(newCable);
+        }
+    }
+
+    /**
+     * Método auxiliar para calcular o multiplicador do cabo.
+     */
+    private double getCableMultiplier(String armLength) {
+        return switch (armLength.charAt(0)) {
+            case '1' -> 2.5;
+            case '2' -> 8.5;
+            case '3' -> 12.5;
+            default -> throw new IllegalArgumentException("Comprimento do braço inválido: " + armLength);
+        };
+    }
+
+    private Optional<ContractItemsQuantitative> searchContractItem(Contract contract, Material material) {
+        return contract.getContractItemsQuantitative().stream()
+                .filter(i -> {
+                    var referenceItem = i.getReferenceItem();
+
+                    var type = referenceItem.getType();
+                    var materialType = material.getMaterialType();
+                    if (type == null || materialType == null || materialType.getTypeName() == null) return false;
+
+                    return type.equalsIgnoreCase(materialType.getTypeName());
+                })
+                .filter(i -> {
+                    var referenceItem = i.getReferenceItem();
+
+                    var linking = referenceItem.getLinking();
+                    var materialPower = material.getMaterialPower();
+                    var materialLength = material.getMaterialLength();
+
+                    // Se linking for nulo, não filtra (ou ajuste confocablee a lógica esperada)
+                    return linking == null ||
+                            (linking.equalsIgnoreCase(materialPower)) ||
+                            (linking.equalsIgnoreCase(materialLength));
+                }).findFirst();
+    }
 
     public ResponseEntity<?> getAll(String status) {
-        AtomicInteger number = new AtomicInteger(1);
-
         List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
                 .findAllByStatusOrderByCreatedAtAsc(status)
                 .stream()
                 .sorted(Comparator.comparing(PreMeasurement::getPreMeasurementId))
-                .map(p -> new PreMeasurementResponseDTO(
-                        p.getPreMeasurementId(),
-                        p.getContract().getContractId(),
-                        p.getCity(),
-                        p.getCreatedBy() != null ? p.getCreatedBy().getCompletedName() : "Desconhecido",
-                        util.normalizeDate(p.getCreatedAt()),
-                        "",
-                        p.getTypePreMeasurement(),
-                        Objects.equals(p.getTypePreMeasurement(), ContractType.INSTALLATION) ?
-                                "badge-primary" : "badge-neutral",
-                        p.getTypePreMeasurement(),
-                        p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
-                        p.getStatus(),
-                        p.getStreets().stream()
-                                .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
-                                .map(s -> new PreMeasurementStreetResponseDTO(
-                                        number.getAndIncrement(),
-                                        s.getPreMeasurementStreetId(),
-                                        s.getLastPower(),
-                                        s.getLatitude(),
-                                        s.getLongitude(),
-                                        s.getStreet(),
-                                        s.getStreetStatus(),
-                                        s.getItems() != null ? s.getItems().stream()
-                                                .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
-                                                .map(i -> new PreMeasurementStreetItemResponseDTO(
-                                                        i.getPreMeasurementStreetItemId(),
-                                                        i.getMaterial().getIdMaterial(),
-                                                        i.getContractItem().getContractItemId(),
-                                                        i.getMaterial().getMaterialName(),
-                                                        i.getMaterial().getMaterialType().getTypeName(),
-                                                        i.getMaterial().getMaterialPower(),
-                                                        i.getMaterial().getMaterialLength(),
-                                                        i.getItemQuantity(),
-                                                        i.getItemStatus()
-                                                )).toList()
-                                                : List.of() // Retorna lista vazia se `s.getItems()` for null
-                                )).toList()
-                )).toList();
+                .map(this::convertToPreMeasurementResponseDTO).toList();
 
         return ResponseEntity.ok().body(measurements);
     }
-
 
     public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
         PreMeasurement p = preMeasurementRepository
                 .findByPreMeasurementId(preMeasurementId);
 
+        return ResponseEntity.ok().body(convertToPreMeasurementResponseDTO(p));
+    }
 
+    public PreMeasurementResponseDTO convertToPreMeasurementResponseDTO(PreMeasurement p) {
         AtomicInteger number = new AtomicInteger(1);
-
-        var preMeasurement = new PreMeasurementResponseDTO(
+        return new PreMeasurementResponseDTO(
                 p.getPreMeasurementId(),
                 p.getContract().getContractId(),
                 p.getCity(),
@@ -346,7 +344,5 @@ public class PreMeasurementService {
                                         : List.of() // Retorna lista vazia se `s.getItems()` for null
                         )).toList()
         );
-
-        return ResponseEntity.ok().body(preMeasurement);
     }
 }

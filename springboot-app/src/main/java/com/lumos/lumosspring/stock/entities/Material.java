@@ -12,7 +12,7 @@ public class Material {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_material")
-    private long idMaterial;
+    private Long idMaterial;
 
     @Column(columnDefinition = "TEXT", nullable = false, unique = true)
     private String materialName;
@@ -59,7 +59,7 @@ public class Material {
 
     public Material() { }
 
-    public long getIdMaterial() {
+    public Long getIdMaterial() {
         return idMaterial;
     }
 

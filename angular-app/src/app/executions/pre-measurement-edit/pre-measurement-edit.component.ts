@@ -24,6 +24,7 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
   styleUrl: './pre-measurement-edit.component.scss'
 })
 export class PreMeasurementEditComponent {
+  alert: boolean = false;
   preMeasurement: {
     preMeasurementId: number;
     contractId: number;
@@ -213,29 +214,135 @@ export class PreMeasurementEditComponent {
 
   cancelItem(id: number) {
     let itemIndex = this.streetItems.findIndex(i => i.preMeasurementStreetItemId == id);
-    if (itemIndex === -1) {
-      return
-    }
+    if (itemIndex === -1) return
+
+    let relayIndex = 0;
+    if (this.streetItems[itemIndex].materialType.toUpperCase() === 'LED') relayIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'RELÉ');
+    let cableIndex = 0;
+    if (this.streetItems[itemIndex].materialType.toUpperCase() === 'BRAÇO') cableIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'CABO');
+    let relayQuantity = 0.0;
+    let cableQuantity = 0.0;
+    let ledQuantity = 0.0;
+    let armQuantity = 0.0;
+
+
     let item = this.streetItems[itemIndex];
     let canceled = this.cancelledItems.some(ci => ci.itemId == id);
+    let message = '';
     switch (canceled) {
       case false:
-        item.status = "CANCELLED";
-        this.streetItems[itemIndex] = item;
-        this.cancelledItems.push({itemId: id, streetId: this.streetId});
-        this.utils.showMessage("ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " CANCELADO", false);
-        console.log(this.cancelledStreets)
-        console.log(this.cancelledItems)
+        this.streetItems[itemIndex].status = "CANCELLED";
+        if (relayIndex > 0) {
+          ledQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "LED" && si.status !== "CANCELLED").length;
+          if (ledQuantity > 1) {
+            this.streetItems[relayIndex].materialQuantity -= this.streetItems[itemIndex].materialQuantity;
+            this.streetItems[relayIndex].status = "EDITED";
+            message = `ITEM ${item.materialName} CANCELADO E ITEM ${this.streetItems[relayIndex].materialName} ALTERADO`;
+          } else {
+            this.streetItems[relayIndex].status = "CANCELLED";
+            message = `ITENS ${item.materialName} E ${this.streetItems[relayIndex].materialName} CANCELADOS`;
+          }
+        } else if (cableIndex > 0) {
+          armQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "BRAÇO" && si.status !== "CANCELLED").length;
+          if (armQuantity > 1) {
+            if (this.streetItems[itemIndex].materialLength.startsWith('1')) {
+              cableQuantity = 2.5;
+            } else if (this.streetItems[itemIndex].materialLength.startsWith('2')) {
+              cableQuantity = 8.5;
+            } else if (this.streetItems[itemIndex].materialLength.startsWith('3')) {
+              cableQuantity = 12.5;
+            }
+            this.streetItems[cableIndex].materialQuantity -= cableQuantity;
+            this.streetItems[cableIndex].status = "EDITED";
+            message = `ITEM ${item.materialName} CANCELADO E ITEM ${this.streetItems[cableIndex].materialName} ALTERADO`;
+          } else {
+            this.streetItems[cableIndex].status = "CANCELLED";
+            message = `ITENS ${item.materialName} E ${this.streetItems[cableIndex].materialName} CANCELADOS`;
+          }
+        } else {
+          message = "ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " CANCELADO";
+        }
+
         break;
       case true:
-        item.status = "PENDING";
-        this.streetItems[itemIndex] = item;
-        this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== id);
-        this.utils.showMessage("ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " ATIVADO", false);
-        console.log(this.cancelledStreets)
-        console.log(this.cancelledItems)
+        this.streetItems[itemIndex].status = "PENDING";
+        if (relayIndex > 0) {
+          ledQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "LED" && si.status === "CANCELLED").length;
+          if (ledQuantity > 1) {
+            this.streetItems[relayIndex].materialQuantity += this.streetItems[itemIndex].materialQuantity;
+            this.streetItems[relayIndex].status = "EDITED";
+            message = `ITEM ${item.materialName} ATIVADO E ITEM ${this.streetItems[relayIndex].materialName} ALTERADO`;
+          } else {
+            this.streetItems[relayIndex].status = "PENDING";
+            message = `ITENS ${item.materialName} E ${this.streetItems[relayIndex].materialName} ATIVADOS`;
+          }
+        } else if (cableIndex > 0) {
+          armQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "BRAÇO" && si.status === "CANCELLED").length;
+          if (armQuantity > 1) {
+            if (this.streetItems[itemIndex].materialLength.startsWith('1')) {
+              cableQuantity = 2.5;
+            } else if (this.streetItems[itemIndex].materialLength.startsWith('2')) {
+              cableQuantity = 8.5;
+            } else if (this.streetItems[itemIndex].materialLength.startsWith('3')) {
+              cableQuantity = 12.5;
+            }
+            this.streetItems[cableIndex].materialQuantity += cableQuantity;
+            this.streetItems[cableIndex].status = "EDITED";
+            message = `ITEM ${item.materialName} ATIVADO E ITEM ${this.streetItems[cableIndex].materialName} ALTERADO`;
+          } else {
+            this.streetItems[cableIndex].status = "PENDING";
+            message = `ITENS ${item.materialName} E ${this.streetItems[cableIndex].materialName} ATIVADOS`;
+          }
+        } else {
+          message = "ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " ATIVADO";
+        }
         break;
     }
+
+    // adicao items
+    if(item.status === "CANCELLED") {
+      this.cancelledItems.push({itemId: id, streetId: this.streetId});
+    } else {
+      this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== id);
+    }
+
+    // adicao itens dependentes
+    if (relayIndex > 0) {
+      if (this.streetItems[relayIndex].status === "EDITED") {
+        this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId);
+
+        this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId)
+        this.changedItems.push({
+          itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
+          streetId: this.streetId,
+          quantity: this.streetItems[relayIndex].materialQuantity
+        });
+      } else {
+        this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId);
+        this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId);
+        this.cancelledItems.push({itemId: this.streetItems[relayIndex].preMeasurementStreetItemId, streetId: this.streetId});
+      }
+    } else if (cableIndex > 0) {
+      if (this.streetItems[cableIndex].status === "EDITED") {
+        this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId);
+
+        this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId)
+        this.changedItems.push({
+          itemId: this.streetItems[cableIndex].preMeasurementStreetItemId,
+          streetId: this.streetId,
+          quantity: this.streetItems[cableIndex].materialQuantity
+        });
+
+      } else {
+        this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId);
+        this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId);
+        this.cancelledItems.push({itemId: this.streetItems[cableIndex].preMeasurementStreetItemId, streetId: this.streetId});
+      }
+    }
+    console.log(this.cancelledStreets);
+    console.log(this.cancelledItems);
+    console.log(this.changedItems);
+    this.utils.showMessage(message, false);
   }
 
   cancelStreet(id: number, cancel: boolean) {
@@ -254,6 +361,10 @@ export class PreMeasurementEditComponent {
         this.cancelledStreets.push({streetId: id});
         this.openModal = false;
         this.utils.showMessage("Todos os itens da rua " + street.address + " foram cancelados", false);
+
+        // remove dos cancelados e modificados
+        this.cancelledItems = this.cancelledItems.filter(ci => ci.streetId !== id);
+        this.changedItems = this.changedItems.filter(ci => ci.streetId !== id);
         break;
       case false:
         street.status = "PENDING";
@@ -275,42 +386,97 @@ export class PreMeasurementEditComponent {
   finish: boolean = false;
 
   conclude() {
-    this.utils.showMessage("Não é permitido salvar uma edição com nenhuma rua/item modificado", true);
+    if (this.cancelledItems.length === 0 && this.cancelledStreets.length === 0 && this.changedItems.length === 0) {
+      this.utils.showMessage("Não é permitido salvar uma edição com nenhuma rua/item modificado", true);
+    }
     this.finish = true;
   }
 
   changeValue(preMeasurementStreetItemId: number, action: 'increment' | 'decrement') {
+    let index = this.streetItems.findIndex(i => i.preMeasurementStreetItemId === preMeasurementStreetItemId);
+    if (index === -1) return
+    this.streetItems[index].status = 'EDITED';
+    let relayIndex = 0;
+    if (this.streetItems[index].materialType.toUpperCase() === 'LED') relayIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'RELÉ');
+    let cableIndex = 0;
+    if (this.streetItems[index].materialType.toUpperCase() === 'BRAÇO') cableIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'CABO');
+    let cableQuantity = 0.0;
+
     if (action === 'increment') {
-      let index = this.streetItems.findIndex(i => i.preMeasurementStreetItemId === preMeasurementStreetItemId);
-      if (index !== -1) {
-        this.streetItems[index].materialQuantity += 1;
-      }
-    } else if (action === 'decrement') {
-      let index = this.streetItems.findIndex(i => i.preMeasurementStreetItemId === preMeasurementStreetItemId);
-      if (index !== -1) {
-        if (this.streetItems[index].materialQuantity > 0) this.streetItems[index].materialQuantity -= 1;
+      this.streetItems[index].materialQuantity += 1;
+
+      if (relayIndex > 0) {
+        this.streetItems[relayIndex].materialQuantity += 1;
+        this.streetItems[relayIndex].status = 'EDITED';
         this.changedItems.push({
-          itemId: this.streetItems[index].preMeasurementStreetItemId,
+          itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
           streetId: this.streetId,
-          quantity: this.streetItems[index].materialQuantity
+          quantity: this.streetItems[relayIndex].materialQuantity
         });
-
-        if (this.streetItems[index].materialType.toUpperCase() === 'LED') {
-          let relayIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'RELÉ');
-          // adicionar validacao de rua
-          this.streetItems[relayIndex].materialQuantity -= 1;
-          this.changedItems.push({
-            itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
-            streetId: this.streetId,
-            quantity: this.streetItems[relayIndex].materialQuantity
-          });
-        }
-
-        if (this.streetItems[index].materialType.toUpperCase() === 'BRAÇO') {
-          // implementar para cabos
-        }
-
       }
+
+      if (cableIndex > 0) {
+        if (this.streetItems[index].materialLength.startsWith('1')) {
+          cableQuantity = 2.5;
+        } else if (this.streetItems[index].materialLength.startsWith('2')) {
+          cableQuantity = 8.5;
+        } else if (this.streetItems[index].materialLength.startsWith('3')) {
+          cableQuantity = 12.5;
+        }
+        this.streetItems[cableIndex].materialQuantity += cableQuantity;
+        this.streetItems[cableIndex].status = 'EDITED';
+      }
+
+    } else if (action === 'decrement') {
+      if (this.streetItems[index].materialQuantity == 0) return
+      this.streetItems[index].materialQuantity -= 1;
+      this.streetItems[index].status = 'EDITED';
+
+      if (relayIndex > 0) {
+        // adicionar validacao de rua
+        this.streetItems[relayIndex].materialQuantity -= 1;
+        this.streetItems[relayIndex].status = 'EDITED';
+      }
+
+      if (cableIndex > 0) {
+        if (this.streetItems[index].materialLength.startsWith('1')) {
+          cableQuantity = 2.5;
+        } else if (this.streetItems[index].materialLength.startsWith('2')) {
+          cableQuantity = 8.5;
+        } else if (this.streetItems[index].materialLength.startsWith('3')) {
+          cableQuantity = 12.5;
+        }
+        this.streetItems[cableIndex].materialQuantity -= cableQuantity;
+        this.streetItems[cableIndex].status = 'EDITED';
+      }
+
     }
+
+    // adicao itens primarios
+    this.changedItems = this.changedItems.filter(ci => ci.itemId !== preMeasurementStreetItemId)
+    this.changedItems.push({
+      itemId: preMeasurementStreetItemId,
+      streetId: this.streetId,
+      quantity: this.streetItems[index].materialQuantity
+    });
+
+    // adicao itens dependentes
+    if (cableIndex > 0) {
+      this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId)
+      this.changedItems.push({
+        itemId: this.streetItems[cableIndex].preMeasurementStreetItemId,
+        streetId: this.streetId,
+        quantity: this.streetItems[cableIndex].materialQuantity
+      });
+    } else if (relayIndex) {
+      this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId)
+      this.changedItems.push({
+        itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
+        streetId: this.streetId,
+        quantity: this.streetItems[relayIndex].materialQuantity
+      });
+    }
+
+    console.log(this.changedItems);
   }
 }
