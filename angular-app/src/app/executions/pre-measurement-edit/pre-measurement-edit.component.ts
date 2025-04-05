@@ -227,14 +227,14 @@ export class PreMeasurementEditComponent {
 
 
     let item = this.streetItems[itemIndex];
-    let canceled = this.cancelledItems.some(ci => ci.itemId == id);
     let message = '';
-    switch (canceled) {
-      case false:
+    switch (this.streetItems[itemIndex].status) {
+      case 'PENDING':
+      case 'EDITED':
         this.streetItems[itemIndex].status = "CANCELLED";
         if (relayIndex > 0) {
           ledQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "LED" && si.status !== "CANCELLED").length;
-          if (ledQuantity > 1) {
+          if (ledQuantity > 0) {
             this.streetItems[relayIndex].materialQuantity -= this.streetItems[itemIndex].materialQuantity;
             this.streetItems[relayIndex].status = "EDITED";
             message = `ITEM ${item.materialName} CANCELADO E ITEM ${this.streetItems[relayIndex].materialName} ALTERADO`;
@@ -244,7 +244,7 @@ export class PreMeasurementEditComponent {
           }
         } else if (cableIndex > 0) {
           armQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "BRAÇO" && si.status !== "CANCELLED").length;
-          if (armQuantity > 1) {
+          if (armQuantity > 0) {
             if (this.streetItems[itemIndex].materialLength.startsWith('1')) {
               cableQuantity = 2.5;
             } else if (this.streetItems[itemIndex].materialLength.startsWith('2')) {
@@ -264,11 +264,11 @@ export class PreMeasurementEditComponent {
         }
 
         break;
-      case true:
+      case 'CANCELLED':
         this.streetItems[itemIndex].status = "PENDING";
         if (relayIndex > 0) {
           ledQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "LED" && si.status === "CANCELLED").length;
-          if (ledQuantity > 1) {
+          if (ledQuantity === 0) {
             this.streetItems[relayIndex].materialQuantity += this.streetItems[itemIndex].materialQuantity;
             this.streetItems[relayIndex].status = "EDITED";
             message = `ITEM ${item.materialName} ATIVADO E ITEM ${this.streetItems[relayIndex].materialName} ALTERADO`;
@@ -278,7 +278,7 @@ export class PreMeasurementEditComponent {
           }
         } else if (cableIndex > 0) {
           armQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "BRAÇO" && si.status === "CANCELLED").length;
-          if (armQuantity > 1) {
+          if (armQuantity === 0) {
             if (this.streetItems[itemIndex].materialLength.startsWith('1')) {
               cableQuantity = 2.5;
             } else if (this.streetItems[itemIndex].materialLength.startsWith('2')) {
@@ -300,7 +300,7 @@ export class PreMeasurementEditComponent {
     }
 
     // adicao items
-    if(item.status === "CANCELLED") {
+    if (item.status === "CANCELLED") {
       this.cancelledItems.push({itemId: id, streetId: this.streetId});
     } else {
       this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== id);
@@ -320,7 +320,10 @@ export class PreMeasurementEditComponent {
       } else {
         this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId);
         this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId);
-        this.cancelledItems.push({itemId: this.streetItems[relayIndex].preMeasurementStreetItemId, streetId: this.streetId});
+        this.cancelledItems.push({
+          itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
+          streetId: this.streetId
+        });
       }
     } else if (cableIndex > 0) {
       if (this.streetItems[cableIndex].status === "EDITED") {
@@ -336,7 +339,10 @@ export class PreMeasurementEditComponent {
       } else {
         this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId);
         this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId);
-        this.cancelledItems.push({itemId: this.streetItems[cableIndex].preMeasurementStreetItemId, streetId: this.streetId});
+        this.cancelledItems.push({
+          itemId: this.streetItems[cableIndex].preMeasurementStreetItemId,
+          streetId: this.streetId
+        });
       }
     }
     console.log(this.cancelledStreets);

@@ -39,8 +39,9 @@
             class="w-[23rem]  cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
             (click)="edit('street', s.preMeasurementStreetId, streets, items)">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge rounded mb-4 mt-2" [ngClass]="s.status == 'PENDING' ? 'badge-primary' : 'badge-error'">
-                {{ s.status === "PENDING" ? "ATIVA" : "CANCELADA" }}
+            <span class="badge rounded mb-4 mt-2"
+                  [ngClass]="s.status == 'PENDING' ? 'badge-primary' :  s.status === 'EDITED' ? 'badge-warning' : 'badge-error'">
+                {{ s.status === "PENDING" ? "ATIVO" : s.status === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
             </span>
 
             <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">{{ s.address }}</h3>
@@ -87,26 +88,35 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let i of streetItems; index as index;"
             class="w-[23rem] m-2">
-          <div class="flex justify-between border rounded px-4 py-2 shadow h-36" [class.bg-neutral-100]="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')">
+          <div class="flex justify-between border rounded px-4 py-2 shadow h-36"
+               [class.bg-neutral-100]="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')">
             <div class="relative w-full">
-              <span class="badge rounded mb-4 mt-2" [ngClass]="i.status == 'PENDING' ? 'badge-primary' :  i.status === 'EDITED' ? 'badge-warning' : 'badge-error'">
+              <span class="badge rounded mb-4 mt-2"
+                    [ngClass]="i.status == 'PENDING' ? 'badge-primary' :  i.status === 'EDITED' ? 'badge-warning' : 'badge-error'">
                 {{ i.status === "PENDING" ? "ATIVO" : i.status === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
             </span>
               <h3 class="text-lg text-neutral-800 leading-[1.15rem] font-light">{{ i.materialName }}</h3>
-              <span class="text-sm text-neutral-600 flex items-center">{{ i.materialPower ? i.materialPower : i.materialLength }}</span>
+              <span
+                class="text-sm text-neutral-600 flex items-center">{{ i.materialPower ? i.materialPower : i.materialLength }}</span>
               <span *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
-                [ngClass]="i.status === 'PENDING' ? 'text-red-600' : 'text-primary'" class="material-icons text-2xl ml-1 absolute bottom-0 cursor-pointer rounded hover:border p-1 select-none" (click)="edit('item', i.preMeasurementStreetItemId, streets, items)">{{i.status !== "CANCELLED" ? 'delete' : 'restore'}}</span>
-              <span *ngIf="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')" class="absolute bottom-0 text-xs border-t min-w-full pt-1 select-none">Controlado automaticamente</span>
+                    [ngClass]="i.status === 'PENDING' ? 'text-red-600' : 'text-primary'"
+                    class="material-icons text-2xl ml-1 absolute bottom-0 cursor-pointer rounded hover:border p-1 select-none"
+                    (click)="edit('item', i.preMeasurementStreetItemId, streets, items)">{{ i.status !== "CANCELLED" ? 'delete' : 'restore' }}</span>
+              <span *ngIf="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')"
+                    class="absolute bottom-0 text-xs border-t min-w-full pt-1 select-none">Controlado automaticamente</span>
             </div>
             <div
+              *ngIf="i.status !== 'CANCELLED'"
               class="flex flex-col justify-center items-center  border rounded  p-1 border-b-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] min-w-fit">
               <span
-                *ngIf="i.status !== 'CANCELLED' && !i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
-                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:-translate-y-2 select-none" (click)="changeValue(i.preMeasurementStreetItemId, 'increment')">expand_less</span>
+                *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:-translate-y-2 select-none"
+                (click)="changeValue(i.preMeasurementStreetItemId, 'increment')">expand_less</span>
               <span class="text-sm text-neutral-600 flex items-center">{{ i.materialQuantity }}</span>
               <span
-                *ngIf="i.status !== 'CANCELLED' && !i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
-                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-y-2 select-none" (click)="changeValue(i.preMeasurementStreetItemId, 'decrement')">expand_more</span>
+                *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-y-2 select-none"
+                (click)="changeValue(i.preMeasurementStreetItemId, 'decrement')">expand_more</span>
               <p class="text-xs p-1">Qtde.</p>
             </div>
           </div>
@@ -121,7 +131,7 @@
 
   <app-modal [modalOpen]="openModal" (modalClose)="openModal=false"
              classModal="rounded p-4 w-[30%] flex flex-col  justify-center">
-    @if(alert) {
+    @if (alert) {
       <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
         <span class="material-icons text-error">warning</span>
         <h2 class="text-center font-semibold">Essa ação retorna o status de todos os itens, deseja prosseguir?</h2>
@@ -135,8 +145,7 @@
         <span class="material-icons">check</span>
         Ok, manter
       </button>
-    }
-    @else if (itemId > 0) {
+    } @else if (itemId > 0) {
 
     } @else if (streetId > 0) {
       <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
