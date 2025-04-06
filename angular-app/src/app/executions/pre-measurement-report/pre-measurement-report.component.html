@@ -117,7 +117,7 @@
               <tbody>
               <tr *ngFor="let s of preMeasurement.streets">
                 <td>{{ s.number }}</td>
-                <td>{{ s.address }}</td>
+                <td>{{ s.street}}</td>
                 <td>{{ s.lastPower }}</td>
                 <td *ngIf="condition('cabo')">{{ getItem('cabo', s) }}</td>
                 <td *ngIf="condition('1,5M')">{{ getItem('1,5M', s) }}</td>

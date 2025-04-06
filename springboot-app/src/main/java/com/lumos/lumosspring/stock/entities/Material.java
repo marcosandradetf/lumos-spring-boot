@@ -47,7 +47,6 @@ public class Material {
             joinColumns = @JoinColumn(name = "material_id"),
             inverseJoinColumns = @JoinColumn(name = "material_service_id")
     )
-    private Set<MaterialService> materialServices = new HashSet<>();
 
     public Type getMaterialType() {
         return materialType;
@@ -117,14 +116,6 @@ public class Material {
 
     public void setRelatedMaterials(Set<Material> relatedMaterials) {
         this.relatedMaterials = relatedMaterials;
-    }
-
-    public Set<MaterialService> getMaterialServices() {
-        return materialServices;
-    }
-
-    public void setMaterialServices(Set<MaterialService> materialServices) {
-        this.materialServices = materialServices;
     }
 }
 

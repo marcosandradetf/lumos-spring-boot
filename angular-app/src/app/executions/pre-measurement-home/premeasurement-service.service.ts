@@ -5,6 +5,7 @@ import {Observable} from 'rxjs';
 import * as http from 'node:http';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
+import {PreMeasurementModel} from '../../models/pre-measurement.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,297 +17,11 @@ export class PreMeasurementService {
   }
 
   getPreMeasurement(preMeasurementId: string) {
-    return this.http.get<
-      {
-        preMeasurementId: number;
-        contractId: number;
-        city: string;
-        createdBy: string;
-        createdAt: string;
-        preMeasurementType: string;
-        preMeasurementStyle: string;
-        teamName: string;
-        totalPrice: string;
-        status: string;
-
-        streets: {
-          number: number;
-          preMeasurementStreetId: number;
-          lastPower: string;
-          latitude: number;
-          longitude: number;
-          address: string;
-          status: string;
-
-          items: {
-            preMeasurementStreetItemId: number;
-            materialId: number;
-            contractItemId: number;
-            materialName: string;
-            materialType: string;
-            materialPower: string;
-            materialLength: string;
-            materialQuantity: number;
-            status: string;
-          }[]
-
-        }[];
-      }>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
+    return this.http.get<PreMeasurementModel>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
   }
 
-  getPreMeasurements(status: string): Observable<
-    {
-      preMeasurementId: number;
-      city: string;
-      createdBy: string;
-      createdAt: string;
-      preMeasurementType: string;
-      preMeasurementStyle: string;
-      teamName: string;
-
-      streets: {
-        preMeasurementStreetId: number;
-        lastPower: string;
-        latitude: number;
-        longitude: number;
-        address: string;
-
-        items: {
-          preMeasurementStreetItemId: number;
-          materialId: number;
-          materialName: string;
-          materialType: string;
-          materialPower: string;
-          materialLength: string;
-          materialQuantity: number;
-        }[]
-
-      }[];
-
-    }[]> {
-    return this.http.get<
-      {
-        preMeasurementId: number;
-        city: string;
-        createdBy: string;
-        createdAt: string;
-        preMeasurementType: string;
-        preMeasurementStyle: string;
-        teamName: string;
-
-        streets: {
-          preMeasurementStreetId: number;
-          lastPower: string;
-          latitude: number;
-          longitude: number;
-          address: string;
-
-          items: {
-            preMeasurementStreetItemId: number;
-            materialId: number;
-            materialName: string;
-            materialType: string;
-            materialPower: string;
-            materialLength: string;
-            materialQuantity: number;
-          }[]
-
-        }[];
-
-      }[]>(`${this.endpoint + `/get-pre-measurements/${status}`}`);
-  }
-
-  getFields(preMeasurementId: number) {
-    return this.http.get<
-      {
-        leds:
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }[];
-        ledService: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        piService: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        arms:
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }[];
-        armService: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        screws: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        straps: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        relays: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        connectors: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        cables: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-        posts: [
-          {
-            description: string;
-            quantity: number;
-            price: string;
-            priceTotal: string;
-          }
-        ];
-      }
-
-    >(`${this.endpoint + `/get-fields/${preMeasurementId}`}`);
-  }
-
-
-  savePremeasurementValues(
-    values: {
-      leds:
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }[];
-      ledService: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      piService: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      arms:
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }[];
-      armService: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      screws: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      straps: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      relays: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      connectors: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      cables: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-      posts: [
-        {
-          description: string;
-          quantity: number;
-          price: string;
-          priceTotal: string;
-        }
-      ];
-    },
-    preMeasurementId: number) {
-    return this.http.post(`${this.endpoint + `/save-pre-measurement-values/${preMeasurementId}`}`, values);
-  }
-
-
-  saveHTMLReport(html: string, preMeasurementId: number) {
-    return this.http.post(`${this.endpoint + `/save-pre-measurement-html-report/${preMeasurementId}`}`, html);
+  getPreMeasurements(status: string): Observable<PreMeasurementModel[]> {
+    return this.http.get<PreMeasurementModel[]>(`${this.endpoint + `/get-pre-measurements/${status}`}`);
   }
 
   getContract(contractId: number) {
@@ -335,5 +50,13 @@ export class PreMeasurementService {
 
   evolveStatus(preMeasurementId: number) {
     return this.http.post(environment.springboot + "/api/pre-measurement/evolve-status/" + preMeasurementId, null);
+  }
+
+  sendModifications(modifications: {
+    cancelledStreets: { streetId: number }[];
+    cancelledItems: { streetId: number; itemId: number }[];
+    changedItems: { streetId: number; itemId: number; quantity: number }[]
+  }) {
+    return this.http.post(environment.springboot + "/api/pre-measurement/send-modifications", modifications);
   }
 }

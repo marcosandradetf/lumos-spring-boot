@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -29,6 +30,10 @@ public class PreMeasurementStreetItem {
     @JoinColumn(name = "pre_measurement_street_id")
     private PreMeasurementStreet preMeasurementStreet;
 
+    @ManyToOne
+    @JoinColumn(name = "pre_measurement_id")
+    private PreMeasurement preMeasurement;
+
     private double itemQuantity;
 
     private String itemStatus = ItemStatus.PENDING;
@@ -36,8 +41,8 @@ public class PreMeasurementStreetItem {
     private BigDecimal unitPrice = BigDecimal.ZERO;
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    @OneToMany(mappedBy = "preMeasurementStreetItem", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PreMeasurementStreetItemService> services = new HashSet<>();
+    private String contractServiceIdMask;
+    private BigDecimal contractServiceDividerPrices = BigDecimal.ZERO;
 
     public long getPreMeasurementStreetItemId() {
         return preMeasurementStreetItemId;
@@ -47,7 +52,7 @@ public class PreMeasurementStreetItem {
         this.preMeasurementStreetItemId = itemId;
     }
 
-    public double getItemQuantity() {
+    public Double getItemQuantity() {
         return itemQuantity;
     }
 
@@ -63,7 +68,6 @@ public class PreMeasurementStreetItem {
         this.unitPrice = itemValue;
         if (itemValue != null) {
             setTotalPrice(itemValue.multiply(BigDecimal.valueOf(itemQuantity)));
-            preMeasurementStreet.getPreMeasurement().sumTotalPrice(totalPrice);
         }
     }
 
@@ -99,7 +103,6 @@ public class PreMeasurementStreetItem {
         this.itemQuantity += v;
         if (updateValue) {
             setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(v)));
-            preMeasurementStreet.getPreMeasurement().sumTotalPrice(totalPrice);
         }
     }
 
@@ -111,26 +114,6 @@ public class PreMeasurementStreetItem {
         this.preMeasurementStreet = preMeasurementStreet;
     }
 
-    public void addService(PreMeasurementStreetItemService service) {
-        this.services.add(service);
-    }
-
-    public void removeService(String serviceName) {
-        this.services.stream()
-                .filter(s -> s.getService().getServiceName().equals(serviceName))
-                .findFirst()
-                .ifPresent(s -> {
-                    this.services.remove(s);
-                });
-    }
-
-    public PreMeasurementStreetItemService getService(String serviceName) {
-        return this.services.stream()
-                .filter(s -> s.getService().getServiceName().equals(serviceName))
-                .findFirst()
-                .orElse(null);
-    }
-
     public ContractItemsQuantitative getContractItem() {
         return contractItem;
     }
@@ -140,4 +123,35 @@ public class PreMeasurementStreetItem {
         this.setUnitPrice(contractItem.getUnitPrice());
     }
 
+    public String getContractServiceIdMask() {
+        return contractServiceIdMask;
+    }
+
+    public void setContractServiceIdMask(Long contractServiceId) {
+        if (this.contractServiceIdMask == null || this.contractServiceIdMask.isEmpty()) {
+            this.contractServiceIdMask = contractServiceId.toString();
+        } else {
+            this.contractServiceIdMask = this.contractServiceIdMask.concat("#").concat(contractServiceId.toString());
+        }
+    }
+
+    public PreMeasurement getPreMeasurement() {
+        return preMeasurement;
+    }
+
+    public void setPreMeasurement(PreMeasurement preMeasurement) {
+        this.preMeasurement = preMeasurement;
+    }
+
+    public void setContractServiceIdMask(String contractServiceIdMask) {
+        this.contractServiceIdMask = contractServiceIdMask;
+    }
+
+    public BigDecimal getContractServiceDividerPrices() {
+        return contractServiceDividerPrices;
+    }
+
+    public void setContractServiceDividerPrices(BigDecimal contractServiceDividerPrices) {
+        this.contractServiceDividerPrices = this.contractServiceDividerPrices.add(contractServiceDividerPrices);
+    }
 }

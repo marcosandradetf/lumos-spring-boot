@@ -11,6 +11,7 @@ import {UserService} from '../../manage/user/user-service.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {ReportService} from '../../core/service/report-service';
 import {environment} from '../../../environments/environment';
+import {PreMeasurementModel} from '../../models/pre-measurement.model';
 
 @Component({
   selector: 'app-pre-measurement-home-report',
@@ -26,40 +27,7 @@ import {environment} from '../../../environments/environment';
   styleUrl: './pre-measurement-report.component.scss'
 })
 export class PreMeasurementReportComponent {
-  preMeasurement: {
-    preMeasurementId: number;
-    contractId: number;
-    city: string;
-    createdBy: string;
-    createdAt: string;
-    preMeasurementType: string;
-    preMeasurementStyle: string;
-    teamName: string;
-    totalPrice: string;
-    status: string;
-
-    streets: {
-      number: number;
-      preMeasurementStreetId: number;
-      lastPower: string;
-      latitude: number;
-      longitude: number;
-      address: string;
-
-      items: {
-        preMeasurementStreetItemId: number;
-        materialId: number;
-        contractItemId: number;
-        materialName: string;
-        materialType: string;
-        materialPower: string;
-        materialLength: string;
-        materialQuantity: number;
-      }[]
-
-    }[];
-
-  } = {
+  preMeasurement: PreMeasurementModel = {
     preMeasurementId: 0,
     contractId: 0,
     city: '',
@@ -195,23 +163,7 @@ export class PreMeasurementReportComponent {
   }
 
 
-  getItem(attributeName: string, street: {
-    preMeasurementStreetId: number;
-    lastPower: string;
-    latitude: number;
-    longitude: number;
-    address: string;
-
-    items: {
-      preMeasurementStreetItemId: number;
-      materialId: number;
-      materialName: string;
-      materialType: string;
-      materialPower: string;
-      materialLength: string;
-      materialQuantity: number;
-    }[]
-  }) {
+  getItem(attributeName: string, street: PreMeasurementModel['streets'][0]) {
     return street.items.find(item =>
       (item.materialLength?.toLowerCase() === attributeName?.toLowerCase() ||
         item.materialPower?.toLowerCase() === attributeName?.toLowerCase() ||

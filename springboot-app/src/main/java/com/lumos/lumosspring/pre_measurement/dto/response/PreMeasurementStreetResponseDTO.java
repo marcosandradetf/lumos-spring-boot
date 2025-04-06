@@ -8,7 +8,9 @@ public record PreMeasurementStreetResponseDTO(
         String lastPower,
         double latitude,
         double longitude,
-        String address,
+        String street,
+        String hood,
+        String city,
         String status,
         List<PreMeasurementStreetItemResponseDTO> items
 ) {

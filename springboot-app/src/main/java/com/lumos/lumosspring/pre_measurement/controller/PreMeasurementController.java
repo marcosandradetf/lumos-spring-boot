@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.pre_measurement.controller;
 
+import com.lumos.lumosspring.pre_measurement.dto.ModificationsDTO;
 import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
 import com.lumos.lumosspring.pre_measurement.service.PreMeasurementService;
 import com.lumos.lumosspring.util.ContractStatus;
@@ -67,6 +68,11 @@ public class PreMeasurementController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/pre-measurement/send-modifications")
+    public ResponseEntity<?> saveModifications(@RequestBody ModificationsDTO modificationsDTO) {
+        return this.preMeasurementService.saveModifications(modificationsDTO);
     }
 
 }

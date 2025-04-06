@@ -6,6 +6,7 @@ import {UtilsService} from '../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
+import {PreMeasurementModel} from '../../models/pre-measurement.model';
 
 @Component({
   selector: 'app-pre-measurement-home',
@@ -21,40 +22,13 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
   styleUrl: './pre-measurement.component.scss'
 })
 export class PreMeasurementComponent implements OnInit {
-  preMeasurements: {
-    preMeasurementId: number;
-    city: string;
-    createdBy: string;
-    createdAt: string;
-    preMeasurementType: string;
-    preMeasurementStyle: string;
-    teamName: string;
-
-    streets: {
-      preMeasurementStreetId: number;
-      lastPower: string;
-      latitude: number;
-      longitude: number;
-      address: string;
-
-      items: {
-        preMeasurementStreetItemId: number;
-        materialId: number;
-        materialName: string;
-        materialType: string;
-        materialPower: string;
-        materialLength: string;
-        materialQuantity: number;
-      }[]
-
-    }[];
-
-  }[] = [];
+  preMeasurements: PreMeasurementModel[] = [];
 
   private loading: boolean = false;
   protected status: string = "";
   openModal: boolean = false;
   preMeasurementId: number = 0;
+  city: string = '';
 
   constructor(
     private preMeasurementService: PreMeasurementService,
@@ -82,21 +56,25 @@ export class PreMeasurementComponent implements OnInit {
       case 'pendente':
         this.preMeasurementService.getPreMeasurements('pending').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
+          this.city = this.preMeasurements[0].streets[0].city;
         });
         break;
       case 'aguardando-retorno':
         this.preMeasurementService.getPreMeasurements('waiting').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
+          this.city = this.preMeasurements[0].streets[0].city;
         });
         break;
       case 'validando':
         this.preMeasurementService.getPreMeasurements('validating').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
+          this.city = this.preMeasurements[0].streets[0].city;
         });
         break;
       case 'disponivel':
         this.preMeasurementService.getPreMeasurements('available').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
+          this.city = this.preMeasurements[0].streets[0].city;
         });
         break;
     }

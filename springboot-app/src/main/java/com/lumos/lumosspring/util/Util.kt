@@ -14,6 +14,9 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import java.util.stream.Collectors
+
+
 
 @Component
 class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepository: RefreshTokenRepository) {
@@ -90,6 +93,15 @@ class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepositor
             else -> "${duration.toMinutes()}min"
         }
     }
+
+    fun extractMaskToList(mask: String): List<Long> {
+        if (mask.isBlank()) return emptyList()
+
+        return mask.split("#")
+            .filter { it.isNotBlank() }
+            .map { it.toLong() }
+    }
+
 }
 
 object ContractStatus {

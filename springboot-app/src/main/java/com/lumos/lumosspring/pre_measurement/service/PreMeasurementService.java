@@ -3,8 +3,8 @@ package com.lumos.lumosspring.pre_measurement.service;
 import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
+import com.lumos.lumosspring.pre_measurement.dto.*;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
-import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetResponseDTO;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 public class PreMeasurementService {
@@ -79,8 +80,10 @@ public class PreMeasurementService {
         return true;
     }
 
-    //    analisar se duplicata ocorre novamente
-//    corrigir soma de valores da pre-medicao
+    /**
+     * TODO
+     * SALVAMENTO DA PRÉ-MEDIÇÃO
+     */
     @Transactional
     public ResponseEntity<?> saveMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
         if (userUUID == null || userUUID.isBlank()) {
@@ -122,9 +125,9 @@ public class PreMeasurementService {
         preMeasurement.setCity(contract.getContractor());
         preMeasurementRepository.save(preMeasurement);
 
-        streets.forEach(streetOff -> {
+        streets.forEach(streetDTO -> {
             PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
-            var street = streetOff.getStreet();
+            var street = streetDTO.getStreet();
 
             preMeasurementStreet.setPreMeasurement(preMeasurement);
             preMeasurementStreet.setStreet(street.getStreet());
@@ -137,10 +140,8 @@ public class PreMeasurementService {
             preMeasurementStreet.setLastPower(street.getLastPower());
             preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
             preMeasurementStreetRepository.save(preMeasurementStreet);
-            streetOff.getItems().forEach(item -> {
-                // IMPORTANTE
-                // ADICIONAR AUTOMATICAMENTE CABO E RELE
-                materialRepository.findByIdWithGraphType(item.getMaterialId()).ifPresent(material -> {
+            streetDTO.getItems().forEach(itemDTO -> {
+                materialRepository.findByIdWithGraphType(itemDTO.getMaterialId()).ifPresent(material -> {
                     var contractItem = searchContractItem(contract, material);
                     if (contractItem.isEmpty()) {
                         throw new RuntimeException("Item do Contrato não encontrado");
@@ -148,52 +149,79 @@ public class PreMeasurementService {
 
                     var newItem = new PreMeasurementStreetItem();
                     newItem.setPreMeasurementStreet(preMeasurementStreet);
+                    newItem.setPreMeasurement(preMeasurement);
                     newItem.setMaterial(material);
                     newItem.setItemStatus(ItemStatus.PENDING);
-                    newItem.setItemQuantity(item.getMaterialQuantity());
-                    preMeasurementStreetItemRepository.save(newItem);
-                    preMeasurementStreetItemRepository.flush();
+                    newItem.setItemQuantity(itemDTO.getMaterialQuantity());
                     newItem.setContractItem(contractItem.get());
-                    //    analisar se duplicata ocorre novamente
-//    corrigir soma de valores da pre-medicao
-                    preMeasurementStreetItemRepository.save(newItem); // Salvar a relação
-                    if (Objects.equals(material.getMaterialType().getTypeName(), "LED")) {
-                        contract.getContractItemsQuantitative().stream()
-                                .filter(i -> Objects.equals(i.getReferenceItem().getType(), "SERVIÇO"))
-                                .filter(i -> Objects.equals(i.getReferenceItem().getItemDependency(), "LED"))
-                                .forEach(i -> {
-                                    newItem.getPreMeasurementStreet().getPreMeasurement().sumTotalPrice(i.getUnitPrice().multiply(BigDecimal.valueOf(i.getContractedQuantity())));
-                                });
+                    preMeasurementStreetItemRepository.save(newItem);
 
-                    } else if (Objects.equals(material.getMaterialType().getTypeName(), "BRAÇO")) {
-                        contract.getContractItemsQuantitative().stream()
-                                .filter(i -> Objects.equals(i.getReferenceItem().getType(), "SERVIÇO"))
-                                .filter(i -> Objects.equals(i.getReferenceItem().getItemDependency(), "BRAÇO"))
-                                .forEach(i -> {
-                                    newItem.getPreMeasurementStreet().getPreMeasurement().sumTotalPrice(i.getUnitPrice().multiply(BigDecimal.valueOf(i.getContractedQuantity())));
-                                });
-                    }
+                    insertServices(material.getMaterialType().getTypeName(), contract, newItem);
 
-                    material.getRelatedMaterials().stream()
-                            .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("REL"))
-                            .findFirst().ifPresent(rm -> {
-                                insertOrUpdateRelay(preMeasurementStreet, rm, item.getMaterialQuantity(), contract);
-                            });
+                    insertDependencyItems(material, itemDTO, preMeasurementStreet, contract);
 
-                    material.getRelatedMaterials().stream()
-                            .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("CAB"))
-                            .findFirst().ifPresent(rm -> {
-                                insertOrUpdateCable(preMeasurementStreet, rm, material.getMaterialLength(), item.getMaterialQuantity(), contract);
-                            });
                 });
             });
         });
 
+
+        var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurement(preMeasurement);
+
+        BigDecimal itemsPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal servicesPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        preMeasurement.setTotalPrice(itemsPrices.add(servicesPrices));
+        preMeasurementRepository.save(preMeasurement);
+
         return ResponseEntity.ok().body(new DefaultResponse("Pré-Medição salva com sucesso"));
     }
 
+    /**
+     * TODO
+     * METODO PARA ADICIONAR SERVIÇOS RELACIONADOS NA PRÉ-MEDIÇÃO
+     * EXEMPLO: PRIMEIRA CHAMADA LED DE 100W / BRAÇO DE 1,5
+     * EXEMPLO: SEGUNDA CHAMADA LED DE 120W / BRAÇO DE 2,5
+     */
     @Transactional
-    public void insertOrUpdateRelay(PreMeasurementStreet preMeasurementStreet, Material rm, int quantity, Contract contract) {
+    private void insertServices(String actualItemType, Contract contract, PreMeasurementStreetItem actualItem) {
+        if (!List.of("LED", "BRAÇO").contains(actualItemType.toUpperCase())) return;
+
+        contract.getContractItemsQuantitative().stream()
+                .filter(i -> "SERVIÇO".equalsIgnoreCase(i.getReferenceItem().getType()))
+                .filter(i -> actualItemType.equalsIgnoreCase(i.getReferenceItem().getItemDependency()))
+                .forEach(contractService -> {
+                    actualItem.setContractServiceIdMask(contractService.getContractItemId());
+                    actualItem.setContractServiceDividerPrices(
+                            contractService.getUnitPrice().multiply(BigDecimal.valueOf(actualItem.getItemQuantity()))
+                    );
+                });
+    }
+
+    /**
+     * ME TODO PARA ADICIONAR MATERIAIS DEPENDENTES NA PRÉ-MEDIÇÃO
+     **/
+    @Transactional
+    private void insertDependencyItems(Material material, PreMeasurementStreetItemDTO itemDTO, PreMeasurementStreet preMeasurementStreet, Contract contract) {
+        material.getRelatedMaterials().stream()
+                .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("REL"))
+                .findFirst().ifPresent(rm -> {
+                    insertOrUpdateRelay(preMeasurementStreet, rm, itemDTO.getMaterialQuantity(), contract);
+                });
+
+        material.getRelatedMaterials().stream()
+                .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("CAB"))
+                .findFirst().ifPresent(rm -> {
+                    insertOrUpdateCable(preMeasurementStreet, rm, material.getMaterialLength(), itemDTO.getMaterialQuantity(), contract);
+                });
+    }
+
+    @Transactional
+    private void insertOrUpdateRelay(PreMeasurementStreet preMeasurementStreet, Material rm, int quantity, Contract contract) {
         var existingRelay = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
                 .stream()
                 .filter(i -> i.getMaterial().getIdMaterial().equals(rm.getIdMaterial()))
@@ -211,16 +239,13 @@ public class PreMeasurementService {
             newRelay.setMaterial(rm);
             newRelay.addItemQuantity(quantity);
             preMeasurementStreet.addItem(newRelay);
-            preMeasurementStreetItemRepository.save(newRelay);
-
-            // Agora que o objeto foi salvo, podemos definir a relação e salvar novamente
             newRelay.setContractItem(contractRelay.get());
             preMeasurementStreetItemRepository.save(newRelay);
         }
     }
 
     @Transactional
-    public void insertOrUpdateCable(PreMeasurementStreet preMeasurementStreet, Material cable, String armLength, int quantity, Contract contract) {
+    private void insertOrUpdateCable(PreMeasurementStreet preMeasurementStreet, Material cable, String armLength, int quantity, Contract contract) {
         var existingCable = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
                 .stream()
                 .filter(i -> i.getMaterial().getIdMaterial().equals(cable.getIdMaterial()))
@@ -241,17 +266,11 @@ public class PreMeasurementService {
 
             double multiplier = getCableMultiplier(armLength);
             newCable.addItemQuantity(quantity * multiplier);
-            preMeasurementStreetItemRepository.save(newCable);
-
-            // Definir a relação e salvar novamente
             newCable.setContractItem(contractCable.get());
             preMeasurementStreetItemRepository.save(newCable);
         }
     }
 
-    /**
-     * Método auxiliar para calcular o multiplicador do cabo.
-     */
     private double getCableMultiplier(String armLength) {
         return switch (armLength.charAt(0)) {
             case '1' -> 2.5;
@@ -327,6 +346,8 @@ public class PreMeasurementService {
                                 s.getLatitude(),
                                 s.getLongitude(),
                                 s.getStreet(),
+                                s.getNeighborhood(),
+                                s.getCity(),
                                 s.getStreetStatus(),
                                 s.getItems() != null ? s.getItems().stream()
                                         .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
@@ -345,4 +366,251 @@ public class PreMeasurementService {
                         )).toList()
         );
     }
+
+    /**
+     * MÉTODO PARA SALVAR AS MODIFICAÇOES NA PRÉ-MEDIÇÃO
+     */
+    public ResponseEntity<?> saveModifications(ModificationsDTO modificationsDTO) {
+        var cancelledStreets = modificationsDTO.getCancelledStreets();
+        var cancelledItems = modificationsDTO.getCancelledItems();
+        var changedItems = modificationsDTO.getChangedItems();
+
+        if (!cancelledStreets.isEmpty())
+            cancelStreets(cancelledStreets);
+
+        if (!cancelledItems.isEmpty())
+            cancelItems(cancelledItems);
+
+        if (!changedItems.isEmpty())
+            changeItems(changedItems);
+
+
+        return ResponseEntity.ok(new DefaultResponse("Itens Atualizados com Sucesso!"));
+    }
+
+    @Transactional
+    private void cancelStreets(List<CancelledStreets> cancelledStreets) {
+        List<Long> streetIds = cancelledStreets.stream()
+                .filter(Objects::nonNull)
+                .map(CancelledStreets::getStreetId)
+                .toList();
+
+        List<PreMeasurementStreet> allStreets = preMeasurementStreetRepository.findAllById(streetIds)
+                .stream()
+                .peek(s -> {
+                    s.setStreetStatus(ItemStatus.CANCELLED);
+                    if (s.getItems() != null) {
+                        s.getItems().forEach(item -> item.setItemStatus(ItemStatus.CANCELLED));
+                    }
+                })
+                .toList();
+
+        Set<Long> preMeasurementIds = allStreets.stream()
+                .map(s -> s.getPreMeasurement().getPreMeasurementId())
+                .collect(Collectors.toSet());
+
+        if (preMeasurementIds.size() > 1) {
+            throw new IllegalStateException("Ruas de múltiplas pré-medições não podem ser canceladas juntas");
+        }
+
+        BigDecimal itemsPrices = allStreets.stream()
+                .map(PreMeasurementStreet::getItems)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal servicesPrices = allStreets.stream()
+                .map(PreMeasurementStreet::getItems)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalPrice = itemsPrices.add(servicesPrices);
+
+        PreMeasurement preMeasurement = allStreets.getFirst().getPreMeasurement();
+        preMeasurement.subtractTotalPrice(totalPrice);
+        preMeasurementRepository.save(preMeasurement);
+    }
+
+    @Transactional
+    private void cancelItems(List<CancelledItems> cancelledItems) {
+        List<Long> itemsIds = cancelledItems.stream()
+                .filter(Objects::nonNull)
+                .map(CancelledItems::getItemId)
+                .toList();
+
+        List<PreMeasurementStreetItem> allItems = preMeasurementStreetItemRepository.findAllById(itemsIds)
+                .stream()
+                .peek(s ->
+                        s.setItemStatus(ItemStatus.CANCELLED)
+                )
+                .toList();
+
+        Set<Long> preMeasurementIds = allItems.stream()
+                .map(item -> item.getPreMeasurement().getPreMeasurementId())
+                .collect(Collectors.toSet());
+
+        if (preMeasurementIds.size() > 1) {
+            throw new IllegalStateException("Itens de múltiplas pré-medições não podem ser cancelados juntos");
+        }
+
+        BigDecimal itemsPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal servicesPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
+        BigDecimal totalPrice = itemsPrices.add(servicesPrices);
+
+        PreMeasurement preMeasurement = allItems.getFirst().getPreMeasurement();
+        preMeasurement.subtractTotalPrice(totalPrice);
+        preMeasurementRepository.save(preMeasurement);
+    }
+
+    @Transactional
+    private void changeItems(List<ChangedItems> changedItems) {
+        List<Long> itemsIds = changedItems.stream()
+                .filter(Objects::nonNull)
+                .map(ChangedItems::getItemId)
+                .toList();
+
+        // Carrega os itens antigos com base nos IDs
+        List<PreMeasurementStreetItem> oldItems = preMeasurementStreetItemRepository.findAllById(itemsIds)
+                .stream()
+                .peek(s ->
+                        s.setItemStatus(ItemStatus.CANCELLED)
+                )
+                .toList();
+
+        Set<Long> preMeasurementIds = oldItems.stream()
+                .map(item -> item.getPreMeasurement().getPreMeasurementId())
+                .collect(Collectors.toSet());
+
+        if (preMeasurementIds.size() > 1) {
+            throw new IllegalStateException("Itens de múltiplas pré-medições não podem ser cancelados juntos");
+        }
+
+        Map<Long, PreMeasurementStreetItem> itemMap = oldItems.stream()
+                .collect(Collectors.toMap(PreMeasurementStreetItem::getPreMeasurementStreetItemId, i -> i));
+
+        // Carrega os serviços do contrato relacionado
+        var services = oldItems.stream()
+                .map(PreMeasurementStreetItem::getPreMeasurementStreet)
+                .filter(Objects::nonNull)
+                .map(PreMeasurementStreet::getPreMeasurement)
+                .filter(Objects::nonNull)
+                .map(PreMeasurement::getContract)
+                .filter(Objects::nonNull)
+                .flatMap(c -> getAllServices(c.getContractId()).stream())
+                .toList();
+
+        // Soma total de preço de serviços antigos
+        BigDecimal oldServicesPrice = oldItems.stream()
+                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Soma total de preço de itens antigos
+        BigDecimal oldItemsPrice = oldItems.stream()
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Atualiza os itens com as novas quantidades e preços
+        var newItems = changedItems.stream()
+                .map(cs -> Map.entry(itemMap.get(cs.getItemId()), cs.getQuantity()))
+                .filter(entry -> entry.getKey() != null)
+                .peek(entry -> {
+                    var item = entry.getKey();
+                    var quantity = entry.getValue();
+
+                    item.setItemStatus(ItemStatus.APPROVED);
+                    item.setItemQuantity(quantity);
+                    item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
+
+                    if (item.getContractServiceIdMask() != null) {
+                        var typeItem = item.getMaterial().getMaterialType().getTypeName();
+                        item.setContractServiceDividerPrices(BigDecimal.ZERO);
+                        services.stream()
+                                .filter(serviceItem -> typeItem.equalsIgnoreCase(
+                                        serviceItem.getReferenceItem().getItemDependency()))
+                                .forEach(contractService -> item.setContractServiceDividerPrices(
+                                        contractService.getUnitPrice().multiply(BigDecimal.valueOf(quantity))
+                                ));
+                    }
+
+                    Optional.ofNullable(item.getPreMeasurementStreet())
+                            .ifPresent(s -> s.setStreetStatus(ItemStatus.APPROVED));
+                })
+                .map(Map.Entry::getKey)
+                .toList();
+
+        // Soma total de preço de serviços novos
+        BigDecimal newServicesPrice = newItems.stream()
+                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Soma total de preço de itens novos
+        BigDecimal newItemsPrice = newItems.stream()
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (newItems.isEmpty()) {
+            throw new IllegalStateException("Nenhum item foi alterado.");
+        }
+
+        PreMeasurement preMeasurement = newItems.getFirst().getPreMeasurement();
+        preMeasurement.subtractTotalPrice(oldItemsPrice.add(oldServicesPrice));
+        preMeasurement.sumTotalPrice(newItemsPrice.add(newServicesPrice));
+        preMeasurementRepository.save(preMeasurement);
+    }
+
+    private BigDecimal calculateServicesPrice(List<PreMeasurementStreetItem> items, List<ContractItemsQuantitative> services) {
+        return items.stream()
+                .filter(item -> item.getContractServiceIdMask() != null && !item.getContractServiceIdMask().isBlank())
+                .flatMap(item -> {
+                    List<Long> serviceIds = this.util.extractMaskToList(item.getContractServiceIdMask());
+                    return serviceIds.stream().map(serviceId -> Map.entry(serviceId, item));
+                })
+                .map(entry -> {
+                    Long serviceId = entry.getKey();
+                    PreMeasurementStreetItem item = entry.getValue();
+
+                    BigDecimal unitPrice = services.stream()
+                            .filter(s -> Objects.equals(s.getContractItemId(), serviceId))
+                            .findFirst()
+                            .map(ContractItemsQuantitative::getUnitPrice)
+                            .orElse(BigDecimal.ZERO);
+
+                    var quantity = item.getItemQuantity() != null ? item.getItemQuantity() : 0;
+                    return unitPrice.multiply(BigDecimal.valueOf(quantity));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private List<ContractItemsQuantitative> getAllServices(Long contractId) {
+        return contractRepository.findContractByContractId(contractId)
+                .map(contract -> contract.getContractItemsQuantitative().stream()
+                        .filter(ciq -> {
+                            var type = ciq.getReferenceItem().getType();
+                            var linking = ciq.getReferenceItem().getLinking();
+                            return type != null && type.equalsIgnoreCase("SERVIÇO")
+                                    && linking != null;
+                        })
+                        .toList()
+                )
+                .orElse(Collections.emptyList());
+    }
+
 }

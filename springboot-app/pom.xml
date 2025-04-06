@@ -145,7 +145,7 @@
     </dependencies>
 
     <build>
-        <testSourceDirectory>target/generated-test-sources/test-annotations</testSourceDirectory>
+<!--        <testSourceDirectory>target/generated-test-sources/test-annotations</testSourceDirectory>-->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

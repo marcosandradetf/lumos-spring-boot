@@ -21,8 +21,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    flavorDimensions += listOf("env")
 
-    flavorDimensions("env")
     productFlavors {
         create("dev") {
             dimension = "env"

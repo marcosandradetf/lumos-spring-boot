@@ -7,7 +7,7 @@ data class PreMeasurementDTO(
 
 data class PreMeasurementStreetItemsDTO(
     val street: PreMeasurementStreetDTO,
-    val items: List<PreMeasurementStreetItem>
+    val items: List<PreMeasurementStreetItemDTO>
 )
 
 data class PreMeasurementStreetDTO(
@@ -23,7 +23,7 @@ data class PreMeasurementStreetDTO(
     var state: String?,
 )
 
-data class PreMeasurementStreetItem(
+data class PreMeasurementStreetItemDTO(
     val preMeasurementItemId: Long = 0,
     var preMeasurementStreetId: Long,
     val materialId: Long,

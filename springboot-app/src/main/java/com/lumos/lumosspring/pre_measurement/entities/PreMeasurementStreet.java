@@ -2,6 +2,7 @@ package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +25,6 @@ public class PreMeasurementStreet {
     private String state;
 
     private double latitude;
-
     private double longitude;
 
     private String streetStatus = ItemStatus.PENDING;
@@ -36,11 +36,7 @@ public class PreMeasurementStreet {
     public void addItem(PreMeasurementStreetItem item) {
         items.add(item);
         item.setPreMeasurementStreet(this);
-    }
-
-    public void removeItem(PreMeasurementStreetItem item) {
-        items.remove(item);
-        item.setPreMeasurementStreet(null);
+        item.setPreMeasurement(this.preMeasurement);
     }
 
     @ManyToOne
@@ -149,6 +145,14 @@ public class PreMeasurementStreet {
 
     public void setStreet(String street) {
         this.street = street;
+    }
+
+    public void cancelAllItems() {
+        if (!this.items.isEmpty()) {
+            this.items.forEach(item -> {
+                item.setItemStatus(ItemStatus.CANCELLED);
+            });
+        }
     }
 
 }

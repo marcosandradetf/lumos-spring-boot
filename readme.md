@@ -3,3 +3,7 @@
 
 # Generate public key
 - openssl rsa -in ./app.key -pubout -out ./app.pub
+
+
+# Dependencies
+- wkhtmltopdf

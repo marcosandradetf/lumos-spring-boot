@@ -29,7 +29,6 @@ public class PreMeasurement {
     @ManyToOne(fetch = FetchType.LAZY)
     private Contract contract;
 
-
     // Métodos auxiliares para garantir consistência no relacionamento
     public void addStreet(PreMeasurementStreet street) {
         streets.add(street);
@@ -163,8 +162,12 @@ public class PreMeasurement {
         this.streets = streets;
     }
 
-    public void sumTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = this.totalPrice.add(totalPrice);
+    public void sumTotalPrice(BigDecimal value) {
+        this.totalPrice = this.totalPrice.add(value);
+    }
+
+    public void subtractTotalPrice(BigDecimal value) {
+        this.totalPrice = this.totalPrice.subtract(value);
     }
 
     public BigDecimal getTotalPrice() {
