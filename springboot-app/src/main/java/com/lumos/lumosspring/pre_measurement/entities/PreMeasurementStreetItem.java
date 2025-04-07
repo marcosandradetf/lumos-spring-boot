@@ -154,4 +154,8 @@ public class PreMeasurementStreetItem {
     public void setContractServiceDividerPrices(BigDecimal contractServiceDividerPrices) {
         this.contractServiceDividerPrices = this.contractServiceDividerPrices.add(contractServiceDividerPrices);
     }
+
+    public void setContractServiceDividerPrices(BigDecimal contractServiceDividerPrices, Boolean set) {
+        this.contractServiceDividerPrices = contractServiceDividerPrices;
+    }
 }

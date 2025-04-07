@@ -645,15 +645,15 @@ fun PMSContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 20.dp)
-                            .clickable {
-                                val newUri = createFile() // Gera um novo Uri
-                                fileUri.value = newUri // Atualiza o estado
-                                launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
-                            }
                     ) {
 
                         Card(
-                            modifier = Modifier.padding(end = 5.dp),
+                            modifier = Modifier.padding(end = 5.dp)
+                                .clickable {
+                                    val newUri = createFile() // Gera um novo Uri
+                                    fileUri.value = newUri // Atualiza o estado
+                                    launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
+                                },
                             shape = RoundedCornerShape(10.dp), // Formato
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer // Cor de fundo do botão

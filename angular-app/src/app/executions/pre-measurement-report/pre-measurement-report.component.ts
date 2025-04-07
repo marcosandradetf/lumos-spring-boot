@@ -154,7 +154,7 @@ export class PreMeasurementReportComponent {
               this.loading = false;
               this.openModal = true;
             }
-          })
+          });
         } else {
           this.loading = false;
         }

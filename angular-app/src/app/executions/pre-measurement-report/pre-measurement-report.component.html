@@ -190,7 +190,7 @@
               </table>
             </div>
 
-            <div class="footer">
+            <div class="footer" *ngIf="preMeasurement.status === 'PENDING'">
               <p>Solicitamos análise e aprovação do presente orçamento. Em caso de aprovação parcial, solicitamos
                 indicação dos
                 itens aprovados.</p>

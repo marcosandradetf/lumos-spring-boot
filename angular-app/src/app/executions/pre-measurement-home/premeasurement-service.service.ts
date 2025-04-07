@@ -57,6 +57,6 @@ export class PreMeasurementService {
     cancelledItems: { streetId: number; itemId: number }[];
     changedItems: { streetId: number; itemId: number; quantity: number }[]
   }) {
-    return this.http.post(environment.springboot + "/api/pre-measurement/send-modifications", modifications);
+    return this.http.post<{message: string}>(environment.springboot + "/api/pre-measurement/send-modifications", modifications);
   }
 }

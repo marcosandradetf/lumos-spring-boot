@@ -90,10 +90,9 @@ export class PreMeasurementComponent implements OnInit {
         this.openModal = true;
         break
       case 'validando':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId]);
         break;
       case  'disponivel':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId]);
+        void this.router.navigate(['execucao/pre-medicao/' + preMeasurementId]);
         break;
     }
   }
@@ -110,5 +109,19 @@ export class PreMeasurementComponent implements OnInit {
 
   getPreMeasurement(preMeasurementId: number) {
     return this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId);
+  }
+
+  hideContent = false;
+  evolvePreMeasurement() {
+    this.preMeasurementService.evolveStatus(this.preMeasurementId).subscribe({
+      error: (error: any) => {
+        this.utils.showMessage("Erro ao atualizar o status:", error);
+      },
+      complete: () => {
+        this.loading = false;
+        this.openModal = false;
+        this.hideContent = true;
+      }
+    });
   }
 }

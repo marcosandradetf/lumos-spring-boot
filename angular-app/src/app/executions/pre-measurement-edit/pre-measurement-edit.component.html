@@ -12,17 +12,28 @@
         Editando {{ streets.classList.contains('hidden') ? getStreetName(streetId) : contract.contractor }}</h3>
     </div>
 
-    <!--    <div class="flex w-full justify-center p-5">-->
-    <!--      <div role="tablist" class="tabs tabs-bordered">-->
-    <!--        <input type="radio" class="tab" aria-label="Ruas" checked-->
-    <!--               (click)="router.navigate(['/'])"/>-->
-    <!--        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"-->
-    <!--               aria-label="Itens"-->
-    <!--               (click)="router.navigate(['/'])"/>-->
-    <!--      </div>-->
-    <!--    </div>-->
+    <div *ngIf="hideContent" class="border-b w-full pl-2 h-screen pt-2">
+      <div class="flex items-center flex-col border rounded p-10 shadow">
+        <span class="material-icons mt-20 text-orange-600">thumb_up</span>
+        <h2 class="mt-2 font-semibold text-xl">Itens modificados com sucesso</h2>
+        <p>A pré-medição se encontra <span class="badge badge-info rounded p-3 cursor-pointer" (click)="router.navigate(['/pre-medicao/disponivel'])">Disponível para execução</span></p>
 
-    <div class="border-b w-full pl-2 h-screen pt-2" #streets>
+        <div class="mt-10 flex flex-col">
+          <button class="btn btn-link"
+                  (click)="router.navigate(['/pre-medicao/relatorio/' + preMeasurement.preMeasurementId])">
+            <span class="material-icons">report</span>
+            Exibir relatório
+          </button>
+          <button class="btn btn-link"
+                  (click)="router.navigate(['execucao/pre-medicao/' + preMeasurement.preMeasurementId])">
+            <span class="material-icons">open_in_new</span>
+            Continuar para execução
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-b w-full pl-2 h-screen pt-2" #streets [class.hidden]="hideContent">
       <ol class="flex flex-wrap">
         <li
           class="w-[23rem] m-2">

@@ -63,11 +63,11 @@ public class PreMeasurementService {
                 preMeasurement.get().setStatus(ContractStatus.WAITING);
                 break;
             case (ContractStatus.WAITING):
-                preMeasurement.get().setStatus(ContractStatus.VALIDATING);
-                break;
-            case (ContractStatus.VALIDATING):
                 preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
                 break;
+//            case (ContractStatus.VALIDATING):
+//                preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
+//                break;
             case (ContractStatus.AVAILABLE):
                 preMeasurement.get().setStatus(ContractStatus.IN_PROGRESS);
                 break;
@@ -338,6 +338,7 @@ public class PreMeasurementService {
                 p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
                 p.getStatus(),
                 p.getStreets().stream()
+                        .filter(s -> !Objects.equals(s.getStreetStatus(), ItemStatus.CANCELLED))
                         .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                         .map(s -> new PreMeasurementStreetResponseDTO(
                                 number.getAndIncrement(),
@@ -350,6 +351,7 @@ public class PreMeasurementService {
                                 s.getCity(),
                                 s.getStreetStatus(),
                                 s.getItems() != null ? s.getItems().stream()
+                                        .filter(i -> !Objects.equals(i.getItemStatus(), ItemStatus.CANCELLED))
                                         .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
                                         .map(i -> new PreMeasurementStreetItemResponseDTO(
                                                 i.getPreMeasurementStreetItemId(),
@@ -433,6 +435,7 @@ public class PreMeasurementService {
 
         PreMeasurement preMeasurement = allStreets.getFirst().getPreMeasurement();
         preMeasurement.subtractTotalPrice(totalPrice);
+        preMeasurement.setStatus(ContractStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
@@ -473,6 +476,7 @@ public class PreMeasurementService {
 
         PreMeasurement preMeasurement = allItems.getFirst().getPreMeasurement();
         preMeasurement.subtractTotalPrice(totalPrice);
+        preMeasurement.setStatus(ContractStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
@@ -486,9 +490,6 @@ public class PreMeasurementService {
         // Carrega os itens antigos com base nos IDs
         List<PreMeasurementStreetItem> oldItems = preMeasurementStreetItemRepository.findAllById(itemsIds)
                 .stream()
-                .peek(s ->
-                        s.setItemStatus(ItemStatus.CANCELLED)
-                )
                 .toList();
 
         Set<Long> preMeasurementIds = oldItems.stream()
@@ -503,15 +504,20 @@ public class PreMeasurementService {
                 .collect(Collectors.toMap(PreMeasurementStreetItem::getPreMeasurementStreetItemId, i -> i));
 
         // Carrega os serviços do contrato relacionado
-        var services = oldItems.stream()
+        // Pega o contrato a partir de um dos itens (todos são da mesma pré-med)
+        Optional<Contract> contractOpt = oldItems.stream()
                 .map(PreMeasurementStreetItem::getPreMeasurementStreet)
                 .filter(Objects::nonNull)
                 .map(PreMeasurementStreet::getPreMeasurement)
                 .filter(Objects::nonNull)
                 .map(PreMeasurement::getContract)
                 .filter(Objects::nonNull)
-                .flatMap(c -> getAllServices(c.getContractId()).stream())
-                .toList();
+                .findFirst();
+
+        List<ContractItemsQuantitative> services = contractOpt
+                .map(contract -> getAllServices(contract.getContractId()))
+                .orElse(Collections.emptyList());
+
 
         // Soma total de preço de serviços antigos
         BigDecimal oldServicesPrice = oldItems.stream()
@@ -539,12 +545,12 @@ public class PreMeasurementService {
 
                     if (item.getContractServiceIdMask() != null) {
                         var typeItem = item.getMaterial().getMaterialType().getTypeName();
-                        item.setContractServiceDividerPrices(BigDecimal.ZERO);
+                        item.setContractServiceDividerPrices(BigDecimal.ZERO, true);
                         services.stream()
-                                .filter(serviceItem -> typeItem.equalsIgnoreCase(
-                                        serviceItem.getReferenceItem().getItemDependency()))
-                                .forEach(contractService -> item.setContractServiceDividerPrices(
-                                        contractService.getUnitPrice().multiply(BigDecimal.valueOf(quantity))
+                                .filter(serviceItem ->
+                                        typeItem.equalsIgnoreCase(serviceItem.getReferenceItem().getItemDependency()))
+                                .forEach(contractService ->
+                                        item.setContractServiceDividerPrices(contractService.getUnitPrice().multiply(BigDecimal.valueOf(quantity))
                                 ));
                     }
 
@@ -573,6 +579,7 @@ public class PreMeasurementService {
         PreMeasurement preMeasurement = newItems.getFirst().getPreMeasurement();
         preMeasurement.subtractTotalPrice(oldItemsPrice.add(oldServicesPrice));
         preMeasurement.sumTotalPrice(newItemsPrice.add(newServicesPrice));
+        preMeasurement.setStatus(ContractStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
@@ -604,9 +611,7 @@ public class PreMeasurementService {
                 .map(contract -> contract.getContractItemsQuantitative().stream()
                         .filter(ciq -> {
                             var type = ciq.getReferenceItem().getType();
-                            var linking = ciq.getReferenceItem().getLinking();
-                            return type != null && type.equalsIgnoreCase("SERVIÇO")
-                                    && linking != null;
+                            return type != null && type.equalsIgnoreCase("SERVIÇO");
                         })
                         .toList()
                 )

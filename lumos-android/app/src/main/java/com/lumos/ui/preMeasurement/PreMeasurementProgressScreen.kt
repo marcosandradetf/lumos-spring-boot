@@ -98,6 +98,14 @@ fun PreMeasurementProgressScreen(
             streets = streets,
             sendPreMeasurement = {
                 if (streets.isNotEmpty()) {
+                    Toast
+                        .makeText(
+                            context,
+                            "Pré-medição enviada com sucesso!",
+                            Toast.LENGTH_SHORT
+                        )
+                        .show()
+                    onNavigateToHome()
                     preMeasurementViewModel.sendPreMeasurementSync(contractId)
                 } else {
                     Toast

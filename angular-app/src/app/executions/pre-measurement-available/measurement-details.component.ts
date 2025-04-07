@@ -5,7 +5,7 @@ import * as L from 'leaflet';
 import {TableComponent} from '../../shared/components/table/table.component';
 
 @Component({
-  selector: 'app-measurement-details',
+  selector: 'app-pre-measurement-available',
   standalone: true,
   imports: [
     KeyValuePipe,

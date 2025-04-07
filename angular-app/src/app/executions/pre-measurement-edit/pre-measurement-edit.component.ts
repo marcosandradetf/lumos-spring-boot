@@ -515,7 +515,9 @@ export class PreMeasurementEditComponent {
     this.openModal = true;
   }
 
+  hideContent: boolean = false;
   sendModifications() {
+    this.openModal = false;
     const modifications = {
       cancelledStreets: this.cancelledStreets,
       cancelledItems: this.cancelledItems,
@@ -523,13 +525,12 @@ export class PreMeasurementEditComponent {
     }
 
     this.preMeasurementService.sendModifications(modifications).subscribe({
-      next: (response) => {
+      next: (response: {message: string}) => {
+        this.utils.showMessage(response.message, false);
+        this.hideContent = true;
         console.log(response);
       }, error: (error) => {
         console.log(error);
-      },
-      complete: () => {
-
       }
     });
   }
