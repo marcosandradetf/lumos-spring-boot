@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.team;
 
+import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
@@ -51,6 +52,9 @@ public class Team {
 
     @ManyToOne
     private Region region;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Deposit deposit;
 
     public long getIdTeam() {
         return idTeam;
@@ -132,4 +136,11 @@ public class Team {
         this.cityName = cityName;
     }
 
+    public Deposit getDeposit() {
+        return deposit;
+    }
+
+    public void setDeposit(Deposit deposit) {
+        this.deposit = deposit;
+    }
 }

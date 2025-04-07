@@ -1,96 +1,53 @@
-package com.lumos.lumosspring.pre_measurement.entities;
+package com.lumos.lumosspring.execution.entities
 
-import com.lumos.lumosspring.stock.entities.MaterialStock;
-import jakarta.persistence.*;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
+import com.lumos.lumosspring.stock.entities.MaterialStock
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "tb_material_reservation")
-public class MaterialReservation {
+class MaterialReservation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_material_reservation")
-    private long idMaterialReservation;
+    var idMaterialReservation: Long = 0
 
     @Column(columnDefinition = "TEXT")
-    private String stockReservationName;
+    var description: String? = null
 
-    @ManyToOne
+    @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "material_stock_id")
-    private MaterialStock materialStock;
+    var materialStock: MaterialStock? = null
 
-    @ManyToOne
-    private PreMeasurementStreet street;
-
-    @Column(nullable = false)
-    private double reservedQuantity = 0.0;
+    @ManyToOne(cascade = [(CascadeType.MERGE)])
+    val street: PreMeasurementStreet? = null
 
     @Column(nullable = false)
-    private double quantityCompleted = 0.0;
+    var reservedQuantity: Double = 0.0
 
-    private ReservationStatus status; // Pode ser "pendente", "coletado", "cancelado"
+    @Column(nullable = false)
+    var quantityCompleted: Double = 0.0
+        private set
 
-    public long getIdMaterialReservation() {
-        return idMaterialReservation;
+    var status: String = "PENDING"
+
+    fun setReservedQuantity(reservedQuantity: Double) {
+        this.reservedQuantity = reservedQuantity
+        materialStock!!.removeStockAvailable(reservedQuantity)
     }
 
-    public void setIdMaterialReservation(long idMaterialReservation) {
-        this.idMaterialReservation = idMaterialReservation;
+    fun setQuantityCompleted(quantityCompleted: Int) {
+        this.quantityCompleted = quantityCompleted.toDouble()
+        materialStock!!.removeStockQuantity(quantityCompleted)
     }
 
-    public String getStockReservationName() {
-        return stockReservationName;
-    }
-
-    public void setStockReservationName(String stockReservationName) {
-        this.stockReservationName = stockReservationName;
-    }
-
-    public MaterialStock getMaterialStock() {
-        return materialStock;
-    }
-
-    public void setMaterialStock(MaterialStock material) {
-        this.materialStock = material;
-    }
-
-    public double getReservedQuantity() {
-        return reservedQuantity;
-    }
-
-    public void setReservedQuantity(int reservedQuantity) {
-        this.reservedQuantity = reservedQuantity;
-        this.materialStock.removeStockAvailable(reservedQuantity);
-    }
-
-    public double getQuantityCompleted() {
-        return quantityCompleted;
-    }
-
-    public void setQuantityCompleted(int quantityCompleted) {
-        this.quantityCompleted = quantityCompleted;
-        this.materialStock.removeStockQuantity(quantityCompleted);
-    }
-
-    private void removeStockAvailable() {
-        double qtStockAvailable = this.materialStock.getStockAvailable();
+    private fun removeStockAvailable() {
+        val qtStockAvailable = materialStock!!.stockAvailable
         if (qtStockAvailable > 0) {
-            this.materialStock.removeStockAvailable(this.reservedQuantity);
+            materialStock!!.removeStockAvailable(this.reservedQuantity)
         }
     }
 
-    public ReservationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ReservationStatus status) {
-        this.status = status;
-    }
-
-    public enum ReservationStatus {
-        PENDING,
-        COLLECTED,
-        CANCELLED
-    }
 
 }
 

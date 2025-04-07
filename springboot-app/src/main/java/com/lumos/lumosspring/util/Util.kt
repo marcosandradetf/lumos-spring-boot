@@ -134,3 +134,9 @@ object NotificationType {
     const val CASH ="CASH"
     const val ALERT ="CASH"
 }
+
+object ReservationStatus {
+    const val PENDING = "PENDING"
+    const val COLLECTED = "COLLECTED"
+    const val CANCELLED = "CANCELLED"
+}
