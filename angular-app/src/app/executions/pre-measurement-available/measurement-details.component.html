@@ -18,22 +18,23 @@
           class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10"
           #slider>
           <div
-            *ngFor="let card of cards"
+            *ngFor="let street of preMeasurement.streets"
+            (click)="initMap(street.latitude, street.longitude); streetId = street.preMeasurementStreetId"
             class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
             hover:translate-y-2 m-2 card-execution">
-            <h3 class="text-lg font-semibold mb-2">{{ card.title }}</h3>
-            <p class="text-sm text-gray-600">{{ card.description }}</p>
+            <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
+            <p class="text-sm text-gray-600">{{ street.items.length }} itens para reserva</p>
           </div>
         </div>
 
         <!-- Navegação -->
         <button
-          class="absolute left-2 top-1/2 -translate-y-1/2 material-icons"
+          class="absolute left-2 top-1/2 -translate-y-1/2 material-icons p-1 rounded bg-neutral-800 text-white"
           (click)="scrollLeft(slider)">
           arrow_back_ios
         </button>
         <button
-          class="absolute right-2 top-1/2 -translate-y-1/2 material-icons"
+          class="absolute right-2 top-1/2 -translate-y-1/2 material-icons p-1 rounded bg-neutral-800 text-white"
           (click)="scrollRight(slider)">
           arrow_forward_ios
         </button>
@@ -46,8 +47,8 @@
       <div class="w-1/2">
         <ol>
           <li class="flex justify-end border-b pb-2">
-            <!--            <span class="badge badge-primary mr-2 rounded">{{ preMeasurement.measurement.latitude }}</span>-->
-            <!--            <span class="badge badge-primary mr-2 rounded">{{ preMeasurement.measurement.longitude }}</span>-->
+            <span class="badge badge-primary mr-2 rounded">{{ getStreet(streetId)?.latitude }}</span>
+            <span class="badge badge-primary mr-2 rounded">{{ getStreet(streetId)?.longitude }}</span>
           </li>
           <li>
             <div id="map" class="h-[400px]"></div>

@@ -11,31 +11,44 @@ export class ExecutionService {
 
   constructor(private http: HttpClient) { }
 
-  public getMeasurements() {
+  public getStockAvailable() {
     return this.http.get<
       {
-        measurement: {
-          measurementId: number,
-          latitude: number,
-          longitude: number,
-          address: string,
-          city: string,
-          depositId: number,
-          deviceId: string,
-          depositName: string,
-          measurementType: string,
-          measurementStyle: string,
-          createdBy: string
-        },
-        items: {
-          materialId: string,
-          materialQuantity: number,
-          lastPower: string,
-          measurementId: number,
-          material: string,
-        }[]
+        streetId: number;
+        materialsInStock: {
+          materialId: number;
+          materialName: string;
+          deposit: string;
+          availableQuantity: number
+        }[];
+        materialsInTruck: {
+          materialId: number;
+          materialName: string;
+          deposit: string;
+          availableQuantity: number
+        }[];
       }[]
-    >(this.baseUrl + '/api/execution/measurements');
+    >(this.baseUrl + '/api/execution/get-available-stock');
+  }
+
+  public getStockAvailableForStreet() {
+    return this.http.get<
+      {
+        streetId: number;
+        materialsInStock: {
+          materialId: number;
+          materialName: string;
+          deposit: string;
+          availableQuantity: number
+        }[];
+        materialsInTruck: {
+          materialId: number;
+          materialName: string;
+          deposit: string;
+          availableQuantity: number
+        }[];
+      }
+    >(this.baseUrl + '/api/execution/get-available-stock');
   }
 
 }

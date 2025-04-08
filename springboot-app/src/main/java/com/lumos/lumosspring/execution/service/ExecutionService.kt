@@ -1,27 +1,28 @@
 package com.lumos.lumosspring.execution.service
 
+import com.lumos.lumosspring.execution.dto.MaterialsInStockDTO
 import com.lumos.lumosspring.execution.dto.ReserveDTO
+import com.lumos.lumosspring.execution.dto.LocalStockDTO
 import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
-import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementStreetDTO
-import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
-import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
+import com.lumos.lumosspring.stock.entities.Material
 import com.lumos.lumosspring.stock.repository.DepositRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
-import com.lumos.lumosspring.team.Team
 import com.lumos.lumosspring.team.TeamRepository
 import com.lumos.lumosspring.util.ErrorResponse
-import io.grpc.Status
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 
 @Service
 class ExecutionService(
     private val preMeasurementStreetRepository: PreMeasurementStreetRepository,
+    private val preMeasurementRepository: PreMeasurementRepository,
     private val depositRepository: DepositRepository,
     private val teamRepository: TeamRepository,
-    private val materialReservationRepository: MaterialReservationRepository
+    private val materialReservationRepository: MaterialReservationRepository,
+    private val materialStockRepository: MaterialStockRepository
 ) {
 
     fun reserve(reserveDTO: List<ReserveDTO>): ResponseEntity<Any> {
@@ -37,7 +38,7 @@ class ExecutionService(
             val items = street.items.orEmpty()
             val reservation = hashSetOf<MaterialReservation>()
 
-            items.forEach { item ->
+            for (item in items) {
                 val material = item.material ?: return ResponseEntity
                     .badRequest().body(ErrorResponse("Material não encontrado"))
 
@@ -85,5 +86,105 @@ class ExecutionService(
         }
 
         return ResponseEntity.ok().body(ErrorResponse("Reserva de materiais salva com sucesso"))
+    }
+
+    fun getStockAvailable(preMeasurementId: Long, depositId: Long, truckDepositId: Long) {
+        val preMeasurement = preMeasurementRepository.findById(preMeasurementId).orElseThrow()
+        val streets = preMeasurement.streets
+        val localStockDTO = mutableListOf<LocalStockDTO>()
+
+        for (street in streets) {
+            val depositMaterials = mutableListOf<MaterialsInStockDTO>()
+            val truckMaterials = mutableListOf<MaterialsInStockDTO>()
+            val items = street.items
+            val materials = mutableListOf<Material>()
+            for (item in items) {
+                val material = item.material ?: continue
+                materials.add(material)
+            }
+
+            if (materials.isEmpty()) continue
+            val materialsStock = materialStockRepository.findAvailableFiltered(materials)
+            val materialsInDeposit = materialsStock.filter { it.deposit.idDeposit == depositId }
+            val materialsInTruck = materialsStock.filter { it.deposit.idDeposit == truckDepositId }
+
+            for (material in materialsInDeposit) {
+                depositMaterials.add(
+                    MaterialsInStockDTO(
+                        materialId = material.material.idMaterial,
+                        materialName = material.material.materialName,
+                        deposit = material.deposit.depositName,
+                        availableQuantity = material.stockAvailable
+                    )
+                )
+            }
+
+            for (material in materialsInTruck) {
+                truckMaterials.add(
+                    MaterialsInStockDTO(
+                        materialId = material.material.idMaterial,
+                        materialName = material.material.materialName,
+                        deposit = material.deposit.depositName,
+                        availableQuantity = material.stockAvailable
+                    )
+                )
+            }
+
+            localStockDTO.add(
+                LocalStockDTO(
+                    streetId = street.preMeasurementStreetId,
+                    materialsInStock = depositMaterials,
+                    materialsInTruck = truckMaterials,
+                )
+            )
+        }
+
+
+    }
+
+    fun getStockAvailableForStreet(streetId: Long, depositId: Long, truckDepositId: Long) {
+        val street = preMeasurementStreetRepository.findById(streetId).orElseThrow()
+        val depositMaterials = mutableListOf<MaterialsInStockDTO>()
+        val truckMaterials = mutableListOf<MaterialsInStockDTO>()
+        val items = street.items
+        val materials = mutableListOf<Material>()
+
+        for (item in items) {
+            val material = item.material ?: continue
+            materials.add(material)
+        }
+
+        val materialsStock = materialStockRepository.findAvailableFiltered(materials)
+        val materialsInDeposit = materialsStock.filter { it.deposit.idDeposit == depositId }
+        val materialsInTruck = materialsStock.filter { it.deposit.idDeposit == truckDepositId }
+
+        for (material in materialsInDeposit) {
+            depositMaterials.add(
+                MaterialsInStockDTO(
+                    materialId = material.material.idMaterial,
+                    materialName = material.material.materialName,
+                    deposit = material.deposit.depositName,
+                    availableQuantity = material.stockAvailable
+                )
+            )
+        }
+
+        for (material in materialsInTruck) {
+            truckMaterials.add(
+                MaterialsInStockDTO(
+                    materialId = material.material.idMaterial,
+                    materialName = material.material.materialName,
+                    deposit = material.deposit.depositName,
+                    availableQuantity = material.stockAvailable
+                )
+            )
+        }
+
+        LocalStockDTO(
+            streetId = street.preMeasurementStreetId,
+            materialsInStock = depositMaterials,
+            materialsInTruck = truckMaterials,
+        )
+
     }
 }

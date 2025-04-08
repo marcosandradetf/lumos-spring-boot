@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.repository;
 
+import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,5 +45,8 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "OR unaccent(LOWER(t.type_name)) LIKE unaccent(concat('%', :name, '%'))",
             nativeQuery = true)
     Page<MaterialStock> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
+
+    @Query("SELECT ms FROM MaterialStock ms WHERE ms.stockAvailable > 0 AND ms.material IN :materials and not ms.inactive")
+    List<MaterialStock> findAvailableFiltered(@Param("materials") List<Material> materials);
 }
 

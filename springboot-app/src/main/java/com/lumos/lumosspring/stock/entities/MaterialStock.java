@@ -43,7 +43,6 @@ public class MaterialStock {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inactive;
 
-
     public Long getMaterialIdStock() {
         return materialIdStock;
     }
@@ -75,10 +74,6 @@ public class MaterialStock {
     public void setCompany(Company company) {
         this.company = company;
     }
-
-
-
-
 
     public String getBuyUnit() {
         return buyUnit;

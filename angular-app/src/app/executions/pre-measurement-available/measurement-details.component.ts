@@ -4,6 +4,7 @@ import {KeyValuePipe, NgForOf} from '@angular/common';
 import * as L from 'leaflet';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -16,21 +17,13 @@ import {PreMeasurementModel} from '../../models/pre-measurement.model';
   templateUrl: './measurement-details.component.html',
   styleUrl: './measurement-details.component.scss'
 })
-export class MeasurementDetailsComponent implements AfterViewInit {
-  cards = [
-    { title: 'Card 1', description: 'Descrição do card 1' },
-    { title: 'Card 2', description: 'Descrição do card 2' },
-    { title: 'Card 3', description: 'Descrição do card 3' },
-    { title: 'Card 4', description: 'Descrição do card 4' },
-    { title: 'Card 5', description: 'Descrição do card 5' },
-  ];
-
+export class MeasurementDetailsComponent {
   scrollLeft(slider: HTMLElement) {
-    slider.scrollBy({ left: -300, behavior: 'smooth' });
+    slider.scrollBy({left: -300, behavior: 'smooth'});
   }
 
   scrollRight(slider: HTMLElement) {
-    slider.scrollBy({ left: 300, behavior: 'smooth' });
+    slider.scrollBy({left: 300, behavior: 'smooth'});
   }
 
   preMeasurement: PreMeasurementModel = {
@@ -47,18 +40,64 @@ export class MeasurementDetailsComponent implements AfterViewInit {
     streets: []
   }
   private map!: L.Map;
+  streetId: number = 0;
 
-  constructor(private route: ActivatedRoute, protected router: Router) {
-    const navigation = this.router.getCurrentNavigation();
-    const id = navigation?.extras.state?.['id'];
+  localStockAll: {
+    streetId: number;
+    materialsInStock: {
+      materialId: number;
+      materialName: string;
+      deposit: string;
+      availableQuantity: number
+    }[];
+    materialsInTruck: {
+      materialId: number;
+      materialName: string;
+      deposit: string;
+      availableQuantity: number
+    }[];
+  }[] = []
+
+  localStockStreet: {
+    streetId: number;
+    materialsInStock: {
+      materialId: number;
+      materialName: string;
+      deposit: string;
+      availableQuantity: number
+    }[];
+    materialsInTruck: {
+      materialId: number;
+      materialName: string;
+      deposit: string;
+      availableQuantity: number
+    }[];
+  } = {
+    streetId: 0,
+    materialsInStock: [],
+    materialsInTruck: []
   }
 
-  private initMap(): void {
-    // const latitude = this.preMeasurement.measurement.latitude;
-    // const longitude = this.preMeasurement.measurement.longitude;
+  constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService) {
+    const preMeasurementId = this.route.snapshot.paramMap.get('id');
+    if (preMeasurementId == null) {
+      return
+    }
+    this.loadPreMeasurement(preMeasurementId);
+  }
 
-    // this.map = L.map('map').setView([latitude, longitude], 17); // Coordenadas iniciais
+  loadPreMeasurement(id: string) {
+    this.preMeasurementService.getPreMeasurement(id).subscribe(preMeasurement => {
+      this.preMeasurement = preMeasurement;
+    });
+  }
 
+  getStreet(id: number) {
+    return this.preMeasurement.streets.find(s => s.preMeasurementStreetId === id);
+  }
+
+  protected initMap(latitude: number, longitude: number): void {
+    this.map = L.map('map').setView([latitude, longitude], 17); // Coordenadas iniciais
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -74,24 +113,18 @@ export class MeasurementDetailsComponent implements AfterViewInit {
       shadowSize: [41, 41] // Tamanho da sombra
     });
 
-
     // Adicionar o marcador com o ícone SVG
-    // L.marker([latitude, longitude], { icon: defaultIcon }).addTo(this.map)
-    //   .bindPopup('Localização da medição')
-    //   .openPopup();
-  }
-
-  ngAfterViewInit(): void {
-    this.initMap();
+    L.marker([latitude, longitude], {icon: defaultIcon}).addTo(this.map)
+      .bindPopup('Localização da medição')
+      .openPopup();
   }
 
   toggleButton(warning: HTMLSpanElement, warningText: HTMLSpanElement) {
-    if(warning.innerHTML !== 'warning') {
+    if (warning.innerHTML !== 'warning') {
       warning.innerHTML = 'warning';
       warning.classList.add('text-orange-500');
       warningText.innerHTML = 'Com prioridade';
-    }
-    else {
+    } else {
       warning.classList.remove('text-orange-500');
       warning.innerHTML = 'warning_amber';
       warningText.innerHTML = 'Sem prioridade';
