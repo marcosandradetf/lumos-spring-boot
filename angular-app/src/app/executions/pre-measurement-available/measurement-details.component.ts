@@ -3,6 +3,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {KeyValuePipe, NgForOf} from '@angular/common';
 import * as L from 'leaflet';
 import {TableComponent} from '../../shared/components/table/table.component';
+import {PreMeasurementModel} from '../../models/pre-measurement.model';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -16,56 +17,47 @@ import {TableComponent} from '../../shared/components/table/table.component';
   styleUrl: './measurement-details.component.scss'
 })
 export class MeasurementDetailsComponent implements AfterViewInit {
-  measurement: {
-    measurement: {
-      measurementId: number,
-      latitude: number,
-      longitude: number,
-      address: string,
-      city: string,
-      depositId: number,
-      deviceId: string,
-      depositName: string,
-      measurementType: string,
-      measurementStyle: string,
-      createdBy: string
-    },
-    items: {
-      materialId: string,
-      materialQuantity: number,
-      lastPower: string,
-      measurementId: number,
-      material: string
-    }[]
-  } = {
-    measurement: {
-      measurementId: 0,
-      latitude: 0,
-      longitude: 0,
-      address: '',
-      city: '',
-      depositId: 0,
-      deviceId: '',
-      depositName: '',
-      measurementType: '',
-      measurementStyle: '',
-      createdBy: ''
-    },
-    items: []
+  cards = [
+    { title: 'Card 1', description: 'Descrição do card 1' },
+    { title: 'Card 2', description: 'Descrição do card 2' },
+    { title: 'Card 3', description: 'Descrição do card 3' },
+    { title: 'Card 4', description: 'Descrição do card 4' },
+    { title: 'Card 5', description: 'Descrição do card 5' },
+  ];
+
+  scrollLeft(slider: HTMLElement) {
+    slider.scrollBy({ left: -300, behavior: 'smooth' });
+  }
+
+  scrollRight(slider: HTMLElement) {
+    slider.scrollBy({ left: 300, behavior: 'smooth' });
+  }
+
+  preMeasurement: PreMeasurementModel = {
+    city: '',
+    contractId: 0,
+    createdAt: '',
+    createdBy: '',
+    preMeasurementId: 0,
+    preMeasurementStyle: '',
+    preMeasurementType: '',
+    status: '',
+    teamName: '',
+    totalPrice: '',
+    streets: []
   }
   private map!: L.Map;
 
   constructor(private route: ActivatedRoute, protected router: Router) {
     const navigation = this.router.getCurrentNavigation();
-    this.measurement = navigation?.extras.state?.['measurement'];
-    console.log('Measurement recebido:', this.measurement);
+    const id = navigation?.extras.state?.['id'];
   }
 
   private initMap(): void {
-    const latitude = this.measurement.measurement.latitude;
-    const longitude = this.measurement.measurement.longitude;
+    // const latitude = this.preMeasurement.measurement.latitude;
+    // const longitude = this.preMeasurement.measurement.longitude;
 
-    this.map = L.map('map').setView([latitude, longitude], 17); // Coordenadas iniciais
+    // this.map = L.map('map').setView([latitude, longitude], 17); // Coordenadas iniciais
 
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -84,9 +76,9 @@ export class MeasurementDetailsComponent implements AfterViewInit {
 
 
     // Adicionar o marcador com o ícone SVG
-    L.marker([latitude, longitude], { icon: defaultIcon }).addTo(this.map)
-      .bindPopup('Localização da medição')
-      .openPopup();
+    // L.marker([latitude, longitude], { icon: defaultIcon }).addTo(this.map)
+    //   .bindPopup('Localização da medição')
+    //   .openPopup();
   }
 
   ngAfterViewInit(): void {

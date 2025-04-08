@@ -5,10 +5,40 @@
         <ul class="select-none">
           <li><a href="/">Início</a></li>
           <li><a href="/execucoes/lista-medicoes">Execuçoes pendentes</a></li>
-          <li>Medição </li>
+          <li>Medição</li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block">{{ measurement.measurement.address }}</h3>
+      <!--      <h3 class="text-medium pr-5 hidden lg:block">{{ preMeasurement.measurement.address }}</h3>-->
+    </div>
+
+    <div>
+      <h2 class="text-center mt-2 btn-link">Ruas pendentes</h2>
+      <div class="relative w-full overflow-hidden border-b">
+        <div
+          class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10"
+          #slider>
+          <div
+            *ngFor="let card of cards"
+            class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
+            hover:translate-y-2 m-2 card-execution">
+            <h3 class="text-lg font-semibold mb-2">{{ card.title }}</h3>
+            <p class="text-sm text-gray-600">{{ card.description }}</p>
+          </div>
+        </div>
+
+        <!-- Navegação -->
+        <button
+          class="absolute left-2 top-1/2 -translate-y-1/2 material-icons"
+          (click)="scrollLeft(slider)">
+          arrow_back_ios
+        </button>
+        <button
+          class="absolute right-2 top-1/2 -translate-y-1/2 material-icons"
+          (click)="scrollRight(slider)">
+          arrow_forward_ios
+        </button>
+      </div>
+
     </div>
 
 
@@ -16,8 +46,8 @@
       <div class="w-1/2">
         <ol>
           <li class="flex justify-end border-b pb-2">
-            <span class="badge badge-primary mr-2 rounded">{{ measurement.measurement.latitude }}</span>
-            <span class="badge badge-primary mr-2 rounded">{{ measurement.measurement.longitude }}</span>
+            <!--            <span class="badge badge-primary mr-2 rounded">{{ preMeasurement.measurement.latitude }}</span>-->
+            <!--            <span class="badge badge-primary mr-2 rounded">{{ preMeasurement.measurement.longitude }}</span>-->
           </li>
           <li>
             <div id="map" class="h-[400px]"></div>
@@ -72,15 +102,15 @@
             <th>Quantidade</th>
             <th>Qtde. Estoque</th>
           </tr>
-          <tr body *ngFor="let i of measurement.items; index as index;">
-            <td>{{ index + 1 }}</td>
-            <td>{{ i.material }}</td>
-            <td>100W</td>
-            <td></td>
-            <td>100CM</td>
-            <td class="font-semibold text-blue-600">{{ i.materialQuantity }}</td>
-            <td class="font-semibold text-green-600">44</td>
-          </tr>
+          <!--          <tr body *ngFor="let i of preMeasurement.items; index as index;">-->
+          <!--            <td>{{ index + 1 }}</td>-->
+          <!--            <td>{{ i.material }}</td>-->
+          <!--            <td>100W</td>-->
+          <!--            <td></td>-->
+          <!--            <td>100CM</td>-->
+          <!--            <td class="font-semibold text-blue-600">{{ i.materialQuantity }}</td>-->
+          <!--            <td class="font-semibold text-green-600">44</td>-->
+          <!--          </tr>-->
 
         </app-table>
       </div>

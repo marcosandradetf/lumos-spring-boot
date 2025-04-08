@@ -20,10 +20,11 @@ class MaterialReservation {
     var materialStock: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
-    val street: PreMeasurementStreet? = null
+    var street: PreMeasurementStreet? = null
 
     @Column(nullable = false)
     var reservedQuantity: Double = 0.0
+        private set
 
     @Column(nullable = false)
     var quantityCompleted: Double = 0.0
