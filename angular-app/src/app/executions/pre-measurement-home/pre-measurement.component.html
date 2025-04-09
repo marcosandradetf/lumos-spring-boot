@@ -31,7 +31,9 @@
       <div class="flex items-center flex-col border rounded p-10 shadow">
         <span class="material-icons mt-20 text-orange-600">thumb_up</span>
         <h2 class="mt-2 font-semibold text-xl">Itens aprovados com sucesso</h2>
-        <p>A pré-medição se encontra <span class="badge badge-info rounded p-3 cursor-pointer" (click)="router.navigate(['/pre-medicao/disponivel']); hideContent = false;">Disponível para execução</span></p>
+        <p>A pré-medição se encontra <span class="badge badge-info rounded p-3 cursor-pointer"
+                                           (click)="router.navigate(['/pre-medicao/disponivel']); hideContent = false;">Disponível para execução</span>
+        </p>
 
         <div class="mt-10 flex flex-col">
           <button class="btn btn-link"
@@ -72,42 +74,76 @@
   <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
                       class="absolute right-0"></app-screen-message>
 
-  <app-modal [modalOpen]="openModal" (modalClose)="openModal=false; step1.classList.remove('hidden'); step2.classList.add('hidden');"
-             classModal="rounded p-4 w-[30%] flex flex-col  justify-center">
+  <app-modal [modalOpen]="openModal"
+             (modalClose)="openModal=false; toggleSteps()"
+             classModal="rounded p-4 lg:w-[35%] flex flex-col  justify-center">
 
-    <div class="w-full flex flex-col" #step1>
-      <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
-        <span class="material-icons text-error">warning</span>
-        <h2 class="text-center font-semibold">Atenção durante esse processo</h2>
+    @if (status === 'disponivel') {
+      <div class="w-full flex flex-col">
+        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+          <span class="material-icons text-primary text-2xl">mediation</span>
+          <h2 class="text-center font-semibold">Defina a sistemática da execução</h2>
+        </div>
+        <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+                (click)="navigateToExecution(true)">
+          <div class="lg:tooltip" data-tip="Dividir a pré-medição por ruas, colocar equipes e almoxarifados por cada rua">
+            <span class="material-icons">info</span>
+          </div>
+          Multiplas equipes nessa pré-medicao!
+        </button>
+        <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]"
+                (click)="navigateToExecution(false)">
+          <div class="lg:tooltip" data-tip="Alocar apenas uma equipe, todas as ruas serão executadas por apenas uma equipe">
+            <span class="material-icons">info</span>
+          </div>
+          Apenas uma equipe nessa pré-medicao!
+        </button>
+      </div>
+    } @else {
+      <div class="w-full flex flex-col" #step1>
+        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+          <span class="material-icons text-error">warning</span>
+          <h2 class="text-center font-semibold">Atenção durante esse processo</h2>
+        </div>
+
+
+        <p class="pb-5 text-center">Qual ação deverá ser executada a partir do retorno após envio de relatório da
+          pré-medição do contrato referente à  {{ getPreMeasurement(preMeasurementId)?.city }}?</p>
+        <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+                (click)="router.navigate(['/pre-medicao/editar/' + preMeasurementId])">
+          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="white">
+            <path
+              d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"/>
+          </svg>
+          Editar os itens da pré-medição
+        </button>
+        <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]"
+                (click)="step2.classList.remove('hidden'); step1.classList.add('hidden');">
+          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f">
+            <path
+              d="M144-348v-72h288v72H144Zm0-150v-72h432v72H144Zm0-150v-72h432v72H144Zm499 408L508-376l51-51 84 85 170-170 51 51-221 221Z"/>
+          </svg>
+          Todos os itens foram aprovados, seguir para execução
+        </button>
       </div>
 
-
-      <p class="pb-5 text-center">Qual ação deverá ser executada a partir do retorno após envio de relatório da pré-medição do contrato referente à  {{ getPreMeasurement(preMeasurementId)?.city }}?</p>
-      <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2" (click)="router.navigate(['/pre-medicao/editar/' + preMeasurementId])">
-        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="white"><path d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"/></svg>
-        Editar os itens da pré-medição
-      </button>
-      <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]" (click)="step2.classList.remove('hidden'); step1.classList.add('hidden');">
-        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f"><path d="M144-348v-72h288v72H144Zm0-150v-72h432v72H144Zm0-150v-72h432v72H144Zm499 408L508-376l51-51 84 85 170-170 51 51-221 221Z"/></svg>
-        Todos os itens foram aprovados, seguir para execução
-      </button>
-    </div>
-
-    <div #step2 class="hidden w-full flex flex-col">
-      <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
-        <span class="material-icons text-primary text-2xl">question_mark</span>
-        <h2 class="text-center font-semibold">Essa ação aprova todos os itens da pré-medição, deseja prosseguir?</h2>
+      <div #step2 class="hidden w-full flex flex-col">
+        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+          <span class="material-icons text-primary text-2xl">question_mark</span>
+          <h2 class="text-center font-semibold">Essa ação aprova todos os itens da pré-medição, deseja prosseguir?</h2>
+        </div>
+        <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+                (click)="openModal = false; step1.classList.remove('hidden'); step2.classList.add('hidden');">
+          <span class="material-icons">restore</span>
+          Cancelar
+        </button>
+        <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]"
+                (click)="evolvePreMeasurement()">
+          <span class="material-icons">save</span>
+          Salvar
+        </button>
       </div>
-      <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
-              (click)="openModal = false; step1.classList.remove('hidden'); step2.classList.add('hidden');">
-        <span class="material-icons">restore</span>
-        Cancelar
-      </button>
-      <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]" (click)="evolvePreMeasurement()">
-        <span class="material-icons">save</span>
-        Salvar
-      </button>
-    </div>
+    }
 
   </app-modal>
 </div>

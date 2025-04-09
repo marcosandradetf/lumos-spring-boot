@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {User} from '../../models/user.model';
 import {Observable} from 'rxjs';
 import * as http from 'node:http';
@@ -58,5 +58,28 @@ export class PreMeasurementService {
     changedItems: { streetId: number; itemId: number; quantity: number }[]
   }) {
     return this.http.post<{message: string}>(environment.springboot + "/api/pre-measurement/send-modifications", modifications);
+  }
+
+  getStockAvailable(preMeasurementId: number, teamId: number) {
+    const params = new HttpParams()
+      .set('preMeasurementId', preMeasurementId)
+      .set('teamId', teamId);
+
+    return this.http.get<
+      {
+        streetId: number;
+        materialsInStock: {
+          materialId: number;
+          materialName: string;
+          deposit: string;
+          availableQuantity: number
+        }[];
+        materialsInTruck: {
+          materialId: number;
+          materialName: string;
+          deposit: string;
+          availableQuantity: number
+        }[];
+      }[]>(environment.springboot + "/api/execution/get-available-stock", { params });
   }
 }

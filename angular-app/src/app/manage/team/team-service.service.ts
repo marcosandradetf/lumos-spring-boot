@@ -5,6 +5,7 @@ import {Observable} from 'rxjs';
 import * as http from 'node:http';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
+import {TeamsModel} from '../../models/teams.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,18 +17,7 @@ export class TeamService {
   }
 
   public getTeams() {
-    return this.http.get<{
-      idTeam: string;
-      teamName: string;
-      driver: { driverId: string; driverName: string };
-      electrician: { electricianId: string; electricianName: string };
-      othersMembers: { memberId: string; memberName: string }[];
-      UFName: string;
-      cityName: string;
-      regionName: string;
-      plate: string;
-      sel: boolean;
-    }[]>(`${this.endpoint}/get-teams`);
+    return this.http.get<TeamsModel[]>(`${this.endpoint}/get-teams`);
   }
 
   public getUsers() {
@@ -39,44 +29,11 @@ export class TeamService {
     }[]>(`${environment.springboot}/api/user/get-users`);
   }
 
-  public updateTeams(user: {
-    idTeam: string;
-    teamName: string;
-    driver: { driverId: string; driverName: string };
-    electrician: { electricianId: string; electricianName: string };
-    othersMembers: { memberId: string; memberName: string }[];
-    UFName: string;
-    cityName: string;
-    regionName: string;
-    plate: string;
-    sel: boolean;
-  }[]) {
-    return this.http.post<{
-      idTeam: string;
-      teamName: string;
-      driver: { driverId: string; driverName: string };
-      electrician: { electricianId: string; electricianName: string };
-      othersMembers: { memberId: string; memberName: string }[];
-      UFName: string;
-      cityName: string;
-      regionName: string;
-      plate: string;
-      sel: boolean;
-    }[]>(`${this.endpoint}/update-teams`, user);
+  public updateTeams(user: TeamsModel[]) {
+    return this.http.post<TeamsModel[]>(`${this.endpoint}/update-teams`, user);
   }
 
-  public insertTeams(user: {
-    idTeam: string;
-    teamName: string;
-    driver: { driverId: string; driverName: string };
-    electrician: { electricianId: string; electricianName: string };
-    othersMembers: { memberId: string; memberName: string }[];
-    UFName: string;
-    cityName: string;
-    regionName: string;
-    plate: string;
-    sel: boolean;
-  }[]) {
+  public insertTeams(user: TeamsModel[]) {
     return this.http.post<{
       idTeam: string;
       teamName: string;
@@ -86,6 +43,7 @@ export class TeamService {
       UFName: string;
       cityName: string;
       regionName: string;
+      depositName: string;
       plate: string;
       sel: boolean;
     }[]>(`${this.endpoint}/post-teams`, user);

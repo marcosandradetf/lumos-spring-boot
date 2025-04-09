@@ -46,7 +46,8 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             nativeQuery = true)
     Page<MaterialStock> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
 
-    @Query("SELECT ms FROM MaterialStock ms WHERE ms.stockAvailable > 0 AND ms.material IN :materials and not ms.inactive")
+//    @Query("SELECT ms FROM MaterialStock ms WHERE ms.stockAvailable > 0 AND ms.material IN :materials and not ms.inactive")
+    @Query("SELECT ms FROM MaterialStock ms WHERE ms.material IN :materials and not ms.inactive")
     List<MaterialStock> findAvailableFiltered(@Param("materials") List<Material> materials);
 }
 

@@ -88,8 +88,9 @@ class ExecutionService(
         return ResponseEntity.ok().body(ErrorResponse("Reserva de materiais salva com sucesso"))
     }
 
-    fun getStockAvailable(preMeasurementId: Long, depositId: Long, truckDepositId: Long) {
+    fun getStockAvailable(preMeasurementId: Long, teamId: Long): ResponseEntity<Any> {
         val preMeasurement = preMeasurementRepository.findById(preMeasurementId).orElseThrow()
+        val team = teamRepository.findById(teamId).orElseThrow()
         val streets = preMeasurement.streets
         val localStockDTO = mutableListOf<LocalStockDTO>()
 
@@ -105,19 +106,8 @@ class ExecutionService(
 
             if (materials.isEmpty()) continue
             val materialsStock = materialStockRepository.findAvailableFiltered(materials)
-            val materialsInDeposit = materialsStock.filter { it.deposit.idDeposit == depositId }
-            val materialsInTruck = materialsStock.filter { it.deposit.idDeposit == truckDepositId }
+            val materialsInTruck = materialsStock.filter { it.deposit.idDeposit == team.deposit.idDeposit }
 
-            for (material in materialsInDeposit) {
-                depositMaterials.add(
-                    MaterialsInStockDTO(
-                        materialId = material.material.idMaterial,
-                        materialName = material.material.materialName,
-                        deposit = material.deposit.depositName,
-                        availableQuantity = material.stockAvailable
-                    )
-                )
-            }
 
             for (material in materialsInTruck) {
                 truckMaterials.add(
@@ -139,7 +129,7 @@ class ExecutionService(
             )
         }
 
-
+        return ResponseEntity.ok(localStockDTO)
     }
 
     fun getStockAvailableForStreet(streetId: Long, depositId: Long, truckDepositId: Long) {

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {PreMeasurementService} from './premeasurement-service.service';
 import {NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -92,7 +92,7 @@ export class PreMeasurementComponent implements OnInit {
       case 'validando':
         break;
       case  'disponivel':
-        void this.router.navigate(['execucao/pre-medicao/' + preMeasurementId]);
+        this.openModal = true;
         break;
     }
   }
@@ -124,4 +124,23 @@ export class PreMeasurementComponent implements OnInit {
       }
     });
   }
+
+  @ViewChild('step1') step1Ref!: ElementRef<HTMLDivElement>;
+  @ViewChild('step2') step2Ref!: ElementRef<HTMLDivElement>;
+  toggleSteps() {
+    const step1 = this.step1Ref.nativeElement;
+    const step2 = this.step2Ref.nativeElement;
+
+    step1.classList.add('hidden');
+    step2.classList.remove('hidden');
+  }
+
+
+  navigateToExecution(isMultiTeam: boolean) {
+    void this.router.navigate(
+      ['execucao/pre-medicao', this.preMeasurementId],
+      { queryParams: { multiTeam: isMultiTeam } }
+    );
+  }
+
 }

@@ -14,6 +14,7 @@ import {citiesRequest} from '../../core/cities-request.dto';
 import {TeamService} from './team-service.service';
 import {catchError, tap} from 'rxjs';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
+import {TeamsModel} from '../../models/teams.model';
 
 @Component({
   selector: 'app-team',
@@ -37,18 +38,7 @@ export class TeamComponent {
   loading: boolean = false;
   formSubmitted: boolean = false;
 
-  teams: {
-    idTeam: string;
-    teamName: string;
-    driver: { driverId: string; driverName: string };
-    electrician: { electricianId: string; electricianName: string };
-    othersMembers: { memberId: string; memberName: string }[];
-    UFName: string;
-    cityName: string;
-    regionName: string;
-    plate: string;
-    sel: boolean;
-  }[] = [
+  teams: TeamsModel[] = [
     {
       idTeam: '',
       teamName: '',
@@ -60,6 +50,7 @@ export class TeamComponent {
       cityName: '',
       regionName: '',
       plate: '',
+      depositName: '',
       sel: false,
     }
   ];
@@ -216,6 +207,7 @@ export class TeamComponent {
         cityName: '',
         regionName: '',
         plate: '',
+        depositName: '',
         sel: false,
     };
     this.teams.push(team);

@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.team;
 
+import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.team.dto.*;
 import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.user.UserRepository;
@@ -47,7 +48,10 @@ public class TeamService {
                         team.getUFName(),
                         team.getCityName(),
                         team.getRegion().getRegionName(),
-                        team.getPlateVehicle()
+                        team.getPlateVehicle(),
+                        Optional.ofNullable(team.getDeposit())
+                                .map(Deposit::getDepositName)
+                                .orElseThrow(() -> new IllegalStateException("Equipe sem depósito associado, faça a correção na tela de gerenciamento de equipes!"))
                 ))
                 .toList(); // Convertendo para List<TeamResponse>
 
