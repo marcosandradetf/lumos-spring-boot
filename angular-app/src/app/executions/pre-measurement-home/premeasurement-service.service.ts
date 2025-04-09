@@ -71,13 +71,21 @@ export class PreMeasurementService {
         materialsInStock: {
           materialId: number;
           materialName: string;
+          materialPower: string;
+          materialAmp: string;
+          materialLength: string;
           deposit: string;
+          itemQuantity: number;
           availableQuantity: number
         }[];
         materialsInTruck: {
           materialId: number;
           materialName: string;
+          materialPower: string;
+          materialAmp: string;
+          materialLength: string;
           deposit: string;
+          itemQuantity: number;
           availableQuantity: number
         }[];
       }[]>(environment.springboot + "/api/execution/get-available-stock", { params });

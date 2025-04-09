@@ -14,7 +14,8 @@ open class FirebaseConfig {
     open fun firebaseInit(): FirebaseApp {
         // Verifica se o Firebase já foi inicializado
         return if (FirebaseApp.getApps().isEmpty()) {
-            val serviceAccount = FileInputStream("src/main/resources/lumos-push-firebase-adminsdk-fbsvc-b03c2911a6.json")
+            // mudar para parametro no properties
+            val serviceAccount = FileInputStream("src/main/resources/lumos-push-firebase-adminsdk-fbsvc-07fce6e866.json")
 
             val options = FirebaseOptions.builder()
                 .setCredentials(ServiceAccountCredentials.fromStream(serviceAccount))

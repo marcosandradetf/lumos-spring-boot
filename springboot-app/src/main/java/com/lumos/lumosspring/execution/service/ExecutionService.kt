@@ -114,7 +114,12 @@ class ExecutionService(
                     MaterialsInStockDTO(
                         materialId = material.material.idMaterial,
                         materialName = material.material.materialName,
+                        materialPower = material.material.materialPower,
+                        materialAmp = material.material.materialAmps,
+                        materialLength = material.material.materialLength,
                         deposit = material.deposit.depositName,
+                        itemQuantity = street.items
+                            .first { it.material.idMaterial == material.material.idMaterial }.itemQuantity,
                         availableQuantity = material.stockAvailable
                     )
                 )
@@ -153,7 +158,12 @@ class ExecutionService(
                 MaterialsInStockDTO(
                     materialId = material.material.idMaterial,
                     materialName = material.material.materialName,
+                    materialPower = material.material.materialPower,
+                    materialAmp = material.material.materialAmps,
+                    materialLength = material.material.materialLength,
                     deposit = material.deposit.depositName,
+                    itemQuantity = street.items
+                        .first { it.material.idMaterial == material.material.idMaterial }.itemQuantity,
                     availableQuantity = material.stockAvailable
                 )
             )
@@ -164,7 +174,12 @@ class ExecutionService(
                 MaterialsInStockDTO(
                     materialId = material.material.idMaterial,
                     materialName = material.material.materialName,
+                    materialPower = material.material.materialPower,
+                    materialAmp = material.material.materialAmps,
+                    materialLength = material.material.materialLength,
                     deposit = material.deposit.depositName,
+                    itemQuantity = street.items
+                        .first { it.material.idMaterial == material.material.idMaterial }.itemQuantity,
                     availableQuantity = material.stockAvailable
                 )
             )

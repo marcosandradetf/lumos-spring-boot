@@ -58,13 +58,21 @@ export class MeasurementDetailsComponent implements OnInit {
     materialsInStock: {
       materialId: number;
       materialName: string;
+      materialPower: string;
+      materialAmp: string;
+      materialLength: string;
       deposit: string;
+      itemQuantity: number;
       availableQuantity: number
     }[];
     materialsInTruck: {
       materialId: number;
       materialName: string;
+      materialPower: string;
+      materialAmp: string;
+      materialLength: string;
       deposit: string;
+      itemQuantity: number;
       availableQuantity: number
     }[];
   }[] = [];
@@ -255,6 +263,10 @@ export class MeasurementDetailsComponent implements OnInit {
     }
 
     this.preMeasurement.streets[streetIndex].status = 'VALIDATED';
+  }
 
+  isFullStock(): boolean {
+    return this.localStockStreet.find(l => l.streetId == this.streetId)
+      ?.materialsInTruck.every(t => t.availableQuantity >= t.itemQuantity) || false;
   }
 }

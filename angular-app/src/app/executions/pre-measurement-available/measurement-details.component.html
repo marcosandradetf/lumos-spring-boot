@@ -16,15 +16,17 @@
         <div
           class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10"
           #slider>
-          <div
-            *ngFor="let street of preMeasurement.streets"
-            [class.selected]="streetId === street.preMeasurementStreetId"
-            (click)="initMap(street);"
-            class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
+          <ng-container *ngFor="let street of preMeasurement.streets">
+            <div
+              *ngIf="street.status !== 'VALIDATED'"
+              [class.selected]="streetId === street.preMeasurementStreetId"
+              (click)="initMap(street);"
+              class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
             hover:translate-y-2 m-2 card-execution select-none">
-            <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
-            <p class="text-sm text-gray-600">{{ street.items.length }} itens pendentes de reserva</p>
-          </div>
+              <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
+              <p class="text-sm text-gray-600">{{ street.items.length }} itens pendentes de reserva</p>
+            </div>
+          </ng-container>
         </div>
 
         <!-- Navegação -->
@@ -133,9 +135,16 @@
             <h3 class="text-sm font-semibold text-gray-800">
               {{ truckDepositName }}
             </h3>
-            <span class="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-              Todos os itens possuem estoque
-            </span>
+            <span class="material-icons cursor-pointer" title="Clique para mais informações" (click)="openModal = true">info</span>
+            @if (isFullStock()) {
+              <span class="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full shadow-sm">
+                Todos os itens possuem estoque
+              </span>
+            } @else {
+              <span class="bg-red-100 text-red-800 text-xs font-medium px-3 py-1 rounded-full shadow-sm">
+                Existem itens que não possuem estoque
+              </span>
+            }
           </div>
 
           <!-- Tabela -->
@@ -154,11 +163,13 @@
             <tr body *ngFor="let m of getTruckMaterials(streetId); index as index;" class="hover:bg-gray-50">
               <td>{{ index + 1 }}</td>
               <td>{{ m.materialName }}</td>
-              <td>100W</td>
-              <td></td>
-              <td>100CM</td>
-              <td class="font-semibold text-blue-600">{{ m.availableQuantity }}</td>
-              <td class="font-semibold text-green-600">{{ m.availableQuantity }}</td>
+              <td>{{ m.materialPower }}</td>
+              <td>{{ m.materialAmp }}</td>
+              <td>{{ m.materialLength }}</td>
+              <td class="font-semibold text-blue-600">{{ m.itemQuantity }}</td>
+              <td class="font-semibold"
+                  [ngClass]="m.availableQuantity >= m.itemQuantity ? 'text-green-600' : 'text-red-600'">{{ m.availableQuantity }}
+              </td>
             </tr>
 
           </app-table>
@@ -172,7 +183,7 @@
 
 
   <app-modal [modalOpen]="openModal" (modalClose)="openModal = false" classModal="xl:w-[50vw] p-0 z-10">
-    @if(truckDepositName === '') {
+    @if (truckDepositName === '') {
       <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 cursor-pointer">
         <table class="table text-left text-gray-700 border-t">
           <!-- head -->
@@ -204,21 +215,15 @@
           <!-- head -->
           <thead>
           <tr class="bg-gray-200 text-xs uppercase text-gray-600">
-            <th>Equipe</th>
-            <th>Motorista</th>
-            <th>Eletricista</th>
-            <th>Telefone</th>
+            <th>{{ getTeam(getReserve().teamId)?.electrician?.electricianName }}</th>
+            <th>{{ getTeam(getReserve().teamId)?.driver?.driverName }}</th>
           </tr>
           </thead>
           <tbody>
           <!-- row 1 -->
-          <tr class="hover:bg-blue-100 hover:text-blue-700" *ngFor="let team of teams; let i = index"
-              (click)="selectTeam(team)">
-            <td>{{ team.teamName }}</td>
-            <td>{{ team.driver.driverName }}</td>
-            <td>{{ team.electrician.electricianName }}</td>
-            <td>TELEFONE</td>
-            <td>{{ team.regionName }}</td>
+          <tr class="hover:bg-blue-100 hover:text-blue-700">
+            <td>Telefone não cadastrado {{ 1 }}</td>
+            <td>Telefone não cadastrado {{ 2 }}</td>
           </tr>
           </tbody>
         </table>
