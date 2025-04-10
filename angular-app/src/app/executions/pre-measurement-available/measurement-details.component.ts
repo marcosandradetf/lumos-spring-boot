@@ -102,17 +102,27 @@ export class MeasurementDetailsComponent implements OnInit {
   teams: TeamsModel[] = [];
 
   reserveDTO: {
-    preMeasurementStreetId: number;
-    teamId: number;
-    teamName: string,
-    truckDepositName: string;
-    secondDepositId: number;
-    secondDepositName: string;
-    thirdDepositId: number;
-    thirdDepositName: string;
-    prioritized: boolean;
-    comment: string;
-  }[] = [];
+    preMeasurementId: number;
+    firstDepositCityId: number;
+    firstDepositCityName: string;
+    secondDepositCityId: number;
+    secondDepositCityName: string;
+    street: {
+      preMeasurementStreetId: number;
+      teamId: number;
+      teamName: string,
+      truckDepositName: string;
+      prioritized: boolean;
+      comment: string;
+    }[]
+  } = {
+    preMeasurementId: 0,
+    firstDepositCityId: 0,
+    firstDepositCityName: '',
+    secondDepositCityId: 0,
+    secondDepositCityName: '',
+    street: []
+  };
 
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
@@ -128,6 +138,7 @@ export class MeasurementDetailsComponent implements OnInit {
     if (preMeasurementId == null) {
       return
     }
+    this.reserveDTO.preMeasurementId = Number(preMeasurementId);
     this.loadPreMeasurement(preMeasurementId);
   }
 
@@ -169,7 +180,7 @@ export class MeasurementDetailsComponent implements OnInit {
       this.map.remove();
     }
 
-    let reserve = this.reserveDTO.find(r => r.preMeasurementStreetId === this.streetId);
+    let reserve = this.reserveDTO.street.find(r => r.preMeasurementStreetId === this.streetId);
 
     if (!reserve) {
       reserve = {
@@ -177,14 +188,10 @@ export class MeasurementDetailsComponent implements OnInit {
         teamId: 0,
         teamName: '',
         truckDepositName: '',
-        secondDepositId: 0,
-        secondDepositName: '',
-        thirdDepositId: 0,
-        thirdDepositName: '',
         prioritized: false,
         comment: ''
       };
-      this.reserveDTO.push(reserve);
+      this.reserveDTO.street.push(reserve);
     }
 
     const team = this.getTeam(reserve.teamId);
@@ -223,7 +230,8 @@ export class MeasurementDetailsComponent implements OnInit {
   truckDepositName: string = "";
 
   selectTeam(team: TeamsModel) {
-    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.reserveDTO.street
+      .findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       this.openModal = false;
       return;
@@ -239,21 +247,23 @@ export class MeasurementDetailsComponent implements OnInit {
       }
     });
 
-    this.reserveDTO[streetIndex].teamId = Number(team.idTeam);
-    this.reserveDTO[streetIndex].teamName = team.teamName;
-    this.reserveDTO[streetIndex].truckDepositName = team.depositName;
+    this.reserveDTO.street[streetIndex].teamId = Number(team.idTeam);
+    this.reserveDTO.street[streetIndex].teamName = team.teamName;
+    this.reserveDTO.street[streetIndex].truckDepositName = team.depositName;
     this.teamName = "EQUIPE " + team.teamName.toUpperCase();
     this.openModal = false;
-    this.toggleSideBar();
   }
 
   getReserve() {
-    return this.reserveDTO.find(r => r.preMeasurementStreetId === this.streetId) || {
-      preMeasurementStreetId: this.streetId,
-      depositId: 0,
-      teamId: 0,
-      enjoyTuckDepositOfTeam: false,
-    };
+    return this.reserveDTO.street.find(r => r.preMeasurementStreetId === this.streetId) ||
+      {
+        preMeasurementStreetId: this.streetId,
+        teamId: 0,
+        teamName: '',
+        truckDepositName: '',
+        prioritized: false,
+        comment: ''
+      };
   }
 
   getTeam(teamId: number) {
@@ -268,18 +278,13 @@ export class MeasurementDetailsComponent implements OnInit {
   finish: boolean = false;
 
   finishStreet() {
-    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    if (this.reserveDTO[streetIndex].teamId === 0) {
+    if (this.reserveDTO.street[streetIndex].teamId === 0) {
       this.utils.showMessage('Selecione uma equipe para continuar', true);
-      return;
-    }
-
-    if (this.reserveDTO[streetIndex].secondDepositId === 0 || this.reserveDTO[streetIndex].thirdDepositId === 0) {
-      this.utils.showMessage('Selecione os almoxarifados reservas para continuar', true);
       return;
     }
 
@@ -289,6 +294,9 @@ export class MeasurementDetailsComponent implements OnInit {
     this.utils.playSound("pop");
     if (this.streetId === 0) {
       this.finish = true;
+      if (this.reserveDTO.firstDepositCityId === 0 || this.reserveDTO.secondDepositCityId === 0) {
+        this.toggleSideBar();
+      }
       return;
     }
     const street = this.getStreet(this.streetId);
@@ -302,18 +310,15 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
   getReserveByStreetId(preMeasurementStreetId: number) {
-    return this.reserveDTO.find(r => r.preMeasurementStreetId === preMeasurementStreetId) || {
-      preMeasurementStreetId: this.streetId,
-      teamId: 0,
-      teamName: '',
-      truckDepositName: '',
-      secondDepositId: 0,
-      secondDepositName: '',
-      thirdDepositId: 0,
-      thirdDepositName: '',
-      prioritized: false,
-      comment: ''
-    };
+    return this.reserveDTO.street.find(r => r.preMeasurementStreetId === preMeasurementStreetId) ||
+      {
+        preMeasurementStreetId: this.streetId,
+        teamId: 0,
+        teamName: '',
+        truckDepositName: '',
+        prioritized: false,
+        comment: ''
+      }
   }
 
 
@@ -331,61 +336,63 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
 
-
   selectDeposits(firstDeposit: string, secondDeposit: string) {
     if (firstDeposit === "Selecione" || secondDeposit === "Selecione") {
       this.utils.showMessage("A seleção dos dois almoxarifados reservas são obrigatórias", true);
       return;
     }
+    this.reserveDTO.firstDepositCityId = Number(firstDeposit)
+    this.reserveDTO.firstDepositCityName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
+    this.reserveDTO.secondDepositCityId = Number(secondDeposit)
+    this.reserveDTO.secondDepositCityName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
 
-    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
-    if (streetIndex === -1) {
-      return;
-    }
-
-    this.reserveDTO[streetIndex].secondDepositId = Number(firstDeposit)
-    this.reserveDTO[streetIndex].secondDepositName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
-    this.reserveDTO[streetIndex].thirdDepositId = Number(secondDeposit)
-    this.reserveDTO[streetIndex].thirdDepositName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
-
-    this.utils.showMessage("Almoxarifados reservas definidos com sucesso", false);
+    this.utils.showMessage("Almoxarifados da cidade definidos com sucesso", false);
     this.openDepositModal = false;
   }
 
 
-  togglePriority(warning: HTMLSpanElement, warningText: HTMLSpanElement) {
-    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+  togglePriority() {
+    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
-      warning.classList.remove('text-orange-500');
-      warning.innerHTML = 'warning_amber';
-      warningText.innerHTML = 'Sem prioridade';
       return;
     }
 
     this.utils.playSound("select");
 
-    this.reserveDTO[streetIndex].prioritized = !this.reserveDTO[streetIndex].prioritized;
+    this.reserveDTO.street[streetIndex].prioritized = !this.reserveDTO.street[streetIndex].prioritized;
     let message: string;
-    if (this.reserveDTO[streetIndex].prioritized) {
-      warning.innerHTML = 'warning';
-      warning.classList.add('text-orange-500');
-      warningText.innerHTML = 'Com prioridade';
+    if (this.reserveDTO.street[streetIndex].prioritized) {
       message = "Prioridade definida para essa rua";
     } else {
       message = "Prioridade removida para essa rua";
-      warning.classList.remove('text-orange-500');
-      warning.innerHTML = 'warning_amber';
-      warningText.innerHTML = 'Sem prioridade';
     }
     this.utils.showMessage(message, false);
   }
 
   insertComment($event: Event) {
-    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    this.reserveDTO[streetIndex].comment = ($event.target as HTMLInputElement).value;
+    this.reserveDTO.street[streetIndex].comment = ($event.target as HTMLInputElement).value;
+  }
+
+  getComment() {
+    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    if (streetIndex === -1) {
+      return;
+    }
+
+    return this.reserveDTO.street[streetIndex].comment;
+  }
+
+  isPriority() {
+    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    if (streetIndex === -1) {
+      return;
+    }
+
+    return this.reserveDTO.street[streetIndex].prioritized;
   }
 }

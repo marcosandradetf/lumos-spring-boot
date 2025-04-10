@@ -1,5 +1,41 @@
 <div class="flex mt-[3rem] h-fit" #top>
-  <div *ngIf="finish" class="w-full h-screen pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
+  <div *ngIf="openDepositModal" class="fixed top-20 right-4 w-80 z-50 bg-white shadow-lg rounded-lg p-4 border"
+       @fadeSlide>
+    <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Almoxarifados da Cidade</h3>
+    <p class="text-xs font-light">Pelo menos dois almoxarifados reservas devem ser indicados para pleno atendimento.</p>
+
+    <div class="space-y-2">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block mt-5">Primário</label>
+        <select class="select select-sm select-bordered w-full" #firstDeposit>
+          <option disabled selected>Selecione</option>
+          <ng-container *ngFor="let d of deposits">
+            <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')"
+                    [value]="d.idDeposit">{{ d.depositName }}
+            </option>
+          </ng-container>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Secundário</label>
+        <select class="select select-sm select-bordered w-full" #secondDeposit>
+          <option disabled selected>Selecione</option>
+          <ng-container *ngFor="let d of deposits">
+            <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')"
+                    [value]="d.idDeposit">{{ d.depositName }}
+            </option>
+          </ng-container>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button class="btn btn-sm btn-primary" (click)="selectDeposits(firstDeposit.value, secondDeposit.value)">
+        Salvar
+      </button>
+    </div>
+  </div>
+  <div *ngIf="finish && !openDepositModal" class="w-full h-screen pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
     <div class="max-w-7xl mx-auto">
       <!-- Ações -->
       <div class="flex justify-between items-center mb-8">
@@ -19,6 +55,23 @@
             <span class="material-icons">save</span> Concluir
           </button>
         </div>
+      </div>
+
+      <div class="bg-white shadow rounded-lg overflow-hidden w-fit mb-3">
+        <table class="min-w-fit text-sm text-gray-700">
+          <thead class="bg-[#044686] text-white uppercase text-xs">
+          <tr>
+            <th class="px-4 py-2 text-left">Almox. Primário</th>
+            <th class="px-4 py-2 text-left">Almox. Secundário</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2">{{ reserveDTO.firstDepositCityName }}</td>
+            <td class="px-4 py-2">{{ reserveDTO.secondDepositCityName }}</td>
+          </tr>
+          </tbody>
+        </table>
       </div>
 
       <dialog #dialog class="modal">
@@ -48,27 +101,35 @@
             <th class="px-6 py-3 text-left">Rua</th>
             <th class="px-6 py-3 text-left">Equipe</th>
             <th class="px-6 py-3 text-left">Almox. Prioritário</th>
-            <th class="px-6 py-3 text-left">Almox. Secundário</th>
-            <th class="px-6 py-3 text-left">Almox. Terciário</th>
+            <th class="px-6 py-3 text-left">Comentário</th>
           </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
           <tr *ngFor="let street of preMeasurement.streets" class="hover:bg-gray-50">
-            @let reserve = getReserveByStreetId(street.preMeasurementStreetId);
+            @let reserve = getReserveByStreetId(street.preMeasurementStreetId) ;
             <td class="px-6 py-2"><span class="material-icons text-orange-500 cursor-pointer"
                                         *ngIf="reserve.prioritized">warning_amber</span></td>
             <td class="px-6 py-4">{{ street.street }}</td>
             <td class="px-6 py-4">{{ reserve.teamName }}</td>
             <td class="px-6 py-4">{{ reserve.truckDepositName }}</td>
-            <td class="px-6 py-4">{{ reserve.secondDepositName }}</td>
-            <td class="px-6 py-4">{{ reserve.thirdDepositName }}</td>
+            <td class="px-6 py-4">{{ reserve.comment }}</td>
           </tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
-
+  <div *ngIf="finish && openDepositModal" class="w-full h-screen pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
+    <div class="flex flex-col gap-4">
+      <div class="skeleton h-8 w-full"></div>
+      <div class="skeleton h-4 w-full mb-2"></div>
+      <div class="skeleton h-4 w-full mb-2"></div>
+      <div class="skeleton h-4 w-full mb-2"></div>
+      <div class="skeleton h-4 w-full mb-2"></div>
+      <div class="skeleton h-4 w-full mb-2"></div>
+      <div class="skeleton h-4 w-full mb-2"></div>
+    </div>
+  </div>
   <div class="w-full" *ngIf="!finish" @fadeSlide>
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
@@ -148,11 +209,11 @@
               <span
                 class="material-icons text-neutral-500 cursor-pointer select-none
                 transition-all duration-300 ease-in-out hover:text-orange-600 hover:scale-110"
-                (click)="togglePriority(warning, warningText)"
-                #warning>
+                (click)="togglePriority()"
+                [ngClass]="isPriority() ? 'warning text-orange-500' : ''" >
                 warning_amber
               </span>
-              <span #warningText class="text-xs">Sem prioridade</span>
+              <span class="text-xs">{{ isPriority() ? 'Com prioridade' : 'Sem prioridade' }}</span>
             </div>
 
             <div
@@ -172,6 +233,7 @@
             <div class="border rounded p-2">
               <textarea
                 (input)="insertComment($event)"
+                [value]="getComment()"
                 placeholder="Adicionar comentário"
                 class="w-full text-xs outline-none resize-none h-10">
               </textarea>
@@ -188,13 +250,6 @@
               class="btn bg-indigo-600 text-white hover:bg-indigo-700 shadow w-full py-2 rounded transition-transform">
               Concluir Rua
             </button>
-
-            <div class="mt-2 text-xs text-gray-600 text-center">
-              <div>Almoxarifados reservas</div>
-              <div>Primário: <strong>Galpao rua tres</strong></div>
-              <div>Secundário: <strong>Galpao BH</strong></div>
-            </div>
-
           </div>
         }
       </div>
@@ -256,39 +311,6 @@
         </div>
 
       </div>
-
-      <div *ngIf="openDepositModal" class="fixed top-20 right-4 w-72 z-50 bg-white shadow-lg rounded-lg p-4 border"
-           @fadeSlide>
-        <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Almoxarifados Reservas</h3>
-
-        <div class="space-y-2">
-          <div>
-            <label class="text-xs text-gray-500 mb-1 block">Primário</label>
-            <select class="select select-sm select-bordered w-full" #firstDeposit>
-              <option disabled selected>Selecione</option>
-              <ng-container *ngFor="let d of deposits">
-                <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')" [value]="d.idDeposit">{{ d.depositName }}</option>
-              </ng-container>
-            </select>
-          </div>
-          <div>
-            <label class="text-xs text-gray-500 mb-1 block">Secundário</label>
-            <select class="select select-sm select-bordered w-full" #secondDeposit>
-              <option disabled selected>Selecione</option>
-              <ng-container *ngFor="let d of deposits">
-                <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')" [value]="d.idDeposit">{{ d.depositName }}</option>
-              </ng-container>
-            </select>
-          </div>
-        </div>
-
-        <div class="mt-4 flex justify-end">
-          <button class="btn btn-sm btn-primary" (click)="selectDeposits(firstDeposit.value, secondDeposit.value)">
-            Salvar
-          </button>
-        </div>
-      </div>
-
 
     </div>
 
