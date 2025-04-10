@@ -120,4 +120,20 @@ export class UtilsService {
     }, timeout);
   }
 
+  playSound(type: string) {
+    if (type === 'open') {
+      const audio = new Audio('sci.mp3');
+      audio.play().catch(err => {
+      });
+    } else if (type === 'select') {
+      const audio = new Audio('select.mp3');
+      audio.play().catch(err => {
+      });
+    } else if (type === 'pop') {
+      const audio = new Audio('pop.mp3');
+      audio.play().catch(err => {
+      });
+    }
+  }
+
 }

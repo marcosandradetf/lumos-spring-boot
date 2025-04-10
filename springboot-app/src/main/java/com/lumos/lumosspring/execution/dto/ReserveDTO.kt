@@ -4,5 +4,6 @@ data class ReserveDTO(
     val preMeasurementStreetId: Long,
     val depositId: Long,
     val teamId: Long,
-    val enjoyTuckDepositOfTeam: Boolean,
+    val secondDepositId: Long,
+    val thirdDepositId: Long
 )

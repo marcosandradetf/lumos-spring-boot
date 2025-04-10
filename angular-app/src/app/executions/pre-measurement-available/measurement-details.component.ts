@@ -8,9 +8,19 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {TeamsModel} from '../../models/teams.model';
 import {TeamService} from '../../manage/team/team-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {response} from 'express';
 import {UtilsService} from '../../core/service/utils.service';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
+
+import {
+  trigger,
+  state,
+  style,
+  animate,
+  transition
+} from '@angular/animations';
+import {FormsModule} from '@angular/forms';
+import {EstoqueService} from '../../stock/services/estoque.service';
+import {Deposit} from '../../models/almoxarifado.model';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -21,10 +31,22 @@ import {ScreenMessageComponent} from '../../shared/components/screen-message/scr
     TableComponent,
     NgIf,
     NgClass,
-    ScreenMessageComponent
+    ScreenMessageComponent,
+    FormsModule
   ],
   templateUrl: './measurement-details.component.html',
-  styleUrl: './measurement-details.component.scss'
+  styleUrl: './measurement-details.component.scss',
+  animations: [
+    trigger('fadeSlide', [
+      transition(':enter', [ // Aparecendo
+        style({opacity: 0, transform: 'translateY(-10px)'}),
+        animate('500ms ease-out', style({opacity: 1, transform: 'translateY(0)'}))
+      ]),
+      transition(':leave', [ // Sumindo
+        animate('500ms ease-in', style({opacity: 0, transform: 'translateY(-10px)'}))
+      ])
+    ])
+  ]
 })
 export class MeasurementDetailsComponent implements OnInit {
   isMultiTeam: boolean = false;
@@ -81,14 +103,21 @@ export class MeasurementDetailsComponent implements OnInit {
 
   reserveDTO: {
     preMeasurementStreetId: number;
-    depositId: number;
     teamId: number;
-    enjoyTuckDepositOfTeam: boolean;
+    teamName: string,
+    truckDepositName: string;
+    secondDepositId: number;
+    secondDepositName: string;
+    thirdDepositId: number;
+    thirdDepositName: string;
+    prioritized: boolean;
+    comment: string;
   }[] = [];
 
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
-              private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,) {
+              private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,
+              private stockService: EstoqueService) {
   }
 
   ngOnInit() {
@@ -111,7 +140,16 @@ export class MeasurementDetailsComponent implements OnInit {
       next: (response) => {
         this.teams = response;
       },
-      error: (error: { error: { message: string} }) => {
+      error: (error: { error: { message: string } }) => {
+        this.utils.showMessage(error.error.message, true);
+      }
+    });
+
+    this.stockService.getDeposits().subscribe({
+      next: (response) => {
+        this.deposits = response;
+      },
+      error: (error: { error: { message: string } }) => {
         this.utils.showMessage(error.error.message, true);
       }
     });
@@ -122,28 +160,7 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
 
-  protected initMap(street: {
-    number: number;
-    preMeasurementStreetId: number;
-    lastPower: string;
-    latitude: number;
-    longitude: number;
-    street: string;
-    hood: string;
-    city: string;
-    status: string;
-    items: {
-      preMeasurementStreetItemId: number;
-      materialId: number;
-      contractItemId: number;
-      materialName: string;
-      materialType: string;
-      materialPower: string;
-      materialLength: string;
-      materialQuantity: number;
-      status: string
-    }[]
-  }): void {
+  protected initMap(street: PreMeasurementModel['streets'][0]): void {
     const latitude = street.latitude;
     const longitude = street.longitude;
     this.streetId = street.preMeasurementStreetId;
@@ -157,9 +174,15 @@ export class MeasurementDetailsComponent implements OnInit {
     if (!reserve) {
       reserve = {
         preMeasurementStreetId: street.preMeasurementStreetId,
-        depositId: 0,
         teamId: 0,
-        enjoyTuckDepositOfTeam: false,
+        teamName: '',
+        truckDepositName: '',
+        secondDepositId: 0,
+        secondDepositName: '',
+        thirdDepositId: 0,
+        thirdDepositName: '',
+        prioritized: false,
+        comment: ''
       };
       this.reserveDTO.push(reserve);
     }
@@ -195,18 +218,6 @@ export class MeasurementDetailsComponent implements OnInit {
 
   }
 
-  toggleButton(warning: HTMLSpanElement, warningText: HTMLSpanElement) {
-    if (warning.innerHTML !== 'warning') {
-      warning.innerHTML = 'warning';
-      warning.classList.add('text-orange-500');
-      warningText.innerHTML = 'Com prioridade';
-    } else {
-      warning.classList.remove('text-orange-500');
-      warning.innerHTML = 'warning_amber';
-      warningText.innerHTML = 'Sem prioridade';
-    }
-  }
-
   openModal: boolean = false;
   teamName: string = "";
   truckDepositName: string = "";
@@ -229,8 +240,11 @@ export class MeasurementDetailsComponent implements OnInit {
     });
 
     this.reserveDTO[streetIndex].teamId = Number(team.idTeam);
+    this.reserveDTO[streetIndex].teamName = team.teamName;
+    this.reserveDTO[streetIndex].truckDepositName = team.depositName;
     this.teamName = "EQUIPE " + team.teamName.toUpperCase();
     this.openModal = false;
+    this.toggleSideBar();
   }
 
   getReserve() {
@@ -251,22 +265,127 @@ export class MeasurementDetailsComponent implements OnInit {
     return this.localStockStreet.find(s => s.streetId === streetId)?.materialsInTruck || [];
   }
 
+  finish: boolean = false;
+
   finishStreet() {
     const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    if(this.reserveDTO[streetIndex].teamId === 0) {
+    if (this.reserveDTO[streetIndex].teamId === 0) {
       this.utils.showMessage('Selecione uma equipe para continuar', true);
       return;
     }
 
+    if (this.reserveDTO[streetIndex].secondDepositId === 0 || this.reserveDTO[streetIndex].thirdDepositId === 0) {
+      this.utils.showMessage('Selecione os almoxarifados reservas para continuar', true);
+      return;
+    }
+
     this.preMeasurement.streets[streetIndex].status = 'VALIDATED';
+    this.streetId = this.preMeasurement.streets[streetIndex + 1]?.preMeasurementStreetId || 0;
+    this.utils.showMessage("Rua pendente salva com sucesso", false);
+    this.utils.playSound("pop");
+    if (this.streetId === 0) {
+      this.finish = true;
+      return;
+    }
+    const street = this.getStreet(this.streetId);
+    if (street) this.initMap(street);
+
   }
 
   isFullStock(): boolean {
     return this.localStockStreet.find(l => l.streetId == this.streetId)
       ?.materialsInTruck.every(t => t.availableQuantity >= t.itemQuantity) || false;
+  }
+
+  getReserveByStreetId(preMeasurementStreetId: number) {
+    return this.reserveDTO.find(r => r.preMeasurementStreetId === preMeasurementStreetId) || {
+      preMeasurementStreetId: this.streetId,
+      teamId: 0,
+      teamName: '',
+      truckDepositName: '',
+      secondDepositId: 0,
+      secondDepositName: '',
+      thirdDepositId: 0,
+      thirdDepositName: '',
+      prioritized: false,
+      comment: ''
+    };
+  }
+
+
+  deposits: Deposit[] = [];
+
+  openDepositModal: boolean = false;
+
+  toggleSideBar() {
+    this.openDepositModal = !this.openDepositModal;
+
+    const audio = new Audio('sci.mp3');
+    audio.play().catch(err => {
+      console.warn('Erro ao tentar tocar o som:', err);
+    });
+  }
+
+
+
+  selectDeposits(firstDeposit: string, secondDeposit: string) {
+    if (firstDeposit === "Selecione" || secondDeposit === "Selecione") {
+      this.utils.showMessage("A seleção dos dois almoxarifados reservas são obrigatórias", true);
+      return;
+    }
+
+    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    if (streetIndex === -1) {
+      return;
+    }
+
+    this.reserveDTO[streetIndex].secondDepositId = Number(firstDeposit)
+    this.reserveDTO[streetIndex].secondDepositName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
+    this.reserveDTO[streetIndex].thirdDepositId = Number(secondDeposit)
+    this.reserveDTO[streetIndex].thirdDepositName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
+
+    this.utils.showMessage("Almoxarifados reservas definidos com sucesso", false);
+    this.openDepositModal = false;
+  }
+
+
+  togglePriority(warning: HTMLSpanElement, warningText: HTMLSpanElement) {
+    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    if (streetIndex === -1) {
+      warning.classList.remove('text-orange-500');
+      warning.innerHTML = 'warning_amber';
+      warningText.innerHTML = 'Sem prioridade';
+      return;
+    }
+
+    this.utils.playSound("select");
+
+    this.reserveDTO[streetIndex].prioritized = !this.reserveDTO[streetIndex].prioritized;
+    let message: string;
+    if (this.reserveDTO[streetIndex].prioritized) {
+      warning.innerHTML = 'warning';
+      warning.classList.add('text-orange-500');
+      warningText.innerHTML = 'Com prioridade';
+      message = "Prioridade definida para essa rua";
+    } else {
+      message = "Prioridade removida para essa rua";
+      warning.classList.remove('text-orange-500');
+      warning.innerHTML = 'warning_amber';
+      warningText.innerHTML = 'Sem prioridade';
+    }
+    this.utils.showMessage(message, false);
+  }
+
+  insertComment($event: Event) {
+    const streetIndex = this.reserveDTO.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    if (streetIndex === -1) {
+      return;
+    }
+
+    this.reserveDTO[streetIndex].comment = ($event.target as HTMLInputElement).value;
   }
 }

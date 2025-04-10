@@ -1,5 +1,75 @@
 <div class="flex mt-[3rem] h-fit" #top>
-  <div class="w-full">
+  <div *ngIf="finish" class="w-full h-screen pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
+    <div class="max-w-7xl mx-auto">
+      <!-- Ações -->
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800">
+          Pré-medição - <span class="text-[#044686]">{{ preMeasurement.city }}</span>
+        </h2>
+
+        <div class="flex gap-4">
+          <button
+            (click)="router.navigate(['/pre-medicao/disponivel'])"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+            <span class="material-icons">close</span> Cancelar
+          </button>
+          <button
+            (click)="dialog.show()"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition">
+            <span class="material-icons">save</span> Concluir
+          </button>
+        </div>
+      </div>
+
+      <dialog #dialog class="modal">
+        <div class="modal-box rounded-xl shadow-lg">
+          <h3 class="font-bold text-lg mb-4 text-indigo-700">Confirmar envio dos dados</h3>
+
+          <div class="flex justify-end gap-4">
+            <button
+              (click)="dialog.close()"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+              <span class="material-icons">close</span> Cancelar
+            </button>
+            <button
+              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition">
+              <span class="material-icons">save</span> Concluir
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Tabela -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full text-sm text-gray-700">
+          <thead class="bg-[#044686] text-white uppercase text-xs">
+          <tr>
+            <th class="px-6 py-3 text-left"></th>
+            <th class="px-6 py-3 text-left">Rua</th>
+            <th class="px-6 py-3 text-left">Equipe</th>
+            <th class="px-6 py-3 text-left">Almox. Prioritário</th>
+            <th class="px-6 py-3 text-left">Almox. Secundário</th>
+            <th class="px-6 py-3 text-left">Almox. Terciário</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+          <tr *ngFor="let street of preMeasurement.streets" class="hover:bg-gray-50">
+            @let reserve = getReserveByStreetId(street.preMeasurementStreetId);
+            <td class="px-6 py-2"><span class="material-icons text-orange-500 cursor-pointer"
+                                        *ngIf="reserve.prioritized">warning_amber</span></td>
+            <td class="px-6 py-4">{{ street.street }}</td>
+            <td class="px-6 py-4">{{ reserve.teamName }}</td>
+            <td class="px-6 py-4">{{ reserve.truckDepositName }}</td>
+            <td class="px-6 py-4">{{ reserve.secondDepositName }}</td>
+            <td class="px-6 py-4">{{ reserve.thirdDepositName }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full" *ngIf="!finish" @fadeSlide>
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
@@ -12,6 +82,7 @@
     </div>
 
     <div>
+
       <div class="relative w-full overflow-hidden border-b">
         <div
           class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10"
@@ -19,6 +90,7 @@
           <ng-container *ngFor="let street of preMeasurement.streets">
             <div
               *ngIf="street.status !== 'VALIDATED'"
+              @fadeSlide
               [class.selected]="streetId === street.preMeasurementStreetId"
               (click)="initMap(street);"
               class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
@@ -69,17 +141,17 @@
             </div>
 
             <div class="h-[300px] rounded overflow-hidden">
-              <div id="map" class="h-full w-full" [class.-z-10]="openModal"></div>
+              <div id="map" class="h-full w-full" [class.-z-10]="openModal || openDepositModal"></div>
             </div>
 
             <div class="flex items-center gap-2 border-b pb-2">
-        <span
-          class="material-icons text-neutral-500 cursor-pointer select-none
-          transition-all duration-300 ease-in-out hover:text-orange-600 hover:scale-110"
-          (click)="toggleButton(warning, warningText)"
-          #warning>
-          warning_amber
-        </span>
+              <span
+                class="material-icons text-neutral-500 cursor-pointer select-none
+                transition-all duration-300 ease-in-out hover:text-orange-600 hover:scale-110"
+                (click)="togglePriority(warning, warningText)"
+                #warning>
+                warning_amber
+              </span>
               <span #warningText class="text-xs">Sem prioridade</span>
             </div>
 
@@ -98,9 +170,11 @@
 
 
             <div class="border rounded p-2">
-        <textarea
-          placeholder="Adicionar comentário"
-          class="w-full text-xs outline-none resize-none h-10"></textarea>
+              <textarea
+                (input)="insertComment($event)"
+                placeholder="Adicionar comentário"
+                class="w-full text-xs outline-none resize-none h-10">
+              </textarea>
             </div>
 
             <button
@@ -114,6 +188,12 @@
               class="btn bg-indigo-600 text-white hover:bg-indigo-700 shadow w-full py-2 rounded transition-transform">
               Concluir Rua
             </button>
+
+            <div class="mt-2 text-xs text-gray-600 text-center">
+              <div>Almoxarifados reservas</div>
+              <div>Primário: <strong>Galpao rua tres</strong></div>
+              <div>Secundário: <strong>Galpao BH</strong></div>
+            </div>
 
           </div>
         }
@@ -176,6 +256,39 @@
         </div>
 
       </div>
+
+      <div *ngIf="openDepositModal" class="fixed top-20 right-4 w-72 z-50 bg-white shadow-lg rounded-lg p-4 border"
+           @fadeSlide>
+        <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Almoxarifados Reservas</h3>
+
+        <div class="space-y-2">
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Primário</label>
+            <select class="select select-sm select-bordered w-full" #firstDeposit>
+              <option disabled selected>Selecione</option>
+              <ng-container *ngFor="let d of deposits">
+                <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')" [value]="d.idDeposit">{{ d.depositName }}</option>
+              </ng-container>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Secundário</label>
+            <select class="select select-sm select-bordered w-full" #secondDeposit>
+              <option disabled selected>Selecione</option>
+              <ng-container *ngFor="let d of deposits">
+                <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')" [value]="d.idDeposit">{{ d.depositName }}</option>
+              </ng-container>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <button class="btn btn-sm btn-primary" (click)="selectDeposits(firstDeposit.value, secondDeposit.value)">
+            Salvar
+          </button>
+        </div>
+      </div>
+
 
     </div>
 
