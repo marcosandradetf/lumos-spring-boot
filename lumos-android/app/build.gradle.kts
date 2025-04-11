@@ -65,6 +65,23 @@ android {
             exclude(group = "org.jetbrains", module = "annotations")
         }
     }
+
+//    signingConfigs {
+//        create("release") {
+//            storeFile = file("/home/marcos/projects/lumos/lumos-android/key-store-path/key.jks")
+//            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+//            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+//            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+//        }
+//    }
+//
+//    buildTypes {
+//        getByName("release") {
+//            isMinifyEnabled = false //  ProGuard
+//            signingConfig = signingConfigs.getByName("release")
+//        }
+//    }
+
 }
 
 dependencies {

@@ -105,6 +105,7 @@ fun PreMeasurementProgressScreen(
                             Toast.LENGTH_SHORT
                         )
                         .show()
+//                    preMeasurementViewModel.
                     onNavigateToHome()
                     preMeasurementViewModel.sendPreMeasurementSync(contractId)
                 } else {

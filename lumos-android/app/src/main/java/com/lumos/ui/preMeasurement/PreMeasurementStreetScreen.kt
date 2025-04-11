@@ -108,6 +108,8 @@ import com.lumos.ui.components.NetworkStatusBar
 import com.lumos.ui.components.TopBar
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.StockViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -166,6 +168,8 @@ fun PreMeasurementStreetScreen(
             val lengthsList = loadedContract.lengths
                 ?.split("#")?.map { it.trim() } ?: emptyList()
 
+            stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
+
             Log.e("DEBUG", "contract.powers: ${loadedContract.powers}")
             Log.e("powersList", powersList.toString())
             Log.e("lengthsList", lengthsList.toString())
@@ -178,8 +182,7 @@ fun PreMeasurementStreetScreen(
                 )
                 .setConstraints(
                     Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .setRequiresBatteryNotLow(true)
+                        .setRequiresBatteryNotLow(false)
                         .build()
                 )
                 .build()
@@ -190,14 +193,16 @@ fun PreMeasurementStreetScreen(
                 workRequest
             )
 
-            val workManager = WorkManager.getInstance(context)
-            workManager.getWorkInfoByIdLiveData(workRequest.id)
-                .observe(lifecycleOwner) { workInfo ->
-                    if (workInfo?.state == WorkInfo.State.SUCCEEDED) {
-                        Log.e("syncStock screen street", "carregando materiais pos-worker")
-                        stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
+            withContext(Dispatchers.Main) {
+                val workManager = WorkManager.getInstance(context)
+                workManager.getWorkInfoByIdLiveData(workRequest.id)
+                    .observe(lifecycleOwner) { workInfo ->
+                        if (workInfo?.state == WorkInfo.State.SUCCEEDED) {
+                            Log.e("syncStock screen street", "carregando materiais pos-worker")
+                            stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -500,7 +505,10 @@ fun PMSContent(
                         }
 
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally // Alinha o conteúdo da coluna no centro
+                            horizontalAlignment = Alignment.CenterHorizontally, // Alinha o conteúdo da coluna no centro
+                            modifier = Modifier.clickable {
+                                showModal()
+                            }
                         ) {
                             BadgedBox(
                                 badge = {
@@ -880,11 +888,12 @@ fun BottomSheetDialog(
 
             LazyColumn {
                 items(filteredList) { material ->
+                    val selectedItem = preMeasurementStreetItems.find { it.materialId == material.materialId }
                     // Passando diretamente o estado de 'selected' e 'quantity' do Composable 1
                     ItemLightRow(
                         material = material,
-                        preSelected = preList.firstOrNull { it.materialId == material.materialId } != null,
-                        preQuantity = preList.firstOrNull { it.materialId == material.materialId }?.materialQuantity
+                        preSelected = selectedItem != null,
+                        preQuantity = selectedItem?.materialQuantity
                             ?: 0,
                         onItemSelected = { m ->
                             if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
@@ -925,8 +934,8 @@ fun ItemLightRow(
     preSelected: Boolean,
     preQuantity: Int
 ) {
-    var selected by remember { mutableStateOf(preSelected) }
-    var quantity by remember { mutableIntStateOf(preQuantity) }
+    var selected = preSelected
+    var quantity = preQuantity
 
     val materialChar = if (material.materialLength != null) {
         "Tamanho: ${material.materialLength}"

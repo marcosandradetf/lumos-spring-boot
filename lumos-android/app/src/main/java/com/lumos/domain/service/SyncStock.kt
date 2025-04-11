@@ -44,7 +44,7 @@ class SyncStock(appContext: Context, workerParams: WorkerParameters) :
             }
         } catch (e: Exception) {
             Log.e("SyncStock", "Erro ao sincronizar: ${e.message}")
-            Result.failure() // Retenta em caso de falha
+            Result.failure()
         }
     }
 
