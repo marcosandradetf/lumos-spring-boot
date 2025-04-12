@@ -39,7 +39,6 @@ services:
       - MINIO_URL=minio:9000
       - JAVA_TOOL_OPTIONS=-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -XX:+AlwaysPreTouch --enable-preview
     mem_limit: 1024m
-    
     restart: always
     
   minio:

@@ -14,4 +14,5 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar /app/lumos-spring.jar
 
 EXPOSE 8080
-CMD ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-XX:MinRAMPercentage=20.0", "-XX:+ExitOnOutOfMemoryError", "-XX:+AlwaysPreTouch", "--enable-preview", "-jar", "lumos-spring.jar"]
+CMD ["java", "-jar", "lumos-spring.jar"]
+
