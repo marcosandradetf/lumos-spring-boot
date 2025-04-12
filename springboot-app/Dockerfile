@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pom.xml /app/
 COPY ./src /app/src/
 
-RUN mvn clean package -DskipTests --no-transfer-progress -Pprod
+RUN mvn clean package -DskipTests --no-transfer-progress
 
 # Etapa 2: Runtime
 FROM eclipse-temurin:21-jdk-alpine
