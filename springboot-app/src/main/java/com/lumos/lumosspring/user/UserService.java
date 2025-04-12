@@ -8,6 +8,7 @@ import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,6 +35,7 @@ public class UserService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    @Cacheable("getAllUsers")
     public ResponseEntity<List<UserResponse>> findAll() {
         List<User> users = userRepository.findAll();
         List<UserResponse> userResponses = new ArrayList<>();
@@ -60,6 +62,7 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(userResponses);
     }
 
+    @Cacheable("getUserByUUID")
     public ResponseEntity<UserResponse> find(String uuid) {
         var user = userRepository.findByIdUser(UUID.fromString(uuid));
         if (user.isEmpty()) {

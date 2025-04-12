@@ -6,6 +6,7 @@ import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class TypeService {
         this.materialStockRepository = materialStockRepository;
     }
 
+    @Cacheable("getAllTypes")
     public List<Type> findAll() {
         return tipoRepository.findAllByOrderByIdTypeAsc();
     }

@@ -10,6 +10,7 @@ import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
 import com.lumos.lumosspring.util.Util;
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -246,6 +247,7 @@ public class MaterialService {
     }
 
 
+    @Cacheable("getMaterialsForMob")
     public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
         var materials = materialRepository.getMaterialsForInstallation();
         List<MaterialDTOMob> materialsDTO = new ArrayList<>();

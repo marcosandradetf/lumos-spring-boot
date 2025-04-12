@@ -21,6 +21,9 @@ import com.lumos.lumosspring.user.Role;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.*;
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +54,10 @@ public class PreMeasurementService {
         this.notificationService = notificationService;
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
+            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true)
+    })
     public boolean setStatus(Long preMeasurementId) {
         var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
 
@@ -85,6 +92,12 @@ public class PreMeasurementService {
      * SALVAMENTO DA PRÉ-MEDIÇÃO
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
+            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true),
+            @CacheEvict(cacheNames = "GetContractsForPreMeasurement", allEntries = true)
+
+    })
     public ResponseEntity<?> saveMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
         if (userUUID == null || userUUID.isBlank()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("user UUID is required"));
@@ -188,7 +201,7 @@ public class PreMeasurementService {
      * EXEMPLO: SEGUNDA CHAMADA LED DE 120W / BRAÇO DE 2,5
      */
     @Transactional
-    private void insertServices(String actualItemType, Contract contract, PreMeasurementStreetItem actualItem) {
+    protected void insertServices(String actualItemType, Contract contract, PreMeasurementStreetItem actualItem) {
         if (!List.of("LED", "BRAÇO").contains(actualItemType.toUpperCase())) return;
 
         contract.getContractItemsQuantitative().stream()
@@ -206,7 +219,7 @@ public class PreMeasurementService {
      * ME TODO PARA ADICIONAR MATERIAIS DEPENDENTES NA PRÉ-MEDIÇÃO
      **/
     @Transactional
-    private void insertDependencyItems(Material material, PreMeasurementStreetItemDTO itemDTO, PreMeasurementStreet preMeasurementStreet, Contract contract) {
+    protected void insertDependencyItems(Material material, PreMeasurementStreetItemDTO itemDTO, PreMeasurementStreet preMeasurementStreet, Contract contract) {
         material.getRelatedMaterials().stream()
                 .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("REL"))
                 .findFirst().ifPresent(rm -> {
@@ -221,7 +234,7 @@ public class PreMeasurementService {
     }
 
     @Transactional
-    private void insertOrUpdateRelay(PreMeasurementStreet preMeasurementStreet, Material rm, int quantity, Contract contract) {
+    protected void insertOrUpdateRelay(PreMeasurementStreet preMeasurementStreet, Material rm, int quantity, Contract contract) {
         var existingRelay = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
                 .stream()
                 .filter(i -> i.getMaterial().getIdMaterial().equals(rm.getIdMaterial()))
@@ -245,7 +258,7 @@ public class PreMeasurementService {
     }
 
     @Transactional
-    private void insertOrUpdateCable(PreMeasurementStreet preMeasurementStreet, Material cable, String armLength, int quantity, Contract contract) {
+    protected void insertOrUpdateCable(PreMeasurementStreet preMeasurementStreet, Material cable, String armLength, int quantity, Contract contract) {
         var existingCable = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
                 .stream()
                 .filter(i -> i.getMaterial().getIdMaterial().equals(cable.getIdMaterial()))
@@ -305,6 +318,7 @@ public class PreMeasurementService {
                 }).findFirst();
     }
 
+    @Cacheable("getPreMeasurements")
     public ResponseEntity<?> getAll(String status) {
         List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
                 .findAllByStatusOrderByCreatedAtAsc(status)
@@ -315,6 +329,7 @@ public class PreMeasurementService {
         return ResponseEntity.ok().body(measurements);
     }
 
+    @Cacheable("getPreMeasurementById")
     public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
         PreMeasurement p = preMeasurementRepository
                 .findByPreMeasurementId(preMeasurementId);
@@ -372,6 +387,11 @@ public class PreMeasurementService {
     /**
      * MÉTODO PARA SALVAR AS MODIFICAÇOES NA PRÉ-MEDIÇÃO
      */
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
+            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true)
+    })
+    @Transactional
     public ResponseEntity<?> saveModifications(ModificationsDTO modificationsDTO) {
         var cancelledStreets = modificationsDTO.getCancelledStreets();
         var cancelledItems = modificationsDTO.getCancelledItems();
@@ -390,8 +410,7 @@ public class PreMeasurementService {
         return ResponseEntity.ok(new DefaultResponse("Itens Atualizados com Sucesso!"));
     }
 
-    @Transactional
-    private void cancelStreets(List<CancelledStreets> cancelledStreets) {
+    protected void cancelStreets(List<CancelledStreets> cancelledStreets) {
         List<Long> streetIds = cancelledStreets.stream()
                 .filter(Objects::nonNull)
                 .map(CancelledStreets::getStreetId)
@@ -439,8 +458,7 @@ public class PreMeasurementService {
         preMeasurementRepository.save(preMeasurement);
     }
 
-    @Transactional
-    private void cancelItems(List<CancelledItems> cancelledItems) {
+    protected void cancelItems(List<CancelledItems> cancelledItems) {
         List<Long> itemsIds = cancelledItems.stream()
                 .filter(Objects::nonNull)
                 .map(CancelledItems::getItemId)
@@ -480,8 +498,7 @@ public class PreMeasurementService {
         preMeasurementRepository.save(preMeasurement);
     }
 
-    @Transactional
-    private void changeItems(List<ChangedItems> changedItems) {
+    protected void changeItems(List<ChangedItems> changedItems) {
         List<Long> itemsIds = changedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ChangedItems::getItemId)

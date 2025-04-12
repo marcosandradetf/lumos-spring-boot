@@ -31,24 +31,38 @@
         <kotlin.version>2.1.10</kotlin.version>
     </properties>
     <dependencies>
+        <!-- Spring Cache -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+        <!-- Caffeine Cache -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
+
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
             <version>9.4.3</version>
         </dependency>
         <!-- Coroutines Core -->
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>1.8.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.jetbrains.kotlinx</groupId>-->
+<!--            <artifactId>kotlinx-coroutines-core</artifactId>-->
+<!--            <version>1.8.0</version>-->
+<!--        </dependency>-->
 
-        <!-- Coroutines para Spring (opcional, mas recomendado) -->
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-reactor</artifactId>
-            <version>1.8.0</version>
-        </dependency>
+<!--        &lt;!&ndash; Coroutines para Spring (opcional, mas recomendado) &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.jetbrains.kotlinx</groupId>-->
+<!--            <artifactId>kotlinx-coroutines-reactor</artifactId>-->
+<!--            <version>1.8.0</version>-->
+<!--        </dependency>-->
 
         <!--        Web Socket-->
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-messaging -->
@@ -82,27 +96,33 @@
             <version>1.9.0</version>
         </dependency>
         <!--        -->
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-security</artifactId>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
@@ -139,7 +159,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>6.2.5</version> <!-- Certifique-se de que o spring-core tem a mesma versão do spring-messaging -->
         </dependency>
 
     </dependencies>
@@ -150,6 +169,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <layers enabled="true"/>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>

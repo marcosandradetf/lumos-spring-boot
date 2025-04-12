@@ -1,30 +1,17 @@
-# Etapa 1: Usando uma imagem do Maven para construir o JAR
+# Etapa 1: Build
 FROM maven:3.9.8-eclipse-temurin-21 AS builder
-
-# Defina o diretório de trabalho no container
 WORKDIR /app
 
-# Copie o pom.xml e o diretório de código fonte para o container
 COPY pom.xml /app/
 COPY ./src /app/src/
 
-# Execute o Maven para construir o JAR
-RUN mvn clean package
+RUN mvn clean package -DskipTests --no-transfer-progress -Pprod
 
-# Verifique se o arquivo JAR foi gerado corretamente
-#RUN ls -l /app/target
-
-# Etapa 2: Usando uma imagem do OpenJDK para rodar o Spring Boot
-FROM openjdk:21
-
-# Defina o diretório de trabalho no container
+# Etapa 2: Runtime
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 
-# Copie o JAR gerado pela etapa de build para o container
 COPY --from=builder /app/target/*.jar /app/lumos-spring.jar
 
-# Exponha a porta 8080 para o Spring Boot
 EXPOSE 8080
-
-# Comando para rodar a aplicação Spring Boot
-CMD ["java", "--enable-preview", "-jar", "lumos-spring.jar"]
+CMD ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-XX:MinRAMPercentage=20.0", "-XX:+ExitOnOutOfMemoryError", "-XX:+AlwaysPreTouch", "--enable-preview", "-jar", "lumos-spring.jar"]

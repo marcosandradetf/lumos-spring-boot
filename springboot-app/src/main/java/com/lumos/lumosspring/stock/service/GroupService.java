@@ -5,6 +5,7 @@ import com.lumos.lumosspring.stock.entities.Group;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class GroupService {
     @Autowired
     private TypeRepository typeRepository;
 
+    @Cacheable("getAllGroups")
     public List<Group> findAll() {
         return groupRepository.findAllByOrderByIdGroupAsc();
     }

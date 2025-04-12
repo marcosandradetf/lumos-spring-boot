@@ -14,15 +14,14 @@ import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.*
 
 @Service
-class ContractService(
+open class ContractService(
     private val contractRepository: ContractRepository,
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
     private val contractReferenceItemRepository: ContractReferenceItemRepository,
@@ -53,22 +52,20 @@ class ContractService(
         return ResponseEntity.ok().body(referenceItemsResponse)
     }
 
-    suspend fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
+    fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         val contract = Contract()
         contract.contractNumber = contractDTO.number
         contract.contractor = contractDTO.contractor
         contract.cnpj = contractDTO.cnpj
         contract.address = contractDTO.address
         contract.creationDate = util.dateTime
-        contract.createdBy = withContext(Dispatchers.IO) {
-            userRepository.findByIdUser(UUID.fromString(contractDTO.userUUID))
-        }.orElseThrow()
+        contract.createdBy = userRepository.findByIdUser(UUID.fromString(contractDTO.userUUID)).orElseThrow()
         contract.unifyServices = contractDTO.unifyServices
         contract.noticeFile = if ((contractDTO.noticeFile?.length ?: 0) > 0) contractDTO.noticeFile else null
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
-        withContext(Dispatchers.IO) {
-            contractRepository.save(contract)
-        }
+
+        contractRepository.save(contract)
+
 
         contractDTO.items.forEach { item ->
             val ci = ContractItemsQuantitative()
@@ -95,7 +92,9 @@ class ContractService(
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }
 
-    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
+
+    @Cacheable("GetContractsForPreMeasurement")
+    open fun getContractsForPreMeasurement(): ResponseEntity<Any> {
         data class ContractForPreMeasurementDTO(
             val contractId: Long,
             val contractor: String,

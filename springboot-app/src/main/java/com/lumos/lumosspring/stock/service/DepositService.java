@@ -11,6 +11,7 @@ import com.lumos.lumosspring.team.Region;
 import com.lumos.lumosspring.team.RegionRepository;
 import com.lumos.lumosspring.team.TeamRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class DepositService {
     @Autowired
     private TeamRepository teamRepository;
 
+    @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
         var deposits =  depositRepository.findAllByOrderByIdDeposit();
         List<DepositResponse> depositResponses = new ArrayList<>();
@@ -151,7 +153,7 @@ public class DepositService {
         depositRepository.delete(deposit);
         return ResponseEntity.ok(this.findAll());
     }
-
+    @Cacheable("getAllDepositsForMob")
     public ResponseEntity<List<DepositResponseMobile>> findAllForMobile() {
         var deposits =  depositRepository.findAllByOrderByIdDeposit();
         List<DepositResponseMobile> depositResponses = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.lumos.lumosspring.stock.service;
 import com.lumos.lumosspring.stock.entities.Company;
 import com.lumos.lumosspring.stock.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public class CompanyService {
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Cacheable("getAllCompanies")
     public List<Company> findAll() {
         return companyRepository.findAll();
     }
