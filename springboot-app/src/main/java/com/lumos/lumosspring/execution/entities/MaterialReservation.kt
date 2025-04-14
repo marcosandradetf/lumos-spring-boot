@@ -2,6 +2,8 @@ package com.lumos.lumosspring.execution.entities
 
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
+import com.lumos.lumosspring.stock.entities.StockMovement.Status
+import com.lumos.lumosspring.system.entities.Log
 import jakarta.persistence.*
 
 @Entity
@@ -17,7 +19,15 @@ class MaterialReservation {
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "material_stock_id")
-    var materialStock: MaterialStock? = null
+    var truckDeposit: MaterialStock? = null
+
+    @ManyToOne(cascade = [(CascadeType.MERGE)])
+    @JoinColumn(name = "material_stock_id")
+    var firstDepositCity: MaterialStock? = null
+
+    @ManyToOne(cascade = [(CascadeType.MERGE)])
+    @JoinColumn(name = "material_stock_id")
+    var secondDepositCity: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     var street: PreMeasurementStreet? = null
@@ -32,24 +42,91 @@ class MaterialReservation {
 
     var status: String = "PENDING"
 
+    @ManyToOne
+    @JoinColumn(name = "truck_id_log")
+    var log: Log = Log()
+
     fun setReservedQuantity(reservedQuantity: Double) {
         this.reservedQuantity = reservedQuantity
-        materialStock!!.removeStockAvailable(reservedQuantity)
+    }
+
+    fun removeStockAvailable() {
+        if (truckDeposit != null && firstDepositCity != null && secondDepositCity != null) {
+            truckDeposit!!.removeStockAvailable(reservedQuantity)
+            firstDepositCity!!.removeStockAvailable(reservedQuantity)
+            secondDepositCity!!.removeStockAvailable(reservedQuantity)
+        }
+    }
+
+    fun confirmReservation(location: Location) {
+        when (location) {
+            Location.TRUCK -> {
+                firstDepositCity!!.addStockAvailable(reservedQuantity)
+                secondDepositCity!!.addStockAvailable(reservedQuantity)
+                firstDepositCity = null
+                secondDepositCity = null
+            }
+
+            Location.FIRST -> {
+                truckDeposit!!.addStockAvailable(reservedQuantity)
+                secondDepositCity!!.addStockAvailable(reservedQuantity)
+                truckDeposit = null
+                secondDepositCity = null
+            }
+
+            Location.SECOND -> {
+                truckDeposit!!.addStockAvailable(reservedQuantity)
+                firstDepositCity!!.addStockAvailable(reservedQuantity)
+                truckDeposit = null
+                firstDepositCity = null
+            }
+        }
+
+        status = Status.APPROVED.name
+    }
+
+    fun rejectReservation(location: Location) {
+        when (location) {
+            Location.TRUCK -> {
+                truckDeposit = null
+                auditTruck()
+            }
+
+            Location.FIRST -> {
+                firstDepositCity = null
+            }
+
+            Location.SECOND -> {
+                secondDepositCity = null
+            }
+        }
+
+        checkReservations()
+    }
+
+    private fun checkReservations() {
+        if (truckDeposit != null && firstDepositCity != null && secondDepositCity != null) {
+            status = Status.REJECTED.name
+        }
+    }
+
+    private fun auditTruck() {
+        log.message = "Caminhao ${truckDeposit?.deposit?.depositName} rejeitou "
+        // continua...
     }
 
     fun setQuantityCompleted(quantityCompleted: Int) {
         this.quantityCompleted = quantityCompleted.toDouble()
-        materialStock!!.removeStockQuantity(quantityCompleted)
+
+        if (truckDeposit != null) truckDeposit!!.removeStockQuantity(quantityCompleted)
+        else if(firstDepositCity != null) firstDepositCity!!.removeStockQuantity(quantityCompleted)
+        else if(secondDepositCity != null) secondDepositCity!!.removeStockQuantity(quantityCompleted)
     }
 
-    private fun removeStockAvailable() {
-        val qtStockAvailable = materialStock!!.stockAvailable
-        if (qtStockAvailable > 0) {
-            materialStock!!.removeStockAvailable(this.reservedQuantity)
-        }
+    enum class Location {
+        TRUCK, FIRST, SECOND
     }
-
-
 }
+
 
 

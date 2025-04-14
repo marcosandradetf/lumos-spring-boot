@@ -1,8 +1,8 @@
 package com.lumos.lumosspring.execution.service
 
-import com.lumos.lumosspring.execution.dto.MaterialsInStockDTO
-import com.lumos.lumosspring.execution.dto.ReserveDTO
 import com.lumos.lumosspring.execution.dto.LocalStockDTO
+import com.lumos.lumosspring.execution.dto.MaterialsInStockDTO
+import com.lumos.lumosspring.execution.dto.ReserveForStreetsDTO
 import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
@@ -25,17 +25,23 @@ class ExecutionService(
     private val materialStockRepository: MaterialStockRepository
 ) {
 
-    fun reserve(reserveDTO: List<ReserveDTO>): ResponseEntity<Any> {
-        if (reserveDTO.isEmpty()) return ResponseEntity.badRequest()
+    fun reserve(reserveDTO: ReserveForStreetsDTO): ResponseEntity<Any> {
+        if (reserveDTO.streets.isEmpty()) return ResponseEntity.badRequest()
             .body(ErrorResponse("Nenhum dado foi enviado"))
 
-        for (reserve in reserveDTO) {
-            val street = preMeasurementStreetRepository.findById(reserve.preMeasurementStreetId).orElseThrow()
-            val team = teamRepository.findById(reserve.teamId).orElseThrow()
-            val truckDeposit = team.deposit ?: throw IllegalStateException("Equipe não possui depósito associado")
-            val deposit = depositRepository.findById(reserve.depositId).orElseThrow()
+        val firstDepositCity = depositRepository.findById(reserveDTO.firstDepositCityId).orElseThrow()
+        val secondDepositCity = depositRepository.findById(reserveDTO.secondDepositCityId).orElseThrow()
+        val preMeasurement = preMeasurementRepository.findById(reserveDTO.preMeasurementId).orElseThrow();
 
-            val items = street.items.orEmpty()
+        for (streetDTO in reserveDTO.streets) {
+            val pStreet = preMeasurement.streets.first { it.preMeasurementStreetId == streetDTO.preMeasurementStreetId }
+            val team = teamRepository.findById(streetDTO.teamId).orElseThrow()
+            val truckDeposit =
+                team.deposit ?: throw IllegalStateException("Equipe não possui almoxarifado associado")
+            pStreet.team = team
+
+
+            val items = pStreet.items.orEmpty()
             val reservation = hashSetOf<MaterialReservation>()
 
             for (item in items) {
@@ -47,39 +53,53 @@ class ExecutionService(
                     .firstOrNull { it.stockAvailable >= item.itemQuantity }
 
                 val description =
-                    "Reserva para execução da rua ${street?.street} na cidade de ${street?.city}"
+                    "Reserva para execução da rua ${pStreet?.street} na cidade de ${pStreet?.city}"
 
                 if (materialInTruck != null) {
                     reservation.add(
                         MaterialReservation().apply {
                             this.description = description
-                            this.materialStock = materialInTruck
+                            this.truckDeposit = materialInTruck
                             this.setReservedQuantity(item.itemQuantity)
-                            this.street = street
+                            this.street = pStreet
                         }
                     )
-                } else {
-                    val materialInDeposit = deposit.materialStocks
-                        .filter { it.material == material }
-                        .firstOrNull { it.stockAvailable >= item.itemQuantity }
-                    if (materialInDeposit == null)
-                        return ResponseEntity.badRequest()
-                            .body(
-                                ErrorResponse(
-                                    "Material '${material.materialName}' não possui quantidade suficiente no almoxarifado."
-                                )
-                            )
-
-                    reservation.add(
-                        MaterialReservation().apply {
-                            this.description = description
-                            this.materialStock = materialInDeposit
-                            this.setReservedQuantity(item.itemQuantity)
-                            this.street = street
-                        }
-                    )
-
                 }
+
+                var materialInDeposit = firstDepositCity.materialStocks
+                    .filter { it.material == material }
+                    .firstOrNull { it.stockAvailable >= item.itemQuantity }
+
+                if (materialInDeposit == null)
+                    return ResponseEntity.badRequest()
+                        .body(
+                            ErrorResponse(
+                                "Material '${material.materialName}' não possui quantidade suficiente no almoxarifado."
+                            )
+                        )
+
+                reservation.add(
+                    MaterialReservation().apply {
+                        this.description = description
+                        this.truckDeposit = materialInDeposit
+                        this.setReservedQuantity(item.itemQuantity)
+                        this.street = pStreet
+                    }
+                )
+
+                materialInDeposit = secondDepositCity.materialStocks
+                    .filter { it.material == material }
+                    .firstOrNull { it.stockAvailable >= item.itemQuantity }
+
+                reservation.add(
+                    MaterialReservation().apply {
+                        this.description = description
+                        this.truckDeposit = materialInDeposit
+                        this.setReservedQuantity(item.itemQuantity)
+                        this.street = pStreet
+                    }
+                )
+
             }
 
             materialReservationRepository.saveAll(reservation)

@@ -120,7 +120,7 @@ public class MaterialStock {
     }
 
     public void removeStockAvailable(double quantityAvailable) {
-        this.stockAvailable -= quantityAvailable;
+        if (this.stockAvailable > 0) this.stockAvailable -= quantityAvailable;
     }
 
     public double getStockAvailable() {
