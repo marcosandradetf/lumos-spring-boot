@@ -3,7 +3,7 @@ package com.lumos.lumosspring.authentication;
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
-import com.lumos.lumosspring.team.TeamRepository;
+import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.Role;
 import com.lumos.lumosspring.user.RoleRepository;
 import com.lumos.lumosspring.user.UserRepository;

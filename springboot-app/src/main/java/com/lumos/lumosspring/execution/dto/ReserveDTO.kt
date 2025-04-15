@@ -12,3 +12,11 @@ data class ReserveResponseDTO(
     val materialQuantity: Double,
     val streetName: String,
 )
+
+data class DeclineReserveDTO(
+    val reserveId: Long
+)
+
+data class ApproveReserveDTO(
+    val reserveId: Long,
+)

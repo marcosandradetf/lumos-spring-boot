@@ -1,8 +1,7 @@
-package com.lumos.lumosspring.team;
+package com.lumos.lumosspring.team.repository;
 
-import org.springframework.data.jpa.repository.Query;
+import com.lumos.lumosspring.team.entities.Region;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 

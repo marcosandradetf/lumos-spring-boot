@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.team;
+package com.lumos.lumosspring.team.entities;
 
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.user.User;

@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.contract.entities.Contract;
-import com.lumos.lumosspring.team.Region;
+import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 

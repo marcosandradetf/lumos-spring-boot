@@ -1,9 +1,8 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
-import com.lumos.lumosspring.team.Team;
+import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;

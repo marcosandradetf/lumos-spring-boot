@@ -6,5 +6,5 @@ import java.util.Optional
 
 
 interface MaterialReservationRepository : JpaRepository<MaterialReservation, Long> {
-    fun findAllByTeam_IdTeam(teamId: Long): Optional<List<MaterialReservation>>
+    fun findAllByStreetPreMeasurementStreetId(streetId: Long): Optional<List<MaterialReservation>>
 }

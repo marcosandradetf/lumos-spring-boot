@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.team.Region;
+import com.lumos.lumosspring.team.entities.Region;
 import jakarta.persistence.*;
 
 import java.util.Set;

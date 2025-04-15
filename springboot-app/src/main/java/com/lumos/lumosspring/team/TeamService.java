@@ -2,10 +2,12 @@ package com.lumos.lumosspring.team;
 
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.team.dto.*;
+import com.lumos.lumosspring.team.entities.Region;
+import com.lumos.lumosspring.team.entities.Team;
+import com.lumos.lumosspring.team.repository.RegionRepository;
+import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.user.UserRepository;
-import com.lumos.lumosspring.user.dto.UpdateUserDto;
-import com.lumos.lumosspring.user.dto.UserResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;

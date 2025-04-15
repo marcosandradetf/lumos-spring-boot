@@ -5,7 +5,7 @@ import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
 import com.lumos.lumosspring.stock.entities.StockMovement.Status
 import com.lumos.lumosspring.system.entities.Log
-import com.lumos.lumosspring.team.Team
+import com.lumos.lumosspring.team.entities.Team
 import jakarta.persistence.*
 
 @Entity
