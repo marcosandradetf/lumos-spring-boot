@@ -37,7 +37,7 @@ class MaterialReservation {
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "pre_measurement_street_id")
-    var street: PreMeasurementStreet? = null
+    var street: PreMeasurementStreet = PreMeasurementStreet()
 
     @Column(nullable = false)
     var reservedQuantity: Double = 0.0

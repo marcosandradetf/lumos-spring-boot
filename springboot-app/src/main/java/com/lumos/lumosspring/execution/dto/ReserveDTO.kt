@@ -6,3 +6,9 @@ data class ReserveDTO(
     val secondDepositCityId: Long,
     val teamId: Long,
 )
+
+data class ReserveResponseDTO(
+    val materialName: String,
+    val materialQuantity: Double,
+    val streetName: String,
+)

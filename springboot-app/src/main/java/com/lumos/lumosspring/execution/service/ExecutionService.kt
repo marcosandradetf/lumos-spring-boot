@@ -3,6 +3,7 @@ package com.lumos.lumosspring.execution.service
 import com.lumos.lumosspring.execution.dto.LocalStockDTO
 import com.lumos.lumosspring.execution.dto.MaterialsInStockDTO
 import com.lumos.lumosspring.execution.dto.ReserveForStreetsDTO
+import com.lumos.lumosspring.execution.dto.ReserveResponseDTO
 import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
 import com.lumos.lumosspring.notification.service.NotificationService
@@ -130,8 +131,24 @@ class ExecutionService(
         return ResponseEntity.ok().body(ErrorResponse("Reserva de materiais salva com sucesso"))
     }
 
-    fun getReserve(preMeasurementId: Long) {
-        var reservation = materialReservationRepository.finallBy
+    fun getReservations(teamId: Long, location: String) {
+        when (location) {
+            "truck" -> {
+                val reservations = materialReservationRepository.findAllByTeam_IdTeam(teamId).orElse(emptyList())
+                val reservationsDTO = reservations.map {
+                    it.truckDeposit?.material?.let { d ->
+                        ReserveResponseDTO(
+                            materialName = d.materialName,
+                            materialQuantity = it.reservedQuantity,
+                            streetName = it.street.street
+                        )
+                    }
+                }
+            }
+
+            firstDe
+        }
+
     }
 
     fun getStockAvailable(preMeasurementId: Long, teamId: Long): ResponseEntity<Any> {
