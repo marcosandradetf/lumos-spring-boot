@@ -5,13 +5,18 @@ import com.lumos.lumosspring.execution.dto.MaterialsInStockDTO
 import com.lumos.lumosspring.execution.dto.ReserveForStreetsDTO
 import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
+import com.lumos.lumosspring.notification.service.NotificationService
+import com.lumos.lumosspring.notification.service.Routes
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.Material
 import com.lumos.lumosspring.stock.repository.DepositRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
 import com.lumos.lumosspring.team.TeamRepository
+import com.lumos.lumosspring.user.Role
 import com.lumos.lumosspring.util.ErrorResponse
+import com.lumos.lumosspring.util.NotificationType
+import com.lumos.lumosspring.util.Util
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 
@@ -22,7 +27,9 @@ class ExecutionService(
     private val depositRepository: DepositRepository,
     private val teamRepository: TeamRepository,
     private val materialReservationRepository: MaterialReservationRepository,
-    private val materialStockRepository: MaterialStockRepository
+    private val materialStockRepository: MaterialStockRepository,
+    private val notificationService: NotificationService,
+    private val util: Util
 ) {
 
     fun reserve(reserveDTO: ReserveForStreetsDTO): ResponseEntity<Any> {
@@ -31,7 +38,9 @@ class ExecutionService(
 
         val firstDepositCity = depositRepository.findById(reserveDTO.firstDepositCityId).orElseThrow()
         val secondDepositCity = depositRepository.findById(reserveDTO.secondDepositCityId).orElseThrow()
-        val preMeasurement = preMeasurementRepository.findById(reserveDTO.preMeasurementId).orElseThrow();
+        val preMeasurement = preMeasurementRepository.findById(reserveDTO.preMeasurementId).orElseThrow()
+        var quantityMaterials: Int = 0
+
 
         for (streetDTO in reserveDTO.streets) {
             val pStreet = preMeasurement.streets.first { it.preMeasurementStreetId == streetDTO.preMeasurementStreetId }
@@ -39,7 +48,6 @@ class ExecutionService(
             val truckDeposit =
                 team.deposit ?: throw IllegalStateException("Equipe não possui almoxarifado associado")
             pStreet.team = team
-
 
             val items = pStreet.items.orEmpty()
             val reservation = hashSetOf<MaterialReservation>()
@@ -56,6 +64,7 @@ class ExecutionService(
                     "Reserva para execução da rua ${pStreet?.street} na cidade de ${pStreet?.city}"
 
                 if (materialInTruck != null) {
+                    quantityMaterials += 1
                     reservation.add(
                         MaterialReservation().apply {
                             this.description = description
@@ -83,6 +92,7 @@ class ExecutionService(
                         this.description = description
                         this.truckDeposit = materialInDeposit
                         this.setReservedQuantity(item.itemQuantity)
+                        this.preMeasurement = preMeasurement
                         this.street = pStreet
                     }
                 )
@@ -96,16 +106,32 @@ class ExecutionService(
                         this.description = description
                         this.truckDeposit = materialInDeposit
                         this.setReservedQuantity(item.itemQuantity)
+                        this.preMeasurement = preMeasurement
                         this.street = pStreet
+                        this.team = team
                     }
                 )
 
             }
 
             materialReservationRepository.saveAll(reservation)
+            if (quantityMaterials > 0) {
+                notificationService.sendNotificationForTeam(
+                    title = "Confirme o estoque dos materiais",
+                    body = "$quantityMaterials materiais constam no sistema como em estoque no caminhao da equipe, verifique e confirme se possuí estoque",
+                    action = Routes.STOCK_CHECK,
+                    team = team.idTeam.toString(),
+                    time = util.dateTime,
+                    type = NotificationType.ALERT
+                )
+            }
         }
 
         return ResponseEntity.ok().body(ErrorResponse("Reserva de materiais salva com sucesso"))
+    }
+
+    fun getReserve(preMeasurementId: Long) {
+        var reservation = materialReservationRepository.finallBy
     }
 
     fun getStockAvailable(preMeasurementId: Long, teamId: Long): ResponseEntity<Any> {

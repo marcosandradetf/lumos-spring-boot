@@ -1,54 +1,73 @@
-<div class="flex mt-[4rem] h-fit pl-2 pr-2">
-  <div class="mb-5">
-    <div class="breadcrumbs text-sm py-5">
-      <ul class="select-none">
-        <li><a>Início</a></li>
-        <li><a>Estoque</a></li>
-        <li>Materiais</li>
-      </ul>
-    </div>
+<!--<div class="flex mt-[4rem] h-fit pl-2 pr-2">-->
+<div class="flex h-fit">
+  <!--  <div class="mb-5">-->
+  <!--    <div class="breadcrumbs text-sm py-5">-->
+  <!--      <ul class="select-none">-->
+  <!--        <li><a>Início</a></li>-->
+  <!--        <li><a>Estoque</a></li>-->
+  <!--        <li>Materiais</li>-->
+  <!--      </ul>-->
+  <!--    </div>-->
 
-    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
-      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])" />
-      <input type="radio" class="tab" aria-label="Materiais" checked />
-      <input type="radio" class="tab" aria-label="Grupos" (click)="router.navigate(['/estoque/grupos'])"/>
-      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>
-    </div>
+  <!--    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">-->
+  <!--      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])" />-->
+  <!--      <input type="radio" class="tab" aria-label="Materiais" checked />-->
+  <!--      <input type="radio" class="tab" aria-label="Grupos" (click)="router.navigate(['/estoque/grupos'])"/>-->
+  <!--      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>-->
+  <!--    </div>-->
 
-    <div class="collapse border border-neutral-300 shadow rounded-none">
-      <input type="checkbox" class="peer" (click)="setOpen()"/>
-      <div
-        class="collapse-title text-primary-content">
-        @if (!formOpen) {
-          <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>
-        } @else {
-          <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>
-        }
-      </div>
-      <div
-        class="collapse-content text-primary-content peer-checked: peer-checked:">
-        <app-material-form></app-material-form>
-      </div>
-    </div>
+  <!--    <div class="collapse border border-neutral-300 shadow rounded-none">-->
+  <!--      <input type="checkbox" class="peer" (click)="setOpen()"/>-->
+  <!--      <div-->
+  <!--        class="collapse-title text-primary-content">-->
+  <!--        @if (!formOpen) {-->
+  <!--          <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>-->
+  <!--        } @else {-->
+  <!--          <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>-->
+  <!--        }-->
+  <!--      </div>-->
+  <!--      <div-->
+  <!--        class="collapse-content text-primary-content peer-checked: peer-checked:">-->
+  <!--        <app-material-form></app-material-form>-->
+  <!--      </div>-->
+  <!--    </div>-->
 
-    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto">
-      <div class="flex w-full items-center mb-2">
-        <label class="input input-sm input-bordered flex items-center gap-2 flex-1">
-          <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)"/>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            class="h-4 w-4 opacity-70">
-            <path
-              fill-rule="evenodd"
-              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-              clip-rule="evenodd"/>
-          </svg>
-        </label>
-      </div>
-      <app-tabela></app-tabela>
+  <!--    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto">-->
+  <!--      <div class="flex w-full items-center mb-2">-->
+  <!--        <label class="input input-sm input-bordered flex items-center gap-2 flex-1">-->
+  <!--          <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)"/>-->
+  <!--          <svg-->
+  <!--            xmlns="http://www.w3.org/2000/svg"-->
+  <!--            viewBox="0 0 16 16"-->
+  <!--            fill="currentColor"-->
+  <!--            class="h-4 w-4 opacity-70">-->
+  <!--            <path-->
+  <!--              fill-rule="evenodd"-->
+  <!--              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"-->
+  <!--              clip-rule="evenodd"/>-->
+  <!--          </svg>-->
+  <!--        </label>-->
+  <!--      </div>-->
+  <!--      <app-tabela></app-tabela>-->
 
-    </div>
+  <!--    </div>-->
+  <!--  </div>-->
+
+  <div
+    class="flex flex-col items-center justify-center h-screen bg-gradient-to-br w-full text-center">
+    <!-- SVG de manutenção -->
+    <svg class="w-24 h-24 text-yellow-500 mb-6 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5"
+         viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9.75 3a1.5 1.5 0 00-1.5 1.5V6H6.75A1.5 1.5 0 005.25 7.5v1.125a6.75 6.75 0 0012.75 0V7.5A1.5 1.5 0 0016.5 6h-1.5V4.5a1.5 1.5 0 00-1.5-1.5h-3.75zM3.75 14.25a9.003 9.003 0 0116.5 0M9 18.75h6M10.5 21h3"/>
+    </svg>
+
+    <!-- Título -->
+    <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-2">Em manutenção</h1>
+    <!-- Texto adicional -->
+    <p class="text-gray-600 text-sm max-w-md">
+      Estamos realizando atualizações importantes para melhorar sua experiência. Volte mais tarde.
+    </p>
   </div>
+
 </div>

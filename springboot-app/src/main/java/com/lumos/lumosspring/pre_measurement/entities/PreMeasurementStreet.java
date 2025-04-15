@@ -1,7 +1,9 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
+import com.lumos.lumosspring.team.Team;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +33,10 @@ public class PreMeasurementStreet {
 
     @OneToMany(mappedBy = "preMeasurementStreet", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PreMeasurementStreetItem> items = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    private Team team;
 
     // Métodos auxiliares para garantir consistência no relacionamento
     public void addItem(PreMeasurementStreetItem item) {
@@ -155,4 +161,11 @@ public class PreMeasurementStreet {
         }
     }
 
+    public Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
+    }
 }

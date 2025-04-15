@@ -1,9 +1,11 @@
 package com.lumos.lumosspring.execution.entities
 
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
 import com.lumos.lumosspring.stock.entities.StockMovement.Status
 import com.lumos.lumosspring.system.entities.Log
+import com.lumos.lumosspring.team.Team
 import jakarta.persistence.*
 
 @Entity
@@ -30,6 +32,11 @@ class MaterialReservation {
     var secondDepositCity: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
+    @JoinColumn(name = "pre_measurement_id")
+    var preMeasurement: PreMeasurement? = null
+
+    @ManyToOne(cascade = [(CascadeType.MERGE)])
+    @JoinColumn(name = "pre_measurement_street_id")
     var street: PreMeasurementStreet? = null
 
     @Column(nullable = false)
@@ -45,6 +52,10 @@ class MaterialReservation {
     @ManyToOne
     @JoinColumn(name = "truck_id_log")
     var log: Log = Log()
+
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    var team: Team? = null
 
     fun setReservedQuantity(reservedQuantity: Double) {
         this.reservedQuantity = reservedQuantity
