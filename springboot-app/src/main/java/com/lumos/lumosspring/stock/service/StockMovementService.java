@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.stock.service;
 
-import com.lumos.lumosspring.authentication.RefreshTokenRepository;
+import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementDTO;
 import com.lumos.lumosspring.stock.controller.dto.StockMovementResponse;

@@ -1,5 +1,6 @@
-package com.lumos.lumosspring.authentication;
+package com.lumos.lumosspring.authentication.repository;
 
+import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

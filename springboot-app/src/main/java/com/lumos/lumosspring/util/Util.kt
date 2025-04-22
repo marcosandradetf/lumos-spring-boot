@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.util
 
-import com.lumos.lumosspring.authentication.RefreshTokenRepository
+import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository
 import com.lumos.lumosspring.user.User
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.stereotype.Component
@@ -14,8 +14,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import java.util.stream.Collectors
-
 
 
 @Component
@@ -107,8 +105,10 @@ class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepositor
 object ContractStatus {
     const val PENDING = "PENDING"
     const val VALIDATING = "VALIDATING"
-    const val WAITING  = "WAITING"
+    const val WAITING_CONTRACTOR  = "WAITING_CONTRACTOR"
     const val AVAILABLE = "AVAILABLE"
+    const val WAITING_TEAM = "WAITING_TEAM"
+    const val WAITING_STOCKIST = "WAITING_TEAM"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
 }

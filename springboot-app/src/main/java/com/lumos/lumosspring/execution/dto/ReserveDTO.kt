@@ -13,10 +13,6 @@ data class ReserveResponseDTO(
     val streetName: String,
 )
 
-data class DeclineReserveDTO(
+data class ReplyReserveDTO(
     val reserveId: Long
-)
-
-data class ApproveReserveDTO(
-    val reserveId: Long,
 )

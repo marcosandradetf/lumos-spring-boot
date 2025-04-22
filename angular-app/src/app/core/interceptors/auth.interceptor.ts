@@ -17,7 +17,8 @@ export class AuthInterceptor implements HttpInterceptor {
     let isLoggedIn = false;
 
     // Verifique se a requisição é para o login, por exemplo, verificando a URL
-    if (request.url.includes('/login') || request.url.includes('/logout') || request.url.includes('/refresh-token') || request.url.includes('https://servicodados.ibge.gov.br')) {
+    if (request.url.includes('/login') || request.url.includes('/logout') || request.url.includes('/refresh-token')
+      || request.url.includes('https://servicodados.ibge.gov.br') || request.url.includes('/reset-password')) {
       // Não adicionar token e não interceptar requisição de login
       return next.handle(request);
     }

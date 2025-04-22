@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.execution.controller
 
-import com.lumos.lumosspring.execution.dto.ReserveDTO
+import com.lumos.lumosspring.execution.dto.ReserveForStreetsDTO
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -12,7 +12,7 @@ class ExecutionController(
 ) {
 
     @PostMapping("/execution/reserve")
-    fun reserve(@RequestBody reserveDto : List<ReserveDTO>): ResponseEntity<Any> {
+    fun reserve(@RequestBody reserveDto : ReserveForStreetsDTO): ResponseEntity<Any> {
         return executionService.reserve(reserveDto)
     }
 

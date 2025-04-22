@@ -39,7 +39,7 @@ public class PreMeasurementController {
     @GetMapping("/execution/get-pre-measurements/waiting")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
     public ResponseEntity<?> getWaitingMeasurements() {
-        return preMeasurementService.getAll(ContractStatus.WAITING);
+        return preMeasurementService.getAll(ContractStatus.WAITING_CONTRACTOR);
     }
 
     @GetMapping("/execution/get-pre-measurements/validating")

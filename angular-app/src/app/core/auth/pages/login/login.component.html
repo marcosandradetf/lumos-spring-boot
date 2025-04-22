@@ -1,33 +1,80 @@
-<section class="flex flex-col justify-center lg:justify-evenly lg:flex-row lg:items-start h-[92.6vh] items-center">
-  <div class="flex flex-col justify-center lg:mt-52">
-    <h3 class="poppins-regular">Lumos™</h3>
-    <p class="roboto-light select-none text-3xl leading-4">Insira suas credenciais<br><br>para acessar o sistema.</p>
-  </div>
-  <div class="flex justify-center">
-    <div class="card w-96 bg-base-100 shadow mt-20 mb-20 lg:mt-40 rounded">
-      <form #myForm="ngForm" (ngSubmit)="login(myForm)" class="card-body">
-        <div class="items-center
-         mt-2">
-          <label class="input input-bordered flex items-center gap-2 mb-2">
-            <span class="material-icons">person</span>
-            <input type="text" class="grow" placeholder="Usuário ou Email" name="username" [(ngModel)]="username" required />
-          </label>
-          <label class="input input-bordered flex items-center gap-2 mb-2">
-            <span class="material-icons">key</span>
-            <input [type]="showPassword ? 'text' : 'password'" placeholder="********" class="grow" name="password" [(ngModel)]="password" required />
-          </label>
-          <div class="flex my-4">
-            <input type="checkbox" class="checkbox mr-2" (change)="togglePasswordVisibility()"><span class="poppins-light">Mostrar Senha</span>
-          </div>
-        </div>
-        <div class="card-actions justify-end">
-          <button class="btn btn-primary w-full" type="submit">Entrar</button>
-        </div>
-        <div class="mt-5">
-          <p class="hover:underline cursor-pointer text-center select-none">Esqueceu a senha?</p>
-        </div>
-      </form>
+@if (!loading) {
+  <section
+    class="flex flex-col justify-center lg:justify-evenly lg:flex-row lg:items-start h-[92.6vh] items-center"
+    [class.blur]="finished">
+    <div class="flex flex-col justify-center lg:mt-52">
+      <h3 class="poppins-regular">Lumos™</h3>
+      <p class="roboto-light select-none text-3xl leading-4">Insira suas credenciais<br><br>para acessar o sistema.</p>
     </div>
-  </div>
-</section>
+    <div class="flex justify-center">
+      <div class="card w-96 bg-base-100 shadow mt-20 mb-20 lg:mt-40 rounded">
+        <form #myForm="ngForm" (ngSubmit)="login(myForm)" class="card-body">
+          <div class="items-center
+         mt-2">
+            <label class="input input-bordered flex items-center gap-2 mb-2">
+              <span class="material-icons">person</span>
+              <input type="text" class="grow" placeholder="Usuário ou Email" name="username"
+                     [(ngModel)]="username"
+                     #user="ngModel"
+                     required/>
+            </label>
+            <div *ngIf="user.invalid && myForm.submitted ">
+              <div *ngIf="user.invalid && myForm.submitted">
+                <small *ngIf="user.errors?.['required']" class="text-red-600" #error>Preenchimento obrigatório.</small>
+              </div>
+            </div>
+            <small class="text-red-600" #error></small>
+            <label class="input input-bordered flex items-center gap-2 mb-2">
+              <span class="material-icons">key</span>
+              <input [type]="showPassword ? 'text' : 'password'" placeholder="********" class="grow" name="password"
+                     [(ngModel)]="password"
+                     #pass="ngModel"
+                     required/>
+            </label>
+            <div *ngIf="pass.invalid && myForm.submitted">
+              <small *ngIf="pass.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+            </div>
+            <div class="flex my-4">
+              <input type="checkbox" class="checkbox mr-2" (change)="togglePasswordVisibility()"><span
+              class="poppins-light">Mostrar Senha</span>
+            </div>
+          </div>
+          <div class="card-actions justify-end">
+            <button class="btn btn-primary w-full" type="submit">Entrar</button>
+          </div>
+          <div class="mt-5">
+            <p class="hover:underline cursor-pointer text-center select-none" (click)="forgetPassword(error)">Esqueceu a
+              senha?</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+  <dialog [open]="finished" class="modal">
+    <div class="modal-box rounded-xl shadow border">
+      <h3 class="font-bold text-lg mb-4 text-neutral">Nova senha enviada</h3>
 
+      <div class="w-full pb-2">
+        <p>{{ message }}</p>
+      </div>
+
+      <div class="flex justify-end gap-4 pt-4">
+        <button
+          (click)="finished = false"
+          class="btn btn-primary px-12">
+          Ok
+        </button>
+      </div>
+    </div>
+  </dialog>
+}
+
+@if (loading) {
+  <section class="h-[92.6vh] flex items-center justify-center flex-col">
+    <p>Verificando suas credenciais</p>
+    <span class="loading loading-infinity loading-lg"></span>
+  </section>
+}
+
+<app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
+                    class="absolute right-0"></app-screen-message>

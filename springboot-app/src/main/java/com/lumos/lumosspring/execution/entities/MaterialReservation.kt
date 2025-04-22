@@ -4,7 +4,6 @@ import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
 import com.lumos.lumosspring.stock.entities.StockMovement.Status
-import com.lumos.lumosspring.system.entities.Log
 import com.lumos.lumosspring.team.entities.Team
 import jakarta.persistence.*
 
@@ -20,15 +19,15 @@ class MaterialReservation {
     var description: String? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "material_stock_id")
+    @JoinColumn(name = "material_truck_stock_id")
     var truckDeposit: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "material_stock_id")
+    @JoinColumn(name = "material_first_deposit_stock_id")
     var firstDepositCity: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "material_stock_id")
+    @JoinColumn(name = "material_second_deposit_stock_id")
     var secondDepositCity: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
@@ -48,10 +47,6 @@ class MaterialReservation {
         private set
 
     var status: String = "PENDING"
-
-    @ManyToOne
-    @JoinColumn(name = "truck_id_log")
-    var log: Log = Log()
 
     @ManyToOne
     @JoinColumn(name = "team_id")
@@ -99,15 +94,17 @@ class MaterialReservation {
     fun rejectReservation(location: Location) {
         when (location) {
             Location.TRUCK -> {
+                truckDeposit!!.addStockAvailable(reservedQuantity)
                 truckDeposit = null
-                auditTruck()
             }
 
             Location.FIRST -> {
+                firstDepositCity!!.addStockAvailable(reservedQuantity)
                 firstDepositCity = null
             }
 
             Location.SECOND -> {
+                secondDepositCity!!.addStockAvailable(reservedQuantity)
                 secondDepositCity = null
             }
         }
@@ -119,11 +116,6 @@ class MaterialReservation {
         if (truckDeposit != null && firstDepositCity != null && secondDepositCity != null) {
             status = Status.REJECTED.name
         }
-    }
-
-    private fun auditTruck() {
-        log.message = "Caminhao ${truckDeposit?.deposit?.depositName} rejeitou "
-        // continua...
     }
 
     fun setQuantityCompleted(quantityCompleted: Int) {

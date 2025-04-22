@@ -53,8 +53,8 @@ public class EmailService {
     }
 
     public void sendNewPasswordForEmail(String toNome, String toEmail, String password) {
-        String body = String.format("Olá, %s,<br><br>" +
-                        "Sua senha foi resetada com sucesso pelo administrador no sistema Lumos. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
+        String body = String.format("Olá, %s<br><br>" +
+                        "Sua senha foi redefinida com sucesso no sistema Lumos. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
                         "<b>Nova Senha:</b> %s<br><br>" +
                         "Importante: Por questões de segurança, recomendamos que você altere sua senha assim que fizer login no sistema. Você pode fazer isso acessando a seção \"Alterar Senha\" nas configurações do seu usuário.<br><br>" +
                         "Se você tiver qualquer dúvida ou precisar de assistência, nossa equipe de suporte está à disposição para ajudá-lo.<br><br>" +

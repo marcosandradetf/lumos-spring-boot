@@ -5,6 +5,7 @@ import com.lumos.lumosspring.user.User
 import jakarta.persistence.*
 
 @Entity
+@Table(name = "tb_stockists")
 class Stockist {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.user;
 
-import com.lumos.lumosspring.authentication.RefreshTokenRepository;
+import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.notification.EmailService;
 import com.lumos.lumosspring.user.dto.CreateUserDto;
 import com.lumos.lumosspring.user.dto.PasswordDTO;
@@ -8,7 +8,9 @@ import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -37,7 +39,7 @@ public class UserService {
 
     @Cacheable("getAllUsers")
     public ResponseEntity<List<UserResponse>> findAll() {
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findByStatusTrueOrderByNameAsc();
         List<UserResponse> userResponses = new ArrayList<>();
         for (User user : users) {
             if (user.getStatus()) {
@@ -88,6 +90,10 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
+    public Optional<User> findUserByUsernameOrEmail(String username) {
+        return userRepository.findByUsernameOrEmailIgnoreCase(username, username);
+    }
+
     public ResponseEntity<?> resetPassword(String userId) {
         var user = userRepository.findByIdUser(UUID.fromString(userId));
         if (user.isEmpty()) {
@@ -99,7 +105,7 @@ public class UserService {
 
         emailService.sendNewPasswordForEmail(user.get().getName(), user.get().getEmail(), newPassword);
 
-        return ResponseEntity.ok(new DefaultResponse(STR."A nova senha foi enviada para o email \{user.get().getEmail()}"));
+        return ResponseEntity.ok(new DefaultResponse(STR."Foi enviada uma nova senha para \{user.get().getEmail()}, por favor verifique sua caixa de entrada e spam."));
     }
 
     public ResponseEntity<?> changePassword(String userId, String oldPassword, String newPassword) {
@@ -171,6 +177,10 @@ public class UserService {
         return ResponseEntity.ok().body(new DefaultResponse("Senha atualizada com sucesso"));
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getAllUsers", allEntries = true),
+            @CacheEvict(cacheNames = "getUserByUUID", allEntries = true)
+    })
     public ResponseEntity<?> updateUsers(List<UpdateUserDto> dto) {
         boolean hasInvalidUser = dto.stream().noneMatch(UpdateUserDto::sel);
         String regex = "^(?!.*\\.\\.)(?!.*\\.@)(?!.*@\\.)(?!.*@example)(?!.*@teste)(?!.*@email)\\b[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}\\b$";
@@ -260,6 +270,10 @@ public class UserService {
         return this.findAll();
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getAllUsers", allEntries = true),
+            @CacheEvict(cacheNames = "getUserByUUID", allEntries = true)
+    })
     public ResponseEntity<?> insertUsers(List<CreateUserDto> dto) {
         var hasInvalidUser = dto.stream().noneMatch(u -> u.userId().isEmpty());
         String regex = "^(?!.*\\.\\.)(?!.*\\.@)(?!.*@\\.)(?!.*@example)(?!.*@teste)(?!.*@email)\\b[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}\\b$";

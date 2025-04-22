@@ -67,9 +67,9 @@ public class PreMeasurementService {
 
         switch (preMeasurement.get().getStatus()) {
             case (ContractStatus.PENDING):
-                preMeasurement.get().setStatus(ContractStatus.WAITING);
+                preMeasurement.get().setStatus(ContractStatus.WAITING_CONTRACTOR);
                 break;
-            case (ContractStatus.WAITING):
+            case (ContractStatus.WAITING_CONTRACTOR):
                 preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
                 break;
 //            case (ContractStatus.VALIDATING):

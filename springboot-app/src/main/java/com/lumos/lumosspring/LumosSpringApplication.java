@@ -10,9 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableCaching
 public class LumosSpringApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(LumosSpringApplication.class, args);
     }
-
 }

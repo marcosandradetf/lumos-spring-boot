@@ -21,7 +21,7 @@ import java.math.BigDecimal
 import java.util.*
 
 @Service
-open class ContractService(
+class ContractService(
     private val contractRepository: ContractRepository,
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
     private val contractReferenceItemRepository: ContractReferenceItemRepository,
@@ -94,7 +94,7 @@ open class ContractService(
 
 
     @Cacheable("GetContractsForPreMeasurement")
-    open fun getContractsForPreMeasurement(): ResponseEntity<Any> {
+    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
         data class ContractForPreMeasurementDTO(
             val contractId: Long,
             val contractor: String,

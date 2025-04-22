@@ -28,7 +28,7 @@ public class Team {
 
     @ManyToMany
     @JoinTable(
-            name = "team_complementary_members",
+            name = "tb_team_complementary_members",
             joinColumns = @JoinColumn(name = "team_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )

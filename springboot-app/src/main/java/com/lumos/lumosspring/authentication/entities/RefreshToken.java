@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.authentication;
+package com.lumos.lumosspring.authentication.entities;
 
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
