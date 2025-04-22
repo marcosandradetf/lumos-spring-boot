@@ -67,16 +67,19 @@ export class LoginComponent {
   forgetPassword(error: HTMLElement) {
     if (this.username.length == 0) {
       error.innerText = 'Campo obrigatório.';
+      return;
     }
 
     this.loading = true;
     this.authService.resetPassword(this.username).subscribe({
       next: (response) => {
         this.message = response.message;
+        error.innerText = '';
         this.finished = true;
         this.loading = false;
       },
       error: error => {
+        error.innerText = '';
         this.utils.showMessage(error.message, true);
         this.loading = false;
       }
