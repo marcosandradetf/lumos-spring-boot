@@ -132,22 +132,20 @@ class ExecutionService(
     }
 
     fun getExecutions(userUUID: UUID): ResponseEntity<Any> {
+        val reservations = mutableListOf<MaterialReservation>()
+
         val team = teamRepository.findByUserUUID(userUUID).orElse(null) ?: return ResponseEntity.notFound().build()
-        val executions = preMeasurementStreetRepository.findByTeam(team)
+        val streets = preMeasurementStreetRepository.findByTeam(team)
 
-        for (execution in executions) {
 
+        for (street in streets) {
+            val reserves = materialReservationRepository.findAllByStreet(street)
+            if (reserves != null) {
+                for (reserve in reserves) {
+                    reservations.add(reserve)
+                }
+            }
         }
-
-        return ResponseEntity.ok().body(executions)
-    }
-
-
-    fun getReservations(streetId: Long, userUUID: UUID): ResponseEntity<Any> {
-        val team = teamRepository.findByUserUUID(userUUID).orElse(null)
-        val reservations = materialReservationRepository
-            .findAllByStreetPreMeasurementStreetId(streetId)
-            .orElse(emptyList())
 
         if (reservations.isEmpty()) {
             return ResponseEntity.ok(emptyList<ReserveResponseDTO>())
@@ -166,6 +164,7 @@ class ExecutionService(
                                 ReserveResponseDTO(
                                     materialName = d.materialName,
                                     materialQuantity = it.reservedQuantity,
+                                    streetId = it.street.preMeasurementStreetId,
                                     streetName = it.street.street
                                 )
                             )
@@ -186,6 +185,7 @@ class ExecutionService(
                                             ReserveResponseDTO(
                                                 materialName = d.materialName,
                                                 materialQuantity = it.reservedQuantity,
+                                                streetId = it.street.preMeasurementStreetId,
                                                 streetName = it.street.street
                                             )
                                         )
@@ -202,6 +202,96 @@ class ExecutionService(
                                             ReserveResponseDTO(
                                                 materialName = d.materialName,
                                                 materialQuantity = it.reservedQuantity,
+                                                streetId = it.street.preMeasurementStreetId,
+                                                streetName = it.street.street
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return ResponseEntity.ok(reservationsResponse)
+    }
+
+    fun getRequests(userUUID: UUID): ResponseEntity<Any> {
+        val reservations = mutableListOf<MaterialReservation>()
+        val stockist = stockistRepository.findByUserUUID(userUUID).orElse(null) ?: return ResponseEntity.notFound().build()
+
+
+        val streets = materialReservationRepository.findAllByFirstDepositCityOrSecondDepositCity(stockist.deposit)
+
+
+        for (street in streets) {
+            val reserves = materialReservationRepository.findAllByStreet(street)
+            if (reserves != null) {
+                for (reserve in reserves) {
+                    reservations.add(reserve)
+                }
+            }
+        }
+
+        if (reservations.isEmpty()) {
+            return ResponseEntity.ok(emptyList<ReserveResponseDTO>())
+        }
+
+        val isTheTeam = reservations.first().team == team
+        val reservationsResponse = mutableListOf<ReserveResponseDTO>()
+        val firstDeposit = reservations.first().firstDepositCity
+
+        when (isTheTeam) {
+            true -> {
+                reservations.map {
+                    if (it.truckDeposit !== null) {
+                        it.truckDeposit?.material?.let { d ->
+                            reservationsResponse.add(
+                                ReserveResponseDTO(
+                                    materialName = d.materialName,
+                                    materialQuantity = it.reservedQuantity,
+                                    streetId = it.street.preMeasurementStreetId,
+                                    streetName = it.street.street
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            false -> {
+                val stockist = stockistRepository.findByUserUUID(userUUID)
+                if (!stockist.isEmpty) {
+                    when (firstDeposit == stockist.get().deposit) {
+                        true -> {
+                            reservations.map {
+                                if (it.truckDeposit == null) {
+                                    it.secondDepositCity?.material?.let { d ->
+                                        reservationsResponse.add(
+                                            ReserveResponseDTO(
+                                                materialName = d.materialName,
+                                                materialQuantity = it.reservedQuantity,
+                                                streetId = it.street.preMeasurementStreetId,
+                                                streetName = it.street.street
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        false -> {
+                            reservations.map {
+                                if (it.truckDeposit == null && firstDeposit == null) {
+                                    it.secondDepositCity?.material?.let { d ->
+                                        reservationsResponse.add(
+                                            ReserveResponseDTO(
+                                                materialName = d.materialName,
+                                                materialQuantity = it.reservedQuantity,
+                                                streetId = it.street.preMeasurementStreetId,
                                                 streetName = it.street.street
                                             )
                                         )
