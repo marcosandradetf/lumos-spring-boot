@@ -4,5 +4,6 @@ import androidx.room.PrimaryKey
 
 data class Execution(
     @PrimaryKey val streetId: Long,
-    
+    val streetName: String,
+    val executionStatus: String
 )

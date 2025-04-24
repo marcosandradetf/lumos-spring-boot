@@ -11,20 +11,17 @@ import java.util.UUID;
 
 public interface TeamRepository extends JpaRepository<Team, Long> {
     Optional<Team> findByDriver(User driver);
+
     Optional<Team> findByElectrician(User electrician);
+
     Optional<Team> findByTeamName(String teamName);
 
     @Query("""
-                SELECT t FROM Team t\s
-                WHERE t.driver.idUser = :userId\s
-                   OR t.electrician.idUser = :userId\s
-                   OR EXISTS (
-                       SELECT 1 FROM t.complementaryMembers m\s
-                       WHERE m.idUser = :userId
-                   )
-           \s""")
-    Optional<List<Team>> findByUserUUID(UUID userId);
-
+                 SELECT t FROM Team t\s
+                 WHERE t.driver.idUser = :userId\s
+                    OR t.electrician.idUser = :userId\s
+            \s""")
+    Optional<Team> findByUserUUID(UUID userId);
 
 
 }

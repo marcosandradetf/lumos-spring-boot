@@ -12,14 +12,13 @@ import com.lumos.lumosspring.stock.repository.DepositRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
-import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.ErrorResponse
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 @Service
 class ExecutionService(
@@ -132,23 +131,33 @@ class ExecutionService(
         return ResponseEntity.ok().body(ErrorResponse("Reserva de materiais salva com sucesso"))
     }
 
+    fun getExecutions(userUUID: UUID): ResponseEntity<Any> {
+        val team = teamRepository.findByUserUUID(userUUID).orElse(null) ?: return ResponseEntity.notFound().build()
+        val executions = preMeasurementStreetRepository.findByTeam(team)
+
+        for (execution in executions) {
+
+        }
+
+        return ResponseEntity.ok().body(executions)
+    }
+
+
     fun getReservations(streetId: Long, userUUID: UUID): ResponseEntity<Any> {
-        val reservations =
-            materialReservationRepository.findAllByStreetPreMeasurementStreetId(streetId).orElse(emptyList())
-        val teams = teamRepository.findByUserUUID(userUUID)
-        var isTeam = false
+        val team = teamRepository.findByUserUUID(userUUID).orElse(null)
+        val reservations = materialReservationRepository
+            .findAllByStreetPreMeasurementStreetId(streetId)
+            .orElse(emptyList())
+
+        if (reservations.isEmpty()) {
+            return ResponseEntity.ok(emptyList<ReserveResponseDTO>())
+        }
+
+        val isTheTeam = reservations.first().team == team
         val reservationsResponse = mutableListOf<ReserveResponseDTO>()
         val firstDeposit = reservations.first().firstDepositCity
 
-        if (!teams.isEmpty) {
-            for (team in teams.get()) {
-                if (team == reservations[0].team) {
-                    isTeam = true
-                }
-            }
-        }
-
-        when (isTeam) {
+        when (isTheTeam) {
             true -> {
                 reservations.map {
                     if (it.truckDeposit !== null) {
@@ -223,11 +232,11 @@ class ExecutionService(
         val approvedIds = approvals.map { it.reserveId }.toSet()
         val declinedIds = declinations.map { it.reserveId }.toSet()
 
-        val teams = teamRepository.findByUserUUID(userUUID)
+        val team = teamRepository.findByUserUUID(userUUID).orElse(null)
         val stockist = stockistRepository.findByUserUUID(userUUID)
         val firstDeposit = reservations.firstOrNull()?.firstDepositCity
 
-        val isTeam = teams.isPresent && teams.get().any { it == reservations.first().team }
+        val isTeam = team != null && reservations.any { it.team == team }
 
         for (reserve in reservations) {
             when {
