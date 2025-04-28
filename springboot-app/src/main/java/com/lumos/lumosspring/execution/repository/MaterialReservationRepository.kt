@@ -4,6 +4,8 @@ import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.util.Optional
 
 
@@ -11,8 +13,10 @@ interface MaterialReservationRepository : JpaRepository<MaterialReservation, Lon
     fun findAllByStreetPreMeasurementStreetId(streetId: Long): Optional<List<MaterialReservation>>
 
     fun findAllByStreet(street: PreMeasurementStreet): MutableList<MaterialReservation>?
+
+    @Query("select mr from MaterialReservation mr where mr.firstDepositCity in :materials or mr.secondDepositCity in :materials")
     fun findAllByFirstDepositCityOrSecondDepositCity(
-        firstDepositCity: MaterialStock,
-        secondDepositCity: MaterialStock
-    ): MutableList<MaterialReservation>
+        @Param("materials") materials: Set<MaterialStock>,
+    ): List<MaterialReservation>
+
 }

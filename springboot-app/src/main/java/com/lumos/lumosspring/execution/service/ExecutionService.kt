@@ -133,7 +133,6 @@ class ExecutionService(
 
     fun getExecutions(userUUID: UUID): ResponseEntity<Any> {
         val reservations = mutableListOf<MaterialReservation>()
-
         val team = teamRepository.findByUserUUID(userUUID).orElse(null) ?: return ResponseEntity.notFound().build()
         val streets = preMeasurementStreetRepository.findByTeam(team)
 
@@ -151,161 +150,47 @@ class ExecutionService(
             return ResponseEntity.ok(emptyList<ReserveResponseDTO>())
         }
 
-        val isTheTeam = reservations.first().team == team
-        val reservationsResponse = mutableListOf<ReserveResponseDTO>()
-        val firstDeposit = reservations.first().firstDepositCity
-
-        when (isTheTeam) {
-            true -> {
-                reservations.map {
-                    if (it.truckDeposit !== null) {
-                        it.truckDeposit?.material?.let { d ->
-                            reservationsResponse.add(
-                                ReserveResponseDTO(
-                                    materialName = d.materialName,
-                                    materialQuantity = it.reservedQuantity,
-                                    streetId = it.street.preMeasurementStreetId,
-                                    streetName = it.street.street
-                                )
-                            )
-                        }
-                    }
+        val reservationsResponse = reservations
+            .mapNotNull {
+                val status = if (it.truckDeposit == null) "NOT_RESERVED" else "RESERVED"
+                it.truckDeposit?.material?.let { d ->
+                    ReserveResponseDTO(
+                        materialName = d.materialName,
+                        materialQuantity = it.reservedQuantity,
+                        streetId = it.street.preMeasurementStreetId,
+                        streetName = it.street.street,
+                        status = status,
+                    )
                 }
             }
-
-            false -> {
-                val stockist = stockistRepository.findByUserUUID(userUUID)
-                if (!stockist.isEmpty) {
-                    when (firstDeposit == stockist.get().deposit) {
-                        true -> {
-                            reservations.map {
-                                if (it.truckDeposit == null) {
-                                    it.secondDepositCity?.material?.let { d ->
-                                        reservationsResponse.add(
-                                            ReserveResponseDTO(
-                                                materialName = d.materialName,
-                                                materialQuantity = it.reservedQuantity,
-                                                streetId = it.street.preMeasurementStreetId,
-                                                streetName = it.street.street
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        false -> {
-                            reservations.map {
-                                if (it.truckDeposit == null && firstDeposit == null) {
-                                    it.secondDepositCity?.material?.let { d ->
-                                        reservationsResponse.add(
-                                            ReserveResponseDTO(
-                                                materialName = d.materialName,
-                                                materialQuantity = it.reservedQuantity,
-                                                streetId = it.street.preMeasurementStreetId,
-                                                streetName = it.street.street
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
 
         return ResponseEntity.ok(reservationsResponse)
     }
 
-    fun getRequests(userUUID: UUID): ResponseEntity<Any> {
-        val reservations = mutableListOf<MaterialReservation>()
-        val stockist = stockistRepository.findByUserUUID(userUUID).orElse(null) ?: return ResponseEntity.notFound().build()
+    fun getStockRequests(userUUID: UUID): ResponseEntity<Any> {
+        val stockist =
+            stockistRepository.findByUserUUID(userUUID).orElse(null) ?: return ResponseEntity.notFound().build()
 
+        val reservations = materialReservationRepository.findAllByFirstDepositCityOrSecondDepositCity(
+            stockist.deposit.materialStocks
+        )
 
-        val streets = materialReservationRepository.findAllByFirstDepositCityOrSecondDepositCity(stockist.deposit)
-
-
-        for (street in streets) {
-            val reserves = materialReservationRepository.findAllByStreet(street)
-            if (reserves != null) {
-                for (reserve in reserves) {
-                    reservations.add(reserve)
+        val reservationsResponse = reservations
+            .filter { it.truckDeposit == null }
+            .mapNotNull {
+                it.secondDepositCity?.material?.let { d ->
+                    ReserveResponseDTO(
+                        materialName = d.materialName,
+                        materialQuantity = it.reservedQuantity,
+                        streetId = it.street.preMeasurementStreetId,
+                        streetName = it.street.street,
+                        status = "RESERVED"
+                    )
                 }
             }
-        }
-
-        if (reservations.isEmpty()) {
-            return ResponseEntity.ok(emptyList<ReserveResponseDTO>())
-        }
-
-        val isTheTeam = reservations.first().team == team
-        val reservationsResponse = mutableListOf<ReserveResponseDTO>()
-        val firstDeposit = reservations.first().firstDepositCity
-
-        when (isTheTeam) {
-            true -> {
-                reservations.map {
-                    if (it.truckDeposit !== null) {
-                        it.truckDeposit?.material?.let { d ->
-                            reservationsResponse.add(
-                                ReserveResponseDTO(
-                                    materialName = d.materialName,
-                                    materialQuantity = it.reservedQuantity,
-                                    streetId = it.street.preMeasurementStreetId,
-                                    streetName = it.street.street
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            false -> {
-                val stockist = stockistRepository.findByUserUUID(userUUID)
-                if (!stockist.isEmpty) {
-                    when (firstDeposit == stockist.get().deposit) {
-                        true -> {
-                            reservations.map {
-                                if (it.truckDeposit == null) {
-                                    it.secondDepositCity?.material?.let { d ->
-                                        reservationsResponse.add(
-                                            ReserveResponseDTO(
-                                                materialName = d.materialName,
-                                                materialQuantity = it.reservedQuantity,
-                                                streetId = it.street.preMeasurementStreetId,
-                                                streetName = it.street.street
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        false -> {
-                            reservations.map {
-                                if (it.truckDeposit == null && firstDeposit == null) {
-                                    it.secondDepositCity?.material?.let { d ->
-                                        reservationsResponse.add(
-                                            ReserveResponseDTO(
-                                                materialName = d.materialName,
-                                                materialQuantity = it.reservedQuantity,
-                                                streetId = it.street.preMeasurementStreetId,
-                                                streetName = it.street.street
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
 
         return ResponseEntity.ok(reservationsResponse)
+
     }
 
     fun reservationsReply(
@@ -360,7 +245,6 @@ class ExecutionService(
 
         return ResponseEntity.ok().build()
     }
-
 
     fun getStockAvailable(preMeasurementId: Long, teamId: Long): ResponseEntity<Any> {
         val preMeasurement = preMeasurementRepository.findById(preMeasurementId).orElseThrow()

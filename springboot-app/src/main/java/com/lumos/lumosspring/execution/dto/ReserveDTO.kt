@@ -12,6 +12,7 @@ data class ReserveResponseDTO(
     val materialQuantity: Double,
     val streetId: Long,
     val streetName: String,
+    val status: String,
 )
 
 data class ReplyReserveDTO(
