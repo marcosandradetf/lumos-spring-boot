@@ -1,47 +1,121 @@
+# ================================
+# Project-Specific Exclusions
+# ================================
+
 HELP.md
-!**/target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
-!**/src/main/resources/app.key
-!**/src/main/resources/app.pub
-!**/src/main/resources/lumos-firebase-sdk.json
-!**/src/main/resources/lumos-firebase-sdk.json:Zone.Identifier
+# ================================
+# Build / Target folders (Java, Spring, Kotlin)
+# ================================
 
-### STS ###
-!**/.apt_generated
-!**/.classpath
-!**/.factorypath
-!**/.project
-!**/.settings
-!**/.springBeans
-!**/.sts4-cache
+**/target/
+springboot-app/target/lumos-spring-0.0.1-SNAPSHOT.jar.original
 
-### IntelliJ IDEA ###
-!**/.idea
-*.iws
-*.iml
-*.ipr
+**/build/
+**/nbbuild/
+**/dist/
+**/nbdist/
+**/out/
 
-### NetBeans ###
-!**/nbproject/private/
-!**/nbbuild/
-!**/dist/
-!**/nbdist/
-!**/.nb-gradle/
-!**/build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# ================================
+# Maven Wrapper
+# ================================
 
-### VS Code ###
-!**/.vscode/
+.mvn/wrapper/maven-wrapper.jar
 
-### node ###
+# ================================
+# Resource files to INCLUDE (override ignore)
+# ================================
 
-!**/golang-services/keys/
+!src/main/resources/
+!src/main/resources/**/*.properties
+
+# ================================
+# Secrets & Sensitive Files (Always Ignore)
+# ================================
 
 *.key
 *.pub
-*lumos-firebase-sdk.json
-*lumos-firebase-sdk.json:Zone.Identifier
+*.pem
+*.crt
+*.cert
+*.jks
+*.p12
+*.pfx
+*.der
+
+*firebase-sdk.json
+*firebase-sdk.json:Zone.Identifier
+
+# ================================
+# IDEs
+# ================================
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse / STS
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans/
+.sts4-cache/
+
+# NetBeans
+nbproject/private/
+.nb-gradle/
+
+# VS Code
+.vscode/
+
+# ================================
+# Logs & Temp
+# ================================
+
+*.log
+*.tmp
+*.swp
+*.bak
+*.orig
+*.rej
+.DS_Store
+Thumbs.db
+
+# ================================
+# Node / JS (if present)
+# ================================
+
+node_modules/
+dist/
+*.lock
+
+# ================================
+# Golang-specific
+# ================================
+
+golang-services/keys/
+**/*.test
+**/vendor/
+**/bin/
+**/pkg/
+**/go.sum
+**/go.mod
+
+# ================================
+# Java compiled class files
+# ================================
+
+*.class
+
+# ================================
+# OS / Misc
+# ================================
+
+*.~*
+*.sublime*
+*.idea_modules/
