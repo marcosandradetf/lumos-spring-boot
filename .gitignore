@@ -27,8 +27,9 @@ springboot-app/target/lumos-spring-0.0.1-SNAPSHOT.jar.original
 # Resource files to INCLUDE (override ignore)
 # ================================
 
-!src/main/resources/
-!src/main/resources/**/*.properties
+!springboot-app/src/main/resources/
+!springboot-app/src/main/resources/**/*.properties
+
 
 # ================================
 # Secrets & Sensitive Files (Always Ignore)
