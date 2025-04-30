@@ -24,14 +24,6 @@ springboot-app/target/lumos-spring-0.0.1-SNAPSHOT.jar.original
 .mvn/wrapper/maven-wrapper.jar
 
 # ================================
-# Resource files to INCLUDE (override ignore)
-# ================================
-
-!springboot-app/src/main/resources/
-!springboot-app/src/main/resources/**/*.properties
-
-
-# ================================
 # Secrets & Sensitive Files (Always Ignore)
 # ================================
 
@@ -120,3 +112,9 @@ golang-services/keys/
 *.~*
 *.sublime*
 *.idea_modules/
+
+# ================================
+# Resource files to INCLUDE (override ignore)
+# ================================
+
+!springboot-app/src/main/resources/**/*.properties
