@@ -117,4 +117,6 @@ golang-services/keys/
 # Resource files to INCLUDE (override ignore)
 # ================================
 
+# Inclui todos os arquivos dentro de src/main/resources
+!springboot-app/src/main/resources/
 !springboot-app/src/main/resources/**/*.properties
