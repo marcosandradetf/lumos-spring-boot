@@ -1,3 +1,0 @@
-*.css linguist-vendored
-*.java linguist-detectable=true
-*.ts linguist-detectable=true
