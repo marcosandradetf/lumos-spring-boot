@@ -2,12 +2,10 @@ package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import jakarta.persistence.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "tb_users")

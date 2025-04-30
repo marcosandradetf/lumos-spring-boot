@@ -9,8 +9,10 @@ import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.user.UserService;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.scheduling.annotation.Scheduled;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class TokenService {
@@ -40,6 +47,12 @@ public class TokenService {
         this.jwtDecoder = jwtDecoder;
         this.refreshTokenRepository = refreshTokenRepository;
         this.util = util;
+    }
+
+    @Scheduled(cron = "0 0 3 * * *") // Roda todo dia às 3 da manhã
+    @Transactional
+    public void cleanUpExpiredTokens() {
+        refreshTokenRepository.deleteExpiredOrRevokedTokens(util.getDateTime());
     }
 
     public ResponseEntity<?> resetPassword(LoginRequest loginRequest) {
@@ -114,6 +127,7 @@ public class TokenService {
                 .subject(user.get().getIdUser().toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(refreshExpiresIn))
+                .claim("jti", UUID.randomUUID().toString())
                 .build();
 
         var accessTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
@@ -126,7 +140,7 @@ public class TokenService {
         refreshToken.setRevoked(false);
         refreshTokenRepository.save(refreshToken);
 
-        // Configura o `refreshToken` como um cookie HTTP-Only
+        // Configura o refreshToken como um cookie HTTP-Only
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshTokenValue);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true); // Use apenas em HTTPS em produção
@@ -134,7 +148,7 @@ public class TokenService {
         refreshTokenCookie.setMaxAge((int) refreshExpiresIn); // Expiração em 1 dia
         response.addCookie(refreshTokenCookie);
 
-        // Retorna o `accessToken` no corpo da resposta
+        // Retorna o accessToken no corpo da resposta
         return ResponseEntity.ok(new LoginResponse(accessTokenValue, expiresIn, scopes));
     }
 
@@ -146,7 +160,7 @@ public class TokenService {
             refreshTokenRepository.save(token);
         }
 
-        // Remove o cookie do `refreshToken` do navegador
+        // Remove o cookie do refreshToken do navegador
         Cookie deleteCookie = new Cookie("refreshToken", null);
         deleteCookie.setPath("/");
         deleteCookie.setHttpOnly(true);
