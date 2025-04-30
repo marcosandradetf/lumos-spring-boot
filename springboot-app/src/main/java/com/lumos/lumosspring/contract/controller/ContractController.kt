@@ -17,9 +17,9 @@ class ContractController(
     }
 
     @PostMapping("/contracts/insert-contract")
-    suspend fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> {
+    fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> =
         return contractService.saveContract(contractDTO)
-    }
+    
 
     @GetMapping("/mobile/contracts/get-contracts")
     fun getContracts(): ResponseEntity<Any> {
