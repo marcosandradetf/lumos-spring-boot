@@ -1,0 +1,175 @@
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Itim&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Itim&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.lower-text {
+  font-size: 12px !important;
+}
+
+.nunito-regular {
+  font-family: "Nunito", sans-serif !important;
+  font-optical-sizing: auto !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+ }
+
+.nunito-semibold {
+  font-family: "Nunito", sans-serif !important;
+  font-weight: 600 !important;
+  font-style: normal !important;
+}
+
+.nunito-bold {
+  font-family: "Nunito", sans-serif !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+.roboto-light {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 300 !important;
+  font-style: normal !important;
+}
+
+.roboto-regular {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+.roboto-medium {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.roboto-bold {
+  font-family: "Roboto", sans-serif !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+.poppins-light {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 300 !important;
+  font-style: normal !important;
+}
+
+.poppins-regular {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+.poppins-medium {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.poppins-semibold {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 600 !important;
+  font-style: normal !important;
+}
+
+.poppins-bold {
+  font-family: 'Poppins', sans-serif !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+
+
+.poppins-extrabold {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 800 !important;
+  font-style: normal !important;
+}
+
+.poppins-black {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+}
+
+.poppins-thin-italic {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 100 !important;
+  font-style: italic !important;
+}
+
+.poppins-extralight-italic {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 200 !important;
+  font-style: italic !important;
+}
+
+.poppins-light-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.poppins-regular-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.poppins-medium-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.poppins-semibold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.poppins-bold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.poppins-extrabold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-style: italic;
+}
+
+.poppins-black-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+* {
+  font-family: "Poppins", sans-serif;
+}
+
+

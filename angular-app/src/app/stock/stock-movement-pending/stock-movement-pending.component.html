@@ -1,0 +1,98 @@
+<div class="flex mt-[4rem] h-fit pl-2 pr-2">
+  <div class="mb-5 w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a href="/início">Início</a></li>
+          <li><a href="/estoque">Estoque</a></li>
+          <li>Pendente de Aprovação</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Clique nos materiais desejados para aprovar as movimentações</h3>
+    </div>
+
+    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+      <div class="flex justify-center m-5">
+        <ul class="steps">
+          <li class="step step-primary"><a href="estoque/movimento" class="link link-hover hover:text-blue-700">Selecionar
+            itens</a></li>
+          <li class="step step-primary">Pendente de Aprovação</li>
+          <li class="step cursor-pointer"><a href="estoque/movimento/aprovado"
+                                             class="link link-hover hover:text-blue-700">Aprovado</a></li>
+        </ul>
+      </div>
+
+      <app-table>
+        <tr class="bg-indigo-700 text-white" header>
+          <th>Codigo</th>
+          <th>Comentário</th>
+          <th>Material</th>
+          <th>Quantidade</th>
+          <th>Unid. Compra</th>
+          <th>Unid. Requisição</th>
+          <th>Preço total</th>
+          <th>Fornecedor</th>
+          <th>Empresa</th>
+          <th>Almoxarifado</th>
+          <th>Responsável</th>
+        </tr>
+        <tr *ngFor="let row of stockMovement; let i = index" class="odd:bg-neutral-100 cursor-pointer"
+            (click)="handleOpenModal(row.id)" body>
+          <td>{{ row.id }}</td>
+          <td>{{ row.description }}</td>
+          <td>{{ row.materialName }}</td>
+          <td>{{ row.inputQuantity }}</td>
+          <td>{{ row.buyUnit }}</td>
+          <td>{{ row.requestUnit }}</td>
+          <td>{{ row.pricePerItem }}</td>
+          <td>{{ row.supplierName }}</td>
+          <td>{{ row.company }}</td>
+          <td>{{ row.deposit }}</td>
+          <td>{{ row.employee }}</td>
+        </tr>
+      </app-table>
+
+    </div>
+
+    <!--    modal confirmation-->
+    @if (openModalAprovation) {
+      <app-modal [modalOpen]="openModalAprovation" [confirmation]="true" (modalClose)="closeAprovationModal()">
+        <div>
+          <h3 class="text-center mb-7">Confirma a transação?</h3>
+          <ul class="mb-5">
+            <li class="flex"><span class="material-icons">engineering</span>
+              Material: {{ getMovementmovement(movementId).materialName }}
+            </li>
+            <li class="flex"><span class="material-icons">production_quantity_limits</span>
+              Quantidade: {{ getMovementmovement(movementId).inputQuantity }}
+            </li>
+            <li class="flex"><span class="material-icons">ad_units</span> Unid.
+              Compra: {{ getMovementmovement(movementId).buyUnit }}
+            </li>
+            <li class="flex"><span class="material-icons">add</span> Qtde. p/
+              Unidade: {{ getMovementmovement(movementId).quantityPackage }}
+            </li>
+            <li class="flex"><span class="material-icons">attach_money</span>
+              Preço: {{ getMovementmovement(movementId).pricePerItem }}
+            </li>
+            <li class="flex"><span class="material-icons">local_offer</span>
+              Fornecedor: {{ getMovementmovement(movementId).supplierName }}
+            </li>
+            <li class="flex"><span class="material-icons">warehouse</span>
+              Almoxarifado: {{ getMovementmovement(movementId).deposit }}
+            </li>
+          </ul>
+
+          <div class="flex justify-around">
+            <app-button (click)="RejectMovement()" title="Rejeitar" classButton="btn bg-red-500 hover:bg-red-700"
+                        textColor="text-black"></app-button>
+            <app-button (click)="submitAprovationMovement()" title="Aprovar Movimento"></app-button>
+          </div>
+        </div>
+      </app-modal>
+    }
+
+    <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+
+  </div>
+</div>

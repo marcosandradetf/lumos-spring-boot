@@ -1,0 +1,47 @@
+HELP.md
+!**/target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+!**/src/main/resources/app.key
+!**/src/main/resources/app.pub
+!**/src/main/resources/lumos-firebase-sdk.json
+!**/src/main/resources/lumos-firebase-sdk.json:Zone.Identifier
+
+### STS ###
+!**/.apt_generated
+!**/.classpath
+!**/.factorypath
+!**/.project
+!**/.settings
+!**/.springBeans
+!**/.sts4-cache
+
+### IntelliJ IDEA ###
+!**/.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+!**/nbproject/private/
+!**/nbbuild/
+!**/dist/
+!**/nbdist/
+!**/.nb-gradle/
+!**/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+!**/.vscode/
+
+### node ###
+
+!**/golang-services/keys/
+
+*.key
+*.pub
+*lumos-firebase-sdk.json
+*lumos-firebase-sdk.json:Zone.Identifier

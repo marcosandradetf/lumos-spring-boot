@@ -1,0 +1,61 @@
+<div class="flex mt-[3rem] h-fit" #top>
+  <div class="w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a>Início</a></li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Dashboard</h3>
+    </div>
+
+<!--    <div class="border-b w-full pl-2 flex h-screen items-center justify-center">-->
+<!--      Módulo em desenvolvimento-->
+<!--    </div>-->
+
+    <!-- Conteúdo Principal -->
+    <main class="px-6 py-8">
+      <h2 class="text-3xl font-semibold mb-6">Visão Geral</h2>
+
+      <!-- Cards de Informações -->
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-gray-100 p-6 rounded-lg shadow">
+          <h3 class="text-lg font-semibold mb-2">Execuções</h3>
+          <p class="text-3xl font-bold">0</p>
+          <p class="text-gray-500">Em aberto</p>
+        </div>
+
+        <div class="bg-gray-100 p-6 rounded-lg shadow">
+          <h3 class="text-lg font-semibold mb-2">Itens com baixo estoque</h3>
+          <p class="text-3xl font-bold text-red-500">0</p>
+          <p class="text-gray-500">Precisam de atenção</p>
+        </div>
+
+        <div class="bg-gray-100 p-6 rounded-lg shadow">
+          <h3 class="text-lg font-semibold mb-2">Relatórios Gerados</h3>
+          <p class="text-3xl font-bold">0</p>
+          <p class="text-gray-500">Últimos 30 dias</p>
+        </div>
+      </div>
+
+      <!-- Links rápidos -->
+      <section class="mt-8 grid md:grid-cols-3 gap-6">
+        <a href="/relatorios" class="bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 transition block text-center">
+          <h3 class="text-xl font-semibold">Relatórios</h3>
+          <p class="text-gray-200">Acesse estatísticas detalhadas</p>
+        </a>
+
+        <a href="/gestao" class="bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 transition block text-center">
+          <h3 class="text-xl font-semibold">Gestão de execuções</h3>
+          <p class="text-gray-200">Gerencie execuções em andamento</p>
+        </a>
+
+        <a href="/mapa" class="bg-gray-700 text-white p-6 rounded-lg shadow hover:bg-gray-800 transition block text-center">
+          <h3 class="text-xl font-semibold">Mapa</h3>
+          <p class="text-gray-200">Visualize o mapa de execuções</p>
+        </a>
+      </section>
+    </main>
+
+  </div>
+</div>

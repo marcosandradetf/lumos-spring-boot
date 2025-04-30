@@ -1,0 +1,365 @@
+<div class="flex mt-[4rem] h-fit pl-2 pr-2">
+  <!--  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>-->
+  <div class="mb-5 w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a href="/início">Início</a></li>
+          <li><a href="/estoque">Estoque</a></li>
+          <li>Pendente de Aprovação</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Selecione os materiais desejados para movimentar o estoque</h3>
+    </div>
+
+    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+      <div class="flex justify-center m-5">
+        <ul class="steps">
+          <li class="step step-primary">Selecionar itens</li>
+          <li class="step"><a href="estoque/movimento-pendente" class="link link-hover hover:text-blue-700">Pendente de
+            Aprovação</a></li>
+          <li class="step cursor-pointer"><a href="estoque/movimento/aprovado"
+                                             class="link link-hover hover:text-blue-700">Aprovado</a></li>
+        </ul>
+      </div>
+
+      <app-table [search]="true" [filter]="true">
+
+        <div class="flex justify-end" filter>
+          <div class="dropdown dropdown-end flex-2">
+            <div tabindex="0" role="button" class="p-1 m-1 material-icons flex items-center">
+              <span class="material-icons text-indigo-400">filter_alt</span>
+              <span class="text-sm poppins-regular">Almoxarifados</span>
+            </div>
+            <table tabindex="0"
+                   class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+              <tr *ngFor="let deposit of deposits">
+                <td>
+                  <input type="checkbox" class="checkbox"
+                         (change)="filterDeposit(deposit.idDeposit.toString(), $event)"/>
+                </td>
+                <td class="poppintypeNames-light select-none lower-text">{{ deposit.depositName }}</td>
+              </tr>
+            </table>
+          </div>
+
+        </div>
+
+
+        <tr class="bg-indigo-700 text-white" header>
+          <th class="material-icons">call_received</th>
+          <th>Codigo</th>
+          <th>Nome</th>
+          <th>Marca</th>
+          <th>Potência</th>
+          <th>Corrente (A)</th>
+          <th>Tamanho</th>
+          <th>UN Compra</th>
+          <th>Estoque</th>
+          <th>Empresa</th>
+          <th>Almoxarifado</th>
+        </tr>
+        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100" body>
+          <td>
+            <input
+              type="checkbox"
+              class="checkbox"
+              [(ngModel)]="row.selected"
+              (change)="toggleSelection(row)"
+              name="selected{{i}}"
+            />
+          </td>
+          <td>{{ row.idMaterial }}</td>
+          <td>{{ row.materialName }}</td>
+          <td>{{ row.materialBrand }}</td>
+          <td>{{ row.materialPower }}</td>
+          <td>{{ row.materialAmps }}</td>
+          <td>{{ row.materialLength }}</td>
+          <td>{{ row.buyUnit }}</td>
+          <td>{{ row.stockQt }}</td>
+          <td>{{ row.company }}</td>
+          <td>{{ row.deposit }}</td>
+        </tr>
+      </app-table>
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <app-button [action]="handleClick" title="Continuar"></app-button>
+      <div class="overflow-auto m-10">
+        <app-pagination [service]="this.materialService"></app-pagination>
+      </div>
+    </div>
+
+    <!--    modal change -->
+    <app-modal [modalOpen]="openMovementModal" classModal="rounded-none" (modalClose)="closeMovementModal()">
+      <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
+        <app-table>
+          <tr class="bg-indigo-700 text-white" header>
+            <th>Codigo</th>
+            <th class="min-w-64">Descrição</th>
+            <th>Quantidade*</th>
+            <th>UN. Compra*</th>
+            <th>Qtde. p/ embalagem*</th>
+            <th>Preço total*</th>
+            <th>Fornecedor*</th>
+            <th>Comentário</th>
+            <th>UN. Requisição*</th>
+            <th>Qtde. Total</th>
+          </tr>
+          <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100" body>
+            <td><input
+              readonly
+              required
+              [ngModel]="movement.materialId"
+              class="input input-bordered input-xs w-12"
+              name="materialId{{i}}"
+              type="text"></td>
+            <td>
+              @if (openMovementModal) {
+                <input
+                  readonly
+                  [value]="getDescription(movement.materialId)"
+                  required
+                  class="input input-bordered input-xs min-w-64"
+                  name="materialId{{i}}"
+                  type="text">
+              }
+            </td>
+
+            <td><input
+              required
+              [(ngModel)]="movement.inputQuantity"
+              (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
+              name="inputQuantity{{i}}"
+              type="text"
+              (input)="this.utils.formatNumber($event)"
+              placeholder="Digite aqui"
+              class="input input-bordered input-xs w-24"
+              #inputQuantity="ngModel"/>
+              <div *ngIf="inputQuantity.invalid && formSubmitted">
+                <small *ngIf="inputQuantity.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+              </div>
+            </td>
+            <td>
+              <select
+                class="select select-bordered select-xs w-16"
+                [(ngModel)]="movement.buyUnit"
+                (change)="updateQuantityPackage(); movement.requestUnit = ''; movement.totalQuantity = 0;"
+                name="buyUnit{{i}}"
+                required
+                #buyUnit="ngModel">
+                @for (unit of units; track unit.Value) {
+                  <option [value]="unit.Value" [selected]="movement.buyUnit === unit.Value">{{ unit.Value }}</option>
+                }
+              </select>
+              @if (buyUnit.invalid && formSubmitted) {
+                @if (buyUnit.errors?.['required']) {
+                  <small class="text-red-600">Preenchimento obrigatório.</small>
+                }
+              }
+            </td>
+            <td
+              [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
+              [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
+              @if (getOption(movement)) {
+                <input
+                  required
+                  (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
+                  type="text"
+                  (input)="this.utils.formatNumber($event)"
+                  [(ngModel)]="movement.quantityPackage"
+                  [disabled]="movement.buyUnit === ''"
+                  [readOnly]="!shouldShowTooltip(movement.buyUnit)"
+                  name="quantityPackage{{i}}"
+                  placeholder="Digite aqui"
+                  class="input input-bordered input-xs w-24"
+                  #quantityPackage="ngModel"
+                />
+                <div *ngIf="quantityPackage.invalid && formSubmitted">
+                  <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento
+                    obrigatório.</small>
+                </div>
+              } @else {
+                <p class="input input-disabled input-xs">Não se aplica</p>
+              }
+            </td>
+            <td><input
+              required
+              type="text"
+              [(ngModel)]="movement.priceTotal"
+              (input)="formatValue($event, i)"
+              name="priceTotal{{i}}"
+              placeholder="R$"
+              class="input input-bordered input-xs w-24"
+              #price="ngModel"
+            />
+              <div *ngIf="price.invalid && formSubmitted">
+                <small *ngIf="price.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
+            <td>
+              <select
+                required
+                [(ngModel)]="movement.supplierId"
+                name="supplierId{{i}}"
+                class="select select-bordered select-xs w-56 max-w-xs"
+                #supplier="ngModel">
+                <option value="" disabled>Selecione um Fornecedor</option>
+                @for (s of suppliers; track s.id) {
+                  <option [value]="s.id">{{ s.name }}</option>
+                }
+              </select>
+              <div *ngIf="supplier.invalid && formSubmitted">
+                <small *ngIf="supplier.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+            </td>
+            <td><input
+              type="text"
+              [(ngModel)]="movement.description"
+              name="description{{i}}"
+              placeholder="Digite aqui"
+              class="input input-bordered input-xs  w-64 max-w-xs"
+            />
+            </td>
+            <td>
+              <select
+                [disabled]="movement.buyUnit === ''"
+                class="select select-bordered select-xs w-16"
+                [(ngModel)]="movement.requestUnit"
+                (change)="calculateQuantity(movement)"
+                name="requestUnit{{i}}"
+                required
+                #requestUnit="ngModel">
+                @for (unit of filterUnits(movement.buyUnit); track unit) {
+                  <option [value]="unit" [selected]="movement.requestUnit === unit">{{ unit }}</option>
+                }
+              </select>
+              @if (requestUnit.invalid && formSubmitted) {
+                @if (requestUnit.errors?.['required']) {
+                  <small class="text-red-600">Preenchimento obrigatório.</small>
+                }
+              }
+            </td>
+            <td>
+              <p class="input input-bordered input-xs">
+                {{ movement.totalQuantity }}
+              </p>
+            </td>
+          </tr>
+        </app-table>
+        <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
+          <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor" class="w-full"
+                      classButton="btn bg-neutral-300 hover:bg-orange-500 rounded-none w-full"
+                      textColor="text-black"></app-button>
+          <app-button (click)="closeMovementModal()" title="Cancelar" class="w-full"
+                      classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
+                      textColor="text-black"></app-button>
+          <app-button typeButton="submit" title="Salvar Movimentação" class="w-full"
+                      classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+        </div>
+      </form>
+    </app-modal>
+
+    <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+
+    <!--    modal confirmation-->
+    <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">
+      <div>
+        <h3 class="text-center mb-7">Confirma a transação?</h3>
+        <div class="flex justify-around">
+          <app-button (click)="closeConfirmationModal()" title="Cancelar" classButton="btn bg-red-500 hover:bg-red-700"
+                      textColor="text-black"></app-button>
+          <app-button (click)="submitDataMovement()" title="Confirmar"></app-button>
+        </div>
+      </div>
+    </app-modal>
+
+    <app-modal [modalOpen]="openSupplierModal" (modalClose)="closeSupplierModal()">
+      <form #supplierForm="ngForm" (ngSubmit)="submitDataSupplier(supplierForm)">
+        <app-table>
+          <tr class="bg-indigo-700 text-white" header>
+            <th>Nome*</th>
+            <th>CNPJ</th>
+            <th>Contato</th>
+            <th>Endereço</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th></th>
+          </tr>
+          <tr *ngFor="let supplier of sendSuppliers; let i = index" class="odd:bg-neutral-100" body>
+            <td>
+              <input
+                required
+                [(ngModel)]="supplier.name"
+                name="name{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"
+                #ngSupplierName="ngModel"/>
+              <div *ngIf="ngSupplierName.invalid && formSubmitted">
+                <small *ngIf="ngSupplierName.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+              </div>
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.cnpj"
+                name="cnpj{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"/>
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.contact"
+                name="contact{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"/>
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.address"
+                name="address{{i}}"
+                type="text"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"/>
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.phone"
+                name="phone{{i}}"
+                type="tel"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"/>
+            </td>
+            <td>
+              <input
+                [(ngModel)]="supplier.email"
+                name="email{{i}}"
+                type="email"
+                placeholder="Digite aqui"
+                class="input input-bordered input-xs"/>
+            </td>
+            <td>
+              <span class="btn btn-outline btn-xs btn-error" (click)="removeRow(i)">-</span>
+            </td>
+          </tr>
+        </app-table>
+
+        <span class="btn btn-outline btn-primary" (click)="addSupplier()">Adicionar</span>
+
+        <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
+          <app-button (click)="closeSupplierModal()" title="Cancelar" class="w-full"
+                      classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
+                      textColor="text-black"></app-button>
+          <app-button typeButton="submit" title="Salvar Fornecedor" class="w-full"
+                      classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+        </div>
+      </form>
+    </app-modal>
+
+
+  </div>
+</div>

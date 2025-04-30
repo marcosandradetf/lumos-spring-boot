@@ -1,0 +1,13 @@
+@if (classButton !== "" && !loading) {
+  <button (click)="action()" type="{{typeButton ? typeButton : 'button'}}" class="btn {{ classButton }}">
+    {{title}}
+  </button>
+} @else if (loading) {
+  <button (click)="action()" type="{{typeButton ? typeButton : 'button'}}" class="btn {{ classButton }}">
+    <span class="loading loading-spinner"></span>
+  </button>
+} @else {
+  <button class="btn bg-indigo-600 hover:bg-indigo-800 text-white" (click)="action()" type="{{typeButton ? typeButton : 'button'}}" >
+    {{title}}
+  </button>
+}

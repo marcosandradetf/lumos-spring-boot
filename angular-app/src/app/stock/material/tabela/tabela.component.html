@@ -1,0 +1,87 @@
+<div class="overflow-x-auto">
+  <table class="table table-xs cursor-default select-none z-10">
+    <thead>
+    <tr class="bg-indigo-700 text-white">
+      <th class="text-left">Código</th>
+      <th class="text-left">Nome Material</th>
+      <th class="text-left">Marca</th>
+
+      <th class="text-left">Potência</th>
+      <th class="text-left">Corrente (A)</th>
+      <th class="text-left">Tamanho</th>
+
+      <th class="text-left">Unid. Compra</th>
+      <th class="text-left">Unid. Requisição</th>
+      <th class="text-left">Tipo Material</th>
+      <th class="text-left">Grupo Material</th>
+      <th class="text-left">Qtde. Estoque</th>
+      <th class="text-left">Inativo</th>
+      <th class="text-left">Empresa</th>
+      <th class="text-left">Almoxarifado</th>
+      <th class="text-left" colspan="2">Ação</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let material of materials" class="odd:bg-neutral-100">
+      <td>{{ material.idMaterial }}</td>
+      <td>{{ material.materialName }}</td>
+      <td>{{ material.materialBrand }}</td>
+
+      <td>{{ material.materialPower }}</td>
+      <td>{{ material.materialAmps }}</td>
+      <td>{{ material.materialLength }}</td>
+
+      <td>{{ material.buyUnit }}</td>
+      <td>{{ material.requestUnit }}</td>
+      <td>{{ material.materialType }}</td>
+      <td>{{ material.materialGroup }}</td>
+      <td>{{ material.stockQt }}</td>
+      <td>
+        <input type="checkbox"
+               (click)="false"
+               [checked]="material.inactive"
+               class="toggle toggle-primary"/>
+      </td>
+      <td>{{ material.company }}</td>
+      <td>{{ material.deposit }}</td>
+      <td class="cursor-pointer">
+        <button (click)="idMaterial = material.idMaterial; openConfirmationModal = true"
+                class="cursor-pointer material-icons text-red-600">delete
+        </button>
+      </td>
+      <td class="cursor-pointer">
+        <button (click)="updateMaterial(material.idMaterial)" class="cursor-pointer material-icons">edit
+        </button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="join flex justify-center p-3">
+    <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of materialService.pages; let i = index"
+            (click)="changePage(i)"
+            [ngClass]="i === parseInt(currentPage) ? 'bg-indigo-700 text-white' : '' ">{{ i + 1 }}
+    </button>
+  </div>
+
+  <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+
+  <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="openConfirmationModal = false">
+    <div>
+      <h3 class="text-center mb-7">Confirma a exclusão?</h3>
+      <div class="flex justify-around">
+        <app-button (click)="openConfirmationModal = false" title="Cancelar" class="bg-red-500 hover:bg-red-700"
+                    textColor="text-black"></app-button>
+        <app-button (click)="submitDeleteMaterial()" title="Confirmar"></app-button>
+      </div>
+    </div>
+  </app-modal>
+
+  <app-modal [modalOpen]="openUpdateModal" (modalClose)="closeUpdateModal()">
+    <form>
+      {{ material ? material.materialName : "" }}
+    </form>
+    <app-material-form></app-material-form>
+  </app-modal>
+
+</div>

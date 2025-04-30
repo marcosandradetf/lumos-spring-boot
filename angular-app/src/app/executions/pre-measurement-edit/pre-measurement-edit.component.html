@@ -1,0 +1,191 @@
+<div class="flex mt-[3rem] h-fit" #top>
+  <div class="w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a href="/">Início</a></li>
+          <li><a [href]="'/pre-medicao/relatorio/' + preMeasurement.preMeasurementId">Pré-medição</a></li>
+          <li>Editar itens</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">
+        Editando {{ streets.classList.contains('hidden') ? getStreetName(streetId) : contract.contractor }}</h3>
+    </div>
+
+    <div *ngIf="hideContent" class="border-b w-full pl-2 h-screen pt-2">
+      <div class="flex items-center flex-col border rounded p-10 shadow">
+        <span class="material-icons mt-20 text-orange-600">thumb_up</span>
+        <h2 class="mt-2 font-semibold text-xl">Itens modificados com sucesso</h2>
+        <p>A pré-medição se encontra <span class="badge badge-info rounded p-3 cursor-pointer" (click)="router.navigate(['/pre-medicao/disponivel'])">Disponível para execução</span></p>
+
+        <div class="mt-10 flex flex-col">
+          <button class="btn btn-link"
+                  (click)="router.navigate(['/pre-medicao/relatorio/' + preMeasurement.preMeasurementId])">
+            <span class="material-icons">report</span>
+            Exibir relatório
+          </button>
+          <button class="btn btn-link"
+                  (click)="router.navigate(['execucao/pre-medicao/' + preMeasurement.preMeasurementId])">
+            <span class="material-icons">open_in_new</span>
+            Continuar para execução
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-b w-full pl-2 h-screen pt-2" #streets [class.hidden]="hideContent">
+      <ol class="flex flex-wrap">
+        <li
+          class="w-[23rem] m-2">
+          <button class="btn btn-success text-white w-[23rem]"
+                  (click)="conclude()">
+            <span class="material-icons">save</span>
+            Concluir processo
+          </button>
+        </li>
+      </ol>
+
+      <ol class="flex flex-wrap">
+        <li *ngFor="let s of preMeasurement.streets; index as i;"
+            class="w-[23rem]  cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
+            (click)="edit('street', s.preMeasurementStreetId, streets, items)">
+          <div class="flex flex-col border rounded px-4 py-2 card-execution">
+            <span class="badge rounded mb-4 mt-2"
+                  [ngClass]="s.status == 'PENDING' ? 'badge-primary' :  s.status === 'EDITED' ? 'badge-warning' : 'badge-error'">
+                {{ s.status === "PENDING" ? "NÃO MODIFICADO" : s.status === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
+            </span>
+
+            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">{{ s.street }}</h3>
+            <span class="text-sm text-neutral-600 flex items-center">Essa rua contém {{ s.items.length }} itens<span
+              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+            <span class="text-sm text-neutral-600 flex items-center">{{ s.latitude + " , " + s.longitude }}<span
+              class="material-icons text-sm ml-1 text-blue-500">location</span></span>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="border-b w-full pl-2 h-screen pt-2 hidden" #items>
+      <ol class="flex flex-wrap">
+        <li
+          class="w-[23rem] m-2">
+          <button
+            class="btn bg-[#ffffff] hover:bg-[#ffffff] border-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] w-[23rem]"
+            (click)="changeFromTo(items, streets)">
+            <span class="material-icons">arrow_back</span>
+            Visão geral
+          </button>
+        </li>
+
+        <li
+          class="w-[23rem] m-2">
+          @if (isNotActive('street', streetId)) {
+            <button class="btn bg-[#47698F] hover:bg-[#30698F] w-[23rem] text-white border-[#35567b] mb-2"
+                    (click)="cancelStreet(streetId, false)">
+              <span class="material-icons">restore</span>
+              Reativar rua com todos os itens
+            </button>
+          } @else {
+            <button class="btn bg-[#FF9900] hover:bg-[#FF8800] w-[23rem] text-black border-[#e17d00]"
+                    (click)="cancelStreet(streetId, true)">
+              <span class="material-icons">delete_forever</span>
+              Cancelar rua com todos os itens
+            </button>
+          }
+
+        </li>
+      </ol>
+
+      <ol class="flex flex-wrap">
+        <li *ngFor="let i of streetItems; index as index;"
+            class="w-[23rem] m-2">
+          <div class="flex justify-between border rounded px-4 py-2 shadow h-36"
+               [class.bg-neutral-100]="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')">
+            <div class="relative w-full">
+              <span class="badge rounded mb-4 mt-2"
+                    [ngClass]="i.status == 'PENDING' ? 'badge-primary' :  i.status === 'EDITED' ? 'badge-warning' : 'badge-error'">
+                {{ i.status === "PENDING" ? "NÃO MODIFICADO" : i.status === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
+            </span>
+              <h3 class="text-lg text-neutral-800 leading-[1.15rem] font-light">{{ i.materialName }}</h3>
+              <span
+                class="text-sm text-neutral-600 flex items-center">{{ i.materialPower ? i.materialPower : i.materialLength }}</span>
+              <span *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+                    [ngClass]="i.status === 'PENDING' ? 'text-red-600' : 'text-primary'"
+                    class="material-icons text-2xl ml-1 absolute bottom-0 cursor-pointer rounded hover:border p-1 select-none"
+                    (click)="edit('item', i.preMeasurementStreetItemId, streets, items)">{{ i.status !== "CANCELLED" ? 'delete' : 'restore' }}</span>
+              <span *ngIf="i.materialName.startsWith('CABO') || i.materialName.startsWith('RELÉ')"
+                    class="absolute bottom-0 text-xs border-t min-w-full pt-1 select-none">Controlado automaticamente</span>
+            </div>
+            <div
+              *ngIf="i.status !== 'CANCELLED'"
+              class="flex flex-col justify-center items-center  border rounded  p-1 border-b-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] min-w-fit">
+              <span
+                *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:-translate-y-2 select-none"
+                (click)="changeItem(i.preMeasurementStreetItemId, 'increment')">expand_less</span>
+              <span class="text-sm text-neutral-600 flex items-center">{{ i.materialQuantity }}</span>
+              <span
+                *ngIf="!i.materialName.startsWith('CABO') && !i.materialName.startsWith('RELÉ')"
+                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-y-2 select-none"
+                (click)="changeItem(i.preMeasurementStreetItemId, 'decrement')">expand_more</span>
+              <p class="text-xs p-1">Qtde.</p>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+  </div>
+
+  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
+                      class="absolute right-0"></app-screen-message>
+
+  <app-modal [modalOpen]="openModal" (modalClose)="openModal=false; alert = false; finish = false;"
+             classModal="rounded p-4 lg:w-[30%] flex flex-col  justify-center">
+    @if (alert && !finish) {
+      <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <span class="material-icons text-error">warning</span>
+        <h2 class="text-center font-semibold">Essa ação retorna o status de todos os itens, deseja prosseguir?</h2>
+      </div>
+      <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+              (click)="cancelStreet(streetId, false)">
+        <span class="material-icons">restore</span>
+        Reativar rua com todos os itens
+      </button>
+      <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]" (click)="openModal = false">
+        <span class="material-icons">check</span>
+        Ok, manter
+      </button>
+    } @else if (streetId > 0 && !finish) {
+      <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <span class="material-icons text-error">warning</span>
+        <h2 class="text-center font-semibold">Uma ação de cancelamento foi executada nesta rua, como deseja
+          prosseguir?</h2>
+      </div>
+      <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+              (click)="cancelStreet(streetId, false)">
+        <span class="material-icons">restore</span>
+        Reativar rua com todos os itens
+      </button>
+      <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]" (click)="openModal = false">
+        <span class="material-icons">check</span>
+        Ok, manter
+      </button>
+    } @else if (finish) {
+      <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <span class="material-icons text-primary text-2xl">question_mark</span>
+        <h2 class="text-center font-semibold">Deseja salvar todas as modificações?</h2>
+      </div>
+      <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
+              (click)="openModal = false; finish = false; alert = false;">
+        <span class="material-icons">restore</span>
+        Cancelar
+      </button>
+      <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]" (click)="sendModifications()">
+        <span class="material-icons">save</span>
+        Salvar
+      </button>
+    }
+  </app-modal>
+
+</div>

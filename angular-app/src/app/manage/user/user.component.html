@@ -1,0 +1,440 @@
+<div class="flex mt-[4rem] h-fit pl-2" #top>
+  <div class="w-[85vw] xl:w-[80rem] 2xl:w-[100rem] mb-5 ">
+    <div class="breadcrumbs text-sm py-5">
+      <ul class="select-none">
+        <li><a>Início</a></li>
+        <li><a>Configurações</a></li>
+        <li>Usuários</li>
+      </ul>
+    </div>
+
+
+    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+      <input type="radio" class="tab" aria-label="Usuários" checked/>
+      <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
+      <input type="radio" class="tab" aria-label="Empresa" disabled
+             (click)="router.navigate(['/configuracoes/empresa'])"/>
+    </div>
+
+    <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)" class="shadow border p-2">
+      <div class="flex justify-evenly pb-5 items-center">
+        @if (!add && !change) {
+          <app-button title="Alterar Usuários" [action]="changeUser()">
+          </app-button>
+        }
+        @if (!add && !change) {
+          <app-button title="Adicionar Usuários" classButton="btn btn-success text-white" [action]="addUser()">
+          </app-button>
+        }
+        @if (add || change) {
+          <app-button title="Cancelar" classButton="btn" [action]="resetView()">
+          </app-button>
+          <app-button title="Salvar" typeButton="submit" [loading]="loading"
+                      classButton="btn btn-primary w-32 text-white">
+          </app-button>
+          @if (add) {
+            <div class="flex">
+              <div class="flex flex-col items-center mr-2">
+                <button class="btn btn-outline btn-primary btn-xs" (click)="newUser()" type="button">+</button>
+                <p class="text-xs">Adicionar</p>
+              </div>
+              <div class="flex flex-col items-center">
+                <button class="btn btn-outline btn-xs" (click)="removeUser()" type="button">-</button>
+                <p class="text-xs">Remover</p>
+              </div>
+            </div>
+          }
+        }
+
+      </div>
+      <app-table class="min-h-96">
+        <tr header>
+          <th *ngIf="change"></th>
+          <th hidden>Código</th>
+          <th>Usuário</th>
+          <th>Nome</th>
+          <th>Sobrenome</th>
+          <th>Email</th>
+          <th>Data de Nascimento</th>
+          <th>Funções</th>
+          <th>Status</th>
+          @if (!add && !change) {
+            <th>Ação</th>
+          }
+        </tr>
+
+        <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
+          @if (change) {
+            <td>
+              <input type="checkbox"
+                     class="check-box"
+                     [(ngModel)]="user.sel"
+                     (click)="user.username !== 'admin'"
+                     name="sel{{i}}">
+            </td>
+            <td hidden>
+              <input disabled
+                     [(ngModel)]="user.userId"
+                     name="userId{{i}}"
+                     type="text"
+                     class="input input-bordered input-xs"
+              ></td>
+            <td>
+              <input required
+                     [readOnly]="!user.sel"
+                     [(ngModel)]="user.username"
+                     name="username{{i}}"
+                     type="text"
+                     placeholder="Insira o username"
+                     class="input input-bordered input-xs"
+                     #username="ngModel"
+                     [pattern]="usernamePattern"
+              >
+              <div *ngIf="username.invalid && username.touched">
+                <small *ngIf="username.errors?.['required']" class="text-red-600">Campo é obrigatório.</small>
+                <small *ngIf="username.errors?.['pattern']" class="text-red-600">Não é permitido espaços no username é
+                  permitido incluir letras, números, e os caracteres '_', '-', '.'.</small>
+              </div>
+            </td>
+            <td>
+              <input required
+                     [readOnly]="!user.sel"
+                     [(ngModel)]="user.name"
+                     name="name{{i}}"
+                     type="text"
+                     min="4"
+                     placeholder="Insira o nome"
+                     class="input input-bordered input-xs"
+                     #name="ngModel">
+              <div *ngIf="name.invalid && name.touched">
+                <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="name.errors?.['min']" class="text-red-600">Nome inválido</small>
+              </div>
+            </td>
+            <td><input required
+                       [readOnly]="!user.sel"
+                       [(ngModel)]="user.lastname"
+                       name="lastname{{i}}"
+                       type="text"
+                       min="4"
+                       placeholder="Insira o sobrenome"
+                       class="input input-bordered input-xs"
+                       #lastname="ngModel">
+              <div *ngIf="lastname.invalid && lastname.touched">
+                <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="lastname.errors?.['min']" class="text-red-600">Sobrenome inválido</small>
+              </div>
+            </td>
+            <td><input required
+                       [readOnly]="!user.sel"
+                       [(ngModel)]="user.email"
+                       name="email{{i}}"
+                       type="text"
+                       placeholder="nome@exemplo.com"
+                       class="input input-bordered input-xs"
+                       #email="ngModel"
+                       [pattern]="emailPattern">
+              <div *ngIf="email.invalid && email.touched">
+                <small *ngIf="email.errors?.['required']" class="text-red-600">Email é obrigatório.</small>
+                <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
+              </div>
+            </td>
+            <td class="flex items-center space-x-2 align-middle mt-[.25rem]">
+              <div class="flex flex-col">
+                <input
+                  required
+                  [readOnly]="!user.sel"
+                  [(ngModel)]="user.day"
+                  [ngModelOptions]="{ updateOn: 'blur' }"
+                  name="day{{i}}"
+                  #day="ngModel"
+                  type="number"
+                  placeholder="Dia"
+                  min="1"
+                  [max]="getMaxDay(user.month, user.year)"
+                  class="input input-bordered input-xs max-w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                >
+                <div *ngIf="day.invalid && day.touched">
+                  <small *ngIf="day.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="day.errors?.['min']" class="text-red-600">Dia deve ser no mínimo 1.</small>
+                  <small *ngIf="day.errors?.['max']" class="text-red-600">Dia inválido para o mês
+                    selecionado.</small>
+                </div>
+              </div>
+
+
+              <div class="flex flex-col">
+                <details #dropdown class="dropdown">
+                  <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs disabled">
+                    {{ getMonth(user.month.toString())?.name }}
+                  </summary>
+                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow" *ngIf="user.sel">
+                    <li *ngFor="let m of months" class="select-none lower-text">
+                      <a (click)="handleClick(dropdown, m.number, user.userId)">{{ m.name }}</a>
+                    </li>
+                  </ul>
+                </details>
+
+                <small class="text-red-600">{{ validation }}</small>
+              </div>
+
+              <div class="flex flex-col">
+                <input
+                  required
+                  [readOnly]="!user.sel"
+                  [(ngModel)]="user.year"
+                  name="year{{i}}"
+                  type="text"
+                  minlength="4"
+                  maxlength="4"
+                  placeholder="Ano"
+                  class="input input-bordered input-xs max-w-16"
+                  (input)="utils.formatNumber($event)"
+                  #year="ngModel"
+                >
+                <div *ngIf="year.invalid && year.touched">
+                  <small *ngIf="year.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="year.errors?.['minlength']" class="text-red-600">
+                    Ano requer no mínimo 4 caracteres.
+                  </small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="dropdown dropdown-end flex-2">
+                <div tabindex="0" role="button"
+                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
+                  <span
+                    class="text-sm poppins-regular pr-10">{{ user.role.length === 0 ? 'Selecionar' : 'Selecionadas' }}</span>
+                </div>
+                <table *ngIf="user.sel"
+                       tabindex="0"
+                       class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+                  <tr *ngFor="let role of roles">
+                    <td>
+                      <input type="checkbox"
+                             class="checkbox"
+                             (change)="changeRole(i, role.roleName)"
+                             [checked]="verifyRole(i, role.roleName)"/>
+                    </td>
+                    <td class="poppintypeNames-light select-none lower-text">{{ role.roleName }}</td>
+                  </tr>
+                </table>
+              </div>
+              <small class="text-red-600">{{ user.month === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
+            </td>
+            <td><input type="checkbox"
+                       name="status{{i}}"
+                       [readOnly]="!user.sel"
+                       [(ngModel)]="user.status"
+                       class="toggle toggle-primary"/>
+              } @else if (add) {
+            <td hidden>
+              <input disabled
+                     [(ngModel)]="user.userId"
+                     name="userId{{i}}"
+                     type="text"
+                     class="input input-bordered input-xs"
+              ></td>
+            <td>
+              <input required
+                     [readOnly]="user.userId !== ''"
+                     [(ngModel)]="user.username"
+                     name="username{{i}}"
+                     type="text"
+                     placeholder="Insira o username"
+                     class="input input-bordered input-xs"
+                     #username="ngModel"
+                     [pattern]="usernamePattern">
+              <div *ngIf="username.invalid && username.touched">
+                <small *ngIf="username.errors?.['required']" class="text-red-600">Username é obrigatório.</small>
+                <small *ngIf="username.errors?.['pattern']" class="text-red-600">Não é permitido espaços no username é
+                  permitido incluir letras, números, e os caracteres '_', '-', '.'.</small>
+              </div>
+            </td>
+            <td>
+              <input required
+                     [readOnly]="user.userId !== ''"
+                     [(ngModel)]="user.name"
+                     name="name{{i}}"
+                     type="text"
+                     placeholder="Insira o nome"
+                     min="4"
+                     class="input input-bordered input-xs"
+                     #name="ngModel">
+              <div *ngIf="name.invalid && name.touched">
+                <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="name.errors?.['min']" class="text-red-600">Nome inválido</small>
+              </div>
+            </td>
+            <td><input required
+                       [readOnly]="user.userId !== ''"
+                       [(ngModel)]="user.lastname"
+                       name="lastname{{i}}"
+                       type="text"
+                       min="4"
+                       placeholder="Insira o sobrenome"
+                       class="input input-bordered input-xs"
+                       #lastname="ngModel">
+              <div *ngIf="lastname.invalid && lastname.touched">
+                <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                <small *ngIf="lastname.errors?.['min']" class="text-red-600">Sobrenome inválido</small>
+              </div>
+            </td>
+            <td><input required
+                       [readOnly]="user.userId !== ''"
+                       [(ngModel)]="user.email"
+                       name="email{{i}}"
+                       type="text"
+                       [pattern]="emailPattern"
+                       placeholder="nome@exemplo.com"
+                       class="input input-bordered input-xs"
+                       #email="ngModel">
+              <div *ngIf="email.invalid && email.touched">
+                <small *ngIf="email.errors?.['required']" class="text-red-600">Email é obrigatório.</small>
+                <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
+              </div>
+            </td>
+            <td class="flex items-center space-x-2 align-middle mt-[.25rem]">
+              <div class="flex flex-col">
+                <input
+                  required
+                  [readOnly]="user.userId !== ''"
+                  [(ngModel)]="user.day"
+                  [ngModelOptions]="{ updateOn: 'blur' }"
+                  name="day{{i}}"
+                  #day="ngModel"
+                  type="number"
+                  placeholder="Dia"
+                  min="1"
+                  [max]="getMaxDay(user.month, user.year)"
+                  class="input input-bordered input-xs max-w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                >
+                <div *ngIf="day.invalid  && day.touched">
+                  <small *ngIf="day.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="day.errors?.['min']" class="text-red-600">Dia deve ser no mínimo 1.</small>
+                  <small *ngIf="day.errors?.['max']" class="text-red-600">Dia inválido para o mês
+                    selecionado.</small>
+                </div>
+              </div>
+
+
+              <div class="flex flex-col">
+                <details #dropdown class="dropdown">
+                  <summary class="text-sm poppins-regular pr-10 select select-bordered select-xs disabled">
+                    {{ getMonth(user.month.toString())?.name || 'Mês' }}
+                  </summary>
+                  <ul class="menu dropdown-content bg-base-100 rounded-box z-[50] w-fit p-2 shadow"
+                      *ngIf="user.userId === ''">
+                    <li *ngFor="let m of months" class="select-none lower-text">
+                      <a (click)="handleClickInsert(dropdown, m.number, i)">{{ m.name }}</a>
+                    </li>
+                  </ul>
+                </details>
+
+                <small
+                  class="text-red-600">{{ user.month === '' && formSubmitted ? 'Campo obrigatorio' : '' }}</small>
+              </div>
+
+              <div class="flex flex-col">
+                <input
+                  required
+                  [readOnly]="user.userId !== ''"
+                  [(ngModel)]="user.year"
+                  name="year{{i}}"
+                  type="text"
+                  minlength="4"
+                  maxlength="4"
+                  placeholder="Ano"
+                  class="input input-bordered input-xs max-w-16"
+                  (input)="utils.formatNumber($event)"
+                  #year="ngModel"
+                >
+                <div *ngIf="year.invalid && year.touched">
+                  <small *ngIf="year.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="year.errors?.['minlength']" class="text-red-600">
+                    Ano requer no mínimo 4 caracteres.
+                  </small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="dropdown dropdown-end flex-2">
+                <div tabindex="0" role="button"
+                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
+                  <span
+                    class="text-sm poppins-regular pr-10">{{ user.role.length === 0 ? 'Selecionar' : 'Selecionadas' }}</span>
+                </div>
+                <table *ngIf="user.userId === ''"
+                       tabindex="0"
+                       class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
+                  <tr *ngFor="let role of roles">
+                    <td>
+                      <input type="checkbox"
+                             class="checkbox"
+                             (change)="changeRole(i, role.roleName)"
+                             [checked]="verifyRole(i, role.roleName)"/>
+                    </td>
+                    <td class="poppintypeNames-light select-none lower-text">{{ role.roleName }}</td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+            <td><input type="checkbox"
+                       name="status{{i}}"
+                       (click)="user.userId === ''"
+                       [(ngModel)]="user.status"
+                       class="toggle toggle-primary"/>
+              } @else {
+            <td hidden disabled>{{ user.userId }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.lastname }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.day + " de " + getMonth(user.month.toString())?.name + " de " + user.year }}</td>
+            <td>
+              <div class="dropdown dropdown-hover">
+                <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
+                  class="material-icons">arrow_drop_down_icon </span></div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                  <li *ngFor="let role of filterRolesByUserId(i)">{{ role.role }}</li>
+                </ul>
+              </div>
+            </td>
+            <td><input type="checkbox"
+                       (click)="false"
+                       name="status{{i}}"
+                       [(ngModel)]="user.status"
+                       class="toggle toggle-primary"/></td>
+            <td>
+              <app-button title="Resetar Senha"
+                          classButton="btn-sm"
+                          (click)="confirmResetPassword(user.userId, user.email)">
+              </app-button>
+            </td>
+          }
+        </tr>
+      </app-table>
+    </form>
+
+
+  </div>
+
+  <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+  <!--    modal confirmation-->
+  <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="openConfirmationModal = false">
+    <div>
+      <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
+      <div class="flex justify-around">
+        <app-button (click)="openConfirmationModal = false; loading = false" title="Cancelar"
+                    classButton="btn bg-red-500 hover:bg-red-700"
+                    textColor="text-black"></app-button>
+        <app-button (click)="resetPassword()" title="Confirmar" [loading]="loading" classButton="btn btn-primary w-32 text-white"></app-button>
+      </div>
+    </div>
+  </app-modal>
+
+
+</div>

@@ -1,0 +1,71 @@
+.report-base-header {
+  background-color: #096cb8;
+  color: white;
+  text-align: left;
+}
+
+.report-base table {
+  border-collapse: collapse;
+  font-size: 0.7em;
+  font-family: sans-serif;
+  width: 100%;
+  border: 2px solid #ddd;
+}
+
+.report-base table th,
+.report-base table td {
+  padding: 12px 15px;
+}
+
+.report-base table tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.report-base table tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.report-base table tr:last-of-type {
+  border-bottom: 2px solid #009879;
+}
+
+.report-base table tr.active-row {
+  font-weight: bold;
+  color: #009879;
+}
+
+.report-base table tr td input {
+  max-width: 120px;
+  background-color: inherit;
+  color: #242424;
+  padding: .15rem .5rem;
+  min-height: 25px;
+  border-radius: 4px;
+  outline: none;
+  border: none;
+  line-height: 1.15;
+  box-shadow: 0 10px 20px -18px;
+}
+
+.report-base table tr td input:focus {
+  border-bottom: 2px solid #5b5fc7;
+  border-radius: 4px 4px 2px 2px;
+}
+
+.report-base table tr td input:hover {
+  outline: 1px solid lightgrey;
+}
+
+.report-base-total {
+  font-weight: bold;
+  background-color: #8be78b;
+}
+
+.report-base-total-price{
+  width: 120px;
+}
+
+.card-execution:hover {
+  border-bottom: 2px solid #5b5fc7;
+  border-radius: 4px;
+}

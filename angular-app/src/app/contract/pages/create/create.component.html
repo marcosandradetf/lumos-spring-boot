@@ -1,0 +1,344 @@
+<div class="flex mt-[3rem] h-fit" #top xmlns="http://www.w3.org/1999/html">
+  <div class="w-full">
+    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+      <div class="breadcrumbs text-sm">
+        <ul class="select-none">
+          <li><a>Início</a></li>
+          <li><a>Contratos</a></li>
+          <li>Novo</li>
+        </ul>
+      </div>
+      <h3 class="text-medium pr-5 hidden lg:block">Novo Contrato</h3>
+    </div>
+
+    <div *ngIf="!finish">
+      <div class="border-b w-full pl-2 flex pb-4" #contractData>
+        <form
+          #myForm="ngForm" (ngSubmit)="submitContract(myForm, contractData, contractItems)"
+          class="p-2 flex flex-col w-full">
+          <div class="flex justify-between">
+            <p class="select-none text-blue-700">Informe os dados do contrato</p>
+          </div>
+
+          <div class="flex space-x-4 flex-wrap mt-5 w-[70%]">
+            <label class="form-control w-full max-w-xs ml-4">
+              <div class="label">
+                <span class="label-text">N.º Contrato</span>
+              </div>
+              <input type="text"
+                     name="number"
+                     class="input input-sm input-bordered w-full max-w-xs"
+                     placeholder="Insira o Número"
+                     required
+                     [(ngModel)]="contract.number"
+                     (input)="utils.formatContractNumber($event)"
+                     #number="ngModel"/>
+              <div *ngIf="number.invalid && myForm.submitted ">
+                <div *ngIf="number.invalid && myForm.submitted">
+                  <small *ngIf="number.errors?.['required']" class="text-red-600">Preenchimento
+                    obrigatório.</small>
+                </div>
+              </div>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Contratante</span>
+              </div>
+              <input type="text"
+                     name="socialReason"
+                     class="input input-sm input-bordered w-full max-w-xs"
+                     placeholder="Ex. Prefeitura de Belo Horizonte"
+                     required
+                     [(ngModel)]="contract.contractor"
+                     #socialReason="ngModel"/>
+              <div *ngIf="socialReason.invalid && myForm.submitted">
+                <div *ngIf="socialReason.invalid && myForm.submitted">
+                  <small *ngIf="socialReason.errors?.['required']" class="text-red-600">Preenchimento
+                    obrigatório.</small>
+                </div>
+              </div>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Endereço da Contratante</span>
+              </div>
+              <input type="text"
+                     name="address"
+                     class="input input-sm input-bordered w-full max-w-xs"
+                     placeholder="Endereço"
+                     required
+                     [(ngModel)]="contract.address"
+                     #address="ngModel"/>
+              <div *ngIf="address.invalid && myForm.submitted">
+                <div *ngIf="address.invalid && myForm.submitted">
+                  <small *ngIf="address.errors?.['required']" class="text-red-600">Preenchimento
+                    obrigatório.</small>
+                </div>
+              </div>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Telefone da Contratante</span>
+              </div>
+              <input type="text"
+                     name="nomeMaterial"
+                     class="input input-sm input-bordered w-full max-w-xs"
+                     placeholder="(31) 99999-9999"
+                     required
+                     (input)="utils.formatPhone($event)"
+                     minlength="14"
+                     maxlength="15"
+                     [(ngModel)]="contract.phone"
+                     #phone="ngModel"/>
+              <div *ngIf="phone.invalid && myForm.submitted">
+                <small *ngIf="phone.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+                <small *ngIf="phone.errors?.['minlength']" class="text-red-600">Telefone Inválido.</small>
+              </div>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">CNPJ da Contratante</span>
+              </div>
+              <input type="text"
+                     name="cnpj"
+                     class="input input-sm input-bordered w-full max-w-xs"
+                     placeholder="99.997.090/0001-99"
+                     minlength="18"
+                     maxlength="18"
+                     (input)="utils.formatCNPJ($event)"
+                     required
+                     [(ngModel)]="contract.cnpj"
+                     #cnpj="ngModel"/>
+              <div *ngIf="cnpj.invalid && myForm.submitted">
+                <small *ngIf="cnpj.errors?.['required']" class="text-red-600">Preenchimento
+                  obrigatório.</small>
+                <small *ngIf="cnpj.errors?.['minlength']" class="text-red-600">CNPJ Inválido.</small>
+              </div>
+            </label>
+
+            <input type="file" class="file-input file-input-sm hidden" accept=".pdf" #inputFile
+                   (change)="onFileSelected($event, typeSelect)"/>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Edital</span>
+              </div>
+              <span type="button" [class.btn-outline]="!noticeFile" class="btn btn-accent btn-sm text-xs"
+                    (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
+                                                                             *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name || 'Clique para selecionar' }}</span>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Contrato</span>
+              </div>
+              <span type="button" [class.btn-outline]="!contractFile" class="btn btn-accent btn-sm text-xs"
+                    (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
+                                                                               *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name || 'Clique para selecionar' }}</span>
+            </label>
+
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Serviço Unificado</span>
+              </div>
+              <span type="button" class="btn btn-sm text-xs btn-outline btn-primary" #unify
+                    (click)="styleField(unify)">
+              Clique para ativar serviço unificado</span>
+            </label>
+
+
+          </div>
+          <div class="w-full flex justify-end">
+            <button
+              #submitForm
+              type="submit"
+              class="poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+              Adicionar Itens<span class="material-icons ml-2">arrow_forward</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="border-b w-full pl-2 flex flex-col pb-4 hidden" #contractItems>
+        <div class="flex items-center justify-between">
+        <span
+          (click)="contractData.classList.remove('hidden'); contractItems.classList.add('hidden')"
+          class="p-2 mb-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+          <span class="material-icons mr-2">arrow_back</span>Rever dados do contrato
+        </span>
+        </div>
+
+        <div>
+          <table class="table table-auto table-xs w-full">
+            <thead>
+            <tr class="text-left bg-gray-100 border-t-2 border-t-blue-600">
+              <th class="px-4 py-2 text-gray-700">Adicionar</th>
+              <th class="px-4 py-2 text-gray-700">Descrição</th>
+              <th class="px-4 py-2 text-gray-700">Quantidade</th>
+              <th class="w-48 px-4 py-2 text-gray-700">Valor unitário</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let item of items; let i = index" [class.fade-out]="removingIndex === i"
+                [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
+                [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
+                class="transition-all duration-200 hover:bg-gray-50">
+              <td class="px-4 py-2">
+                <span
+                  class="material-icons text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
+                  (click)="addItem(item, i)">
+                  add
+                </span>
+              </td>
+
+              <td class="px-4 py-2">{{ item.description }}</td>
+
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  placeholder="Ex.: 2"
+                  #inputField
+                  (input)="removeLeadingZeros(inputField)"
+                  [(ngModel)]="item.quantity"
+                  name="quantity{{i}}"
+                  #ngQtde="ngModel"
+                  class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <div *ngIf="ngQtde.invalid && myForm.submitted">
+                  <small *ngIf="ngQtde.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+                </div>
+              </td>
+
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  (input)="formatValue($event, item.contractReferenceItemId)"
+                  placeholder="R$"
+                  [(ngModel)]="item.price"
+                  name="price{{i}}"
+                  #ngValor="ngModel"
+                  class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <div *ngIf="ngValor.invalid && myForm.submitted">
+                  <small *ngIf="ngValor.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+                </div>
+              </td>
+
+            </tr>
+            </tbody>
+          </table>
+
+          <div class="flex w-full justify-end pr-2">
+          <span
+            (click)="reviewItems(contractItems, steepFinal)"
+            class="mt-2 poppins-semibold select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+              Revisar itens adicionados<span class="material-icons ml-2">arrow_forward</span>
+          </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-b w-full pl-2 flex-col pb-4 hidden" #steepFinal>
+       <span
+         (click)="contractItems.classList.remove('hidden'); steepFinal.classList.add('hidden')"
+         class="p-2 mb-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
+        <span class="material-icons mr-2">arrow_back</span>Adiconar mais itens
+      </span>
+
+        <app-table>
+          <tr header>
+            <th class="text-left px-3 py-2 bg-gray-100 text-gray-700">Remover</th>
+            <th class="text-left px-3 py-2 bg-gray-100 text-gray-700">Descrição</th>
+            <th class="text-left px-3 py-2 bg-gray-100 text-gray-700">Quantidade</th>
+            <th class="w-48 text-left px-3 py-2 bg-gray-100 text-gray-700">Valor unitário</th>
+          </tr>
+          <tr body *ngFor="let item of contract.items; let i = index" [class.fade-out]="removingIndexContract === i"
+              class="hover:bg-gray-50 transition-all duration-200">
+            <td class="px-4 py-2">
+                <span
+                  class="material-icons text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
+                  (click)="removeItem(item, i)">
+                  remove
+                </span>
+            </td>
+            <td class="px-3 py-2">{{ item.description }}</td>
+            <td class="px-3 py-2">{{ item.quantity }}</td>
+            <td class="px-3 py-2">{{ item.price }}</td>
+          </tr>
+        </app-table>
+
+        <div
+          class="w-full bg-white p-2 rounded-lg shadow-md flex justify-between items-center border-l-4 border-blue-600 mt-2">
+          <div>
+            <p class="text-sm text-gray-500">Total do Contrato</p>
+            <p class="text-lg font-semibold text-gray-700">Valor Total</p>
+          </div>
+          <div>
+            <p class="text-2xl font-semibold text-blue-700">R$ {{ totalValue }}</p>
+          </div>
+        </div>
+
+
+        <div class="flex w-full justify-end mt-5">
+          <button class="btn btn-primary material-icons text-xl mr-10" (click)="openModal = true">save<span
+            class="text-xs">Salvar</span>
+          </button>
+        </div>
+      </div>
+
+      <app-modal [confirmation]="true" [modalOpen]="openModal" (modalClose)="openModal = false">
+        <h2 class="text-center text-xl font-bold">Salvar contrato</h2>
+        <p class="my-5 text-center">Confirma o salvamento do contrato?</p>
+        <div class="flex justify-end space-x-4">
+          <button class="btn btn-neutral material-icons text-xl" (click)="openModal = false">close<span class="text-xs">Cancelar</span>
+          </button>
+          <button class="btn btn-primary text-xs" (click)="submitForm.click()"><span class="material-icons text-xl"
+                                                                                     *ngIf="!loading">save</span><span
+            *ngIf="loading" class="loading loading-spinner"></span>Salvar
+          </button>
+        </div>
+      </app-modal>
+    </div>
+
+    <div *ngIf="finish" class="flex flex-col justify-center items-center h-[calc(100vh-500px)]">
+      <div *ngIf="finish"
+           class="w-full max-w-md mx-auto bg-green-100 border border-green-400 text-green-800 p-4 rounded-lg shadow-md flex flex-col items-center text-center gap-4">
+        <div class="flex items-center gap-3">
+          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <div>
+            <h3 class="text-lg font-semibold">Sucesso!</h3>
+            <p class="text-sm">O contrato foi criado com sucesso.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 mt-10">
+        <button (click)="finish=false" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+          Criar Novo Contrato
+        </button>
+        <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+                (click)="router.navigate(['/contratos/lista'])">
+          Ver Contratos Criados
+        </button>
+      </div>
+
+    </div>
+
+
+    <div *ngIf="utils.serverMessage">
+      <app-screen-message [message]="utils.serverMessage" [alertType]="utils.alertType"></app-screen-message>
+    </div>
+
+
+  </div>
+</div>

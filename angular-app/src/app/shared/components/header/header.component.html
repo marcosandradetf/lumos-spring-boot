@@ -1,0 +1,40 @@
+<header>
+  @if (authService.isLoggedIn$ | async) {
+    <div class="bg-neutral-50 border-r border-neutral-300 fixed top-0 h-14 w-screen shadow p-1 pr-4 z-[30]">
+
+      <div class="flex justify-end p-2 items-center space-x-4">
+        <div
+          class="text-center mr-auto ml-10 select-none poppins-medium bg-gradient-to-r from-indigo-800 via-indigo-500 to-indigo-300 text-transparent bg-clip-text justify-between cursor-pointer">
+          <h3>Thryon System™</h3>
+        </div>
+        <button>
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
+            <path
+              d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z"/>
+          </svg>
+        </button>
+
+        <div class="dropdown dropdown-bottom dropdown-end">
+          <div tabindex="0" role="button" class="avatar online placeholder">
+            <div class="bg-neutral text-neutral-content w-8 rounded-full">
+              <span class="text-xl select-none">{{ authService.getUser().username.charAt(0).toUpperCase() }}</span>
+            </div>
+          </div>
+          <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+            <li><a href="/configuracoes/conta">Minha conta</a></li>
+            <li>
+              <button (click)="logout()">Sair</button>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+  } @else {
+    <div class="flex justify-center items-center">
+      <img class="rounded" ngSrc="/logo.png" alt="logo" height="25" width="25">
+    </div>
+  }
+
+</header>
