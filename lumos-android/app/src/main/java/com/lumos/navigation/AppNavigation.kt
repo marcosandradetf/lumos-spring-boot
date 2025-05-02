@@ -47,7 +47,7 @@ import com.lumos.ui.preMeasurement.MeasurementHome
 import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
 import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
-import com.lumos.ui.preMeasurement.PreMeasurementViewModel
+import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel

@@ -12,7 +12,7 @@ import java.util.Optional
 interface MaterialReservationRepository : JpaRepository<MaterialReservation, Long> {
     fun findAllByStreetPreMeasurementStreetId(streetId: Long): Optional<List<MaterialReservation>>
 
-    fun findAllByStreet(street: PreMeasurementStreet): MutableList<MaterialReservation>?
+    fun findAllByStreet(street: PreMeasurementStreet): List<MaterialReservation>
 
     @Query("select mr from MaterialReservation mr where mr.firstDepositCity in :materials or mr.secondDepositCity in :materials")
     fun findAllByFirstDepositCityOrSecondDepositCity(

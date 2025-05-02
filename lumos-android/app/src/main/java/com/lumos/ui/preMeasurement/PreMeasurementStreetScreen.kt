@@ -65,7 +65,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,7 +88,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -107,6 +105,7 @@ import com.lumos.domain.service.SyncStock
 import com.lumos.ui.components.NetworkStatusBar
 import com.lumos.ui.components.TopBar
 import com.lumos.ui.viewmodel.ContractViewModel
+import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.ui.viewmodel.StockViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

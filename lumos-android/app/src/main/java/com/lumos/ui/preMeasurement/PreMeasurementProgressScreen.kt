@@ -2,7 +2,6 @@ package com.lumos.ui.preMeasurement
 
 import android.content.Context
 import android.content.res.Configuration
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -54,7 +53,7 @@ import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.utils.ConnectivityUtils
+import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import java.time.Instant
 
 @Composable

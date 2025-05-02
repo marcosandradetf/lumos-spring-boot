@@ -137,34 +137,39 @@ class ExecutionService(
         val streets = preMeasurementStreetRepository.findByTeam(team)
 
 
-        for (street in streets) {
-            val reserves = materialReservationRepository.findAllByStreet(street)
-            if (reserves != null) {
-                for (reserve in reserves) {
-                    reservations.add(reserve)
-                }
-            }
-        }
+        streets.flatMap { materialReservationRepository.findAllByStreet(it) }
+            .let { reservations.addAll(it) }
+
 
         if (reservations.isEmpty()) {
             return ResponseEntity.ok(emptyList<ReserveResponseDTO>())
         }
 
-        val reservationsResponse = reservations
-            .mapNotNull {
-                val status = if (it.truckDeposit == null) "NOT_RESERVED" else "RESERVED"
-                it.truckDeposit?.material?.let { d ->
-                    ReserveResponseDTO(
-                        materialName = d.materialName,
-                        materialQuantity = it.reservedQuantity,
-                        streetId = it.street.preMeasurementStreetId,
-                        streetName = it.street.street,
-                        status = status,
-                    )
-                }
-            }
+        val groupedReservations = reservations.groupBy { it.street }
 
-        return ResponseEntity.ok(reservationsResponse)
+        val executionsResponse = groupedReservations.map { (street, reserves) ->
+            ExecutionDTO(
+                streetId = street.preMeasurementStreetId,
+                streetName = street.street,
+                teamId = street.team.idTeam,
+                teamName = street.team.teamName ?: "",
+                reserves = reserves.mapNotNull {
+                    val status = if (it.truckDeposit == null) "NOT_RESERVED" else "RESERVED"
+                    it.truckDeposit?.material?.let { material ->
+                        ReserveResponseDTO(
+                            reserveId = it.idMaterialReservation,
+                            materialId = material.idMaterial,
+                            materialName = material.materialName,
+                            materialQuantity = it.reservedQuantity,
+                            status = status
+                        )
+                    }
+                }
+            )
+        }
+
+
+        return ResponseEntity.ok(executionsResponse)
     }
 
     fun getStockRequests(userUUID: UUID): ResponseEntity<Any> {
@@ -180,10 +185,10 @@ class ExecutionService(
             .mapNotNull {
                 it.secondDepositCity?.material?.let { d ->
                     ReserveResponseDTO(
+                        reserveId = it.idMaterialReservation,
+                        materialId = d.idMaterial,
                         materialName = d.materialName,
                         materialQuantity = it.reservedQuantity,
-                        streetId = it.street.preMeasurementStreetId,
-                        streetName = it.street.street,
                         status = "RESERVED"
                     )
                 }

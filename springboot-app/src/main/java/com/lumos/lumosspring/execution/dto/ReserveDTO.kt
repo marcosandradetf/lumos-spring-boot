@@ -7,11 +7,12 @@ data class ReserveDTO(
     val teamId: Long,
 )
 
+
 data class ReserveResponseDTO(
+    val reserveId: Long,
+    val materialId: Long,
     val materialName: String,
     val materialQuantity: Double,
-    val streetId: Long,
-    val streetName: String,
     val status: String,
 )
 

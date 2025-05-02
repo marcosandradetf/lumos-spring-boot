@@ -1,4 +1,4 @@
-package com.lumos.ui.preMeasurement
+package com.lumos.ui.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.State
@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.PreMeasurementRepository
-import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
 import kotlinx.coroutines.async
