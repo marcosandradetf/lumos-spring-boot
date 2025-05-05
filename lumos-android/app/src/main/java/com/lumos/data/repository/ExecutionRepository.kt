@@ -63,10 +63,10 @@ class ExecutionRepository(
 
     }
 
-    fun checkFlowExecutions(status: String): Flow<List<Execution>> =
-        dao.checkFlowExecutions(status)
+    fun getFlowExecutions(status: String): Flow<List<Execution>> =
+        dao.getFlowExecutions(status)
 
-    fun checkFlowReserves(streetId: Long, status: String): Flow<List<Reserve>> =
+    fun getFlowReserves(streetId: Long, status: String): Flow<List<Reserve>> =
         dao.getFlowReserves(streetId, status)
 
 

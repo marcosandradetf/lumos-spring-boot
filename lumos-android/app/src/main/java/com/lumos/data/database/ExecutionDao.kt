@@ -22,7 +22,7 @@ interface ExecutionDao {
     fun getFlowReserves(streetId: Long, status: String): Flow<List<Reserve>>
 
     @Query("SELECT * FROM executions WHERE executionStatus = :status")
-    fun checkFlowExecutions(status: String): Flow<List<Execution>>
+    fun getFlowExecutions(status: String): Flow<List<Execution>>
 
 //    @Query("SELECT * FROM contracts WHERE status = :status")
 //    fun getFlowContracts(status: String): Flow<List<Contract>>

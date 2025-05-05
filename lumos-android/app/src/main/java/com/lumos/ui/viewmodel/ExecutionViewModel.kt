@@ -6,8 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.ContractRepository
+import com.lumos.data.repository.ExecutionRepository
 import com.lumos.data.repository.Status
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.Execution
+import com.lumos.domain.model.Reserve
 import com.lumos.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,18 +20,30 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ExecutionViewModel(
-    private val repository: ContractRepository,
+    private val repository: ExecutionRepository,
 
     ) : ViewModel() {
-    private val _contracts = MutableStateFlow<List<Contract>>(emptyList()) // estado da lista
-    val contracts: StateFlow<List<Contract>> = _contracts // estado acessível externamente
+    private val _executions = MutableStateFlow<List<Execution>>(emptyList()) // estado da lista
+    val executions: StateFlow<List<Execution>> = _executions // estado acessível externamente
 
+    private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
+    val reserves: StateFlow<List<Reserve>> = _reserves
 
-    fun loadFlowContracts(status: String) {
+    fun syncExecutions() {
         viewModelScope.launch {
             try {
-                repository.getFlowContracts(status).collectLatest { fetched ->
-                    _contracts.value = fetched // atualiza o estado com os dados obtidos
+                repository.syncExecutions()
+            } catch (e: Exception) {
+                // Tratar erros aqui
+            }
+        }
+    }
+
+    fun loadFlowExecutions(status: String) {
+        viewModelScope.launch {
+            try {
+                repository.getFlowExecutions(status).collectLatest { fetched ->
+                    _executions.value = fetched // atualiza o estado com os dados obtidos
                 }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
@@ -36,53 +51,16 @@ class ExecutionViewModel(
         }
     }
 
-    fun syncContracts() {
+    fun loadFlowReserves(streetId: Long, status: String) {
         viewModelScope.launch {
             try {
-                repository.syncContracts()
-            } catch (e: Exception) {
-                // Tratar erros aqui
-            }
-        }
-    }
-
-    suspend fun getContract(contractId: Long): Contract? {
-        return withContext(Dispatchers.IO) {
-            try {
-                repository.getContract(contractId)
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-                null  // Retorna null em caso de erro
-            }
-        }
-    }
-
-
-    fun setStatus(contractId: Long, status: String) {
-        viewModelScope.launch {
-            try {
-                repository.setStatus(contractId, status)
+                repository.getFlowReserves(streetId, status).collectLatest { fetched ->
+                    _reserves.value = fetched // atualiza o estado com os dados obtidos
+                }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
             }
         }
     }
-
-    fun downloadContract(contractId: Long) {
-        return
-    }
-
-    fun startPreMeasurement(contractId: Long, deviceId: String) {
-        viewModelScope.launch {
-            try {
-                repository.setStatus(contractId, Status.IN_PROGRESS)
-                repository.startAt(contractId, Utils.dateTime.toString(), deviceId)
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-            }
-        }
-
-    }
-
 
 }
