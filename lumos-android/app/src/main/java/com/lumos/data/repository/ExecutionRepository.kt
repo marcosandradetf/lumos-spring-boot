@@ -28,13 +28,15 @@ class ExecutionRepository(
                 if (remoteExecutions.isNotEmpty())
                     remoteExecutions.forEach { it ->
                         val streetId = it.streetId
-                        dao.insertExecution(Execution(
-                            streetId = streetId,
-                            streetName = it.streetName,
-                            teamId = it.teamId,
-                            teamName = it.teamName,
-                            executionStatus = "PENDING"
-                        ))
+                        dao.insertExecution(
+                            Execution(
+                                streetId = streetId,
+                                streetName = it.streetName,
+                                teamId = it.teamId,
+                                teamName = it.teamName,
+                                executionStatus = "PENDING"
+                            )
+                        )
                         it.reserves.forEach { r ->
                             dao.insertReserve(
                                 Reserve(
@@ -60,6 +62,13 @@ class ExecutionRepository(
         }
 
     }
+
+    fun checkFlowExecutions(status: String): Flow<List<Execution>> =
+        dao.checkFlowExecutions(status)
+
+    fun checkFlowReserves(streetId: Long, status: String): Flow<List<Reserve>> =
+        dao.getFlowReserves(streetId, status)
+
 
 //    fun getFlowContracts(status: String): Flow<List<Contract>> =
 //        dao.getFlowContracts(status)

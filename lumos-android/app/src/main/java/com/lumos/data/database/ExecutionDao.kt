@@ -18,6 +18,12 @@ interface ExecutionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReserve(reserve: Reserve): Long
 
+    @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus = :status")
+    fun getFlowReserves(streetId: Long, status: String): Flow<List<Reserve>>
+
+    @Query("SELECT * FROM executions WHERE executionStatus = :status")
+    fun checkFlowExecutions(status: String): Flow<List<Execution>>
+
 //    @Query("SELECT * FROM contracts WHERE status = :status")
 //    fun getFlowContracts(status: String): Flow<List<Contract>>
 
