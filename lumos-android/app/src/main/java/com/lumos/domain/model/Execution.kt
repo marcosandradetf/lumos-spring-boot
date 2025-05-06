@@ -10,6 +10,10 @@ data class Execution(
     val teamId: Long,
     val teamName: String,
     val executionStatus: String,
+    val priority: Boolean,
+    val type: String,
+    val itemsQuantity: Int,
+    val creationDate: String
 )
 
 @Entity(tableName = "reserves")
@@ -28,4 +32,8 @@ data class ExecutionDTO(
     val teamId: Long,
     val teamName: String,
     val reserves: List<Reserve>,
+    val priority: Boolean,
+    val type: String,
+    val itemsQuantity: Int,
+    val creationDate: String
 )

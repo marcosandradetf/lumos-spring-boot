@@ -34,7 +34,11 @@ class ExecutionRepository(
                                 streetName = it.streetName,
                                 teamId = it.teamId,
                                 teamName = it.teamName,
-                                executionStatus = "PENDING"
+                                executionStatus = "PENDING",
+                                priority = it.priority,
+                                type = it.type,
+                                itemsQuantity =it.itemsQuantity,
+                                creationDate = it.creationDate
                             )
                         )
                         it.reserves.forEach { r ->
