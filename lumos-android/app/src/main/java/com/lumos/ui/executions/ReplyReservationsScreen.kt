@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.HomeRepairService
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Warning
@@ -50,6 +51,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.data.repository.Status
 import com.lumos.domain.model.Execution
+import com.lumos.domain.model.Reserve
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Loading
@@ -58,9 +60,8 @@ import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.utils.ConnectivityUtils
 
 @Composable
-fun StreetsScreen(
+fun ReplyReservationsScreen(
     executionViewModel: ExecutionViewModel,
-    connection: ConnectivityUtils,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -69,65 +70,51 @@ fun StreetsScreen(
     navController: NavHostController,
     notificationsBadge: String,
     pSelected: Int,
-    onNavigateToReplyReservations: (Long) -> Unit,
     onNavigateToExecution: (Long) -> Unit,
+    streetId: Long
 ) {
-    val executions by executionViewModel.executions.collectAsState()
     val reserves by executionViewModel.reserves.collectAsState()
-
-    var internet by remember { mutableStateOf(true) }
     var loading by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        if (connection.isConnectedToInternet(context)) executionViewModel.syncExecutions()
-        else internet = false
 
-        executionViewModel.loadFlowExecutions()
+    LaunchedEffect(streetId) {
+        // Inicia carregamento de reservas pendentes
+        executionViewModel.loadFlowReserves(
+            streetId = streetId,
+            status = listOf(Status.PENDING)
+        )
     }
 
-    LaunchedEffect(executions) {
-        if (executions.isNotEmpty() || internet) loading = false
-    }
-
-    var selectedStreetId by remember { mutableStateOf<Long?>(null) }
-
-    LaunchedEffect(reserves, selectedStreetId) {
-        selectedStreetId?.let { streetId ->
-            if (reserves.isNotEmpty()) {
-                onNavigateToReplyReservations(streetId)
-            } else {
-                onNavigateToExecution(streetId)
+    // A lógica de carregamento e navegação acontece de uma vez que as reservas mudam
+    LaunchedEffect(reserves) {
+        when {
+            reserves.isNotEmpty() -> {
+                loading = false
             }
-            selectedStreetId = null // evita loop
+
+            else -> {
+                // Carrega as reservas rejeitadas caso não haja pendentes
+                executionViewModel.loadFlowReserves(
+                    streetId = streetId,
+                    status = listOf(Status.REJECTED)
+                )
+            }
+        }
+    }
+
+    // Quando as reservas ainda estiverem vazias após carregar "REJECTED", navega para execução
+    LaunchedEffect(reserves) {
+        if (reserves.isEmpty() && !loading) {
+            onNavigateToExecution(streetId)
         }
     }
 
 
-    Content(
-        executions = executions,
-        onNavigateToHome = onNavigateToHome,
-        onNavigateToMenu = onNavigateToMenu,
-        onNavigateToProfile = onNavigateToProfile,
-        onNavigateToNotifications = onNavigateToNotifications,
-        context = context,
-        navController = navController,
-        notificationsBadge = notificationsBadge,
-        internet = internet,
-        loading = loading,
-        pSelected = pSelected,
-        select = { streetId ->
-            selectedStreetId = streetId
-            loading = true
-            executionViewModel.loadFlowReserves(
-                streetId,
-                status = listOf(Status.PENDING, Status.REJECTED)
-            )
-        },
-    )
 }
 
+
 @Composable
-fun Content(
-    executions: List<Execution>,
+fun ContentReply(
+    reservations: List<Reserve>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -135,13 +122,12 @@ fun Content(
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
-    internet: Boolean,
     loading: Boolean,
     pSelected: Int,
-    select: (Long) -> Unit,
+    reply: (Long, Boolean) -> Unit,
 ) {
     AppLayout(
-        title = "Execuções",
+        title = "Reservas",
         pSelected = pSelected,
         sliderNavigateToMenu = onNavigateToMenu,
         sliderNavigateToHome = onNavigateToHome,
@@ -152,31 +138,7 @@ fun Content(
         context = context,
         notificationsBadge = notificationsBadge
     ) {
-        if (!internet) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(5.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = Icons.Default.NetworkCell, contentDescription = "Alert")
-                Text(
-                    text = "Conecte-se a internet para obter novas execuções",
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 10.dp)
-                )
-            }
-        }
-
         Loading(loading)
-        if (!loading && internet)
-            NothingData(
-                executions.size,
-                "Nenhuma execução disponível no momento, volte mais tarde!"
-            )
 
         LazyColumn(
             modifier = Modifier
@@ -185,19 +147,14 @@ fun Content(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
         ) {
-            items(executions) { execution -> // Iteração na lista
-//                val createdAt = "Criado por ${contract.createdBy} há ${
-//                    Utils.timeSinceCreation(
-//                        Instant.parse(contract.createdAt)
-//                    )
-//                }"
-                val objective = if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
-                val status = when (execution.executionStatus) {
-                    Status.PENDING -> "Pendente"
-                    Status.IN_PROGRESS -> "Em Progresso"
-                    Status.FINISHED -> "Finalizado"
-                    else -> "Status Desconhecido"
-                }
+            items(reservations) { reserve -> // Iteração na lista
+//                val objective = if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
+//                val status = when (execution.executionStatus) {
+//                    Status.PENDING -> "Pendente"
+//                    Status.IN_PROGRESS -> "Em Progresso"
+//                    Status.FINISHED -> "Finalizado"
+//                    else -> "Status Desconhecido"
+//                }
                 Card(
                     shape = RoundedCornerShape(5.dp),
                     modifier = Modifier
@@ -213,7 +170,7 @@ fun Content(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                select(execution.streetId)
+                                reply(reserve.reserveId, false)
                             }
                             .height(IntrinsicSize.Min) // Isso é o truque!
                     ) {
@@ -227,34 +184,32 @@ fun Content(
                                     .fillMaxHeight(0.7f)
                                     .padding(start = 20.dp)
                                     .width(4.dp)
-                                    .background(
-                                        color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.tertiary
-                                    )
+//                                    .background(
+//                                        color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+//                                        else MaterialTheme.colorScheme.tertiary
+//                                    )
                             )
 
                             // Bolinha com ícone (no meio da linha)
                             Box(
+                                contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .offset(x = 10.dp) // posiciona sobre a linha
                                     .size(24.dp) // tamanho do círculo
                                     .clip(CircleShape)
-                                    .background(
-                                        color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.tertiary
-                                    ),
-                                contentAlignment = Alignment.Center
+//                                    .background(
+//                                        color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+//                                        else MaterialTheme.colorScheme.tertiary
+//                                    ),
                             ) {
                                 Icon(
-                                    imageVector =
-                                        if (execution.type == "INSTALLATION") Icons.Default.Power
-                                        else Icons.Default.Build,
+                                    imageVector = Icons.Default.HomeRepairService,
                                     contentDescription = "Local",
                                     tint = Color.White,
-                                    modifier = Modifier.size(
-                                        if (execution.type == "INSTALLATION") 18.dp
-                                        else 14.dp
-                                    )
+//                                    modifier = Modifier.size(
+//                                        if (execution.type == "INSTALLATION") 18.dp
+//                                        else 14.dp
+//                                    )
                                 )
                             }
                         }
@@ -278,7 +233,7 @@ fun Content(
                                     ) {
                                     Row {
                                         Text(
-                                            text = execution.streetName,
+                                            text = reserve.materialName,
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -293,24 +248,24 @@ fun Content(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = "$objective de ${execution.itemsQuantity} Itens",
+                                        text = "Quantidade: ${reserve.materialQuantity}",
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Normal,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
-                                    Box(
-                                        modifier = Modifier.clip(RoundedCornerShape(5.dp))
-                                            .background(Color(0xFFEDEBF6))
-                                            .padding(5.dp)
-                                    ) {
-                                        Text(
-                                            text = status,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontSize = 12.sp
-                                        )
-                                    }
+//                                    Box(
+//                                        modifier = Modifier.clip(RoundedCornerShape(5.dp))
+//                                            .background(Color(0xFFEDEBF6))
+//                                            .padding(5.dp)
+//                                    ) {
+//                                        Text(
+//                                            text = status,
+//                                            style = MaterialTheme.typography.bodySmall,
+//                                            fontWeight = FontWeight.Medium,
+//                                            color = MaterialTheme.colorScheme.onSurface,
+//                                            fontSize = 12.sp
+//                                        )
+//                                    }
 
                                 }
 
@@ -318,32 +273,12 @@ fun Content(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Responsável: ${execution.teamName}",
+                                        text = "?",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Normal,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
-
-                                // Informação extra
-                                if (execution.priority)
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.End
-                                    ) {
-                                        Column(
-                                            verticalArrangement = Arrangement.Center,
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(
-                                                imageVector =
-                                                    Icons.Default.Warning,
-                                                contentDescription = "Prioridade",
-                                                tint = Color(0xFFFC4705),
-                                                modifier = Modifier.size(22.dp)
-                                            )
-                                        }
-                                    }
 
                             }
                         }
@@ -358,49 +293,23 @@ fun Content(
 
 @Preview(showBackground = true)
 @Composable
-fun PrevStreetsScreen() {
+fun PrevReplyScreen() {
     // Criando um contexto fake para a preview
     val fakeContext = LocalContext.current
     val values =
         listOf(
-            Execution(
-                streetId = 1,
-                streetName = "Rua Dona Tina, 251",
-                teamId = 12,
-                teamName = "Equipe Norte",
-                executionStatus = "PENDING",
-                priority = true,
-                type = "INSTALLATION",
-                itemsQuantity = 7,
-                creationDate = ""
-            ),
-            Execution(
-                streetId = 2,
-                streetName = "Rua Marcos Coelho Neto, 960",
-                teamId = 12,
-                teamName = "Equipe Sul",
-                executionStatus = Status.IN_PROGRESS,
-                priority = false,
-                type = "MAINTENANCE",
-                itemsQuantity = 5,
-                creationDate = ""
-            ),
-            Execution(
-                streetId = 3,
-                streetName = "Rua Chopin, 35",
-                teamId = 12,
-                teamName = "Equipe BH",
-                executionStatus = Status.FINISHED,
-                priority = false,
-                type = "INSTALLATION",
-                itemsQuantity = 12,
-                creationDate = ""
-            ),
+            Reserve(
+                reserveId = 1,
+                materialId = 1,
+                materialName = "LED 120W",
+                materialQuantity = 17.0,
+                reserveStatus = "PENDING",
+                streetId = 1
+            )
         )
 
 
-    Content(
-        executions = values,
+    ContentReply(
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
@@ -408,9 +317,9 @@ fun PrevStreetsScreen() {
         context = fakeContext,
         navController = rememberNavController(),
         notificationsBadge = "12",
-        internet = false,
         loading = false,
         pSelected = BottomBar.HOME.value,
-        select = {},
+        reply = { _, _ -> },
+        reservations = values,
     )
 }

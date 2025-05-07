@@ -123,6 +123,7 @@ class PreMeasurementRepository(
 
 object Status {
     const val PENDING = "PENDING"
+    const val REJECTED = "REJECTED"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
 }

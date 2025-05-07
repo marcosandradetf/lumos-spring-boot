@@ -70,7 +70,7 @@ class ExecutionRepository(
     fun getFlowExecutions(): Flow<List<Execution>> =
         dao.getFlowExecutions()
 
-    fun getFlowReserves(streetId: Long, status: String): Flow<List<Reserve>> =
+    fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>> =
         dao.getFlowReserves(streetId, status)
 
 
