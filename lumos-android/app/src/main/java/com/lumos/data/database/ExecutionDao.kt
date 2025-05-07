@@ -21,6 +21,9 @@ interface ExecutionDao {
     @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus = :status")
     fun getFlowReserves(streetId: Long, status: String): Flow<List<Reserve>>
 
+    @Query("SELECT * FROM executions WHERE executionStatus <> 'FINISHED' ORDER BY priority DESC, creationDate ASC")
+    fun getFlowExecutions(): Flow<List<Execution>>
+
     @Query("SELECT * FROM executions WHERE executionStatus = :status ORDER BY priority DESC, creationDate ASC")
     fun getFlowExecutions(status: String): Flow<List<Execution>>
 

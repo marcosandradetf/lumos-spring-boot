@@ -39,10 +39,10 @@ class ExecutionViewModel(
         }
     }
 
-    fun loadFlowExecutions(status: String) {
+    fun loadFlowExecutions() {
         viewModelScope.launch {
             try {
-                repository.getFlowExecutions(status).collectLatest { fetched ->
+                repository.getFlowExecutions().collectLatest { fetched ->
                     _executions.value = fetched // atualiza o estado com os dados obtidos
                 }
             } catch (e: Exception) {
