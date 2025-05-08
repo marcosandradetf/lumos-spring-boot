@@ -91,10 +91,8 @@ export class CreateComponent {
 
 
   submitContract(form: any, contractData: HTMLDivElement, contractItems: HTMLDivElement) {
-
-    if (form.invalid) {
-      return;
-    }
+    if (form.invalid) return;
+    if(this.loading) return;
 
     if (this.contract.items.length === 0) {
       contractData.classList.add('hidden');
@@ -151,7 +149,6 @@ export class CreateComponent {
   }
 
   resetForm() {
-    this.loading = false;
     this.openModal = false;
     this.contract = {
       number: '',
@@ -165,7 +162,7 @@ export class CreateComponent {
       userUUID: '',
       items: [],
     };
-
+    this.loading = false;
     this.finish = true;
   }
 
