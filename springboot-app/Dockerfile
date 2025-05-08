@@ -13,6 +13,9 @@ WORKDIR /app
 
 COPY --from=builder /app/target/*.jar /app/lumos-spring.jar
 
+# Copiar o arquivo de credenciais do Firebase para o classpath
+COPY src/main/resources/lumos-firebase-sdk.json /app/resources/lumos-firebase-sdk.json
+
 EXPOSE 8080
 CMD ["java", "-jar", "lumos-spring.jar"]
 

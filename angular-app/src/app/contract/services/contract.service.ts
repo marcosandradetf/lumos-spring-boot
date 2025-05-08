@@ -1,9 +1,7 @@
 import {Injectable} from '@angular/core';
-import {Contract} from '../contract-response.dto';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {MaterialResponse} from '../../models/material-response.dto';
-import {ItemRequest} from '../itens-request.dto';
+import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
+import {ContractResponse} from '../contract-models';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +12,7 @@ export class ContractService {
   constructor(private http: HttpClient) {
   }
 
-  createContract(contract:  {
+  createContract(contract: {
     number: string,
     contractor: string,
     address: string,
@@ -34,7 +32,7 @@ export class ContractService {
       quantity: number;
       price: string;
     }[]
-  } ) {
+  }) {
     return this.http.post(this.endpoint + "/insert-contract", contract);
   }
 
@@ -51,5 +49,8 @@ export class ContractService {
     }[]>(this.endpoint + "/get-items");
   }
 
+  getAllContracts() {
+    return this.http.get<ContractResponse[]>(this.endpoint + "/getAll-contracts");
+  }
 
 }
