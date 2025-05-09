@@ -17,6 +17,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsernameIgnoreCase(String username);
     Optional<User> findByEmailIgnoreCase(String email);
     Optional<User> findByUsernameOrEmailIgnoreCase(String username, String email);
+    Optional<User> findByUsernameOrCpfIgnoreCase(String username, String cpf);
 
     @Query("SELECT u.idUser FROM User u JOIN u.roles r WHERE r.roleName IN :roleNames")
     Optional<List<UUID>> findAllByRoleNames(@Param("roleNames") Set<String> roleNames);

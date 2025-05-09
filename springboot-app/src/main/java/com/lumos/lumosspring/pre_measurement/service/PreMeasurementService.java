@@ -568,7 +568,7 @@ public class PreMeasurementService {
                                         typeItem.equalsIgnoreCase(serviceItem.getReferenceItem().getItemDependency()))
                                 .forEach(contractService ->
                                         item.setContractServiceDividerPrices(contractService.getUnitPrice().multiply(BigDecimal.valueOf(quantity))
-                                ));
+                                        ));
                     }
 
                     Optional.ofNullable(item.getPreMeasurementStreet())
@@ -635,4 +635,12 @@ public class PreMeasurementService {
                 .orElse(Collections.emptyList());
     }
 
+    @Transactional
+    public ResponseEntity<?> importPreMeasurements(List<PreMeasurementDTO> preMeasurementDTO, String userUUID) {
+        for(PreMeasurementDTO preMeasurement : preMeasurementDTO) {
+            this.saveMeasurement(preMeasurement, userUUID);
+        }
+
+        return null;
+    }
 }

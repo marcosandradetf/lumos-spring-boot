@@ -28,6 +28,8 @@ public class User {
 
     private String codeResetPassword;
 
+    private String cpf;
+
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(
             name = "tb_users_roles",
@@ -127,5 +129,13 @@ public class User {
 
     public void setStatus(Boolean status) {
         this.status = status;
+    }
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
 }

@@ -6,6 +6,7 @@ import * as http from 'node:http';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {PreMeasurementDTO} from '../../pre-measurement/pre-measurement-models';
 
 @Injectable({
   providedIn: 'root'
@@ -89,5 +90,9 @@ export class PreMeasurementService {
           availableQuantity: number
         }[];
       }[]>(environment.springboot + "/api/execution/get-available-stock", { params });
+  }
+
+  importData(preMeasurements: PreMeasurementDTO[]) {
+    return this.http.post(environment.springboot + "/api/pre-measurement/import", preMeasurements);
   }
 }
