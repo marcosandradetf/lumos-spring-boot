@@ -6,17 +6,20 @@ import {PreMeasurementModel} from '../../../../models/pre-measurement.model';
 import {PreMeasurementService} from '../../../../executions/pre-measurement-home/premeasurement-service.service';
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {ContractResponse, ContractService} from '../../../services/contract.service';
+import {ContractService} from '../../../services/contract.service';
+import {ContractResponse} from '../../../contract-models';
+import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-contract-list',
   standalone: true,
-    imports: [
-        ModalComponent,
-        NgForOf,
-        NgIf,
-        ScreenMessageComponent
-    ],
+  imports: [
+    ModalComponent,
+    NgForOf,
+    NgIf,
+    ScreenMessageComponent,
+    LoadingComponent
+  ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'
 })
@@ -38,7 +41,7 @@ export class ContractListComponent implements OnInit {
 
   ngOnInit() {
     this.loading = true
-    this.contractService.getAllContracts.subscribe(c => {
+    this.contractService.getAllContracts().subscribe(c => {
       this.contracts = c;
       this.loading = false;
     });
@@ -73,67 +76,8 @@ export class ContractListComponent implements OnInit {
   //   }
   // }
 
-  navigateTo(preMeasurementId: number) {
-    this.preMeasurementId = preMeasurementId;
-    switch (this.status) {
-      case 'pendente':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId]);
-        break;
-      case 'aguardando-retorno':
-        this.openModal = true;
-        break
-      case 'validando':
-        break;
-      case  'disponivel':
-        this.openModal = true;
-        break;
-    }
+
+  showItems(dialog: HTMLDialogElement) {
+    dialog.show()
   }
-
-  getItemsQuantity(preMeasurementId: number) {
-    let quantity: number = 0;
-    this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId)
-      ?.streets.forEach((street) => {
-      quantity += street.items.length;
-    });
-
-    return quantity;
-  }
-
-  getPreMeasurement(preMeasurementId: number) {
-    return this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId);
-  }
-
-  hideContent = false;
-  evolvePreMeasurement() {
-    this.preMeasurementService.evolveStatus(this.preMeasurementId).subscribe({
-      error: (error: any) => {
-        this.utils.showMessage("Erro ao atualizar o status:", error);
-      },
-      complete: () => {
-        this.loading = false;
-        this.openModal = false;
-        this.hideContent = true;
-      }
-    });
-  }
-
-  @ViewChild('step1') step1Ref!: ElementRef<HTMLDivElement>;
-  @ViewChild('step2') step2Ref!: ElementRef<HTMLDivElement>;
-  toggleSteps() {
-    const step1 = this.step1Ref.nativeElement;
-    const step2 = this.step2Ref.nativeElement;
-
-    step1.classList.add('hidden');
-    step2.classList.remove('hidden');
-  }
-
-
-  navigateToExecution(isMultiTeam: boolean) {
-    void this.router.navigate(
-      ['execucao/pre-medicao', this.preMeasurementId],
-      { queryParams: { multiTeam: isMultiTeam } }
-    );
-  }
-
 }

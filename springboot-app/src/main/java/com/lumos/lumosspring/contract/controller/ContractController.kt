@@ -30,4 +30,8 @@ class ContractController(
     fun getContract(@PathVariable contractId: Long): ResponseEntity<Any> =
          contractService.getContract(contractId)
 
+    @GetMapping("/contracts/get-AllContracts")
+    fun getAllContracts(): ResponseEntity<Any> =
+        contractService.getAllContracts()
+
 }

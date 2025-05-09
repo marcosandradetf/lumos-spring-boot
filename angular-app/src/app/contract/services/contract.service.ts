@@ -50,7 +50,7 @@ export class ContractService {
   }
 
   getAllContracts() {
-    return this.http.get<ContractResponse[]>(this.endpoint + "/getAll-contracts");
+    return this.http.get<ContractResponse[]>(this.endpoint + "/get-AllContracts");
   }
 
 }

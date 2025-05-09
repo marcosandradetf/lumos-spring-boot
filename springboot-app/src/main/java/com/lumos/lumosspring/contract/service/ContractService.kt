@@ -211,4 +211,34 @@ class ContractService(
         )
     }
 
+    fun getAllContracts(): ResponseEntity<Any> {
+        data class ContractResponseDTO(
+            val contractId: Long,
+            val number: String,
+            val contractor: String,
+            val address: String,
+            val phone: String,
+            val cnpj: String,
+            val noticeFile: String,
+            val contractFile: String,
+            val createdBy: String,
+            val itemQuantity: Int,
+        )
+
+        return ResponseEntity.ok().body(contractRepository.findAll().map {
+            ContractResponseDTO(
+                contractId = it.contractId,
+                number = it.contractNumber ?: "",
+                contractor = it.contractor ?: "",
+                address = it.address ?: "",
+                phone = it.phone ?: "",
+                cnpj = it.cnpj ?: "",
+                noticeFile = it.noticeFile ?: "",
+                contractFile = it.contractFile ?: "",
+                itemQuantity = it.contractItemsQuantitative.size,
+                createdBy = it.createdBy.completedName,
+            )
+        })
+    }
+
 }

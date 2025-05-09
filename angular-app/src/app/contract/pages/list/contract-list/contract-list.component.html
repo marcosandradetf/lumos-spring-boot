@@ -8,33 +8,65 @@
           <li>Lista</li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block" *ngIf="!hideContent">Selecione um contrato</h3>
+      <h3 class="text-medium pr-5 hidden lg:block">Selecione um contrato</h3>
     </div>
 
-    <div *ngIf="loading">
-      loading
-    </div>
+
+    <app-loading *ngIf="loading"></app-loading>
 
     <div class="border-b w-full pl-2 h-screen pt-2" *ngIf="!loading">
       <ol class="flex flex-wrap">
-        <li *ngFor="let p of preMeasurements; index as i;"
-            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="navigateTo(p.preMeasurementId)">
-          <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
-                {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
-            </span>
+        <li *ngFor="let c of contracts; index as i;"
+            class="w-full cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
+            (click)="showItems(dialog)">
+          <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full">
+            <div class="flex flex-col items-center justify-center mr-10">
+              <div class="h-full w-1 bg-blue-700"></div>
+              <div class="material-icons">info</div>
+            </div>
 
-            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
-              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ city }}</h3>
-            <span class="text-sm text-neutral-600 flex items-center">Por {{ p.createdBy }}<span
-              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
-            <span class="text-xs">{{ p.createdAt }} em {{ city }}</span>
+            <div class="flex flex-col mr-10">
+              <span class="badge rounded mb-4 mt-2">
+                  {{ "PENDENTE" }}
+              </span>
+
+              <h2 class="text-xl text-neutral-800 leading-[3rem] font-semibold">Contrato {{ c.number }}</h2>
+              <h3 class="text-lg text-neutral-800 leading-[1.3rem] font-normal">{{ c.contractor }}</h3>
+              <h3 class="text-base text-neutral-800 leading-[1.3rem] font-light">{{ c.address }}</h3>
+              <h3 class="text-base text-neutral-800 leading-[1.3rem] font-light">{{ c.cnpj }}</h3>
+              <h3 class="text-base text-neutral-800 leading-[3rem] font-light">{{ c.phone }}</h3>
+
+              <span class="text-sm text-neutral-600 flex items-center">Criado por {{ c.createdBy }}<span
+                class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+              <!--            <span class="text-xs">{{ p.createdAt }} em {{ c. }}</span>-->
+            </div>
+            <div class="flex flex-col">
+              <h2 class="text-xl text-neutral-800 leading-[3rem] font-semibold">{{ c.itemQuantity }} itens</h2>
+              <h3 class="text-lg text-neutral-800 leading-[1.3rem] font-normal">Valor total: 1.333.500,00</h3>
+            </div>
           </div>
         </li>
       </ol>
     </div>
   </div>
+
+  <dialog #dialog class="modal">
+    <div class="modal-box rounded-xl shadow-lg">
+      <h3 class="font-bold text-lg mb-4 text-indigo-700">Confirmar envio dos dados</h3>
+
+      <div class="flex justify-end gap-4">
+        <button
+          (click)="dialog.close()"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+          <span class="material-icons">close</span> Cancelar
+        </button>
+        <button
+          class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition">
+          <span class="material-icons">save</span> Concluir
+        </button>
+      </div>
+    </div>
+  </dialog>
 
   <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
                       class="absolute right-0"></app-screen-message>
