@@ -53,7 +53,7 @@ public class TokenService {
         refreshTokenRepository.deleteExpiredOrRevokedTokens(util.getDateTime());
     }
 
-    public ResponseEntity<?> resetPassword(LoginRequest loginRequest) {
+    public ResponseEntity<?> forgotPassword(LoginRequest loginRequest) {
         var user = userService.findUserByUsernameOrCpf(loginRequest.username());
 
         if (user.isEmpty()) {
@@ -96,7 +96,7 @@ public class TokenService {
     public ResponseEntity<?> login(LoginRequest loginRequest, HttpServletResponse response) {
         var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário/CPF ou senha incorretos"));
         }
 
         if (!user.get().getStatus()) {

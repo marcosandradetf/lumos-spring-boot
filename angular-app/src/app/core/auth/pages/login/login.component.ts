@@ -71,7 +71,7 @@ export class LoginComponent {
     }
 
     this.loading = true;
-    this.authService.resetPassword(this.username).subscribe({
+    this.authService.forgetPassword(this.username).subscribe({
       next: (response) => {
         this.message = response.message;
         error.innerText = '';

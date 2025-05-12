@@ -44,8 +44,8 @@ public class TokenController {
         return tokenService.refreshToken(refreshToken);
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody LoginRequest loginRequest) {
-        return tokenService.resetPassword(loginRequest);
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody LoginRequest loginRequest) {
+        return tokenService.forgotPassword(loginRequest);
     }
 }

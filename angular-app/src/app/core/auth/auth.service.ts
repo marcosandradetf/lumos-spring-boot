@@ -124,7 +124,7 @@ export class AuthService {
     return this.user;
   }
 
-  resetPassword(username: string) {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, {username}, {withCredentials: true});
+  forgetPassword(username: string) {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, {username}, {withCredentials: true});
   }
 }

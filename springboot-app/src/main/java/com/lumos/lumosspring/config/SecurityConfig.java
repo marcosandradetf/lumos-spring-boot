@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/mobile/auth/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
+//                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
