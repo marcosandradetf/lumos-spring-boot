@@ -108,7 +108,7 @@ object ContractStatus {
     const val WAITING_CONTRACTOR  = "WAITING_CONTRACTOR"
     const val AVAILABLE = "AVAILABLE"
     const val WAITING_TEAM = "WAITING_TEAM"
-    const val WAITING_STOCKIST = "WAITING_TEAM"
+    const val WAITING_STOCKIST = "WAITING_STOCKIST"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
 }

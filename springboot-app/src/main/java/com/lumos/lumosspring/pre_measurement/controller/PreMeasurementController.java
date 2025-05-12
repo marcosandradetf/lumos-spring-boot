@@ -8,8 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 
 @RestController
 @RequestMapping("/api")
@@ -23,7 +21,7 @@ public class PreMeasurementController {
 
     @PostMapping("/mobile/execution/insert-pre-measurement")
     public ResponseEntity<?> saveMeasurement(@RequestBody PreMeasurementDTO measurementDTO, @RequestHeader("UUID") String userUUID) {
-        return preMeasurementService.saveMeasurement(measurementDTO, userUUID);
+        return preMeasurementService.savePreMeasurement(measurementDTO, userUUID);
     }
 
     @GetMapping("/execution/get-pre-measurement/{preMeasurementId}")
@@ -78,7 +76,7 @@ public class PreMeasurementController {
     }
 
     @PostMapping("/pre-measurement/import")
-    public ResponseEntity<?> importPreMeasurements(@RequestBody List<PreMeasurementDTO> preMeasurementDTO, @RequestHeader("UUID") String userUUID) {
+    public ResponseEntity<?> importPreMeasurements(@RequestBody PreMeasurementDTO preMeasurementDTO, @RequestHeader("UUID") String userUUID) {
         return this.preMeasurementService.importPreMeasurements(preMeasurementDTO, userUUID);
     }
 

@@ -14,10 +14,8 @@ import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.notification.service.NotificationService;
-import com.lumos.lumosspring.notification.service.Routes;
 import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
-import com.lumos.lumosspring.user.Role;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.*;
 import jakarta.transaction.Transactional;
@@ -98,7 +96,7 @@ public class PreMeasurementService {
             @CacheEvict(cacheNames = "GetContractsForPreMeasurement", allEntries = true)
 
     })
-    public ResponseEntity<?> saveMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
+    public ResponseEntity<?> savePreMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
         if (userUUID == null || userUUID.isBlank()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("user UUID is required"));
         }
@@ -110,35 +108,39 @@ public class PreMeasurementService {
 
         var user = userRepository.findByIdUser(UUID.fromString(userUUID));
         if (user.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("user not found"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("User not found"));
         }
 
-        if (!contract.getStatus().equals(ContractStatus.PENDING)) {
-            notificationService.sendNotificationForRole(
-                    "Pré-medição de ".concat(Objects.requireNonNull(contract.getContractor())),
-                    "Sua pré-medição não foi salva, pois já foi enviada anteriormente pelo usuário ".concat(user.get().getName()).concat(" em caso de dúvidas, procure sua empresa para evitar inconsistências na pré-medição."),
-                    Routes.PRE_MEASUREMENT_PROGRESS.concat("/").concat(String.valueOf(contract.getContractId())),
-                    Role.Values.RESPONSAVEL_TECNICO,
-                    util.getDateTime(),
-                    NotificationType.WARNING
-            );
-            return ResponseEntity.ok().body(new ErrorResponse("Já foi enviada uma pré-medição anterior para este contrato."));
-        }
+//        if (!contract.getStatus().equals(ContractStatus.PENDING)) {
+//            notificationService.sendNotificationForRole(
+//                    "Pré-medição de ".concat(Objects.requireNonNull(contract.getContractor())),
+//                    "Sua pré-medição não foi salva, pois já foi enviada anteriormente pelo usuário ".concat(user.get().getName()).concat(" em caso de dúvidas, procure sua empresa para evitar inconsistências na pré-medição."),
+//                    Routes.PRE_MEASUREMENT_PROGRESS.concat("/").concat(String.valueOf(contract.getContractId())),
+//                    Role.Values.RESPONSAVEL_TECNICO,
+//                    util.getDateTime(),
+//                    NotificationType.WARNING
+//            );
+//            return ResponseEntity.ok().body(new ErrorResponse("Já foi enviada uma pré-medição anterior para este contrato."));
+//        }
 
         contract.setStatus(ContractStatus.VALIDATING);
         contractRepository.save(contract);
-        PreMeasurement preMeasurement = new PreMeasurement();
+
+        var preMeasurement = preMeasurementRepository.findByContract_ContractId(contract.getContractId())
+                .orElseGet(() -> {
+                    PreMeasurement newPre = new PreMeasurement();
+                    newPre.setContract(contract);
+                    newPre.setCreatedBy(user.orElse(null));
+                    newPre.setCreatedAt(util.getDateTime());
+                    newPre.setTypePreMeasurement(ContractType.INSTALLATION);
+                    newPre.setStatus(ContractStatus.PENDING);
+                    newPre.setCity(contract.getContractor());
+                    return preMeasurementRepository.save(newPre);
+                });
+
         var streets = preMeasurementDTO.getStreets();
 
-        preMeasurement.setContract(contract);
-        preMeasurement.setCreatedBy(user.orElse(null));
-        preMeasurement.setCreatedAt(util.getDateTime());
-        preMeasurement.setTypePreMeasurement(ContractType.INSTALLATION);
-        preMeasurement.setStatus(ContractStatus.PENDING);
-        preMeasurement.setCity(contract.getContractor());
-        preMeasurementRepository.save(preMeasurement);
-
-        streets.forEach(streetDTO -> {
+        for (var streetDTO : streets) {
             PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
             var street = streetDTO.getStreet();
 
@@ -153,7 +155,7 @@ public class PreMeasurementService {
             preMeasurementStreet.setLastPower(street.getLastPower());
             preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
             preMeasurementStreetRepository.save(preMeasurementStreet);
-            streetDTO.getItems().forEach(itemDTO -> {
+            for (var itemDTO : streetDTO.getItems()) {
                 materialRepository.findByIdWithGraphType(itemDTO.getMaterialId()).ifPresent(material -> {
                     var contractItem = searchContractItem(contract, material);
                     if (contractItem.isEmpty()) {
@@ -170,12 +172,13 @@ public class PreMeasurementService {
                     preMeasurementStreetItemRepository.save(newItem);
 
                     insertServices(material.getMaterialType().getTypeName(), contract, newItem);
+                    insertProject(material.getMaterialType().getTypeName(), contract, newItem);
 
                     insertDependencyItems(material, itemDTO, preMeasurementStreet, contract);
 
                 });
-            });
-        });
+            }
+        }
 
 
         var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurement(preMeasurement);
@@ -191,7 +194,7 @@ public class PreMeasurementService {
         preMeasurement.setTotalPrice(itemsPrices.add(servicesPrices));
         preMeasurementRepository.save(preMeasurement);
 
-        return ResponseEntity.ok().body(new DefaultResponse("Pré-Medição salva com sucesso"));
+        return ResponseEntity.ok().body(new DefaultResponse(preMeasurement.getPreMeasurementId().toString()));
     }
 
     /**
@@ -206,6 +209,21 @@ public class PreMeasurementService {
 
         contract.getContractItemsQuantitative().stream()
                 .filter(i -> "SERVIÇO".equalsIgnoreCase(i.getReferenceItem().getType()))
+                .filter(i -> actualItemType.equalsIgnoreCase(i.getReferenceItem().getItemDependency()))
+                .forEach(contractService -> {
+                    actualItem.setContractServiceIdMask(contractService.getContractItemId());
+                    actualItem.setContractServiceDividerPrices(
+                            contractService.getUnitPrice().multiply(BigDecimal.valueOf(actualItem.getItemQuantity()))
+                    );
+                });
+    }
+
+    @Transactional
+    protected void insertProject(String actualItemType, Contract contract, PreMeasurementStreetItem actualItem) {
+        if (!"LED".equalsIgnoreCase(actualItemType)) return;
+
+        contract.getContractItemsQuantitative().stream()
+                .filter(i -> "PROJETO".equalsIgnoreCase(i.getReferenceItem().getType()))
                 .filter(i -> actualItemType.equalsIgnoreCase(i.getReferenceItem().getItemDependency()))
                 .forEach(contractService -> {
                     actualItem.setContractServiceIdMask(contractService.getContractItemId());
@@ -313,6 +331,7 @@ public class PreMeasurementService {
 
                     // Se linking for nulo, não filtra (ou ajuste confocablee a lógica esperada)
                     return linking == null ||
+                            (linking.equalsIgnoreCase(material.getIdMaterial().toString())) ||
                             (linking.equalsIgnoreCase(materialPower)) ||
                             (linking.equalsIgnoreCase(materialLength));
                 }).findFirst();
@@ -636,11 +655,63 @@ public class PreMeasurementService {
     }
 
     @Transactional
-    public ResponseEntity<?> importPreMeasurements(List<PreMeasurementDTO> preMeasurementDTO, String userUUID) {
-        for(PreMeasurementDTO preMeasurement : preMeasurementDTO) {
-            this.saveMeasurement(preMeasurement, userUUID);
+    public ResponseEntity<?> importPreMeasurements(PreMeasurementDTO preMeasurement, String userUUID) {
+        return this.savePreMeasurement(preMeasurement, userUUID);
+    }
+
+    @Transactional
+    public ResponseEntity<?> deletePreMeasurementStreets(DeletePreMeasurementDTO deleteDTO) {
+        this.preMeasurementStreetItemRepository.deleteByStreet(deleteDTO.getPreMeasurementStreetIds());
+        this.preMeasurementStreetRepository.deleteByStreet(deleteDTO.getPreMeasurementStreetIds());
+
+        var preMeasurement = this.preMeasurementRepository.findByPreMeasurementId(deleteDTO.getPreMeasurementId());
+        if (preMeasurement == null) {
+            return ResponseEntity.notFound().build();
+        }
+        updatePremeasurementPrice(preMeasurement);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Transactional
+    public ResponseEntity<?> deleteProject(DeletePreMeasurementDTO deleteDTO) {
+
+        var streets = preMeasurementStreetRepository.findByIds(deleteDTO.getPreMeasurementStreetIds());
+        if (streets.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
 
-        return null;
+        for (PreMeasurementStreet street : streets) {
+            for (PreMeasurementStreetItem item : street.getItems()) {
+                if (item.getContractServiceIdMask() != null) {
+                    item.clearContractServices();
+                    insertServices(
+                            item.getMaterial().getMaterialType().getTypeName(),
+                            street.getPreMeasurement().getContract(),
+                            item
+                    );
+                }
+            }
+        }
+        preMeasurementStreetRepository.saveAll(streets);
+
+
+        return ResponseEntity.ok().build();
     }
+
+    private void updatePremeasurementPrice(PreMeasurement preMeasurement) {
+        var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurement(preMeasurement);
+
+        BigDecimal itemsPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal servicesPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        preMeasurement.setTotalPrice(itemsPrices.add(servicesPrices));
+        preMeasurementRepository.save(preMeasurement);
+    }
+
 }

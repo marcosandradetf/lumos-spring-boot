@@ -50,6 +50,7 @@ public class UserService {
                         user.getName(),
                         user.getLastName(),
                         user.getEmail(),
+                        user.getCpf(),
                         user.getRoles().stream()
                                 .map(Role::getRoleName) // Pega apenas o nome de cada Role
                                 .collect(Collectors.toList()), // Coleta como uma lista
@@ -77,6 +78,7 @@ public class UserService {
                 user.get().getName(),
                 user.get().getLastName(),
                 user.get().getEmail(),
+                user.get().getCpf(),
                 user.get().getRoles().stream()
                         .map(Role::getRoleName) // Pega apenas o nome de cada Role
                         .collect(Collectors.toList()), // Coleta como uma lista
@@ -90,8 +92,8 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
-    public Optional<User> findUserByUsernameOrEmail(String username) {
-        return userRepository.findByUsernameOrEmailIgnoreCase(username, username);
+    public Optional<User> findUserByUsernameOrCpf(String username) {
+        return userRepository.findByUsernameOrCpfIgnoreCase(username, username);
     }
 
     public ResponseEntity<?> resetPassword(String userId) {
@@ -210,6 +212,11 @@ public class UserService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
             }
 
+            if (!isValidCPF(u.cpf())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ErrorResponse(STR."ERRO: CPF \{u.cpf()} é inválido."));
+            }
+
             // Verifica se o username já existe no sistema
             Optional<User> userOptional = userRepository.findByUsernameIgnoreCase(u.username());
             if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
@@ -219,10 +226,10 @@ public class UserService {
             }
 
             // Verifica se o e-mail já existe no banco de dados
-            userOptional = userRepository.findByEmailIgnoreCase(u.email());
+            userOptional = userRepository.findByCpfIgnoreCase(u.cpf());
             if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                        new ErrorResponse(String.format("Email %s já existente no sistema.", u.email()))
+                        new ErrorResponse(String.format("CPF %s já existente no sistema.", u.cpf()))
                 );
             }
 
@@ -260,6 +267,7 @@ public class UserService {
             user.get().setName(u.name());
             user.get().setLastName(u.lastname());
             user.get().setEmail(u.email());
+            user.get().setCpf(u.cpf());
             user.get().setDateOfBirth(date);
             user.get().setRoles(userRoles);
             user.get().setStatus(u.status());
@@ -297,12 +305,18 @@ public class UserService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
             }
 
+            if (!isValidCPF(u.cpf())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ErrorResponse(STR."ERRO: CPF \{u.cpf()} é inválido."));
+            }
+
+
             if (userRepository.findByUsernameIgnoreCase(u.username()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Username \{u.username()} já existente no sistema, recupere a senha ou utilize outro username."));
             }
 
-            if (userRepository.findByEmailIgnoreCase(u.email()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Email \{u.email()} já existente no sistema, recupere a senha ou utilize outro email."));
+            if (userRepository.findByCpfIgnoreCase(u.cpf()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."CPF \{u.email()} já existente no sistema, recupere a senha ou utilize outro CPF."));
             }
 
             Set<Role> userRoles = new HashSet<>();
@@ -327,6 +341,7 @@ public class UserService {
             user.setName(u.name());
             user.setLastName(u.lastname());
             user.setEmail(u.email());
+            user.setCpf(u.cpf());
             user.setDateOfBirth(date);
             user.setRoles(userRoles);
             user.setStatus(u.status());
@@ -356,4 +371,25 @@ public class UserService {
 
         return ResponseEntity.ok().body(new DefaultResponse("Senha atualizada com sucesso"));
     }
+
+    public static boolean isValidCPF(String cpf) {
+        cpf = cpf.replaceAll("\\D", "");
+
+        if (cpf.length() != 11 || cpf.matches("(\\d)\\1{10}")) return false;
+
+        try {
+            int soma = 0;
+            for (int i = 0; i < 9; i++) soma += (cpf.charAt(i) - '0') * (10 - i);
+            int dig1 = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+
+            soma = 0;
+            for (int i = 0; i < 10; i++) soma += (cpf.charAt(i) - '0') * (11 - i);
+            int dig2 = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+
+            return dig1 == (cpf.charAt(9) - '0') && dig2 == (cpf.charAt(10) - '0');
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }

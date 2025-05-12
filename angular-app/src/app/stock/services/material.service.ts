@@ -212,4 +212,8 @@ export class MaterialService {
   ) {
     return this.http.post(this.goEndpoint + "/import", materials);
   }
+
+  getMaterials() {
+    return this.http.get<MaterialResponse[]>(`${this.apiUrl}/get-all`);
+  }
 }

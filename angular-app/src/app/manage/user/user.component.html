@@ -55,6 +55,7 @@
           <th>Nome</th>
           <th>Sobrenome</th>
           <th>Email</th>
+          <th>CPF</th>
           <th>Data de Nascimento</th>
           <th>Funções</th>
           <th>Status</th>
@@ -137,6 +138,23 @@
               <div *ngIf="email.invalid && email.touched">
                 <small *ngIf="email.errors?.['required']" class="text-red-600">Email é obrigatório.</small>
                 <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
+              </div>
+            </td>
+            <td><input
+                       [readOnly]="!user.sel"
+                       [(ngModel)]="user.cpf"
+                       name="cpf{{i}}"
+                       type="text"
+                       placeholder="999.999.999-99"
+                       maxlength="14"
+                       class="input input-bordered input-xs"
+                       #cpf="ngModel"
+                       mask="000.000.000-00"
+                       [dropSpecialCharacters]="true"
+                       [pattern]="cpfPattern">
+              <div *ngIf="cpf.invalid && cpf.touched">
+                <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF é obrigatório.</small>
+                <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
               </div>
             </td>
             <td class="flex items-center space-x-2 align-middle mt-[.25rem]">
@@ -296,6 +314,23 @@
                 <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
               </div>
             </td>
+            <td><input
+                       [readOnly]="user.userId !== ''"
+                       [(ngModel)]="user.cpf"
+                       name="cpf{{i}}"
+                       type="text"
+                       placeholder="999.999.999-99"
+                       maxlength="14"
+                       class="input input-bordered input-xs"
+                       #cpf="ngModel"
+                       mask="000.000.000-00"
+                       [dropSpecialCharacters]="true"
+                       [pattern]="cpfPattern">
+              <div *ngIf="cpf.invalid && cpf.touched">
+                <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF é obrigatório.</small>
+                <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
+              </div>
+            </td>
             <td class="flex items-center space-x-2 align-middle mt-[.25rem]">
               <div class="flex flex-col">
                 <input
@@ -393,6 +428,7 @@
             <td>{{ user.name }}</td>
             <td>{{ user.lastname }}</td>
             <td>{{ user.email }}</td>
+            <td>{{ user.cpf | mask: '000.000.000-00' }}</td>
             <td>{{ user.day + " de " + getMonth(user.month.toString())?.name + " de " + user.year }}</td>
             <td>
               <div class="dropdown dropdown-hover">

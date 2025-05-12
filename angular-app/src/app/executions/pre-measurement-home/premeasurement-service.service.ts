@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {User} from '../../models/user.model';
 import {Observable} from 'rxjs';
 import * as http from 'node:http';
@@ -58,7 +58,9 @@ export class PreMeasurementService {
     cancelledItems: { streetId: number; itemId: number }[];
     changedItems: { streetId: number; itemId: number; quantity: number }[]
   }) {
-    return this.http.post<{message: string}>(environment.springboot + "/api/pre-measurement/send-modifications", modifications);
+    return this.http.post<{
+      message: string
+    }>(environment.springboot + "/api/pre-measurement/send-modifications", modifications);
   }
 
   getStockAvailable(preMeasurementId: number, teamId: number) {
@@ -89,10 +91,14 @@ export class PreMeasurementService {
           itemQuantity: number;
           availableQuantity: number
         }[];
-      }[]>(environment.springboot + "/api/execution/get-available-stock", { params });
+      }[]>(environment.springboot + "/api/execution/get-available-stock", {params});
   }
 
-  importData(preMeasurements: PreMeasurementDTO[]) {
-    return this.http.post(environment.springboot + "/api/pre-measurement/import", preMeasurements);
+  importData(preMeasurement: PreMeasurementDTO, userUUID: string) {
+    const header = new HttpHeaders({'UUID': userUUID});
+    return this.http.post<{ message: string }>(environment.springboot + "/api/pre-measurement/import",
+      preMeasurement,
+      {headers: header}
+    );
   }
 }

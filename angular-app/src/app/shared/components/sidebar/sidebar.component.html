@@ -60,6 +60,11 @@
                 Disponível para execução
               </a>
             </li>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['contratos/listar']" [queryParams]="{ for: 'preMeasurement' }">
+                Importar pré-medição (.xlx)
+              </a>
+            </li>
           </ul>
         </details>
 
@@ -102,7 +107,7 @@
           </ul>
         </details>
 
-        <details [open]="false">
+        <details  [open]="bToggleContracts" #contracts (toggle)="toggleContracts(contracts.open)">
           <summary class="font-semibold">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#434343">
               <path
@@ -114,6 +119,11 @@
             <li routerLinkActive="bg-neutral-200 font-medium">
               <a [routerLink]="['contratos/criar']">
                 Novo contrato
+              </a>
+            </li>
+            <li routerLinkActive="bg-neutral-200 font-medium">
+              <a [routerLink]="['contratos/listar']" [queryParams]="{ for: 'view' }">
+                Exibir Contratos
               </a>
             </li>
           </ul>
@@ -129,7 +139,7 @@
           </summary>
           <ul>
             <li routerLinkActive="bg-neutral-200 font-medium">
-              <a [routerLink]="['estoque/movimento/']">
+              <a [routerLink]="['estoque/movimento']">
                 Movimentar Estoque
               </a>
             </li>

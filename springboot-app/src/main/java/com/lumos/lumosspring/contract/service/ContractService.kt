@@ -181,7 +181,8 @@ class ContractService(
 
         val contract = contractRepository.findContractByContractId(contractId).orElseThrow()
         var number = 1
-        contract.contractItemsQuantitative.forEach { item ->
+        contract.contractItemsQuantitative.sortedBy { it.referenceItem.description }
+            .forEach { item ->
             items.add(
                 ItemsForReport(
                     number = number,
@@ -223,6 +224,9 @@ class ContractService(
             val contractFile: String,
             val createdBy: String,
             val itemQuantity: Int,
+            val contractStatus: String,
+            val contractValue: String,
+            val additiveFile: String,
         )
 
         return ResponseEntity.ok().body(contractRepository.findAll().map {
@@ -237,6 +241,9 @@ class ContractService(
                 contractFile = it.contractFile ?: "",
                 itemQuantity = it.contractItemsQuantitative.size,
                 createdBy = it.createdBy.completedName,
+                contractStatus = it.status,
+                contractValue = it.contractValue.toString(),
+                additiveFile = ""
             )
         })
     }

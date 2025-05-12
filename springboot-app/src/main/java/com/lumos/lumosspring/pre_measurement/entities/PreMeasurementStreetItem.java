@@ -102,7 +102,7 @@ public class PreMeasurementStreetItem {
     public void addItemQuantity(double v, boolean updateValue) {
         this.itemQuantity += v;
         if (updateValue) {
-            setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(v)));
+            setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(itemQuantity)));
         }
     }
 
@@ -133,6 +133,11 @@ public class PreMeasurementStreetItem {
         } else {
             this.contractServiceIdMask = this.contractServiceIdMask.concat("#").concat(contractServiceId.toString());
         }
+    }
+
+    public void clearContractServices() {
+        this.contractServiceIdMask = null;
+        this.contractServiceDividerPrices = BigDecimal.ZERO;
     }
 
     public PreMeasurement getPreMeasurement() {

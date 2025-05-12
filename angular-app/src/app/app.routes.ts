@@ -73,6 +73,7 @@ export const routes: Routes = [
   // end
 
   // start contract paths
+  {path: 'contratos', redirectTo: 'contratos/dashboard'},
   {
     path: 'contratos/dashboard',
     loadComponent: () => import('./contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
@@ -142,6 +143,12 @@ export const routes: Routes = [
   {
     path: 'pre-medicao/editar/:id',
     loadComponent: () => import('./executions/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+  },
+  {
+    path: 'pre-medicao/importar/contrato/:id',
+    loadComponent: () => import('./pre-measurement/import-pre-measurements/import-pre-measurements.component').then(p => p.ImportPreMeasurementsComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },

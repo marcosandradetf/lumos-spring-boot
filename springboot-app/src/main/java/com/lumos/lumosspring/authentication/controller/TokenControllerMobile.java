@@ -47,7 +47,7 @@ public class TokenControllerMobile {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginMobile(@RequestBody LoginRequest loginRequest) {
-        var user = userRepository.findByUsernameOrEmailIgnoreCase(loginRequest.username(), loginRequest.email());
+        var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.email());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }

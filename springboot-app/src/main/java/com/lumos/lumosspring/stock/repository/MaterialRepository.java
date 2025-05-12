@@ -39,5 +39,7 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
     @Query("SELECT m FROM Material m WHERE m.idMaterial = :id")
     Optional<Material> findByIdWithGraphStock(@Param("id") Long id);
 
+    @Query("SELECT m FROM Material m WHERE (m.inactive is null or m.inactive = false) AND m.nameForImport is not null")
+    List<Material> findAllForImportPreMeasurement();
 }
 

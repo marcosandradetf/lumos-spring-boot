@@ -128,4 +128,9 @@ public class MaterialController {
         
         return materialService.deleteById(id, userUUID);
     }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<?> findAllForImportPreMeasurement() {
+        return materialService.findAllForImportPreMeasurement();
+    }
 }

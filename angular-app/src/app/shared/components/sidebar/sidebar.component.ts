@@ -24,6 +24,7 @@ export class SidebarComponent implements OnInit {
   bToggleStock = true;
   bToggleRequest = false;
   bToggleSettings: boolean = true;
+  bToggleContracts: boolean = true;
 
   constructor() {}
 
@@ -53,6 +54,9 @@ export class SidebarComponent implements OnInit {
     if (savedMenuState !== null) {
       this.bToggleSettings = JSON.parse(savedMenuState); // Converte de volta para booleano
     }
+
+    savedMenuState = localStorage.getItem('toggleContracts');
+    if (savedMenuState !== null) this.bToggleContracts = JSON.parse(savedMenuState);
   }
 
   toggleMenu() {
@@ -80,5 +84,10 @@ export class SidebarComponent implements OnInit {
   toggleSettings(open: boolean) {
     localStorage.setItem('toggleSettings', JSON.stringify(open));
   }
+
+  toggleContracts(open: boolean) {
+    localStorage.setItem('toggleContracts', JSON.stringify(open));
+  }
+
 
 }

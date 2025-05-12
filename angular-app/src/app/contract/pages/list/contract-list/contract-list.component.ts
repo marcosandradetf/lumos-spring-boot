@@ -1,6 +1,6 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ModalComponent} from "../../../../shared/components/modal/modal.component";
-import {NgForOf, NgIf} from "@angular/common";
+import {CurrencyPipe, NgForOf, NgIf} from "@angular/common";
 import {ScreenMessageComponent} from "../../../../shared/components/screen-message/screen-message.component";
 import {PreMeasurementModel} from '../../../../models/pre-measurement.model';
 import {PreMeasurementService} from '../../../../executions/pre-measurement-home/premeasurement-service.service';
@@ -14,11 +14,11 @@ import {LoadingComponent} from '../../../../shared/components/loading/loading.co
   selector: 'app-contract-list',
   standalone: true,
   imports: [
-    ModalComponent,
     NgForOf,
     NgIf,
     ScreenMessageComponent,
-    LoadingComponent
+    LoadingComponent,
+    CurrencyPipe
   ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'
@@ -31,21 +31,28 @@ export class ContractListComponent implements OnInit {
   openModal: boolean = false;
   preMeasurementId: number = 0;
   city: string = '';
+  reason: string = '';
 
   constructor(
     private contractService: ContractService,
-    public utils: UtilsService,
+    protected utils: UtilsService,
     protected router: Router,
+    private route: ActivatedRoute
   ) {
   }
 
   ngOnInit() {
-    this.loading = true
+    this.loading = true;
+    this.route.queryParams.subscribe(params => {
+      this.reason = params['for'];
+    });
+
     this.contractService.getAllContracts().subscribe(c => {
       this.contracts = c;
       this.loading = false;
     });
   }
+
 
   // private loadPreMeasurements() {
   //   switch (this.status) {

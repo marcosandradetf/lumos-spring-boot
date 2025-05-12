@@ -136,4 +136,24 @@ export class UtilsService {
     }
   }
 
+  getStatus(status: string): string {
+    if (status === 'PENDING') {
+      return 'PENDENTE';
+    } else if (status === 'VALIDATING') {
+      return 'VALIDANDO';
+    } else if (status === 'WAITING_CONTRACTOR') {
+      return 'AGUARDANDO CONTRATANTE';
+    } else if (status === 'AVAILABLE') {
+      return 'DISPONÍVEL';
+    }else if (status === 'WAITING_TEAM') {
+      return 'AGUARDANDO EQUIPE';
+    }else if (status === 'IN_PROGRESS') {
+      return 'EM PROGRESSO';
+    }else if (status === 'FINISHED') {
+      return 'FINALIZADO';
+    } else {
+      return 'STATUS DESCONHECIDO';
+    }
+  }
+
 }

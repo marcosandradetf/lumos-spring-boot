@@ -21,13 +21,13 @@ public class User {
     private String name;
     private String lastName;
 
-    @Column(unique = true)
     private String email;
 
     private String password;
 
     private String codeResetPassword;
 
+    @Column(unique = true)
     private String cpf;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)

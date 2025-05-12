@@ -16,7 +16,7 @@ public class PreMeasurement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pre_measurement_id")
-    private long preMeasurementId;
+    private Long preMeasurementId;
 
     @OneToMany(mappedBy = "preMeasurement", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PreMeasurementStreet> streets = new HashSet<>();
@@ -65,7 +65,7 @@ public class PreMeasurement {
 
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    public long getPreMeasurementId() {
+    public Long getPreMeasurementId() {
         return preMeasurementId;
     }
 

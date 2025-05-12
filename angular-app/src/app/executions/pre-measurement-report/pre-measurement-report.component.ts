@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 
 import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
 import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
@@ -12,6 +12,8 @@ import {AuthService} from '../../core/auth/auth.service';
 import {ReportService} from '../../core/service/report-service';
 import {environment} from '../../../environments/environment';
 import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {MaterialResponse} from '../../models/material-response.dto';
+import {MaterialService} from '../../stock/services/material.service';
 
 @Component({
   selector: 'app-pre-measurement-home-report',
@@ -26,7 +28,7 @@ import {PreMeasurementModel} from '../../models/pre-measurement.model';
   templateUrl: './pre-measurement-report.component.html',
   styleUrl: './pre-measurement-report.component.scss'
 })
-export class PreMeasurementReportComponent {
+export class PreMeasurementReportComponent implements OnInit {
   preMeasurement: PreMeasurementModel = {
     preMeasurementId: 0,
     contractId: 0,
@@ -90,9 +92,11 @@ export class PreMeasurementReportComponent {
     status: false,
   };
 
+  materials: MaterialResponse[] = []
+
   constructor(protected router: Router, protected utils: UtilsService, private titleService: Title,
               private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, authService: AuthService,
-              private userService: UserService, private reportService: ReportService) {
+              private userService: UserService, private reportService: ReportService, private materialService: MaterialService,) {
 
     const measurementId = this.route.snapshot.paramMap.get('id');
     this.titleService.setTitle("Relatório de Pré-medição");
@@ -100,6 +104,10 @@ export class PreMeasurementReportComponent {
     const uuid = authService.getUser().uuid;
 
     if (measurementId) {
+      this.materialService.getMaterials().subscribe(materials => {
+        this.materials = materials;
+      });
+
       this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
         this.preMeasurement = preMeasurement;
         this.preMeasurementService.getContract(preMeasurement.contractId).subscribe(contract => {
@@ -112,6 +120,14 @@ export class PreMeasurementReportComponent {
         });
       });
     }
+  }
+
+  reason: string = "";
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      this.reason = params['reason'];
+    });
   }
 
   generatePDF(htmlContent: HTMLDivElement): void {
@@ -127,7 +143,7 @@ export class PreMeasurementReportComponent {
 
     this.reportService.generateReportPdf(contentText, this.contract.contractor).subscribe({
       next: (response) => {
-        const blob = new Blob([response], { type: 'application/pdf' });
+        const blob = new Blob([response], {type: 'application/pdf'});
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -167,8 +183,9 @@ export class PreMeasurementReportComponent {
     return street.items.find(item =>
       (item.materialLength?.toLowerCase() === attributeName?.toLowerCase() ||
         item.materialPower?.toLowerCase() === attributeName?.toLowerCase() ||
-        item.materialType?.toLowerCase() === attributeName?.toLowerCase())
-    )?.materialQuantity || 0;
+        item.materialType?.toLowerCase() === attributeName?.toLowerCase()) ||
+      (item.materialId.toString() === attributeName && item.materialName.startsWith("POSTE"))
+    )
   }
 
   condition(attributeName: string): boolean {
@@ -176,7 +193,8 @@ export class PreMeasurementReportComponent {
       street.items.some(item =>
         item.materialLength?.toLowerCase() === attributeName?.toLowerCase() ||
         item.materialPower?.toLowerCase() === attributeName?.toLowerCase() ||
-        item.materialType?.toLowerCase() === attributeName?.toLowerCase()
+        item.materialType?.toLowerCase() === attributeName?.toLowerCase() ||
+        (item.materialId.toString() === attributeName && item.materialName.startsWith("POSTE"))
       )
     );
   }
@@ -188,7 +206,8 @@ export class PreMeasurementReportComponent {
       street.items.forEach((item) => {
         if (item.materialLength?.toLowerCase() === attributeName?.toLowerCase() ||
           item.materialPower?.toLowerCase() === attributeName?.toLowerCase() ||
-          item.materialType?.toLowerCase() === attributeName?.toLowerCase()) {
+          item.materialType?.toLowerCase() === attributeName?.toLowerCase() ||
+          (item.materialId.toString() === attributeName && item.materialName.startsWith("POSTE"))) {
           quantity += item.materialQuantity;
         }
       })
@@ -239,7 +258,8 @@ export class PreMeasurementReportComponent {
       this.preMeasurement.streets.forEach((street) => {
         street.items.forEach((item) => {
           if (item.materialLength?.toUpperCase() === linking?.toUpperCase() ||
-            item.materialPower?.toUpperCase() === linking?.toUpperCase()
+            item.materialPower?.toUpperCase() === linking?.toUpperCase() ||
+            item.materialId.toString() === linking
           ) {
             quantity += item.materialQuantity;
           }
@@ -292,7 +312,8 @@ export class PreMeasurementReportComponent {
       this.preMeasurement.streets.forEach((street) => {
         street.items.forEach((item) => {
           if (item.materialLength?.toUpperCase() === linking?.toUpperCase() ||
-            item.materialPower?.toUpperCase() === linking?.toUpperCase()
+            item.materialPower?.toUpperCase() === linking?.toUpperCase() ||
+            item.materialId.toString() === linking
           ) {
             price += item.materialQuantity * parseFloat(unitPrice);
           }

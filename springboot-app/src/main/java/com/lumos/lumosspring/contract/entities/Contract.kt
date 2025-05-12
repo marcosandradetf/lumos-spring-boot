@@ -21,7 +21,7 @@ class Contract {
     @ManyToOne
     @JoinColumn(name = "created_by_id_user")
     var createdBy : User = User()
-    private var contractValue : BigDecimal = BigDecimal.ZERO;
+    var contractValue : BigDecimal = BigDecimal.ZERO;
     var unifyServices : Boolean = false
     var noticeFile : String? = null
     var contractFile : String? = null

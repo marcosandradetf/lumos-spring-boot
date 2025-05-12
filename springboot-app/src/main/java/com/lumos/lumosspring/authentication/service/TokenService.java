@@ -19,8 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -56,7 +54,7 @@ public class TokenService {
     }
 
     public ResponseEntity<?> resetPassword(LoginRequest loginRequest) {
-        var user = userService.findUserByUsernameOrEmail(loginRequest.username());
+        var user = userService.findUserByUsernameOrCpf(loginRequest.username());
 
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -96,7 +94,7 @@ public class TokenService {
     }
 
     public ResponseEntity<?> login(LoginRequest loginRequest, HttpServletResponse response) {
-        var user = userRepository.findByUsernameOrEmailIgnoreCase(loginRequest.username(), loginRequest.username());
+        var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário ou senha incorretos"));
         }

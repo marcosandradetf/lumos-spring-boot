@@ -17,6 +17,9 @@ public class Material {
     @Column(columnDefinition = "TEXT", nullable = false, unique = true)
     private String materialName;
 
+    @Column(unique = true)
+    private String nameForImport;
+
     @Column(columnDefinition = "TEXT")
     private String materialBrand;
 
@@ -29,6 +32,8 @@ public class Material {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_material_type", nullable = false)
     private Type materialType;
+
+    private Boolean inactive;
 
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<MaterialStock> materialStocks;
@@ -116,6 +121,22 @@ public class Material {
 
     public void setRelatedMaterials(Set<Material> relatedMaterials) {
         this.relatedMaterials = relatedMaterials;
+    }
+
+    public Boolean getInactive() {
+        return inactive;
+    }
+
+    public void setInactive(Boolean inactive) {
+        this.inactive = inactive;
+    }
+
+    public String getNameForImport() {
+        return nameForImport;
+    }
+
+    public void setNameForImport(String nameForImport) {
+        this.nameForImport = nameForImport;
     }
 }
 

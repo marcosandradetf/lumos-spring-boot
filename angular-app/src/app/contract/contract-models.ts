@@ -9,4 +9,7 @@ export interface ContractResponse {
   contractFile: string,
   createdBy: string,
   itemQuantity: number,
+  contractStatus: string,
+  contractValue: string,
+  additiveFile: string
 }

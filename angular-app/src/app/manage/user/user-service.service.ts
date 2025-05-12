@@ -22,6 +22,7 @@ export class UserService {
       name: string,
       lastname: string,
       email: string,
+      cpf: string,
       dateOfBirth: string,
       day: string;
       month: string;
@@ -39,6 +40,7 @@ export class UserService {
       name: string,
       lastname: string,
       email: string,
+      cpf: string,
       dateOfBirth: string,
       day: string;
       month: string;
@@ -71,6 +73,7 @@ export class UserService {
     name: string,
     lastname: string,
     email: string,
+    cpf: string,
     year: string;
     month: string;
     day: string;
@@ -84,6 +87,7 @@ export class UserService {
       name: string,
       lastname: string,
       email: string,
+      cpf: string,
       year: string;
       month: string;
       day: string;
@@ -99,6 +103,7 @@ export class UserService {
     name: string,
     lastname: string,
     email: string,
+    cpf: string,
     year: string;
     month: string;
     day: string;
@@ -112,6 +117,7 @@ export class UserService {
       name: string,
       lastname: string,
       email: string,
+      cpf: string,
       year: string;
       month: string;
       day: string;

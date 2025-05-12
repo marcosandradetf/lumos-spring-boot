@@ -21,3 +21,10 @@ data class ChangedItems(
     val quantity: Long,
 )
 
+///
+
+data class DeletePreMeasurementDTO(
+    val preMeasurementId: Long,
+    val preMeasurementStreetIds: List<Long>,
+    val userUUID: String,
+)

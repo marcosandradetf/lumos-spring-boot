@@ -271,4 +271,26 @@ public class MaterialService {
 
         return ResponseEntity.ok(materialsDTO);
     }
+
+    public ResponseEntity<?> findAllForImportPreMeasurement() {
+        List<Material> materials = materialRepository.findAllForImportPreMeasurement(); // ou equivalente
+        record MaterialDTOImport(long idMaterial, String materialName, String materialBrand, String materialPower, String materialAmps, String materialLength) {
+        }
+        List<MaterialDTOImport> materialsDTO = new ArrayList<>();
+
+        for (Material m : materials) {
+            materialsDTO.add(new MaterialDTOImport(
+                    m.getIdMaterial(),
+                    m.getNameForImport(),
+                    m.getMaterialBrand(),
+                    m.getMaterialPower(),
+                    m.getMaterialAmps(),
+                    m.getMaterialLength()
+            ));
+        }
+
+        return ResponseEntity.ok(materialsDTO);
+    }
+
+
 }

@@ -11,6 +11,7 @@ import {AlertMessageComponent} from '../../shared/components/alert-message/alert
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {AuthService} from '../../core/auth/auth.service';
 import {Title} from '@angular/platform-browser';
+import {NgxMaskDirective, NgxMaskPipe, provideNgxMask} from 'ngx-mask';
 
 @Component({
   selector: 'app-user',
@@ -23,8 +24,11 @@ import {Title} from '@angular/platform-browser';
     NgForOf,
     NgIf,
     AlertMessageComponent,
-    ModalComponent
+    ModalComponent,
+    NgxMaskDirective,
+    NgxMaskPipe
   ],
+  providers: [provideNgxMask()],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
 })
@@ -39,6 +43,7 @@ export class UserComponent {
     name: string,
     lastname: string,
     email: string,
+    cpf: string,
     year: string;
     month: string;
     day: string;
@@ -53,6 +58,7 @@ export class UserComponent {
     name: string,
     lastname: string,
     email: string,
+    cpf: string,
     year: string;
     month: string;
     day: string;
@@ -102,6 +108,7 @@ export class UserComponent {
   openConfirmationModal: boolean = false;
   usernamePattern: string = '^[a-zA-Z0-9._-]{3,20}$';
   emailPattern: string = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+  cpfPattern: string = '^[0-9]{11}$'; // sem pontuação, pois o valor real é só os números
   private email: string = "";
 
   getMonth(monthNumber: string) {
@@ -261,6 +268,7 @@ export class UserComponent {
       name: "",
       lastname: "",
       email: "",
+      cpf: "",
       year: "",
       month: "",
       day: "",
@@ -378,8 +386,7 @@ export class UserComponent {
   }
 
   confirmResetPassword(userId: string, email: string) {
-    const adminId = this.users.find(u => u.username === 'admin')?.userId;
-    if (userId !== adminId) {
+    if (userId !== '') {
       this.openConfirmationModal = true;
       this.userId = userId;
       this.email = email;
