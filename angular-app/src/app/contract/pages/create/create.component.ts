@@ -251,7 +251,9 @@ export class CreateComponent {
       this.removingIndexContract = null;
       this.items.push(item);
       this.contract.items = this.contract.items.filter(i => i.contractReferenceItemId !== item.contractReferenceItemId);
-    }, 900); // Tempo igual à transição no CSS
+      this.totalValue = this.utils.subValue(this.totalValue, this.utils.multiplyValue(item.price, item.quantity));
+      this.totalItems -= 1;
+      }, 900); // Tempo igual à transição no CSS
   }
 
 

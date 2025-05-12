@@ -18,7 +18,7 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let c of contracts; index as i;"
             class=" cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
-            (click)="reason === 'view' ? showItems(dialog) : router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])">
+            (click)="reason === 'view' ? showItems(dialog, c.contractId) : router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])">
           <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full">
             <div class="flex flex-col items-center justify-center mr-10">
               <div class="h-full w-1 bg-neutral"></div>
@@ -59,19 +59,28 @@
 
   <dialog #dialog class="modal">
     <div class="modal-box rounded-xl shadow-lg">
-      <h3 class="font-bold text-lg mb-4 text-indigo-700">Confirmar envio dos dados</h3>
+      <h3 class="font-bold text-lg mb-4 text-indigo-700">Itens</h3>
 
-      <div class="flex justify-end gap-4">
-        <button
-          (click)="dialog.close()"
-          class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
-          <span class="material-icons">close</span> Cancelar
-        </button>
-        <button
-          class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition">
-          <span class="material-icons">save</span> Concluir
-        </button>
-      </div>
+      <table>
+        <tr class="report-base-header">
+          <th>ITEM</th>
+          <th>DESCRIÇÃO</th>
+          <th>QUANTIDADE TOTAL CONTRATADA</th>
+          <th>PREÇO UNITÁRIO CONTRATADO</th>
+          <th>PREÇO TOTAL CONTRATADO</th>
+        </tr>
+        <tr *ngFor="let i of contractItems">
+          <td>{{ i.number }}</td>
+          <td>{{ i.description }}</td>
+          <td>{{ i.contractedQuantity }}</td>
+          <td>{{ i.unitPrice | currency:'BRL':'symbol':'1.2-2' }}</td>
+          <td>{{ parseFloat(i.unitPrice) * i.contractedQuantity | currency:'BRL':'symbol':'1.2-2' }}</td>
+          </tr>
+        <tr class="report-base-total">
+          <td colspan="6">TOTAL GERAL</td>
+          <td>{{ getTotalPrice() | currency:'BRL':'symbol':'1.2-2' }}</td>
+        </tr>
+      </table>
     </div>
   </dialog>
 

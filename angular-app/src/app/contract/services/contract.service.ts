@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
-import {ContractResponse} from '../contract-models';
+import {ContractItemsResponse, ContractResponse} from '../contract-models';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +51,10 @@ export class ContractService {
 
   getAllContracts() {
     return this.http.get<ContractResponse[]>(this.endpoint + "/get-AllContracts");
+  }
+
+  getContractItems(contractId: number) {
+    return this.http.get<ContractItemsResponse[]>(this.endpoint + "/get-contract-items/" + contractId);
   }
 
 }

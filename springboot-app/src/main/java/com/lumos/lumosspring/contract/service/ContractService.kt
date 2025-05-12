@@ -183,18 +183,18 @@ class ContractService(
         var number = 1
         contract.contractItemsQuantitative.sortedBy { it.referenceItem.description }
             .forEach { item ->
-            items.add(
-                ItemsForReport(
-                    number = number,
-                    contractItemId = item.contractItemId,
-                    description = item.referenceItem.description ?: "",
-                    unitPrice = item.unitPrice,
-                    contractedQuantity = item.contractedQuantity,
-                    linking = item.referenceItem.linking,
+                items.add(
+                    ItemsForReport(
+                        number = number,
+                        contractItemId = item.contractItemId,
+                        description = item.referenceItem.description ?: "",
+                        unitPrice = item.unitPrice,
+                        contractedQuantity = item.contractedQuantity,
+                        linking = item.referenceItem.linking,
+                    )
                 )
-            )
-            number += 1
-        }
+                number += 1
+            }
 
         return ResponseEntity.ok(
             ContractForReport(
@@ -246,6 +246,34 @@ class ContractService(
                 additiveFile = ""
             )
         })
+    }
+
+    fun getContractItems(contractId: Long): ResponseEntity<Any> {
+        data class ContractItemsResponse(
+            val number: Int,
+            val contractItemId: Long,
+            val description: String,
+            val unitPrice: String,
+            val contractedQuantity: Double,
+            val linking: String
+        )
+        var order = 1
+
+        return ResponseEntity.ok().body(
+            contractRepository.findById(contractId).orElseThrow()
+                .contractItemsQuantitative
+                .sortedBy { it.referenceItem.description }
+                .map {
+                    ContractItemsResponse(
+                        number = order,
+                        contractItemId = it.contractItemId,
+                        description = it.referenceItem.description ?: "",
+                        unitPrice = it.unitPrice.toPlainString(),
+                        contractedQuantity = it.contractedQuantity,
+                        linking = it.referenceItem.linking ?: ""
+                    )
+                    order += 1
+                })
     }
 
 }

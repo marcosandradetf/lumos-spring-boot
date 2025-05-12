@@ -7,7 +7,7 @@ import {PreMeasurementService} from '../../../../executions/pre-measurement-home
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ContractService} from '../../../services/contract.service';
-import {ContractResponse} from '../../../contract-models';
+import {ContractItemsResponse, ContractResponse} from '../../../contract-models';
 import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
 
 @Component({
@@ -25,6 +25,7 @@ import {LoadingComponent} from '../../../../shared/components/loading/loading.co
 })
 export class ContractListComponent implements OnInit {
   contracts: ContractResponse[] = [];
+  contractItems: ContractItemsResponse[] = []
 
   loading: boolean = false;
   protected status: string = "";
@@ -84,7 +85,24 @@ export class ContractListComponent implements OnInit {
   // }
 
 
-  showItems(dialog: HTMLDialogElement) {
-    dialog.show()
+  showItems(dialog: HTMLDialogElement, contractId: number) {
+    if (contractId !== 0) {
+      this.contractId = contractId;
+      this.loading = true;
+      this.contractService.getContractItems(contractId).subscribe(items => {
+          this.contractItems = items;
+          dialog.show();
+          this.loading = false;
+        }
+      );
+    }
+  }
+
+  protected readonly parseFloat = parseFloat;
+
+  contractId: number = 0;
+
+  getTotalPrice() {
+    return this.contracts.find(c => c.contractId == this.contractId)?.contractValue || "0,00";
   }
 }

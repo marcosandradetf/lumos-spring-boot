@@ -13,3 +13,12 @@ export interface ContractResponse {
   contractValue: string,
   additiveFile: string
 }
+
+export interface ContractItemsResponse {
+  number: number;
+  contractItemId: number;
+  description: string;
+  unitPrice: string;
+  contractedQuantity: number;
+  linking: string;
+}

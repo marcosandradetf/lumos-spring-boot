@@ -1,0 +1,54 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.6em;
+  font-family: sans-serif;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+th {
+  background-color: #044686;
+  color: white;
+}
+
+.report-total-sum, .report-base-total {
+  font-weight: bold;
+  background-color: #eee;
+}
+
+.footer {
+  margin-top: 20px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  line-height: 0;
+}
+
+.generate-report {
+  width: 100%;
+  background-color: #292a2d;
+  padding-inline: 30px;
+  min-height: calc(100vh - 110px);
+  max-height: calc(100vh - 110px);
+}
+
+.download-report {
+  background-color: white;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+  border-radius: 5px;
+  padding: 30px;
+}
+
+.button-report {
+  color: white;
+  display: flex;
+  justify-content: end;
+}
+
