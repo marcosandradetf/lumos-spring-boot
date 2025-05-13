@@ -2,6 +2,7 @@ package com.lumos.lumosspring.pre_measurement.service;
 
 import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
+import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.pre_measurement.dto.*;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
@@ -156,27 +157,32 @@ public class PreMeasurementService {
             preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
             preMeasurementStreetRepository.save(preMeasurementStreet);
             for (var itemDTO : streetDTO.getItems()) {
-                materialRepository.findByIdWithGraphType(itemDTO.getMaterialId()).ifPresent(material -> {
-                    var contractItem = searchContractItem(contract, material);
-                    if (contractItem.isEmpty()) {
-                        throw new RuntimeException("Item do Contrato não encontrado");
+                for (var contractItem : contract.getContractItemsQuantitative()) {
+                    if (contractItem.getContractItemId() == itemDTO.getItemContractId()) {
+                        var newItem = new PreMeasurementStreetItem();
+                        newItem.setPreMeasurementStreet(preMeasurementStreet);
+                        newItem.setPreMeasurement(preMeasurement);
+//                    newItem.setMaterial(material);
+                        newItem.setItemStatus(ItemStatus.PENDING);
+                        newItem.setMeasuredItemQuantity(itemDTO.getMaterialQuantity());
+                        newItem.setContractItem(contractItem);
+                        preMeasurementStreetItemRepository.save(newItem);
+
+                        var referenceItem = contractItem.getReferenceItem();
+                        if (referenceItem.getType() != null) {
+                            insertServices(referenceItem.getType(), contract, newItem);
+                            insertProject(referenceItem.getType(), contract, newItem);
+
+                            // exemplo braco de 1,5
+                            insertDependencyItems(
+                                    referenceItem, //braço
+                                    itemDTO,
+                                    preMeasurementStreet,
+                                    contract
+                            );
+                        }
                     }
-
-                    var newItem = new PreMeasurementStreetItem();
-                    newItem.setPreMeasurementStreet(preMeasurementStreet);
-                    newItem.setPreMeasurement(preMeasurement);
-                    newItem.setMaterial(material);
-                    newItem.setItemStatus(ItemStatus.PENDING);
-                    newItem.setItemQuantity(itemDTO.getMaterialQuantity());
-                    newItem.setContractItem(contractItem.get());
-                    preMeasurementStreetItemRepository.save(newItem);
-
-                    insertServices(material.getMaterialType().getTypeName(), contract, newItem);
-                    insertProject(material.getMaterialType().getTypeName(), contract, newItem);
-
-                    insertDependencyItems(material, itemDTO, preMeasurementStreet, contract);
-
-                });
+                }
             }
         }
 
@@ -207,99 +213,92 @@ public class PreMeasurementService {
     protected void insertServices(String actualItemType, Contract contract, PreMeasurementStreetItem actualItem) {
         if (!List.of("LED", "BRAÇO").contains(actualItemType.toUpperCase())) return;
 
-        contract.getContractItemsQuantitative().stream()
-                .filter(i -> "SERVIÇO".equalsIgnoreCase(i.getReferenceItem().getType()))
-                .filter(i -> actualItemType.equalsIgnoreCase(i.getReferenceItem().getItemDependency()))
-                .forEach(contractService -> {
-                    actualItem.setContractServiceIdMask(contractService.getContractItemId());
+        for (var iq : contract.getContractItemsQuantitative()) {
+            var service = iq.getReferenceItem();
+            if (Objects.requireNonNull(service.getType()).equalsIgnoreCase( "SERVIÇO")) {
+                if(Objects.requireNonNull(service.getItemDependency()).equalsIgnoreCase(actualItemType)) {
+                    actualItem.setContractServiceIdMask(iq.getContractItemId());
                     actualItem.setContractServiceDividerPrices(
-                            contractService.getUnitPrice().multiply(BigDecimal.valueOf(actualItem.getItemQuantity()))
+                            iq.getUnitPrice().multiply(BigDecimal.valueOf(actualItem.getMeasuredItemQuantity()))
                     );
-                });
+                }
+            }
+        }
     }
 
     @Transactional
     protected void insertProject(String actualItemType, Contract contract, PreMeasurementStreetItem actualItem) {
         if (!"LED".equalsIgnoreCase(actualItemType)) return;
 
-        contract.getContractItemsQuantitative().stream()
-                .filter(i -> "PROJETO".equalsIgnoreCase(i.getReferenceItem().getType()))
-                .filter(i -> actualItemType.equalsIgnoreCase(i.getReferenceItem().getItemDependency()))
-                .forEach(contractService -> {
-                    actualItem.setContractServiceIdMask(contractService.getContractItemId());
+        for (var iq : contract.getContractItemsQuantitative()) {
+            var project = iq.getReferenceItem();
+            if (Objects.requireNonNull(project.getType()).equalsIgnoreCase( "PROJETO")) {
+                if(Objects.requireNonNull(project.getItemDependency()).equalsIgnoreCase(actualItemType)) {
+                    actualItem.setContractServiceIdMask(iq.getContractItemId());
                     actualItem.setContractServiceDividerPrices(
-                            contractService.getUnitPrice().multiply(BigDecimal.valueOf(actualItem.getItemQuantity()))
+                            iq.getUnitPrice().multiply(BigDecimal.valueOf(actualItem.getMeasuredItemQuantity()))
                     );
-                });
+                }
+            }
+        }
     }
 
     /**
      * ME TODO PARA ADICIONAR MATERIAIS DEPENDENTES NA PRÉ-MEDIÇÃO
      **/
     @Transactional
-    protected void insertDependencyItems(Material material, PreMeasurementStreetItemDTO itemDTO, PreMeasurementStreet preMeasurementStreet, Contract contract) {
-        material.getRelatedMaterials().stream()
-                .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("REL"))
-                .findFirst().ifPresent(rm -> {
-                    insertOrUpdateRelay(preMeasurementStreet, rm, itemDTO.getMaterialQuantity(), contract);
-                });
-
-        material.getRelatedMaterials().stream()
-                .filter(m -> util.normalizeWord(m.getMaterialType().getTypeName()).startsWith("CAB"))
-                .findFirst().ifPresent(rm -> {
-                    insertOrUpdateCable(preMeasurementStreet, rm, material.getMaterialLength(), itemDTO.getMaterialQuantity(), contract);
-                });
-    }
-
-    @Transactional
-    protected void insertOrUpdateRelay(PreMeasurementStreet preMeasurementStreet, Material rm, int quantity, Contract contract) {
-        var existingRelay = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
-                .stream()
-                .filter(i -> i.getMaterial().getIdMaterial().equals(rm.getIdMaterial()))
-                .findFirst();
-
-        if (existingRelay.isPresent()) {
-            existingRelay.get().addItemQuantity(quantity, true);
-            preMeasurementStreetItemRepository.save(existingRelay.get());
-        } else {
-            var contractRelay = searchContractItem(contract, rm);
-            if (contractRelay.isEmpty()) {
-                throw new RuntimeException("Relé do Contrato não encontrado");
+    protected void insertDependencyItems(ContractReferenceItem referenceItem, PreMeasurementStreetItemDTO itemDTO, PreMeasurementStreet preMeasurementStreet, Contract contract) {
+        for (var iq : contract.getContractItemsQuantitative()) {
+            var reference = iq.getReferenceItem();
+            if (reference.getItemDependency() != null && Objects.equals(reference.getItemDependency(), referenceItem.getType())) {
+                insertOrUpdateItem(
+                        referenceItem, //braço
+                        preMeasurementStreet,
+                        iq, // CABO FLEXÍVEL 1,5MM
+                        itemDTO.getMaterialQuantity()
+                );
             }
-            var newRelay = new PreMeasurementStreetItem();
-            newRelay.setMaterial(rm);
-            newRelay.addItemQuantity(quantity);
-            preMeasurementStreet.addItem(newRelay);
-            newRelay.setContractItem(contractRelay.get());
-            preMeasurementStreetItemRepository.save(newRelay);
         }
     }
 
     @Transactional
-    protected void insertOrUpdateCable(PreMeasurementStreet preMeasurementStreet, Material cable, String armLength, int quantity, Contract contract) {
-        var existingCable = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
+    protected void insertOrUpdateItem(ContractReferenceItem referenceItem,
+                                      PreMeasurementStreet preMeasurementStreet,
+                                      ContractItemsQuantitative itemInsert,
+                                      int quantity) {
+        //ex.: itemInsert = CABO FLEXÍVEL 1,5MM
+        //ex.: referenceItem = BRAÇO
+        var referenceInsert = itemInsert.getReferenceItem();
+        var existingItem = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
                 .stream()
-                .filter(i -> i.getMaterial().getIdMaterial().equals(cable.getIdMaterial()))
+                .filter(i -> i.getContractItem().equals(itemInsert))
                 .findFirst();
 
-        if (existingCable.isPresent()) {
-            double multiplier = getCableMultiplier(armLength);
-            existingCable.get().addItemQuantity(quantity * multiplier, true);
-            preMeasurementStreetItemRepository.save(existingCable.get());
-        } else {
-            var contractCable = searchContractItem(contract, cable);
-            if (contractCable.isEmpty()) {
-                throw new RuntimeException("Cabo do Contrato não encontrado");
+        if (Objects.equals(referenceInsert.getType(), "RELÉ")) {
+            if (existingItem.isPresent()) {
+                existingItem.get().addItemQuantity(quantity, true);
+                preMeasurementStreetItemRepository.save(existingItem.get());
+            } else {
+                var newRelay = new PreMeasurementStreetItem();
+                newRelay.addItemQuantity(quantity);
+                preMeasurementStreet.addItem(newRelay);
+                newRelay.setContractItem(itemInsert);
+                preMeasurementStreetItemRepository.save(newRelay);
             }
-            var newCable = new PreMeasurementStreetItem();
-            newCable.setMaterial(cable);
-            preMeasurementStreet.addItem(newCable);
+        } else if (Objects.equals(referenceInsert.getType(), "CABO"))
+            if (existingItem.isPresent()) {
+                double multiplier = getCableMultiplier(Objects.requireNonNull(referenceItem.getLinking()));
+                existingItem.get().addItemQuantity(quantity * multiplier, true);
+                preMeasurementStreetItemRepository.save(existingItem.get());
+            } else {
+                var newCable = new PreMeasurementStreetItem();
+                preMeasurementStreet.addItem(newCable);
 
-            double multiplier = getCableMultiplier(armLength);
-            newCable.addItemQuantity(quantity * multiplier);
-            newCable.setContractItem(contractCable.get());
-            preMeasurementStreetItemRepository.save(newCable);
-        }
+                double multiplier = getCableMultiplier(Objects.requireNonNull(referenceItem.getLinking()));
+                newCable.addItemQuantity(quantity * multiplier);
+                newCable.setContractItem(itemInsert);
+                preMeasurementStreetItemRepository.save(newCable);
+            }
     }
 
     private double getCableMultiplier(String armLength) {
@@ -395,7 +394,7 @@ public class PreMeasurementService {
                                                 i.getMaterial().getMaterialType().getTypeName(),
                                                 i.getMaterial().getMaterialPower(),
                                                 i.getMaterial().getMaterialLength(),
-                                                i.getItemQuantity(),
+                                                i.getMeasuredItemQuantity(),
                                                 i.getItemStatus()
                                         )).toList()
                                         : List.of() // Retorna lista vazia se `s.getItems()` for null
@@ -576,7 +575,7 @@ public class PreMeasurementService {
                     var quantity = entry.getValue();
 
                     item.setItemStatus(ItemStatus.APPROVED);
-                    item.setItemQuantity(quantity);
+                    item.setMeasuredItemQuantity(quantity);
                     item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
 
                     if (item.getContractServiceIdMask() != null) {
@@ -636,7 +635,7 @@ public class PreMeasurementService {
                             .map(ContractItemsQuantitative::getUnitPrice)
                             .orElse(BigDecimal.ZERO);
 
-                    var quantity = item.getItemQuantity() != null ? item.getItemQuantity() : 0;
+                    var quantity = item.getMeasuredItemQuantity() != null ? item.getMeasuredItemQuantity() : 0;
                     return unitPrice.multiply(BigDecimal.valueOf(quantity));
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -59,7 +59,7 @@ class ExecutionService(
 
                 val materialInTruck = truckDeposit.materialStocks
                     .filter { it.material == material }
-                    .firstOrNull { it.stockAvailable >= item.itemQuantity }
+                    .firstOrNull { it.stockAvailable >= item.measuredItemQuantity }
 
                 val description =
                     "Reserva para execução da rua ${pStreet?.street} na cidade de ${pStreet?.city}"
@@ -70,7 +70,7 @@ class ExecutionService(
                         MaterialReservation().apply {
                             this.description = description
                             this.truckDeposit = materialInTruck
-                            this.setReservedQuantity(item.itemQuantity)
+                            this.setReservedQuantity(item.measuredItemQuantity)
                             this.street = pStreet
                         }
                     )
@@ -78,7 +78,7 @@ class ExecutionService(
 
                 var materialInDeposit = firstDepositCity.materialStocks
                     .filter { it.material == material }
-                    .firstOrNull { it.stockAvailable >= item.itemQuantity }
+                    .firstOrNull { it.stockAvailable >= item.measuredItemQuantity }
 
                 if (materialInDeposit == null)
                     return ResponseEntity.badRequest()
@@ -92,7 +92,7 @@ class ExecutionService(
                     MaterialReservation().apply {
                         this.description = description
                         this.truckDeposit = materialInDeposit
-                        this.setReservedQuantity(item.itemQuantity)
+                        this.setReservedQuantity(item.measuredItemQuantity)
                         this.preMeasurement = preMeasurement
                         this.street = pStreet
                     }
@@ -100,13 +100,13 @@ class ExecutionService(
 
                 materialInDeposit = secondDepositCity.materialStocks
                     .filter { it.material == material }
-                    .firstOrNull { it.stockAvailable >= item.itemQuantity }
+                    .firstOrNull { it.stockAvailable >= item.measuredItemQuantity }
 
                 reservation.add(
                     MaterialReservation().apply {
                         this.description = description
                         this.truckDeposit = materialInDeposit
-                        this.setReservedQuantity(item.itemQuantity)
+                        this.setReservedQuantity(item.measuredItemQuantity)
                         this.preMeasurement = preMeasurement
                         this.street = pStreet
                         this.team = team
@@ -282,7 +282,7 @@ class ExecutionService(
                         materialLength = material.material.materialLength,
                         deposit = material.deposit.depositName,
                         itemQuantity = street.items
-                            .first { it.material.idMaterial == material.material.idMaterial }.itemQuantity,
+                            .first { it.material.idMaterial == material.material.idMaterial }.measuredItemQuantity,
                         availableQuantity = material.stockAvailable
                     )
                 )
@@ -326,7 +326,7 @@ class ExecutionService(
                     materialLength = material.material.materialLength,
                     deposit = material.deposit.depositName,
                     itemQuantity = street.items
-                        .first { it.material.idMaterial == material.material.idMaterial }.itemQuantity,
+                        .first { it.material.idMaterial == material.material.idMaterial }.measuredItemQuantity,
                     availableQuantity = material.stockAvailable
                 )
             )
@@ -342,7 +342,7 @@ class ExecutionService(
                     materialLength = material.material.materialLength,
                     deposit = material.deposit.depositName,
                     itemQuantity = street.items
-                        .first { it.material.idMaterial == material.material.idMaterial }.itemQuantity,
+                        .first { it.material.idMaterial == material.material.idMaterial }.measuredItemQuantity,
                     availableQuantity = material.stockAvailable
                 )
             )

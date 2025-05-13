@@ -1,14 +1,10 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
 @Entity
 @Table(name = "tb_pre_measurements_streets_items")
@@ -18,9 +14,9 @@ public class PreMeasurementStreetItem {
     @Column(name = "pre_measurement_street_item_id")
     private long preMeasurementStreetItemId;
 
-    @ManyToOne
-    @JoinColumn(name = "material_id")
-    private Material material;
+//    @ManyToOne
+//    @JoinColumn(name = "material_id")
+//    private Material material;
 
     @ManyToOne
     @JoinColumn(name = "contract_item_id")
@@ -34,7 +30,7 @@ public class PreMeasurementStreetItem {
     @JoinColumn(name = "pre_measurement_id")
     private PreMeasurement preMeasurement;
 
-    private double itemQuantity;
+    private double measuredItemQuantity;
 
     private String itemStatus = ItemStatus.PENDING;
 
@@ -52,12 +48,12 @@ public class PreMeasurementStreetItem {
         this.preMeasurementStreetItemId = itemId;
     }
 
-    public Double getItemQuantity() {
-        return itemQuantity;
+    public Double getMeasuredItemQuantity() {
+        return measuredItemQuantity;
     }
 
-    public void setItemQuantity(double itemQuantity) {
-        this.itemQuantity = itemQuantity;
+    public void setMeasuredItemQuantity(double itemQuantity) {
+        this.measuredItemQuantity = itemQuantity;
     }
 
     public BigDecimal getUnitPrice() {
@@ -67,7 +63,7 @@ public class PreMeasurementStreetItem {
     public void setUnitPrice(BigDecimal itemValue) {
         this.unitPrice = itemValue;
         if (itemValue != null) {
-            setTotalPrice(itemValue.multiply(BigDecimal.valueOf(itemQuantity)));
+            setTotalPrice(itemValue.multiply(BigDecimal.valueOf(measuredItemQuantity)));
         }
     }
 
@@ -79,13 +75,13 @@ public class PreMeasurementStreetItem {
         this.totalPrice = itemTotalValue;
     }
 
-    public Material getMaterial() {
-        return material;
-    }
-
-    public void setMaterial(Material material) {
-        this.material = material;
-    }
+//    public Material getMaterial() {
+//        return material;
+//    }
+//
+//    public void setMaterial(Material material) {
+//        this.material = material;
+//    }
 
     public String getItemStatus() {
         return itemStatus;
@@ -96,13 +92,13 @@ public class PreMeasurementStreetItem {
     }
 
     public void addItemQuantity(double v) {
-        this.itemQuantity += v;
+        this.measuredItemQuantity += v;
     }
 
     public void addItemQuantity(double v, boolean updateValue) {
-        this.itemQuantity += v;
+        this.measuredItemQuantity += v;
         if (updateValue) {
-            setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(itemQuantity)));
+            setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(measuredItemQuantity)));
         }
     }
 
