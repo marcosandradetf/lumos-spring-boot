@@ -9,6 +9,12 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ContractService} from '../../../services/contract.service';
 import {ContractItemsResponse, ContractResponse} from '../../../contract-models';
 import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
+import {Dialog} from 'primeng/dialog';
+import {TableModule} from 'primeng/table';
+import {Button, ButtonDirective, ButtonIcon, ButtonLabel} from 'primeng/button';
+import {FormsModule} from '@angular/forms';
+import {InputText} from 'primeng/inputtext';
+import {Ripple} from 'primeng/ripple';
 
 @Component({
   selector: 'app-contract-list',
@@ -18,7 +24,16 @@ import {LoadingComponent} from '../../../../shared/components/loading/loading.co
     NgIf,
     ScreenMessageComponent,
     LoadingComponent,
-    CurrencyPipe
+    CurrencyPipe,
+    Dialog,
+    TableModule,
+    Button,
+    ButtonDirective,
+    FormsModule,
+    InputText,
+    Ripple,
+    ButtonIcon,
+    ButtonLabel
   ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'
@@ -85,24 +100,52 @@ export class ContractListComponent implements OnInit {
   // }
 
 
-  showItems(dialog: HTMLDialogElement, contractId: number) {
+  showItems(contractId: number) {
     if (contractId !== 0) {
       this.contractId = contractId;
       this.loading = true;
-      this.contractService.getContractItems(contractId).subscribe(items => {
+      this.contractService.getContractItems(contractId).subscribe({
+        next: items => {
           this.contractItems = items;
-          dialog.show();
+          this.showDialog();
+        },
+        error: err => {
+          console.error(err);
+          // talvez mostrar uma notificação
+        },
+        complete: () => {
           this.loading = false;
         }
-      );
+      });
     }
   }
 
   protected readonly parseFloat = parseFloat;
 
   contractId: number = 0;
+  dialogVisible: boolean = false;
 
   getTotalPrice() {
-    return this.contracts.find(c => c.contractId == this.contractId)?.contractValue || "0,00";
+    return this.contracts.find(c => c.contractId == this.contractId)?.contractValue || "0.00";
   }
+
+  showDialog() {
+    this.dialogVisible = true;
+  }
+
+  onRowEditInit(item: any) {
+    console.log('Edit init', item);
+  }
+
+  onRowEditSave(item: any) {
+    // Aqui você pode validar ou salvar
+    console.log('Item salvo:', item);
+  }
+
+  onRowEditCancel(item: any, index: number) {
+    console.log('Edição cancelada', item);
+  }
+
+
+
 }

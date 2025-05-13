@@ -257,23 +257,22 @@ class ContractService(
             val contractedQuantity: Double,
             val linking: String
         )
-        var order = 1
 
         return ResponseEntity.ok().body(
             contractRepository.findById(contractId).orElseThrow()
                 .contractItemsQuantitative
                 .sortedBy { it.referenceItem.description }
-                .map {
+                .mapIndexed { index, it ->
                     ContractItemsResponse(
-                        number = order,
+                        number = index + 1,
                         contractItemId = it.contractItemId,
                         description = it.referenceItem.description ?: "",
                         unitPrice = it.unitPrice.toPlainString(),
                         contractedQuantity = it.contractedQuantity,
                         linking = it.referenceItem.linking ?: ""
                     )
-                    order += 1
                 })
+
     }
 
 }

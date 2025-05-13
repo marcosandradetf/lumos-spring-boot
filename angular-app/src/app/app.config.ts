@@ -12,6 +12,9 @@ import {AuthInterceptor} from './core/interceptors/auth.interceptor';
 import {LOCALE_ID, DEFAULT_CURRENCY_CODE} from '@angular/core';
 import localePt from '@angular/common/locales/pt';
 import {registerLocaleData} from '@angular/common';
+import {providePrimeNG} from 'primeng/config';
+import Aura from '@primeng/themes/aura';
+
 
 registerLocaleData(localePt, 'pt');
 export const appConfig: ApplicationConfig = {
@@ -36,6 +39,13 @@ export const appConfig: ApplicationConfig = {
       provide:  DEFAULT_CURRENCY_CODE,
       useValue: 'BRL'
     },
+
+    provideAnimationsAsync(),
+    providePrimeNG({
+      theme: {
+        preset: Aura
+      }
+    })
   ],
 };
 

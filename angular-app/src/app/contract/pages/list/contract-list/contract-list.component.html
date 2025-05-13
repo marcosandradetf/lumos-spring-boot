@@ -8,7 +8,8 @@
           <li>Lista</li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block font-medium text-neutral-600">{{ reason === 'view' ? 'Selecione um contrato para ver os detalhes' : 'Selecione um contrato para importar a pré-medição' }}</h3>
+      <h3
+        class="text-medium pr-5 hidden lg:block font-medium text-neutral-600">{{ reason === 'view' ? 'Selecione um contrato para ver os detalhes' : 'Selecione um contrato para importar a pré-medição' }}</h3>
     </div>
 
 
@@ -18,7 +19,7 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let c of contracts; index as i;"
             class=" cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
-            (click)="reason === 'view' ? showItems(dialog, c.contractId) : router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])">
+            (click)="reason === 'view' ? showItems(c.contractId) : router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])">
           <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full">
             <div class="flex flex-col items-center justify-center mr-10">
               <div class="h-full w-1 bg-neutral"></div>
@@ -40,7 +41,8 @@
               </div>
               <div class="flex item-center justify-between leading-[3rem]">
                 <h3 class="text-xl text-neutral-800 font-semibold">Contrato {{ c.number }}</h3>
-                <h3 class="text-lg text-neutral-800 font-normal badge bg-[#d0e4fd] rounded p-3">{{ c.contractValue | currency:'BRL':'symbol':'1.2-2' }}</h3>
+                <h3
+                  class="text-lg text-neutral-800 font-normal badge bg-[#d0e4fd] rounded p-3">{{ c.contractValue | currency:'BRL':'symbol':'1.2-2' }}</h3>
               </div>
               <h3 class="text-lg text-neutral-800 leading-[1.3rem] font-normal">{{ c.contractor }}</h3>
               <h3 class="text-base text-neutral-800 leading-[1.3rem] font-light">{{ c.address }}</h3>
@@ -57,32 +59,148 @@
     </div>
   </div>
 
-  <dialog #dialog class="modal">
-    <div class="modal-box rounded-xl shadow-lg">
-      <h3 class="font-bold text-lg mb-4 text-indigo-700">Itens</h3>
+  <p-dialog
+    [resizable]="false"
+    [modal]="true"
+    [maximizable]="true"
+    appendTo="body"
+    [(visible)]="dialogVisible"
+    [style]="{ width: '75vw' }"
+    [contentStyle]="{ height: '300px' }"
+  >
+    <ng-template pTemplate="header">
+      <div class="flex items-center w-full space-x-10">
+        <span class="text-lg font-semibold">Itens do Contrato</span>
+        <div class="flex gap-2">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-download"
+            label="Baixar Contrato"
+            class="p-button-sm"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-download"
+            label="Baixar Edital"
+            class="p-button-sm p-button-secondary"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-download"
+            label="Baixar Aditivo"
+            class="p-button-sm p-button-secondary"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
 
-      <table>
-        <tr class="report-base-header">
-          <th>ITEM</th>
-          <th>DESCRIÇÃO</th>
-          <th>QUANTIDADE TOTAL CONTRATADA</th>
-          <th>PREÇO UNITÁRIO CONTRATADO</th>
-          <th>PREÇO TOTAL CONTRATADO</th>
+
+    <p-table
+      [value]="contractItems"
+      dataKey="id"
+      editMode="row"
+      [tableStyle]="{ 'min-width': '60rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Item</th>
+          <th>Descrição</th>
+          <th>Qtde. Total Contratada</th>
+          <th>Preço Unitário</th>
+          <th>Preço Total</th>
+          <th>Ações</th>
         </tr>
-        <tr *ngFor="let i of contractItems">
-          <td>{{ i.number }}</td>
-          <td>{{ i.description }}</td>
-          <td>{{ i.contractedQuantity }}</td>
-          <td>{{ i.unitPrice | currency:'BRL':'symbol':'1.2-2' }}</td>
-          <td>{{ parseFloat(i.unitPrice) * i.contractedQuantity | currency:'BRL':'symbol':'1.2-2' }}</td>
-          </tr>
-        <tr class="report-base-total">
-          <td colspan="6">TOTAL GERAL</td>
-          <td>{{ getTotalPrice() | currency:'BRL':'symbol':'1.2-2' }}</td>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item let-editing="editing" let-ri="rowIndex">
+        <tr [pEditableRow]="item">
+          <td>
+            {{ item.number }}
+          </td>
+
+          <td>
+            {{ item.description }}
+          </td>
+
+          <td>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.contractedQuantity"
+                />
+              </ng-template>
+              <ng-template pTemplate="output">
+                {{ item.contractedQuantity }}
+              </ng-template>
+            </p-cellEditor>
+          </td>
+
+          <td>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.unitPrice"
+                />
+              </ng-template>
+              <ng-template pTemplate="output">
+                {{ item.unitPrice | currency: 'BRL' }}
+              </ng-template>
+            </p-cellEditor>
+          </td>
+
+          <td>
+            {{ item.unitPrice * item.contractedQuantity | currency: 'BRL' }}
+          </td>
+
+          <td>
+            <div class="flex items-center justify-center gap-2">
+              <button
+                *ngIf="!editing"
+                type="button"
+                pInitEditableRow
+                class="pi pi-pencil"
+                (click)="onRowEditInit(item)"
+              ></button>
+              <button
+                *ngIf="!editing"
+                type="button"
+                pInitEditableRow
+                class="pi pi-trash"
+                (click)="onRowEditInit(item)"
+              ></button>
+
+              <button
+                *ngIf="editing"
+                type="button"
+                pSaveEditableRow
+                class="pi pi-check"
+                (click)="onRowEditSave(item)"
+              ></button>
+              <button
+                *ngIf="editing"
+                type="button"
+                pCancelEditableRow
+                class="pi pi-times"
+                (click)="onRowEditCancel(item, ri)"
+              ></button>
+            </div>
+          </td>
         </tr>
-      </table>
-    </div>
-  </dialog>
+
+      </ng-template>
+    </p-table>
+
+    <ng-template #footer>
+      <p-button label="Ok" icon="pi pi-check" (onClick)="dialogVisible = false"/>
+    </ng-template>
+  </p-dialog>
 
   <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
                       class="absolute right-0"></app-screen-message>
