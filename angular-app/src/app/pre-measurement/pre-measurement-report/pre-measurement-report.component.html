@@ -3,7 +3,7 @@
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
-          <li><a href="/">Início</a></li>
+          <li><a href="/public">Início</a></li>
           <li><a href="/pre-medicao/validando">Pré-medição</a></li>
           <li>Relatório</li>
         </ul>
@@ -29,7 +29,7 @@
               <img [src]="environment.minio + '/scl-construtora/logo_scl.jpg'" alt="logo" width="150">
             </div>
             <h3 style="text-align: center;">PRÉ-MEDIÇÃO INSTALAÇÃO DE LED - {{ preMeasurement.city.toUpperCase() }}</h3>
-            <h5 style="text-align: center;">Contrato Nº: {{ contract.contractNumber }}</h5>
+            <h5 style="text-align: center;">Contrato Nº: {{ contract.number }}</h5>
 
             <table>
               <thead>
@@ -91,52 +91,13 @@
 
             <table>
               <thead>
-              <!--              <tr class="report-header">-->
-              <!--                <th>RUA</th>-->
-              <!--                <th>ENDEREÇO</th>-->
-              <!--                <th>POTÊNCIA ATUAL</th>-->
-              <!--                <th *ngIf="condition('cabo')">CABO</th>-->
-              <!--                <th *ngIf="condition('1,5M')">BRAÇOS DE 1,5</th>-->
-              <!--                <th *ngIf="condition('2,5M')">BRAÇOS DE 2,5</th>-->
-              <!--                <th *ngIf="condition('3,5M')">BRAÇOS DE 3,5</th>-->
-              <!--                <th *ngIf="condition('60W')">LED 60W</th>-->
-              <!--                <th *ngIf="condition('70W')">LED 70W</th>-->
-              <!--                <th *ngIf="condition('100W')">LED 100W</th>-->
-              <!--                <th *ngIf="condition('120W')">LED 120W</th>-->
-              <!--                <th *ngIf="condition('150W')">LED 150W</th>-->
-              <!--                <th *ngIf="condition('braço')">TROCA DE PONTO</th>-->
-              <!--                <th *ngIf="condition('cinta')">CINTAS</th>-->
-              <!--                <th *ngIf="condition('parafuso')">PARAF. E ARRUELAS</th>-->
-              <!--                <th *ngIf="condition('conector')">PERFUR.</th>-->
-              <!--                <th *ngIf="condition('relé')">RELÉ</th>-->
-              <!--                <th *ngIf="condition('led')">PROJETO</th>-->
-              <!--                <th *ngIf="condition('led')">SERVIÇO</th>-->
-              <!--&lt;!&ndash;                <th *ngFor="let i of getPreMeasurementItems()">{{ i.materialName }}</th>&ndash;&gt;-->
-              <!--              </tr>-->
               <tr class="report-header">
                 <th>RUA</th>
                 <th>ENDEREÇO</th>
                 <th>POTÊNCIA ATUAL</th>
-                <th *ngIf="condition('cabo')">CABO</th>
-                <th *ngIf="condition('1,5M')">BRAÇOS DE 1,5</th>
-                <th *ngIf="condition('2,5M')">BRAÇOS DE 2,5</th>
-                <th *ngIf="condition('3,5M')">BRAÇOS DE 3,5</th>
-                <th *ngIf="condition('60W')">LED 60W</th>
-                <th *ngIf="condition('70W')">LED 70W</th>
-                <th *ngIf="condition('100W')">LED 100W</th>
-                <th *ngIf="condition('120W')">LED 120W</th>
-                <th *ngIf="condition('150W')">LED 150W</th>
-                <th *ngIf="condition('braço')">TROCA DE PONTO</th>
-                <th *ngIf="condition('cinta')">CINTAS</th>
-                <th *ngIf="condition('parafuso')">PARAF. E ARRUELAS</th>
-                <th *ngIf="condition('conector')">PERFUR.</th>
-                <th *ngIf="condition('relé')">RELÉ</th>
-                <ng-container *ngFor="let m of materials">
-                  <th *ngIf="condition(m.idMaterial.toString())">{{ m.materialName }}</th>
-                </ng-container>
-                <th *ngIf="condition('led')">PROJETO</th>
-                <th *ngIf="condition('led')">SERVIÇO</th>
-                <!--                <th *ngFor="let i of getPreMeasurementItems()">{{ i.materialName }}</th>-->
+                <th *ngFor="let h of contract.items">
+                  {{ h.nameForImport }}
+                </th>
               </tr>
               </thead>
               <tbody>
@@ -144,27 +105,10 @@
                 <td>{{ s.number }}</td>
                 <td>{{ s.street }}</td>
                 <td>{{ s.lastPower }}</td>
-                <td *ngIf="condition('cabo')">{{ getItem('cabo', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('1,5M')">{{ getItem('1,5M', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('2,5M')">{{ getItem('2,5M', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('3,5M')">{{ getItem('3,5M', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('60W')">{{ getItem('60W', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('70W')">{{ getItem('70W', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('100W')">{{ getItem('100W', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('120W')">{{ getItem('120W', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('150W')">{{ getItem('150W', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('braço')">{{ getItem('braço', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('cinta')">{{ getItem('cinta', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('parafuso')">{{ getItem('parafuso', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('conector')">{{ getItem('conector', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('relé')">{{ getItem('relé', s)?.materialQuantity || 0 }}</td>
-                <ng-container *ngFor="let m of materials">
-                  <td
-                    *ngIf="condition(m.idMaterial.toString())">{{ getItem(m.idMaterial.toString(), s)?.materialQuantity || 0 }}
+                <ng-container *ngFor="let item of s.items">
+                  <td>{{ item.contractReferenceItemName }}
                   </td>
                 </ng-container>
-                <td *ngIf="condition('led')">{{ getItem('led', s)?.materialQuantity || 0 }}</td>
-                <td *ngIf="condition('led')">{{ getItem('led', s)?.materialQuantity || 0 }}</td>
               </tr>
               </tbody>
               <tfoot>
@@ -172,25 +116,11 @@
                 <td colspan="3">SOMA
                   TOTAL:
                 </td>
-                <td *ngIf="condition('cabo')">{{ getTotalQuantity("cabo") }}</td>
-                <td *ngIf="condition('1,5M')">{{ getTotalQuantity("1,5M") }}</td>
-                <td *ngIf="condition('2,5M')">{{ getTotalQuantity("2,5M") }}</td>
-                <td *ngIf="condition('3,5M')">{{ getTotalQuantity("3,5M") }}</td>
-                <td *ngIf="condition('60W')">{{ getTotalQuantity("60W") }}</td>
-                <td *ngIf="condition('70W')">{{ getTotalQuantity("70W") }}</td>
-                <td *ngIf="condition('100W')">{{ getTotalQuantity("100W") }}</td>
-                <td *ngIf="condition('120W')">{{ getTotalQuantity("120W") }}</td>
-                <td *ngIf="condition('150W')">{{ getTotalQuantity("150W") }}</td>
-                <td *ngIf="condition('braço')">{{ getTotalQuantity("braço") }}</td>
-                <td *ngIf="condition('cinta')">{{ getTotalQuantity("cinta") }}</td>
-                <td *ngIf="condition('parafuso')">{{ getTotalQuantity("parafuso") }}</td>
-                <td *ngIf="condition('conector')">{{ getTotalQuantity("conector") }}</td>
-                <td *ngIf="condition('relé')">{{ getTotalQuantity("relé") }}</td>
-                <ng-container *ngFor="let m of materials">
-                  <td *ngIf="condition(m.idMaterial.toString())">{{ getTotalQuantity(m.idMaterial.toString()) }}</td>
+                <ng-container *ngFor="let item of contract.items">
+                  <td>
+                    {{ getTotalQuantity(item.contractItemId) }}
+                  </td>
                 </ng-container>
-                <td *ngIf="condition('led')">{{ getTotalQuantity("led") }}</td>
-                <td *ngIf="condition('led')">{{ getTotalQuantity("led") }}</td>
               </tr>
               </tfoot>
             </table>
@@ -213,8 +143,8 @@
                   <td>{{ i.contractedQuantity }}</td>
                   <td>{{ i.unitPrice | currency:'BRL':'symbol':'1.2-2' }}</td>
                   <td>{{ parseFloat(i.unitPrice) * i.contractedQuantity | currency:'BRL':'symbol':'1.2-2' }}</td>
-                  <td>{{ getTotalPreMeasured(i.contractItemId, i.linking, i.description) }}</td>
-                  <td>{{ getTotalPrice(i.contractItemId, i.linking, i.description, i.unitPrice) | currency:'BRL':'symbol':'1.2-2' }}</td>
+                  <td>{{ getTotalPreMeasured(i.contractItemId) }}</td>
+                  <td>{{ getTotalPrice(i.contractItemId, i.unitPrice) | currency:'BRL':'symbol':'1.2-2' }}</td>
                 </tr>
                 <tr class="report-base-total">
                   <td colspan="6">TOTAL GERAL</td>

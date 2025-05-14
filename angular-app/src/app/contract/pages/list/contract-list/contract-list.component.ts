@@ -2,7 +2,7 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ModalComponent} from "../../../../shared/components/modal/modal.component";
 import {CurrencyPipe, NgForOf, NgIf} from "@angular/common";
 import {ScreenMessageComponent} from "../../../../shared/components/screen-message/screen-message.component";
-import {PreMeasurementModel} from '../../../../models/pre-measurement.model';
+import {PreMeasurementResponseDTO} from '../../../../models/pre-measurement-response-d-t.o';
 import {PreMeasurementService} from '../../../../executions/pre-measurement-home/premeasurement-service.service';
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';

@@ -136,7 +136,7 @@ export const routes: Routes = [
   },
   {
     path: 'pre-medicao/relatorio/:id',
-    loadComponent: () => import('./executions/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
+    loadComponent: () => import('./pre-measurement/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
   },

@@ -5,8 +5,9 @@ import {Observable} from 'rxjs';
 import * as http from 'node:http';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
-import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 import {PreMeasurementDTO} from '../../pre-measurement/pre-measurement-models';
+import {ContractAndItemsResponse} from '../../contract/contract-models';
 
 @Injectable({
   providedIn: 'root'
@@ -18,35 +19,15 @@ export class PreMeasurementService {
   }
 
   getPreMeasurement(preMeasurementId: string) {
-    return this.http.get<PreMeasurementModel>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
+    return this.http.get<PreMeasurementResponseDTO>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
   }
 
-  getPreMeasurements(status: string): Observable<PreMeasurementModel[]> {
-    return this.http.get<PreMeasurementModel[]>(`${this.endpoint + `/get-pre-measurements/${status}`}`);
+  getPreMeasurements(status: string): Observable<PreMeasurementResponseDTO[]> {
+    return this.http.get<PreMeasurementResponseDTO[]>(`${this.endpoint + `/get-pre-measurements/${status}`}`);
   }
 
   getContract(contractId: number) {
-    return this.http.get<
-      {
-        contractId: number,
-        contractNumber: string,
-        contractor: string,
-        cnpj: string,
-        phone: string,
-        address: string,
-        contractFile: string,
-        createdBy: string,
-        createdAt: string,
-        items: {
-          number: number,
-          contractItemId: number,
-          description: string,
-          unitPrice: string,
-          contractedQuantity: number,
-          linking: string,
-        }[]
-      }
-    >(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
+    return this.http.get<ContractAndItemsResponse>(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
   }
 
   evolveStatus(preMeasurementId: number) {

@@ -9,7 +9,7 @@ import {ReportService} from '../../core/service/report-service';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 import {response} from 'express';
 
 @Component({
@@ -27,7 +27,7 @@ import {response} from 'express';
 })
 export class PreMeasurementEditComponent {
   alert: boolean = false;
-  preMeasurement: PreMeasurementModel = {
+  preMeasurement: PreMeasurementResponseDTO = {
     preMeasurementId: 0,
     contractId: 0,
     city: '',
@@ -41,7 +41,7 @@ export class PreMeasurementEditComponent {
     streets: []
   };
 
-  preMeasurementCopy: PreMeasurementModel = {
+  preMeasurementCopy: PreMeasurementResponseDTO = {
     preMeasurementId: 0,
     contractId: 0,
     city: '',

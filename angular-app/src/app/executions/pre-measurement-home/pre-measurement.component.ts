@@ -6,7 +6,7 @@ import {UtilsService} from '../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 
 @Component({
   selector: 'app-pre-measurement-home',
@@ -22,7 +22,7 @@ import {PreMeasurementModel} from '../../models/pre-measurement.model';
   styleUrl: './pre-measurement.component.scss'
 })
 export class PreMeasurementComponent implements OnInit {
-  preMeasurements: PreMeasurementModel[] = [];
+  preMeasurements: PreMeasurementResponseDTO[] = [];
 
   private loading: boolean = false;
   protected status: string = "";

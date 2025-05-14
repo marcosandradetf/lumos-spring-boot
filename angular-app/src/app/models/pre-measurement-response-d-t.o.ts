@@ -1,9 +1,10 @@
-export interface PreMeasurementModel {
+export interface PreMeasurementResponseDTO {
   preMeasurementId: number;
   contractId: number;
   city: string;
   createdBy: string;
   createdAt: string;
+  depositName: String;
   preMeasurementType: string;
   preMeasurementStyle: string;
   teamName: string;
@@ -23,14 +24,13 @@ export interface PreMeasurementModel {
 
     items: {
       preMeasurementStreetItemId: number;
-      materialId: number;
       contractItemId: number;
-      materialName: string;
-      materialType: string;
-      materialPower: string;
-      materialLength: string;
-      materialQuantity: number;
-      status: string;
+      contractReferenceItemName: string;
+      contractReferenceItemType: string;
+      contractReferenceItemPower: string;
+      contractReferenceItemLength: string;
+      measuredQuantity: number;
+      itemStatus: string;
     }[]
 
   }[];

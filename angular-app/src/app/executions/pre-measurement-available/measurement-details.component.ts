@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import * as L from 'leaflet';
-import {PreMeasurementModel} from '../../models/pre-measurement.model';
+import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {TeamsModel} from '../../models/teams.model';
@@ -59,7 +59,7 @@ export class MeasurementDetailsComponent implements OnInit {
     slider.scrollBy({left: 300, behavior: 'smooth'});
   }
 
-  preMeasurement: PreMeasurementModel = {
+  preMeasurement: PreMeasurementResponseDTO = {
     city: '',
     contractId: 0,
     createdAt: '',
@@ -171,7 +171,7 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
 
-  protected initMap(street: PreMeasurementModel['streets'][0]): void {
+  protected initMap(street: PreMeasurementResponseDTO['streets'][0]): void {
     const latitude = street.latitude;
     const longitude = street.longitude;
     this.streetId = street.preMeasurementStreetId;
