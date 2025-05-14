@@ -3,7 +3,7 @@ import {ModalComponent} from "../../../../shared/components/modal/modal.componen
 import {CurrencyPipe, NgForOf, NgIf} from "@angular/common";
 import {ScreenMessageComponent} from "../../../../shared/components/screen-message/screen-message.component";
 import {PreMeasurementResponseDTO} from '../../../../models/pre-measurement-response-d-t.o';
-import {PreMeasurementService} from '../../../../executions/pre-measurement-home/premeasurement-service.service';
+import {PreMeasurementService} from '../../../../pre-measurement/pre-measurement-home/premeasurement-service.service';
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ContractService} from '../../../services/contract.service';

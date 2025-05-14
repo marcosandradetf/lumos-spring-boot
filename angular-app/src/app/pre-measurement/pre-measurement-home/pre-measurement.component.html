@@ -3,7 +3,7 @@
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
-          <li><a href="/">Início</a></li>
+          <li><a href="/public">Início</a></li>
           <li><a>Execuçoes</a></li>
           <li>Pré-medição</li>
         </ul>
@@ -11,7 +11,9 @@
       <h3 class="text-medium pr-5 hidden lg:block" *ngIf="!hideContent">Selecione uma cidade</h3>
     </div>
 
-    <div class="flex w-full justify-center p-5" *ngIf="!hideContent">
+    <app-loading *ngIf="loading"></app-loading>
+
+    <div class="flex w-full justify-center p-5" *ngIf="!hideContent && !loading">
       <div role="tablist" class="tabs tabs-bordered">
         <input type="radio" class="tab" aria-label="Pendente" [checked]="status === 'pendente'"
                (click)="router.navigate(['/pre-medicao/pendente'])"/>
@@ -27,7 +29,7 @@
       </div>
     </div>
 
-    <div *ngIf="hideContent" class="border-b w-full pl-2 h-screen pt-2">
+    <div *ngIf="hideContent  && !loading" class="border-b w-full pl-2 h-screen pt-2">
       <div class="flex items-center flex-col border rounded p-10 shadow">
         <span class="material-icons mt-20 text-orange-600">thumb_up</span>
         <h2 class="mt-2 font-semibold text-xl">Itens aprovados com sucesso</h2>
@@ -50,7 +52,7 @@
       </div>
     </div>
 
-    <div class="border-b w-full pl-2 h-screen pt-2" *ngIf="!hideContent">
+    <div class="border-b w-full pl-2 h-screen pt-2" *ngIf="!hideContent  && !loading">
       <ol class="flex flex-wrap">
         <li *ngFor="let p of preMeasurements; index as i;"
             class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"

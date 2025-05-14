@@ -6,7 +6,7 @@ import * as http from 'node:http';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
-import {PreMeasurementDTO} from '../../pre-measurement/pre-measurement-models';
+import {PreMeasurementDTO} from '../pre-measurement-models';
 import {ContractAndItemsResponse} from '../../contract/contract-models';
 
 @Injectable({

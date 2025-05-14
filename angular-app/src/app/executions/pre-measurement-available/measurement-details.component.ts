@@ -3,7 +3,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import * as L from 'leaflet';
 import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
-import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
+import {PreMeasurementService} from '../../pre-measurement/pre-measurement-home/premeasurement-service.service';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {TeamsModel} from '../../models/teams.model';
 import {TeamService} from '../../manage/team/team-service.service';

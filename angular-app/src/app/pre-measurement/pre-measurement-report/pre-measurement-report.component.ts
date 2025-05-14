@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 
 import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
-import {PreMeasurementService} from '../../executions/pre-measurement-home/premeasurement-service.service';
+import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {UtilsService} from '../../core/service/utils.service';
 import {ModalComponent} from '../../shared/components/modal/modal.component';

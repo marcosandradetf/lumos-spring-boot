@@ -11,7 +11,7 @@ import {Title} from '@angular/platform-browser';
 import {ActivatedRoute, Router} from '@angular/router';
 import {FileServerService} from '../../file-server.service';
 import * as XLSX from 'xlsx';
-import {PreMeasurementService} from '../../executions/pre-measurement-home/premeasurement-service.service';
+import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {MaterialResponse} from '../../models/material-response.dto';
 import {IconAAlertComponent, IconArrowDropDownComponent, IconErrorComponent} from '../../shared/icons/icons.component';

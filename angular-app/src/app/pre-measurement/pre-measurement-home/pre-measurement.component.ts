@@ -7,6 +7,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-pre-measurement-home',
@@ -16,7 +17,8 @@ import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d
     FormsModule,
     NgIf,
     ScreenMessageComponent,
-    ModalComponent
+    ModalComponent,
+    LoadingComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
@@ -24,7 +26,7 @@ import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d
 export class PreMeasurementComponent implements OnInit {
   preMeasurements: PreMeasurementResponseDTO[] = [];
 
-  private loading: boolean = false;
+  protected loading: boolean = false;
   protected status: string = "";
   openModal: boolean = false;
   preMeasurementId: number = 0;
@@ -39,6 +41,7 @@ export class PreMeasurementComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loading = true;
     this.route.paramMap.subscribe(params => {
       const status = params.get('status');
       if (!status) {
@@ -57,24 +60,28 @@ export class PreMeasurementComponent implements OnInit {
         this.preMeasurementService.getPreMeasurements('pending').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
           this.city = this.preMeasurements[0].streets[0].city;
+          this.loading = false;
         });
         break;
       case 'aguardando-retorno':
         this.preMeasurementService.getPreMeasurements('waiting').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
           this.city = this.preMeasurements[0].streets[0].city;
+          this.loading = false;
         });
         break;
       case 'validando':
         this.preMeasurementService.getPreMeasurements('validating').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
           this.city = this.preMeasurements[0].streets[0].city;
+          this.loading = false;
         });
         break;
       case 'disponivel':
         this.preMeasurementService.getPreMeasurements('available').subscribe(preMeasurements => {
           this.preMeasurements = preMeasurements;
           this.city = this.preMeasurements[0].streets[0].city;
+          this.loading = false;
         });
         break;
     }
@@ -113,8 +120,10 @@ export class PreMeasurementComponent implements OnInit {
 
   hideContent = false;
   evolvePreMeasurement() {
+    this.loading = true;
     this.preMeasurementService.evolveStatus(this.preMeasurementId).subscribe({
       error: (error: any) => {
+        this.loading = false;
         this.utils.showMessage("Erro ao atualizar o status:", error);
       },
       complete: () => {
