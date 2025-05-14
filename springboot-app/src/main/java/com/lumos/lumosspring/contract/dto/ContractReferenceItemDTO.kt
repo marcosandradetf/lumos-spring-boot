@@ -5,7 +5,7 @@ import jakarta.persistence.Column
 data class ContractReferenceItemDTO(
     var contractReferenceItemId: Long,
     var description : String?,
-    var completeDescription : String?,
+    var nameForImport : String?,
     var type : String?,
     var linking : String?,
     var itemDependency : String?,

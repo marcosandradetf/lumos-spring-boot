@@ -39,7 +39,7 @@ class ContractService(
                 ContractReferenceItemDTO(
                     item.contractReferenceItemId,
                     item.description,
-                    item.completeDescription,
+                    item.nameForImport,
                     item.type,
                     item.linking,
                     item.itemDependency,
@@ -255,7 +255,8 @@ class ContractService(
             val description: String,
             val unitPrice: String,
             val contractedQuantity: Double,
-            val linking: String
+            val linking: String,
+            val nameForImport: String
         )
 
         return ResponseEntity.ok().body(
@@ -266,10 +267,11 @@ class ContractService(
                     ContractItemsResponse(
                         number = index + 1,
                         contractItemId = it.contractItemId,
-                        description = it.referenceItem.description ?: "",
+                        description = it.referenceItem.description,
                         unitPrice = it.unitPrice.toPlainString(),
                         contractedQuantity = it.contractedQuantity,
-                        linking = it.referenceItem.linking ?: ""
+                        linking = it.referenceItem.linking ?: "",
+                        nameForImport = it.referenceItem.nameForImport ?: ""
                     )
                 })
 

@@ -11,16 +11,16 @@ class ExecutionController(
     private val executionService: ExecutionService,
 ) {
 
-    @PostMapping("/execution/reserve")
-    fun reserve(@RequestBody reserveDto : ReserveForStreetsDTO): ResponseEntity<Any> {
-        return executionService.reserve(reserveDto)
-    }
-
-    @GetMapping("/execution/get-available-stock")
-    fun getStockAvailable(
-        @RequestParam preMeasurementId: Long,
-        @RequestParam teamId: Long
-    ) : ResponseEntity<Any> {
-        return executionService.getStockAvailable(preMeasurementId, teamId)
-    }
+//    @PostMapping("/execution/reserve")
+//    fun reserve(@RequestBody reserveDto : ReserveForStreetsDTO): ResponseEntity<Any> {
+//        return executionService.reserve(reserveDto)
+//    }
+//
+//    @GetMapping("/execution/get-available-stock")
+//    fun getStockAvailable(
+//        @RequestParam preMeasurementId: Long,
+//        @RequestParam teamId: Long
+//    ) : ResponseEntity<Any> {
+//        return executionService.getStockAvailable(preMeasurementId, teamId)
+//    }
 }

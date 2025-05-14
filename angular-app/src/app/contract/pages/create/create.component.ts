@@ -11,6 +11,7 @@ import {FileService} from '../../../core/service/file-service.service';
 import {forkJoin} from 'rxjs';
 import {AuthService} from '../../../core/auth/auth.service';
 import {Router} from '@angular/router';
+import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-models';
 
 
 @Component({
@@ -28,27 +29,7 @@ import {Router} from '@angular/router';
   styleUrl: './create.component.scss'
 })
 export class CreateComponent {
-  contract: {
-    number: string,
-    contractor: string,
-    address: string,
-    phone: string,
-    cnpj: string,
-    unifyServices: boolean;
-    noticeFile: string;
-    contractFile: string;
-    userUUID: string;
-    items: {
-      contractReferenceItemId: number;
-      description: string;
-      completeDescription: string;
-      type: string;
-      linking: string;
-      itemDependency: string;
-      quantity: number;
-      price: string;
-    }[]
-  } = {
+  contract: CreateContractDTO = {
     number: '',
     contractor: '',
     address: '',
@@ -64,16 +45,7 @@ export class CreateComponent {
   noticeFile: File | null = null;
   contractFile: File | null = null;
 
-  items: {
-    contractReferenceItemId: number;
-    description: string;
-    completeDescription: string;
-    type: string;
-    linking: string;
-    itemDependency: string;
-    quantity: number;
-    price: string;
-  }[] = [];
+  items: ContractReferenceItemsDTO[] = [];
 
   totalValue: string = "0,00";
   totalItems: number = 0;
@@ -82,7 +54,7 @@ export class CreateComponent {
 
   constructor(protected contractService: ContractService, protected utils: UtilsService, private fileService: FileService, private auth: AuthService, protected router: Router) {
     this.contract.userUUID = this.auth.getUser().uuid;
-    this.contractService.getItems().subscribe(
+    this.contractService.getContractReferenceItems().subscribe(
       items => {
         this.items = items;
       }
@@ -201,16 +173,7 @@ export class CreateComponent {
 
 
   addItem(
-    item: {
-      contractReferenceItemId: number;
-      description: string;
-      completeDescription: string;
-      type: string;
-      linking: string;
-      itemDependency: string;
-      quantity: number;
-      price: string;
-    }
+    item: ContractReferenceItemsDTO
     , index: number) {
     if (item.price === '0,00' || item.quantity === 0) {
       this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", true);
@@ -235,16 +198,7 @@ export class CreateComponent {
   textContent: string = 'Clique para selecionar';
   typeSelect: string = '';
 
-  removeItem(item: {
-    contractReferenceItemId: number;
-    description: string;
-    completeDescription: string;
-    type: string;
-    linking: string;
-    itemDependency: string;
-    quantity: number;
-    price: string;
-  }, index: number) {
+  removeItem(item: ContractReferenceItemsDTO, index: number) {
 
     this.removingIndexContract = index;
     setTimeout(() => {

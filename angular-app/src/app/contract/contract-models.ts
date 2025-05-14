@@ -21,4 +21,29 @@ export interface ContractItemsResponse {
   unitPrice: string;
   contractedQuantity: number;
   linking: string;
+  nameForImport: string;
+}
+
+export interface CreateContractDTO {
+  number: string,
+  contractor: string,
+  address: string,
+  phone: string,
+  cnpj: string,
+  unifyServices: boolean;
+  noticeFile: string;
+  contractFile: string;
+  userUUID: string;
+  items: ContractReferenceItemsDTO[]
+}
+
+export interface ContractReferenceItemsDTO {
+  contractReferenceItemId: number;
+  description: string;
+  nameForImport: string;
+  type: string;
+  linking: string;
+  itemDependency: string;
+  quantity: number;
+  price: string;
 }

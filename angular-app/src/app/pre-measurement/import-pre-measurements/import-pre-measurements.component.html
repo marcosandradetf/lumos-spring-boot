@@ -19,8 +19,8 @@
             <span class="underline font-bold text-xl">Utilize apenas os que você precisar</span></p>
         </div>
         <ol class="flex flex-wrap">
-          <li *ngFor="let header of materialsFromApi"
-              class="badge mr-2 mb-2 rounded bg-[#5542a9] text-white p-3">{{ header.materialName }}
+          <li *ngFor="let header of contractReferenceItems"
+              class="badge mr-2 mb-2 rounded bg-[#5542a9] text-white p-3">{{ header.nameForImport }}
           </li>
         </ol>
         <div class="flex flex-col mt-5 text-justify justify-center">
@@ -165,8 +165,8 @@
 
         <h2 class="ml-2 font-bold text-xl mb-2">Observe novamente os ítens que podem ser usados e faça a correção</h2>
         <ol class="flex flex-wrap ml-2">
-          <li *ngFor="let header of materialsFromApi"
-              class="badge mr-2 mb-2 rounded bg-[#5542a9] text-white p-3">{{ header.materialName }}
+          <li *ngFor="let header of contractReferenceItems"
+              class="badge mr-2 mb-2 rounded bg-[#5542a9] text-white p-3">{{ header.nameForImport }}
           </li>
         </ol>
         <div class="flex justify-center mt-5">

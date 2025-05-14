@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.entities;
 
+import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -45,6 +46,9 @@ public class Material {
             inverseJoinColumns = @JoinColumn(name = "related_id")
     )
     private Set<Material> relatedMaterials = new HashSet<>();
+
+    @ManyToOne
+    private ContractReferenceItem contractReferenceItem;
 
     @ManyToMany
     @JoinTable(
@@ -137,6 +141,14 @@ public class Material {
 
     public void setNameForImport(String nameForImport) {
         this.nameForImport = nameForImport;
+    }
+
+    public ContractReferenceItem getContractReferenceItem() {
+        return contractReferenceItem;
+    }
+
+    public void setContractReferenceItem(ContractReferenceItem contractReferenceItem) {
+        this.contractReferenceItem = contractReferenceItem;
     }
 }
 

@@ -16,6 +16,8 @@ import {TableComponent} from '../../shared/components/table/table.component';
 import {MaterialResponse} from '../../models/material-response.dto';
 import {IconAAlertComponent, IconArrowDropDownComponent, IconErrorComponent} from '../../shared/icons/icons.component';
 import {AuthService} from '../../core/auth/auth.service';
+import {ContractService} from '../../contract/services/contract.service';
+import {ContractItemsResponse, ContractReferenceItemsDTO} from '../../contract/contract-models';
 
 @Component({
   selector: 'app-import-pre-measurements',
@@ -30,7 +32,7 @@ import {AuthService} from '../../core/auth/auth.service';
   styleUrl: './import-pre-measurements.component.scss'
 })
 export class ImportPreMeasurementsComponent implements OnInit {
-  materialsFromApi: MaterialResponse[] = [];
+  contractReferenceItems: ContractItemsResponse[] = [];
   preMeasurements: PreMeasurementDTO = {
     contractId: 0,
     streets: []
@@ -46,54 +48,59 @@ export class ImportPreMeasurementsComponent implements OnInit {
   userUUID: string = '';
 
   errors: string[] = [];
-  columnRules = [
-    {columnName: 'Endereço', required: true},
-    {columnName: 'POTÊNCIA ATUAL', required: false},
-    {columnName: 'Braços de 1,5', required: false},
-    {columnName: 'Braços de 2,5', required: false},
-    {columnName: 'Braços\n de 3,5', required: false},
-    {columnName: 'LED 50W', required: false},
-    {columnName: 'LED 60W', required: false},
-    {columnName: 'LED 70W', required: false},
-    {columnName: 'LED 80W', required: false},
-    {columnName: 'LED 100W', required: false},
-    {columnName: 'LED 110W', required: false},
-    {columnName: 'LED 120W', required: false},
-    {columnName: 'LED 150W', required: false},
-    {columnName: 'LED 200W', required: false},
-    {columnName: 'CINTAS', required: false},
-    {columnName: 'PARAF. E ARRUELAS', required: false},
-    {columnName: 'PERFUR', required: false},
-    {columnName: 'POSTE', required: false},
-
-  ];
 
   constructor(
     private title: Title, protected router: Router,
     private fileServerService: FileServerService,
     private preMeasurementService: PreMeasurementService,
-    private materialService: MaterialService,
+    private contractService: ContractService,
     private route: ActivatedRoute,
     private authService: AuthService) {
 
-    this.title.setTitle('Importar Pré-Medições');
-    this.materialService.getMaterials().subscribe(materials => {
-      this.materialsFromApi = materials;
-    });
-
-    const uuid = this.authService.getUser().uuid;
-    if(uuid.length > 0) {
-      this.userUUID = uuid;
-    }
   }
 
   ngOnInit(): void {
+    this.title.setTitle('Importar Pré-Medições');
+
     const contractId = this.route.snapshot.paramMap.get('id');
     if (contractId == null) {
       return
     }
     this.preMeasurements.contractId = Number(contractId);
     this.contractId = Number(contractId);
+
+    this.contractService.getContractItems(this.contractId).subscribe(ri => {
+      ri.forEach(item => {
+        if (item.nameForImport !== null && item.nameForImport !== '' && item.nameForImport !== undefined && item.nameForImport !== ' ') {
+          this.contractReferenceItems.push(item);
+        }
+      });
+      [
+        "RUA",
+        "NÚMERO",
+        "BAIRRO",
+        "CIDADE",
+        "ESTADO",
+        "LATITUDE",
+        "LONGITUDE",
+        "POTÊNCIA ATUAL"
+      ].forEach(col => {
+        this.contractReferenceItems.push({
+          number: 0,
+          contractItemId: 0,
+          description: '',
+          unitPrice: '',
+          contractedQuantity: 0,
+          linking: '',
+          nameForImport: col
+        });
+      });
+    });
+    const uuid = this.authService.getUser().uuid;
+    if (uuid.length > 0) {
+      this.userUUID = uuid;
+    }
+
   }
 
 
@@ -128,7 +135,7 @@ export class ImportPreMeasurementsComponent implements OnInit {
         this.loading = true;
         this.preMeasurements = data;
         this.preMeasurementService.importData(data, this.userUUID).subscribe({
-          next: (res: {message: string}) => {
+          next: (res: { message: string }) => {
             this.loading = false;
             void this.router.navigate(['pre-medicao/relatorio/' + res.message], {queryParams: {reason: 'importPreMeasurement'}});
           },
@@ -140,7 +147,7 @@ export class ImportPreMeasurementsComponent implements OnInit {
         });
       } else {
         data.forEach((error, i) => {
-          this.errors.push(`${i+ 1} - Coluna não reconhecida: ${error}`);
+          this.errors.push(`${i + 1} - Coluna não reconhecida: ${error}`);
         });
         this.loading = false;
       }
@@ -159,28 +166,22 @@ export class ImportPreMeasurementsComponent implements OnInit {
 
     const materialMap: { [key: string]: number } = {};
 
-    this.materialsFromApi.forEach(material => {
-      if (material.materialName !== null) {
-        const key = this.normalizeHeader(material.materialName);
-        materialMap[key] = material.idMaterial;
+    this.contractReferenceItems.forEach(ri => {
+      if (ri.nameForImport !== null && ri.contractItemId > 0) {
+        const key = this.normalizeHeader(ri.nameForImport);
+        materialMap[key] = ri.contractItemId;
       }
     });
 
     const knownColumns = [
-      'cabo',
-      'troca de ponto',
-      'rele',
-      'projeto',
-      'servico',
-
-      'potencia atual',
-      'latitude',
-      'longitude',
-      'endereco',
-      'numero',
-      'bairro',
-      'cidade',
-      'estado',
+      "rua",
+      "numero",
+      "bairro",
+      "cidade",
+      "estado",
+      "latitude",
+      "longitude",
+      "potencia atual",
 
       ...Object.keys(materialMap) // inclui materiais normalizados
     ];
@@ -210,7 +211,7 @@ export class ImportPreMeasurementsComponent implements OnInit {
         lastPower: row[colIndex['potencia atual']] || '',
         latitude: row[colIndex['latitude']] || '',
         longitude: row[colIndex['longitude']] || '',
-        street: row[colIndex['endereco']] || '',
+        street: row[colIndex['rua']] || '',
         number: row[colIndex['numero']] || '',
         neighborhood: row[colIndex['bairro']] || '',
         city: row[colIndex['cidade']] || '',
@@ -226,8 +227,8 @@ export class ImportPreMeasurementsComponent implements OnInit {
           const quantity = Number(row[index]) || 0;
           if (quantity > 0) {
             items.push({
-              materialId,
-              materialQuantity: quantity
+              itemContractId: materialId,
+              itemContractQuantity: quantity
             });
           }
         }

@@ -27,6 +27,6 @@ data class PreMeasurementStreetItemDTO(
     val preMeasurementItemId: Long = 0,
     var preMeasurementStreetId: Long,
     val itemContractId: Long,
-    val materialQuantity: Int,
+    val itemContractQuantity: Int,
     val contractId: Long,
 )

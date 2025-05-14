@@ -1,7 +1,12 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
-import {ContractItemsResponse, ContractResponse} from '../contract-models';
+import {
+  ContractItemsResponse,
+  ContractReferenceItemsDTO,
+  ContractResponse,
+  CreateContractDTO
+} from '../contract-models';
 
 @Injectable({
   providedIn: 'root'
@@ -12,41 +17,12 @@ export class ContractService {
   constructor(private http: HttpClient) {
   }
 
-  createContract(contract: {
-    number: string,
-    contractor: string,
-    address: string,
-    phone: string,
-    cnpj: string,
-    unifyServices: boolean;
-    noticeFile: string;
-    contractFile: string;
-    userUUID: string;
-    items: {
-      contractReferenceItemId: number;
-      description: string;
-      completeDescription: string;
-      type: string;
-      linking: string;
-      itemDependency: string;
-      quantity: number;
-      price: string;
-    }[]
-  }) {
+  createContract(contract: CreateContractDTO) {
     return this.http.post(this.endpoint + "/insert-contract", contract);
   }
 
-  getItems() {
-    return this.http.get<{
-      contractReferenceItemId: number;
-      description: string;
-      completeDescription: string;
-      type: string;
-      linking: string;
-      itemDependency: string;
-      quantity: number;
-      price: string;
-    }[]>(this.endpoint + "/get-items");
+  getContractReferenceItems() {
+    return this.http.get<ContractReferenceItemsDTO[]>(this.endpoint + "/get-items");
   }
 
   getAllContracts() {

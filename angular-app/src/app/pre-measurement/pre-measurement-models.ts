@@ -20,6 +20,6 @@ export interface PreMeasurementStreetDTO {
 }
 
 export interface PreMeasurementStreetItemDTO {
-  materialId: Number,
-  materialQuantity: Number,
+  itemContractId: Number,
+  itemContractQuantity: Number,
 }
