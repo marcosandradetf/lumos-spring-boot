@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import * as L from 'leaflet';
-import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 import {PreMeasurementService} from '../../pre-measurement/pre-measurement-home/premeasurement-service.service';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {TeamsModel} from '../../models/teams.model';
@@ -21,6 +20,7 @@ import {
 import {FormsModule} from '@angular/forms';
 import {EstoqueService} from '../../stock/services/estoque.service';
 import {Deposit} from '../../models/almoxarifado.model';
+import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -70,7 +70,8 @@ export class MeasurementDetailsComponent implements OnInit {
     status: '',
     teamName: '',
     totalPrice: '',
-    streets: []
+    depositName: '',
+    streets: [],
   }
   private map!: L.Map;
   streetId: number = 0;

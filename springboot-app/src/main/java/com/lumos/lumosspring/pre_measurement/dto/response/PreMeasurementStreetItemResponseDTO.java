@@ -4,9 +4,10 @@ public record PreMeasurementStreetItemResponseDTO(
         long preMeasurementStreetItemId,
         long contractItemId,
         String contractReferenceItemName,
+        String contractReferenceNameForImport,
         String contractReferenceItemType,
-        String contractReferenceItemPower,
-        String contractReferenceItemLength,
+        String contractReferenceLinking,
+        String contractReferenceItemDependency,
         double measuredQuantity,
         String itemStatus
 ) {

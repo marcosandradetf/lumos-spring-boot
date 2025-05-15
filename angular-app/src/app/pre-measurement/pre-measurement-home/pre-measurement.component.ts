@@ -6,8 +6,8 @@ import {UtilsService} from '../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import {PreMeasurementResponseDTO} from '../pre-measurement-models';
 
 @Component({
   selector: 'app-pre-measurement-home',

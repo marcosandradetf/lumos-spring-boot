@@ -9,8 +9,8 @@ import {ReportService} from '../../core/service/report-service';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
-import {response} from 'express';
+import {ContractAndItemsResponse} from '../../contract/contract-models';
+import {PreMeasurementResponseDTO} from '../pre-measurement-models';
 
 @Component({
   selector: 'app-pre-measurement-edit',
@@ -38,7 +38,8 @@ export class PreMeasurementEditComponent {
     teamName: '',
     totalPrice: '',
     status: '',
-    streets: []
+    depositName: '',
+    streets: [],
   };
 
   preMeasurementCopy: PreMeasurementResponseDTO = {
@@ -52,30 +53,13 @@ export class PreMeasurementEditComponent {
     teamName: '',
     totalPrice: '',
     status: '',
-    streets: []
+    depositName: '',
+    streets: [],
   };
 
-  contract: {
-    contractId: number,
-    contractNumber: string,
-    contractor: string,
-    cnpj: string,
-    phone: string,
-    address: string,
-    contractFile: string,
-    createdBy: string,
-    createdAt: string,
-    items: {
-      number: number;
-      contractItemId: number;
-      description: string;
-      unitPrice: string;
-      contractedQuantity: number;
-      linking: string;
-    }[],
-  } = {
+  contract: ContractAndItemsResponse = {
     contractId: 0,
-    contractNumber: "",
+    number: "",
     contractor: "",
     cnpj: "",
     phone: "",
@@ -83,7 +67,12 @@ export class PreMeasurementEditComponent {
     contractFile: "",
     createdBy: '',
     createdAt: '',
-    items: []
+    items: [],
+    noticeFile: '',
+    itemQuantity: 0,
+    contractStatus: '',
+    contractValue: '',
+    additiveFile: ''
   };
   openModal: boolean = false;
   loading: boolean = true;
@@ -104,17 +93,7 @@ export class PreMeasurementEditComponent {
     status: false,
   };
 
-  streetItems: {
-    preMeasurementStreetItemId: number;
-    materialId: number;
-    contractItemId: number;
-    materialName: string;
-    materialType: string;
-    materialPower: string;
-    materialLength: string;
-    materialQuantity: number;
-    status: string
-  }[] = [];
+  streetItems: PreMeasurementResponseDTO["streets"][0]["items"] = [];
 
   constructor(protected router: Router, protected utils: UtilsService, private titleService: Title,
               private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, authService: AuthService,
@@ -169,7 +148,7 @@ export class PreMeasurementEditComponent {
       case "street":
         return this.preMeasurement.streets.find(s => s.preMeasurementStreetId === id)?.status === "CANCELLED";
       case "item":
-        return this.streetItems.find(i => i.preMeasurementStreetItemId == id)?.status === "CANCELLED";
+        return this.streetItems.find(i => i.preMeasurementStreetItemId == id)?.itemStatus === "CANCELLED";
       default:
         return true;
     }
@@ -208,7 +187,7 @@ export class PreMeasurementEditComponent {
       case true:
         street.status = "CANCELLED";
         street.items.forEach((item) => {
-          if (item) item.status = "CANCELLED";
+          if (item) item.itemStatus = "CANCELLED";
         });
         this.preMeasurement.streets[streetIndex] = street;
         this.cancelledStreets.push({streetId: id});
@@ -218,19 +197,19 @@ export class PreMeasurementEditComponent {
       case false:
         street.items.forEach((item) => {
           if (item) {
-            if (item.materialQuantity === this.getOriginalItem(item.preMeasurementStreetItemId)) {
-              item.status = 'PENDING';
+            if (item.measuredQuantity === this.getOriginalItem(item.preMeasurementStreetItemId)) {
+              item.itemStatus = 'PENDING';
             } else {
-              item.status = 'EDITED';
+              item.itemStatus = 'EDITED';
               this.changedItems.push({
                 itemId: item.preMeasurementStreetItemId,
                 streetId: this.streetId,
-                quantity: item.materialQuantity
+                quantity: item.measuredQuantity
               });
             }
           }
         });
-        street.status = this.streetItems.some(i => i.status === 'EDITED') ? 'EDITED' : 'PENDING';
+        street.status = this.streetItems.some(i => i.itemStatus === 'EDITED') ? 'EDITED' : 'PENDING';
         this.preMeasurement.streets[streetIndex] = street;
         this.openModal = false;
         this.utils.showMessage("Todos os itens da rua " + street.street + " foram reativados", false);
@@ -244,94 +223,119 @@ export class PreMeasurementEditComponent {
     if (itemIndex === -1) return
 
     let relayIndex = 0;
-    if (this.streetItems[itemIndex].materialType.toUpperCase() === 'LED') relayIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'RELÉ');
+    let projectIndex = 0;
+    let ledServiceIndex = 0;
+    if (this.streetItems[itemIndex].contractReferenceItemType.toUpperCase() === 'LED') {
+      relayIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'RELÉ');
+      projectIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'PROJETO');
+      ledServiceIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'SERVIÇO' && i.contractReferenceItemDependency === 'LED');
+    }
     let cableIndex = 0;
-    if (this.streetItems[itemIndex].materialType.toUpperCase() === 'BRAÇO') cableIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'CABO');
+    let armServiceIndex = 0;
+    if (this.streetItems[itemIndex].contractReferenceItemType.toUpperCase() === 'BRAÇO') {
+      cableIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'CABO');
+      armServiceIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'SERVIÇO' && i.contractReferenceItemDependency === 'BRAÇO');
+    }
     let cableQuantity = 0.0;
     let ledQuantity = 0.0;
     let armQuantity = 0.0;
 
+
     let item = this.streetItems[itemIndex];
     let message = '';
-    switch (this.streetItems[itemIndex].status) {
+    switch (this.streetItems[itemIndex].itemStatus) {
       case 'PENDING':
       case 'EDITED':
-        this.streetItems[itemIndex].status = "CANCELLED";
+        this.streetItems[itemIndex].itemStatus = "CANCELLED";
         if (relayIndex > 0) {
-          ledQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "LED" && si.status !== "CANCELLED").length;
+          ledQuantity = this.streetItems.filter(si => si.contractReferenceItemType?.toUpperCase() === "LED"
+            && si.itemStatus !== "CANCELLED").length;
           if (ledQuantity > 0) {
-            this.streetItems[relayIndex].materialQuantity -= this.streetItems[itemIndex].materialQuantity;
-            this.streetItems[relayIndex].status = "EDITED";
-            message = `ITEM ${item.materialName} CANCELADO E ITEM ${this.streetItems[relayIndex].materialName} ALTERADO`;
+            this.streetItems[relayIndex].measuredQuantity -= this.streetItems[itemIndex].measuredQuantity;
+            this.streetItems[relayIndex].itemStatus = "EDITED";
+
+            this.streetItems[projectIndex].measuredQuantity -= this.streetItems[itemIndex].measuredQuantity;
+            this.streetItems[projectIndex].itemStatus = "EDITED";
+
+            this.streetItems[ledServiceIndex].measuredQuantity -= this.streetItems[itemIndex].measuredQuantity;
+            this.streetItems[ledServiceIndex].itemStatus = "EDITED";
+
+            message = `ITEM ${item.contractReferenceNameForImport} CANCELADO E ITENS ${this.streetItems[relayIndex].contractReferenceNameForImport}, ${this.streetItems[projectIndex].contractReferenceNameForImport} E ${this.streetItems[ledServiceIndex].contractReferenceNameForImport} ALTERADOS`;
           } else {
-            this.streetItems[relayIndex].status = "CANCELLED";
-            message = `ITENS ${item.materialName} E ${this.streetItems[relayIndex].materialName} CANCELADOS`;
+            this.streetItems[relayIndex].itemStatus = "CANCELLED";
+            this.streetItems[projectIndex].itemStatus = "CANCELLED";
+            this.streetItems[ledServiceIndex].itemStatus = "CANCELLED";
+            message = `ITENS ${item.contractReferenceNameForImport}, ${this.streetItems[relayIndex].contractReferenceNameForImport}, ${this.streetItems[projectIndex].contractReferenceNameForImport} E ${this.streetItems[ledServiceIndex].contractReferenceNameForImport} CANCELADOS`;
           }
         } else if (cableIndex > 0) {
-          armQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "BRAÇO" && si.status !== "CANCELLED").length;
+          armQuantity = this.streetItems.filter(si => si.contractReferenceItemType?.toUpperCase() === "BRAÇO" && si.itemStatus !== "CANCELLED").length;
           if (armQuantity > 0) {
-            if (this.streetItems[itemIndex].materialLength.startsWith('1')) {
+            if (this.streetItems[itemIndex].contractReferenceLinking.startsWith('1')) {
               cableQuantity = 2.5;
-            } else if (this.streetItems[itemIndex].materialLength.startsWith('2')) {
+            } else if (this.streetItems[itemIndex].contractReferenceLinking.startsWith('2')) {
               cableQuantity = 8.5;
-            } else if (this.streetItems[itemIndex].materialLength.startsWith('3')) {
+            } else if (this.streetItems[itemIndex].contractReferenceLinking.startsWith('3')) {
               cableQuantity = 12.5;
             }
-            this.streetItems[cableIndex].materialQuantity -= cableQuantity;
-            this.streetItems[cableIndex].status = "EDITED";
-            message = `ITEM ${item.materialName} CANCELADO E ITEM ${this.streetItems[cableIndex].materialName} ALTERADO`;
+            this.streetItems[cableIndex].measuredQuantity -= cableQuantity;
+            this.streetItems[cableIndex].itemStatus = "EDITED";
+
+            this.streetItems[armServiceIndex].measuredQuantity -= this.streetItems[itemIndex].measuredQuantity;
+            this.streetItems[armServiceIndex].itemStatus = "EDITED";
+
+            message = `ITEM ${item.contractReferenceNameForImport} CANCELADO E ITEM ${this.streetItems[cableIndex].contractReferenceNameForImport} ALTERADO`;
           } else {
-            this.streetItems[cableIndex].status = "CANCELLED";
-            message = `ITENS ${item.materialName} E ${this.streetItems[cableIndex].materialName} CANCELADOS`;
+            this.streetItems[cableIndex].itemStatus = "CANCELLED";
+            message = `ITENS ${item.contractReferenceNameForImport} E ${this.streetItems[cableIndex].contractReferenceNameForImport} CANCELADOS`;
           }
         } else {
-          message = "ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " CANCELADO";
+          message = "ITEM " + item.contractReferenceNameForImport + " CANCELADO";
         }
 
         break;
       case 'CANCELLED':
-        if (this.streetItems[itemIndex].materialQuantity === this.getOriginalItem(this.streetItems[itemIndex].preMeasurementStreetItemId)) {
-          this.streetItems[itemIndex].status = 'PENDING';
+        if (this.streetItems[itemIndex].measuredQuantity === this.getOriginalItem(this.streetItems[itemIndex].preMeasurementStreetItemId)) {
+          this.streetItems[itemIndex].itemStatus = 'PENDING';
         } else {
-          this.streetItems[itemIndex].status = 'EDITED';
+          this.streetItems[itemIndex].itemStatus = 'EDITED';
         }
         if (relayIndex > 0) {
-          ledQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "LED" && si.status === "CANCELLED").length;
+          ledQuantity = this.streetItems.filter(si => si.contractReferenceItemType?.toUpperCase() === "LED" && si.itemStatus === "CANCELLED").length;
           if (ledQuantity === 0) {
-            this.streetItems[relayIndex].materialQuantity += this.streetItems[itemIndex].materialQuantity;
-            message = `ITEM ${item.materialName} ATIVADO E ITEM ${this.streetItems[relayIndex].materialName} ALTERADO`;
+            this.streetItems[relayIndex].measuredQuantity += this.streetItems[itemIndex].measuredQuantity;
+            message = `ITEM ${item.contractReferenceNameForImport} ATIVADO E ITEM ${this.streetItems[relayIndex].contractReferenceNameForImport} ALTERADO`;
           } else {
-            message = `ITENS ${item.materialName} E ${this.streetItems[relayIndex].materialName} ATIVADOS`;
+            message = `ITENS ${item.contractReferenceNameForImport} E ${this.streetItems[relayIndex].contractReferenceNameForImport} ATIVADOS`;
           }
-          if (this.streetItems[relayIndex].materialQuantity === this.getOriginalItem(this.streetItems[relayIndex].preMeasurementStreetItemId)) {
-            this.streetItems[relayIndex].status = 'PENDING';
+          if (this.streetItems[relayIndex].measuredQuantity === this.getOriginalItem(this.streetItems[relayIndex].preMeasurementStreetItemId)) {
+            this.streetItems[relayIndex].itemStatus = 'PENDING';
           } else {
-            this.streetItems[relayIndex].status = 'EDITED';
+            this.streetItems[relayIndex].itemStatus = 'EDITED';
           }
 
         } else if (cableIndex > 0) {
-          armQuantity = this.streetItems.filter(si => si.materialType?.toUpperCase() === "BRAÇO" && si.status === "CANCELLED").length;
+          armQuantity = this.streetItems.filter(si => si.contractReferenceItemType?.toUpperCase() === "BRAÇO" && si.itemStatus === "CANCELLED").length;
           if (armQuantity === 0) {
-            if (this.streetItems[itemIndex].materialLength.startsWith('1')) {
+            if (this.streetItems[itemIndex].contractReferenceLinking.startsWith('1')) {
               cableQuantity = 2.5;
-            } else if (this.streetItems[itemIndex].materialLength.startsWith('2')) {
+            } else if (this.streetItems[itemIndex].contractReferenceLinking.startsWith('2')) {
               cableQuantity = 8.5;
-            } else if (this.streetItems[itemIndex].materialLength.startsWith('3')) {
+            } else if (this.streetItems[itemIndex].contractReferenceLinking.startsWith('3')) {
               cableQuantity = 12.5;
             }
-            this.streetItems[cableIndex].materialQuantity += cableQuantity;
-            this.streetItems[cableIndex].status = "EDITED";
-            message = `ITEM ${item.materialName} ATIVADO E ITEM ${this.streetItems[cableIndex].materialName} ALTERADO`;
+            this.streetItems[cableIndex].measuredQuantity += cableQuantity;
+            this.streetItems[cableIndex].itemStatus = "EDITED";
+            message = `ITEM ${item.contractReferenceNameForImport} ATIVADO E ITEM ${this.streetItems[cableIndex].contractReferenceNameForImport} ALTERADO`;
           } else {
-            message = `ITENS ${item.materialName} E ${this.streetItems[cableIndex].materialName} ATIVADOS`;
+            message = `ITENS ${item.contractReferenceNameForImport} E ${this.streetItems[cableIndex].contractReferenceNameForImport} ATIVADOS`;
           }
-          if (this.streetItems[cableIndex].materialQuantity === this.getOriginalItem(this.streetItems[cableIndex].preMeasurementStreetItemId)) {
-            this.streetItems[cableIndex].status = 'PENDING';
+          if (this.streetItems[cableIndex].measuredQuantity === this.getOriginalItem(this.streetItems[cableIndex].preMeasurementStreetItemId)) {
+            this.streetItems[cableIndex].itemStatus = 'PENDING';
           } else {
-            this.streetItems[cableIndex].status = 'EDITED';
+            this.streetItems[cableIndex].itemStatus = 'EDITED';
           }
         } else {
-          message = "ITEM " + item.materialName + " " + (item.materialLength ? item.materialLength : '') + (item.materialPower ? item.materialPower : '') + " ATIVADO";
+          message = "ITEM " + item.contractReferenceNameForImport + " ATIVADO";
         }
         break;
     }
@@ -339,23 +343,23 @@ export class PreMeasurementEditComponent {
     // adicao items
     this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== id);
     this.changedItems = this.changedItems.filter(ci => ci.itemId !== id);
-    if (item.status === "CANCELLED") {
+    if (item.itemStatus === "CANCELLED") {
       this.cancelledItems.push({itemId: id, streetId: this.streetId});
-    } else if (item.status === "EDITED") {
-      this.changedItems.push({itemId: id, streetId: this.streetId, quantity: item.materialQuantity});
+    } else if (item.itemStatus === "EDITED") {
+      this.changedItems.push({itemId: id, streetId: this.streetId, quantity: item.measuredQuantity});
     }
 
     // adicao itens dependentes
     if (relayIndex > 0) {
       this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId);
       this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId)
-      if (this.streetItems[relayIndex].status === "EDITED") {
+      if (this.streetItems[relayIndex].itemStatus === "EDITED") {
         this.changedItems.push({
           itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
           streetId: this.streetId,
-          quantity: this.streetItems[relayIndex].materialQuantity
+          quantity: this.streetItems[relayIndex].measuredQuantity
         });
-      } else if (this.streetItems[relayIndex].status === "CANCELLED") {
+      } else if (this.streetItems[relayIndex].itemStatus === "CANCELLED") {
         this.cancelledItems.push({
           itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
           streetId: this.streetId
@@ -364,14 +368,14 @@ export class PreMeasurementEditComponent {
     } else if (cableIndex > 0) {
       this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId);
       this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId)
-      if (this.streetItems[cableIndex].status === "EDITED") {
+      if (this.streetItems[cableIndex].itemStatus === "EDITED") {
         this.changedItems.push({
           itemId: this.streetItems[cableIndex].preMeasurementStreetItemId,
           streetId: this.streetId,
-          quantity: this.streetItems[cableIndex].materialQuantity
+          quantity: this.streetItems[cableIndex].measuredQuantity
         });
 
-      } else if (this.streetItems[cableIndex].status === "CANCELLED") {
+      } else if (this.streetItems[cableIndex].itemStatus === "CANCELLED") {
         this.cancelledItems.push({
           itemId: this.streetItems[cableIndex].preMeasurementStreetItemId,
           streetId: this.streetId
@@ -380,7 +384,7 @@ export class PreMeasurementEditComponent {
     }
     const street = this.preMeasurement.streets?.find(s => s.preMeasurementStreetId == this.streetId);
     if (street) {
-      street.status = this.streetItems.some(i => i.status === 'CANCELLED') ? 'EDITED' : 'PENDING';
+      street.status = this.streetItems.some(i => item.itemStatus === 'CANCELLED') ? 'EDITED' : 'PENDING';
     }
     this.utils.showMessage(message, false);
 
@@ -390,112 +394,112 @@ export class PreMeasurementEditComponent {
     let index = this.streetItems.findIndex(i => i.preMeasurementStreetItemId === preMeasurementStreetItemId);
     if (index === -1) return
     let relayIndex = 0;
-    if (this.streetItems[index].materialType.toUpperCase() === 'LED') relayIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'RELÉ');
+    if (this.streetItems[index].contractReferenceItemType.toUpperCase() === 'LED') relayIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'RELÉ');
     let cableIndex = 0;
-    if (this.streetItems[index].materialType.toUpperCase() === 'BRAÇO') cableIndex = this.streetItems.findIndex(i => i.materialType.toUpperCase() === 'CABO');
+    if (this.streetItems[index].contractReferenceItemType.toUpperCase() === 'BRAÇO') cableIndex = this.streetItems.findIndex(i => i.contractReferenceItemType.toUpperCase() === 'CABO');
     let cableQuantity = 0.0;
 
     if (action === 'increment') {
-      this.streetItems[index].materialQuantity += 1;
-      if (this.streetItems[index].materialQuantity === this.getOriginalItem(this.streetItems[index].preMeasurementStreetItemId)) {
-        this.streetItems[index].status = 'PENDING';
+      this.streetItems[index].measuredQuantity += 1;
+      if (this.streetItems[index].measuredQuantity === this.getOriginalItem(this.streetItems[index].preMeasurementStreetItemId)) {
+        this.streetItems[index].itemStatus = 'PENDING';
       } else {
-        this.streetItems[index].status = 'EDITED';
+        this.streetItems[index].itemStatus = 'EDITED';
       }
 
       if (relayIndex > 0) {
-        this.streetItems[relayIndex].materialQuantity += 1;
-        if (this.streetItems[relayIndex].materialQuantity === this.getOriginalItem(this.streetItems[relayIndex].preMeasurementStreetItemId)) {
-          this.streetItems[relayIndex].status = 'PENDING';
+        this.streetItems[relayIndex].measuredQuantity += 1;
+        if (this.streetItems[relayIndex].measuredQuantity === this.getOriginalItem(this.streetItems[relayIndex].preMeasurementStreetItemId)) {
+          this.streetItems[relayIndex].itemStatus = 'PENDING';
         } else {
-          this.streetItems[relayIndex].status = 'EDITED';
+          this.streetItems[relayIndex].itemStatus = 'EDITED';
         }
       }
 
       if (cableIndex > 0) {
-        if (this.streetItems[index].materialLength.startsWith('1')) {
+        if (this.streetItems[index].contractReferenceLinking.startsWith('1')) {
           cableQuantity = 2.5;
-        } else if (this.streetItems[index].materialLength.startsWith('2')) {
+        } else if (this.streetItems[index].contractReferenceLinking.startsWith('2')) {
           cableQuantity = 8.5;
-        } else if (this.streetItems[index].materialLength.startsWith('3')) {
+        } else if (this.streetItems[index].contractReferenceLinking.startsWith('3')) {
           cableQuantity = 12.5;
         }
-        this.streetItems[cableIndex].materialQuantity += cableQuantity;
-        if (this.streetItems[cableIndex].materialQuantity === this.getOriginalItem(this.streetItems[cableIndex].preMeasurementStreetItemId)) {
-          this.streetItems[cableIndex].status = 'PENDING';
+        this.streetItems[cableIndex].measuredQuantity += cableQuantity;
+        if (this.streetItems[cableIndex].measuredQuantity === this.getOriginalItem(this.streetItems[cableIndex].preMeasurementStreetItemId)) {
+          this.streetItems[cableIndex].itemStatus = 'PENDING';
         } else {
-          this.streetItems[cableIndex].status = 'EDITED';
+          this.streetItems[cableIndex].itemStatus = 'EDITED';
         }
       }
 
     } else if (action === 'decrement') {
-      if (this.streetItems[index].materialQuantity == 0) return
-      this.streetItems[index].materialQuantity -= 1;
-      if (this.streetItems[index].materialQuantity === this.getOriginalItem(this.streetItems[index].preMeasurementStreetItemId)) {
-        this.streetItems[index].status = 'PENDING';
+      if (this.streetItems[index].measuredQuantity == 0) return
+      this.streetItems[index].measuredQuantity -= 1;
+      if (this.streetItems[index].measuredQuantity === this.getOriginalItem(this.streetItems[index].preMeasurementStreetItemId)) {
+        this.streetItems[index].itemStatus = 'PENDING';
       } else {
-        this.streetItems[index].status = 'EDITED';
+        this.streetItems[index].itemStatus = 'EDITED';
       }
 
       if (relayIndex > 0) {
         // adicionar validacao de rua
-        this.streetItems[relayIndex].materialQuantity -= 1;
-        if (this.streetItems[relayIndex].materialQuantity === this.getOriginalItem(this.streetItems[relayIndex].preMeasurementStreetItemId)) {
-          this.streetItems[relayIndex].status = 'PENDING';
+        this.streetItems[relayIndex].measuredQuantity -= 1;
+        if (this.streetItems[relayIndex].measuredQuantity === this.getOriginalItem(this.streetItems[relayIndex].preMeasurementStreetItemId)) {
+          this.streetItems[relayIndex].itemStatus = 'PENDING';
         } else {
-          this.streetItems[relayIndex].status = 'EDITED';
+          this.streetItems[relayIndex].itemStatus = 'EDITED';
         }
       }
 
       if (cableIndex > 0) {
-        if (this.streetItems[index].materialLength.startsWith('1')) {
+        if (this.streetItems[index].contractReferenceLinking.startsWith('1')) {
           cableQuantity = 2.5;
-        } else if (this.streetItems[index].materialLength.startsWith('2')) {
+        } else if (this.streetItems[index].contractReferenceLinking.startsWith('2')) {
           cableQuantity = 8.5;
-        } else if (this.streetItems[index].materialLength.startsWith('3')) {
+        } else if (this.streetItems[index].contractReferenceLinking.startsWith('3')) {
           cableQuantity = 12.5;
         }
-        this.streetItems[cableIndex].materialQuantity -= cableQuantity;
-        if (this.streetItems[cableIndex].materialQuantity === this.getOriginalItem(this.streetItems[cableIndex].preMeasurementStreetItemId)) {
-          this.streetItems[cableIndex].status = 'PENDING';
+        this.streetItems[cableIndex].measuredQuantity -= cableQuantity;
+        if (this.streetItems[cableIndex].measuredQuantity === this.getOriginalItem(this.streetItems[cableIndex].preMeasurementStreetItemId)) {
+          this.streetItems[cableIndex].itemStatus = 'PENDING';
         } else {
-          this.streetItems[cableIndex].status = 'EDITED';
+          this.streetItems[cableIndex].itemStatus = 'EDITED';
         }
       }
     }
 
     // adicao itens primarios
     this.changedItems = this.changedItems.filter(ci => ci.itemId !== preMeasurementStreetItemId);
-    if (this.streetItems[index].status === 'EDITED') {
+    if (this.streetItems[index].itemStatus === 'EDITED') {
       this.changedItems.push({
         itemId: preMeasurementStreetItemId,
         streetId: this.streetId,
-        quantity: this.streetItems[index].materialQuantity
+        quantity: this.streetItems[index].measuredQuantity
       });
     }
 
     // adicao itens dependentes
     if (cableIndex > 0) {
       this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[cableIndex].preMeasurementStreetItemId)
-      if (this.streetItems[cableIndex].status === 'EDITED')
+      if (this.streetItems[cableIndex].itemStatus === 'EDITED')
         this.changedItems.push({
           itemId: this.streetItems[cableIndex].preMeasurementStreetItemId,
           streetId: this.streetId,
-          quantity: this.streetItems[cableIndex].materialQuantity
+          quantity: this.streetItems[cableIndex].measuredQuantity
         });
     } else if (relayIndex) {
       this.changedItems = this.changedItems.filter(ci => ci.itemId !== this.streetItems[relayIndex].preMeasurementStreetItemId)
-      if (this.streetItems[relayIndex].status === 'EDITED')
+      if (this.streetItems[relayIndex].itemStatus === 'EDITED')
         this.changedItems.push({
           itemId: this.streetItems[relayIndex].preMeasurementStreetItemId,
           streetId: this.streetId,
-          quantity: this.streetItems[relayIndex].materialQuantity
+          quantity: this.streetItems[relayIndex].measuredQuantity
         });
     }
 
     const street = this.preMeasurement.streets?.find(s => s.preMeasurementStreetId == this.streetId);
     if (street) {
-      street.status = this.streetItems.some(i => i.status === 'EDITED') ? 'EDITED' : 'PENDING';
+      street.status = this.streetItems.some(i => i.itemStatus === 'EDITED') ? 'EDITED' : 'PENDING';
     }
 
   }
@@ -516,6 +520,7 @@ export class PreMeasurementEditComponent {
   }
 
   hideContent: boolean = false;
+
   sendModifications() {
     this.openModal = false;
     const modifications = {
@@ -525,7 +530,7 @@ export class PreMeasurementEditComponent {
     }
 
     this.preMeasurementService.sendModifications(modifications).subscribe({
-      next: (response: {message: string}) => {
+      next: (response: { message: string }) => {
         this.utils.showMessage(response.message, false);
         this.hideContent = true;
         console.log(response);
@@ -538,7 +543,65 @@ export class PreMeasurementEditComponent {
   getOriginalItem(preMeasurementStreetItemId: number) {
     return this.preMeasurementCopy
       .streets.find(s => s.preMeasurementStreetId == this.streetId)
-      ?.items.find(i => i.preMeasurementStreetItemId == preMeasurementStreetItemId)?.materialQuantity || -1;
+      ?.items.find(i => i.preMeasurementStreetItemId == preMeasurementStreetItemId)?.measuredQuantity || -1;
   }
+
+  cancelProject() {
+    const itemId = this.streetItems.find(i => i.contractReferenceItemType?.toUpperCase() == "PROJETO")?.preMeasurementStreetItemId;
+    if(!itemId) return;
+    let itemIndex = this.streetItems.findIndex(i => i.preMeasurementStreetItemId == itemId);
+    if (itemIndex === -1) return
+
+    let item = this.streetItems[itemIndex];
+    let message = '';
+    const quantity = this.getProjectQuantity();
+    switch (this.streetItems[itemIndex].itemStatus) {
+      case 'PENDING':
+      case 'EDITED':
+        this.streetItems[itemIndex].itemStatus = "CANCELLED";
+        this.streetItems[itemIndex].measuredQuantity = quantity;
+        message = "PROJETO CANCELADO NA RUA ATUAL";
+        break;
+      case 'CANCELLED':
+        if (quantity === this.getOriginalItem(this.streetItems[itemIndex].preMeasurementStreetItemId)) {
+          this.streetItems[itemIndex].itemStatus = 'PENDING';
+        } else {
+          this.streetItems[itemIndex].itemStatus = 'EDITED';
+        }
+        message = "PROJETO RESTAURADO NA RUA ATUAL";
+        break;
+    }
+
+    this.cancelledItems = this.cancelledItems.filter(ci => ci.itemId !== itemId);
+    this.changedItems = this.changedItems.filter(ci => ci.itemId !== itemId);
+    if (item.itemStatus === "CANCELLED") {
+      this.cancelledItems.push({itemId: itemId, streetId: this.streetId});
+    } else if (item.itemStatus === "EDITED") {
+      this.changedItems.push({itemId: itemId, streetId: this.streetId, quantity: item.measuredQuantity});
+    }
+    this.utils.showMessage(message, false);
+  }
+
+  getProjectQuantity() {
+    const project = this.streetItems.find(i => i.contractReferenceItemType?.toUpperCase() == "PROJETO")
+    if(!project) return 0;
+    let quantity = 0;
+    this.streetItems.forEach(item => {
+      if(item.contractReferenceItemType?.toUpperCase() == project.contractReferenceItemDependency) {
+        quantity += item.measuredQuantity;
+      }
+    });
+    return quantity;
+  }
+
+  isProjectCancelled() {
+    const itemId = this.streetItems.find(i => i.contractReferenceItemType?.toUpperCase() == "PROJETO")?.preMeasurementStreetItemId;
+    if (!itemId) return false;
+    let itemIndex = this.streetItems.findIndex(i => i.preMeasurementStreetItemId == itemId);
+    if (itemIndex === -1) return false;
+
+    return this.streetItems[itemIndex].itemStatus === 'CANCELLED';
+  }
+
 }
 

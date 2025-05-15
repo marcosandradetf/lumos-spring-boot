@@ -1,9 +1,6 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ModalComponent} from "../../../../shared/components/modal/modal.component";
+import {Component, OnInit} from '@angular/core';
 import {CurrencyPipe, NgForOf, NgIf} from "@angular/common";
 import {ScreenMessageComponent} from "../../../../shared/components/screen-message/screen-message.component";
-import {PreMeasurementResponseDTO} from '../../../../models/pre-measurement-response-d-t.o';
-import {PreMeasurementService} from '../../../../pre-measurement/pre-measurement-home/premeasurement-service.service';
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ContractService} from '../../../services/contract.service';
@@ -30,10 +27,7 @@ import {Ripple} from 'primeng/ripple';
     Button,
     ButtonDirective,
     FormsModule,
-    InputText,
-    Ripple,
-    ButtonIcon,
-    ButtonLabel
+    InputText
   ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'

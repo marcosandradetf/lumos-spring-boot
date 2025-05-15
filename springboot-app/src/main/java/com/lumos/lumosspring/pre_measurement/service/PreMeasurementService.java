@@ -397,9 +397,10 @@ public class PreMeasurementService {
                                                 i.getPreMeasurementStreetItemId(),
                                                 i.getContractItem().getContractItemId(),
                                                 i.getContractItem().getReferenceItem().getDescription(),
+                                                i.getContractItem().getReferenceItem().getNameForImport(),
                                                 i.getContractItem().getReferenceItem().getType(),
-                                                i.getContractItem().getReferenceItem().getItemDependency(),
                                                 i.getContractItem().getReferenceItem().getLinking(),
+                                                i.getContractItem().getReferenceItem().getItemDependency(),
                                                 i.getMeasuredItemQuantity(),
                                                 i.getItemStatus()
                                         )).toList()
@@ -466,29 +467,20 @@ public class PreMeasurementService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal servicesPrices = allStreets.stream()
-                .map(PreMeasurementStreet::getItems)
-                .filter(Objects::nonNull)
-                .flatMap(Collection::stream)
-                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalPrice = itemsPrices.add(servicesPrices);
 
         PreMeasurement preMeasurement = allStreets.getFirst().getPreMeasurement();
-        preMeasurement.subtractTotalPrice(totalPrice);
+        preMeasurement.subtractTotalPrice(itemsPrices);
         preMeasurement.setStatus(ContractStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
     protected void cancelItems(List<CancelledItems> cancelledItems) {
-        List<Long> itemsIds = cancelledItems.stream()
+        List<Long> changedItemsIds = cancelledItems.stream()
                 .filter(Objects::nonNull)
                 .map(CancelledItems::getItemId)
                 .toList();
 
-        List<PreMeasurementStreetItem> allItems = preMeasurementStreetItemRepository.findAllById(itemsIds)
+        List<PreMeasurementStreetItem> allItems = preMeasurementStreetItemRepository.findAllById(changedItemsIds)
                 .stream()
                 .peek(s ->
                         s.setItemStatus(ItemStatus.CANCELLED)
@@ -508,63 +500,34 @@ public class PreMeasurementService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal servicesPrices = allItems.stream()
-                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-
-        BigDecimal totalPrice = itemsPrices.add(servicesPrices);
 
         PreMeasurement preMeasurement = allItems.getFirst().getPreMeasurement();
-        preMeasurement.subtractTotalPrice(totalPrice);
+        preMeasurement.subtractTotalPrice(itemsPrices);
         preMeasurement.setStatus(ContractStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
     protected void changeItems(List<ChangedItems> changedItems) {
-        List<Long> itemsIds = changedItems.stream()
+        List<Long> changedItemsIds = changedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ChangedItems::getItemId)
                 .toList();
 
         // Carrega os itens antigos com base nos IDs
-        List<PreMeasurementStreetItem> oldItems = preMeasurementStreetItemRepository.findAllById(itemsIds)
+        List<PreMeasurementStreetItem> oldItems = preMeasurementStreetItemRepository.findAllById(changedItemsIds)
                 .stream()
                 .toList();
 
-        Set<Long> preMeasurementIds = oldItems.stream()
+        Set<Long> preMeasurementId = oldItems.stream()
                 .map(item -> item.getPreMeasurement().getPreMeasurementId())
                 .collect(Collectors.toSet());
 
-        if (preMeasurementIds.size() > 1) {
+        if (preMeasurementId.size() > 1) {
             throw new IllegalStateException("Itens de múltiplas pré-medições não podem ser alterados juntos");
         }
 
         Map<Long, PreMeasurementStreetItem> itemMap = oldItems.stream()
                 .collect(Collectors.toMap(PreMeasurementStreetItem::getPreMeasurementStreetItemId, i -> i));
-
-        // Carrega os serviços do contrato relacionado
-        // Pega o contrato a partir de um dos itens (todos são da mesma pré-med)
-        Optional<Contract> contractOpt = oldItems.stream()
-                .map(PreMeasurementStreetItem::getPreMeasurementStreet)
-                .filter(Objects::nonNull)
-                .map(PreMeasurementStreet::getPreMeasurement)
-                .filter(Objects::nonNull)
-                .map(PreMeasurement::getContract)
-                .filter(Objects::nonNull)
-                .findFirst();
-
-        List<ContractItemsQuantitative> services = contractOpt
-                .map(contract -> getAllServices(contract.getContractId()))
-                .orElse(Collections.emptyList());
-
-
-        // Soma total de preço de serviços antigos
-        BigDecimal oldServicesPrice = oldItems.stream()
-                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Soma total de preço de itens antigos
         BigDecimal oldItemsPrice = oldItems.stream()
@@ -583,29 +546,11 @@ public class PreMeasurementService {
                     item.setItemStatus(ItemStatus.APPROVED);
                     item.setMeasuredItemQuantity(quantity);
                     item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
-
-                    if (item.getContractServiceIdMask() != null) {
-                        var typeItem = item.getContractItem().getReferenceItem().getType();
-                        item.setContractServiceDividerPrices(BigDecimal.ZERO, true);
-                        services.stream()
-                                .filter(serviceItem ->
-                                        typeItem.equalsIgnoreCase(serviceItem.getReferenceItem().getItemDependency()))
-                                .forEach(contractService ->
-                                        item.setContractServiceDividerPrices(contractService.getUnitPrice().multiply(BigDecimal.valueOf(quantity))
-                                        ));
-                    }
-
                     Optional.ofNullable(item.getPreMeasurementStreet())
                             .ifPresent(s -> s.setStreetStatus(ItemStatus.APPROVED));
                 })
                 .map(Map.Entry::getKey)
                 .toList();
-
-        // Soma total de preço de serviços novos
-        BigDecimal newServicesPrice = newItems.stream()
-                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Soma total de preço de itens novos
         BigDecimal newItemsPrice = newItems.stream()
@@ -618,45 +563,10 @@ public class PreMeasurementService {
         }
 
         PreMeasurement preMeasurement = newItems.getFirst().getPreMeasurement();
-        preMeasurement.subtractTotalPrice(oldItemsPrice.add(oldServicesPrice));
-        preMeasurement.sumTotalPrice(newItemsPrice.add(newServicesPrice));
+        preMeasurement.subtractTotalPrice(oldItemsPrice);
+        preMeasurement.sumTotalPrice(newItemsPrice.add(newItemsPrice));
         preMeasurement.setStatus(ContractStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
-    }
-
-    private BigDecimal calculateServicesPrice(List<PreMeasurementStreetItem> items, List<ContractItemsQuantitative> services) {
-        return items.stream()
-                .filter(item -> item.getContractServiceIdMask() != null && !item.getContractServiceIdMask().isBlank())
-                .flatMap(item -> {
-                    List<Long> serviceIds = this.util.extractMaskToList(item.getContractServiceIdMask());
-                    return serviceIds.stream().map(serviceId -> Map.entry(serviceId, item));
-                })
-                .map(entry -> {
-                    Long serviceId = entry.getKey();
-                    PreMeasurementStreetItem item = entry.getValue();
-
-                    BigDecimal unitPrice = services.stream()
-                            .filter(s -> Objects.equals(s.getContractItemId(), serviceId))
-                            .findFirst()
-                            .map(ContractItemsQuantitative::getUnitPrice)
-                            .orElse(BigDecimal.ZERO);
-
-                    var quantity = item.getMeasuredItemQuantity() != null ? item.getMeasuredItemQuantity() : 0;
-                    return unitPrice.multiply(BigDecimal.valueOf(quantity));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private List<ContractItemsQuantitative> getAllServices(Long contractId) {
-        return contractRepository.findContractByContractId(contractId)
-                .map(contract -> contract.getContractItemsQuantitative().stream()
-                        .filter(ciq -> {
-                            var type = ciq.getReferenceItem().getType();
-                            return type.equalsIgnoreCase("SERVIÇO");
-                        })
-                        .toList()
-                )
-                .orElse(Collections.emptyList());
     }
 
     @Transactional

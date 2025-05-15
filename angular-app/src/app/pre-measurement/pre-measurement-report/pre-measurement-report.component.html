@@ -23,6 +23,15 @@
             download
           </button>
         </div>
+
+        <div class="button-report p-2 mb-1" *ngIf="reason === 'importPreMeasurement'">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-pencil"
+            label="Modificar Pré-Medição" (click)="router.navigate(['/pre-medicao/editar', preMeasurement.preMeasurementId])">
+          </button>
+        </div>
         <div class="download-report">
           <div #content class="report">
             <div>
@@ -95,8 +104,8 @@
                 <th>RUA</th>
                 <th>ENDEREÇO</th>
                 <th>POTÊNCIA ATUAL</th>
-                <th *ngFor="let h of contract.items">
-                  {{ h.nameForImport }}
+                <th *ngFor="let h of getHeaders()">
+                  {{ h }}
                 </th>
               </tr>
               </thead>
@@ -105,9 +114,8 @@
                 <td>{{ s.number }}</td>
                 <td>{{ s.street }}</td>
                 <td>{{ s.lastPower }}</td>
-                <ng-container *ngFor="let item of s.items">
-                  <td>{{ item.contractReferenceItemName }}
-                  </td>
+                <ng-container *ngFor="let h of getHeaders()">
+                  <td>{{ getItem(h, s.preMeasurementStreetId)?.measuredQuantity || 0 }}</td>
                 </ng-container>
               </tr>
               </tbody>
@@ -116,9 +124,9 @@
                 <td colspan="3">SOMA
                   TOTAL:
                 </td>
-                <ng-container *ngFor="let item of contract.items">
+                <ng-container *ngFor="let h of getHeaders()">
                   <td>
-                    {{ getTotalQuantity(item.contractItemId) }}
+                    {{ getTotalQuantity(h) || 0 }}
                   </td>
                 </ng-container>
               </tr>

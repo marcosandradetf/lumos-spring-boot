@@ -11,8 +11,9 @@ import {UserService} from '../../manage/user/user-service.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {ReportService} from '../../core/service/report-service';
 import {environment} from '../../../environments/environment';
-import {PreMeasurementResponseDTO} from '../../models/pre-measurement-response-d-t.o';
 import {ContractAndItemsResponse} from '../../contract/contract-models';
+import {PreMeasurementResponseDTO} from '../pre-measurement-models';
+import {ButtonDirective} from 'primeng/button';
 
 @Component({
   selector: 'app-pre-measurement-home-report',
@@ -22,7 +23,8 @@ import {ContractAndItemsResponse} from '../../contract/contract-models';
     NgIf,
     ModalComponent,
     FormsModule,
-    CurrencyPipe
+    CurrencyPipe,
+    ButtonDirective
   ],
   templateUrl: './pre-measurement-report.component.html',
   styleUrl: './pre-measurement-report.component.scss'
@@ -159,11 +161,11 @@ export class PreMeasurementReportComponent implements OnInit {
     });
   }
 
-  getTotalQuantity(contractItemId: number) {
+  getTotalQuantity(description: string) {
     let quantity = 0;
     this.preMeasurement.streets.forEach((street) => {
       street.items.forEach((item) => {
-        if (item.contractItemId === contractItemId) {
+        if (item.contractReferenceNameForImport === description) {
           quantity += item.measuredQuantity;
         }
       })
@@ -188,13 +190,13 @@ export class PreMeasurementReportComponent implements OnInit {
   getTotalPrice(contractItemId: number, unitPrice: string) {
     let price = 0.00;
 
-      this.preMeasurement.streets.forEach((street) => {
-        street.items.forEach((item) => {
-          if (item.contractItemId === contractItemId) {
-            price += item.measuredQuantity * parseFloat(unitPrice);
-          }
-        });
+    this.preMeasurement.streets.forEach((street) => {
+      street.items.forEach((item) => {
+        if (item.contractItemId === contractItemId) {
+          price += item.measuredQuantity * parseFloat(unitPrice);
+        }
       });
+    });
 
     return price;
   }
@@ -202,4 +204,25 @@ export class PreMeasurementReportComponent implements OnInit {
   protected readonly parseFloat = parseFloat;
 
   protected readonly environment = environment;
+
+  getHeaders() {
+    let reportHeaders: string[] = [];
+    this.preMeasurement.streets.forEach((street) => {
+      street.items.forEach(item => {
+        if (item.itemStatus !== "CANCELLED" && item.contractReferenceNameForImport) {
+          if (!reportHeaders.includes(item.contractReferenceNameForImport)) {
+            reportHeaders.push(item.contractReferenceNameForImport);
+          }
+        }
+      });
+    });
+    return reportHeaders.sort();
+  }
+
+  getItem(h: string, streetId: number) {
+    return this.preMeasurement.streets.find(s =>
+      s.preMeasurementStreetId === streetId
+    )?.items.find(i =>
+      i.contractReferenceNameForImport === h)
+  }
 }
