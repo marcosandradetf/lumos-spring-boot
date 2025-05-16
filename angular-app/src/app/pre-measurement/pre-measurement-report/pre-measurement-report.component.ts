@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 
-import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
+import {CurrencyPipe, NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
 import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {UtilsService} from '../../core/service/utils.service';
@@ -24,7 +24,8 @@ import {ButtonDirective} from 'primeng/button';
     ModalComponent,
     FormsModule,
     CurrencyPipe,
-    ButtonDirective
+    ButtonDirective,
+    NgOptimizedImage
   ],
   templateUrl: './pre-measurement-report.component.html',
   styleUrl: './pre-measurement-report.component.scss'

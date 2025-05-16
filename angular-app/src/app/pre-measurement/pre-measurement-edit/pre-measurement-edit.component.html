@@ -125,6 +125,12 @@
                     [ngClass]="i.itemStatus === 'PENDING' ? 'text-red-600' : 'text-primary'"
                     class="material-icons text-2xl ml-1 absolute bottom-0 cursor-pointer rounded hover:border p-1 select-none"
                     (click)="edit('item', i.preMeasurementStreetItemId, streets, items)">{{ i.itemStatus !== "CANCELLED" ? 'delete' : 'restore' }}</span>
+
+              <span
+                    *ngIf="(i.contractReferenceItemType?.toUpperCase() === 'LED' || i.contractReferenceItemType?.toUpperCase() === 'BRAÇO') && i.itemStatus !== 'CANCELLED'"
+                    class="pi pi-pencil ml-10 absolute bottom-2 cursor-pointer rounded hover:border p-1 select-none" style="font-size: 1rem"
+                    (click)="edit('item', i.preMeasurementStreetItemId, streets, items)"></span>
+
               <span *ngIf="i.contractReferenceItemType?.toUpperCase() === 'CABO' || i.contractReferenceItemType?.toUpperCase() === 'RELÉ' ||
                         i.contractReferenceItemType?.toUpperCase() === 'SERVIÇO' || i.contractReferenceItemType?.toUpperCase() === 'PROJETO'"
                     class="absolute bottom-0 text-xs border-t min-w-full pt-1 select-none">Controlado automaticamente</span>

@@ -259,4 +259,32 @@ export class ImportPreMeasurementsComponent implements OnInit {
 
 
   protected readonly location = location;
+
+  downloadTemplate(): void {
+    // Dados com cabeçalhos
+    const data = [
+      ['RUA', 'NÚMERO', 'BAIRRO', 'CIDADE', 'ESTADO', 'LATITUDE', 'LONGITUDE', 'POTÊNCIA ATUAL', 'CABO', 'BRAÇO 1,5', 'LED 80W']
+    ];
+
+    // Cria a worksheet
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+
+    // Cria o workbook e adiciona a worksheet
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Endereços');
+
+    // Gera o arquivo XLSX como array
+    const wbout: ArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+    // Cria um Blob para download
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+    // Cria um link para download e dispara o clique
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'importar_pre_medicao_modelo.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
 }

@@ -166,7 +166,7 @@ class ContractService(
 
         data class ContractForReport(
             val contractId: Long,
-            val contractNumber: String,
+            val number: String,
             val contractor: String,
             val cnpj: String,
             val phone: String,
@@ -199,7 +199,7 @@ class ContractService(
         return ResponseEntity.ok(
             ContractForReport(
                 contractId = contract.contractId,
-                contractNumber = contract.contractNumber ?: "",
+                number = contract.contractNumber ?: "",
                 contractor = contract.contractor ?: "",
                 cnpj = contract.cnpj ?: "",
                 phone = contract.phone ?: "",

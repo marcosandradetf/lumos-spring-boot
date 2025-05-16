@@ -35,7 +35,13 @@
         <div class="download-report">
           <div #content class="report">
             <div>
-              <img [src]="environment.minio + '/scl-construtora/logo_scl.jpg'" alt="logo" width="150">
+              <img
+                ngSrc="https://minio.thryon.com.br/scl-construtora/logo_solutions.png"
+                width="150"
+                height="91"
+                priority
+                alt="Logo Solutions"
+              />
             </div>
             <h3 style="text-align: center;">PRÉ-MEDIÇÃO INSTALAÇÃO DE LED - {{ preMeasurement.city.toUpperCase() }}</h3>
             <h5 style="text-align: center;">Contrato Nº: {{ contract.number }}</h5>
