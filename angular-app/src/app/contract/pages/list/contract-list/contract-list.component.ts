@@ -12,6 +12,9 @@ import {Button, ButtonDirective, ButtonIcon, ButtonLabel} from 'primeng/button';
 import {FormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Ripple} from 'primeng/ripple';
+import {Toast} from 'primeng/toast';
+import {Breadcrumb} from 'primeng/breadcrumb';
+import {MenuItem} from 'primeng/api';
 
 @Component({
   selector: 'app-contract-list',
@@ -19,7 +22,6 @@ import {Ripple} from 'primeng/ripple';
   imports: [
     NgForOf,
     NgIf,
-    ScreenMessageComponent,
     LoadingComponent,
     CurrencyPipe,
     Dialog,
@@ -27,7 +29,9 @@ import {Ripple} from 'primeng/ripple';
     Button,
     ButtonDirective,
     FormsModule,
-    InputText
+    InputText,
+    Toast,
+    Breadcrumb
   ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'
@@ -42,6 +46,9 @@ export class ContractListComponent implements OnInit {
   preMeasurementId: number = 0;
   city: string = '';
   reason: string = '';
+  items: MenuItem[] | undefined;
+
+  home: MenuItem | undefined;
 
   constructor(
     private contractService: ContractService,
@@ -61,6 +68,13 @@ export class ContractListComponent implements OnInit {
       this.contracts = c;
       this.loading = false;
     });
+
+    this.items = [
+      {label: 'Contratos'},
+      {label: 'Exibir Todos'},
+    ];
+
+    this.home = {icon: 'pi pi-home', routerLink: '/'};
   }
 
 
@@ -139,7 +153,6 @@ export class ContractListComponent implements OnInit {
   onRowEditCancel(item: any, index: number) {
     console.log('Edição cancelada', item);
   }
-
 
 
 }

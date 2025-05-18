@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {catchError, firstValueFrom, map, Observable, of, tap, throwError} from 'rxjs';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
@@ -16,6 +16,8 @@ import {MaterialService} from '../services/material.service';
 import {EstoqueService} from '../services/estoque.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {SupplierDTO} from '../../models/supplier.dto';
+import {Steps} from 'primeng/steps';
+import {MenuItem} from 'primeng/api';
 
 @Component({
   selector: 'app-stock-movement',
@@ -30,11 +32,14 @@ import {SupplierDTO} from '../../models/supplier.dto';
     AlertMessageComponent,
     NgIf,
     NgClass,
+    Steps,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'
 })
-export class StockMovementComponent {
+export class StockMovementComponent implements OnInit{
+  items: MenuItem[] | undefined;
+
   sidebarLinks = [
     {title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1'},
     {title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2'},
@@ -100,6 +105,23 @@ export class StockMovementComponent {
     this.loadMaterials();
     this.titleService.setTitle("Movimentar Estoque");
     this.estoqueService.getDeposits().subscribe(d => this.deposits = d);
+  }
+
+  ngOnInit() {
+    this.items = [
+      {
+        label: 'Selecionar itens',
+        routerLink: '/estoque/movimento'
+      },
+      {
+        label: 'Pendente de Aprovação',
+        routerLink: '/estoque/movimento-pendente'
+      },
+      {
+        label: 'Aprovado',
+        routerLink: '/estoque/movimento/aprovado'
+      },
+    ];
   }
 
 

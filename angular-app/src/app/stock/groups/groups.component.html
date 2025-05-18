@@ -1,4 +1,4 @@
-<div class="flex mt-[4rem] h-fit pl-2 pr-2" #top>
+<div class="flex" #top>
   <div class="mb-5 w-full">
     <div class="breadcrumbs text-sm py-5">
       <ul class="select-none">
@@ -8,7 +8,7 @@
       </ul>
     </div>
 
-    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+    <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5">
       <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])"/>
       <input type="radio" class="tab" aria-label="Materiais" (click)="router.navigate(['/estoque/materiais'])"/>
       <input type="radio" class="tab" aria-label="Grupos" checked/>
@@ -17,26 +17,26 @@
 
     <!--    form    -->
     <div
-      class="collapse border border-neutral-300 shadow rounded-none">
+      class="collapse">
       <input
         #collapseDiv
         type="checkbox" class="peer" (click)="setOpen()"/>
       <div
-        class="collapse-title text-primary-content">
+        class="collapse-title">
         @if (!formOpen) {
-          <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>
+          <div><p>Clique para fazer um novo Cadastro</p></div>
         } @else {
-          <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>
+          <div class="flex justify-end"><p class="material-icons">close</p></div>
         }
       </div>
       <div
-        class="collapse-content text-primary-content peer-checked: peer-checked:">
+        class="collapse-content peer-checked: peer-checked:">
         <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
               class=" h-auto flex flex-col">
-          <h4 class="border-b border-neutral-300 poppins-regular select-none text-neutral-700">{{
+          <h4 class="border-b poppins-regular select-none">{{
               state === State.create ? "Cadastrar Novo Grupo" : "Atualizar Grupo"
             }}</h4>
-          <div class="flex space-x-4 flex-wrap text-neutral-700">
+          <div class="flex space-x-4 flex-wrap">
 
             <label class="form-control w-full max-w-xs">
               <div class="label">
@@ -58,9 +58,9 @@
               </div>
             </label>
 
-            <div class="w-full flex border-t mt-10 p-6 border-neutral-300">
+            <div class="w-full flex border-t mt-10 p-6">
               <p>{{ message }}</p>
-              <button class="btn btn-active btn-primary ml-auto" type="submit">{{
+              <button class="btn btn-active btn-primary ml-auto dark:btn-accent" type="submit">{{
                 state === State.create ? "Gravar" : "Atualizar"
                 }}</button>
             </div>
@@ -71,16 +71,16 @@
     </div>
 
     <!--    table     -->
-    <div class="border border-neutral-300 shadow mt-3 p-1">
+    <div class="mt-3 p-1">
       <app-table>
-        <tr class="bg-indigo-700 text-white" header>
+        <tr header>
           <th>Código</th>
           <th>Descrição</th>
-          <th colspan="2"></th>
+          <th colspan="2">Ação</th>
         </tr>
 
         @for (g of gps; track g.idGroup) {
-          <tr class="odd:bg-neutral-100" body>
+          <tr class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
             <td>{{ g.idGroup }}</td>
             <td>{{ g.groupName }}</td>
             <td class="material-icons cursor-pointer" (click)="updateGroup(g)">edit</td>

@@ -15,7 +15,6 @@ import {catchError, tap, throwError} from 'rxjs';
   selector: 'app-import-materials',
   standalone: true,
   imports: [
-    SidebarComponent,
     TableComponent,
     NgIf,
     NgForOf

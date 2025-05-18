@@ -1,6 +1,6 @@
-<div class="flex mt-[3rem] h-fit" #top>
+<div class="flex" #top>
   <div class="w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/public">Início</a></li>
@@ -12,7 +12,7 @@
         Editando {{ streets.classList.contains('hidden') ? getStreetName(streetId) : contract.contractor }}</h3>
     </div>
 
-    <div *ngIf="hideContent" class="border-b w-full pl-2 h-screen pt-2">
+    <div *ngIf="hideContent" class="w-full pl-2 pt-2">
       <div class="flex items-center flex-col border rounded p-10 shadow">
         <span class="material-icons mt-20 text-orange-600">thumb_up</span>
         <h2 class="mt-2 font-semibold text-xl">Itens modificados com sucesso</h2>
@@ -35,12 +35,12 @@
       </div>
     </div>
 
-    <div class="border-b w-full pl-2 h-screen pt-2" #streets [class.hidden]="hideContent">
+    <div class="w-full pl-2 h-screen pt-2" #streets [class.hidden]="hideContent">
       <ol class="flex flex-wrap">
         <li
           class="w-[23rem] m-2">
           <button class="btn btn-success text-white w-[23rem]"
-                  (click)="conclude()">
+                  (click)="test()">
             <span class="material-icons">save</span>
             Concluir processo
           </button>
@@ -52,27 +52,27 @@
             class="w-[23rem]  cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
             (click)="edit('street', s.preMeasurementStreetId, streets, items)">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge rounded mb-4 mt-2"
+            <span class="badge rounded mb-4 mt-2 dark:badge-accent"
                   [ngClass]="s.status == 'PENDING' ? 'badge-primary' :  s.status === 'EDITED' ? 'badge-warning' : 'badge-error'">
                 {{ s.status === "PENDING" ? "NÃO MODIFICADO" : s.status === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
             </span>
 
-            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">{{ s.street }}</h3>
-            <span class="text-sm text-neutral-600 flex items-center">Essa rua contém {{ s.items.length }} itens<span
+            <h3 class="text-xl leading-[1.15rem] font-light">{{ s.street }}</h3>
+            <span class="text-sm  flex items-center">Essa rua contém {{ s.items.length }} itens<span
               class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
-            <span class="text-sm text-neutral-600 flex items-center">{{ s.latitude + " , " + s.longitude }}<span
+            <span class="text-sm flex items-center">{{ s.latitude + " , " + s.longitude }}<span
               class="material-icons text-sm ml-1 text-blue-500">location</span></span>
           </div>
         </li>
       </ol>
     </div>
 
-    <div class="border-b w-full pl-2 h-screen pt-2 hidden" #items>
+    <div class="w-full pl-2 h-screen pt-2 hidden" #items>
       <ol class="flex flex-wrap">
         <li
           class="w-[23rem] m-2">
           <button
-            class="btn bg-[#ffffff] hover:bg-[#ffffff] border-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] w-[23rem]"
+            class="btn border-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] w-[23rem]"
             (click)="changeFromTo(items, streets)">
             <span class="material-icons">arrow_back</span>
             Visão geral
@@ -80,17 +80,18 @@
         </li>
 
         <li *ngIf="isNotActive('street', streetId)"
-          class="w-[23rem] m-2 flex justify-center items-center">
-            <button class="btn bg-[#47698F] hover:bg-[#30698F] w-[23rem] text-white border-[#35567b] mb-2"
-                    (click)="cancelStreet(streetId, false)">
-              <span class="material-icons">restore</span>
-              Reativar rua com todos os itens
-            </button>
+            class="w-[23rem] m-2 flex justify-center items-center">
+          <button class="btn bg-[#47698F] hover:bg-[#30698F] w-[23rem] text-white border-[#35567b] mb-2"
+                  (click)="cancelStreet(streetId, false)">
+            <span class="material-icons">restore</span>
+            Reativar rua com todos os itens
+          </button>
         </li>
 
         <li *ngIf="!isNotActive('street', streetId)">
-          <button class="btn bg-[#FF9900] hover:bg-[#FF8800] text-black border-[#e17d00] w-[23rem] m-2 flex justify-center items-center"
-                  (click)="cancelStreet(streetId, true)">
+          <button
+            class="btn bg-[#FF9900] hover:bg-[#FF8800] text-black border-[#e17d00] w-[23rem] m-2 flex justify-center items-center"
+            (click)="cancelStreet(streetId, true)">
             <span class="material-icons">delete_forever</span>
             Cancelar rua com todos os itens
           </button>
@@ -98,38 +99,45 @@
 
         <li *ngIf="!isNotActive('street', streetId)">
           @let projectCancelled = isProjectCancelled();
-          <button class="btn bg-indigo-800 hover:bg-indigo-900 text-white border-indigo-700 w-[23rem] m-2 flex justify-center items-center"
-                  (click)="cancelProject()">
-            <span class="material-icons">{{projectCancelled ? 'restore' : 'delete_forever' }}</span>
+          <button
+            class="btn bg-indigo-800 hover:bg-indigo-900 text-white border-indigo-700 w-[23rem] m-2 flex justify-center items-center"
+            (click)="cancelProject()">
+            <span class="material-icons">{{ projectCancelled ? 'restore' : 'delete_forever' }}</span>
             {{ projectCancelled ? 'Reativar projeto' : 'Cancelar projeto' }}
           </button>
         </li>
       </ol>
 
       <ol class="flex flex-wrap">
-        <li *ngFor="let i of streetItems; index as index;"
+        <li *ngFor="let i of streetItems; let idx = index;"
             class="w-[23rem] m-2">
           <div class="flex justify-between border rounded px-4 py-2 shadow h-36"
-               [class.bg-neutral-100]="i.contractReferenceItemType?.toUpperCase() === 'CABO' || i.contractReferenceItemType?.toUpperCase() === 'RELÉ' ||
-                        i.contractReferenceItemType?.toUpperCase() === 'SERVIÇO' || i.contractReferenceItemType?.toUpperCase() === 'PROJETO'">
+
+               [ngClass]="i.contractReferenceItemType.toUpperCase() === 'CABO' || i.contractReferenceItemType.toUpperCase() === 'RELÉ' ||
+                        i.contractReferenceItemType.toUpperCase() === 'SERVIÇO' || i.contractReferenceItemType.toUpperCase() === 'PROJETO' ? 'bg-neutral-100 dark:bg-neutral-800' : ''">
+
             <div class="relative w-full">
               <span class="badge rounded mb-4 mt-2"
-                    [ngClass]="i.itemStatus == 'PENDING' ? 'badge-primary' :  i.itemStatus === 'EDITED' ? 'badge-warning' : 'badge-error'">
+                    [ngClass]="i.itemStatus == 'PENDING' ? 'badge-primary dark:badge-accent' :  i.itemStatus === 'EDITED' ? 'badge-warning' : 'badge-error'">
                 {{ i.itemStatus === "PENDING" ? "NÃO MODIFICADO" : i.itemStatus === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
             </span>
-              <h3 class="text-lg text-neutral-800 leading-[1.15rem] font-light">{{ i.contractReferenceNameForImport }}</h3>
+              <h3
+                class="text-lg  leading-[1.15rem] font-light">{{ i.contractReferenceNameForImport }}</h3>
               <span
-                class="text-sm text-neutral-600 flex items-center">{{ i.contractReferenceLinking }}</span>
+                class="text-sm  flex items-center">{{ i.contractReferenceLinking }}</span>
               <span *ngIf="i.contractReferenceItemType?.toUpperCase() !== 'CABO' && i.contractReferenceItemType?.toUpperCase() !== 'RELÉ' &&
                         i.contractReferenceItemType?.toUpperCase() !== 'SERVIÇO' && i.contractReferenceItemType?.toUpperCase() !== 'PROJETO'"
                     [ngClass]="i.itemStatus === 'PENDING' ? 'text-red-600' : 'text-primary'"
                     class="material-icons text-2xl ml-1 absolute bottom-0 cursor-pointer rounded hover:border p-1 select-none"
                     (click)="edit('item', i.preMeasurementStreetItemId, streets, items)">{{ i.itemStatus !== "CANCELLED" ? 'delete' : 'restore' }}</span>
 
+              <!-- Botão (ícone) que abre o menu -->
               <span
-                    *ngIf="(i.contractReferenceItemType?.toUpperCase() === 'LED' || i.contractReferenceItemType?.toUpperCase() === 'BRAÇO') && i.itemStatus !== 'CANCELLED'"
-                    class="pi pi-pencil ml-10 absolute bottom-2 cursor-pointer rounded hover:border p-1 select-none" style="font-size: 1rem"
-                    (click)="edit('item', i.preMeasurementStreetItemId, streets, items)"></span>
+                *ngIf="i.contractReferenceItemType?.toUpperCase() === 'LED' && i.itemStatus !== 'CANCELLED'"
+                class="fa-solid fa-pencil ml-12 p-2 absolute bottom-0 cursor-pointer rounded hover:border select-none"
+                style="font-size: 1rem"
+                (click)="showDialog(i.preMeasurementStreetItemId)">
+              </span>
 
               <span *ngIf="i.contractReferenceItemType?.toUpperCase() === 'CABO' || i.contractReferenceItemType?.toUpperCase() === 'RELÉ' ||
                         i.contractReferenceItemType?.toUpperCase() === 'SERVIÇO' || i.contractReferenceItemType?.toUpperCase() === 'PROJETO'"
@@ -137,18 +145,34 @@
             </div>
             <div
               *ngIf="i.itemStatus !== 'CANCELLED'"
-              class="flex flex-col justify-center items-center  border rounded  p-1 border-b-2 hover:border-b-[#5b5fc7] border-[0xFFD4D4D4] min-w-fit">
-              <span
-                *ngIf="i.contractReferenceItemType?.toUpperCase() !== 'CABO' && i.contractReferenceItemType?.toUpperCase() !== 'RELÉ' &&
-                        i.contractReferenceItemType?.toUpperCase() !== 'SERVIÇO' && i.contractReferenceItemType?.toUpperCase() !== 'PROJETO'"
-                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:-translate-y-2 select-none"
-                (click)="changeItem(i.preMeasurementStreetItemId, 'increment')">expand_less</span>
-              <span class="text-sm text-neutral-600 flex items-center">{{ i.measuredQuantity }}</span>
-              <span
-                *ngIf="i.contractReferenceItemType?.toUpperCase() !== 'CABO' && i.contractReferenceItemType?.toUpperCase() !== 'RELÉ' &&
-                        i.contractReferenceItemType?.toUpperCase() !== 'SERVIÇO' && i.contractReferenceItemType?.toUpperCase() !== 'PROJETO'"
-                class="text-4xl material-icons cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-y-2 select-none"
-                (click)="changeItem(i.preMeasurementStreetItemId, 'decrement')">expand_more</span>
+              class="flex flex-col justify-center items-center p-1 min-w-fit">
+              @if (!['SERVIÇO', 'PROJETO', 'CABO', 'RELÉ'].includes(i.contractReferenceItemType)) {
+                <p-inputnumber
+                  [(ngModel)]="i.measuredQuantity"
+                  (ngModelChange)="changeItem(i.preMeasurementStreetItemId)"
+                  [showButtons]="true" buttonLayout="vertical"
+                  spinnerMode="vertical"
+                  inputId="vertical"
+                  class="text-xs"
+                  [inputStyle]="{ width: '3rem' }">
+                  <ng-template pTemplate="incrementbuttonicon">
+                    <span class="pi pi-plus"></span>
+                  </ng-template>
+                  <ng-template pTemplate="decrementbuttonicon">
+                    <span class="pi pi-minus"></span>
+                  </ng-template>
+                </p-inputnumber>
+              } @else {
+                <p-inputnumber
+                  readonly
+                  [(ngModel)]="i.measuredQuantity"
+                  buttonLayout="vertical"
+                  spinnerMode="vertical"
+                  inputId="vertical"
+                  [inputStyle]="{ width: '3.5rem', textAlign: 'center'}">
+                </p-inputnumber>
+              }
+
               <p class="text-xs p-1">Qtde.</p>
             </div>
           </div>
@@ -158,8 +182,17 @@
 
   </div>
 
-  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
-                      class="absolute right-0"></app-screen-message>
+
+  <p-dialog header="Editar Led" [modal]="true" [(visible)]="visible" [style]="{ width: '25rem' }">
+    <span class="p-text-secondary block mb-8">Escolha o Led desejado</span>
+
+    <div class="flex flex-col p-2 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer"
+         *ngFor="let item of getReferenceItems()" (click)="updateLed(item.contractReferenceItemId)">
+      <label for="username"
+             class="font-semibold w-24 cursor-pointer">{{ item.nameForImport }}</label>
+    </div>
+
+  </p-dialog>
 
   <app-modal [modalOpen]="openModal" (modalClose)="openModal=false; alert = false; finish = false;"
              classModal="rounded p-4 lg:w-[30%] flex flex-col  justify-center">
@@ -210,3 +243,5 @@
   </app-modal>
 
 </div>
+
+<p-toast/>

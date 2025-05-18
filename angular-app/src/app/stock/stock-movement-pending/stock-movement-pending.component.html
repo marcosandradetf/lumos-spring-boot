@@ -1,4 +1,4 @@
-<div class="flex mt-[4rem] h-fit pl-2 pr-2">
+<div class="flex">
   <div class="mb-5 w-full">
     <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
@@ -12,18 +12,12 @@
     </div>
 
     <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
-      <div class="flex justify-center m-5">
-        <ul class="steps">
-          <li class="step step-primary"><a href="estoque/movimento" class="link link-hover hover:text-blue-700">Selecionar
-            itens</a></li>
-          <li class="step step-primary">Pendente de Aprovação</li>
-          <li class="step cursor-pointer"><a href="estoque/movimento/aprovado"
-                                             class="link link-hover hover:text-blue-700">Aprovado</a></li>
-        </ul>
+      <div class="card p-3">
+        <p-steps [model]="items" [readonly]="false" />
       </div>
 
       <app-table>
-        <tr class="bg-indigo-700 text-white" header>
+        <tr header>
           <th>Codigo</th>
           <th>Comentário</th>
           <th>Material</th>
@@ -36,7 +30,7 @@
           <th>Almoxarifado</th>
           <th>Responsável</th>
         </tr>
-        <tr *ngFor="let row of stockMovement; let i = index" class="odd:bg-neutral-100 cursor-pointer"
+        <tr *ngFor="let row of stockMovement; let i = index" class="odd:bg-neutral-100 cursor-pointer dark:odd:bg-neutral"
             (click)="handleOpenModal(row.id)" body>
           <td>{{ row.id }}</td>
           <td>{{ row.description }}</td>

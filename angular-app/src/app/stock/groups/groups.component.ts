@@ -20,7 +20,6 @@ import {AlertMessageComponent} from '../../shared/components/alert-message/alert
   imports: [
     FormsModule,
     NgIf,
-    SidebarComponent,
     TableComponent,
     ButtonComponent,
     ModalComponent,

@@ -6,8 +6,6 @@ public record PreMeasurementResponseDTO(
         long preMeasurementId,
         long contractId,
         String city,
-        String createdBy,
-        String createdAt,
         String depositName,
         String preMeasurementType,
         String preMeasurementStyle,

@@ -21,7 +21,6 @@ import {citiesRequest} from '../../core/cities-request.dto';
   selector: 'app-deposits',
   standalone: true,
   imports: [
-    SidebarComponent,
     FormsModule,
     NgIf,
     TableComponent,

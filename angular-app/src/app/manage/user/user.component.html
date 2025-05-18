@@ -1,4 +1,4 @@
-<div class="flex mt-[4rem] h-fit pl-2" #top>
+<div class="flex h-fit pl-2" #top>
   <div class="w-[85vw] xl:w-[80rem] 2xl:w-[100rem] mb-5 ">
     <div class="breadcrumbs text-sm py-5">
       <ul class="select-none">
@@ -9,14 +9,14 @@
     </div>
 
 
-    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">
+    <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5">
       <input type="radio" class="tab" aria-label="Usuários" checked/>
       <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
       <input type="radio" class="tab" aria-label="Empresa" disabled
              (click)="router.navigate(['/configuracoes/empresa'])"/>
     </div>
 
-    <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)" class="shadow border p-2">
+    <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
       <div class="flex justify-evenly pb-5 items-center">
         @if (!add && !change) {
           <app-button title="Alterar Usuários" [action]="changeUser()">
@@ -64,7 +64,7 @@
           }
         </tr>
 
-        <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100" body>
+        <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
           @if (change) {
             <td>
               <input type="checkbox"

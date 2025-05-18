@@ -4,6 +4,7 @@ import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -47,23 +48,10 @@ public class PreMeasurement {
 
     private String typePreMeasurement;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by_user_id")
-    private User createdBy;
-
-    @ManyToOne
-    @JoinColumn(name = "assigned_by_user_id")
-    private User assignedBy;
-
-    @ManyToOne
-    @JoinColumn(name = "finished_by_user_id")
-    private User finishedBy;
-
-    private Instant createdAt;
-    private Instant assignedAt;
-    private Instant finishedAt;
-
     private BigDecimal totalPrice = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    private Integer steps;
 
     public Long getPreMeasurementId() {
         return preMeasurementId;
@@ -71,54 +59,6 @@ public class PreMeasurement {
 
     public void setPreMeasurementId(long preMeasurementId) {
         this.preMeasurementId = preMeasurementId;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getAssignedAt() {
-        return assignedAt;
-    }
-
-    public void setAssignedAt(Instant assignedAt) {
-        this.assignedAt = assignedAt;
-    }
-
-    public Instant getFinishedAt() {
-        return finishedAt;
-    }
-
-    public void setFinishedAt(Instant finishedAt) {
-        this.finishedAt = finishedAt;
-    }
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public User getAssignedBy() {
-        return assignedBy;
-    }
-
-    public void setAssignedBy(User assignedBy) {
-        this.assignedBy = assignedBy;
-    }
-
-    public User getFinishedBy() {
-        return finishedBy;
-    }
-
-    public void setFinishedBy(User finishedBy) {
-        this.finishedBy = finishedBy;
     }
 
     public Region getRegion() {
@@ -192,6 +132,17 @@ public class PreMeasurement {
 
     public void setContract(Contract contract) {
         this.contract = contract;
+    }
+
+    public Integer getSteps() {
+        return steps;
+    }
+
+    public void newStep() {
+        if (steps == null) {
+            steps = 0;
+        }
+        steps++;
     }
 
 }

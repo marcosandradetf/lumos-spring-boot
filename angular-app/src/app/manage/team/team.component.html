@@ -1,7 +1,7 @@
-<div class="flex mt-[3rem] h-fit" #top>
+<div class="flex" #top>
   <div class="w-full h-full">
 
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a>Início</a></li>
@@ -13,7 +13,7 @@
     </div>
 
 
-    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5 mt-5">
+    <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5 mt-5">
       <input type="radio" class="tab" aria-label="Usuários" (click)="router.navigate(['/configuracoes/usuarios'])"/>
       <input type="radio" class="tab" aria-label="Equipes" checked/>
       <input type="radio" class="tab" aria-label="Empresa" disabled
@@ -21,7 +21,7 @@
     </div>
 
     <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)"
-          class="border-b w-full pl-2 items-center justify-center">
+          class="w-full pl-2 items-center justify-center">
       <div class="flex justify-evenly pb-5 items-center">
         @if (!add && !change) {
           <app-button title="Alterar Equipes" (click)="change = true">
@@ -66,7 +66,7 @@
           <th class="min-w-52">Região</th>
         </tr>
 
-        <tr *ngFor="let team of teams; let i = index" class="odd:bg-neutral-100" body>
+        <tr *ngFor="let team of teams; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
           @if (change) {
             <td>
               <input type="checkbox"

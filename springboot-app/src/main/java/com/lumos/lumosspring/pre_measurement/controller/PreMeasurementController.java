@@ -60,9 +60,9 @@ public class PreMeasurementController {
         return preMeasurementService.getAll(ContractStatus.IN_PROGRESS);
     }
 
-    @PostMapping("/pre-measurement/evolve-status/{id}")
-    public ResponseEntity<?> evolveStatus(@PathVariable Long id) {
-        var state =  preMeasurementService.setStatus(id);
+    @PostMapping("/pre-measurement/evolve-status/{id}/{step}")
+    public ResponseEntity<?> evolveStatus(@PathVariable Long id, @PathVariable Integer step) {
+        var state =  preMeasurementService.setStatus(id, step);
         if(state) {
             return ResponseEntity.ok().build();
         } else {

@@ -1,11 +1,21 @@
 import {Injectable} from '@angular/core';
+import {MessageService} from 'primeng/api';
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UtilsService {
-  serverMessage: string | null = null;
-  alertType: string | null = null;
+  private menuState = new BehaviorSubject<boolean>(false);
+
+  constructor(private messageService: MessageService) {
+  }
+
+  menuState$ = this.menuState.asObservable();
+
+  toggleMenu(isOpen: boolean) {
+    this.menuState.next(isOpen);
+  }
 
   formatValue(value: string): string {
     // Verifica se targetValue está vazio e define um valor padrão
@@ -111,16 +121,36 @@ export class UtilsService {
     (event.target as HTMLInputElement).value = value;
   }
 
-  showMessage(message: string, error: boolean, timeout = 3000) {
-    this.serverMessage = message;
-    error ? this.alertType = 'alert-error' : this.alertType = 'alert-success';
-    setTimeout(() => {
-      this.serverMessage = null;
-      this.alertType = null;
-    }, timeout);
+  showMessage(messageContent: string,
+              typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary', ) {
+    switch (typeMessage) {
+      case 'success':
+        this.messageService.add({severity: 'success', summary: 'Successo', detail: messageContent});
+        break;
+      case 'info':
+        this.messageService.add({severity: 'info', summary: 'Informação', detail: messageContent});
+        break;
+      case 'warn':
+        this.messageService.add({severity: 'warn', summary: 'Alerta', detail: messageContent});
+        break;
+      case 'error':
+        this.messageService.add({severity: 'error', summary: 'Erro', detail: messageContent});
+        break;
+      case 'contrast':
+        this.messageService.add({severity: 'contrast', summary: 'Erro', detail: messageContent});
+        break;
+      case 'secondary':
+        this.messageService.add({severity: 'secondary', summary: 'Secondary', detail: messageContent});
+        break;
+    }
+
   }
 
-  playSound(type: string) {
+
+  playSound(type
+            :
+            string
+  ) {
     if (type === 'open') {
       const audio = new Audio('sci.mp3');
       audio.play().catch(err => {
@@ -136,7 +166,11 @@ export class UtilsService {
     }
   }
 
-  getStatus(status: string): string {
+  getStatus(status
+            :
+            string
+  ):
+    string {
     if (status === 'PENDING') {
       return 'PENDENTE';
     } else if (status === 'VALIDATING') {
@@ -145,15 +179,16 @@ export class UtilsService {
       return 'AGUARDANDO CONTRATANTE';
     } else if (status === 'AVAILABLE') {
       return 'DISPONÍVEL';
-    }else if (status === 'WAITING_TEAM') {
+    } else if (status === 'WAITING_TEAM') {
       return 'AGUARDANDO EQUIPE';
-    }else if (status === 'IN_PROGRESS') {
+    } else if (status === 'IN_PROGRESS') {
       return 'EM PROGRESSO';
-    }else if (status === 'FINISHED') {
+    } else if (status === 'FINISHED') {
       return 'FINALIZADO';
     } else {
       return 'STATUS DESCONHECIDO';
     }
   }
+
 
 }

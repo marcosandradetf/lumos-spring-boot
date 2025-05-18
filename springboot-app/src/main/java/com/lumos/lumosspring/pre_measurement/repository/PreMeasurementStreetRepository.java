@@ -1,14 +1,17 @@
 package com.lumos.lumosspring.pre_measurement.repository;
 
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
 import com.lumos.lumosspring.team.entities.Team;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface PreMeasurementStreetRepository extends JpaRepository<PreMeasurementStreet, Long> {
@@ -23,4 +26,10 @@ public interface PreMeasurementStreetRepository extends JpaRepository<PreMeasure
 
     @Query("SELECT pms from PreMeasurementStreet pms WHERE pms.preMeasurementStreetId in (:streetsIds)")
     List<PreMeasurementStreet> findByIds(@Param("streetsIds") List<Long> preMeasurementStreetIds);
+
+
+    @EntityGraph(attributePaths = {"createdBy", "items", "preMeasurement"})
+    @Query("SELECT DISTINCT s.preMeasurement FROM PreMeasurementStreet s WHERE s.streetStatus = :status")
+    List<PreMeasurement> findAllByStreetStatusOrderByCreatedAtAsc(String status);
+
 }

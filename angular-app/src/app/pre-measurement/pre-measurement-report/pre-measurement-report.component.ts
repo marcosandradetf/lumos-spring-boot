@@ -14,6 +14,7 @@ import {environment} from '../../../environments/environment';
 import {ContractAndItemsResponse} from '../../contract/contract-models';
 import {PreMeasurementResponseDTO} from '../pre-measurement-models';
 import {ButtonDirective} from 'primeng/button';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-pre-measurement-home-report',
@@ -25,7 +26,8 @@ import {ButtonDirective} from 'primeng/button';
     FormsModule,
     CurrencyPipe,
     ButtonDirective,
-    NgOptimizedImage
+    NgOptimizedImage,
+    Toast
   ],
   templateUrl: './pre-measurement-report.component.html',
   styleUrl: './pre-measurement-report.component.scss'
@@ -35,8 +37,6 @@ export class PreMeasurementReportComponent implements OnInit {
     preMeasurementId: 0,
     contractId: 0,
     city: '',
-    createdBy: '',
-    createdAt: '',
     depositName: '',
     preMeasurementType: '',
     preMeasurementStyle: '',
@@ -119,11 +119,11 @@ export class PreMeasurementReportComponent implements OnInit {
     const contentText = htmlContent.outerHTML.trim();
 
     if (!contentText) {
-      this.utils.showMessage("O conteúdo do relatório está vazio.", true);
+      this.utils.showMessage("O conteúdo do relatório está vazio.", 'warn');
       return;
     }
 
-    this.utils.showMessage("Gerando PDF...", false); // Mensagem de carregamento
+    this.utils.showMessage("Gerando PDF...", 'info'); // Mensagem de carregamento
 
     this.reportService.generateReportPdf(contentText, this.contract.contractor).subscribe({
       next: (response) => {
@@ -137,16 +137,16 @@ export class PreMeasurementReportComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        this.utils.showMessage("PDF gerado com sucesso!", false);
+        this.utils.showMessage("PDF gerado com sucesso!", 'success');
       },
       error: (error) => {
         console.error("Erro ao gerar PDF:", error);
-        this.utils.showMessage("Erro ao gerar PDF: " + (error.message || "Erro desconhecido"), true);
+        this.utils.showMessage("Erro ao gerar PDF: " + (error.message || "Erro desconhecido"), 'error');
       },
       complete: () => {
-        if (this.preMeasurement.status === "PENDING") {
+        if (this.preMeasurement.streets[0].status === "PENDING") {
           // Possível mudança de status ou exibição de modal
-          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId).subscribe({
+          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId, this.preMeasurement.streets[0].step).subscribe({
             error: (error: any) => {
               this.utils.showMessage("Erro ao atualizar o status:", error);
             },

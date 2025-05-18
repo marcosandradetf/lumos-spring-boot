@@ -14,6 +14,8 @@ import localePt from '@angular/common/locales/pt';
 import {registerLocaleData} from '@angular/common';
 import {providePrimeNG} from 'primeng/config';
 import Aura from '@primeng/themes/aura';
+import Lara from '@primeng/themes/lara';
+import {MessageService} from 'primeng/api';
 
 
 registerLocaleData(localePt, 'pt');
@@ -41,9 +43,19 @@ export const appConfig: ApplicationConfig = {
     },
 
     provideAnimationsAsync(),
+    MessageService,
     providePrimeNG({
       theme: {
-        preset: Aura
+        preset: Aura,
+        options: {
+          prefix: 'p',
+          darkModeSelector: 'system',
+          // darkModeSelector: '',
+          cssLayer: {
+            name: 'primeng',
+            order: 'tailwind-base, primeng, tailwind-utilities'
+          }
+        }
       }
     })
   ],

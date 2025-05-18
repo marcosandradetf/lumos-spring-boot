@@ -12,6 +12,7 @@ import {forkJoin} from 'rxjs';
 import {AuthService} from '../../../core/auth/auth.service';
 import {Router} from '@angular/router';
 import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-models';
+import {Toast} from 'primeng/toast';
 
 
 @Component({
@@ -21,9 +22,9 @@ import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-model
     FormsModule,
     NgIf,
     NgForOf,
-    ScreenMessageComponent,
     ModalComponent,
-    TableComponent
+    TableComponent,
+    Toast
   ],
   templateUrl: './create.component.html',
   styleUrl: './create.component.scss'
@@ -99,7 +100,7 @@ export class CreateComponent {
           },
           error: error => {
             this.loading = false;
-            this.utils.showMessage(error as string, true);
+            this.utils.showMessage(error as string, 'error');
           }
         });
       } else {
@@ -114,7 +115,7 @@ export class CreateComponent {
       next: response => this.resetForm(),
       error: error => {
         this.openModal = false;
-        this.utils.showMessage(error.message as string, true);
+        this.utils.showMessage(error.message as string, 'error');
         this.loading = false;
       },
     });
@@ -176,7 +177,7 @@ export class CreateComponent {
     item: ContractReferenceItemsDTO
     , index: number) {
     if (item.price === '0,00' || item.quantity === 0) {
-      this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", true);
+      this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", 'warn');
       return;
     }
 
@@ -239,7 +240,7 @@ export class CreateComponent {
       contractItems.classList.add('hidden');
       steepFinal.classList.remove('hidden');
     } else {
-      this.utils.showMessage("Para revisar os itens do contrato, é necessário adicionar pelo menos um item", true)
+      this.utils.showMessage("Para revisar os itens do contrato, é necessário adicionar pelo menos um item", 'warn');
     }
   }
 

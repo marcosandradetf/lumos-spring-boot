@@ -26,8 +26,8 @@ export class PreMeasurementService {
     return this.http.get<ContractAndItemsResponse>(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
   }
 
-  evolveStatus(preMeasurementId: number) {
-    return this.http.post(environment.springboot + "/api/pre-measurement/evolve-status/" + preMeasurementId, null);
+  evolveStatus(preMeasurementId: number, step: number) {
+    return this.http.post(environment.springboot + `/api/pre-measurement/evolve-status/${preMeasurementId}/${step}`, null);
   }
 
   sendModifications(modifications: {

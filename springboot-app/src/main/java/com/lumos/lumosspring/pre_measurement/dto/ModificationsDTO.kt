@@ -19,6 +19,7 @@ data class ChangedItems(
     val streetId: Long,
     val itemId: Long,
     val quantity: Long,
+    val newContractReferenceId: Long,
 )
 
 ///

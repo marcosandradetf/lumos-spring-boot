@@ -24,6 +24,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -41,8 +42,9 @@ public class PreMeasurementService {
     private final Util util;
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
+    private final JdbcTemplate jdbcTemplate;
 
-    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util, ContractRepository contractRepository, NotificationService notificationService) {
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util, ContractRepository contractRepository, NotificationService notificationService, JdbcTemplate jdbcTemplate) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.materialRepository = materialRepository;
         this.preMeasurementRepository = preMeasurementRepository;
@@ -51,38 +53,43 @@ public class PreMeasurementService {
         this.util = util;
         this.contractRepository = contractRepository;
         this.notificationService = notificationService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Caching(evict = {
             @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
             @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true)
     })
-    public boolean setStatus(Long preMeasurementId) {
+    public boolean setStatus(Long preMeasurementId, Integer step) {
         var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
 
         if (preMeasurement.isEmpty()) {
             return false;
         }
 
-        switch (preMeasurement.get().getStatus()) {
-            case (ContractStatus.PENDING):
-                preMeasurement.get().setStatus(ContractStatus.WAITING_CONTRACTOR);
-                break;
-            case (ContractStatus.WAITING_CONTRACTOR):
-                preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
-                break;
+        boolean updated = false;
+        for (var street : preMeasurement.get().getStreets()) {
+            if (street.getStep().equals(step)) {
+                var status = switch (street.getStreetStatus()) {
+                    case (ContractStatus.PENDING) -> ContractStatus.WAITING_CONTRACTOR;
+                    case (ContractStatus.WAITING_CONTRACTOR) -> ContractStatus.AVAILABLE;
 //            case (ContractStatus.VALIDATING):
 //                preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
 //                break;
-            case (ContractStatus.AVAILABLE):
-                preMeasurement.get().setStatus(ContractStatus.IN_PROGRESS);
-                break;
-            case (ContractStatus.IN_PROGRESS):
-                preMeasurement.get().setStatus(ContractStatus.FINISHED);
-                break;
+                    case (ContractStatus.AVAILABLE) -> ContractStatus.IN_PROGRESS;
+                    case (ContractStatus.IN_PROGRESS) -> ContractStatus.FINISHED;
+                    default -> null;
+                };
+                if (status == null) return false;
+                street.setStreetStatus(status);
+                updated = true;
+            }
         }
 
-        preMeasurementRepository.save(preMeasurement.get());
+        if (updated) {
+            preMeasurementRepository.save(preMeasurement.get());
+        }
+
         return true;
     }
 
@@ -131,13 +138,15 @@ public class PreMeasurementService {
                 .orElseGet(() -> {
                     PreMeasurement newPre = new PreMeasurement();
                     newPre.setContract(contract);
-                    newPre.setCreatedBy(user.orElse(null));
-                    newPre.setCreatedAt(util.getDateTime());
                     newPre.setTypePreMeasurement(ContractType.INSTALLATION);
                     newPre.setStatus(ContractStatus.PENDING);
                     newPre.setCity(contract.getContractor());
                     return preMeasurementRepository.save(newPre);
                 });
+
+        preMeasurement.newStep();
+        preMeasurementRepository.save(preMeasurement);
+        var step = preMeasurement.getSteps();
 
         var streets = preMeasurementDTO.getStreets();
 
@@ -155,6 +164,10 @@ public class PreMeasurementService {
             preMeasurementStreet.setLongitude(street.getLongitude());
             preMeasurementStreet.setLastPower(street.getLastPower());
             preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
+            preMeasurementStreet.setStep(step);
+            preMeasurementStreet.setCreatedBy(user.orElse(null));
+            preMeasurementStreet.setCreatedAt(util.getDateTime());
+
             preMeasurementStreetRepository.save(preMeasurementStreet);
             for (var itemDTO : streetDTO.getItems()) {
                 for (var contractItem : contract.getContractItemsQuantitative()) {
@@ -343,16 +356,38 @@ public class PreMeasurementService {
         };
     }
 
+//    @Cacheable("getPreMeasurements")
+//    public ResponseEntity<?> getAll(String status) {
+//        List<PreMeasurementResponseDTO> measurements = new ArrayList<>();
+//
+//        var streets = preMeasurementStreetRepository.findAllByStreetStatusOrderByCreatedAtAsc(status);
+//        if (streets.isEmpty()) {
+//            return ResponseEntity.ok().body(List.of());
+//        }
+//
+//        var preMeasurementId = -1L;
+//        for (var street : streets) {
+//            if(street.getPreMeasurement().getPreMeasurementId() != preMeasurementId) {
+//                preMeasurementId = street.getPreMeasurement().getPreMeasurementId();
+//                measurements.add(convertToPreMeasurementResponseDTO(street.getPreMeasurement()));
+//            }
+//        }
+//
+//        return ResponseEntity.ok().body(measurements);
+//
+//    }
+
     @Cacheable("getPreMeasurements")
     public ResponseEntity<?> getAll(String status) {
-        List<PreMeasurementResponseDTO> measurements = preMeasurementRepository
-                .findAllByStatusOrderByCreatedAtAsc(status)
-                .stream()
-                .sorted(Comparator.comparing(PreMeasurement::getPreMeasurementId))
-                .map(this::convertToPreMeasurementResponseDTO).toList();
+        var preMeasurements = preMeasurementStreetRepository.findAllByStreetStatusOrderByCreatedAtAsc(status);
 
-        return ResponseEntity.ok().body(measurements);
+        var dtos = preMeasurements.stream()
+                .map(this::convertToPreMeasurementResponseDTO)
+                .toList();
+
+        return ResponseEntity.ok(dtos);
     }
+
 
     @Cacheable("getPreMeasurementById")
     public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
@@ -368,8 +403,6 @@ public class PreMeasurementService {
                 p.getPreMeasurementId(),
                 p.getContract().getContractId(),
                 p.getCity(),
-                p.getCreatedBy() != null ? p.getCreatedBy().getCompletedName() : "Desconhecido",
-                util.normalizeDate(p.getCreatedAt()),
                 "",
                 p.getTypePreMeasurement(),
                 Objects.equals(p.getTypePreMeasurement(), ContractType.INSTALLATION) ?
@@ -390,6 +423,9 @@ public class PreMeasurementService {
                                 s.getNeighborhood(),
                                 s.getCity(),
                                 s.getStreetStatus(),
+                                s.getCreatedBy() != null ? s.getCreatedBy().getCompletedName() : "Desconhecido",
+                                util.normalizeDate(s.getCreatedAt()),
+                                s.getStep(),
                                 s.getItems() != null ? s.getItems().stream()
                                         .filter(i -> !Objects.equals(i.getItemStatus(), ItemStatus.CANCELLED))
                                         .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
@@ -551,6 +587,14 @@ public class PreMeasurementService {
                 })
                 .map(Map.Entry::getKey)
                 .toList();
+
+//        continua depois...
+//        for(var item : changedItems) {
+//
+//            if(item.getNewContractReferenceId() != -1) {
+//                var sql = "UPDATE pre_measurement_street_item SET contract_item_id = :contract_item_id WHERE pre_measurement_street_item_id = ?";
+//            }
+//        }
 
         // Soma total de preço de itens novos
         BigDecimal newItemsPrice = newItems.stream()

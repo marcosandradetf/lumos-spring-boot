@@ -28,8 +28,6 @@ export interface PreMeasurementResponseDTO {
   preMeasurementId: number;
   contractId: number;
   city: string;
-  createdBy: string;
-  createdAt: string;
   depositName: String;
   preMeasurementType: string;
   preMeasurementStyle: string;
@@ -47,6 +45,9 @@ export interface PreMeasurementResponseDTO {
     hood: string;
     city: string;
     status: string;
+    createdBy: string;
+    createdAt: string;
+    step: number;
 
     items: {
       preMeasurementStreetItemId: number;

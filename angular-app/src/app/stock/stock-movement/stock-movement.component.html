@@ -1,7 +1,7 @@
-<div class="flex mt-[4rem] h-fit pl-2 pr-2">
+<div class="flex">
   <!--  <app-sidebar title="Estoque" [links]="sidebarLinks"></app-sidebar>-->
   <div class="mb-5 w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/início">Início</a></li>
@@ -12,15 +12,9 @@
       <h3 class="text-medium pr-5 hidden lg:block">Selecione os materiais desejados para movimentar o estoque</h3>
     </div>
 
-    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
-      <div class="flex justify-center m-5">
-        <ul class="steps">
-          <li class="step step-primary">Selecionar itens</li>
-          <li class="step"><a href="estoque/movimento-pendente" class="link link-hover hover:text-blue-700">Pendente de
-            Aprovação</a></li>
-          <li class="step cursor-pointer"><a href="estoque/movimento/aprovado"
-                                             class="link link-hover hover:text-blue-700">Aprovado</a></li>
-        </ul>
+    <div class="p-2 overflow-auto">
+      <div class="card p-3">
+        <p-steps [model]="items" [readonly]="false" />
       </div>
 
       <app-table [search]="true" [filter]="true">
@@ -46,7 +40,7 @@
         </div>
 
 
-        <tr class="bg-indigo-700 text-white" header>
+        <tr header>
           <th class="material-icons">call_received</th>
           <th>Codigo</th>
           <th>Nome</th>
@@ -59,7 +53,7 @@
           <th>Empresa</th>
           <th>Almoxarifado</th>
         </tr>
-        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100" body>
+        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
           <td>
             <input
               type="checkbox"
@@ -83,7 +77,7 @@
       </app-table>
     </div>
 
-    <div class="flex justify-between mt-4">
+    <div class="flex justify-between p-4">
       <app-button [action]="handleClick" title="Continuar"></app-button>
       <div class="overflow-auto m-10">
         <app-pagination [service]="this.materialService"></app-pagination>

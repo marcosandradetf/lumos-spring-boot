@@ -1,6 +1,6 @@
-<div class="flex mt-[3rem] h-fit" #top>
+<div class="flex h-fit" #top>
   <div class="w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2   w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/public">Início</a></li>
@@ -14,10 +14,10 @@
     <app-loading *ngIf="loading"></app-loading>
 
     <div class="flex w-full justify-center p-5" *ngIf="!hideContent && !loading">
-      <div role="tablist" class="tabs tabs-bordered">
+      <div role="tablist" class="tabs tabs-lifted">
         <input type="radio" class="tab" aria-label="Pendente" [checked]="status === 'pendente'"
                (click)="router.navigate(['/pre-medicao/pendente'])"/>
-        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
+        <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90 "
                aria-label="Aguardando Retorno" (click)="router.navigate(['/pre-medicao/aguardando-retorno'])"
                [checked]="status === 'aguardando-retorno'"/>
         <input type="radio" class="tab  transform transition-transform duration-300 hover:scale-90"
@@ -29,7 +29,15 @@
       </div>
     </div>
 
-    <div *ngIf="hideContent  && !loading" class="border-b w-full pl-2 h-screen pt-2">
+    <div *ngIf="preMeasurements.length === 0 && !loading" >
+      <div class="text-center text-gray-500 dark:text-gray-400 mt-10">
+        <i class="fas fa-magnifying-glass-minus text-3xl mb-2"></i>
+        <p>Nenhum resultado encontrado</p>
+      </div>
+
+    </div>
+
+    <div *ngIf="hideContent  && !loading" class="  w-full pl-2 h-screen pt-2">
       <div class="flex items-center flex-col border rounded p-10 shadow">
         <span class="material-icons mt-20 text-orange-600">thumb_up</span>
         <h2 class="mt-2 font-semibold text-xl">Itens aprovados com sucesso</h2>
@@ -39,7 +47,7 @@
 
         <div class="mt-10 flex flex-col">
           <button class="btn btn-link"
-                  (click)="router.navigate(['/pre-medicao/relatorio/' + this.preMeasurementId])">
+                  (click)="router.navigate(['/pre-medicao/relatorio/' + this.preMeasurementId], {queryParams: {reason: 'generate'}})">
             <span class="material-icons">report</span>
             Exibir relatório
           </button>
@@ -52,29 +60,28 @@
       </div>
     </div>
 
-    <div class="border-b w-full pl-2 h-screen pt-2" *ngIf="!hideContent  && !loading">
+    <div class="  w-full pl-2 h-screen pt-2" *ngIf="!hideContent  && !loading">
       <ol class="flex flex-wrap">
         <li *ngFor="let p of preMeasurements; index as i;"
             class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="navigateTo(p.preMeasurementId)">
+            (click)="navigateTo(p.preMeasurementId, p.streets[0].step)">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge {{p.preMeasurementStyle}} rounded mb-4 mt-2">
+            <span class="badge badge-primary dark:badge-accent rounded mb-4 mt-2">
                 {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
             </span>
 
-            <h3 class="text-xl text-neutral-800 leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
+            <h3 class="text-xl leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
               com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ city }}</h3>
-            <span class="text-sm text-neutral-600 flex items-center">Por {{ p.createdBy }}<span
-              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
-            <span class="text-xs">{{ p.createdAt }} em {{ city }}</span>
+            <span class="text-sm  flex items-center">Por {{ p.streets[0].createdBy }}<span
+              class="material-icons text-sm ml-1 text-blue-500 dark:text-[#88f4ff]">verified</span></span>
+            <span class="text-xs">{{ p.streets[0].createdAt }} em {{ city }}</span>
           </div>
         </li>
       </ol>
     </div>
   </div>
 
-  <app-screen-message *ngIf="utils.serverMessage" [alertType]="utils.alertType" [message]="utils.serverMessage"
-                      class="absolute right-0"></app-screen-message>
+  <p-toast />
 
   <app-modal [modalOpen]="openModal"
              (modalClose)="openModal=false; toggleSteps()"
@@ -82,7 +89,7 @@
 
     @if (status === 'disponivel') {
       <div class="w-full flex flex-col">
-        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <div class="flex flex-col items-center justify-center text-xl mb-5   pb-2">
           <span class="material-icons text-primary text-2xl">mediation</span>
           <h2 class="text-center font-semibold">Defina a sistemática da execução</h2>
         </div>
@@ -103,7 +110,7 @@
       </div>
     } @else {
       <div class="w-full flex flex-col" #step1>
-        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <div class="flex flex-col items-center justify-center text-xl mb-5   pb-2">
           <span class="material-icons text-error">warning</span>
           <h2 class="text-center font-semibold">Atenção durante esse processo</h2>
         </div>
@@ -130,7 +137,7 @@
       </div>
 
       <div #step2 class="hidden w-full flex flex-col">
-        <div class="flex flex-col items-center justify-center text-xl mb-5 border-b pb-2">
+        <div class="flex flex-col items-center justify-center text-xl mb-5   pb-2">
           <span class="material-icons text-primary text-2xl">question_mark</span>
           <h2 class="text-center font-semibold">Essa ação aprova todos os itens da pré-medição, deseja prosseguir?</h2>
         </div>
@@ -148,4 +155,5 @@
     }
 
   </app-modal>
+
 </div>

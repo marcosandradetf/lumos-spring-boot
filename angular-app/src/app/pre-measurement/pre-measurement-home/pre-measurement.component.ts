@@ -8,6 +8,7 @@ import {ScreenMessageComponent} from '../../shared/components/screen-message/scr
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {PreMeasurementResponseDTO} from '../pre-measurement-models';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-pre-measurement-home',
@@ -18,7 +19,8 @@ import {PreMeasurementResponseDTO} from '../pre-measurement-models';
     NgIf,
     ScreenMessageComponent,
     ModalComponent,
-    LoadingComponent
+    LoadingComponent,
+    Toast
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
@@ -31,6 +33,7 @@ export class PreMeasurementComponent implements OnInit {
   openModal: boolean = false;
   preMeasurementId: number = 0;
   city: string = '';
+  step: number = -1;
 
   constructor(
     private preMeasurementService: PreMeasurementService,
@@ -55,43 +58,48 @@ export class PreMeasurementComponent implements OnInit {
   }
 
   private loadPreMeasurements() {
+    let statusParam: string;
+
     switch (this.status) {
       case 'pendente':
-        this.preMeasurementService.getPreMeasurements('pending').subscribe(preMeasurements => {
-          this.preMeasurements = preMeasurements;
-          this.city = this.preMeasurements[0].streets[0].city;
-          this.loading = false;
-        });
+        statusParam = 'pending';
         break;
       case 'aguardando-retorno':
-        this.preMeasurementService.getPreMeasurements('waiting').subscribe(preMeasurements => {
-          this.preMeasurements = preMeasurements;
-          this.city = this.preMeasurements[0].streets[0].city;
-          this.loading = false;
-        });
+        statusParam = 'waiting';
         break;
       case 'validando':
-        this.preMeasurementService.getPreMeasurements('validating').subscribe(preMeasurements => {
-          this.preMeasurements = preMeasurements;
-          this.city = this.preMeasurements[0].streets[0].city;
-          this.loading = false;
-        });
+        statusParam = 'validating';
         break;
       case 'disponivel':
-        this.preMeasurementService.getPreMeasurements('available').subscribe(preMeasurements => {
-          this.preMeasurements = preMeasurements;
-          this.city = this.preMeasurements[0].streets[0].city;
-          this.loading = false;
-        });
+        statusParam = 'available';
         break;
+      default:
+        return;
     }
+
+    this.loading = true;
+
+    this.preMeasurementService.getPreMeasurements(statusParam).subscribe({
+      next: (preMeasurements) => {
+        this.preMeasurements = preMeasurements;
+        this.city = this.preMeasurements[0]?.streets[0]?.city;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar pré-medições:', err);
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
   }
 
-  navigateTo(preMeasurementId: number) {
+
+  navigateTo(preMeasurementId: number, step: number) {
     this.preMeasurementId = preMeasurementId;
+    this.step = step;
     switch (this.status) {
       case 'pendente':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId]);
+        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId], {queryParams: {reason: 'generate'}});
         break;
       case 'aguardando-retorno':
         this.openModal = true;
@@ -121,7 +129,12 @@ export class PreMeasurementComponent implements OnInit {
   hideContent = false;
   evolvePreMeasurement() {
     this.loading = true;
-    this.preMeasurementService.evolveStatus(this.preMeasurementId).subscribe({
+    if(this.step === -1) {
+      this.utils.showMessage("Erro 01 ao confirmar", 'error');
+      return;
+    }
+
+    this.preMeasurementService.evolveStatus(this.preMeasurementId, this.step).subscribe({
       error: (error: any) => {
         this.loading = false;
         this.utils.showMessage("Erro ao atualizar o status:", error);

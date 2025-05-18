@@ -17,7 +17,7 @@ import {SidebarComponent} from '../../shared/components/sidebar/sidebar.componen
   standalone: true,
   templateUrl: './material-page.component.html',
   styleUrls: ['./material-page.component.scss'],
-  imports: [CommonModule, ReactiveFormsModule, MaterialFormComponent, SidebarComponent, TabelaComponent] // Adicionando os módulos aqui
+  imports: [CommonModule, ReactiveFormsModule] // Adicionando os módulos aqui
 })
 export class MaterialPageComponent {
   private searchFilter: string = '';

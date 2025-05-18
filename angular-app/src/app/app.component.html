@@ -1,18 +1,30 @@
-@if (authService.isLoading$ | async) {
-  <div class="h-screen w-screen flex justify-center items-center">
-    <span class="loading loading-infinity loading-lg"></span>
-  </div>
-} @else {
-  @if (authService.isLoggedIn$ | async) {
-    <app-header></app-header>
-    <app-sidebar (menuToggle)="onMenuToggle($event)"></app-sidebar>
+<div class="flex flex-col space-y-2 max-h-screen overflow-auto">
+  @if (authService.isLoading$ | async) {
+    <div class="h-screen w-screen flex justify-center items-center max-h-screen overflow-auto">
+      <span class="loading loading-infinity loading-lg"></span>
+    </div>
+  } @else {
+    @if (authService.isLoggedIn$ | async) {
+      <app-header></app-header>
+    }
+
+    <!-- Conteúdo principal -->
+    <div class="flex space-x-2 max-h-screen overflow-auto">
+      @if (authService.isLoggedIn$ | async) {
+        <div class="border rounded overflow-y-auto overflow-x-hidden max-h-screen" >
+          <app-sidebar></app-sidebar>
+        </div>
+      }
+      <div class="border rounded max-h-screen overflow-auto w-screen" >
+        <router-outlet></router-outlet>
+      </div>
+
+    </div>
+
+<!--    <div class="border rounded max-h-screen overflow-none" >-->
+<!--      <app-footer></app-footer>-->
+<!--    </div>-->
+
   }
 
-  <!-- Conteúdo principal -->
-  <div [ngClass]="{'ml-[18rem]': menuOpen, 'ml-9': !menuOpen}" class="min-h-full transition-all">
-    <router-outlet></router-outlet>
-  </div>
-
-  <app-footer></app-footer>
-
-}
+</div>

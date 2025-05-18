@@ -21,6 +21,7 @@ import {FormsModule} from '@angular/forms';
 import {EstoqueService} from '../../stock/services/estoque.service';
 import {Deposit} from '../../models/almoxarifado.model';
 import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -31,8 +32,8 @@ import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-m
     TableComponent,
     NgIf,
     NgClass,
-    ScreenMessageComponent,
-    FormsModule
+    FormsModule,
+    Toast
   ],
   templateUrl: './measurement-details.component.html',
   styleUrl: './measurement-details.component.scss',
@@ -62,8 +63,6 @@ export class MeasurementDetailsComponent implements OnInit {
   preMeasurement: PreMeasurementResponseDTO = {
     city: '',
     contractId: 0,
-    createdAt: '',
-    createdBy: '',
     preMeasurementId: 0,
     preMeasurementStyle: '',
     preMeasurementType: '',
@@ -153,7 +152,7 @@ export class MeasurementDetailsComponent implements OnInit {
         this.teams = response;
       },
       error: (error: { error: { message: string } }) => {
-        this.utils.showMessage(error.error.message, true);
+        this.utils.showMessage(error.error.message, 'error');
       }
     });
 
@@ -162,7 +161,7 @@ export class MeasurementDetailsComponent implements OnInit {
         this.deposits = response;
       },
       error: (error: { error: { message: string } }) => {
-        this.utils.showMessage(error.error.message, true);
+        this.utils.showMessage(error.error.message, 'error');
       }
     });
   }
@@ -244,7 +243,7 @@ export class MeasurementDetailsComponent implements OnInit {
         this.truckDepositName = team.depositName;
       },
       error: (error: { message: string }) => {
-        this.utils.showMessage(error.message, true);
+        this.utils.showMessage(error.message, 'error');
       }
     });
 
@@ -285,13 +284,13 @@ export class MeasurementDetailsComponent implements OnInit {
     }
 
     if (this.reserveDTO.street[streetIndex].teamId === 0) {
-      this.utils.showMessage('Selecione uma equipe para continuar', true);
+      this.utils.showMessage('Selecione uma equipe para continuar', 'warn');
       return;
     }
 
     this.preMeasurement.streets[streetIndex].status = 'VALIDATED';
     this.streetId = this.preMeasurement.streets[streetIndex + 1]?.preMeasurementStreetId || 0;
-    this.utils.showMessage("Rua pendente salva com sucesso", false);
+    this.utils.showMessage("Rua pendente salva com sucesso", 'success');
     this.utils.playSound("pop");
     if (this.streetId === 0) {
       this.finish = true;
@@ -339,7 +338,7 @@ export class MeasurementDetailsComponent implements OnInit {
 
   selectDeposits(firstDeposit: string, secondDeposit: string) {
     if (firstDeposit === "Selecione" || secondDeposit === "Selecione") {
-      this.utils.showMessage("A seleção dos dois almoxarifados reservas são obrigatórias", true);
+      this.utils.showMessage("A seleção dos dois almoxarifados reservas são obrigatórias", 'warn');
       return;
     }
     this.reserveDTO.firstDepositCityId = Number(firstDeposit)
@@ -347,7 +346,7 @@ export class MeasurementDetailsComponent implements OnInit {
     this.reserveDTO.secondDepositCityId = Number(secondDeposit)
     this.reserveDTO.secondDepositCityName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
 
-    this.utils.showMessage("Almoxarifados da cidade definidos com sucesso", false);
+    this.utils.showMessage("Almoxarifados da cidade definidos com sucesso", 'info');
     this.openDepositModal = false;
   }
 
@@ -367,7 +366,7 @@ export class MeasurementDetailsComponent implements OnInit {
     } else {
       message = "Prioridade removida para essa rua";
     }
-    this.utils.showMessage(message, false);
+    this.utils.showMessage(message, 'info');
   }
 
   insertComment($event: Event) {

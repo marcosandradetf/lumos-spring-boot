@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {NgForOf} from '@angular/common';
 import {ReactiveFormsModule} from '@angular/forms';
@@ -10,24 +10,26 @@ import {StockMovementResponse} from '../../models/stock-movement-response.dto';
 import {EstoqueService} from '../services/estoque.service';
 import {Title} from '@angular/platform-browser';
 import {catchError, tap, throwError} from 'rxjs';
+import {Steps} from 'primeng/steps';
+import {MenuItem} from 'primeng/api';
 
 
 @Component({
   selector: 'app-stock-movement-pending',
   standalone: true,
   imports: [
-    SidebarComponent,
     NgForOf,
     ReactiveFormsModule,
     TableComponent,
     ButtonComponent,
     ModalComponent,
-    AlertMessageComponent
+    AlertMessageComponent,
+    Steps
   ],
   templateUrl: './stock-movement-pending.component.html',
   styleUrl: './stock-movement-pending.component.scss'
 })
-export class StockMovementPendingComponent {
+export class StockMovementPendingComponent implements OnInit {
   sidebarLinks = [
     { title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1' },
     { title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2' },
@@ -41,6 +43,7 @@ export class StockMovementPendingComponent {
   movementId: number = 0;
   serverMessage: string | null = null;
   alertType: string | null = null;
+  items: MenuItem[] | undefined;
 
   constructor(private stockService: EstoqueService, private title: Title) {
     this.title.setTitle('Estoque - Pendente');
@@ -49,6 +52,23 @@ export class StockMovementPendingComponent {
         this.stockMovement = stockMovement;
       }
     );
+  }
+
+  ngOnInit() {
+    this.items = [
+      {
+        label: 'Selecionar itens',
+        routerLink: '/estoque/movimento'
+      },
+      {
+        label: 'Pendente de Aprovação',
+        routerLink: '/estoque/movimento-pendente'
+      },
+      {
+        label: 'Aprovado',
+        routerLink: '/estoque/movimento/aprovado'
+      },
+    ];
   }
 
   handleOpenModal(id: number): void {

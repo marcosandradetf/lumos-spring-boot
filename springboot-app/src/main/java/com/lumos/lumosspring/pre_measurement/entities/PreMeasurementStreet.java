@@ -1,9 +1,12 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.team.entities.Team;
+import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
+import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +33,9 @@ public class PreMeasurementStreet {
 
     private String streetStatus = ItemStatus.PENDING;
 
+    @Column(nullable = false)
+    private Integer step;
+
     @OneToMany(mappedBy = "preMeasurementStreet", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PreMeasurementStreetItem> items = new HashSet<>();
 
@@ -47,6 +53,22 @@ public class PreMeasurementStreet {
     @ManyToOne
     @JoinColumn(name = "pre_measurement_id") // FK para a entidade PreMeasurement
     private PreMeasurement preMeasurement;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by_user_id")
+    private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_by_user_id")
+    private User assignedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "finished_by_user_id")
+    private User finishedBy;
+
+    private Instant createdAt;
+    private Instant assignedAt;
+    private Instant finishedAt;
 
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
@@ -166,5 +188,57 @@ public class PreMeasurementStreet {
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    public Integer getStep() {
+        return step;
+    }
+
+    public void setStep(Integer step) {
+        this.step = step;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getAssignedAt() {
+        return assignedAt;
+    }
+
+    public void setAssignedAt(Instant assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
+    public Instant getFinishedAt() {
+        return finishedAt;
+    }
+
+    public void setFinishedAt(Instant finishedAt) {
+        this.finishedAt = finishedAt;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public User getAssignedBy() {
+        return assignedBy;
+    }
+
+    public void setAssignedBy(User assignedBy) {
+        this.assignedBy = assignedBy;
+    }
+
+    public User getFinishedBy() {
+        return finishedBy;
     }
 }

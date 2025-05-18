@@ -3,6 +3,7 @@ table {
   border-collapse: collapse;
   font-size: 0.6em;
   font-family: sans-serif;
+  color: black;
 }
 
 th,
@@ -28,6 +29,7 @@ th {
   display: flex;
   flex-direction: column;
   line-height: 0;
+  color: black;
 }
 
 .generate-report {

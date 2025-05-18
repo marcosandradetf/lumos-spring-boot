@@ -1,6 +1,6 @@
-<div class="flex mt-[3rem] h-fit" #top>
+<div class="flex" #top>
   <div class="w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/public">Início</a></li>
@@ -43,8 +43,8 @@
                 alt="Logo Solutions"
               />
             </div>
-            <h3 style="text-align: center;">PRÉ-MEDIÇÃO INSTALAÇÃO DE LED - {{ preMeasurement.city.toUpperCase() }}</h3>
-            <h5 style="text-align: center;">Contrato Nº: {{ contract.number }}</h5>
+            <h3 style="text-align: center; color: black;">PRÉ-MEDIÇÃO INSTALAÇÃO DE LED - {{ preMeasurement.city.toUpperCase() }}</h3>
+            <h5 style="text-align: center; color: black;">Contrato Nº: {{ contract.number }}</h5>
 
             <table>
               <thead>
@@ -167,7 +167,7 @@
               </table>
             </div>
 
-            <div class="footer" *ngIf="preMeasurement.status === 'PENDING' && reason !== 'importPreMeasurement'">
+            <div class="footer" *ngIf="preMeasurement.streets[0].status === 'PENDING' && reason !== 'importPreMeasurement'">
               <p>Solicitamos análise e aprovação do presente orçamento. Em caso de aprovação parcial, solicitamos
                 indicação dos
                 itens aprovados.</p>
@@ -181,13 +181,6 @@
           </div>
         </div>
 
-        <div *ngIf="reason !== 'importPreMeasurement'">
-          <h2>Confirmar</h2>
-          <div class="flex">
-            <button>Confirmar Importação</button>
-            <button>Cancelar Importação</button>
-          </div>
-        </div>
       </div>
     }
 
@@ -211,5 +204,6 @@
     <button class="btn bg-rose-950 text-white hover:bg-rose-900 m-2" (click)="openModal = false">Ok</button>
   </app-modal>
 
+  <p-toast />
 
 </div>

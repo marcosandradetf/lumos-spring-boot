@@ -12,6 +12,9 @@ public record PreMeasurementStreetResponseDTO(
         String hood,
         String city,
         String status,
+        String createdBy,
+        String createdAt,
+        Integer step,
         List<PreMeasurementStreetItemResponseDTO> items
 ) {
 }

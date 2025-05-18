@@ -7,15 +7,15 @@ import {Title} from '@angular/platform-browser';
 import {map} from 'rxjs';
 import {UtilsService} from '../../../service/utils.service';
 import {ScreenMessageComponent} from '../../../../shared/components/screen-message/screen-message.component';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    NgOptimizedImage,
     FormsModule,
     NgIf,
-    ScreenMessageComponent
+    Toast
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -47,11 +47,11 @@ export class LoginComponent {
             console.log('Login realizado com sucesso:', response);
             void this.router.navigate(['/']); // Redireciona após o login bem-sucedido
           } else {
-            this.utils.showMessage("Email/Usuário ou senha incorretos", true);
+            this.utils.showMessage("Email/Usuário ou senha incorretos", 'error');
           }
         },
         error => {
-          this.utils.showMessage("Email/Usuário ou senha incorretos", true);
+          this.utils.showMessage("Email/Usuário ou senha incorretos",  'error');
         }
       );
     }
@@ -80,7 +80,7 @@ export class LoginComponent {
       },
       error: error => {
         error.innerText = '';
-        this.utils.showMessage(error.message, true);
+        this.utils.showMessage(error.message, 'error');
         this.loading = false;
       }
     });
