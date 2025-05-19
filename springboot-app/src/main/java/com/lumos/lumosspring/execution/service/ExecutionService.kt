@@ -1,19 +1,16 @@
 package com.lumos.lumosspring.execution.service
 
 import com.lumos.lumosspring.execution.dto.*
-import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
 import com.lumos.lumosspring.notification.service.NotificationService
-import com.lumos.lumosspring.notification.service.Routes
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
-import com.lumos.lumosspring.stock.entities.Material
+import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.DepositRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
-import com.lumos.lumosspring.util.ErrorResponse
-import com.lumos.lumosspring.util.NotificationType
+import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.Util
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -30,13 +27,34 @@ class ExecutionService(
     private val materialStockRepository: MaterialStockRepository,
     private val notificationService: NotificationService,
     private val util: Util,
-    private val stockistRepository: StockistRepository
+    private val stockistRepository: StockistRepository,
+    private val userRepository: UserRepository
 ) {
-    // requisicao
+    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
+    fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
+        val stockist =
+            userRepository.findByIdUser(UUID.fromString(delegateDTO.stockistId))
+                .orElse(null) ?: return ResponseEntity.notFound().build()
+
+        val streets = preMeasurementStreetRepository.findAllById(delegateDTO.references)
+        if(streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhuma rua foi Encontrada")
+
+        val management = ReservationManagement()
+        management.description = delegateDTO.description
+        management.stockist = stockist
+        management.streets = streets
 
 
-    // reserva
-    //
+
+        return ResponseEntity.ok().build()
+    }
+
+//    Exemplo temos uma pre-medicao que contem diversas ruas e dentro de cada rua diversos itens,
+//    o que eu preciso fazer é enviar essa referencia para o estoquista e ele irá verificar se cada equipe que ira executar o serviço
+//    já tem estoque no caminhao, caso tenha ele irá reservar os materiais caso contrario ele ira reservar no proprio estoque
+//    ou de terceiros (NESSE CASO ENVIAR UMA NOTIFICAÇÃO E REQUERER CONFIRMAÇÃO).
+
+//     reserva
 //fun reserve(reserveDTO: ReserveForStreetsDTO): ResponseEntity<Any> {
 //        if (reserveDTO.streets.isEmpty()) return ResponseEntity.badRequest()
 //            .body(ErrorResponse("Nenhum dado foi enviado"))

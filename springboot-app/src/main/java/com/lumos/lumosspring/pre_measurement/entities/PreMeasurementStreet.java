@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
+import com.lumos.lumosspring.stock.entities.ReservationManagement;
 import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.util.ItemStatus;
@@ -69,6 +70,9 @@ public class PreMeasurementStreet {
     private Instant createdAt;
     private Instant assignedAt;
     private Instant finishedAt;
+
+    @ManyToOne
+    private ReservationManagement reservationManagement;
 
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
