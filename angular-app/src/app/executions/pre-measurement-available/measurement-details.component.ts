@@ -22,6 +22,8 @@ import {EstoqueService} from '../../stock/services/estoque.service';
 import {Deposit} from '../../models/almoxarifado.model';
 import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
 import {Toast} from 'primeng/toast';
+import {DelegateDTO, StockistModel} from '../executions.model';
+import {User} from '../../models/user.model';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -104,10 +106,9 @@ export class MeasurementDetailsComponent implements OnInit {
 
   reserveDTO: {
     preMeasurementId: number;
-    firstDepositCityId: number;
-    firstDepositCityName: string;
-    secondDepositCityId: number;
-    secondDepositCityName: string;
+    stockistId: string,
+    stockistName: string,
+    preMeasurementStep: number,
     street: {
       preMeasurementStreetId: number;
       teamId: number;
@@ -118,12 +119,20 @@ export class MeasurementDetailsComponent implements OnInit {
     }[]
   } = {
     preMeasurementId: 0,
-    firstDepositCityId: 0,
-    firstDepositCityName: '',
-    secondDepositCityId: 0,
-    secondDepositCityName: '',
+    stockistId: '',
+    stockistName: '',
+    preMeasurementStep: 0,
     street: []
   };
+
+  delegateDTO: DelegateDTO = {
+    description: '',
+    stockistId: '',
+    stockistName: '',
+    preMeasurementId: 0,
+    preMeasurementStep: 0,
+    teamId: 0,
+  }
 
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
@@ -158,12 +167,13 @@ export class MeasurementDetailsComponent implements OnInit {
       }
     });
 
-    this.stockService.getDeposits().subscribe({
+    this.stockService.getStockists().subscribe({
       next: (response) => {
-        this.deposits = response;
+        this.stockists = response;
       },
       error: (error: { error: { message: string } }) => {
         this.utils.showMessage(error.error.message, 'error');
+        this.utils.showMessage("Erro ao carregar Estoquistas", 'error');
       }
     });
   }
@@ -239,8 +249,6 @@ export class MeasurementDetailsComponent implements OnInit {
       return;
     }
 
-    this.truckDepositName = team.depositName;
-
     this.reserveDTO.street[streetIndex].teamId = Number(team.idTeam);
     this.reserveDTO.street[streetIndex].teamName = team.teamName;
     this.reserveDTO.street[streetIndex].truckDepositName = team.depositName;
@@ -288,7 +296,7 @@ export class MeasurementDetailsComponent implements OnInit {
     this.utils.playSound("pop");
     if (this.streetId === 0) {
       this.finish = true;
-      if (this.reserveDTO.firstDepositCityId === 0 || this.reserveDTO.secondDepositCityId === 0) {
+      if (this.reserveDTO.stockistId.length === 0) {
         this.toggleSideBar();
       }
       return;
@@ -316,7 +324,7 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
 
-  deposits: Deposit[] = [];
+  stockists: StockistModel[] = [];
 
   openDepositModal: boolean = false;
 
@@ -330,17 +338,15 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
 
-  selectDeposits(firstDeposit: string, secondDeposit: string) {
-    if (firstDeposit === "Selecione" || secondDeposit === "Selecione") {
-      this.utils.showMessage("A seleção dos dois almoxarifados reservas são obrigatórias", 'warn');
+  selectDeposits(stockist: string) {
+    if (stockist === "Selecione") {
+      this.utils.showMessage("A seleção do estoquista que irá gerenciar as reservas de materiais é obrigatória", 'warn');
       return;
     }
-    this.reserveDTO.firstDepositCityId = Number(firstDeposit)
-    this.reserveDTO.firstDepositCityName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
-    this.reserveDTO.secondDepositCityId = Number(secondDeposit)
-    this.reserveDTO.secondDepositCityName = this.deposits.find(d => d.idDeposit === Number(firstDeposit))?.depositName || '';
+    this.reserveDTO.stockistId = stockist;
+    this.reserveDTO.stockistName = this.stockists.find(s => s.userId === stockist)?.name || '';
 
-    this.utils.showMessage("Almoxarifados da cidade definidos com sucesso", 'info');
+    this.utils.showMessage("Estoquista responsável pelo gerenciamento definido com sucesso", 'info');
     this.openDepositModal = false;
   }
 

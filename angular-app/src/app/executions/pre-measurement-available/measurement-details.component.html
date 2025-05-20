@@ -1,28 +1,20 @@
 <div class="flex" #top>
-  <div *ngIf="openDepositModal" class="fixed top-20 right-4 w-80 z-50 bg-white shadow-lg rounded-lg p-4"
+  <div *ngIf="openDepositModal"
+       class="fixed top-20 right-4 w-80 z-50 bg-white dark:bg-black dark:text-neutral-50 shadow-lg rounded-lg p-4"
        @fadeSlide>
-    <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Almoxarifados da Cidade</h3>
-    <p class="text-xs font-light">Pelo menos dois almoxarifados reservas devem ser indicados para pleno atendimento.</p>
+    <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Estoquista Responsável</h3>
+    <p class="text-xs font-light dark:font-dark">
+      Para garantir o bom andamento da execução das ruas, é importante definir um estoquista responsável pelo gerenciamento de reserva
+      dos materiais. Ele decidirá de onde os materiais serão retirados — seja do caminhão, do próprio almoxarifado ou de terceiros (Outra cidade).
+    </p>
 
     <div class="space-y-2">
       <div>
         <label class="text-xs text-gray-500 mb-1 block mt-5">Primário</label>
-        <select class="select select-sm select-bordered w-full" #firstDeposit>
+        <select class="select select-sm select-bordered w-full" #stockist>
           <option disabled selected>Selecione</option>
-          <ng-container *ngFor="let d of deposits">
-            <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')"
-                    [value]="d.idDeposit">{{ d.depositName }}
-            </option>
-          </ng-container>
-        </select>
-      </div>
-      <div>
-        <label class="text-xs text-gray-500 mb-1 block">Secundário</label>
-        <select class="select select-sm select-bordered w-full" #secondDeposit>
-          <option disabled selected>Selecione</option>
-          <ng-container *ngFor="let d of deposits">
-            <option *ngIf="!d.depositName.toUpperCase().startsWith('CAMINH')"
-                    [value]="d.idDeposit">{{ d.depositName }}
+          <ng-container *ngFor="let s of stockists">
+            <option [value]="s.userId">{{ s.name }}
             </option>
           </ng-container>
         </select>
@@ -30,7 +22,7 @@
     </div>
 
     <div class="mt-4 flex justify-end">
-      <button class="btn btn-sm btn-primary" (click)="selectDeposits(firstDeposit.value, secondDeposit.value)">
+      <button class="btn btn-sm btn-primary" (click)="selectDeposits(stockist.value)">
         Salvar
       </button>
     </div>
@@ -61,14 +53,12 @@
         <table class="min-w-fit text-sm text-gray-700">
           <thead class="bg-[#044686] text-white uppercase text-xs">
           <tr>
-            <th class="px-4 py-2 text-left">Almox. Primário</th>
-            <th class="px-4 py-2 text-left">Almox. Secundário</th>
+            <th class="px-4 py-2 text-left">Estoquista Responsável</th>
           </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
           <tr class="hover:bg-gray-50">
-            <td class="px-4 py-2">{{ reserveDTO.firstDepositCityName }}</td>
-            <td class="px-4 py-2">{{ reserveDTO.secondDepositCityName }}</td>
+            <td class="px-4 py-2">{{ reserveDTO.stockistName }}</td>
           </tr>
           </tbody>
         </table>
@@ -157,7 +147,8 @@
               class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
             hover:translate-y-2 m-2 card-execution select-none">
               <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
-              <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de reserva</p>
+              <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de
+                reserva</p>
             </div>
           </ng-container>
         </div>
@@ -196,7 +187,7 @@
                   {{ getStreet(streetId)?.latitude || 'Latitude não informada' }}
                 </span>
                 <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full shadow-sm">
-                  {{ getStreet(streetId)?.longitude || 'Longitude não informada'  }}
+                  {{ getStreet(streetId)?.longitude || 'Longitude não informada' }}
                 </span>
               </div>
             </div>
@@ -210,7 +201,7 @@
                 class="material-icons text-neutral-500 cursor-pointer select-none
                 transition-all duration-300 ease-in-out hover:text-orange-600 hover:scale-110"
                 (click)="togglePriority()"
-                [ngClass]="isPriority() ? 'warning text-orange-500' : ''" >
+                [ngClass]="isPriority() ? 'warning text-orange-500' : ''">
                 warning_amber
               </span>
               <span class="text-xs">{{ isPriority() ? 'Com prioridade' : 'Sem prioridade' }}</span>
@@ -366,5 +357,6 @@
     }
   </app-modal>
 
-  <<p-toast />
+  <
+  <p-toast/>
 </div>

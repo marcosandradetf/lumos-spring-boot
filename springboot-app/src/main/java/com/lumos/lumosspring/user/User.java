@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
+import com.lumos.lumosspring.team.entities.Stockist;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.Set;
@@ -42,6 +43,9 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean status;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private Stockist stockist;
 
     public UUID getIdUser() {
         return idUser;
@@ -137,5 +141,13 @@ public class User {
 
     public void setCpf(String cpf) {
         this.cpf = cpf;
+    }
+
+    public Stockist getStockist() {
+        return stockist;
+    }
+
+    public void setStockist(Stockist stockist) {
+        this.stockist = stockist;
     }
 }

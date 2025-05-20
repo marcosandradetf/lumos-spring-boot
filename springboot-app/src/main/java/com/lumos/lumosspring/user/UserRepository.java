@@ -24,4 +24,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<List<UUID>> findAllByRoleNames(@Param("roleNames") Set<String> roleNames);
 
     List<User> findByStatusTrueOrderByNameAsc();
+
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.roleName IN :roleNames")
+    List<User> getUsersByRoles(@Param("roleNames") List<String> roleNames);
 }

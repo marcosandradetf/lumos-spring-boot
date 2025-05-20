@@ -38,7 +38,11 @@ class ExecutionService(
             userRepository.findByIdUser(UUID.fromString(delegateDTO.stockistId))
                 .orElse(null) ?: return ResponseEntity.notFound().build()
 
-        val streets = preMeasurementStreetRepository.findAllById(delegateDTO.references)
+        val streets = preMeasurementStreetRepository.getAllByPreMeasurement_PreMeasurementIdAndStep(
+            delegateDTO.preMeasurementId,
+            delegateDTO.preMeasurementStep
+        )
+
         if(streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhuma rua foi Encontrada")
 
         val management = ReservationManagement()

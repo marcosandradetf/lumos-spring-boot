@@ -14,31 +14,36 @@ import java.util.List;
 @RequestMapping("/api/deposit")
 public class DepositController {
     @Autowired
-    private DepositService almoxarifadoService;
+    private DepositService depositService;
 
     @GetMapping
     public List<DepositResponse> getAll() {
-        return almoxarifadoService.findAll();
+        return depositService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Deposit> getById(@PathVariable Long id) {
-        Deposit almoxarifado = almoxarifadoService.findById(id);
-        return almoxarifado != null ? ResponseEntity.ok(almoxarifado) : ResponseEntity.notFound().build();
+        Deposit deposit = depositService.findById(id);
+        return deposit != null ? ResponseEntity.ok(deposit) : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/insert")
-    public ResponseEntity<?> create(@RequestBody DepositDTO almoxarifado) {
-        return almoxarifadoService.save(almoxarifado);
+    public ResponseEntity<?> create(@RequestBody DepositDTO deposit) {
+        return depositService.save(deposit);
     }
 
     @PutMapping("/{id}/update")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody DepositDTO almoxarifado) {
-        return almoxarifadoService.update(id, almoxarifado);
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody DepositDTO deposit) {
+        return depositService.update(id, deposit);
     }
 
     @DeleteMapping("/{id}/delete")
     public ResponseEntity<?> delete(@PathVariable Long id) {
-        return almoxarifadoService.delete(id);
+        return depositService.delete(id);
+    }
+
+    @GetMapping("get-stockists")
+    public ResponseEntity<?> getStockists() {
+        return depositService.getStockists();
     }
 }

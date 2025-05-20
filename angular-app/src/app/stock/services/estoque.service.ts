@@ -11,6 +11,7 @@ import {Group} from '../../models/grupo.model';
 import {Company} from '../../models/empresa.model';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
+import {StockistModel} from '../../executions/executions.model';
 
 
 @Injectable({
@@ -99,4 +100,7 @@ export class EstoqueService {
     return this.http.delete<Deposit[]>(`${this.endpoint}/deposit/${depositId}/delete`);
   }
 
+  getStockists() {
+    return this.http.get<StockistModel[]>(`${this.endpoint}/deposit/get-stockists`);
+  }
 }

@@ -3,6 +3,7 @@ package com.lumos.lumosspring.pre_measurement.repository;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
 import com.lumos.lumosspring.team.entities.Team;
 import jakarta.transaction.Transactional;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -32,4 +33,6 @@ public interface PreMeasurementStreetRepository extends JpaRepository<PreMeasure
     @EntityGraph(attributePaths = {"createdBy", "items", "preMeasurement"})
     @Query("SELECT s FROM PreMeasurementStreet s WHERE s.assignedBy is null AND s.preMeasurement.preMeasurementId = :preMeasurementId AND s.step = :step")
     List<PreMeasurementStreet> getPreMeasurementNotAssignedById(long preMeasurementId, Integer step);
+
+    List<PreMeasurementStreet> getAllByPreMeasurement_PreMeasurementIdAndStep(Long preMeasurement_preMeasurementId, Integer step);
 }
