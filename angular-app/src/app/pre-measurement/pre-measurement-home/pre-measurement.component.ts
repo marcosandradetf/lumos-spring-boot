@@ -33,7 +33,7 @@ export class PreMeasurementComponent implements OnInit {
   openModal: boolean = false;
   preMeasurementId: number = 0;
   city: string = '';
-  step: number = -1;
+  step: number = 0;
 
   constructor(
     private preMeasurementService: PreMeasurementService,
@@ -99,7 +99,7 @@ export class PreMeasurementComponent implements OnInit {
     this.step = step;
     switch (this.status) {
       case 'pendente':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId], {queryParams: {reason: 'generate'}});
+        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId, step], {queryParams: {reason: 'generate'}});
         break;
       case 'aguardando-retorno':
         this.openModal = true;
@@ -160,7 +160,7 @@ export class PreMeasurementComponent implements OnInit {
 
   navigateToExecution(isMultiTeam: boolean) {
     void this.router.navigate(
-      ['execucao/pre-medicao', this.preMeasurementId],
+      ['execucao/pre-medicao', this.preMeasurementId, this.step],
       { queryParams: { multiTeam: isMultiTeam } }
     );
   }

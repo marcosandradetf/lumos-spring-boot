@@ -14,8 +14,8 @@ export class PreMeasurementService {
   constructor(private http: HttpClient) {
   }
 
-  getPreMeasurement(preMeasurementId: string) {
-    return this.http.get<PreMeasurementResponseDTO>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
+  getPreMeasurement(preMeasurementId: string, step: number) {
+    return this.http.get<PreMeasurementResponseDTO>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}/${step}`}`);
   }
 
   getPreMeasurements(status: string): Observable<PreMeasurementResponseDTO[]> {

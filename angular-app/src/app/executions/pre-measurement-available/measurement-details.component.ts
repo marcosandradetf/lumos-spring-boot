@@ -70,6 +70,7 @@ export class MeasurementDetailsComponent implements OnInit {
     teamName: '',
     totalPrice: '',
     depositName: '',
+    step: 0,
     streets: [],
   }
   private map!: L.Map;
@@ -135,15 +136,16 @@ export class MeasurementDetailsComponent implements OnInit {
       this.isMultiTeam = params['multiTeam'] === 'true';
     });
     const preMeasurementId = this.route.snapshot.paramMap.get('id');
-    if (preMeasurementId == null) {
+    const step = this.route.snapshot.paramMap.get('step');
+    if (preMeasurementId == null || step == null) {
       return
     }
     this.reserveDTO.preMeasurementId = Number(preMeasurementId);
-    this.loadPreMeasurement(preMeasurementId);
+    this.loadPreMeasurement(preMeasurementId, Number(step));
   }
 
-  loadPreMeasurement(id: string) {
-    this.preMeasurementService.getPreMeasurement(id).subscribe(preMeasurement => {
+  loadPreMeasurement(id: string, step: number) {
+    this.preMeasurementService.getPreMeasurement(id, step).subscribe(preMeasurement => {
       this.preMeasurement = preMeasurement;
     });
 
@@ -237,15 +239,7 @@ export class MeasurementDetailsComponent implements OnInit {
       return;
     }
 
-    this.executionService.getStockAvailable(this.preMeasurement.preMeasurementId, Number(team.idTeam)).subscribe({
-      next: (response) => {
-        this.localStockStreet = response;
-        this.truckDepositName = team.depositName;
-      },
-      error: (error: { message: string }) => {
-        this.utils.showMessage(error.message, 'error');
-      }
-    });
+    this.truckDepositName = team.depositName;
 
     this.reserveDTO.street[streetIndex].teamId = Number(team.idTeam);
     this.reserveDTO.street[streetIndex].teamName = team.teamName;

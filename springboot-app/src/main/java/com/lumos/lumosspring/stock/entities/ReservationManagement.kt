@@ -8,17 +8,17 @@ import jakarta.persistence.*
 @Table(name = "tb_reservation_managements")
 class ReservationManagement {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private val id : Long = 0
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private val reservationManagementId : Long = 0
 
+    @Column(length = 100)
     var description : String = ""
 
     @ManyToOne
     @JoinColumn(name = "stockist_id", nullable = false)
     var stockist: User = User()
 
-    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "reservation")
+    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "reservationManagement")
     var streets: MutableList<PreMeasurementStreet> = ArrayList()
-
 
 }

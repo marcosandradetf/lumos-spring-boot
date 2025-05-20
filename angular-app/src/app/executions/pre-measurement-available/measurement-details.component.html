@@ -1,5 +1,5 @@
-<div class="flex mt-[3rem] h-fit" #top>
-  <div *ngIf="openDepositModal" class="fixed top-20 right-4 w-80 z-50 bg-white shadow-lg rounded-lg p-4 border"
+<div class="flex" #top>
+  <div *ngIf="openDepositModal" class="fixed top-20 right-4 w-80 z-50 bg-white shadow-lg rounded-lg p-4"
        @fadeSlide>
     <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Almoxarifados da Cidade</h3>
     <p class="text-xs font-light">Pelo menos dois almoxarifados reservas devem ser indicados para pleno atendimento.</p>
@@ -35,7 +35,7 @@
       </button>
     </div>
   </div>
-  <div *ngIf="finish && !openDepositModal" class="w-full h-screen pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
+  <div *ngIf="finish && !openDepositModal" class="w-full  pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
     <div class="max-w-7xl mx-auto">
       <!-- Ações -->
       <div class="flex justify-between items-center mb-8">
@@ -119,7 +119,7 @@
       </div>
     </div>
   </div>
-  <div *ngIf="finish && openDepositModal" class="w-full h-screen pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
+  <div *ngIf="finish && openDepositModal" class="w-full  pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
     <div class="flex flex-col gap-4">
       <div class="skeleton h-8 w-full"></div>
       <div class="skeleton h-4 w-full mb-2"></div>
@@ -131,7 +131,7 @@
     </div>
   </div>
   <div class="w-full" *ngIf="!finish" @fadeSlide>
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/">Início</a></li>
@@ -144,7 +144,7 @@
 
     <div>
 
-      <div class="relative w-full overflow-hidden border-b">
+      <div class="relative w-full overflow-hidden">
         <div
           class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10"
           #slider>
@@ -157,7 +157,7 @@
               class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
             hover:translate-y-2 m-2 card-execution select-none">
               <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
-              <p class="text-sm text-gray-600">{{ street.items.length }} itens pendentes de reserva</p>
+              <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de reserva</p>
             </div>
           </ng-container>
         </div>
@@ -193,10 +193,10 @@
             <div class="flex justify-end border-b pb-2">
               <div class="flex gap-2">
                 <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full shadow-sm">
-                  {{ getStreet(streetId)?.latitude }}
+                  {{ getStreet(streetId)?.latitude || 'Latitude não informada' }}
                 </span>
                 <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full shadow-sm">
-                  {{ getStreet(streetId)?.longitude }}
+                  {{ getStreet(streetId)?.longitude || 'Longitude não informada'  }}
                 </span>
               </div>
             </div>

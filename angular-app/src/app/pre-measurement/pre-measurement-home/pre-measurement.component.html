@@ -47,7 +47,7 @@
 
         <div class="mt-10 flex flex-col">
           <button class="btn btn-link"
-                  (click)="router.navigate(['/pre-medicao/relatorio/' + this.preMeasurementId], {queryParams: {reason: 'generate'}})">
+                  (click)="router.navigate(['/pre-medicao/relatorio',this.preMeasurementId, this.step], {queryParams: {reason: 'generate'}})">
             <span class="material-icons">report</span>
             Exibir relatório
           </button>
@@ -64,7 +64,7 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let p of preMeasurements; index as i;"
             class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="navigateTo(p.preMeasurementId, p.streets[0].step)">
+            (click)="navigateTo(p.preMeasurementId, p.step)">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
             <span class="badge badge-primary dark:badge-accent rounded mb-4 mt-2">
                 {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}

@@ -24,10 +24,10 @@ public class PreMeasurementController {
         return preMeasurementService.savePreMeasurement(measurementDTO, userUUID);
     }
 
-    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}")
+    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}/{step}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-    public ResponseEntity<?> getPreMeasurement(@PathVariable long preMeasurementId) {
-        return preMeasurementService.getPreMeasurement(preMeasurementId);
+    public ResponseEntity<?> getPreMeasurementNotAssigned(@PathVariable long preMeasurementId, @PathVariable Integer step) {
+        return preMeasurementService.getPreMeasurementNotAssigned(preMeasurementId, step);
     }
 
     @GetMapping("/execution/get-pre-measurements/pending")

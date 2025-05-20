@@ -15,7 +15,6 @@ import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.notification.service.NotificationService;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.*;
@@ -379,39 +378,54 @@ public class PreMeasurementService {
 
     @Cacheable("getPreMeasurements")
     public ResponseEntity<?> getAll(String status) {
-        var preMeasurements = preMeasurementStreetRepository.findAllByStreetStatusOrderByCreatedAtAsc(status);
+        List<PreMeasurementStreet> streets = preMeasurementStreetRepository.getAllPreMeasurementsGroupByStep(status);
 
-        var dtos = preMeasurements.stream()
-                .map(this::convertToPreMeasurementResponseDTO)
-                .toList();
+        // Agrupar por PreMeasurement e por Step
+        Map<PreMeasurement, Map<Integer, List<PreMeasurementStreet>>> grouped =
+                streets.stream().collect(
+                        Collectors.groupingBy(
+                                PreMeasurementStreet::getPreMeasurement,
+                                Collectors.groupingBy(PreMeasurementStreet::getStep)
+                        )
+                );
+
+        List<PreMeasurementResponseDTO> dtos = new ArrayList<>();
+
+        grouped.forEach((preMeasurement, stepMap) -> {
+            stepMap.forEach((step, streetList) -> {
+                PreMeasurementResponseDTO dto = convertToPreMeasurementResponseDTO(preMeasurement, streetList, step);
+                dtos.add(dto);
+            });
+        });
 
         return ResponseEntity.ok(dtos);
     }
 
 
-    @Cacheable("getPreMeasurementById")
-    public ResponseEntity<?> getPreMeasurement(long preMeasurementId) {
-        PreMeasurement p = preMeasurementRepository
-                .findByPreMeasurementId(preMeasurementId);
 
-        return ResponseEntity.ok().body(convertToPreMeasurementResponseDTO(p));
+    @Cacheable("getPreMeasurementById")
+    public ResponseEntity<?> getPreMeasurementNotAssigned(long preMeasurementId, Integer step) {
+        var streets = preMeasurementStreetRepository.getPreMeasurementNotAssignedById(preMeasurementId, step);
+
+        return ResponseEntity.ok().body(convertToPreMeasurementResponseDTO(streets.getFirst().getPreMeasurement(), streets, step));
     }
 
-    public PreMeasurementResponseDTO convertToPreMeasurementResponseDTO(PreMeasurement p) {
+    public PreMeasurementResponseDTO convertToPreMeasurementResponseDTO(PreMeasurement p, List<PreMeasurementStreet> streets, Integer step) {
         AtomicInteger number = new AtomicInteger(1);
+
         return new PreMeasurementResponseDTO(
                 p.getPreMeasurementId(),
                 p.getContract().getContractId(),
                 p.getCity(),
                 "",
                 p.getTypePreMeasurement(),
-                Objects.equals(p.getTypePreMeasurement(), ContractType.INSTALLATION) ?
-                        "badge-primary" : "badge-neutral",
+                p.getTypePreMeasurement() == ContractType.INSTALLATION ? "badge-primary" : "badge-neutral",
                 p.getTypePreMeasurement(),
                 p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
                 p.getStatus(),
-                p.getStreets().stream()
-                        .filter(s -> !Objects.equals(s.getStreetStatus(), ItemStatus.CANCELLED))
+                step,
+                streets.stream()
+                        .filter(s -> !ItemStatus.CANCELLED.equals(s.getStreetStatus()))
                         .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
                         .map(s -> new PreMeasurementStreetResponseDTO(
                                 number.getAndIncrement(),
@@ -425,9 +439,9 @@ public class PreMeasurementService {
                                 s.getStreetStatus(),
                                 s.getCreatedBy() != null ? s.getCreatedBy().getCompletedName() : "Desconhecido",
                                 util.normalizeDate(s.getCreatedAt()),
-                                s.getStep(),
-                                s.getItems() != null ? s.getItems().stream()
-                                        .filter(i -> !Objects.equals(i.getItemStatus(), ItemStatus.CANCELLED))
+                                s.getItems() != null
+                                        ? s.getItems().stream()
+                                        .filter(i -> !ItemStatus.CANCELLED.equals(i.getItemStatus()))
                                         .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
                                         .map(i -> new PreMeasurementStreetItemResponseDTO(
                                                 i.getPreMeasurementStreetItemId(),
@@ -440,10 +454,11 @@ public class PreMeasurementService {
                                                 i.getMeasuredItemQuantity(),
                                                 i.getItemStatus()
                                         )).toList()
-                                        : List.of() // Retorna lista vazia se `s.getItems()` for null
+                                        : List.of()
                         )).toList()
         );
     }
+
 
     /**
      * MÉTODO PARA SALVAR AS MODIFICAÇOES NA PRÉ-MEDIÇÃO

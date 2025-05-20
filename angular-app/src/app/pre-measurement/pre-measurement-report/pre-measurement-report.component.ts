@@ -43,6 +43,7 @@ export class PreMeasurementReportComponent implements OnInit {
     teamName: '',
     totalPrice: '',
     status: '',
+    step: 0,
     streets: []
   };
 
@@ -87,12 +88,13 @@ export class PreMeasurementReportComponent implements OnInit {
               private userService: UserService, private reportService: ReportService,) {
 
     const measurementId = this.route.snapshot.paramMap.get('id');
+    const step = this.route.snapshot.paramMap.get('step');
     this.titleService.setTitle("Relatório de Pré-medição");
 
     const uuid = authService.getUser().uuid;
 
-    if (measurementId) {
-      this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
+    if (measurementId && step) {
+      this.preMeasurementService.getPreMeasurement(measurementId, Number(step)).subscribe(preMeasurement => {
         this.preMeasurement = preMeasurement;
         this.preMeasurementService.getContract(preMeasurement.contractId).subscribe(contract => {
           this.contract = contract;
@@ -146,7 +148,7 @@ export class PreMeasurementReportComponent implements OnInit {
       complete: () => {
         if (this.preMeasurement.streets[0].status === "PENDING") {
           // Possível mudança de status ou exibição de modal
-          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId, this.preMeasurement.streets[0].step).subscribe({
+          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId, this.preMeasurement.step).subscribe({
             error: (error: any) => {
               this.utils.showMessage("Erro ao atualizar o status:", error);
             },

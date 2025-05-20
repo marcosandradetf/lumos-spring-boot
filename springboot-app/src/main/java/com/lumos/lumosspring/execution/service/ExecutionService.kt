@@ -8,6 +8,7 @@ import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepo
 import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.DepositRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
+import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
@@ -28,7 +29,8 @@ class ExecutionService(
     private val notificationService: NotificationService,
     private val util: Util,
     private val stockistRepository: StockistRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val reservationManagementRepository: ReservationManagementRepository,
 ) {
     // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
@@ -44,7 +46,7 @@ class ExecutionService(
         management.stockist = stockist
         management.streets = streets
 
-
+        reservationManagementRepository.save(management)
 
         return ResponseEntity.ok().build()
     }

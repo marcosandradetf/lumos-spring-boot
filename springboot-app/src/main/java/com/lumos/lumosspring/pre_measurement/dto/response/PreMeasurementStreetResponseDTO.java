@@ -14,7 +14,6 @@ public record PreMeasurementStreetResponseDTO(
         String status,
         String createdBy,
         String createdAt,
-        Integer step,
         List<PreMeasurementStreetItemResponseDTO> items
 ) {
 }

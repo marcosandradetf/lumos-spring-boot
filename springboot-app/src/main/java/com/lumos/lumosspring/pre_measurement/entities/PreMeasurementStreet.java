@@ -72,6 +72,7 @@ public class PreMeasurementStreet {
     private Instant finishedAt;
 
     @ManyToOne
+    @JoinColumn(name = "reservation_management_id")
     private ReservationManagement reservationManagement;
 
     public long getPreMeasurementStreetId() {
@@ -244,5 +245,13 @@ public class PreMeasurementStreet {
 
     public User getFinishedBy() {
         return finishedBy;
+    }
+
+    public ReservationManagement getReservationManagement() {
+        return reservationManagement;
+    }
+
+    public void setReservationManagement(ReservationManagement reservationManagement) {
+        this.reservationManagement = reservationManagement;
     }
 }

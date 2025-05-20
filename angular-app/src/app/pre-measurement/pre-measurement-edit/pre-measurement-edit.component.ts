@@ -18,7 +18,6 @@ import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
 import {InputText} from 'primeng/inputtext';
 import {ContractService} from '../../contract/services/contract.service';
-import {Divider} from 'primeng/divider';
 
 @Component({
   selector: 'app-pre-measurement-edit',
@@ -49,6 +48,7 @@ export class PreMeasurementEditComponent {
     totalPrice: '',
     status: '',
     depositName: '',
+    step: 0,
     streets: [],
   };
 
@@ -62,6 +62,7 @@ export class PreMeasurementEditComponent {
     totalPrice: '',
     status: '',
     depositName: '',
+    step: 0,
     streets: [],
   };
 
@@ -109,12 +110,13 @@ export class PreMeasurementEditComponent {
               private userService: UserService, private contractService: ContractService) {
 
     const measurementId = this.route.snapshot.paramMap.get('id');
+    const step = this.route.snapshot.paramMap.get('step');
     this.titleService.setTitle("Editar Pré-medição");
 
     const uuid = authService.getUser().uuid;
 
-    if (measurementId) {
-      this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
+    if (measurementId && step) {
+      this.preMeasurementService.getPreMeasurement(measurementId, Number(step)).subscribe(preMeasurement => {
         this.preMeasurement = preMeasurement;
         this.preMeasurementCopy = JSON.parse(JSON.stringify(preMeasurement));
         this.preMeasurementService.getContract(preMeasurement.contractId).subscribe(contract => {

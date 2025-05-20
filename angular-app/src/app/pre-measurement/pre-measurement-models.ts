@@ -34,6 +34,7 @@ export interface PreMeasurementResponseDTO {
   teamName: string;
   totalPrice: string;
   status: string;
+  step: number;
 
   streets: {
     number: number;
@@ -47,7 +48,6 @@ export interface PreMeasurementResponseDTO {
     status: string;
     createdBy: string;
     createdAt: string;
-    step: number;
 
     items: {
       preMeasurementStreetItemId: number;
