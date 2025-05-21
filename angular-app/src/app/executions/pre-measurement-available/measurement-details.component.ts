@@ -9,25 +9,20 @@ import {TeamService} from '../../manage/team/team-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {UtilsService} from '../../core/service/utils.service';
 
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition
-} from '@angular/animations';
+import {animate, style, transition, trigger} from '@angular/animations';
 import {FormsModule} from '@angular/forms';
 import {EstoqueService} from '../../stock/services/estoque.service';
-import {Deposit} from '../../models/almoxarifado.model';
 import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
 import {Toast} from 'primeng/toast';
-import {DelegateDTO, StockistModel} from '../executions.model';
+import {StockistModel} from '../executions.model';
 import {Skeleton} from 'primeng/skeleton';
 import {TableModule} from 'primeng/table';
 import {Button} from 'primeng/button';
 import {Avatar} from 'primeng/avatar';
 import {MessageService} from 'primeng/api';
 import {Tooltip} from 'primeng/tooltip';
+import {AuthService} from '../../core/auth/auth.service';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -44,7 +39,8 @@ import {Tooltip} from 'primeng/tooltip';
     TableModule,
     Button,
     Avatar,
-    Tooltip
+    Tooltip,
+    LoadingComponent
   ],
   templateUrl: './measurement-details.component.html',
   styleUrl: './measurement-details.component.scss',
@@ -121,8 +117,9 @@ export class MeasurementDetailsComponent implements OnInit {
     stockistPhone: string,
     stockistDepositName: string,
     stockistDepositAddress: string,
-
     preMeasurementStep: number,
+    currentUserUUID: string,
+
     street: {
       preMeasurementStreetId: number;
       teamId: number;
@@ -139,15 +136,15 @@ export class MeasurementDetailsComponent implements OnInit {
     stockistPhone: '',
     stockistDepositName: '',
     stockistDepositAddress: '',
-
     preMeasurementStep: 0,
+    currentUserUUID: '',
     street: []
   };
 
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
               private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,
-              private stockService: EstoqueService, private messageService: MessageService) {
+              private stockService: EstoqueService, private messageService: MessageService, private authService: AuthService,) {
   }
 
   ngOnInit() {
@@ -160,13 +157,14 @@ export class MeasurementDetailsComponent implements OnInit {
       return
     }
     this.delegateDTO.preMeasurementId = Number(preMeasurementId);
-    this.loadPreMeasurement(preMeasurementId, Number(step));
+    this.delegateDTO.preMeasurementStep = Number(step);
+    this.delegateDTO.currentUserUUID = this.authService.getUser().uuid;
 
+    this.loadPreMeasurement(preMeasurementId, Number(step));
 
     if (!this.isMultiTeam) {
       this.openModal = true;
     }
-
 
   }
 
@@ -463,17 +461,20 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
   loading: boolean = false;
+  showMessage: boolean = false;
   sendData() {
     this.loading = true;
     this.executionService.delegateExecution(this.delegateDTO).subscribe({
-      next: (response) => {
-        this.utils.showMessage("", "success");
+      next: () => {
+        this.utils.showMessage("Execução delegada com sucesso", "success");
       },
       error: (error) => {
+        this.loading = false;
         this.utils.showMessage('Erro ao delegar execução: ' + error, 'error');
       },
       complete: () => {
         this.loading = false;
+        this.showMessage = true;
       }
     });
   }

@@ -43,7 +43,24 @@ class ExecutionService(
             delegateDTO.preMeasurementStep
         )
 
-        if(streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhuma rua foi Encontrada")
+        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhuma rua foi Encontrada")
+
+        val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
+        for (delegateStreet in delegateDTO.street) {
+            val team = teamRepository.findById(delegateStreet.teamId)
+                .orElse(null) ?: return ResponseEntity.notFound().build()
+            val assignBy = userRepository.findByIdUser(currentUserUUID)
+                .orElse(null) ?: return ResponseEntity.notFound().build()
+            val prioritized = delegateStreet.prioritized
+            val comment = delegateStreet.comment
+
+
+            streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
+                ?.assignToTeam(team, assignBy, util.dateTime, prioritized, comment)
+
+        }
+
+        preMeasurementStreetRepository.saveAll(streets)
 
         val management = ReservationManagement()
         management.description = delegateDTO.description

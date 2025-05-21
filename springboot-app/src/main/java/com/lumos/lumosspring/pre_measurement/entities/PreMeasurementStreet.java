@@ -75,6 +75,10 @@ public class PreMeasurementStreet {
     @JoinColumn(name = "reservation_management_id")
     private ReservationManagement reservationManagement;
 
+    private Boolean prioritized;
+
+    private String comment;
+
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
     }
@@ -253,5 +257,33 @@ public class PreMeasurementStreet {
 
     public void setReservationManagement(ReservationManagement reservationManagement) {
         this.reservationManagement = reservationManagement;
+    }
+
+    public void setFinishedBy(User finishedBy) {
+        this.finishedBy = finishedBy;
+    }
+
+    public Boolean getPrioritized() {
+        return prioritized;
+    }
+
+    public void setPrioritized(Boolean prioritized) {
+        this.prioritized = prioritized;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public void assignToTeam(Team team, User assignedBy, Instant assignedAt, boolean prioritized, String comment) {
+        this.team = team;
+        this.assignedBy = assignedBy;
+        this.assignedAt = assignedAt;
+        this.prioritized = prioritized;
+        this.comment = comment;
     }
 }
