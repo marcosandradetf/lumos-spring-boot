@@ -1,16 +1,18 @@
 <div class="flex" #top>
-  <div *ngIf="openDepositModal"
-       class="fixed top-20 right-4 w-80 z-50 bg-white dark:bg-black dark:text-neutral-50 shadow-lg rounded-lg p-4"
+  <div *ngIf="openStockistModal"
+       class="fixed top-20 right-4 w-96 z-50 bg-white dark:bg-gray-800 dark:text-neutral-50 shadow-lg rounded-lg p-4"
        @fadeSlide>
-    <h3 class="text-sm font-semibold text-gray-800 mb-3">Selecionar Estoquista Responsável</h3>
-    <p class="text-xs font-light dark:font-dark">
-      Para garantir o bom andamento da execução das ruas, é importante definir um estoquista responsável pelo gerenciamento de reserva
-      dos materiais. Ele decidirá de onde os materiais serão retirados — seja do caminhão, do próprio almoxarifado ou de terceiros (Outra cidade).
+    <h3 class="text-base font-semibold text-gray-800 mb-3 dark:text-neutral-100">Selecionar Estoquista Responsável</h3>
+    <p class="text-sm font-light dark:font-dark">
+      Para garantir o bom andamento da execução das ruas, é importante definir um estoquista responsável pelo
+      gerenciamento de reserva
+      dos materiais. Ele decidirá de onde os materiais serão retirados — seja do caminhão, do próprio almoxarifado ou de
+      terceiros (Outra cidade).
     </p>
 
     <div class="space-y-2">
       <div>
-        <label class="text-xs text-gray-500 mb-1 block mt-5">Primário</label>
+        <label class="text-xs text-gray-500 mb-1 block mt-5 dark:text-neutral-100">Primário</label>
         <select class="select select-sm select-bordered w-full" #stockist>
           <option disabled selected>Selecione</option>
           <ng-container *ngFor="let s of stockists">
@@ -22,17 +24,16 @@
     </div>
 
     <div class="mt-4 flex justify-end">
-      <button class="btn btn-sm btn-primary" (click)="selectDeposits(stockist.value)">
+      <button class="btn btn-sm btn-primary" (click)="selectStockist(stockist.value, isMultiTeam)">
         Salvar
       </button>
     </div>
   </div>
-  <div *ngIf="finish && !openDepositModal" class="w-full  pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
+  <div *ngIf="finish && !openStockistModal" class="w-full  pt-8 px-6 overflow-auto relative" @fadeSlide>
     <div class="max-w-7xl mx-auto">
-      <!-- Ações -->
       <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800">
-          Pré-medição - <span class="text-[#044686]">{{ preMeasurement.city }}</span>
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-100">
+          Pré-medição - <span class="text-[#044686] dark:text-accent">{{ preMeasurement.city }}</span>
         </h2>
 
         <div class="flex gap-4">
@@ -49,24 +50,54 @@
         </div>
       </div>
 
-      <div class="bg-white shadow rounded-lg overflow-hidden w-fit mb-3">
-        <table class="min-w-fit text-sm text-gray-700">
-          <thead class="bg-[#044686] text-white uppercase text-xs">
-          <tr>
-            <th class="px-4 py-2 text-left">Estoquista Responsável</th>
-          </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-2">{{ reserveDTO.stockistName }}</td>
-          </tr>
-          </tbody>
-        </table>
+      <div class="overflow-hidden w-fit mb-3">
+
+        <p-toast
+          position="bottom-center"
+          key="confirm"
+          [baseZIndex]="5000"
+        >
+          <ng-template let-message #message>
+            <div class="flex flex-col items-start flex-auto">
+              <!-- Cabeçalho: Avatar + Nome -->
+              <div class="flex items-center gap-2 mb-2">
+                <div class="btn-circle flex justify-center items-center border bg-white dark:bg-gray-800">
+                  <i class="fa-solid fa-list-check"></i>
+                </div>
+
+                <span class="font-bold text-base">
+            {{ message.data.responsible }}
+          </span>
+              </div>
+
+              <!-- Setor e Ação -->
+              <div class="flex gap-4 mb-2 text-sm">
+                <span><strong>Setor:</strong> Almoxarifado {{ message.data.depositName }}</span>
+              </div>
+
+              <div class="mb-1 text-sm">
+                <span><strong>Função nessa pré-medição:</strong> Gerenciar Reservas de Materiais</span>
+              </div>
+
+              <!-- Telefone -->
+              <div class="mb-1 text-sm">
+                <strong>Telefone:</strong> {{ message.data.phone }}
+              </div>
+
+              <!-- Endereço -->
+              <div class="mb-3 text-sm">
+                <strong>Endereço:</strong> {{ message.data.address }}
+              </div>
+
+            </div>
+          </ng-template>
+        </p-toast>
+
       </div>
 
       <dialog #dialog class="modal">
         <div class="modal-box rounded-xl shadow-lg">
-          <h3 class="font-bold text-lg mb-4 text-indigo-700">Confirmar envio dos dados</h3>
+          <h3 class="font-bold text-lg mb-4 text-indigo-700 dark:text-neutral-100">Confirmar envio dos dados</h3>
 
           <div class="flex justify-end gap-4">
             <button
@@ -75,52 +106,84 @@
               <span class="material-icons">close</span> Cancelar
             </button>
             <button
-              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition">
+              (click)="sendData()"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition dark:btn-accent dark:hover:bg-accent-dark">
               <span class="material-icons">save</span> Concluir
             </button>
           </div>
         </div>
       </dialog>
 
-      <!-- Tabela -->
-      <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="min-w-full text-sm text-gray-700">
-          <thead class="bg-[#044686] text-white uppercase text-xs">
+      <p-table [value]="preMeasurement.streets" [tableStyle]="{ 'min-width': '50rem' }">
+        <ng-template #header>
           <tr>
-            <th class="px-6 py-3 text-left"></th>
-            <th class="px-6 py-3 text-left">Rua</th>
-            <th class="px-6 py-3 text-left">Equipe</th>
-            <th class="px-6 py-3 text-left">Almox. Prioritário</th>
-            <th class="px-6 py-3 text-left">Comentário</th>
+            <th><i class="fa-solid fa-triangle-exclamation"></i></th>
+            <th>Rua</th>
+            <th>Equipe</th>
+            <th>Almox. Prioritário</th>
+            <th>Comentário</th>
           </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-          <tr *ngFor="let street of preMeasurement.streets" class="hover:bg-gray-50">
-            @let reserve = getReserveByStreetId(street.preMeasurementStreetId) ;
-            <td class="px-6 py-2"><span class="material-icons text-orange-500 cursor-pointer"
-                                        *ngIf="reserve.prioritized">warning_amber</span></td>
-            <td class="px-6 py-4">{{ street.street }}</td>
-            <td class="px-6 py-4">{{ reserve.teamName }}</td>
-            <td class="px-6 py-4">{{ reserve.truckDepositName }}</td>
-            <td class="px-6 py-4">{{ reserve.comment }}</td>
+        </ng-template>
+        <ng-template #body let-street>
+          @let reserve = getReserveByStreetId(street.preMeasurementStreetId);
+          <tr>
+            <td (click)="streetId = street.preMeasurementStreetId; togglePriority()" class="cursor-pointer"
+                pTooltip="Clique para alterar prioridade" tooltipPosition="left">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500" *ngIf="reserve.prioritized"></i>
+            </td>
+            <td>{{ street.street }}</td>
+            <td>{{ reserve.teamName }}</td>
+            <td>{{ reserve.truckDepositName }}</td>
+            <td>{{ reserve.comment }}</td>
           </tr>
-          </tbody>
-        </table>
-      </div>
+        </ng-template>
+      </p-table>
     </div>
   </div>
-  <div *ngIf="finish && openDepositModal" class="w-full  pt-8 px-6 bg-gray-50 overflow-auto" @fadeSlide>
-    <div class="flex flex-col gap-4">
-      <div class="skeleton h-8 w-full"></div>
-      <div class="skeleton h-4 w-full mb-2"></div>
-      <div class="skeleton h-4 w-full mb-2"></div>
-      <div class="skeleton h-4 w-full mb-2"></div>
-      <div class="skeleton h-4 w-full mb-2"></div>
-      <div class="skeleton h-4 w-full mb-2"></div>
-      <div class="skeleton h-4 w-full mb-2"></div>
+
+
+  <div *ngIf="openStockistModal || (!isMultiTeam && !finish)" class="w-full  pt-8 px-6 overflow-auto">
+    <div class="max-w-7xl mx-auto mb-8">
+      <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-100">
+        Pré-medição - <span class="text-[#044686] dark:text-accent">{{ preMeasurement.city }}</span>
+      </h2>
+    </div>
+
+    <div class="max-w-7xl  mx-auto">
+      <p-table [value]="preMeasurement.streets" [tableStyle]="{ 'min-width': '50rem' }">
+        <ng-template pTemplate="header">
+          <tr>
+            <th><i class="fa-solid fa-triangle-exclamation"></i></th>
+            <th>Rua</th>
+            <th>Equipe</th>
+            <th>Almox. Prioritário</th>
+            <th>Comentário</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-product>
+          <tr>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
   </div>
-  <div class="w-full" *ngIf="!finish" @fadeSlide>
+
+  <div class="w-full" *ngIf="!finish && isMultiTeam" @fadeSlide>
     <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
@@ -136,7 +199,7 @@
 
       <div class="relative w-full overflow-hidden">
         <div
-          class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10"
+          class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10 flex-nowrap"
           #slider>
           <ng-container *ngFor="let street of preMeasurement.streets">
             <div
@@ -144,8 +207,9 @@
               @fadeSlide
               [class.selected]="streetId === street.preMeasurementStreetId"
               (click)="initMap(street);"
-              class="mb-4 border p-4 rounded w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2
-            hover:translate-y-2 m-2 card-execution select-none">
+              class="mb-4 border p-4 rounded min-w-96 w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2 card-execution select-none">
+
+
               <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
               <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de
                 reserva</p>
@@ -155,12 +219,12 @@
 
         <!-- Navegação -->
         <button
-          class="absolute left-2 top-1/2 -translate-y-1/2 material-icons text-neutral-700 "
+          class="absolute left-2 top-1/2 -translate-y-1/2 material-icons text-neutral-700 dark:text-neutral-300"
           (click)="scrollLeft(slider)">
           arrow_back_ios
         </button>
         <button
-          class="absolute right-2 top-1/2 -translate-y-1/2 material-icons text-neutral-700"
+          class="absolute right-2 top-1/2 -translate-y-1/2 material-icons text-neutral-700 dark:text-neutral-300"
           (click)="scrollRight(slider)">
           arrow_forward_ios
         </button>
@@ -170,13 +234,24 @@
 
 
     <div class="w-full pl-2 xl:flex pb-2 pt-2 justify-center">
-      <div class="xl:w-1/3 2xl:w-1/4 h-full rounded" [class.border]="streetId > 0" [class.p-3]="streetId > 0">
+      <div class="xl:w-1/2 2xl:w-1/3 h-full rounded" [class.border]="streetId > 0" [class.p-3]="streetId > 0">
         @if (streetId === 0) {
-          <div class="flex flex-col gap-4">
-            <div class="skeleton h-32 w-full"></div>
-            <div class="skeleton h-4 w-28"></div>
-            <div class="skeleton h-4 w-full mb-2"></div>
-            <div class="skeleton h-4 w-full mb-2"></div>
+          <div class="rounded border border-surface-200 dark:border-surface-700 p-6 bg-surface-0 dark:bg-surface-900">
+            <p-skeleton width="100%" height="40px"/>
+            <div class="border-b my-2"></div>
+            <p-skeleton width="100%" height="300px"/>
+            <div class="my-2"></div>
+            <p-skeleton width="100%" height="40px"/>
+            <div class="border-b my-2"></div>
+            <p-skeleton width="100%" height="40px"/>
+            <div class="my-2"></div>
+
+            <p-skeleton width="100%" height="51px"/>
+            <div class="my-2"></div>
+            <p-skeleton width="100%" height="51px"/>
+            <div class="my-2"></div>
+            <p-skeleton width="100%" height="51px"/>
+
           </div>
         } @else {
           <div class="flex flex-col gap-3 h-full">
@@ -192,8 +267,8 @@
               </div>
             </div>
 
-            <div class="h-[300px] rounded overflow-hidden">
-              <div id="map" class="h-full w-full" [class.-z-10]="openModal || openDepositModal"></div>
+            <div class="h-[330px] rounded overflow-hidden">
+              <div id="map" class="h-full w-full" [class.-z-10]="openModal || openStockistModal"></div>
             </div>
 
             <div class="flex items-center gap-2 border-b pb-2">
@@ -208,10 +283,10 @@
             </div>
 
             <div
-              class="flex justify-between items-center text-xs font-medium px-3 py-2 rounded-md border bg-white shadow-sm transition-all duration-200"
+              class="flex justify-between items-center text-xs font-medium px-3 py-2 rounded-md border  shadow-sm transition-all duration-200"
               [ngClass]="{
-                            'text-orange-500 border-orange-300 bg-orange-50': teamName === 'NENHUMA EQUIPE SELECIONADA',
-                            'text-gray-700 border-gray-200': teamName !== 'NENHUMA EQUIPE SELECIONADA'
+                            'text-orange-500 border-orange-300 bg-orange-50 dark:bg-gray-800': teamName === 'NENHUMA EQUIPE SELECIONADA',
+                            'text-gray-700 border-gray-200 dark:text-neutral-100': teamName !== 'NENHUMA EQUIPE SELECIONADA'
                           }">
               {{ teamName }}
 
@@ -221,7 +296,7 @@
             </div>
 
 
-            <div class="border rounded p-2">
+            <div class="border rounded p-2 dark:bg-[#3b3b3b] dark:text-neutral-100">
               <textarea
                 (input)="insertComment($event)"
                 [value]="getComment()"
@@ -245,64 +320,6 @@
         }
       </div>
 
-
-      <div class="xl:ml-2 xl:pl-2 2xl:w-1/2 mt-2 xl:mt-0 xl:w-[60%]">
-
-        <div class="flex flex-col gap-4" *ngIf="truckDepositName === ''">
-          <div class="skeleton h-32 w-full"></div>
-          <div class="skeleton h-4 w-28"></div>
-          <div class="skeleton h-4 w-full mb-2"></div>
-          <div class="skeleton h-4 w-full mb-2"></div>
-        </div>
-
-        <div *ngIf="truckDepositName !== ''" class="rounded border bg-white shadow-sm overflow-hidden">
-          <!-- Header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
-            <h3 class="text-sm font-semibold text-gray-800">
-              {{ truckDepositName }}
-            </h3>
-            <span class="material-icons cursor-pointer" title="Clique para mais informações" (click)="openModal = true">info</span>
-            @if (isFullStock()) {
-              <span class="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-                Todos os itens possuem estoque
-              </span>
-            } @else {
-              <span class="bg-red-100 text-red-800 text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-                Existem itens que não possuem estoque
-              </span>
-            }
-          </div>
-
-          <!-- Tabela -->
-          <app-table [className]="'table w-full text-sm text-left text-gray-700 border-t'">
-            <tr header class="bg-gray-100 text-xs uppercase text-gray-600">
-              <th></th>
-              <th>Material</th>
-              <th>Potência</th>
-              <th>Corrente (A)</th>
-              <th>Tamanho</th>
-              <th>Quantidade</th>
-              <th>Qtde. Estoque</th>
-            </tr>
-
-
-            <tr body *ngFor="let m of getTruckMaterials(streetId); index as index;" class="hover:bg-gray-50">
-              <td>{{ index + 1 }}</td>
-              <td>{{ m.materialName }}</td>
-              <td>{{ m.materialPower }}</td>
-              <td>{{ m.materialAmp }}</td>
-              <td>{{ m.materialLength }}</td>
-              <td class="font-semibold text-blue-600">{{ m.itemQuantity }}</td>
-              <td class="font-semibold"
-                  [ngClass]="m.availableQuantity >= m.itemQuantity ? 'text-green-600' : 'text-red-600'">{{ m.availableQuantity }}
-              </td>
-            </tr>
-
-          </app-table>
-        </div>
-
-      </div>
-
     </div>
 
   </div>
@@ -311,10 +328,11 @@
   <app-modal [modalOpen]="openModal" (modalClose)="openModal = false" classModal="xl:w-[50vw] p-0 z-10">
     @if (truckDepositName === '') {
       <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 cursor-pointer">
-        <table class="table text-left text-gray-700 border-t">
+        <h2 class="p-3 text-center" *ngIf="!isMultiTeam">Clique para selecionar a equipe operacional responsável pela execução</h2>
+        <table class="table text-left text-gray-700 dark:text-neutral-50 border-t">
           <!-- head -->
           <thead>
-          <tr class="bg-gray-200 text-xs uppercase text-gray-600">
+          <tr class="bg-gray-200 dark:bg-gray-800 text-xs uppercase text-gray-600 dark:text-neutral-100">
             <th>Equipe</th>
             <th>Motorista</th>
             <th>Eletricista</th>
@@ -325,7 +343,7 @@
           <tbody>
           <!-- row 1 -->
           <tr class="hover:bg-blue-100 hover:text-blue-700" *ngFor="let team of teams; let i = index"
-              (click)="selectTeam(team)">
+              (click)="selectTeam(team, isMultiTeam)">
             <td>{{ team.teamName }}</td>
             <td>{{ team.driver.driverName }}</td>
             <td>{{ team.electrician.electricianName }}</td>
@@ -357,6 +375,5 @@
     }
   </app-modal>
 
-  <
   <p-toast/>
 </div>

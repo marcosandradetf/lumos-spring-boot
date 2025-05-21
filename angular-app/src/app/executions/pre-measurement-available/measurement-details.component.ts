@@ -8,7 +8,6 @@ import {TeamsModel} from '../../models/teams.model';
 import {TeamService} from '../../manage/team/team-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {UtilsService} from '../../core/service/utils.service';
-import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 
 import {
   trigger,
@@ -23,7 +22,12 @@ import {Deposit} from '../../models/almoxarifado.model';
 import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
 import {Toast} from 'primeng/toast';
 import {DelegateDTO, StockistModel} from '../executions.model';
-import {User} from '../../models/user.model';
+import {Skeleton} from 'primeng/skeleton';
+import {TableModule} from 'primeng/table';
+import {Button} from 'primeng/button';
+import {Avatar} from 'primeng/avatar';
+import {MessageService} from 'primeng/api';
+import {Tooltip} from 'primeng/tooltip';
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -35,7 +39,12 @@ import {User} from '../../models/user.model';
     NgIf,
     NgClass,
     FormsModule,
-    Toast
+    Toast,
+    Skeleton,
+    TableModule,
+    Button,
+    Avatar,
+    Tooltip
   ],
   templateUrl: './measurement-details.component.html',
   styleUrl: './measurement-details.component.scss',
@@ -104,10 +113,15 @@ export class MeasurementDetailsComponent implements OnInit {
 
   teams: TeamsModel[] = [];
 
-  reserveDTO: {
+  delegateDTO: {
     preMeasurementId: number;
+    description: string,
     stockistId: string,
     stockistName: string,
+    stockistPhone: string,
+    stockistDepositName: string,
+    stockistDepositAddress: string,
+
     preMeasurementStep: number,
     street: {
       preMeasurementStreetId: number;
@@ -119,25 +133,21 @@ export class MeasurementDetailsComponent implements OnInit {
     }[]
   } = {
     preMeasurementId: 0,
+    description: '',
     stockistId: '',
     stockistName: '',
+    stockistPhone: '',
+    stockistDepositName: '',
+    stockistDepositAddress: '',
+
     preMeasurementStep: 0,
     street: []
   };
 
-  delegateDTO: DelegateDTO = {
-    description: '',
-    stockistId: '',
-    stockistName: '',
-    preMeasurementId: 0,
-    preMeasurementStep: 0,
-    teamId: 0,
-  }
-
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
               private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,
-              private stockService: EstoqueService) {
+              private stockService: EstoqueService, private messageService: MessageService) {
   }
 
   ngOnInit() {
@@ -149,8 +159,15 @@ export class MeasurementDetailsComponent implements OnInit {
     if (preMeasurementId == null || step == null) {
       return
     }
-    this.reserveDTO.preMeasurementId = Number(preMeasurementId);
+    this.delegateDTO.preMeasurementId = Number(preMeasurementId);
     this.loadPreMeasurement(preMeasurementId, Number(step));
+
+
+    if (!this.isMultiTeam) {
+      this.openModal = true;
+    }
+
+
   }
 
   loadPreMeasurement(id: string, step: number) {
@@ -163,6 +180,7 @@ export class MeasurementDetailsComponent implements OnInit {
         this.teams = response;
       },
       error: (error: { error: { message: string } }) => {
+        this.utils.showMessage("Erro ao carregar Equipe", 'error');
         this.utils.showMessage(error.error.message, 'error');
       }
     });
@@ -172,8 +190,8 @@ export class MeasurementDetailsComponent implements OnInit {
         this.stockists = response;
       },
       error: (error: { error: { message: string } }) => {
-        this.utils.showMessage(error.error.message, 'error');
         this.utils.showMessage("Erro ao carregar Estoquistas", 'error');
+        this.utils.showMessage(error.error.message, 'error');
       }
     });
   }
@@ -192,7 +210,7 @@ export class MeasurementDetailsComponent implements OnInit {
       this.map.remove();
     }
 
-    let reserve = this.reserveDTO.street.find(r => r.preMeasurementStreetId === this.streetId);
+    let reserve = this.delegateDTO.street.find(r => r.preMeasurementStreetId === this.streetId);
 
     if (!reserve) {
       reserve = {
@@ -203,7 +221,7 @@ export class MeasurementDetailsComponent implements OnInit {
         prioritized: false,
         comment: ''
       };
-      this.reserveDTO.street.push(reserve);
+      this.delegateDTO.street.push(reserve);
     }
 
     const team = this.getTeam(reserve.teamId);
@@ -229,8 +247,9 @@ export class MeasurementDetailsComponent implements OnInit {
       });
 
       // Adicionar o marcador com o ícone SVG
+      const label = (latitude !== 0 && longitude !== 0) ? "Localização da pré-medição" : "Coordenadas não informadas";
       L.marker([latitude, longitude], {icon: defaultIcon}).addTo(this.map)
-        .bindPopup('Localização da pré-medição')
+        .bindPopup(label)
         .openPopup();
 
     }, 200);
@@ -241,23 +260,39 @@ export class MeasurementDetailsComponent implements OnInit {
   teamName: string = "";
   truckDepositName: string = "";
 
-  selectTeam(team: TeamsModel) {
-    const streetIndex = this.reserveDTO.street
-      .findIndex(r => r.preMeasurementStreetId === this.streetId);
-    if (streetIndex === -1) {
-      this.openModal = false;
-      return;
-    }
+  selectTeam(team: TeamsModel, isMultiTeam: boolean) {
+    if (isMultiTeam) {
+      const streetIndex = this.delegateDTO.street
+        .findIndex(r => r.preMeasurementStreetId === this.streetId);
+      if (streetIndex === -1) {
+        this.openModal = false;
+        return;
+      }
 
-    this.reserveDTO.street[streetIndex].teamId = Number(team.idTeam);
-    this.reserveDTO.street[streetIndex].teamName = team.teamName;
-    this.reserveDTO.street[streetIndex].truckDepositName = team.depositName;
-    this.teamName = "EQUIPE " + team.teamName.toUpperCase();
-    this.openModal = false;
+      this.delegateDTO.street[streetIndex].teamId = Number(team.idTeam);
+      this.delegateDTO.street[streetIndex].teamName = team.teamName;
+      this.delegateDTO.street[streetIndex].truckDepositName = team.depositName;
+      this.teamName = "EQUIPE " + team.teamName.toUpperCase();
+      this.openModal = false;
+    } else {
+
+      this.preMeasurement.streets.forEach(street => {
+        this.delegateDTO.street.push({
+          preMeasurementStreetId: street.preMeasurementStreetId,
+          teamId: Number(team.idTeam),
+          teamName: team.teamName,
+          truckDepositName: team.depositName,
+          prioritized: false,
+          comment: ''
+        });
+      });
+      this.openModal = false;
+      this.toggleSideBar();
+    }
   }
 
   getReserve() {
-    return this.reserveDTO.street.find(r => r.preMeasurementStreetId === this.streetId) ||
+    return this.delegateDTO.street.find(r => r.preMeasurementStreetId === this.streetId) ||
       {
         preMeasurementStreetId: this.streetId,
         teamId: 0,
@@ -280,12 +315,12 @@ export class MeasurementDetailsComponent implements OnInit {
   finish: boolean = false;
 
   finishStreet() {
-    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    if (this.reserveDTO.street[streetIndex].teamId === 0) {
+    if (this.delegateDTO.street[streetIndex].teamId === 0) {
       this.utils.showMessage('Selecione uma equipe para continuar', 'warn');
       return;
     }
@@ -296,7 +331,7 @@ export class MeasurementDetailsComponent implements OnInit {
     this.utils.playSound("pop");
     if (this.streetId === 0) {
       this.finish = true;
-      if (this.reserveDTO.stockistId.length === 0) {
+      if (this.delegateDTO.stockistId.length === 0) {
         this.toggleSideBar();
       }
       return;
@@ -312,7 +347,7 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
   getReserveByStreetId(preMeasurementStreetId: number) {
-    return this.reserveDTO.street.find(r => r.preMeasurementStreetId === preMeasurementStreetId) ||
+    return this.delegateDTO.street.find(r => r.preMeasurementStreetId === preMeasurementStreetId) ||
       {
         preMeasurementStreetId: this.streetId,
         teamId: 0,
@@ -326,10 +361,10 @@ export class MeasurementDetailsComponent implements OnInit {
 
   stockists: StockistModel[] = [];
 
-  openDepositModal: boolean = false;
+  openStockistModal: boolean = false;
 
   toggleSideBar() {
-    this.openDepositModal = !this.openDepositModal;
+    this.openStockistModal = !this.openStockistModal;
 
     const audio = new Audio('sci.mp3');
     audio.play().catch(err => {
@@ -338,30 +373,44 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
 
-  selectDeposits(stockist: string) {
-    if (stockist === "Selecione") {
+  selectStockist(stockistHTML: string, isMultiTeam: boolean) {
+    if (stockistHTML === "Selecione") {
       this.utils.showMessage("A seleção do estoquista que irá gerenciar as reservas de materiais é obrigatória", 'warn');
       return;
     }
-    this.reserveDTO.stockistId = stockist;
-    this.reserveDTO.stockistName = this.stockists.find(s => s.userId === stockist)?.name || '';
+
+    this.delegateDTO.stockistId = stockistHTML;
+    const stockist = this.stockists.find(s => s.userId === stockistHTML);
+
+    this.delegateDTO.stockistId = stockist?.userId!!;
+    this.delegateDTO.stockistName = stockist?.name || '';
+    this.delegateDTO.stockistDepositName = stockist?.depositName || '';
+    this.delegateDTO.stockistDepositAddress = stockist?.depositAddress || '';
+    this.delegateDTO.stockistPhone = stockist?.depositPhone || '';
+    this.delegateDTO.description = this.preMeasurement.step + "º etapa da execução da " + this.preMeasurement.city + " com " + this.preMeasurement.streets.length + " ruas";
+
+    if (!isMultiTeam) {
+      this.finish = true;
+    }
 
     this.utils.showMessage("Estoquista responsável pelo gerenciamento definido com sucesso", 'info');
-    this.openDepositModal = false;
+    this.openStockistModal = false;
+
+    this.showToastStockist();
   }
 
 
   togglePriority() {
-    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
     this.utils.playSound("select");
 
-    this.reserveDTO.street[streetIndex].prioritized = !this.reserveDTO.street[streetIndex].prioritized;
+    this.delegateDTO.street[streetIndex].prioritized = !this.delegateDTO.street[streetIndex].prioritized;
     let message: string;
-    if (this.reserveDTO.street[streetIndex].prioritized) {
+    if (this.delegateDTO.street[streetIndex].prioritized) {
       message = "Prioridade definida para essa rua";
     } else {
       message = "Prioridade removida para essa rua";
@@ -370,29 +419,64 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
   insertComment($event: Event) {
-    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    this.reserveDTO.street[streetIndex].comment = ($event.target as HTMLInputElement).value;
+    this.delegateDTO.street[streetIndex].comment = ($event.target as HTMLInputElement).value;
   }
 
   getComment() {
-    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    return this.reserveDTO.street[streetIndex].comment;
+    return this.delegateDTO.street[streetIndex].comment;
   }
 
   isPriority() {
-    const streetIndex = this.reserveDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
+    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
       return;
     }
 
-    return this.reserveDTO.street[streetIndex].prioritized;
+    return this.delegateDTO.street[streetIndex].prioritized;
   }
+
+  showToastStockist() {
+    this.utils.playSound("select");
+    this.messageService.add({
+      key: 'confirm',
+      severity: 'info',
+      summary: 'Responsável pelo Almoxarifado',
+      detail: '',
+      data: {
+        responsible: this.delegateDTO.stockistName,
+        depositName: this.delegateDTO.stockistDepositName,
+        phone: this.delegateDTO.stockistPhone,
+        address: this.delegateDTO.stockistDepositAddress
+      },
+      sticky: true
+    });
+  }
+
+  loading: boolean = false;
+  sendData() {
+    this.loading = true;
+    this.executionService.delegateExecution(this.delegateDTO).subscribe({
+      next: (response) => {
+        this.utils.showMessage("", "success");
+      },
+      error: (error) => {
+        this.utils.showMessage('Erro ao delegar execução: ' + error, 'error');
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+
 }

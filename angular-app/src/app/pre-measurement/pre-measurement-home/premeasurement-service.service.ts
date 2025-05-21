@@ -78,4 +78,24 @@ export class PreMeasurementService {
       {headers: header}
     );
   }
+
+  delegateExecution(delegateDTO: {
+    preMeasurementId: number;
+    stockistId: string;
+    stockistName: string;
+    stockistPhone: string;
+    stockistDepositName: string;
+    stockistDepositAddress: string;
+    preMeasurementStep: number;
+    street: {
+      preMeasurementStreetId: number;
+      teamId: number;
+      teamName: string;
+      truckDepositName: string;
+      prioritized: boolean;
+      comment: string
+    }[]
+  }) {
+    return this.http.post(environment.springboot + "/api/pre-measurement/delegate", delegateDTO);
+  }
 }

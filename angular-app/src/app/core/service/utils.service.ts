@@ -122,7 +122,7 @@ export class UtilsService {
   }
 
   showMessage(messageContent: string,
-              typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary', ) {
+              typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary',) {
     switch (typeMessage) {
       case 'success':
         this.messageService.add({severity: 'success', summary: 'Successo', detail: messageContent});
@@ -147,10 +147,7 @@ export class UtilsService {
   }
 
 
-  playSound(type
-            :
-            string
-  ) {
+  playSound(type: 'pop' | 'select' | 'open') {
     if (type === 'open') {
       const audio = new Audio('sci.mp3');
       audio.play().catch(err => {

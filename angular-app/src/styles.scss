@@ -3,12 +3,6 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-//body {
-//  color: var(--pf-text); /* essa variável muda conforme o tema */
-//  background-color: var(--pf-base); /* background também muda */
-//}
-
-
 @layer tailwind-base, primeng, tailwind-utilities;
 
 @layer tailwind-base {
