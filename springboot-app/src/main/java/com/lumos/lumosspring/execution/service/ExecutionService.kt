@@ -12,6 +12,7 @@ import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
+import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.Util
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -36,14 +37,31 @@ class ExecutionService(
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
         val stockist =
             userRepository.findByIdUser(UUID.fromString(delegateDTO.stockistId))
-                .orElse(null) ?: return ResponseEntity.notFound().build()
+                .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(DefaultResponse("Estoquista não encontrado"))
 
         val streets = preMeasurementStreetRepository.getAllByPreMeasurement_PreMeasurementIdAndStep(
             delegateDTO.preMeasurementId,
             delegateDTO.preMeasurementStep
         )
 
-        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhuma rua foi Encontrada")
+        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(DefaultResponse("Nenhuma rua foi Encontrada"))
+
+        val existingManagement = reservationManagementRepository
+            .existsByStreetsPreMeasurementPreMeasurementIdAndStreetsStep(
+                delegateDTO.preMeasurementId,
+                delegateDTO.preMeasurementStep
+            )
+
+        if (existingManagement) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(DefaultResponse("Já existe uma gestão de reserva para esse estoquista e essas ruas."))
+        }
+
+        val management = ReservationManagement()
+        management.description = delegateDTO.description
+        management.stockist = stockist
+
+        reservationManagementRepository.save(management)
 
         val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
         for (delegateStreet in delegateDTO.street) {
@@ -54,20 +72,14 @@ class ExecutionService(
             val prioritized = delegateStreet.prioritized
             val comment = delegateStreet.comment
 
-
             streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
-                ?.assignToTeam(team, assignBy, util.dateTime, prioritized, comment)
+                ?.assignToStockistAndTeam(team, assignBy, util.dateTime, prioritized, comment, management)
+                ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(DefaultResponse("A rua ${delegateStreet.preMeasurementStreetId} enviada não foi encontrada"))
 
         }
 
         preMeasurementStreetRepository.saveAll(streets)
-
-        val management = ReservationManagement()
-        management.description = delegateDTO.description
-        management.stockist = stockist
-        management.streets = streets
-
-        reservationManagementRepository.save(management)
 
         return ResponseEntity.ok().build()
     }

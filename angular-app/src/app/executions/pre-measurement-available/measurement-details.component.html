@@ -1,26 +1,17 @@
-<div class="flex" #top>
+<div class="flex h-full w-full" #top>
   @if (loading) {
-    <app-loading></app-loading>
+    <div class="flex h-full w-full items-center justify-center">
+      <app-loading></app-loading>
+    </div>
+
+
   } @else if (showMessage) {
-    <div class="flex items-center flex-col border rounded p-10 shadow">
+    <div class="flex items-center flex-col w-full h-full">
       <span class="material-icons mt-20 text-orange-600">thumb_up</span>
       <h2 class="mt-2 font-semibold text-xl">Execução delegada com sucesso</h2>
-      <p>A pré-medição se encontra disponível em<span class="badge badge-info rounded p-3 cursor-pointer"
-                                                      (click)="router.navigate(['/requisicoes/gerenciamento'])">Gerenciamento de Reservas</span>
+      <p>A pré-medição se encontra disponível na tela <span class="badge badge-info rounded py-3 px-2 cursor-pointer"
+                                                            (click)="router.navigate(['/requisicoes/gerenciamento'])">Gerenciamento de Reservas</span>
       </p>
-
-      <div class="mt-10 flex flex-col">
-        <button class="btn btn-link"
-                (click)="router.navigate(['/pre-medicao/relatorio/' + preMeasurement.preMeasurementId])">
-          <span class="material-icons">report</span>
-          Exibir relatório
-        </button>
-        <button class="btn btn-link"
-                (click)="router.navigate(['execucao/pre-medicao/' + preMeasurement.preMeasurementId])">
-          <span class="material-icons">open_in_new</span>
-          Continuar para execução
-        </button>
-      </div>
     </div>
   } @else {
     <div *ngIf="openStockistModal"
@@ -76,50 +67,6 @@
           </div>
         </div>
 
-        <div class="overflow-hidden w-fit mb-3">
-
-          <p-toast
-            position="bottom-center"
-            key="confirm"
-            [baseZIndex]="5000"
-          >
-            <ng-template let-message #message>
-              <div class="flex flex-col items-start flex-auto">
-                <!-- Cabeçalho: Avatar + Nome -->
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="btn-circle flex justify-center items-center border bg-white dark:bg-gray-800">
-                    <i class="fa-solid fa-list-check"></i>
-                  </div>
-
-                  <span class="font-bold text-base">
-            {{ message.data.responsible }}
-          </span>
-                </div>
-
-                <!-- Setor e Ação -->
-                <div class="flex gap-4 mb-2 text-sm">
-                  <span><strong>Setor:</strong> Almoxarifado {{ message.data.depositName }}</span>
-                </div>
-
-                <div class="mb-1 text-sm">
-                  <span><strong>Função nessa pré-medição:</strong> Gerenciar Reservas de Materiais</span>
-                </div>
-
-                <!-- Telefone -->
-                <div class="mb-1 text-sm">
-                  <strong>Telefone:</strong> {{ message.data.phone }}
-                </div>
-
-                <!-- Endereço -->
-                <div class="mb-3 text-sm">
-                  <strong>Endereço:</strong> {{ message.data.address }}
-                </div>
-
-              </div>
-            </ng-template>
-          </p-toast>
-
-        </div>
 
         <dialog #dialog class="modal">
           <div class="modal-box rounded-xl shadow-lg">
@@ -151,7 +98,7 @@
             </tr>
           </ng-template>
           <ng-template #body let-street>
-            @let reserve = getReserveByStreetId(street.preMeasurementStreetId) ;
+            @let reserve = getReserveByStreetId(street.preMeasurementStreetId);
             <tr>
               <td (click)="streetId = street.preMeasurementStreetId; togglePriority()" class="cursor-pointer"
                   pTooltip="Clique para alterar prioridade" tooltipPosition="left">
@@ -401,7 +348,47 @@
         </div>
       }
     </app-modal>
-
-    <p-toast/>
   }
+  <p-toast/>
+
+  <p-toast
+    position="bottom-right"
+    key="confirm"
+    [baseZIndex]="5000"
+  >
+    <ng-template let-message #message>
+      <div class="flex flex-col items-start flex-auto">
+        <!-- Cabeçalho: Avatar + Nome -->
+        <div class="flex items-center gap-2 mb-2">
+          <div class="btn-circle flex justify-center items-center border bg-white dark:bg-gray-800">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+
+          <span class="font-bold text-base">
+            {{ message.data.responsible }}
+          </span>
+        </div>
+
+        <!-- Setor e Ação -->
+        <div class="flex gap-4 mb-2 text-sm">
+          <span><strong>Setor:</strong> Almoxarifado {{ message.data.depositName }}</span>
+        </div>
+
+        <div class="mb-1 text-sm">
+          <span><strong>Função nessa pré-medição:</strong> Gerenciar Reservas de Materiais</span>
+        </div>
+
+        <!-- Telefone -->
+        <div class="mb-1 text-sm">
+          <strong>Telefone:</strong> {{ message.data.phone }}
+        </div>
+
+        <!-- Endereço -->
+        <div class="mb-3 text-sm">
+          <strong>Endereço:</strong> {{ message.data.address }}
+        </div>
+
+      </div>
+    </ng-template>
+  </p-toast>
 </div>

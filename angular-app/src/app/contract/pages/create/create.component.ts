@@ -13,6 +13,7 @@ import {AuthService} from '../../../core/auth/auth.service';
 import {Router} from '@angular/router';
 import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-models';
 import {Toast} from 'primeng/toast';
+import {Title} from '@angular/platform-browser';
 
 
 @Component({
@@ -53,7 +54,13 @@ export class CreateComponent {
   removingIndex: number | null = null;
   openModal: boolean = false;
 
-  constructor(protected contractService: ContractService, protected utils: UtilsService, private fileService: FileService, private auth: AuthService, protected router: Router) {
+  constructor(protected contractService: ContractService,
+              protected utils: UtilsService,
+              private fileService: FileService,
+              private auth: AuthService,
+              protected router: Router,
+              private title: Title) {
+    this.title.setTitle('Cadastrar Contrato');
     this.contract.userUUID = this.auth.getUser().uuid;
     this.contractService.getContractReferenceItems().subscribe(
       items => {

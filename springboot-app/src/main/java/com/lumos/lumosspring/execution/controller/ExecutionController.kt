@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.execution.controller
 
+import com.lumos.lumosspring.execution.dto.DelegateDTO
 import com.lumos.lumosspring.execution.dto.ReserveForStreetsDTO
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.ResponseEntity
@@ -10,6 +11,9 @@ import org.springframework.web.bind.annotation.*
 class ExecutionController(
     private val executionService: ExecutionService,
 ) {
+
+    @PostMapping("/execution/delegate")
+    fun delegate(@RequestBody delegateDTO: DelegateDTO): ResponseEntity<Any> = executionService.delegate(delegateDTO)
 
 //    @PostMapping("/execution/reserve")
 //    fun reserve(@RequestBody reserveDto : ReserveForStreetsDTO): ResponseEntity<Any> {

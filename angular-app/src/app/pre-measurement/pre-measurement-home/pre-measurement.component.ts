@@ -9,6 +9,7 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {PreMeasurementResponseDTO} from '../pre-measurement-models';
 import {Toast} from 'primeng/toast';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-pre-measurement-home',
@@ -39,7 +40,8 @@ export class PreMeasurementComponent implements OnInit {
     private preMeasurementService: PreMeasurementService,
     public utils: UtilsService,
     protected router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private titleService: Title
   ) {
   }
 
@@ -52,6 +54,7 @@ export class PreMeasurementComponent implements OnInit {
         return;
       }
 
+      this.titleService.setTitle("Pré-Medições - " + status.charAt(0).toUpperCase() + status.slice(1));
       this.status = status;
       this.loadPreMeasurements();
     });

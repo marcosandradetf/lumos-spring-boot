@@ -167,11 +167,9 @@ export class SidebarComponent implements OnInit {
         },
         items: [
           {
-            label: 'Itens para execução',
+            label: 'Gerenciamento de Reservas',
             icon: 'pi pi-box',
-            command: () => {
-              void this.router.navigate(['requisicoes/itens']);
-            },
+            routerLink: ['/requisicoes/execucoes/reservas/gerenciamento'],
           },
         ]
       },

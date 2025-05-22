@@ -470,11 +470,13 @@ export class MeasurementDetailsComponent implements OnInit {
       },
       error: (error) => {
         this.loading = false;
-        this.utils.showMessage('Erro ao delegar execução: ' + error, 'error');
+        console.log(error)
+        this.utils.showMessage('Erro ao delegar execução: ' + error.error.message, 'error');
       },
       complete: () => {
         this.loading = false;
         this.showMessage = true;
+        this.showToastStockist();
       }
     });
   }

@@ -3,9 +3,9 @@ package com.lumos.lumosspring.pre_measurement.entities;
 import com.lumos.lumosspring.stock.entities.ReservationManagement;
 import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.util.ContractStatus;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -279,11 +279,13 @@ public class PreMeasurementStreet {
         this.comment = comment;
     }
 
-    public void assignToTeam(Team team, User assignedBy, Instant assignedAt, boolean prioritized, String comment) {
+    public void assignToStockistAndTeam(Team team, User assignedBy, Instant assignedAt, boolean prioritized, String comment, ReservationManagement reservationManagement) {
         this.team = team;
         this.assignedBy = assignedBy;
         this.assignedAt = assignedAt;
         this.prioritized = prioritized;
         this.comment = comment;
+        this.reservationManagement = reservationManagement;
+        this.streetStatus = ContractStatus.WAITING_STOCKIST;
     }
 }

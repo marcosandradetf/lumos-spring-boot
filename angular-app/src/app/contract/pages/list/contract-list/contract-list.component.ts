@@ -15,6 +15,7 @@ import {Ripple} from 'primeng/ripple';
 import {Toast} from 'primeng/toast';
 import {Breadcrumb} from 'primeng/breadcrumb';
 import {MenuItem} from 'primeng/api';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-contract-list',
@@ -54,7 +55,8 @@ export class ContractListComponent implements OnInit {
     private contractService: ContractService,
     protected utils: UtilsService,
     protected router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private titleService: Title
   ) {
   }
 
@@ -63,6 +65,12 @@ export class ContractListComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.reason = params['for'];
     });
+
+    if(this.reason.toLowerCase() !== 'premeasurement') {
+      this.titleService.setTitle("Visualizar Contratos");
+    } else {
+      this.titleService.setTitle("Importar Pré-Medição");
+    }
 
     this.contractService.getAllContracts().subscribe(c => {
       this.contracts = c;

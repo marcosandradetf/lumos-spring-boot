@@ -23,7 +23,7 @@ export const routes: Routes = [
     path: 'estoque/materiais',
     loadComponent: () => import('./stock/material/material-page.component').then(m => m.MaterialPageComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'estoque'},
+    data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'},
   },
   {
     path: 'estoque/grupos',
@@ -132,25 +132,25 @@ export const routes: Routes = [
     path: 'pre-medicao/:status',
     loadComponent: () => import('./pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
     path: 'pre-medicao/relatorio/:id/:step',
     loadComponent: () => import('./pre-measurement/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
     path: 'pre-medicao/editar/:id/:step',
     loadComponent: () => import('./pre-measurement/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
     path: 'pre-medicao/importar/contrato/:id',
     loadComponent: () => import('./pre-measurement/import-pre-measurements/import-pre-measurements.component').then(p => p.ImportPreMeasurementsComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   //
 
@@ -159,29 +159,29 @@ export const routes: Routes = [
     path: 'execucao/pre-medicao/:id/:step',
     loadComponent: () => import('./executions/pre-measurement-available/measurement-details.component').then(m => m.MeasurementDetailsComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
     path: 'execucoes/em-progresso',
     loadComponent: () => import('./executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
 
   {
     path: 'execucoes/finalizadas',
     loadComponent: () => import('./executions/execution-finished/execution-finished.component').then(e => e.ExecutionFinishedComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'ANALISTA', 'RESPOSAVEL_TECNICO'], path: 'execucoes'},
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   //end
 
   // start request path
   {
-    path: 'requisicoes/itens',
-    loadComponent: () => import('./requests/request-items/request-items.component').then(r => r.RequestItemsComponent),
+    path: 'requisicoes/execucoes/reservas/gerenciamento',
+    loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'MOTORISTA', 'ELETRICISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'requisicoes'},
+    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
   },
   //end
 

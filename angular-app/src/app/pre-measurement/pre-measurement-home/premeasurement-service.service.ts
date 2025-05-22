@@ -100,6 +100,6 @@ export class PreMeasurementService {
                       }[]
                     }
   ) {
-    return this.http.post(environment.springboot + "/api/pre-measurement/delegate", delegateDTO);
+    return this.http.post(environment.springboot + "/api/execution/delegate", delegateDTO);
   }
 }
