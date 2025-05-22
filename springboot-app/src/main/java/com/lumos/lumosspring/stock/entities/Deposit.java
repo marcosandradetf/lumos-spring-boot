@@ -1,8 +1,11 @@
 package com.lumos.lumosspring.stock.entities;
 
 import com.lumos.lumosspring.team.entities.Region;
+import com.lumos.lumosspring.team.entities.Stockist;
+import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -34,6 +37,9 @@ public class Deposit {
     @ManyToOne
     @JoinColumn(name = "region_id")
     private Region region;
+
+    @OneToMany(mappedBy = "deposit")
+    private List<Stockist> stockists;
 
     public long getIdDeposit() {
         return idDeposit;
@@ -112,5 +118,13 @@ public class Deposit {
 
     public void setMaterialStocks(Set<MaterialStock> productStocks) {
         this.materialStocks = productStocks;
+    }
+
+    public List<Stockist> getStockists() {
+        return stockists;
+    }
+
+    public void setStockists(List<Stockist> stockists) {
+        this.stockists = stockists;
     }
 }

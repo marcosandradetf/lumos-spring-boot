@@ -3,7 +3,6 @@ package com.lumos.lumosspring.execution.service
 import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
 import com.lumos.lumosspring.notification.service.NotificationService
-import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.DepositRepository
@@ -12,7 +11,9 @@ import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
+import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.DefaultResponse
+import com.lumos.lumosspring.util.ReservationStatus
 import com.lumos.lumosspring.util.Util
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,7 +23,6 @@ import java.util.*
 @Service
 class ExecutionService(
     private val preMeasurementStreetRepository: PreMeasurementStreetRepository,
-    private val preMeasurementRepository: PreMeasurementRepository,
     private val depositRepository: DepositRepository,
     private val teamRepository: TeamRepository,
     private val materialReservationRepository: MaterialReservationRepository,
@@ -37,14 +37,16 @@ class ExecutionService(
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
         val stockist =
             userRepository.findByIdUser(UUID.fromString(delegateDTO.stockistId))
-                .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(DefaultResponse("Estoquista não encontrado"))
+                .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(DefaultResponse("Estoquista não encontrado"))
 
         val streets = preMeasurementStreetRepository.getAllByPreMeasurement_PreMeasurementIdAndStep(
             delegateDTO.preMeasurementId,
             delegateDTO.preMeasurementStep
         )
 
-        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(DefaultResponse("Nenhuma rua foi Encontrada"))
+        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(DefaultResponse("Nenhuma rua foi Encontrada"))
 
         val existingManagement = reservationManagementRepository
             .existsByStreetsPreMeasurementPreMeasurementIdAndStreetsStep(
@@ -83,6 +85,79 @@ class ExecutionService(
 
         return ResponseEntity.ok().build()
     }
+
+    /////////////////////
+    data class ItemResponseDTO(
+        val description: String,
+        val quantity: Double,
+        val type: String,
+        val linking: String?,
+    )
+
+    data class ReserveStreetDTOResponse(
+        val preMeasurementStreetId: Long,
+        val streetName: String,
+        val latitude: Double,
+        val longitude: Double,
+        val prioritized: Boolean,
+        val comment: String,
+        val assignedBy: String,
+        val items: List<ItemResponseDTO>
+    )
+
+    data class ReserveDTOResponse(
+        val description: String,
+        val streets: List<ReserveStreetDTOResponse>
+    )
+
+    fun getPendingReservesForStockist(strUserUUID: String): ResponseEntity<Any> {
+        val userUUID = try {
+            UUID.fromString(strUserUUID)
+        } catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(emptyList())
+        }
+
+        val reserves = reservationManagementRepository.findAllByStatus(ReservationStatus.PENDING)
+        val response = mutableListOf<ReserveDTOResponse>()
+
+        for (reserve in reserves) {
+            val description = reserve.description
+            val stockistMatch = reserve.stockist.idUser == userUUID ||
+                    reserve.stockist.stockist.deposit.stockists.any { it.user.idUser == userUUID }
+
+            if (stockistMatch) {
+                val streets = reserve.streets
+                    .sortedBy { it.prioritized }
+                    .map { street ->
+                        val items = street.items.map { item ->
+                            val ref = item.contractItem.referenceItem
+                            ItemResponseDTO(
+                                description = ref.nameForImport ?: description,
+                                quantity = item.measuredItemQuantity,
+                                type = ref.type,
+                                linking = ref.linking
+                            )
+                        }
+
+                        ReserveStreetDTOResponse(
+                            preMeasurementStreetId = street.preMeasurementStreetId,
+                            streetName = street.street,
+                            latitude = street.latitude,
+                            longitude = street.longitude,
+                            prioritized = street.prioritized,
+                            comment = street.comment,
+                            assignedBy = street.assignedBy.completedName,
+                            items = items
+                        )
+                    }
+
+                response.add(ReserveDTOResponse(description, streets))
+            }
+        }
+
+        return ResponseEntity.ok(response)
+    }
+
 
 //    Exemplo temos uma pre-medicao que contem diversas ruas e dentro de cada rua diversos itens,
 //    o que eu preciso fazer é enviar essa referencia para o estoquista e ele irá verificar se cada equipe que ira executar o serviço

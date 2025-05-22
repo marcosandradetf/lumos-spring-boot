@@ -9,5 +9,7 @@ interface ReservationManagementRepository : JpaRepository<ReservationManagement,
         step: Int
     ): Boolean
 
+    fun findAllByStatus(status: String): MutableList<ReservationManagement>
+
 
 }

@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import {environment} from '../../environments/environment';
 import {HttpClient} from '@angular/common/http';
 import * as http from 'node:http';
+import {ReserveDTOResponse} from './executions.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExecutionService {
-  private baseUrl = environment.springboot;
+  private baseUrl = environment.springboot + "/api";
 
   constructor(private http: HttpClient) { }
 
@@ -28,7 +29,7 @@ export class ExecutionService {
           availableQuantity: number
         }[];
       }[]
-    >(this.baseUrl + '/api/execution/get-available-stock');
+    >(this.baseUrl + '/execution/get-available-stock');
   }
 
   public getStockAvailableForStreet() {
@@ -49,6 +50,10 @@ export class ExecutionService {
         }[];
       }
     >(this.baseUrl + '/api/execution/get-available-stock');
+  }
+
+  public getPendingReservesForStockist(userUUID: string) {
+    return this.http.get<ReserveDTOResponse[]>(this.baseUrl + `/execution/get-reservations/${userUUID}`)
   }
 
 }

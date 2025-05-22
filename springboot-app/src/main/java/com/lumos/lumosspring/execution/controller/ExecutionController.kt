@@ -15,6 +15,10 @@ class ExecutionController(
     @PostMapping("/execution/delegate")
     fun delegate(@RequestBody delegateDTO: DelegateDTO): ResponseEntity<Any> = executionService.delegate(delegateDTO)
 
+    @GetMapping("execution/get-reservations/{userUUID}")
+    fun getPendingReservesForStockist(@PathVariable userUUID: String): ResponseEntity<Any> =
+        executionService.getPendingReservesForStockist(userUUID)
+
 //    @PostMapping("/execution/reserve")
 //    fun reserve(@RequestBody reserveDto : ReserveForStreetsDTO): ResponseEntity<Any> {
 //        return executionService.reserve(reserveDto)

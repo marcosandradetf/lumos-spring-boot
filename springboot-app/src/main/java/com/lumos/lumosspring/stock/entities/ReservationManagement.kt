@@ -2,6 +2,7 @@ package com.lumos.lumosspring.stock.entities
 
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.user.User
+import com.lumos.lumosspring.util.ReservationStatus
 import jakarta.persistence.*
 
 @Entity
@@ -20,5 +21,7 @@ class ReservationManagement {
 
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "reservationManagement")
     var streets: MutableList<PreMeasurementStreet> = ArrayList()
+
+    var status: String = ReservationStatus.PENDING
 
 }
