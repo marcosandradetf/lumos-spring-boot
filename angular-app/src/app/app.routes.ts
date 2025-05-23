@@ -183,6 +183,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
   },
+  {
+    path: 'requisicoes/gerenciamento/execucao',
+    loadComponent: () => import('./requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+  },
   //end
 
   {

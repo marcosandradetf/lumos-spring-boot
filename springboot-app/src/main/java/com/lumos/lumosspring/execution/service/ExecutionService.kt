@@ -114,7 +114,7 @@ class ExecutionService(
         val userUUID = try {
             UUID.fromString(strUserUUID)
         } catch (e: IllegalArgumentException) {
-            return ResponseEntity.badRequest().body(emptyList())
+            return ResponseEntity.badRequest().build()
         }
 
         val reserves = reservationManagementRepository.findAllByStatus(ReservationStatus.PENDING)
@@ -123,7 +123,7 @@ class ExecutionService(
         for (reserve in reserves) {
             val description = reserve.description
             val stockistMatch = reserve.stockist.idUser == userUUID ||
-                    reserve.stockist.stockist.deposit.stockists.any { it.user.idUser == userUUID }
+                    reserve.stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
 
             if (stockistMatch) {
                 val streets = reserve.streets
