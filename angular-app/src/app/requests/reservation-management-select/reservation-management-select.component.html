@@ -1,40 +1,38 @@
 <div class="h-full w-full">
   <app-breadcrumb
-    [currentTitle]="reserve.description"
+    [currentTitle]="description"
     previousPath="/requisicoes/execucoes/reservas/gerenciamento"
     previousTitle="Gerenciamento"></app-breadcrumb>
 
   <div>
-    <div class="relative w-full overflow-hidden">
-      <div
-        class="flex overflow-x-auto scroll-smooth no-scrollbar ml-10 mr-10 flex-nowrap"
-        #slider>
-        <ng-container *ngFor="let street of reserve.streets">
-          <div
-
-            [class.selected]="streetId === street.preMeasurementStreetId"
-            class="mb-4 border p-4 rounded min-w-96 w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2 card-execution select-none">
-
-            <h3 class="text-lg font-semibold mb-2">{{ street.streetName }}</h3>
+    <p-carousel
+      [value]="reserve.streets"
+      [numVisible]="3"
+      [numScroll]="3"
+      [circular]="false"
+      [responsiveOptions]="responsiveOptions">
+      <ng-template let-street #item>
+        <div
+          [class.selected]="streetId === street.preMeasurementStreetId"
+          (click)="startReservation(street)"
+          class="mb-4 border p-4 rounded min-w-96 w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2 card-execution select-none">
+          <h3 class="text-lg font-semibold mb-2">{{ street.streetName }}</h3>
+          <div class="flex items-center justify-between">
             <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de
               reserva</p>
+            <i class="fa-solid fa-triangle-exclamation text-warning" *ngIf="street.prioritized"></i>
           </div>
-        </ng-container>
-      </div>
 
-      <!-- Navegação -->
-      <button
-        class="absolute left-2 top-1/2 -translate-y-1/2 material-icons text-neutral-700 dark:text-neutral-300"
-        (click)="scrollLeft(slider)">
-        arrow_back_ios
-      </button>
-      <button
-        class="absolute right-2 top-1/2 -translate-y-1/2 material-icons text-neutral-700 dark:text-neutral-300"
-        (click)="scrollRight(slider)">
-        arrow_forward_ios
-      </button>
-    </div>
+        </div>
+      </ng-template>
 
+    </p-carousel>
+  </div>
+
+  <div>
+    <p-menubar [model]="items" styleClass="border-0"/>
   </div>
 
 </div>
+
+

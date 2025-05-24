@@ -1,0 +1,35 @@
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.card-execution:hover {
+  border-bottom: 2px solid #5b5fc7;
+  border-radius: 4px;
+}
+
+.selected {
+  border-bottom: 2px solid #ff7400;
+  background-color: #f3f3f3;
+}
+
+.selected:hover {
+  border-bottom: 2px solid #ff7400;
+  border-radius: 4px;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .selected {
+    border-bottom: 2px solid #ff7400;
+    background-color: #2b2d30;
+  }
+
+  .selected:hover {
+    border-bottom: 2px solid #ff7400;
+    border-radius: 4px;
+  }
+}

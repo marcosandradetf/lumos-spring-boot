@@ -127,7 +127,7 @@ class ExecutionService(
 
             if (stockistMatch) {
                 val streets = reserve.streets
-                    .sortedBy { it.prioritized }
+                    .sortedBy { it.prioritized == false }
                     .map { street ->
                         val items = street.items.map { item ->
                             val ref = item.contractItem.referenceItem
