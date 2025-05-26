@@ -7,3 +7,13 @@ data class ExecutionDTO(
     val teamName: String,
     val reserves: List<ReserveResponseDTO>,
 )
+
+data class MaterialInStockDTO(
+    val materialId: Long,
+    val materialName: String,
+    val materialPower: String?,
+    val materialLength: String?,
+    val materialType: String,
+    val deposit: String,
+    val availableQuantity: Double,
+)

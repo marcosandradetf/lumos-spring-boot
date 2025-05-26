@@ -82,6 +82,10 @@ export class UtilsService {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
   }
 
+  formatFloatNumber(event: Event) {
+    (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^0-9.]/g, '');
+  }
+
   formatContractNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^0-9,./-]/g, '');
   }
@@ -122,25 +126,28 @@ export class UtilsService {
   }
 
   showMessage(messageContent: string,
-              typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary',) {
+              typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary',
+              summary: string = typeMessage,
+              stick: boolean = false,) {
     switch (typeMessage) {
       case 'success':
-        this.messageService.add({severity: 'success', summary: 'Successo', detail: messageContent});
+        this.messageService.add({severity: 'success', summary: summary, detail: messageContent, sticky: stick});
         break;
       case 'info':
-        this.messageService.add({severity: 'info', summary: 'Informação', detail: messageContent});
+        this.messageService.add({severity: 'info', summary: summary, detail: messageContent, sticky: stick});
+        break;
         break;
       case 'warn':
-        this.messageService.add({severity: 'warn', summary: 'Alerta', detail: messageContent});
+        this.messageService.add({severity: 'warn', summary: summary, detail: messageContent, sticky: stick});
         break;
       case 'error':
-        this.messageService.add({severity: 'error', summary: 'Erro', detail: messageContent});
+        this.messageService.add({severity: 'error', summary: summary, detail: messageContent, sticky: stick});
         break;
       case 'contrast':
-        this.messageService.add({severity: 'contrast', summary: 'Erro', detail: messageContent});
+        this.messageService.add({severity: 'contrast', summary: summary, detail: messageContent, sticky: stick});
         break;
       case 'secondary':
-        this.messageService.add({severity: 'secondary', summary: 'Secondary', detail: messageContent});
+        this.messageService.add({severity: 'secondary', summary: summary, detail: messageContent, sticky: stick});
         break;
     }
 

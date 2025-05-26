@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.execution.controller
 
 import com.lumos.lumosspring.execution.dto.DelegateDTO
-import com.lumos.lumosspring.execution.dto.ReserveForStreetsDTO
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -18,6 +17,16 @@ class ExecutionController(
     @GetMapping("execution/get-reservations/{userUUID}")
     fun getPendingReservesForStockist(@PathVariable userUUID: String): ResponseEntity<Any> =
         executionService.getPendingReservesForStockist(userUUID)
+
+    @GetMapping("execution/get-stock-materials/{linking}/{truckDepositName}")
+    fun getStockMaterialForLinking(
+        @PathVariable linking: String,
+        @PathVariable truckDepositName: String
+    ): ResponseEntity<Any> =
+        executionService.getStockMaterialForLinking(
+            linking,
+            truckDepositName
+        )
 
 //    @PostMapping("/execution/reserve")
 //    fun reserve(@RequestBody reserveDto : ReserveForStreetsDTO): ResponseEntity<Any> {

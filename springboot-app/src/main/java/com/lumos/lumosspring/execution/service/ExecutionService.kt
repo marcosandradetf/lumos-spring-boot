@@ -11,7 +11,6 @@ import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
-import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.ReservationStatus
 import com.lumos.lumosspring.util.Util
@@ -88,6 +87,7 @@ class ExecutionService(
 
     /////////////////////
     data class ItemResponseDTO(
+        val itemId: Long,
         val description: String,
         val quantity: Double,
         val type: String,
@@ -102,7 +102,9 @@ class ExecutionService(
         val prioritized: Boolean,
         val comment: String,
         val assignedBy: String,
-        val items: List<ItemResponseDTO>
+        val items: List<ItemResponseDTO>,
+        val teamName: String,
+        val truckDepositName: String
     )
 
     data class ReserveDTOResponse(
@@ -129,15 +131,21 @@ class ExecutionService(
                 val streets = reserve.streets
                     .sortedBy { it.prioritized == false }
                     .map { street ->
-                        val items = street.items.map { item ->
-                            val ref = item.contractItem.referenceItem
-                            ItemResponseDTO(
-                                description = ref.nameForImport ?: description,
-                                quantity = item.measuredItemQuantity,
-                                type = ref.type,
-                                linking = ref.linking
-                            )
-                        }
+                        val items = street.items
+                            .filter { item ->
+                                val type = item.contractItem.referenceItem.type
+                                !listOf("SERVIÇO", "PROJETO").contains(type)
+                            }
+                            .map { item ->
+                                val ref = item.contractItem.referenceItem
+                                ItemResponseDTO(
+                                    itemId = item.preMeasurementStreetItemId,
+                                    description = ref.nameForImport ?: description,
+                                    quantity = item.measuredItemQuantity,
+                                    type = ref.type,
+                                    linking = ref.linking
+                                )
+                            }
 
                         ReserveStreetDTOResponse(
                             preMeasurementStreetId = street.preMeasurementStreetId,
@@ -147,6 +155,8 @@ class ExecutionService(
                             prioritized = street.prioritized,
                             comment = street.comment,
                             assignedBy = street.assignedBy.completedName,
+                            teamName = street.team?.teamName ?: "",
+                            truckDepositName = street.team?.deposit?.depositName ?: "",
                             items = items
                         )
                     }
@@ -156,6 +166,12 @@ class ExecutionService(
         }
 
         return ResponseEntity.ok(response)
+    }
+
+    fun getStockMaterialForLinking(linking: String, truckDepositName: String): ResponseEntity<Any> {
+        val materials = materialStockRepository.findAllByLinking(linking.lowercase(), truckDepositName.lowercase())
+
+        return ResponseEntity.ok(materials)
     }
 
 

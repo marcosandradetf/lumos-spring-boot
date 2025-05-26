@@ -1,7 +1,9 @@
 package com.lumos.lumosspring.stock.repository;
 
+import com.lumos.lumosspring.execution.dto.MaterialInStockDTO;
 import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -49,5 +51,20 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
 //    @Query("SELECT ms FROM MaterialStock ms WHERE ms.stockAvailable > 0 AND ms.material IN :materials and not ms.inactive")
     @Query("SELECT ms FROM MaterialStock ms WHERE ms.material IN :materials and not ms.inactive")
     List<MaterialStock> findAvailableFiltered(@Param("materials") List<Material> materials);
+
+    @Query("SELECT new com.lumos.lumosspring.execution.dto.MaterialInStockDTO(" +
+            "ms.materialIdStock, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
+            "ms.material.materialType.typeName, ms.deposit.depositName, ms.stockAvailable) " +
+            "FROM MaterialStock ms " +
+            "WHERE (LOWER(ms.material.materialType.typeName) = :linking " +
+            "   OR LOWER(ms.material.materialPower) = :linking " +
+            "   OR LOWER(ms.material.materialLength) = :linking) " +
+            "AND ms.inactive = false " +
+            "AND (LOWER(ms.deposit.depositName) = LOWER(:depositName) " +
+            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%')")
+    List<MaterialInStockDTO> findAllByLinking(@Param("linking") String linking, @Param("depositName") String depositName);
+
+
+
 }
 

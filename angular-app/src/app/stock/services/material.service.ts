@@ -216,4 +216,6 @@ export class MaterialService {
   getMaterials() {
     return this.http.get<MaterialResponse[]>(`${this.apiUrl}/get-all`);
   }
+
+
 }
