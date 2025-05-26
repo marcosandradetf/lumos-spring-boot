@@ -2,6 +2,7 @@ package com.lumos.lumosspring.stock.entities;
 
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.entities.Stockist;
+import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
@@ -40,6 +41,9 @@ public class Deposit {
 
     @OneToMany(mappedBy = "deposit")
     private List<Stockist> stockists;
+
+    @OneToMany(mappedBy = "deposit")
+    private List<Team> teams;
 
     public long getIdDeposit() {
         return idDeposit;
@@ -126,5 +130,13 @@ public class Deposit {
 
     public void setStockists(List<Stockist> stockists) {
         this.stockists = stockists;
+    }
+
+    public List<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(List<Team> teams) {
+        this.teams = teams;
     }
 }

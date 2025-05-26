@@ -18,17 +18,21 @@ class MaterialReservation {
     @Column(columnDefinition = "TEXT")
     var description: String? = null
 
-    @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "material_truck_stock_id")
-    var truckDeposit: MaterialStock? = null
+//    @ManyToOne(cascade = [(CascadeType.MERGE)])
+//    @JoinColumn(name = "material_truck_stock_id")
+//    var truckDeposit: MaterialStock? = null
+//
+//    @ManyToOne(cascade = [(CascadeType.MERGE)])
+//    @JoinColumn(name = "material_first_deposit_stock_id")
+//    var firstDepositCity: MaterialStock? = null
+//
+//    @ManyToOne(cascade = [(CascadeType.MERGE)])
+//    @JoinColumn(name = "material_second_deposit_stock_id")
+//    var secondDepositCity: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "material_first_deposit_stock_id")
-    var firstDepositCity: MaterialStock? = null
-
-    @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "material_second_deposit_stock_id")
-    var secondDepositCity: MaterialStock? = null
+    @JoinColumn(name = "material_stock_id")
+    var materialStock: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "pre_measurement_id")
@@ -56,64 +60,21 @@ class MaterialReservation {
         this.reservedQuantity = reservedQuantity
     }
 
-    fun removeStockAvailable() {
-        if (truckDeposit != null && firstDepositCity != null && secondDepositCity != null) {
-            truckDeposit!!.removeStockAvailable(reservedQuantity)
-            firstDepositCity!!.removeStockAvailable(reservedQuantity)
-            secondDepositCity!!.removeStockAvailable(reservedQuantity)
+    private fun removeStockAvailable() {
+        if (materialStock != null) {
+            materialStock!!.removeStockAvailable(reservedQuantity)
         }
     }
 
-    fun confirmReservation(location: Location) {
-        when (location) {
-            Location.TRUCK -> {
-                firstDepositCity!!.addStockAvailable(reservedQuantity)
-                secondDepositCity!!.addStockAvailable(reservedQuantity)
-                firstDepositCity = null
-                secondDepositCity = null
-            }
-
-            Location.FIRST -> {
-                truckDeposit!!.addStockAvailable(reservedQuantity)
-                secondDepositCity!!.addStockAvailable(reservedQuantity)
-                truckDeposit = null
-                secondDepositCity = null
-            }
-
-            Location.SECOND -> {
-                truckDeposit!!.addStockAvailable(reservedQuantity)
-                firstDepositCity!!.addStockAvailable(reservedQuantity)
-                truckDeposit = null
-                firstDepositCity = null
-            }
-        }
-
+    fun confirmReservation() {
         status = Status.APPROVED.name
+        removeStockAvailable()
     }
 
-    fun rejectReservation(location: Location) {
-        when (location) {
-            Location.TRUCK -> {
-                truckDeposit!!.addStockAvailable(reservedQuantity)
-                truckDeposit = null
-            }
-
-            Location.FIRST -> {
-                firstDepositCity!!.addStockAvailable(reservedQuantity)
-                firstDepositCity = null
-            }
-
-            Location.SECOND -> {
-                secondDepositCity!!.addStockAvailable(reservedQuantity)
-                secondDepositCity = null
-            }
-        }
-
-        checkReservations()
-    }
-
-    private fun checkReservations() {
-        if (truckDeposit != null && firstDepositCity != null && secondDepositCity != null) {
+    fun rejectReservation() {
+        if (materialStock != null) {
+            materialStock!!.addStockAvailable(reservedQuantity)
+            materialStock = null
             status = Status.REJECTED.name
         }
     }
@@ -121,14 +82,9 @@ class MaterialReservation {
     fun setQuantityCompleted(quantityCompleted: Int) {
         this.quantityCompleted = quantityCompleted.toDouble()
 
-        if (truckDeposit != null) truckDeposit!!.removeStockQuantity(quantityCompleted)
-        else if(firstDepositCity != null) firstDepositCity!!.removeStockQuantity(quantityCompleted)
-        else if(secondDepositCity != null) secondDepositCity!!.removeStockQuantity(quantityCompleted)
+        if (materialStock != null) materialStock!!.removeStockQuantity(quantityCompleted)
     }
 
-    enum class Location {
-        TRUCK, FIRST, SECOND
-    }
 }
 
 

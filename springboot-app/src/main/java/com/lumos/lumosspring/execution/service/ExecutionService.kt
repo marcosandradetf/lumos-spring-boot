@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.execution.service
 
 import com.lumos.lumosspring.execution.dto.*
+import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
 import com.lumos.lumosspring.notification.service.NotificationService
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
@@ -11,9 +12,11 @@ import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
+import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.ReservationStatus
 import com.lumos.lumosspring.util.Util
+import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
@@ -85,33 +88,6 @@ class ExecutionService(
         return ResponseEntity.ok().build()
     }
 
-    /////////////////////
-    data class ItemResponseDTO(
-        val itemId: Long,
-        val description: String,
-        val quantity: Double,
-        val type: String,
-        val linking: String?,
-    )
-
-    data class ReserveStreetDTOResponse(
-        val preMeasurementStreetId: Long,
-        val streetName: String,
-        val latitude: Double,
-        val longitude: Double,
-        val prioritized: Boolean,
-        val comment: String,
-        val assignedBy: String,
-        val items: List<ItemResponseDTO>,
-        val teamName: String,
-        val truckDepositName: String
-    )
-
-    data class ReserveDTOResponse(
-        val description: String,
-        val streets: List<ReserveStreetDTOResponse>
-    )
-
     fun getPendingReservesForStockist(strUserUUID: String): ResponseEntity<Any> {
         val userUUID = try {
             UUID.fromString(strUserUUID)
@@ -130,6 +106,7 @@ class ExecutionService(
             if (stockistMatch) {
                 val streets = reserve.streets
                     .sortedBy { it.prioritized == false }
+                    .filter { it.streetStatus == ContractStatus.WAITING_STOCKIST }
                     .map { street ->
                         val items = street.items
                             .filter { item ->
@@ -172,6 +149,72 @@ class ExecutionService(
         val materials = materialStockRepository.findAllByLinking(linking.lowercase(), truckDepositName.lowercase())
 
         return ResponseEntity.ok(materials)
+    }
+
+    @Transactional
+    fun reserveMaterialsForExecution(executionReserve: ReserveDTOCreate, strUserUUID: String): ResponseEntity<Any> {
+        val preMeasurementStreet = preMeasurementStreetRepository.findById(executionReserve.preMeasurementStreetId)
+            .orElse(null) ?: return ResponseEntity.status(404)
+            .body(DefaultResponse("A rua ${executionReserve.preMeasurementStreetId} não foi encontrada"))
+
+        if (preMeasurementStreet.streetStatus !== ContractStatus.WAITING_STOCKIST)
+            return ResponseEntity.status(500)
+                .body(DefaultResponse("Os itens dessa execução já foram todos reservados, inicie a próxima etapa."))
+
+        val reservation = hashSetOf<MaterialReservation>()
+        val userUUID = try {
+            UUID.fromString(strUserUUID)
+        } catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        for (item in executionReserve.items) {
+            val materialStock = materialStockRepository.findById(item.materialId)
+                .orElse(null) ?: return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Material não encontrado")
+
+            if (materialStock.stockAvailable < item.materialQuantity)
+                return ResponseEntity.status(500)
+                    .body("O material ${materialStock.material.materialName} não possuí estoque suficiente")
+
+            val deposit = materialStock.deposit
+            val stockistMatch = preMeasurementStreet.reservationManagement.stockist.idUser == userUUID ||
+                    deposit.stockists.any { it.user.idUser == userUUID } ||
+                    preMeasurementStreet.reservationManagement
+                        .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
+            val teamMatch = materialStock.deposit.teams.isNotEmpty()
+
+            reservation.add(
+                MaterialReservation().apply {
+                    this.description = ""
+                    this.materialStock = materialStock
+                    this.setReservedQuantity(item.materialQuantity)
+                    this.street = preMeasurementStreet
+                    if (teamMatch || stockistMatch) {
+                        this.confirmReservation()
+                        if (teamMatch) this.status = ReservationStatus.COLLECTED
+                    }
+                }
+            )
+        }
+
+        if (reservation.all { it.status == ReservationStatus.APPROVED }) {
+            preMeasurementStreet.streetStatus = ContractStatus.AVAILABLE_EXECUTION
+        } else {
+            preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
+        }
+
+        materialReservationRepository.saveAll(reservation)
+        preMeasurementStreetRepository.save(preMeasurementStreet)
+
+        if (preMeasurementStreet.reservationManagement.streets
+                .none { it.streetStatus == ContractStatus.WAITING_STOCKIST }
+        ) {
+            preMeasurementStreet.reservationManagement.status = ReservationStatus.FINISHED
+        }
+
+        preMeasurementStreetRepository.save(preMeasurementStreet)
+
+        return ResponseEntity.ok().build()
     }
 
 

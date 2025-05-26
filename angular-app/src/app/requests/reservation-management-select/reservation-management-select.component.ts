@@ -53,12 +53,6 @@ import {ExecutionService} from '../../executions/execution.service';
   styleUrl: './reservation-management-select.component.scss'
 })
 export class ReservationManagementSelectComponent {
-  reserve: ReserveDTOResponse = {
-    description: '',
-    streets: []
-  };
-  streetId: number = 0;
-
   responsiveOptions: CarouselResponsiveOptions[] = [
     {
       breakpoint: '1400px',
@@ -81,8 +75,14 @@ export class ReservationManagementSelectComponent {
       numScroll: 1
     }
   ]
+  reserve: ReserveDTOResponse = {
+    description: '',
+    streets: []
+  };
   description: string = "";
 
+  streetId: number = 0;
+  currentItemId: number = 0;
   street: ReserveStreetDTOResponse = {
     preMeasurementStreetId: 0,
     streetName: '',
@@ -96,7 +96,6 @@ export class ReservationManagementSelectComponent {
     items: []
   }
 
-  currentItemId: number = 0;
 
   materials: MaterialInStockDTO[] = [];
   filteredMaterials!: MaterialInStockDTO[];
@@ -155,10 +154,13 @@ export class ReservationManagementSelectComponent {
     this.currentItemId = item.itemId;
 
     if (this.materials.some(m =>
-      m.materialPower === linking || m.materialPower === linking || m.materialType === linking
+      (m.materialPower === linking || m.materialPower === linking || m.materialType === linking)
+      && m.deposit === this.street.truckDepositName
     )) {
       this.filteredMaterials = this.materials.filter(m =>
-        m.materialPower === linking || m.materialLength === linking || m.materialType === linking);
+        (m.materialPower === linking || m.materialPower === linking || m.materialType === linking)
+        && m.deposit === this.street.truckDepositName
+      );
       this.loading = false;
     } else {
       this.executionService.getStockMaterialForLinking(linking, this.street.truckDepositName).subscribe({
