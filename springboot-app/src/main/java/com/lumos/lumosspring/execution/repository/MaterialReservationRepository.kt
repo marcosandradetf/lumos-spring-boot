@@ -14,9 +14,4 @@ interface MaterialReservationRepository : JpaRepository<MaterialReservation, Lon
 
     fun findAllByStreet(street: PreMeasurementStreet): List<MaterialReservation>
 
-    @Query("select mr from MaterialReservation mr where mr.firstDepositCity in :materials or mr.secondDepositCity in :materials")
-    fun findAllByFirstDepositCityOrSecondDepositCity(
-        @Param("materials") materials: Set<MaterialStock>,
-    ): List<MaterialReservation>
-
 }

@@ -166,7 +166,7 @@
                   <td>{{ material.deposit }}</td>
                   <td>
                     <p-cellEditor>
-                      <ng-template pTemplate="output">{{ material.quantity ?? 0 }}</ng-template>
+                      <ng-template pTemplate="output">{{ getQuantity(material.materialId) ?? 0 }}</ng-template>
                       <ng-template pTemplate="input">
                         <input pInputText (input)="utils.formatFloatNumber($event)" placeholder="Informe a quantidade"
                                [(ngModel)]="setQuantity.quantity"/>

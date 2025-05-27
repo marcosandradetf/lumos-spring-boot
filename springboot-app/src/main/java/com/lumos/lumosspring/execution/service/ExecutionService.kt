@@ -181,6 +181,7 @@ class ExecutionService(
                     deposit.stockists.any { it.user.idUser == userUUID } ||
                     preMeasurementStreet.reservationManagement
                         .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
+
             val teamMatch = materialStock.deposit.teams.isNotEmpty()
 
             reservation.add(

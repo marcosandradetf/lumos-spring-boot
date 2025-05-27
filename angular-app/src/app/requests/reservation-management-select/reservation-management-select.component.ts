@@ -98,7 +98,7 @@ export class ReservationManagementSelectComponent {
 
 
   materials: MaterialInStockDTO[] = [];
-  filteredMaterials!: MaterialInStockDTO[];
+  filteredMaterials: MaterialInStockDTO[] = [];
 
   @ViewChild('table_parent') table!: Table;
   selectedMaterial!: MaterialInStockDTO | null;
@@ -145,7 +145,8 @@ export class ReservationManagementSelectComponent {
   loading: boolean = false;
 
   onRowExpand(item: ItemResponseDTO) {
-    const linking = item.linking ? item.linking : item.type;
+    let linking = item.linking ? item.linking : item.type;
+    linking = linking?.toLowerCase();
     this.filteredMaterials = [];
     this.loading = true;
     this.expandedRows = {}; // fecha tudo
@@ -153,22 +154,38 @@ export class ReservationManagementSelectComponent {
 
     this.currentItemId = item.itemId;
 
-    if (this.materials.some(m =>
-      (m.materialPower === linking || m.materialPower === linking || m.materialType === linking)
-      && m.deposit === this.street.truckDepositName
-    )) {
+    const alreadyLoaded = this.materials.some(m =>
+      m.deposit === this.street.truckDepositName &&
+      (m.materialLength?.toLowerCase() === linking ||
+        m.materialPower?.toLowerCase() === linking ||
+        m.materialType?.toLowerCase() === linking)
+    );
+    if (alreadyLoaded) {
       this.filteredMaterials = this.materials.filter(m =>
-        (m.materialPower === linking || m.materialPower === linking || m.materialType === linking)
-        && m.deposit === this.street.truckDepositName
+       (m.materialLength?.toLowerCase() === linking ||
+         m.materialPower?.toLowerCase() === linking ||
+         m.materialType?.toLowerCase() === linking) && !m.deposit.toLowerCase().includes("caminhão")
       );
+      
+      this.filteredMaterials =
+        [...this.filteredMaterials ,
+          ...this.materials.filter(m =>
+            m.deposit === this.street.truckDepositName &&
+            (m.materialLength?.toLowerCase() === linking ||
+              m.materialType?.toLowerCase() === linking ||
+              m.materialPower?.toLowerCase() === linking))];
+
       this.loading = false;
     } else {
       this.executionService.getStockMaterialForLinking(linking, this.street.truckDepositName).subscribe({
         next: (response) => {
-          const news =
-            response.filter(n => !this.materials.some(m => m.materialId === n.materialId));
-          this.materials = [...this.materials, ...news];
+          const news = response.filter(n =>
+            !this.materials.some(m =>
+              m.materialId === n.materialId && m.deposit === n.deposit
+            )
+          );
 
+          this.materials = [...this.materials, ...news];
           this.filteredMaterials = news;
         },
         error: (error) => {
@@ -193,6 +210,7 @@ export class ReservationManagementSelectComponent {
       i.itemId === this.currentItemId
     );
     if (currentItemIndex === -1) this.utils.showMessage("Erro ao editar item, tente novamente", 'error')
+
 
     this.street.items[currentItemIndex].materialId = material.materialId;
     this.street.items[currentItemIndex].materialQuantity = this.setQuantity.quantity;
@@ -226,6 +244,11 @@ export class ReservationManagementSelectComponent {
 
     this.streetId = 0;
     // continua com o envio...
+  }
+
+
+  getQuantity(materialId: number) {
+    return this.street.items.find(i => i.materialId === materialId)?.materialQuantity || 0;
   }
 
 }
