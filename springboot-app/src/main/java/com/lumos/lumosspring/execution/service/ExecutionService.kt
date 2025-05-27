@@ -12,10 +12,7 @@ import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
-import com.lumos.lumosspring.util.ContractStatus
-import com.lumos.lumosspring.util.DefaultResponse
-import com.lumos.lumosspring.util.ReservationStatus
-import com.lumos.lumosspring.util.Util
+import com.lumos.lumosspring.util.*
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -202,6 +199,49 @@ class ExecutionService(
             preMeasurementStreet.streetStatus = ContractStatus.AVAILABLE_EXECUTION
         } else {
             preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
+
+            val companyPhone = util.getDescription(
+                field = "company_phone",
+                table = "tb_companies",
+                type = String::class.java,
+            )
+
+            // Agrupa as reservas por depósito
+            val groupedByDeposit = reservation
+                .filter { it.status == ReservationStatus.APPROVED }
+                .groupBy { it.materialStock?.deposit }
+
+            // Itera sobre os grupos e envia notificação por depósito
+            groupedByDeposit.forEach { (deposit, reserve) ->
+                val quantity = reserve.size
+                val teamCode = reserve.first().team?.teamCode ?: ""
+
+                val depositName = deposit?.depositName ?: "Desconhecido"
+                val address = deposit?.depositAddress ?: "Endereço não informado"
+                val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
+                val responsible = deposit?.stockists
+                    ?.firstOrNull()
+                    ?.user
+                    ?.completedName
+                    ?: "Responsável não informado"
+
+                val bodyMessage = buildString {
+                    appendLine("Local: $depositName")
+                    appendLine("Endereço: $address")
+                    appendLine("Telefone: $phone")
+                    appendLine("Responsável: $responsible")
+                }
+
+                notificationService.sendNotificationForTeam(
+                    team = teamCode,
+                    title = "Existem $quantity itens pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
+                    body = bodyMessage,
+                    action = "",
+                    time = util.dateTime,
+                    type = NotificationType.ALERT
+                )
+            }
+
         }
 
         materialReservationRepository.saveAll(reservation)

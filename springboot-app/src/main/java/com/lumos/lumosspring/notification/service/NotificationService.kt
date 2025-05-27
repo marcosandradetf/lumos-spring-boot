@@ -37,10 +37,10 @@ class NotificationService {
     }
 
     fun sendNotificationForTeam(
+        team: String,
         title: String,
         body: String,
         action: String,
-        team: String,
         time: Instant,
         type: String
     ) {

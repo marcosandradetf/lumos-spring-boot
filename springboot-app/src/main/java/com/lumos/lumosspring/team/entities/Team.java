@@ -3,6 +3,7 @@ package com.lumos.lumosspring.team.entities;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -142,5 +143,9 @@ public class Team {
 
     public void setDeposit(Deposit deposit) {
         this.deposit = deposit;
+    }
+
+    public String getTeamCode() {
+        return teamName.concat("_").concat(String.valueOf(idTeam));
     }
 }

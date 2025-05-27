@@ -2,6 +2,8 @@ package com.lumos.lumosspring.util
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository
 import com.lumos.lumosspring.user.User
+import org.springframework.dao.EmptyResultDataAccessException
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -17,7 +19,11 @@ import java.util.*
 
 
 @Component
-class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepository: RefreshTokenRepository) {
+class Util(
+    private val jwtDecoder: JwtDecoder,
+    private val jdbcTemplate: JdbcTemplate,
+    private val refreshTokenRepository: RefreshTokenRepository
+) {
     fun convertToBigDecimal(value: String?): BigDecimal? {
         if (value == null) {
             return null
@@ -100,12 +106,45 @@ class Util(private val jwtDecoder: JwtDecoder, private val refreshTokenRepositor
             .map { it.toLong() }
     }
 
+    fun <T> getDescriptions(
+        field: String,
+        table: String,
+        where: String,
+        type: Class<T>,
+        order: String = "",
+    ): List<T> {
+        var sql = "SELECT $field FROM $table WHERE $where"
+        if (order != "") sql += " ORDER BY $order"
+
+        return jdbcTemplate.queryForList(sql, type)
+    }
+
+    fun <T> getDescription(
+        field: String,
+        table: String,
+        where: String = "",
+        type: Class<T>,
+        order: String = ""
+    ): T? {
+        var sql = "SELECT $field FROM $table"
+        if (where.isNotBlank()) sql += " WHERE $where"
+        if (order.isNotBlank()) sql += " ORDER BY $order"
+        sql += " LIMIT 1"
+
+        return try {
+            jdbcTemplate.queryForObject(sql, type)
+        } catch (ex: EmptyResultDataAccessException) {
+            null // ou você pode lançar uma exceção customizada, se preferir
+        }
+    }
+
+
 }
 
 object ContractStatus {
     const val PENDING = "PENDING"
     const val VALIDATING = "VALIDATING"
-    const val WAITING_CONTRACTOR  = "WAITING_CONTRACTOR"
+    const val WAITING_CONTRACTOR = "WAITING_CONTRACTOR"
     const val AVAILABLE = "AVAILABLE"
     const val WAITING_STOCKIST = "WAITING_STOCKIST"
     const val WAITING_RESERVE_CONFIRMATION = "WAITING_RESERVE_CONFIRMATION"
@@ -128,12 +167,12 @@ object ItemStatus {
 }
 
 object NotificationType {
-    const val CONTRACT ="CONTRACT"
-    const val UPDATE ="UPDATE"
-    const val EVENT ="EVENT"
-    const val WARNING ="ALERT"
-    const val CASH ="CASH"
-    const val ALERT ="CASH"
+    const val CONTRACT = "CONTRACT"
+    const val UPDATE = "UPDATE"
+    const val EVENT = "EVENT"
+    const val WARNING = "ALERT"
+    const val CASH = "CASH"
+    const val ALERT = "CASH"
 }
 
 object ReservationStatus {

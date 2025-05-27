@@ -2,8 +2,10 @@ package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import com.lumos.lumosspring.team.entities.Stockist;
+import com.lumos.lumosspring.team.entities.Team;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +48,13 @@ public class User {
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Stockist stockist;
+
+    @OneToMany(mappedBy = "driver", fetch = FetchType.LAZY)
+    private List<Team> drivers;
+
+    @OneToMany(mappedBy = "electrician", fetch = FetchType.LAZY)
+    private List<Team> electricians;
+
 
     public UUID getIdUser() {
         return idUser;
@@ -149,5 +158,21 @@ public class User {
 
     public void setStockist(Stockist stockist) {
         this.stockist = stockist;
+    }
+
+    public List<Team> getDrivers() {
+        return drivers;
+    }
+
+    public void setDrivers(List<Team> drivers) {
+        this.drivers = drivers;
+    }
+
+    public List<Team> getElectricians() {
+        return electricians;
+    }
+
+    public void setElectricians(List<Team> electricians) {
+        this.electricians = electricians;
     }
 }
