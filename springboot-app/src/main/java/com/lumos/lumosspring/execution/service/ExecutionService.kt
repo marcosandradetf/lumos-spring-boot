@@ -151,7 +151,7 @@ class ExecutionService(
                 type.lowercase(),
                 truckDepositName.lowercase()
             )
-        } else  {
+        } else {
             materials = materialStockRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
         }
 
@@ -176,38 +176,55 @@ class ExecutionService(
         }
 
         for (item in executionReserve.items) {
-            val materialStock = materialStockRepository.findById(item.materialId)
-                .orElse(null) ?: return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Material não encontrado")
+            for (materialReserve in item.materials) {
+                val materialStock = materialStockRepository.findById(materialReserve.materialId)
+                    .orElse(null) ?: return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Material não encontrado")
 
-            if (materialStock.stockAvailable < item.materialQuantity)
-                return ResponseEntity.status(500)
-                    .body("O material ${materialStock.material.materialName} não possuí estoque suficiente")
+                if (materialStock.stockAvailable < materialReserve.materialQuantity)
+                    return ResponseEntity.status(500)
+                        .body("O material ${materialStock.material.materialName} não possuí estoque suficiente")
 
-            val deposit = materialStock.deposit
-            val stockistMatch = preMeasurementStreet.reservationManagement.stockist.idUser == userUUID ||
-                    deposit.stockists.any { it.user.idUser == userUUID } ||
-                    preMeasurementStreet.reservationManagement
-                        .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
+                val deposit = materialStock.deposit
+                val stockistMatch = preMeasurementStreet.reservationManagement.stockist.idUser == userUUID ||
+                        deposit.stockists.any { it.user.idUser == userUUID } ||
+                        preMeasurementStreet.reservationManagement
+                            .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
 
-            val teamMatch = materialStock.deposit.teams.isNotEmpty()
+                val teamMatch = materialStock.deposit.teams.isNotEmpty()
 
-            reservation.add(
-                MaterialReservation().apply {
-                    this.description = ""
-                    this.materialStock = materialStock
-                    this.setReservedQuantity(item.materialQuantity)
-                    this.street = preMeasurementStreet
-                    if (teamMatch || stockistMatch) {
-                        this.confirmReservation()
-                        if (teamMatch) this.status = ReservationStatus.COLLECTED
+                reservation.add(
+                    MaterialReservation().apply {
+                        this.description = ""
+                        this.materialStock = materialStock
+                        this.setReservedQuantity(materialReserve.materialQuantity)
+                        this.street = preMeasurementStreet
+                        if (teamMatch || stockistMatch) {
+                            this.confirmReservation()
+                            if (teamMatch) this.status = ReservationStatus.COLLECTED
+                        }
                     }
-                }
-            )
+                )
+            }
         }
 
-        if (reservation.all { it.status == ReservationStatus.APPROVED }) {
+        var responseMessage = ""
+        val companyPhone = util.getDescription(
+            field = "company_phone",
+            table = "tb_companies",
+            type = String::class.java,
+        )
+
+        // Agrupa as reservas por depósito
+        val groupedByDeposit = reservation
+            .filter { it.status == ReservationStatus.APPROVED }
+            .groupBy { it.materialStock?.deposit }
+
+        if (reservation.all { it.status == ReservationStatus.COLLECTED }) {
             preMeasurementStreet.streetStatus = ContractStatus.AVAILABLE_EXECUTION
-        } else {
+            responseMessage =
+                "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
+        } else if (!reservation.any { it.status == ReservationStatus.PENDING } && !reservation.any { it.status == ReservationStatus.COLLECTED }) {
             preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
 
             val companyPhone = util.getDescription(
@@ -254,7 +271,88 @@ class ExecutionService(
                 )
             }
 
+            responseMessage =
+                "Como todos os itens foram reservadas no seu próprio almoxarifado. Não será necessário que aprove." +
+                        "Mas os materiais estão pendentes de coleta pela equipe."
+        } else if (!reservation.any { it.status == ReservationStatus.PENDING } &&
+            reservation.any { it.status == ReservationStatus.COLLECTED }) {
+
+            preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
+
+            // Itera sobre os grupos e envia notificação por depósito
+            groupedByDeposit.forEach { (deposit, reserve) ->
+                val teamCode = reserve.first().team?.teamCode ?: ""
+
+                val depositName = deposit?.depositName ?: "Desconhecido"
+                val address = deposit?.depositAddress ?: "Endereço não informado"
+                val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
+                val responsible = deposit?.stockists
+                    ?.firstOrNull()
+                    ?.user
+                    ?.completedName
+                    ?: "Responsável não informado"
+
+                val bodyMessage = """
+                    Local: $depositName"
+                    Endereço: $address"
+                    Telefone: $phone"
+                    Responsável: $responsible"
+                """.trimIndent()
+
+
+                notificationService.sendNotificationForTeam(
+                    team = teamCode,
+                    title = "Existem alguns itens pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
+                    body = bodyMessage,
+                    action = "",
+                    time = util.dateTime,
+                    type = NotificationType.ALERT,
+                    persistCode = preMeasurementStreet.preMeasurementStreetId.toString()
+                )
+
+                responseMessage =
+                    "Como alguns itens foram reservadas no seu próprio almoxarifado. Não será necessária aprovação." +
+                            "Mas estes materiais estão pendentes de coleta pela equipe."
+            }
+        } else if (reservation.any { it.status == ReservationStatus.PENDING }) {
+            preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
+
+            groupedByDeposit.forEach { (deposit, reserve) ->
+                val teamCode = reserve.first().team?.teamCode ?: ""
+
+                val depositName = deposit?.depositName ?: "Desconhecido"
+                val address = deposit?.depositAddress ?: "Endereço não informado"
+                val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
+                val responsible = deposit?.stockists
+                    ?.firstOrNull()
+                    ?.user
+                    ?.completedName
+                    ?: "Responsável não informado"
+
+                val bodyMessage = """
+                    Local: $depositName"
+                    Endereço: $address"
+                    Telefone: $phone"
+                    Responsável: $responsible"
+                """.trimIndent()
+
+
+                notificationService.sendNotificationForTeam(
+                    team = teamCode,
+                    title = "Existem alguns itens pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
+                    body = bodyMessage,
+                    action = "",
+                    time = util.dateTime,
+                    type = NotificationType.ALERT,
+                    persistCode = preMeasurementStreet.preMeasurementStreetId.toString()
+                )
+
+                responseMessage =
+                    "Como alguns itens foram reservadas no seu próprio almoxarifado. Não será necessária aprovação." +
+                            "Mas estes materiais estão pendentes de coleta pela equipe."
+            }
         }
+
 
         materialReservationRepository.saveAll(reservation)
         preMeasurementStreetRepository.save(preMeasurementStreet)
@@ -267,7 +365,7 @@ class ExecutionService(
 
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
-        return ResponseEntity.ok().build()
+        return ResponseEntity.ok().body(DefaultResponse(""))
     }
 
 

@@ -126,8 +126,8 @@
           <td><p-tag severity="info" styleClass="cursor-pointer" pTooltip="Clique para detalhes">{{ street.teamName }}</p-tag></td>
           <td>{{ item.quantity }}</td>
           <td>
-            <p-tag [value]="item.materialId > 0 ? 'RESERVADO' : 'PENDENTE'"
-                   [severity]="item.materialId > 0 ? 'success' : 'danger'"/>
+            <p-tag [value]="item.materials.length > 0 ? 'RESERVADO' : 'PENDENTE'"
+                   [severity]="item.materials.length> 0 ? 'success' : 'danger'"/>
           </td>
         </tr>
       </ng-template>
@@ -173,7 +173,10 @@
                       </ng-template>
                     </p-cellEditor>
                   </td>
-                  <td>
+                  <td class="flex justify-between items-center space-x-1">
+                    <button pButton *ngIf="existsMaterial(material.materialId)" (click)="Cancel(material)">
+                      Remover
+                    </button>
                     <button pButton *ngIf="currentMaterialId === material.materialId" (click)="Confirm(material)">
                       Confirmar
                     </button>

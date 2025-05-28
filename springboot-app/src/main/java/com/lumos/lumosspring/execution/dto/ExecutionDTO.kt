@@ -60,6 +60,10 @@ data class ReserveDTOCreate(
 
 data class ReserveItemDTO(
     val itemId: Long,
+    val materials: List<ReserveMaterialDTO>
+)
+
+data class ReserveMaterialDTO (
     val materialId: Long,
     val materialQuantity: Double
 )

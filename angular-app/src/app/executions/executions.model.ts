@@ -32,8 +32,10 @@ export interface ItemResponseDTO {
   type: string,
   linking: string,
 
-  materialId: number,
-  materialQuantity: number,
+  materials: {
+    materialId: number,
+    materialQuantity: number,
+  }[]
 }
 
 export interface MaterialInStockDTO{

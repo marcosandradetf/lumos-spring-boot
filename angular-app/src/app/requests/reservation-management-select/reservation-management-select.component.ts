@@ -7,23 +7,14 @@ import {
   ReserveStreetDTOResponse
 } from '../../executions/executions.model';
 import {BreadcrumbComponent} from '../../shared/components/breadcrumb/breadcrumb.component';
-import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
-import {Toolbar} from 'primeng/toolbar';
+import {CurrencyPipe, NgIf} from '@angular/common';
 import {Button, ButtonDirective} from 'primeng/button';
-import {SplitButton} from 'primeng/splitbutton';
-import {IconField} from 'primeng/iconfield';
-import {InputIcon} from 'primeng/inputicon';
-import {MenuItem} from 'primeng/api';
 import {InputText} from 'primeng/inputtext';
-import {Menubar} from 'primeng/menubar';
 import {Carousel, CarouselResponsiveOptions} from 'primeng/carousel';
 import {Table, TableModule} from 'primeng/table';
-import {MaterialResponse} from '../../models/material-response.dto';
-import {MaterialService} from '../../stock/services/material.service';
 import {Tag} from 'primeng/tag';
 import {Ripple} from 'primeng/ripple';
 import {FormsModule} from '@angular/forms';
-import {KeyFilter} from 'primeng/keyfilter';
 import {UtilsService} from '../../core/service/utils.service';
 import {Toast} from 'primeng/toast';
 import {Skeleton} from 'primeng/skeleton';
@@ -212,17 +203,42 @@ export class ReservationManagementSelectComponent {
   Confirm(
     material: MaterialInStockDTO
   ) {
-    if (this.currentItemId === 0) this.utils.showMessage("Erro ao editar item, tente novamente", 'error')
+    if (this.currentItemId === 0) {
+      this.utils.showMessage("Erro ao reservar material, tente novamente", 'error');
+      return;
+    }
 
     const currentItemIndex = this.street.items.findIndex(i =>
       i.itemId === this.currentItemId
     );
-    if (currentItemIndex === -1) this.utils.showMessage("Erro ao editar item, tente novamente", 'error')
+    if (currentItemIndex === -1) {
+      this.utils.showMessage("Erro ao reservar material, tente novamente", 'error');
+      return;
+    }
 
+    if (this.street.items[currentItemIndex].quantity > material.availableQuantity) {
+      this.utils.showMessage("Erro ao reservar material, tente novamente", 'error');
+      return;
+    }
 
-    this.street.items[currentItemIndex].materialId = material.materialId;
-    this.street.items[currentItemIndex].materialQuantity = Number(this.setQuantity.quantity);
+    const newMaterial = {
+      materialId: material.materialId,
+      materialQuantity: Number(this.setQuantity.quantity)
+    }
 
+    if (!this.existsMaterial(newMaterial.materialId)) {
+      this.street.items[currentItemIndex].materials.push(newMaterial);
+      this.utils.showMessage(`QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
+    } else {
+      const matIndex = this.street.items[currentItemIndex].materials
+        .findIndex(i => i.materialId === newMaterial.materialId);
+
+      if (matIndex === -1) {
+        this.utils.showMessage("Erro ao editar item, tente novamente", 'error');
+      }
+      this.street.items[currentItemIndex].materials[matIndex].materialQuantity = newMaterial.materialQuantity;
+      this.utils.showMessage(`NOVA QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva alterada com sucesso');
+    }
 
     // 2. Colapsa a linha expandida
     const item = this.street.items.find(i => i.itemId === this.currentItemId);
@@ -230,20 +246,19 @@ export class ReservationManagementSelectComponent {
       this.table.toggleRow(item); // agora sim, passando o objeto certo
     }
 
-    this.utils.showMessage(`QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
-
     // 3. Limpa variáveis de estado
     this.selectedMaterial = null;
     this.setQuantity = {
       quantity: ''
     };
     this.currentItemId = 0;
+    this.currentMaterialId = 0;
   }
 
 
   sendData() {
     for (const i of this.street.items) {
-      if (i.materialId === 0 || i.materialId === null || i.materialId === undefined) {
+      if (i.materials.length === 0) {
         this.utils.showMessage("Existem itens pendentes", 'error', 'Não foi possível salvar');
         return;
       }
@@ -251,25 +266,54 @@ export class ReservationManagementSelectComponent {
 
     this.loading = true;
     this.executionService.reserveMaterialsForExecution(this.street, this.userUUID).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
         this.streetId = 0;
+        this.utils.showMessage(response.message, 'success', 'Reserva realizada com sucesso', true);
       },
       error: (error) => {
         this.utils.showMessage(error.error.message, 'error', 'Erro ao salvar');
       },
       complete: () => {
         this.loading = false;
-        this.utils.showMessage("Reserva realizada com sucesso", 'success', 'Reserva realizada com sucesso');
       }
     });
 
-    // continua com o envio...
   }
 
-
   getQuantity(materialId: number) {
-    return this.street.items.find(i => i.materialId === materialId)?.materialQuantity.toString() || '0';
+    return this.street.items.find(i => i.itemId === this.currentItemId)
+      ?.materials.find(m => m.materialId == materialId)?.materialQuantity || 0;
+  }
+
+  existsMaterial(materialId: number): boolean {
+    return this.street.items.find(i => i.itemId === this.currentItemId)
+      ?.materials.some(m => m.materialId == materialId) || false;
+  }
+
+  Cancel(material: MaterialInStockDTO) {
+    const index = this.street.items.findIndex(i => i.itemId === this.currentItemId)
+    if (index === -1) {
+      this.utils.showMessage("Não foi possível cancelar o material atual", "error", 'Erro');
+      return;
+    }
+
+    this.street.items[index].materials = this.street.items[index].materials
+      .filter(m => m.materialId !== material.materialId);
+
+    // 2. Colapsa a linha expandida
+    const item = this.street.items.find(i => i.itemId === this.currentItemId);
+    if (item) {
+      this.table.toggleRow(item); // agora sim, passando o objeto certo
+    }
+    this.utils.showMessage("Material " + material.materialName + " removido com sucesso", "success", 'Material Removido');
+
+    this.selectedMaterial = null;
+    this.setQuantity = {
+      quantity: ''
+    };
+    this.currentItemId = 0;
+    this.currentMaterialId = 0;
   }
 
 }
