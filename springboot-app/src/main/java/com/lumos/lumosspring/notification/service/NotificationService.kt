@@ -42,7 +42,8 @@ class NotificationService {
         body: String,
         action: String,
         time: Instant,
-        type: String
+        type: String,
+        persistCode: String
     ) {
         // Criar a mensagem para o tópico
         val message = Message.builder()
@@ -52,6 +53,7 @@ class NotificationService {
             .putData("action", action)
             .putData("time", time.toString())
             .putData("type", type)
+            .putData("persistCode", persistCode)
             .build()
 
         // Enviar a notificação

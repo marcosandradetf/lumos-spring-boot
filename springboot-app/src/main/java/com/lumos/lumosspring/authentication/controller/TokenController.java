@@ -31,17 +31,17 @@ public class TokenController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-       return tokenService.login(loginRequest, response);
+       return tokenService.login(loginRequest, response, false);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
-        return tokenService.logout(refreshToken, response);
+        return tokenService.logout(refreshToken, response, false);
     }
 
     @PostMapping("/refresh-token")
     public ResponseEntity<LoginResponse> refreshToken(@CookieValue("refreshToken") String refreshToken) {
-        return tokenService.refreshToken(refreshToken);
+        return tokenService.refreshToken(refreshToken, false);
     }
 
     @PostMapping("/forgot-password")

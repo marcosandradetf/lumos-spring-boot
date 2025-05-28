@@ -85,7 +85,7 @@ public class StockMovementService {
                     movement.getRequestUnit(),
                     formattedPrice,
                     movement.getSupplier().getSupplierName(),
-                    movement.getMaterialStock().getCompany().getCompanyName(),
+                    movement.getMaterialStock().getCompany().getSocialReason(),
                     movement.getMaterialStock().getDeposit().getDepositName(),
                     employee
             ));
@@ -245,7 +245,7 @@ public class StockMovementService {
                     movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
                     formattedPrice,
                     movement.getSupplier().getSupplierName(),
-                    movement.getMaterialStock().getCompany().getCompanyName(),
+                    movement.getMaterialStock().getCompany().getSocialReason(),
                     movement.getMaterialStock().getDeposit().getDepositName(),
                     employee
             ));

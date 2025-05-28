@@ -10,7 +10,6 @@ import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.repository.RegionRepository;
-import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -48,7 +47,7 @@ public class DepositService {
         for (var deposit : deposits) {
             // Verifica se o campo 'company' é nulo
             if (deposit.getCompany() != null) {
-                companyName = deposit.getCompany().getCompanyName();
+                companyName = deposit.getCompany().getSocialReason();
             } else {
                 companyName = "Não definido";  // Valor padrão
             }
@@ -171,7 +170,7 @@ public class DepositService {
         for (var deposit : deposits) {
             // Verifica se o campo 'company' é nulo
             if (deposit.getCompany() != null) {
-                companyName = deposit.getCompany().getCompanyName();
+                companyName = deposit.getCompany().getSocialReason();
             } else {
                 companyName = "Não definido";  // Valor padrão
             }

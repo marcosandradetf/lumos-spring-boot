@@ -24,7 +24,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
 
     @Query("SELECT ms.material.materialName from MaterialStock ms where ms.material.idMaterial = :id")
     String GetNameById(Long id);
-    
+
     @Query("select ms from MaterialStock ms order by ms.materialIdStock")
     Page<MaterialStock> findAllOrderByIdMaterial(Pageable pageable);
 
@@ -48,22 +48,33 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             nativeQuery = true)
     Page<MaterialStock> findByMaterialNameOrTypeIgnoreAccent(Pageable pageable, String name);
 
-//    @Query("SELECT ms FROM MaterialStock ms WHERE ms.stockAvailable > 0 AND ms.material IN :materials and not ms.inactive")
+    //    @Query("SELECT ms FROM MaterialStock ms WHERE ms.stockAvailable > 0 AND ms.material IN :materials and not ms.inactive")
     @Query("SELECT ms FROM MaterialStock ms WHERE ms.material IN :materials and not ms.inactive")
     List<MaterialStock> findAvailableFiltered(@Param("materials") List<Material> materials);
+
+    // adicionar tipo apenas instalacao ou manutencao??
+    //            "AND ms.material." +
+    @Query("SELECT new com.lumos.lumosspring.execution.dto.MaterialInStockDTO(" +
+            "ms.materialIdStock, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
+            "ms.material.materialType.typeName, ms.deposit.depositName, ms.stockAvailable) " +
+            "FROM MaterialStock ms " +
+            "WHERE LOWER(ms.material.materialType.typeName) = :type " +
+            "AND ms.inactive = false " +
+            "AND (LOWER(ms.deposit.depositName) = LOWER(:depositName) " +
+            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%') order by ms.material.materialName")
+    List<MaterialInStockDTO> findAllByType(@Param("type") String type, @Param("depositName") String depositName);
 
     @Query("SELECT new com.lumos.lumosspring.execution.dto.MaterialInStockDTO(" +
             "ms.materialIdStock, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
             "ms.material.materialType.typeName, ms.deposit.depositName, ms.stockAvailable) " +
             "FROM MaterialStock ms " +
-            "WHERE (LOWER(ms.material.materialType.typeName) = :linking " +
-            "   OR LOWER(ms.material.materialPower) = :linking " +
+            "WHERE LOWER(ms.material.materialType.typeName) = :type " +
+            "AND (LOWER(ms.material.materialPower) = :linking " +
             "   OR LOWER(ms.material.materialLength) = :linking) " +
             "AND ms.inactive = false " +
             "AND (LOWER(ms.deposit.depositName) = LOWER(:depositName) " +
-            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%')")
-    List<MaterialInStockDTO> findAllByLinking(@Param("linking") String linking, @Param("depositName") String depositName);
-
+            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%') order by ms.material.materialName")
+    List<MaterialInStockDTO> findAllByLinkingAndType(@Param("linking") String linking, @Param("type") String type, @Param("depositName") String depositName);
 
 
 }

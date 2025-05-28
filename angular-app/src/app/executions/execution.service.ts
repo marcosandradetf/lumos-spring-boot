@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {environment} from '../../environments/environment';
 import {HttpClient} from '@angular/common/http';
 import * as http from 'node:http';
-import {MaterialInStockDTO, ReserveDTOResponse} from './executions.model';
+import {MaterialInStockDTO, ReserveDTOResponse, ReserveStreetDTOResponse} from './executions.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +10,8 @@ import {MaterialInStockDTO, ReserveDTOResponse} from './executions.model';
 export class ExecutionService {
   private baseUrl = environment.springboot + "/api";
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+  }
 
   public getStockAvailable() {
     return this.http.get<
@@ -56,8 +57,13 @@ export class ExecutionService {
     return this.http.get<ReserveDTOResponse[]>(this.baseUrl + `/execution/get-reservations/${userUUID}`);
   }
 
-  public getStockMaterialForLinking(linking: string, truckDepositName: string) {
-    return this.http.get<MaterialInStockDTO[]>(this.baseUrl + `/execution/get-stock-materials/${linking}/${truckDepositName}`);
+  public getStockMaterialForLinking(linking: string, type: string, truckDepositName: string) {
+    return this.http.get<MaterialInStockDTO[]>(this.baseUrl + `/execution/get-stock-materials/${linking}/${type}/${truckDepositName}`);
   }
+
+  reserveMaterialsForExecution(currentStreet: ReserveStreetDTOResponse, userUUID: string) {
+    return this.http.post(this.baseUrl + `/execution/reserve-materials-for-execution/${userUUID}`, currentStreet);
+  }
+
 
 }

@@ -142,8 +142,18 @@ class ExecutionService(
         return ResponseEntity.ok(response)
     }
 
-    fun getStockMaterialForLinking(linking: String, truckDepositName: String): ResponseEntity<Any> {
-        val materials = materialStockRepository.findAllByLinking(linking.lowercase(), truckDepositName.lowercase())
+    fun getStockMaterialForLinking(linking: String, type: String, truckDepositName: String): ResponseEntity<Any> {
+        var materials: List<MaterialInStockDTO>
+
+        if (type != "NULL" && linking != "NULL") {
+            materials = materialStockRepository.findAllByLinkingAndType(
+                linking.lowercase(),
+                type.lowercase(),
+                truckDepositName.lowercase()
+            )
+        } else  {
+            materials = materialStockRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
+        }
 
         return ResponseEntity.ok(materials)
     }
@@ -225,12 +235,13 @@ class ExecutionService(
                     ?.completedName
                     ?: "Responsável não informado"
 
-                val bodyMessage = buildString {
-                    appendLine("Local: $depositName")
-                    appendLine("Endereço: $address")
-                    appendLine("Telefone: $phone")
-                    appendLine("Responsável: $responsible")
-                }
+                val bodyMessage = """
+                    Local: $depositName"
+                    Endereço: $address"
+                    Telefone: $phone"
+                    Responsável: $responsible"
+                """.trimIndent()
+
 
                 notificationService.sendNotificationForTeam(
                     team = teamCode,
@@ -238,7 +249,8 @@ class ExecutionService(
                     body = bodyMessage,
                     action = "",
                     time = util.dateTime,
-                    type = NotificationType.ALERT
+                    type = NotificationType.ALERT,
+                    persistCode = preMeasurementStreet.preMeasurementStreetId.toString()
                 )
             }
 

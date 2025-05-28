@@ -29,6 +29,7 @@ import {Toast} from 'primeng/toast';
 import {Skeleton} from 'primeng/skeleton';
 import {Tooltip} from 'primeng/tooltip';
 import {ExecutionService} from '../../executions/execution.service';
+import {AuthService} from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-reservation-management-select',
@@ -103,9 +104,11 @@ export class ReservationManagementSelectComponent {
   @ViewChild('table_parent') table!: Table;
   selectedMaterial!: MaterialInStockDTO | null;
   currentMaterialId!: Number;
+  private userUUID: string = '';
 
   constructor(private router: Router,
               protected utils: UtilsService,
+              private authService: AuthService,
               private executionService: ExecutionService) {
 
 
@@ -118,6 +121,8 @@ export class ReservationManagementSelectComponent {
     } else {
       void this.router.navigate(['/requisicoes/execucoes/reservas/gerenciamento']);
     }
+
+    this.userUUID = this.authService.getUser().uuid;
 
   }
 
@@ -137,9 +142,9 @@ export class ReservationManagementSelectComponent {
 
 
   setQuantity: {
-    quantity: number;
+    quantity: string;
   } = {
-    quantity: 0
+    quantity: ""
   }
 
   loading: boolean = false;
@@ -147,6 +152,9 @@ export class ReservationManagementSelectComponent {
   onRowExpand(item: ItemResponseDTO) {
     let linking = item.linking ? item.linking : item.type;
     linking = linking?.toLowerCase();
+
+    let type = item.type.toLowerCase();
+
     this.filteredMaterials = [];
     this.loading = true;
     this.expandedRows = {}; // fecha tudo
@@ -162,13 +170,13 @@ export class ReservationManagementSelectComponent {
     );
     if (alreadyLoaded) {
       this.filteredMaterials = this.materials.filter(m =>
-       (m.materialLength?.toLowerCase() === linking ||
-         m.materialPower?.toLowerCase() === linking ||
-         m.materialType?.toLowerCase() === linking) && !m.deposit.toLowerCase().includes("caminhão")
+        (m.materialLength?.toLowerCase() === linking ||
+          m.materialPower?.toLowerCase() === linking ||
+          m.materialType?.toLowerCase() === linking) && !m.deposit.toLowerCase().includes("caminhão")
       );
-      
+
       this.filteredMaterials =
-        [...this.filteredMaterials ,
+        [...this.filteredMaterials,
           ...this.materials.filter(m =>
             m.deposit === this.street.truckDepositName &&
             (m.materialLength?.toLowerCase() === linking ||
@@ -177,7 +185,7 @@ export class ReservationManagementSelectComponent {
 
       this.loading = false;
     } else {
-      this.executionService.getStockMaterialForLinking(linking, this.street.truckDepositName).subscribe({
+      this.executionService.getStockMaterialForLinking(item.linking ?? 'NULL', item.type ?? 'NULL', this.street.truckDepositName).subscribe({
         next: (response) => {
           const news = response.filter(n =>
             !this.materials.some(m =>
@@ -213,7 +221,7 @@ export class ReservationManagementSelectComponent {
 
 
     this.street.items[currentItemIndex].materialId = material.materialId;
-    this.street.items[currentItemIndex].materialQuantity = this.setQuantity.quantity;
+    this.street.items[currentItemIndex].materialQuantity = Number(this.setQuantity.quantity);
 
 
     // 2. Colapsa a linha expandida
@@ -227,7 +235,7 @@ export class ReservationManagementSelectComponent {
     // 3. Limpa variáveis de estado
     this.selectedMaterial = null;
     this.setQuantity = {
-      quantity: 0
+      quantity: ''
     };
     this.currentItemId = 0;
   }
@@ -241,14 +249,27 @@ export class ReservationManagementSelectComponent {
       }
     }
 
+    this.loading = true;
+    this.executionService.reserveMaterialsForExecution(this.street, this.userUUID).subscribe({
+      next: (response) => {
+        this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
+        this.streetId = 0;
+      },
+      error: (error) => {
+        this.utils.showMessage(error.error.message, 'error', 'Erro ao salvar');
+      },
+      complete: () => {
+        this.loading = false;
+        this.utils.showMessage("Reserva realizada com sucesso", 'success', 'Reserva realizada com sucesso');
+      }
+    });
 
-    this.streetId = 0;
     // continua com o envio...
   }
 
 
   getQuantity(materialId: number) {
-    return this.street.items.find(i => i.materialId === materialId)?.materialQuantity || 0;
+    return this.street.items.find(i => i.materialId === materialId)?.materialQuantity.toString() || '0';
   }
 
 }

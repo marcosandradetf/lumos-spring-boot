@@ -162,7 +162,7 @@ public class MaterialService {
                                 ? ms.getMaterial().getMaterialType().getGroup().getGroupName()
                                 : null,
                         ms.getDeposit() != null ? ms.getDeposit().getDepositName() : null,
-                        ms.getCompany() != null ? ms.getCompany().getCompanyName() : null
+                        ms.getCompany() != null ? ms.getCompany().getSocialReason() : null
                 ))
                 .toList();
     }

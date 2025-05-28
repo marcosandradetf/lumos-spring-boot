@@ -21,8 +21,9 @@ export class AuthService {
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         const roles: string[] = userData.roles;
+        const teams: string[] = userData.teams;
 
-        this.user.initialize(userData.uuid, userData.username, userData.accessToken, roles); // Converte para uma instância de User
+        this.user.initialize(userData.uuid, userData.username, userData.accessToken, roles, teams); // Converte para uma instância de User
       }
       this.initializeAuthStatus();
     }
@@ -50,7 +51,7 @@ export class AuthService {
       tap(response => {
         const decodedToken = jwtDecode(response.accessToken);
         const userId = decodedToken.sub ? decodedToken.sub : '';  // Aqui você tem o ID do usuário
-        this.user.initialize(userId, username, response.accessToken, response.roles.split(' '));
+        this.user.initialize(userId, username, response.accessToken, response.roles.split(' '), response.teams.split(' '));
         if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
         this.isLoggedInSubject.next(true);
       }),

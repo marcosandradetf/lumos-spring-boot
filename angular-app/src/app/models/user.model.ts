@@ -7,6 +7,7 @@ export class User {
   public accessToken!: string;
   public birthDate!: Date; // Data de nascimento do usuário
   public roles!: string[]; // Perfis de acesso do usuário
+  public teams!: string[]; // Equipes do usuário
 
   // constructor(username: string, accessToken: string, roles: string) {
   //   this.username = username;
@@ -18,12 +19,13 @@ export class User {
   constructor() {
   }
 
-  initialize(uuid:string, username: string, accessToken: string, roles: string[]) {
+  initialize(uuid:string, username: string, accessToken: string, roles: string[], teams: string[]) {
     this.uuid = uuid;
     this.username = username;
     this.accessToken = accessToken;
     this.birthDate = new Date();
     this.roles = roles;
+    this.teams = teams;
   }
 
 
@@ -47,13 +49,10 @@ export class User {
     }
   }
 
-
-
   // Define novos tokens
   setToken(accessToken: string): void {
     this.accessToken = accessToken;
   }
-
 
   // Limpa os tokens do usuário
   clearToken(): void {
@@ -64,14 +63,8 @@ export class User {
     return this.roles;
   }
 
-  // Verifica se o usuário possui um papel específico
-  hasRole(role: string[]): boolean {
-    console.log(role)
-    // role.forEach((item) => {
-    //   return this.roles.includes(item);
-    // });
-    return false;
+  getTeams(): string[] {
+    return this.teams;
   }
-
 
 }

@@ -22,7 +22,7 @@ public record MaterialResponse(long idMaterial, String materialName, String mate
                 material.getMaterial().getMaterialType() != null ? material.getMaterial().getMaterialType().getTypeName() : null,
                 material.getMaterial().getMaterialType() != null ? material.getMaterial().getMaterialType().getGroup().getGroupName(): null,
                 material.getDeposit() != null ? material.getDeposit().getDepositName() : null,
-                material.getCompany() != null ? material.getCompany().getCompanyName() : null
+                material.getCompany() != null ? material.getCompany().getSocialReason() : null
         );
     }
 }

@@ -146,6 +146,6 @@ public class Team {
     }
 
     public String getTeamCode() {
-        return teamName.concat("_").concat(String.valueOf(idTeam));
+        return driver.getIdUser().toString().concat("_").concat(String.valueOf(idTeam));
     }
 }
