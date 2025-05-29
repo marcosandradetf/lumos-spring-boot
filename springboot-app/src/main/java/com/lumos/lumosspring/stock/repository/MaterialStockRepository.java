@@ -1,9 +1,9 @@
 package com.lumos.lumosspring.stock.repository;
 
 import com.lumos.lumosspring.execution.dto.MaterialInStockDTO;
+import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
 import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,8 +25,26 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
     @Query("SELECT ms.material.materialName from MaterialStock ms where ms.material.idMaterial = :id")
     String GetNameById(Long id);
 
-    @Query("select ms from MaterialStock ms order by ms.materialIdStock")
-    Page<MaterialStock> findAllOrderByIdMaterial(Pageable pageable);
+    @Query(value = "select new com.lumos.lumosspring.stock.controller.dto.MaterialResponse(" +
+            "ms.materialIdStock, ms.material.materialName, ms.material.materialBrand," +
+            "ms.material.materialPower, ms.material.materialAmps, ms.material.materialLength," +
+            "ms.buyUnit, ms.requestUnit, ms.stockQuantity, ms.inactive, ms.material.materialType.typeName," +
+            "ms.material.materialType.group.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
+            "from MaterialStock ms order by ms.materialIdStock",
+            countQuery = "select count(ms.materialIdStock) from MaterialStock ms"
+    )
+    Page<MaterialResponse> findAllMaterialsStock(Pageable pageable);
+
+    @Query(value = "select new com.lumos.lumosspring.stock.controller.dto.MaterialResponse(" +
+            "ms.materialIdStock, ms.material.materialName, ms.material.materialBrand," +
+            "ms.material.materialPower, ms.material.materialAmps, ms.material.materialLength," +
+            "ms.buyUnit, ms.requestUnit, ms.stockQuantity, ms.inactive, ms.material.materialType.typeName," +
+            "ms.material.materialType.group.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
+            "from MaterialStock ms where ms.deposit.idDeposit = :depositId order by ms.materialIdStock",
+            countQuery = "select count(ms.materialIdStock) from MaterialStock ms where ms.deposit.idDeposit = :depositId"
+    )
+    Page<MaterialResponse> findAllMaterialsStockByDeposit(Pageable pageable, Long depositId);
+
 
     @Query("SELECT 1 FROM MaterialStock ms WHERE ms.material.materialType.idType = :id")
     Optional<Integer> existsType(@Param("id") Long id);

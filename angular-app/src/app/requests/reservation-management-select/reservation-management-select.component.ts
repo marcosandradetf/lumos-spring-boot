@@ -7,7 +7,7 @@ import {
   ReserveStreetDTOResponse
 } from '../../executions/executions.model';
 import {BreadcrumbComponent} from '../../shared/components/breadcrumb/breadcrumb.component';
-import {CurrencyPipe, NgIf} from '@angular/common';
+import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
 import {Button, ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Carousel, CarouselResponsiveOptions} from 'primeng/carousel';
@@ -21,6 +21,8 @@ import {Skeleton} from 'primeng/skeleton';
 import {Tooltip} from 'primeng/tooltip';
 import {ExecutionService} from '../../executions/execution.service';
 import {AuthService} from '../../core/auth/auth.service';
+import {Dialog} from 'primeng/dialog';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-reservation-management-select',
@@ -39,6 +41,9 @@ import {AuthService} from '../../core/auth/auth.service';
     Toast,
     Skeleton,
     Tooltip,
+    Dialog,
+    NgForOf,
+    LoadingComponent,
   ],
   templateUrl: './reservation-management-select.component.html',
   styleUrl: './reservation-management-select.component.scss'
@@ -82,6 +87,7 @@ export class ReservationManagementSelectComponent {
     prioritized: false,
     comment: '',
     assignedBy: '',
+    teamId: 0,
     teamName: '',
     truckDepositName: '',
     items: []
@@ -341,51 +347,74 @@ export class ReservationManagementSelectComponent {
     team_id: number;
   }[] = [];
 
+  filteredUsers: {
+    name: string;
+    last_name: string;
+    phone_number: string;
+    team_id: number;
+  }[] = [];
+
   verifyTeamData() {
+    this.showModalTeam = true;
+    this.loading = true;
+    this.filteredUsers = [];
 
-    if (this.users.findIndex(i => i.team_id === this.currentTeamId) === -1) {
-      this.utils.getObject<Array<{ driver_id: string; electrician_id: string }>>({
-        fields: ['driver_id', 'electrician_id'],
-        table: 'tb_teams',
-        where: 'id_team',
-        equal: [this.currentTeamId]
-      }).subscribe(users => {
-        const uuid: string[] = [];
-        users.forEach(user => {
-          uuid.push(user.driver_id);
-          uuid.push(user.electrician_id);
-        });
-
-        if (uuid.length > 0) {
-          this.utils.getObject<Array<{ name: string; last_name: string, phone_number: string }>>({
-            fields: ['name', 'last_name', 'phone_number'],
-            table: 'tb_users',
-            where: 'id_user',
-            equal: uuid
-          }).subscribe({
-            next: (users) => {
-              users.forEach(user => {
-                const newUser = {
-                  name: user.name,
-                  last_name: user.last_name,
-                  phone_number: user.phone_number,
-                  team_id: this.currentTeamId
-                }
-                this.users.push(newUser);
-              });
-            },
-            error: (error) => {
-              this.utils.showMessage(error.error.message, 'error', 'Erro ao buscar dados da equipe');
-            },
-            complete: () => {
-              this.showModalTeam = true;
-            }
-          });
-        }
-      });
-    } else {
-      this.showModalTeam = true;
+    const existingUsers = this.users.filter(user => user.team_id === this.currentTeamId);
+    if (existingUsers.length > 0) {
+      this.filteredUsers = existingUsers;
+      this.loading = false;
+      return;
     }
 
+    this.utils.getObject<Array<{ driver_id: string; electrician_id: string }>>({
+      fields: ['driver_id', 'electrician_id'],
+      table: 'tb_teams',
+      where: 'id_team',
+      equal: [this.currentTeamId]
+    }).subscribe({
+      next: (teamData) => {
+        const uuid: string[] = [];
+
+        teamData.forEach(user => {
+          if (user.driver_id) uuid.push(user.driver_id);
+          if (user.electrician_id) uuid.push(user.electrician_id);
+        });
+
+        if (uuid.length === 0) {
+          this.loading = false;
+          return;
+        }
+
+        this.utils.getObject<Array<{ name: string; last_name: string, phone_number: string }>>({
+          fields: ['name', 'last_name', 'phone_number'],
+          table: 'tb_users',
+          where: 'id_user',
+          equal: uuid
+        }).subscribe({
+          next: (userData) => {
+            const newUsers = userData.map(user => ({
+              name: user.name,
+              last_name: user.last_name,
+              phone_number: user.phone_number,
+              team_id: this.currentTeamId
+            }));
+
+            this.users.push(...newUsers);
+            this.filteredUsers = newUsers;
+          },
+          error: (error) => {
+            this.utils.showMessage(error.error.message, 'error', 'Erro ao buscar dados da equipe');
+          },
+          complete: () => {
+            this.loading = false;
+          }
+        });
+      },
+      error: (error) => {
+        this.utils.showMessage(error.error.message, 'error', 'Erro ao buscar equipe');
+        this.loading = false;
+      }
+    });
   }
+
 }

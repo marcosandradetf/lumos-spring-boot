@@ -44,8 +44,12 @@ export class MaterialService {
   constructor(private http: HttpClient) {
   }
 
-  getFetch(page: string, size: string): void {
-    let params = new HttpParams().set('page', page).set('size', size);
+  getFetch(page: string, size: string, depositId: number | null = null): void {
+    let params =
+      new HttpParams().set('page', page)
+        .set('size', size);
+
+    if(depositId !== null) params.append('depositId', depositId);
 
     this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}`, {params})
       .subscribe(response => {

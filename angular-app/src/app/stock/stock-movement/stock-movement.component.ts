@@ -1,9 +1,8 @@
 import {Component, OnInit} from '@angular/core';
-import {catchError, firstValueFrom, map, Observable, of, tap, throwError} from 'rxjs';
+import {catchError, tap, throwError} from 'rxjs';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {Title} from '@angular/platform-browser';
-import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {PaginationComponent} from '../../shared/components/pagination/pagination.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
@@ -18,6 +17,7 @@ import {UtilsService} from '../../core/service/utils.service';
 import {SupplierDTO} from '../../models/supplier.dto';
 import {Steps} from 'primeng/steps';
 import {MenuItem} from 'primeng/api';
+import {Select} from 'primeng/select';
 
 @Component({
   selector: 'app-stock-movement',
@@ -33,6 +33,7 @@ import {MenuItem} from 'primeng/api';
     NgIf,
     NgClass,
     Steps,
+    Select,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'
@@ -126,9 +127,11 @@ export class StockMovementComponent implements OnInit{
 
 
   private loadMaterials() {
+    if(!this.currentDeposit) return;
+
     // Chama o serviço para buscar os materiais apenas se o array estiver vazio
     if (this.materials.length === 0) {
-      this.materialService.getFetch(this.currentPage, "25");
+      this.materialService.getFetch(this.currentPage, "25", this.currentDeposit.idDeposit);
     }
 
     this.materialService.materials$.subscribe((materials: MaterialResponse[]) => {
@@ -161,7 +164,7 @@ export class StockMovementComponent implements OnInit{
     }
 
   }
-
+  currentDeposit: Deposit | undefined;
 
   handleConfirmMovement() {
     if (this.validate()) {
@@ -475,4 +478,7 @@ export class StockMovementComponent implements OnInit{
     }
   }
 
+  startNewMovement() {
+
+  }
 }

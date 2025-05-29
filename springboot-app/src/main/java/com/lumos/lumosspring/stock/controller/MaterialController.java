@@ -48,11 +48,12 @@ public class MaterialController {
     @GetMapping
     public ResponseEntity<Page<MaterialResponse>> getAllMaterials(
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
-        Page<MaterialStock> materials = materialService.findAll(page, size);
-        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
-        return ResponseEntity.ok(materialsDTO);
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "depositId", required = false, defaultValue = "-1") Long depositId) {
+
+        return materialService.findAll(page, size, depositId);
     }
+
 
 //    @GetMapping("{pIdMaterial}")
 //    public ResponseEntity<MaterialResponse> getMaterial(@PathVariable Long pIdMaterial) {
@@ -61,34 +62,34 @@ public class MaterialController {
 //        return ResponseEntity.ok(materialsDTO);
 //    }
 
-    @GetMapping("/filter-by-deposit")
-    public ResponseEntity<Page<MaterialResponse>> getMaterialsByDeposit(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "deposit") List<Long> depositId
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<MaterialStock> materials = materialStockRepository.findByDeposit(pageable, depositId);
-        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
-        return ResponseEntity.ok(materialsDTO);
-    }
+//    @GetMapping("/filter-by-deposit")
+//    public ResponseEntity<Page<MaterialResponse>> getMaterialsByDeposit(
+//            @RequestParam(value = "page", defaultValue = "0") int page,
+//            @RequestParam(value = "size", defaultValue = "10") int size,
+//            @RequestParam(value = "deposit") List<Long> depositId
+//    ) {
+//        Pageable pageable = PageRequest.of(page, size);
+//        Page<MaterialStock> materials = materialStockRepository.findByDeposit(pageable, depositId);
+//        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
+//        return ResponseEntity.ok(materialsDTO);
+//    }
 
-    @GetMapping("/search")
-    public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
-            @RequestParam(value = "name") String name,  // 'name' vindo da URL
-            @RequestParam(value = "page", defaultValue = "0") int page,  // 'page' com valor padrão
-            @RequestParam(value = "size", defaultValue = "10") int size) {  // 'size' com valor padrão
-
-        Pageable pageable = PageRequest.of(page, size);  // Configura o Pageable para a paginação
-
-        // Busca materiais que começam com 'name' (parâmetro passado na URL)
-        Page<MaterialStock> materials = materialStockRepository.findByMaterialNameOrTypeIgnoreAccent(pageable, name.toLowerCase());
-
-        // Converte a lista de materiais para o DTO MaterialResponse
-        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
-
-        return ResponseEntity.ok(materialsDTO);  // Retorna os materiais no formato de resposta
-    }
+//    @GetMapping("/search")
+//    public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
+//            @RequestParam(value = "name") String name,  // 'name' vindo da URL
+//            @RequestParam(value = "page", defaultValue = "0") int page,  // 'page' com valor padrão
+//            @RequestParam(value = "size", defaultValue = "10") int size) {  // 'size' com valor padrão
+//
+//        Pageable pageable = PageRequest.of(page, size);  // Configura o Pageable para a paginação
+//
+//        // Busca materiais que começam com 'name' (parâmetro passado na URL)
+//        Page<MaterialStock> materials = materialStockRepository.findByMaterialNameOrTypeIgnoreAccent(pageable, name.toLowerCase());
+//
+//        // Converte a lista de materiais para o DTO MaterialResponse
+//        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
+//
+//        return ResponseEntity.ok(materialsDTO);  // Retorna os materiais no formato de resposta
+//    }
 
 
     @GetMapping("/{id}")

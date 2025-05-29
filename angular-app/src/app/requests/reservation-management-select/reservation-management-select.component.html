@@ -215,6 +215,33 @@
     </div>
   </div>
 
+  <p-dialog [header]="'Equipe' + street.teamName"
+            [modal]="true"
+            [(visible)]="showModalTeam"
+            position="bottom"
+            [style]="{ width: '25rem' }">
+
+
+    <div *ngIf="loading" class="flex h-full w-full justify-center items-center">
+      <app-loading></app-loading>
+    </div>
+    <ng-container *ngIf="!loading && filteredUsers.length > 0">
+      <div *ngFor="let user of filteredUsers; index as i;">
+        <span class="text-surface-500 dark:text-surface-400 block mb-8">Colaborador {{ i }}</span>
+        <div class="flex items-center gap-4 mb-4">
+          <label for="username" class="font-semibold w-24">{{ user.name + ' ' + user.last_name }}</label>
+          <p id="username" class="flex-auto">{{ user.phone_number ?? 'Telefone não cadastrado' }}</p>
+        </div>
+      </div>
+    </ng-container>
+    <div *ngIf="!loading && filteredUsers.length === 0" class="flex h-full w-full justify-center items-center">
+      <p>Cadastro não encontrado para essa equipe</p>
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <p-button label="Fechar" (click)="showModalTeam = false"/>
+    </div>
+  </p-dialog>
   <p-toast/>
 </div>
 

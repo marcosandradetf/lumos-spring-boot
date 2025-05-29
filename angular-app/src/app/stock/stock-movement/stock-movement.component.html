@@ -14,10 +14,21 @@
 
     <div class="p-2 overflow-auto">
       <div class="card p-3">
-        <p-steps [model]="items" [readonly]="false" />
+        <p-steps [model]="items" [readonly]="false"/>
       </div>
 
-      <app-table [search]="true" [filter]="true">
+      <div>
+        <p-select
+          (onChange)="startNewMovement()"
+          [(ngModel)]="currentDeposit"
+          [options]="deposits"
+          optionLabel="depositName"
+          size="large"
+          placeholder="Selecione o Almoxarifado desejado"
+          class="w-full md:w-56"/>
+      </div>
+
+      <app-table [search]="true" [filter]="true" *ngIf="currentDeposit">
 
         <div class="flex justify-end" filter>
           <div class="dropdown dropdown-end flex-2">

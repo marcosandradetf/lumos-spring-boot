@@ -50,9 +50,15 @@ public class MaterialService {
         this.util = util;
     }
 
-    public Page<MaterialStock> findAll(int page, int size) {
+    public ResponseEntity<Page<MaterialResponse>> findAll(int page, int size, long depositId) {
         Pageable pageable = PageRequest.of(page, size);
-        return materialStockRepository.findAllOrderByIdMaterial(pageable);
+        Page<MaterialResponse> materials;
+        if (depositId <= 0)
+            materials = materialStockRepository.findAllMaterialsStock(pageable);
+        else
+            materials = materialStockRepository.findAllMaterialsStockByDeposit(pageable, depositId);
+
+        return ResponseEntity.ok(materials);
     }
 
     @Transactional
@@ -274,7 +280,8 @@ public class MaterialService {
 
     public ResponseEntity<?> findAllForImportPreMeasurement() {
         List<Material> materials = materialRepository.findAllForImportPreMeasurement(); // ou equivalente
-        record MaterialDTOImport(long idMaterial, String materialName, String materialBrand, String materialPower, String materialAmps, String materialLength) {
+        record MaterialDTOImport(long idMaterial, String materialName, String materialBrand, String materialPower,
+                                 String materialAmps, String materialLength) {
         }
         List<MaterialDTOImport> materialsDTO = new ArrayList<>();
 
