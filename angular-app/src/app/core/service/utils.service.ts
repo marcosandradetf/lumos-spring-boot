@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {MessageService} from 'primeng/api';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
+import {HttpClient} from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -8,7 +9,7 @@ import {BehaviorSubject} from 'rxjs';
 export class UtilsService {
   private menuState = new BehaviorSubject<boolean>(false);
 
-  constructor(private messageService: MessageService) {
+  constructor(private messageService: MessageService, private http: HttpClient) {
   }
 
   menuState$ = this.menuState.asObservable();
@@ -83,8 +84,26 @@ export class UtilsService {
   }
 
   formatFloatNumber(event: Event) {
-    (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^0-9.]/g, '');
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+
+    // Remove tudo que não é número ou ponto
+    value = value.replace(/[^0-9.]/g, '');
+
+    // Permite apenas um único ponto
+    const parts = value.split('.');
+    if (parts.length > 2) {
+      value = parts[0] + '.' + parts.slice(1).join('');
+    }
+
+    // Evita começar com ponto (ex: ".2" vira "0.2")
+    if (value.startsWith('.')) {
+      value = '0' + value;
+    }
+
+    input.value = value;
   }
+
 
   formatContractNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^0-9,./-]/g, '');
@@ -194,5 +213,15 @@ export class UtilsService {
     }
   }
 
+  getObject<T>(params: GetObjectRequest): Observable<T> {
+    return this.http.post<T>('/api/generic/get-object', params);
+  }
 
+}
+
+export interface GetObjectRequest {
+  fields: string[];
+  table: string;
+  where: string;
+  equal: string[] | number[];
 }

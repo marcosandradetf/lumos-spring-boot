@@ -20,6 +20,7 @@ export interface ReserveStreetDTOResponse {
   prioritized: Boolean,
   comment: string,
   assignedBy: string,
+  teamId: number;
   teamName: string,
   truckDepositName: string,
   items: ItemResponseDTO[]

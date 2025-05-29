@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.execution.entities
 
-import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
 import com.lumos.lumosspring.stock.entities.StockMovement.Status
@@ -18,29 +17,16 @@ class MaterialReservation {
     @Column(columnDefinition = "TEXT")
     var description: String? = null
 
-//    @ManyToOne(cascade = [(CascadeType.MERGE)])
-//    @JoinColumn(name = "material_truck_stock_id")
-//    var truckDeposit: MaterialStock? = null
-//
-//    @ManyToOne(cascade = [(CascadeType.MERGE)])
-//    @JoinColumn(name = "material_first_deposit_stock_id")
-//    var firstDepositCity: MaterialStock? = null
-//
-//    @ManyToOne(cascade = [(CascadeType.MERGE)])
-//    @JoinColumn(name = "material_second_deposit_stock_id")
-//    var secondDepositCity: MaterialStock? = null
-
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "material_stock_id")
     var materialStock: MaterialStock? = null
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "pre_measurement_id")
-    var preMeasurement: PreMeasurement? = null
-
-    @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "pre_measurement_street_id")
     var street: PreMeasurementStreet = PreMeasurementStreet()
+
+    @JoinColumn(name = "contract_item_id")
+    var contractItemId: Long = 0
 
     @Column(nullable = false)
     var reservedQuantity: Double = 0.0

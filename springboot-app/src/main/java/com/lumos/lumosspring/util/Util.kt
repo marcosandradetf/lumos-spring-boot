@@ -123,11 +123,12 @@ class Util(
         field: String,
         table: String,
         where: String = "",
+        equal: String = "",
         type: Class<T>,
         order: String = ""
     ): T? {
         var sql = "SELECT $field FROM $table"
-        if (where.isNotBlank()) sql += " WHERE $where"
+        if (where.isNotBlank() && equal.isNotBlank()) sql += " WHERE $where = $equal"
         if (order.isNotBlank()) sql += " ORDER BY $order"
         sql += " LIMIT 1"
 
@@ -135,6 +136,40 @@ class Util(
             jdbcTemplate.queryForObject(sql, type)
         } catch (ex: EmptyResultDataAccessException) {
             null // ou você pode lançar uma exceção customizada, se preferir
+        }
+    }
+
+    private val allowedColumnsByTable = mapOf(
+        "tb_users" to setOf("id_user", "name", "last_name", "email", "phone_number"),
+        "tb_teams" to setOf("id_team", "team_name", "team_phone"),
+    )
+
+    val columnTypesByTable = mapOf(
+        "tb_users" to mapOf(
+            "id_user" to "uuid"
+        )
+    )
+    fun getObject(request: UtilController.GetObjectRequest): List<Map<String, Any>> {
+        val allowedColumns = allowedColumnsByTable[request.table.lowercase()]
+            ?: throw IllegalArgumentException("Tabela não permitida: ${request.table}")
+
+        request.fields.forEach { field ->
+            if (!allowedColumns.contains(field)) {
+                throw IllegalArgumentException("Campo $field não permitido para a tabela ${request.table}")
+            }
+        }
+
+        val placeholders = request.equal.joinToString(",") { "?" }
+        val whereClause = "${request.where} IN ($placeholders)"
+        val sql = "SELECT ${request.fields.joinToString()} FROM ${request.table} WHERE $whereClause"
+
+        val columnType = columnTypesByTable[request.table.lowercase()]?.get(request.where)
+
+        return if (columnType?.equals("uuid", ignoreCase = true) == true) {
+            val uuidParams = request.equal.map { UUID.fromString(it.toString()) }.toTypedArray()
+            jdbcTemplate.queryForList(sql, *uuidParams)
+        } else {
+            jdbcTemplate.queryForList(sql, *request.equal.toTypedArray())
         }
     }
 

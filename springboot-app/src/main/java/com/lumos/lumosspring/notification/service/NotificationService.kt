@@ -1,9 +1,12 @@
 package com.lumos.lumosspring.notification.service
 
+import com.google.firebase.messaging.AndroidConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.lumos.lumosspring.user.Role.Values
+import com.lumos.lumosspring.util.NotificationType
 import org.springframework.stereotype.Service
+import java.time.Duration
 import java.time.Instant
 
 @Service
@@ -43,27 +46,44 @@ class NotificationService {
         action: String,
         time: Instant,
         type: String,
-        persistCode: String
+        persistCode: String? = null
     ) {
-        // Criar a mensagem para o tópico
-        val message = Message.builder()
-            .setTopic(team)  // Nome do tópico
-            .putData("title", title)  // 🔹 Agora a notificação será tratada no onMessageReceived
-            .putData("body", body)
-            .putData("action", action)
-            .putData("time", time.toString())
-            .putData("type", type)
-            .putData("persistCode", persistCode)
-            .build()
-
-        // Enviar a notificação
         try {
+            val ttl = when (type) {
+                NotificationType.ALERT -> Duration.ofDays(7).toMillis()
+                NotificationType.WARNING -> Duration.ofDays(7).toMillis()
+                NotificationType.CONTRACT -> Duration.ofDays(1).toMillis()
+                else -> Duration.ofHours(1).toMillis()
+            }
+
+            val androidConfig = AndroidConfig.builder()
+                .setPriority(AndroidConfig.Priority.HIGH) // Garante entrega rápida
+                .setTtl(ttl) // TTL: 7 dias (ajuste conforme sua lógica)
+                .build()
+
+            val messageBuilder = Message.builder()
+                .setTopic(team)
+                .setAndroidConfig(androidConfig)
+                .putData("title", title)
+                .putData("body", body)
+                .putData("action", action)
+                .putData("time", time.toString())
+                .putData("type", type)
+
+            persistCode?.let {
+                messageBuilder.putData("persistCode", it)
+            }
+
+            val message = messageBuilder.build()
+
             val response = FirebaseMessaging.getInstance().send(message)
             println("✅ Notificação enviada para a equipe $team com sucesso: $response")
+
         } catch (e: Exception) {
-            println("❌ Erro ao enviar notificação: ${e.message}")
+            println("❌ Erro ao enviar notificação para a equipe $team: ${e.message}")
         }
     }
+
 
 }
 

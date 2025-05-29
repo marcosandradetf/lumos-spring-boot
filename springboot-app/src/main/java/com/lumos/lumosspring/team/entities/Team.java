@@ -51,6 +51,8 @@ public class Team {
     @Column(columnDefinition = "TEXT")
     private String cityName;
 
+    private String teamPhone;
+
     @ManyToOne
     private Region region;
 
@@ -148,4 +150,13 @@ public class Team {
     public String getTeamCode() {
         return driver.getIdUser().toString().concat("_").concat(String.valueOf(idTeam));
     }
+
+    public String getTeamPhone() {
+        return teamPhone;
+    }
+
+    public void setTeamPhone(String teamPhone) {
+        this.teamPhone = teamPhone;
+    }
+
 }

@@ -28,6 +28,8 @@ public class User {
 
     private String password;
 
+    private String phoneNumber;
+
     private String codeResetPassword;
 
     @Column(unique = true)
@@ -174,5 +176,13 @@ public class User {
 
     public void setElectricians(List<Team> electricians) {
         this.electricians = electricians;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

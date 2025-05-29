@@ -33,7 +33,6 @@ import {AuthService} from '../../core/auth/auth.service';
     Carousel,
     TableModule,
     Tag,
-    CurrencyPipe,
     Ripple,
     FormsModule,
     ButtonDirective,
@@ -94,7 +93,7 @@ export class ReservationManagementSelectComponent {
 
   @ViewChild('table_parent') table!: Table;
   selectedMaterial!: MaterialInStockDTO | null;
-  currentMaterialId!: Number;
+  currentMaterialId: number = 0;
   private userUUID: string = '';
 
   constructor(private router: Router,
@@ -129,6 +128,7 @@ export class ReservationManagementSelectComponent {
     this.streetId = street.preMeasurementStreetId;
     this.description = "Execução na " + street.streetName;
     this.street = street;
+    this.currentTeamId = street.teamId;
   }
 
 
@@ -204,7 +204,7 @@ export class ReservationManagementSelectComponent {
     material: MaterialInStockDTO
   ) {
     if (this.currentItemId === 0) {
-      this.utils.showMessage("Erro ao reservar material, tente novamente", 'error');
+      this.utils.showMessage("1 - Erro ao reservar material , tente novamente", 'error');
       return;
     }
 
@@ -212,12 +212,18 @@ export class ReservationManagementSelectComponent {
       i.itemId === this.currentItemId
     );
     if (currentItemIndex === -1) {
-      this.utils.showMessage("Erro ao reservar material, tente novamente", 'error');
+      this.utils.showMessage("2 - Erro ao reservar material, tente novamente", 'error');
       return;
     }
 
-    if (this.street.items[currentItemIndex].quantity > material.availableQuantity) {
-      this.utils.showMessage("Erro ao reservar material, tente novamente", 'error');
+    const quantity = Number(this.setQuantity.quantity);
+    if (quantity == 0) {
+      this.utils.showMessage("Informe a quantidade desejada.", 'warn', 'Atenção');
+      return;
+    }
+
+    if (material.availableQuantity < quantity) {
+      this.utils.showMessage("O Material informado não possuí estoque disponível, faça a movimentação de estoque.", 'error', "Material sem estoque");
       return;
     }
 
@@ -227,6 +233,8 @@ export class ReservationManagementSelectComponent {
     }
 
     if (!this.existsMaterial(newMaterial.materialId)) {
+      const materials = this.street.items[currentItemIndex].materials;
+      if (!materials) this.street.items[currentItemIndex].materials = [];
       this.street.items[currentItemIndex].materials.push(newMaterial);
       this.utils.showMessage(`QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
     } else {
@@ -283,12 +291,12 @@ export class ReservationManagementSelectComponent {
 
   getQuantity(materialId: number) {
     return this.street.items.find(i => i.itemId === this.currentItemId)
-      ?.materials.find(m => m.materialId == materialId)?.materialQuantity || 0;
+      ?.materials?.find(m => m.materialId == materialId)?.materialQuantity || 0;
   }
 
   existsMaterial(materialId: number): boolean {
     return this.street.items.find(i => i.itemId === this.currentItemId)
-      ?.materials.some(m => m.materialId == materialId) || false;
+      ?.materials?.some(m => m.materialId == materialId) || false;
   }
 
   Cancel(material: MaterialInStockDTO) {
@@ -316,4 +324,68 @@ export class ReservationManagementSelectComponent {
     this.currentMaterialId = 0;
   }
 
+  onRowClick(event: MouseEvent, materialId: number) {
+    // Ignora o clique se foi em um botão (ou dentro de um botão)
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) return;
+
+    this.currentMaterialId = materialId;
+  }
+
+  currentTeamId: number = 0;
+  showModalTeam: boolean = false;
+  users: {
+    name: string;
+    last_name: string;
+    phone_number: string;
+    team_id: number;
+  }[] = [];
+
+  verifyTeamData() {
+
+    if (this.users.findIndex(i => i.team_id === this.currentTeamId) === -1) {
+      this.utils.getObject<Array<{ driver_id: string; electrician_id: string }>>({
+        fields: ['driver_id', 'electrician_id'],
+        table: 'tb_teams',
+        where: 'id_team',
+        equal: [this.currentTeamId]
+      }).subscribe(users => {
+        const uuid: string[] = [];
+        users.forEach(user => {
+          uuid.push(user.driver_id);
+          uuid.push(user.electrician_id);
+        });
+
+        if (uuid.length > 0) {
+          this.utils.getObject<Array<{ name: string; last_name: string, phone_number: string }>>({
+            fields: ['name', 'last_name', 'phone_number'],
+            table: 'tb_users',
+            where: 'id_user',
+            equal: uuid
+          }).subscribe({
+            next: (users) => {
+              users.forEach(user => {
+                const newUser = {
+                  name: user.name,
+                  last_name: user.last_name,
+                  phone_number: user.phone_number,
+                  team_id: this.currentTeamId
+                }
+                this.users.push(newUser);
+              });
+            },
+            error: (error) => {
+              this.utils.showMessage(error.error.message, 'error', 'Erro ao buscar dados da equipe');
+            },
+            complete: () => {
+              this.showModalTeam = true;
+            }
+          });
+        }
+      });
+    } else {
+      this.showModalTeam = true;
+    }
+
+  }
 }

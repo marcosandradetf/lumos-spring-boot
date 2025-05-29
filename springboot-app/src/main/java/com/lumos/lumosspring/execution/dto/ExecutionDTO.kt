@@ -40,6 +40,7 @@ data class ReserveStreetDTOResponse(
     val comment: String,
     val assignedBy: String,
     val items: List<ItemResponseDTO>,
+    val teamId: Long,
     val teamName: String,
     val truckDepositName: String
 )
