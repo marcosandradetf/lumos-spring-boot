@@ -19,6 +19,10 @@ export class MaterialService {
   private materialsSubject: BehaviorSubject<MaterialResponse[]> = new BehaviorSubject<MaterialResponse[]>([]);
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
   public totalPages: number = 0;
+  public totalElements: number = 0;
+  public currentPage: number = 0;
+  public rows: number = 15;
+
   public pages: number[] = [];
   materialSubject: BehaviorSubject<CreateMaterialRequest> = new BehaviorSubject<CreateMaterialRequest>({
     buyUnit: '',
@@ -44,32 +48,52 @@ export class MaterialService {
   constructor(private http: HttpClient) {
   }
 
-  getFetch(page: string, size: string, depositId: number | null = null): void {
+  getFetch(page: number, depositId: number | undefined): void {
     let params =
-      new HttpParams().set('page', page)
-        .set('size', size);
+      new HttpParams()
+        .set('page', page)
+        .set('size', this.rows);
 
-    if(depositId !== null) params.append('depositId', depositId);
+    if (depositId) params = params.append('depositId', depositId);
 
-    this.http.get<{ content: MaterialResponse[], totalPages: number, currentPage: number }>(`${this.apiUrl}`, {params})
+    this.http.get<{
+      content: MaterialResponse[],
+      totalPages: number,
+      totalElements: number
+      number: number,
+      size: number,
+    }>(`${this.apiUrl}`, {params})
       .subscribe(response => {
         this.materialsSubject.next(response.content); // Atualiza o conteúdo
         this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
+        this.currentPage = response.number;
+        this.rows = response.size;
         this.pages = Array.from({length: this.totalPages}, (_, i) => i);
       });
   }
 
+  getBySearch(page: number, search: string, depositId: number | null = null) {
+    let params = new HttpParams()
+      .set('name', search)
+      .set('page', page)
+      .set('size', this.rows);
 
-  getBySearch(page: string, size: string, search: string) {
-    let params = new HttpParams().set('name', search).set('page', page).set('size', size);
+    if (depositId !== null) params = params.append('depositId', depositId);
+
     this.http.get<{
       content: MaterialResponse[],
       totalPages: number,
-      currentPage: number
+      totalElements: number
+      number: number,
+      size: number,
     }>(`${this.apiUrl}/search`, {params})
       .subscribe(response => {
         this.materialsSubject.next(response.content); // Atualiza o conteúdo
         this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
+        this.currentPage = response.number;
+        this.rows = response.size;
         this.pages = Array.from({length: this.totalPages}, (_, i) => i);
       });
   }
@@ -116,24 +140,6 @@ export class MaterialService {
     this.materialsSubject.next(updatedMaterials);
   }
 
-  getMaterialsByDeposit(page: string, size: string, depositId: string[]) {
-    let params = new HttpParams().set('page', page).set('size', size);
-    depositId.forEach(id => {
-      params = params.append('deposit', id);
-    });
-
-    this.http.get<{
-      content: MaterialResponse[],
-      totalPages: number,
-      currentPage: number
-    }>(`${this.apiUrl}/filter-by-deposit`, {params})
-      .subscribe(response => {
-        this.materialsSubject.next(response.content); // Atualiza o conteúdo
-        this.totalPages = response.totalPages;
-        this.pages = Array.from({length: this.totalPages}, (_, i) => i);
-      });
-
-  }
 
   getById(id: number) {
     return this.http.get<string>(`${this.apiUrl}/${id}`);
@@ -159,20 +165,12 @@ export class MaterialService {
     this.materialSubject.next(material);
   }
 
-  getMaterial() {
-    return this.materialSubject.value;
-  }
-
   getMaterialObservable() {
     return this.materialSubject.asObservable();
   }
 
   getState() {
     return this.stateSubject.value;
-  }
-
-  getStatebservable() {
-    return this.stateSubject.asObservable();
   }
 
   resetObject() {
@@ -216,10 +214,4 @@ export class MaterialService {
   ) {
     return this.http.post(this.goEndpoint + "/import", materials);
   }
-
-  getMaterials() {
-    return this.http.get<MaterialResponse[]>(`${this.apiUrl}/get-all`);
-  }
-
-
 }

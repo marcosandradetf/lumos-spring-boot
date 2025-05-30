@@ -61,6 +61,19 @@ public class MaterialService {
         return ResponseEntity.ok(materials);
     }
 
+    public ResponseEntity<Page<MaterialResponse>> searchMaterialStock(String name, int page, int size, long depositId) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MaterialResponse> materials;
+
+
+        if (depositId <= 0)
+            materials = materialStockRepository.searchMaterial(pageable, name.toLowerCase());
+        else
+            materials = materialStockRepository.searchMaterialWithDeposit(pageable, name.toLowerCase(), depositId);
+
+        return ResponseEntity.ok(materials);  // Retorna os materiais no formato de resposta
+    }
+
     @Transactional
     public ResponseEntity<?> save(MaterialRequest material) {
         // Validação do material

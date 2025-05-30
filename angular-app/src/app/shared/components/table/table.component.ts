@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {NgClass} from '@angular/common';
 import {MaterialService} from '../../../stock/services/material.service';
 
@@ -15,20 +15,17 @@ export class TableComponent {
   @Input() search: boolean = false;
   @Input() filter: boolean = false;
   @Input() large: boolean = false;
-
-  constructor(private materialService: MaterialService) { }
+  @Output() onSearchApplied: EventEmitter<string> = new EventEmitter(); // <- Aqui é o callback
 
   // Atualiza o filtro de pesquisa e aplica os filtros combinados
   filterSearch(value: string): void {
     if (value.length > 2) {
-      this.materialService.getBySearch("0", "25", value);
+      this.onSearchApplied.emit(value); // <-- chama o callback com valor
     }
 
     if (value.length === 0) {
-      this.materialService.getFetch("0", "25");
+      this.onSearchApplied.emit(""); // <-- avisa o pai que a busca foi limpa
     }
-
   }
-
 
 }

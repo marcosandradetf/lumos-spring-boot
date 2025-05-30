@@ -1,13 +1,9 @@
 package com.lumos.lumosspring.stock.controller;
 
-import java.util.List;
 import java.util.Objects;
 
-import com.lumos.lumosspring.stock.entities.MaterialStock;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,6 +42,7 @@ public class MaterialController {
 
     // Endpoint para retornar todos os materiais
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
     public ResponseEntity<Page<MaterialResponse>> getAllMaterials(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
@@ -62,38 +59,21 @@ public class MaterialController {
 //        return ResponseEntity.ok(materialsDTO);
 //    }
 
-//    @GetMapping("/filter-by-deposit")
-//    public ResponseEntity<Page<MaterialResponse>> getMaterialsByDeposit(
-//            @RequestParam(value = "page", defaultValue = "0") int page,
-//            @RequestParam(value = "size", defaultValue = "10") int size,
-//            @RequestParam(value = "deposit") List<Long> depositId
-//    ) {
-//        Pageable pageable = PageRequest.of(page, size);
-//        Page<MaterialStock> materials = materialStockRepository.findByDeposit(pageable, depositId);
-//        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
-//        return ResponseEntity.ok(materialsDTO);
-//    }
 
-//    @GetMapping("/search")
-//    public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
-//            @RequestParam(value = "name") String name,  // 'name' vindo da URL
-//            @RequestParam(value = "page", defaultValue = "0") int page,  // 'page' com valor padrão
-//            @RequestParam(value = "size", defaultValue = "10") int size) {  // 'size' com valor padrão
-//
-//        Pageable pageable = PageRequest.of(page, size);  // Configura o Pageable para a paginação
-//
-//        // Busca materiais que começam com 'name' (parâmetro passado na URL)
-//        Page<MaterialStock> materials = materialStockRepository.findByMaterialNameOrTypeIgnoreAccent(pageable, name.toLowerCase());
-//
-//        // Converte a lista de materiais para o DTO MaterialResponse
-//        Page<MaterialResponse> materialsDTO = materials.map(MaterialResponse::new);
-//
-//        return ResponseEntity.ok(materialsDTO);  // Retorna os materiais no formato de resposta
-//    }
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
+    public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
+            @RequestParam(value = "name") String name,  // 'name' vindo da URL
+            @RequestParam(value = "page", defaultValue = "0") int page,  // 'page' com valor padrão
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "depositId", required = false, defaultValue = "-1") Long depositId) {  // 'size' com valor padrão
+
+        return materialService.searchMaterialStock(name, page, size, depositId);  // Retorna os materiais no formato de resposta
+    }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<String>  getById(@PathVariable Long id) {
+    public ResponseEntity<String> getById(@PathVariable Long id) {
         var name = materialStockRepository.GetNameById(id);
         return ResponseEntity.ok(Objects.requireNonNullElse(name, ""));
     }
@@ -101,7 +81,7 @@ public class MaterialController {
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
     @PostMapping
     //public ResponseEntity<String>  create(@RequestBody Material material, @CookieValue("refreshToken") String refreshToken) {
-    public ResponseEntity<?>  create(@RequestBody MaterialRequest material) {
+    public ResponseEntity<?> create(@RequestBody MaterialRequest material) {
         //return materialService.save(material, UUID.fromString(refreshToken));
         return materialService.save(material);
     }
@@ -126,7 +106,7 @@ public class MaterialController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         var userUUID = tokenFromDb.get().getUser().getIdUser();
-        
+
         return materialService.deleteById(id, userUUID);
     }
 

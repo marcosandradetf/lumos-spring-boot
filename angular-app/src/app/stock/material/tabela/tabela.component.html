@@ -60,7 +60,7 @@
   <div class="join flex justify-center p-3">
     <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of materialService.pages; let i = index"
             (click)="changePage(i)"
-            [ngClass]="i === parseInt(currentPage) ? 'bg-indigo-700 text-white' : '' ">{{ i + 1 }}
+            [ngClass]="i === currentPage ? 'bg-indigo-700 text-white' : '' ">{{ i + 1 }}
     </button>
   </div>
 

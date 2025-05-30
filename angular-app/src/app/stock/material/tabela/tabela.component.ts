@@ -27,7 +27,7 @@ import {ReactiveFormsModule} from "@angular/forms";
 })
 export class TabelaComponent implements OnInit {
   materials: MaterialResponse[] = [];
-  currentPage: string = "0";
+  currentPage: number = 0;
   serverMessage: string | null = null;
   alertType: string | null = null;
   idMaterial: number = 0;
@@ -49,7 +49,7 @@ export class TabelaComponent implements OnInit {
       this.materials = materiais;
     });
 
-    this.materialService.getFetch(this.currentPage, "20");
+    this.materialService.getFetch(this.currentPage, 20);
   }
 
   deleteMaterial(): void {
@@ -80,9 +80,9 @@ export class TabelaComponent implements OnInit {
 
 
   changePage(page: number): void {
-    if (page.toString() !== this.currentPage) {
-      this.currentPage = page.toString();
-      this.materialService.getFetch(this.currentPage, "20");
+    if (page !== this.currentPage) {
+      this.currentPage = page;
+      this.materialService.getFetch(this.currentPage, 20);
     }
   }
 

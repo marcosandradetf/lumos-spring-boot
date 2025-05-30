@@ -18,6 +18,8 @@ import {SupplierDTO} from '../../models/supplier.dto';
 import {Steps} from 'primeng/steps';
 import {MenuItem} from 'primeng/api';
 import {Select} from 'primeng/select';
+import {Paginator, PaginatorState} from 'primeng/paginator';
+
 
 @Component({
   selector: 'app-stock-movement',
@@ -34,11 +36,12 @@ import {Select} from 'primeng/select';
     NgClass,
     Steps,
     Select,
+    Paginator,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'
 })
-export class StockMovementComponent implements OnInit{
+export class StockMovementComponent implements OnInit {
   items: MenuItem[] | undefined;
 
   sidebarLinks = [
@@ -127,11 +130,12 @@ export class StockMovementComponent implements OnInit{
 
 
   private loadMaterials() {
-    if(!this.currentDeposit) return;
+    if (!this.currentDeposit) return;
 
     // Chama o serviço para buscar os materiais apenas se o array estiver vazio
     if (this.materials.length === 0) {
-      this.materialService.getFetch(this.currentPage, "25", this.currentDeposit.idDeposit);
+      console.log(this.currentDeposit);
+      this.materialService.getFetch(0, this.currentDeposit.idDeposit);
     }
 
     this.materialService.materials$.subscribe((materials: MaterialResponse[]) => {
@@ -386,30 +390,6 @@ export class StockMovementComponent implements OnInit{
     }
   }
 
-  filterDeposit(depositId
-                :
-                string, event
-                :
-                Event
-  ) {
-    const isChecked = (event.target as HTMLInputElement).checked;
-
-    if (isChecked) {
-      // Adiciona o depósito selecionado
-      this.selectedDeposits.push(depositId);
-      this.materialService.getMaterialsByDeposit(this.currentPage, "25", this.selectedDeposits)
-    } else {
-      // Remove o depósito desmarcado
-      this.selectedDeposits = this.selectedDeposits.filter(dep => dep !== depositId);
-      if (this.selectedDeposits.length === 0) {
-        this.materialService.getFetch(this.currentPage, "25");
-      } else {
-        this.materialService.getMaterialsByDeposit(this.currentPage, "25", this.selectedDeposits);
-      }
-
-    }
-  }
-
   shouldShowTooltip(buyUnit
                     :
                     string
@@ -479,6 +459,36 @@ export class StockMovementComponent implements OnInit{
   }
 
   startNewMovement() {
+    this.loadMaterials()
+  }
+
+
+  search: boolean = false;
+  value: string = '';
+
+  onPageChange(event: PaginatorState) {
+
+    if (!this.search)
+      this.materialService.getFetch(event.page!!, this.currentDeposit?.idDeposit);
+    else if (this.search)
+      this.materialService.getBySearch(event.page!!, this.value, this.currentDeposit?.idDeposit);
 
   }
+
+  handleSearch(value: string): void {
+    if (value.length > 2) {
+      this.value = value;
+      this.search = true;
+      this.materialService.getBySearch(this.materialService.currentPage, value, this.currentDeposit?.idDeposit);
+    }
+
+    if (value.length === 0) {
+      this.value = '';
+      this.search = false;
+      this.materialService.getFetch(this.materialService.currentPage, this.currentDeposit?.idDeposit);
+    }
+
+  }
+
+
 }
