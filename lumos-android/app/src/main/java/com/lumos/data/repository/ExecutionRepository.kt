@@ -43,7 +43,13 @@ class ExecutionRepository(
         fetchedExecutions.forEach { executionDto ->
             val execution = Execution(
                 streetId = executionDto.streetId,
+
                 streetName = executionDto.streetName,
+                streetNumber = executionDto.streetNumber,
+                streetHood = executionDto.streetHood,
+                city = executionDto.city,
+                state = executionDto.state,
+
                 teamId = executionDto.teamId,
                 teamName = executionDto.teamName,
                 executionStatus = "PENDING",
@@ -69,7 +75,8 @@ class ExecutionRepository(
                     depositName = r.depositName,
                     depositAddress = r.depositAddress,
                     stockistName = r.stockistName,
-                    phoneNumber = r.phoneNumber
+                    phoneNumber = r.phoneNumber,
+                    requestUnit = r.requestUnit
                 )
                 db.executionDao().insertReserve(reserve)
             }
@@ -95,7 +102,29 @@ class ExecutionRepository(
     }
 
     suspend fun queueSyncFetchReservationStatus(context: Context, streetId: Long, status: String) {
-        SyncManager.queueSyncPostGeneric(context, db, streetId, status)
+        SyncManager.queueSyncPostGeneric(
+            context = context,
+            db = db,
+            table = "tb_material_reservation",
+            field = "status",
+            set = status,
+            where = "pre_measurement_street_id",
+            equal = streetId.toString())
+    }
+
+    suspend fun getExecution(lng: Long): Execution {
+        return db.executionDao().getExecution(lng)
+    }
+
+    suspend fun queueSyncStartExecution(context: Context, streetId: Long) {
+        SyncManager.queueSyncPostGeneric(
+            context = context,
+            db = db,
+            table = "tb_pre_measurements_streets",
+            field = "street_status",
+            set = Status.IN_PROGRESS,
+            where = "pre_measurement_street_id",
+            equal = streetId.toString())
     }
 
 

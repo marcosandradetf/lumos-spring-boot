@@ -25,6 +25,7 @@ import com.lumos.data.repository.StockRepository
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.ConnectivityUtils
+import com.lumos.utils.Utils.parseToAny
 
 
 object SyncStatus {
@@ -144,7 +145,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if(item.relatedId == null){
+            if(item.equal == null || item.table == null || item.where == null || item.field == null || item.set == null){
                 queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
                 return Result.success()
             }
@@ -153,11 +154,11 @@ class SyncQueueWorker(
                 Log.e("postGeneric", "Internet")
                 queueDao.update(inProgressItem)
                 val request = UpdateEntity(
-                    table = "tb_material_reservation",
-                    field = "status",
-                    set = item.status,
-                    where = "pre_measurement_street_id",
-                    equal = item.relatedId
+                    table = item.table,
+                    field = item.field,
+                    set = parseToAny(item.set),
+                    where = item.where,
+                    equal = parseToAny(item.equal)
                 )
                 val success = genericRepository.setEntity(request)
                 if (success) {

@@ -12,5 +12,11 @@ data class SyncQueueEntity(
     val status: String = SyncStatus.PENDING,
     val priority: Int = 100, // Quanto menor, mais prioritário
     val createdAt: Long = System.currentTimeMillis(),
-    val attemptCount: Int = 0
+    val attemptCount: Int = 0,
+
+    val table: String? = null,
+    val field: String? = null,
+    val set: String? = null,
+    val where: String? = null,
+    val equal: String? = null,
 )

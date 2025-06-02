@@ -43,4 +43,41 @@ object Utils {
         return value.toBigDecimal().stripTrailingZeros().toPlainString()
     }
 
+    fun buildAddress(
+        streetName: String?,
+        number: String? = null,
+        hood: String? = null,
+        city: String? = null,
+        state: String? = null
+    ): String {
+        val part1 = listOfNotNull(
+            streetName?.takeIf { it.isNotBlank() },
+            number?.takeIf { it.isNotBlank() }
+        ).joinToString(", ")
+
+        val part2 = hood?.takeIf { it.isNotBlank() }
+
+        val part3 = listOfNotNull(
+            city?.takeIf { it.isNotBlank() },
+            state?.takeIf { it.isNotBlank() }
+        ).joinToString(" - ")
+
+        return listOf(part1, part2, part3)
+            .filter { !it.isNullOrBlank() }
+            .joinToString(", ")
+    }
+
+    fun parseToAny(text: String): Any {
+        return when {
+            text.equals("true", ignoreCase = true) -> true
+            text.equals("false", ignoreCase = true) -> false
+            text.toLongOrNull() != null -> text.toLong()
+            text.toDoubleOrNull() != null -> text.toDouble()
+            else -> text // volta como String se nada casar
+        }
+    }
+
+
+
+
 }

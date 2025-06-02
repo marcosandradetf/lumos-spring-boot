@@ -34,5 +34,8 @@ interface ExecutionDao {
     @Query("UPDATE executions SET executionStatus = :status WHERE streetId = :streetId")
     suspend fun setExecutionStatus(streetId: Long, status: String = Status.IN_PROGRESS)
 
+    @Query("SELECT * FROM executions WHERE streetId = :lng LIMIT 1")
+    suspend fun getExecution(lng: Long): Execution
+
 
 }

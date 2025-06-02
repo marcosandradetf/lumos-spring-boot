@@ -13,6 +13,10 @@
     <uses-feature android:name="android.hardware.camera" android:required="true"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
+    <queries>
+        <package android:name="com.google.android.apps.maps" />
+    </queries>
+
 
     <application
         android:name=".MyApp"

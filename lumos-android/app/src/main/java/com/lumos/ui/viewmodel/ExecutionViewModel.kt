@@ -5,12 +5,15 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.ExecutionRepository
+import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ExecutionViewModel(
     private val repository: ExecutionRepository,
@@ -86,6 +89,28 @@ class ExecutionViewModel(
         viewModelScope.launch {
             try {
                 repository.queueSyncFetchReservationStatus(context, streetId, status)
+            } catch (e: Exception) {
+                Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
+            }
+        }
+    }
+
+
+    suspend fun getExecution(streetId: Long): Execution? {
+        return withContext(Dispatchers.IO) {
+            try {
+                repository.getExecution(streetId)
+            } catch (e: Exception) {
+                Log.e("Error loadMaterials", e.message.toString())
+                null  // Retorna null em caso de erro
+            }
+        }
+    }
+
+    fun queueSyncStartExecution(streetId: Long, context: Context) {
+        viewModelScope.launch {
+            try {
+                repository.queueSyncStartExecution(context, streetId)
             } catch (e: Exception) {
                 Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
             }

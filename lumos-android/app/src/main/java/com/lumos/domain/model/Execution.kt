@@ -7,7 +7,13 @@ import okhttp3.Address
 @Entity(tableName = "executions")
 data class Execution(
     @PrimaryKey val streetId: Long,
+
     val streetName: String,
+    val streetNumber: String? = null,
+    val streetHood: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+
     val teamId: Long,
     val teamName: String,
     val executionStatus: String,
@@ -15,8 +21,8 @@ data class Execution(
     val type: String,
     val itemsQuantity: Int,
     val creationDate: String,
-    val latitude: Double,
-    val longitude: Double,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val photoUri: String? = null,
 )
 
@@ -33,11 +39,20 @@ data class Reserve(
     val depositAddress: String,
     val stockistName: String,
     val phoneNumber: String,
+    val requestUnit: String,
+
+    val quantityExecuted: Double? = null
 )
 
 data class ExecutionDTO(
     val streetId: Long,
+
     val streetName: String,
+    val streetNumber: String? = null,
+    val streetHood: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+
     val teamId: Long,
     val teamName: String,
     val priority: Boolean,

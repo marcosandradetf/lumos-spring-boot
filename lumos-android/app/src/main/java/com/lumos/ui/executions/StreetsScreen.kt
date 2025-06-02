@@ -69,6 +69,7 @@ import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.utils.ConnectivityUtils
 import androidx.core.net.toUri
 import com.lumos.domain.model.Reserve
+import com.lumos.ui.components.Confirm
 
 @Composable
 fun StreetsScreen(
@@ -143,6 +144,10 @@ fun StreetsScreen(
                 ReservationStatus.COLLECTED,
                 context
             )
+            executionViewModel.queueSyncStartExecution(
+                streetId,
+                context
+            )
             onNavigateToExecution(streetId)
         }
     )
@@ -156,6 +161,7 @@ fun PendingMaterialsAlert(
     context: Context
 ) {
     val groupedReserves = reserves.groupBy { it.depositId }
+    var confirmModal by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -304,12 +310,24 @@ fun PendingMaterialsAlert(
             }
 
             TextButton(
-                onClick = { onConfirmed(reserves.first().streetId) },
+                onClick = { confirmModal = true },
             ) {
                 Text("Marcar todos como coletados e prosseguir")
             }
 
         }
+
+        if (confirmModal)
+            Confirm(
+                body = "Confirma que já coletou todos os materiais?",
+                confirm = {
+                    onConfirmed(reserves.first().streetId)
+                },
+                cancel = {
+                    confirmModal = false
+                }
+            )
+
     }
 }
 
@@ -625,7 +643,8 @@ fun PrevStreetsScreen() {
             depositName = "GALPÃO BH",
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "Elton Melo",
-            phoneNumber = "31999998090"
+            phoneNumber = "31999998090",
+            requestUnit = "UN"
         ),
         Reserve(
             reserveId = 1,
@@ -638,7 +657,8 @@ fun PrevStreetsScreen() {
             depositName = "GALPÃO BH",
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "Elton Melo",
-            phoneNumber = "31999998090"
+            phoneNumber = "31999998090",
+            requestUnit = "UN"
         ),
         Reserve(
             reserveId = 1,
@@ -651,7 +671,8 @@ fun PrevStreetsScreen() {
             depositName = "GALPÃO BH",
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "Elton Melo",
-            phoneNumber = "31999998090"
+            phoneNumber = "31999998090",
+            requestUnit = "UN"
         ),
         Reserve(
             reserveId = 1,
@@ -664,7 +685,8 @@ fun PrevStreetsScreen() {
             depositName = "GALPÃO ITAPECIRICA",
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
-            phoneNumber = "31999999090"
+            phoneNumber = "31999999090",
+            requestUnit = "UN"
         ),
         Reserve(
             reserveId = 1,
@@ -677,7 +699,8 @@ fun PrevStreetsScreen() {
             depositName = "GALPÃO ITAPECIRICA",
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
-            phoneNumber = "31999999090"
+            phoneNumber = "31999999090",
+            requestUnit = "UN"
         )
     )
 
@@ -696,7 +719,7 @@ fun PrevStreetsScreen() {
         loading = false,
         pSelected = BottomBar.HOME.value,
         select = {},
-        alert = false,
+        alert = true,
         onDismiss = {},
         onConfirmed = {}
     )

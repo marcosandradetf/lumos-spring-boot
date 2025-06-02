@@ -143,6 +143,7 @@ class Util(
         "tb_users" to setOf("id_user", "name", "last_name", "email", "phone_number"),
         "tb_teams" to setOf("id_team", "team_name", "team_phone", "driver_id", "electrician_id"),
         "tb_material_reservation" to setOf("pre_measurement_street_id", "status"),
+        "tb_pre_measurements_streets" to setOf("pre_measurement_street_id", "street_status"),
     )
 
     val columnTypesByTable = mapOf(

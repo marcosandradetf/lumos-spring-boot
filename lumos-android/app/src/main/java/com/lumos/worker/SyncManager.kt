@@ -99,17 +99,24 @@ object SyncManager {
     suspend fun queueSyncPostGeneric(
         context: Context,
         db: AppDatabase,
-        streetId: Long,
-        status: String
+        table: String,
+        field: String,
+        set: String,
+        where: String,
+        equal: String,
     ) {
         val syncItem = SyncQueueEntity(
-            relatedId = streetId,
             type = SyncTypes.POST_GENERIC,
-            priority = 100,
-            status = status
+            priority = 90,
+            table = table,
+            field = field,
+            set = set,
+            where = where,
+            equal = equal,
         )
         db.queueDao().insert(syncItem)
         enqueueSync(context)
     }
+
 
 }
