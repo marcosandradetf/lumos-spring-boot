@@ -10,9 +10,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 class ApiService(
+    private val context: Context,
     private val secureStorage: SecureStorage,
 ) {
-//        private val baseUrl = "http://192.168.3.2:8080"
+    //        private val baseUrl = "http://192.168.3.2:8080"
 //    private val baseUrl = "http://192.168.2.13:8080"
     private val baseUrl = "https://spring.thryon.com.br"
 //    val apiKey = BuildConfig.API_URL
@@ -23,7 +24,7 @@ class ApiService(
             .connectTimeout(60, TimeUnit.SECONDS) // Timeout de conexão
             .writeTimeout(60, TimeUnit.SECONDS)   // Timeout de escrita
             .readTimeout(60, TimeUnit.SECONDS)    // Timeout de leitura
-            .addInterceptor(AuthInterceptor(secureStorage))
+            .addInterceptor(AuthInterceptor(context, secureStorage))
             .build()
     }
 

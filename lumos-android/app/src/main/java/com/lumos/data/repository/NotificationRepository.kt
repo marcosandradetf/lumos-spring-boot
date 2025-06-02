@@ -1,7 +1,7 @@
 package com.lumos.data.repository
 
 import com.lumos.data.database.NotificationDao
-import com.lumos.service.NotificationItem
+import com.lumos.notifications.NotificationItem
 
 class NotificationRepository(
     private val dao: NotificationDao,
@@ -12,11 +12,11 @@ class NotificationRepository(
     }
 
     suspend fun delete(id: Long) {
-        dao.delete(id)
+        dao.deleteNonPersistentById(id)
     }
 
     suspend fun deleteAll() {
-        dao.deleteAll()
+        dao.deleteAllNonPersistent()
     }
 
     suspend fun insert(notificationItem: NotificationItem) : Int {

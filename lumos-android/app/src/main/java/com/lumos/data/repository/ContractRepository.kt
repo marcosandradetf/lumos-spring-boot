@@ -1,26 +1,26 @@
 package com.lumos.data.repository
 
+import android.content.Context
 import com.lumos.data.api.ContractApi
-import com.lumos.data.database.ContractDao
+import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
+import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 
 class ContractRepository(
-    private val dao: ContractDao,
+    private val db: AppDatabase,
     private val api: ContractApi
 ) {
 
-    suspend fun syncContracts() {
-        val remoteContracts: List<Contract>
+    suspend fun syncContracts(): Boolean {
+        var remoteContracts: List<Contract> = emptyList()
 
         try {
             val response = api.getContracts()
             if (response.isSuccessful) {
                 val body = response.body()
                 remoteContracts = body!!
-                if (remoteContracts.isNotEmpty())
-                    remoteContracts.forEach { dao.insertContract(it) }
 
             } else {
                 val code = response.code()
@@ -32,22 +32,34 @@ class ContractRepository(
             // TODO handle the error
         }
 
+        if (remoteContracts.isNotEmpty()) {
+            remoteContracts.forEach { db.contractDao().insertContract(it) }
+            return true
+        }
+        return false
     }
 
     fun getFlowContracts(status: String): Flow<List<Contract>> =
-        dao.getFlowContracts(status)
+        db.contractDao().getFlowContracts(status)
 
 
     suspend fun getContract(contractId: Long): Contract {
-        return dao.getContract(contractId)
+        return db.contractDao().getContract(contractId)
     }
 
     suspend fun setStatus(contractId: Long, status: String) {
-        dao.setStatus(contractId, status)
+        db.contractDao().setStatus(contractId, status)
     }
 
     suspend fun startAt(contractId: Long, updated: String, deviceId: String) {
-        dao.startAt(contractId, updated, deviceId)
+        db.contractDao().startAt(contractId, updated, deviceId)
+    }
+
+    suspend fun queueSyncContracts(context: Context) {
+        SyncManager.queueSyncContracts(
+            context,
+            db
+        )
     }
 
 }

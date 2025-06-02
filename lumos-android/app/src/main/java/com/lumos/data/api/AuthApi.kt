@@ -2,14 +2,10 @@ package com.lumos.data.api
 
 import com.lumos.domain.model.LoginRequest
 import com.lumos.domain.model.LoginResponse
-import com.lumos.domain.model.RefreshTokenRequest
-import com.lumos.domain.model.RefreshTokenResponse
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.POST
-
 import retrofit2.http.Header
+import retrofit2.http.POST
 
 interface AuthApi {
 

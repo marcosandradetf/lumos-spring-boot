@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.notification.EmailService;
+import com.lumos.lumosspring.notifications.service.EmailService;
 import com.lumos.lumosspring.user.dto.CreateUserDto;
 import com.lumos.lumosspring.user.dto.PasswordDTO;
 import com.lumos.lumosspring.user.dto.UpdateUserDto;

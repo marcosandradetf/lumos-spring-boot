@@ -19,6 +19,9 @@ import {Steps} from 'primeng/steps';
 import {MenuItem} from 'primeng/api';
 import {Select} from 'primeng/select';
 import {Paginator, PaginatorState} from 'primeng/paginator';
+import {TableModule} from 'primeng/table';
+import {Skeleton} from 'primeng/skeleton';
+import {Toast} from 'primeng/toast';
 
 
 @Component({
@@ -26,31 +29,24 @@ import {Paginator, PaginatorState} from 'primeng/paginator';
   standalone: true,
   imports: [
     TableComponent,
-    PaginationComponent,
     ButtonComponent,
     ModalComponent,
     NgForOf,
     FormsModule,
-    AlertMessageComponent,
     NgIf,
     NgClass,
     Steps,
     Select,
     Paginator,
+    TableModule,
+    Skeleton,
+    Toast,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'
 })
 export class StockMovementComponent implements OnInit {
   items: MenuItem[] | undefined;
-
-  sidebarLinks = [
-    {title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1'},
-    {title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2'},
-    {title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3'},
-    {title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4'},
-    {title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5'}
-  ];
 
   units: any[] = [
     {Value: "CX"},   // Caixa
@@ -72,29 +68,21 @@ export class StockMovementComponent implements OnInit {
 
   materials: MaterialResponse[] = [];
   suppliers: any = [];
-  selectedDeposits: string[] = [];
-
   sendSuppliers: any[] = [];
   sendMovement: StockMovementDTO[] = [];
   selectedMaterials: any[] = [];
-
-  private currentPage: string = "0";
   openMovementModal: boolean = false;
   openConfirmationModal: boolean = false;
   openSupplierModal: boolean = false;
-  serverMessage: string | null = null;
-  alertType: string | null = null;
   formSubmitted: boolean = false;
 
   private validate(): boolean {
     for (let item of this.sendMovement) {
       if (item.inputQuantity.length === 0) {
-        this.serverMessage = "A quantidade não pode ser igual a 0 ou estar inválida.";
-        this.alertType = "alert-error";
+        this.utils.showMessage("A quantidade não pode ser igual a 0 ou estar inválida.", 'warn', 'Atenção');
         return false; // Aqui retorna e sai da função
       } else if (item.quantityPackage.length === 0) {
-        this.serverMessage = "A quantidade por embalagem não pode ser igual a 0 ou estar inválida.";
-        this.alertType = "alert-error";
+        this.utils.showMessage("A quantidade por embalagem não pode ser igual a 0 ou estar inválida.", 'warn', 'Atenção');
         return false; // Aqui também retorna e sai da função
       }
     }
@@ -123,35 +111,41 @@ export class StockMovementComponent implements OnInit {
       },
       {
         label: 'Aprovado',
-        routerLink: '/estoque/movimento/aprovado'
+        routerLink: '/estoque/movimento-aprovado'
       },
     ];
   }
 
+  loading = true;
 
-  private loadMaterials() {
+  loadMaterials() {
     if (!this.currentDeposit) return;
 
+    this.loading = true;
     // Chama o serviço para buscar os materiais apenas se o array estiver vazio
     if (this.materials.length === 0) {
-      console.log(this.currentDeposit);
       this.materialService.getFetch(0, this.currentDeposit.idDeposit);
     }
 
-    this.materialService.materials$.subscribe((materials: MaterialResponse[]) => {
-      this.materials = materials;
+    this.materialService.materials$.subscribe({
+      next: materials => {
+        this.materials = materials;
 
-      this.materials = this.materials.filter(movement => !movement.inactive);
+        this.materials = this.materials.filter(movement => !movement.inactive);
 
-      // Itera sobre os materiais recebidos
-      this.materials.forEach((material) => {
-        // Verifica se o ID do material está presente em sendMovement
-        const matchedMovement = this.sendMovement.find(movement => movement.materialId === material.idMaterial);
-        // Se houver correspondência, marque o material como selecionado
-        material.selected = !!matchedMovement;
-      });
-
-
+        // Itera sobre os materiais recebidos
+        this.materials.forEach((material) => {
+          // Verifica se o ID do material está presente em sendMovement
+          const matchedMovement = this.sendMovement.find(movement => movement.materialId === material.idMaterial);
+          // Se houver correspondência, marque o material como selecionado
+          material.selected = !!matchedMovement;
+        });
+        this.loading = false;
+      },
+      error: error => {
+        this.loading = false;
+        this.utils.showMessage(error.error.message, 'error', 'Erro ao carregar materiais.');
+      },
     });
 
     this.estoqueService.getSuppliers().subscribe((suppliers: SupplierDTO[]) => {
@@ -161,8 +155,7 @@ export class StockMovementComponent implements OnInit {
 
   handleClick = () => {
     if (this.sendMovement.length === 0) {
-      this.alertType = 'alert-warning';
-      this.serverMessage = "Antes de continuar você deve selecionar os itens desejados.";
+      this.utils.showMessage("Antes de continuar você deve selecionar os itens desejados.", 'warn', 'Atenção');
     } else {
       this.openMovementModal = true;
     }
@@ -207,16 +200,14 @@ export class StockMovementComponent implements OnInit {
   submitDataMovement(): void {
     this.estoqueService.stockMovement(this.sendMovement).pipe(
       tap(response => {
-        this.serverMessage = response;
-        this.alertType = 'alert-success';
+        this.utils.showMessage(response, 'success', 'Movimentação salva');
         this.formSubmitted = false;
         this.closeConfirmationModal();
         this.closeMovementModal();
         this.clearSelection();
       }),
       catchError(err => {
-        this.serverMessage = err.message;
-        this.alertType = 'alert-error';
+        this.utils.showMessage(err.error.message, 'error', 'Erro ao salvar movimentação');
         this.formSubmitted = false;
         this.closeConfirmationModal();
         return throwError(() => err);
@@ -257,21 +248,18 @@ export class StockMovementComponent implements OnInit {
     this.formSubmitted = true;
 
     if (form.invalid) {
-      console.log('Formulário inválido');
       return;
     }
 
     this.estoqueService.createSuppliers(this.sendSuppliers).pipe(
       tap(response => {
-        this.serverMessage = "Fornecedor Criado com Sucesso!";
-        this.alertType = 'alert-success';
+        this.utils.showMessage('Fornecedor Criado com Sucesso!', 'success', 'Sucesso');
         this.suppliers = response;
         this.formSubmitted = false;
         this.sendSuppliers = [];
       }),
       catchError(err => {
-        this.serverMessage = err.error;
-        this.alertType = 'alert-error';
+        this.utils.showMessage(err.error.message, 'error', 'Erro ao salvar fornecedor');
         this.formSubmitted = false;
         return throwError(() => err);
       })
@@ -303,17 +291,12 @@ export class StockMovementComponent implements OnInit {
       return ''; // Retorna string vazia se o material não for encontrado
     }
 
-    console.log(material);
 
-    if (material.materialPower !== undefined) {
+    if (material.materialPower) {
       return `${material.materialName} - ${material.materialPower}`;
-    }
-
-    if (material.materialAmps !== undefined) {
+    } else if (material.materialAmps) {
       return `${material.materialName} - ${material.materialAmps}`;
-    }
-
-    if (material.materialLength !== undefined) {
+    } else if (material.materialLength) {
       return `${material.materialName} - ${material.materialLength}`;
     }
 
@@ -329,7 +312,6 @@ export class StockMovementComponent implements OnInit {
       return;
     }
 
-    console.log(this.sendMovement);
     this.handleConfirmMovement();
   }
 
@@ -365,8 +347,11 @@ export class StockMovementComponent implements OnInit {
         case 'L':
         case 'ML':
           movement.quantityPackage = '1';
+          this.calculateQuantity(movement);
+          movement.totalQuantity = Number(movement.inputQuantity);
           break;
         default:
+          this.calculateQuantity(movement);
           break;
       }
     });
@@ -447,7 +432,6 @@ export class StockMovementComponent implements OnInit {
   }
 
   filterUnits(selectedUnit: string): string[] {
-    console.log(selectedUnit);
     switch (selectedUnit.toUpperCase()) {
       case 'CX':
         return ["CX", "UN", "PÇ"]
@@ -458,16 +442,13 @@ export class StockMovementComponent implements OnInit {
     }
   }
 
-  startNewMovement() {
-    this.loadMaterials()
-  }
-
-
   search: boolean = false;
   value: string = '';
+  first: number = 0;
 
   onPageChange(event: PaginatorState) {
-
+    this.loading = true;
+    this.first = event.first!!;
     if (!this.search)
       this.materialService.getFetch(event.page!!, this.currentDeposit?.idDeposit);
     else if (this.search)
@@ -476,6 +457,7 @@ export class StockMovementComponent implements OnInit {
   }
 
   handleSearch(value: string): void {
+    this.loading = true;
     if (value.length > 2) {
       this.value = value;
       this.search = true;
@@ -490,5 +472,5 @@ export class StockMovementComponent implements OnInit {
 
   }
 
-
+  skeleton: any[] = Array.from({length: 15}).map((_, i) => `Item #${i}`);
 }

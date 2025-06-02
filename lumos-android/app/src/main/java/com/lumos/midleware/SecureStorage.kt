@@ -4,16 +4,24 @@ import android.content.Context
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import java.util.UUID
 import javax.crypto.AEADBadTagException
 import androidx.core.content.edit
 
 class SecureStorage(private val context: Context) {
 
-    private val PREFS_NAME = "secure_prefs"
-    private val KEY_ACCESS_TOKEN = "accessToken"
-    private val KEY_REFRESH_TOKEN = "refreshToken"
-    private val KEY_USER_UUID = "userUUID"
+//    private val PREFS_NAME = "secure_prefs"
+//    private val KEY_ACCESS_TOKEN = "accessToken"
+//    private val KEY_REFRESH_TOKEN = "refreshToken"
+//    private val KEY_USER_UUID = "userUUID"
+
+    companion object {
+        private const val PREFS_NAME = "secure_prefs"
+        private const val KEY_ACCESS_TOKEN = "accessToken"
+        private const val KEY_REFRESH_TOKEN = "refreshToken"
+        private const val KEY_USER_UUID = "userUUID"
+        private const val KEY_ROLES = "roles"
+        private const val KEY_TEAMS = "teams"
+    }
 
     // Função modificada para tratar erro específico do Keystore
     private fun getSharedPreferences() =
@@ -50,6 +58,14 @@ class SecureStorage(private val context: Context) {
         }
     }
 
+    fun saveAssignments(roles: Set<String>, teams: Set<String>) {
+        val prefs = getSharedPreferences()
+        prefs.edit {
+            putStringSet(KEY_ROLES, roles)
+                .putStringSet(KEY_TEAMS, teams)
+        }
+    }
+
     fun getAccessToken(): String? =
         getSharedPreferences().getString(KEY_ACCESS_TOKEN, null)
 
@@ -59,9 +75,11 @@ class SecureStorage(private val context: Context) {
     fun getUserUuid(): String? =
         getSharedPreferences().getString(KEY_USER_UUID, null)
 
-    fun clearTokens() {
-        getSharedPreferences().edit { clear() }
-    }
+    fun getRoles(): Set<String> =
+        getSharedPreferences().getStringSet(KEY_ROLES, null) ?: emptySet()
+
+    fun getTeams(): Set<String> =
+        getSharedPreferences().getStringSet(KEY_TEAMS, null) ?: emptySet()
 
     fun saveAccessToken(newAccessToken: String) {
         val prefs = getSharedPreferences()
@@ -69,4 +87,9 @@ class SecureStorage(private val context: Context) {
             putString(KEY_ACCESS_TOKEN, newAccessToken)
         }
     }
+
+    fun clearAll() {
+        getSharedPreferences().edit { clear() }
+    }
+
 }

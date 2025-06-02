@@ -1,17 +1,17 @@
 <div class="flex">
   <div class="mb-5 w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/início">Início</a></li>
           <li><a href="/estoque">Estoque</a></li>
-          <li>Pendente de Aprovação</li>
+          <li>Movimentações aprovadas</li>
         </ul>
       </div>
       <h3 class="text-medium pr-5 hidden lg:block">Últimos três meses</h3>
     </div>
 
-    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+    <div class="mt-4 p-2">
       <div class="card p-3">
         <p-steps [model]="items" [readonly]="false" />
       </div>
@@ -21,10 +21,10 @@
           <th>Codigo</th>
           <th>Comentário</th>
           <th>Material</th>
-          <th>Quantidade</th>
-          <th>Unid. Compra</th>
+          <th>Quantidade Total</th>
           <th>Unid. Requisição</th>
           <th>Preço total</th>
+          <th>Preço por Item</th>
           <th>Fornecedor</th>
           <th>Empresa</th>
           <th>Almoxarifado</th>
@@ -35,9 +35,9 @@
           <td>{{ row.description }}</td>
           <td>{{ row.materialName }}</td>
           <td>{{ row.inputQuantity }}</td>
-          <td>{{ row.buyUnit }}</td>
           <td>{{ row.requestUnit }}</td>
-          <td>{{ row.pricePerItem }}</td>
+          <td>{{ Number(row.pricePerItem) * row.inputQuantity | currency }}</td>
+          <td>{{ row.pricePerItem | currency }}</td>
           <td>{{ row.supplierName }}</td>
           <td>{{ row.company }}</td>
           <td>{{ row.deposit }}</td>

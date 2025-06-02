@@ -7,8 +7,8 @@ import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
-import com.lumos.lumosspring.notification.service.NotificationService
-import com.lumos.lumosspring.notification.service.Routes
+import com.lumos.lumosspring.notifications.service.NotificationService
+import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.user.Role
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.DefaultResponse

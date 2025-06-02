@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.notification.service
+package com.lumos.lumosspring.notifications.service
 
 import com.google.firebase.messaging.AndroidConfig
 import com.google.firebase.messaging.FirebaseMessaging

@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {NgForOf} from '@angular/common';
+import {CurrencyPipe, NgForOf} from '@angular/common';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {StockMovementResponse} from '../../models/stock-movement-response.dto';
@@ -18,7 +18,8 @@ import {MenuItem} from 'primeng/api';
   imports: [
     NgForOf,
     TableComponent,
-    Steps
+    Steps,
+    CurrencyPipe
   ],
   templateUrl: './stock-movement-approvated.component.html',
   styleUrl: './stock-movement-approvated.component.scss'
@@ -57,10 +58,11 @@ export class StockMovementApprovatedComponent implements OnInit {
       },
       {
         label: 'Aprovado',
-        routerLink: '/estoque/movimento/aprovado',
+        routerLink: '/estoque/movimento-aprovado',
       },
     ];
   }
 
 
+  protected readonly Number = Number;
 }

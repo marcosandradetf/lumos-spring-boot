@@ -1,24 +1,23 @@
-<div class="w-full h-full">
+<div class="w-full h-full relative">
   <div class="p-2 w-full flex items-center justify-between">
     <div class="breadcrumbs text-sm">
       <ul class="select-none">
         <li><a href="/início">Início</a></li>
         <li><a href="/estoque">Estoque</a></li>
-        <li>Pendente de Aprovação</li>
+        <li>Movimentação de Estoque</li>
       </ul>
     </div>
-    <h3 class="text-medium pr-5 hidden lg:block font-medium">Selecione os materiais desejados para movimentar o
-      estoque</h3>
+    <h3 class="text-medium pr-5 hidden lg:block font-medium">{{!currentDeposit ? 'Selecione um almoxarifado' : 'Selecione os materiais desejados para movimentar o estoque'}} </h3>
   </div>
 
-  <div class="p-2 w-full h-full">
+  <div class="p-2">
     <div class="card p-3">
       <p-steps [model]="items" [readonly]="false"/>
     </div>
 
-    <div class="m-2" *ngIf="!currentDeposit">
+    <div class="mb-2" *ngIf="!currentDeposit">
       <p-select
-        (onChange)="startNewMovement()"
+        (onChange)="loadMaterials()"
         [(ngModel)]="currentDeposit"
         [options]="deposits"
         optionLabel="depositName"
@@ -28,9 +27,8 @@
     </div>
 
     <app-table [search]="true"
-               [filter]="true"
                *ngIf="currentDeposit"
-               class="min-h-full"
+               [filter]="true"
                (onSearchApplied)="handleSearch($event)">
 
       <tr header>
@@ -46,33 +44,96 @@
         <th>Empresa</th>
         <th>Almoxarifado</th>
       </tr>
-      <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
-        <td>
-          <input
-            type="checkbox"
-            class="checkbox"
-            [(ngModel)]="row.selected"
-            (change)="toggleSelection(row)"
-            name="selected{{i}}"
-          />
-        </td>
-        <td>{{ row.idMaterial }}</td>
-        <td>{{ row.materialName }}</td>
-        <td>{{ row.materialBrand }}</td>
-        <td>{{ row.materialPower }}</td>
-        <td>{{ row.materialAmps }}</td>
-        <td>{{ row.materialLength }}</td>
-        <td>{{ row.buyUnit }}</td>
-        <td>{{ row.stockQt }}</td>
-        <td>{{ row.company }}</td>
-        <td>{{ row.deposit }}</td>
-      </tr>
+      <ng-container *ngIf="!loading && currentDeposit" body>
+        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" >
+          <td>
+            <input
+              type="checkbox"
+              class="checkbox"
+              [(ngModel)]="row.selected"
+              (change)="toggleSelection(row)"
+              name="selected{{i}}"
+            />
+          </td>
+          <td>{{ row.idMaterial }}</td>
+          <td>{{ row.materialName }}</td>
+          <td>{{ row.materialBrand }}</td>
+          <td>{{ row.materialPower }}</td>
+          <td>{{ row.materialAmps }}</td>
+          <td>{{ row.materialLength }}</td>
+          <td>{{ row.buyUnit }}</td>
+          <td>{{ row.stockQt }}</td>
+          <td>{{ row.company }}</td>
+          <td>{{ row.deposit }}</td>
+        </tr>
+      </ng-container>
     </app-table>
 
-    <div class="flex justify-between mt-auto">
+    <!--    table skeleton -->
+    <p-table
+      styleClass="table table-xs table-auto"
+      [value]="skeleton"
+      [tableStyle]="{ 'min-width': '50rem' }"
+      *ngIf="loading">
+      <ng-template pTemplate="header" *ngIf="!currentDeposit">
+        <tr>
+          <th class="material-icons w-16">call_received</th>
+          <th>Codigo</th>
+          <th>Nome</th>
+          <th>Marca</th>
+          <th>Potência</th>
+          <th>Corrente (A)</th>
+          <th>Tamanho</th>
+          <th>UN Compra</th>
+          <th>Estoque</th>
+          <th>Empresa</th>
+          <th>Almoxarifado</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-product>
+        <tr>
+          <td class="w-16 p-3">
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <!--    end-->
+
+    <div class="flex justify-between mt-auto absolute bottom-5 w-[90%]" *ngIf="!loading">
       <app-button [action]="handleClick" title="Continuar"></app-button>
 
-      <p-paginator (onPageChange)="onPageChange($event)" [first]="0" [rows]="materialService.rows"
+      <p-paginator (onPageChange)="onPageChange($event)" [first]="materialService.currentPage" [rows]="materialService.rows"
                    [totalRecords]="materialService.totalElements"/>
 
     </div>
@@ -135,7 +196,7 @@
             <select
               class="select select-bordered select-xs w-16"
               [(ngModel)]="movement.buyUnit"
-              (change)="updateQuantityPackage(); movement.requestUnit = ''; movement.totalQuantity = 0;"
+              (change)="updateQuantityPackage();"
               name="buyUnit{{i}}"
               required
               #buyUnit="ngModel">
@@ -155,7 +216,7 @@
             @if (getOption(movement)) {
               <input
                 required
-                (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
+                (blur)="calculateQuantity(movement)"
                 type="text"
                 (input)="this.utils.formatNumber($event)"
                 [(ngModel)]="movement.quantityPackage"
@@ -251,7 +312,7 @@
     </form>
   </app-modal>
 
-  <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+  <p-toast />
 
   <!--    modal confirmation-->
   <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">

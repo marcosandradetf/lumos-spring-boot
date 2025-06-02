@@ -47,4 +47,5 @@ export interface MaterialInStockDTO{
    materialType: string,
    deposit: string,
    availableQuantity: number,
+   requestUnit: string,
 }

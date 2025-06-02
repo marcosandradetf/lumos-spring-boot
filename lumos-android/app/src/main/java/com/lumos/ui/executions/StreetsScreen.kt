@@ -1,6 +1,8 @@
 package com.lumos.ui.executions
 
 import android.content.Context
+import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,14 +25,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NetworkCell
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Power
+import androidx.compose.material.icons.filled.ProductionQuantityLimits
+import androidx.compose.material.icons.filled.Warehouse
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,11 +52,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.lumos.data.repository.ReservationStatus
 import com.lumos.data.repository.Status
 import com.lumos.domain.model.Execution
 import com.lumos.navigation.BottomBar
@@ -56,6 +67,8 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.utils.ConnectivityUtils
+import androidx.core.net.toUri
+import com.lumos.domain.model.Reserve
 
 @Composable
 fun StreetsScreen(
@@ -69,23 +82,20 @@ fun StreetsScreen(
     navController: NavHostController,
     notificationsBadge: String,
     pSelected: Int,
-    onNavigateToReplyReservations: (Long) -> Unit,
     onNavigateToExecution: (Long) -> Unit,
 ) {
     val executions by executionViewModel.executions.collectAsState()
     val reserves by executionViewModel.reserves.collectAsState()
+    val loading by executionViewModel.isLoading.collectAsState()
 
+    var showAlert by remember { mutableStateOf(false) }
     var internet by remember { mutableStateOf(true) }
-    var loading by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
-        if (connection.isConnectedToInternet(context)) executionViewModel.syncExecutions()
-        else internet = false
+        if (!connection.isConnectedToInternet(context))
+            internet = false
 
+        executionViewModel.queueSyncExecutions(context)
         executionViewModel.loadFlowExecutions()
-    }
-
-    LaunchedEffect(executions) {
-        if (executions.isNotEmpty() || internet) loading = false
     }
 
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
@@ -93,7 +103,7 @@ fun StreetsScreen(
     LaunchedEffect(reserves, selectedStreetId) {
         selectedStreetId?.let { streetId ->
             if (reserves.isNotEmpty()) {
-                onNavigateToReplyReservations(streetId)
+                showAlert = true
             } else {
                 onNavigateToExecution(streetId)
             }
@@ -101,9 +111,9 @@ fun StreetsScreen(
         }
     }
 
-
     Content(
         executions = executions,
+        reserves = reserves,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
         onNavigateToProfile = onNavigateToProfile,
@@ -116,18 +126,198 @@ fun StreetsScreen(
         pSelected = pSelected,
         select = { streetId ->
             selectedStreetId = streetId
-            loading = true
             executionViewModel.loadFlowReserves(
                 streetId,
-                status = listOf(Status.PENDING, Status.REJECTED)
+                status = listOf(ReservationStatus.APPROVED)
             )
         },
+        alert = showAlert,
+        onDismiss = {
+            showAlert = false
+        },
+        onConfirmed = { streetId ->
+            executionViewModel.setReserveStatus(streetId, ReservationStatus.COLLECTED)
+            executionViewModel.setExecutionStatus(streetId, Status.IN_PROGRESS)
+            executionViewModel.queueSyncFetchReservationStatus(
+                streetId,
+                ReservationStatus.COLLECTED,
+                context
+            )
+            onNavigateToExecution(streetId)
+        }
     )
 }
 
 @Composable
+fun PendingMaterialsAlert(
+    reserves: List<Reserve>,
+    onDismiss: () -> Unit = {},
+    onConfirmed: (Long) -> Unit,
+    context: Context
+) {
+    val groupedReserves = reserves.groupBy { it.depositId }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+
+        // Alerta superior tipo "balao do WhatsApp"
+        Card(
+            shape = MaterialTheme.shapes.small,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.inverseSurface),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    "Pendência Encontrada",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Existem materiais pendentes de coleta para essa execução.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
+
+        LazyColumn {
+            groupedReserves.forEach { (_, reservesForDeposit) ->
+
+                val firstReserve = reservesForDeposit.first()
+
+                item {
+                    // --- Bloco de contato + infos do depósito ---
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Contato
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                firstReserve.stockistName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            TextButton(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                                        data = "tel:${firstReserve.phoneNumber}".toUri()
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Phone,
+                                    contentDescription = "Ligar",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        // Detalhes
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Warehouse,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                firstReserve.depositName,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                firstReserve.depositAddress,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ProductionQuantityLimits,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                "${reservesForDeposit.size} Materiais",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            "Em caso de dúvida, entre em contato",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                }
+            }
+        }
+
+
+        // final
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            HorizontalDivider()
+            Spacer(Modifier.height(10.dp))
+
+            TextButton(
+                onClick = { onDismiss() },
+            ) {
+                Text("Voltar", color = MaterialTheme.colorScheme.error)
+            }
+
+            TextButton(
+                onClick = { onConfirmed(reserves.first().streetId) },
+            ) {
+                Text("Marcar todos como coletados e prosseguir")
+            }
+
+        }
+    }
+}
+
+
+@Composable
 fun Content(
     executions: List<Execution>,
+    reserves: List<Reserve>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -139,6 +329,9 @@ fun Content(
     loading: Boolean,
     pSelected: Int,
     select: (Long) -> Unit,
+    alert: Boolean,
+    onDismiss: () -> Unit,
+    onConfirmed: (Long) -> Unit,
 ) {
     AppLayout(
         title = "Execuções",
@@ -171,192 +364,205 @@ fun Content(
             }
         }
 
-        Loading(loading)
-        if (!loading && internet)
+        if (loading)
+            Loading()
+        else if (executions.isEmpty())
             NothingData(
-                executions.size,
                 "Nenhuma execução disponível no momento, volte mais tarde!"
             )
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(2.dp, top = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
-        ) {
-            items(executions) { execution -> // Iteração na lista
+        else {
+            AnimatedVisibility(visible = alert) {
+                PendingMaterialsAlert(
+                    reserves = reserves,
+                    onDismiss = { onDismiss() },
+                    onConfirmed = { onConfirmed(it) },
+                    context = context
+                )
+            }
+            AnimatedVisibility(visible = !alert) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp, top = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+                ) {
+                    items(executions) { execution -> // Iteração na lista
 //                val createdAt = "Criado por ${contract.createdBy} há ${
 //                    Utils.timeSinceCreation(
 //                        Instant.parse(contract.createdAt)
 //                    )
 //                }"
-                val objective = if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
-                val status = when (execution.executionStatus) {
-                    Status.PENDING -> "Pendente"
-                    Status.IN_PROGRESS -> "Em Progresso"
-                    Status.FINISHED -> "Finalizado"
-                    else -> "Status Desconhecido"
-                }
-                Card(
-                    shape = RoundedCornerShape(5.dp),
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(3.dp),
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.onSecondary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                select(execution.streetId)
-                            }
-                            .height(IntrinsicSize.Min) // Isso é o truque!
-                    ) {
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxHeight()
-                        ) {
-                            // Linha vertical com bolinha no meio
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight(0.7f)
-                                    .padding(start = 20.dp)
-                                    .width(4.dp)
-                                    .background(
-                                        color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.tertiary
-                                    )
-                            )
-
-                            // Bolinha com ícone (no meio da linha)
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 10.dp) // posiciona sobre a linha
-                                    .size(24.dp) // tamanho do círculo
-                                    .clip(CircleShape)
-                                    .background(
-                                        color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.tertiary
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector =
-                                        if (execution.type == "INSTALLATION") Icons.Default.Power
-                                        else Icons.Default.Build,
-                                    contentDescription = "Local",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(
-                                        if (execution.type == "INSTALLATION") 18.dp
-                                        else 14.dp
-                                    )
-                                )
-                            }
+                        val objective =
+                            if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
+                        val status = when (execution.executionStatus) {
+                            Status.PENDING -> "Pendente"
+                            Status.IN_PROGRESS -> "Em Progresso"
+                            Status.FINISHED -> "Finalizado"
+                            else -> "Status Desconhecido"
                         }
 
-
-                        Column(
+                        Card(
+                            shape = RoundedCornerShape(5.dp),
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
+                                .fillMaxWidth(0.9f)
+                                .padding(3.dp),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.onSecondary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
                         ) {
-                            Column(
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable {
+                                        select(execution.streetId)
+                                    }
+                                    .height(IntrinsicSize.Min) // Isso é o truque!
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-
-                                    ) {
-                                    Row {
-                                        Text(
-                                            text = execution.streetName,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                        )
-                                    }
-                                }
-
-                                // Informação extra
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxHeight()
                                 ) {
-                                    Text(
-                                        text = "$objective de ${execution.itemsQuantity} Itens",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Normal,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                    // Linha vertical com bolinha no meio
                                     Box(
-                                        modifier = Modifier.clip(RoundedCornerShape(5.dp))
-                                            .background(Color(0xFFEDEBF6))
-                                            .padding(5.dp)
+                                        modifier = Modifier
+                                            .fillMaxHeight(0.7f)
+                                            .padding(start = 20.dp)
+                                            .width(4.dp)
+                                            .background(
+                                                color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.tertiary
+                                            )
+                                    )
+
+                                    // Bolinha com ícone (no meio da linha)
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 10.dp) // posiciona sobre a linha
+                                            .size(24.dp) // tamanho do círculo
+                                            .clip(CircleShape)
+                                            .background(
+                                                color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.tertiary
+                                            ),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = status,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontSize = 12.sp
+                                        Icon(
+                                            imageVector =
+                                                if (execution.type == "INSTALLATION") Icons.Default.Power
+                                                else Icons.Default.Build,
+                                            contentDescription = "Local",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(
+                                                if (execution.type == "INSTALLATION") 18.dp
+                                                else 14.dp
+                                            )
                                         )
                                     }
-
                                 }
 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
                                 ) {
-                                    Text(
-                                        text = "Responsável: ${execution.teamName}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Normal,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-
-                                // Informação extra
-                                if (execution.priority)
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.End
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
                                     ) {
-                                        Column(
-                                            verticalArrangement = Arrangement.Center,
-                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+
+                                            ) {
+                                            Row {
+                                                Text(
+                                                    text = execution.streetName,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                )
+                                            }
+                                        }
+
+                                        // Informação extra
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Icon(
-                                                imageVector =
-                                                    Icons.Default.Warning,
-                                                contentDescription = "Prioridade",
-                                                tint = Color(0xFFFC4705),
-                                                modifier = Modifier.size(22.dp)
+                                            Text(
+                                                text = "$objective de ${execution.itemsQuantity} Itens",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Normal,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(5.dp))
+                                                    .background(Color(0xFFEDEBF6))
+                                                    .padding(5.dp)
+                                            ) {
+                                                Text(
+                                                    text = status,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Responsável: ${execution.teamName}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Normal,
+                                                color = MaterialTheme.colorScheme.onSurface
                                             )
                                         }
-                                    }
 
+                                        // Informação extra
+                                        if (execution.priority)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                Column(
+                                                    verticalArrangement = Arrangement.Center,
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Icon(
+                                                        imageVector =
+                                                            Icons.Default.Warning,
+                                                        contentDescription = "Prioridade",
+                                                        tint = Color(0xFFFC4705),
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                }
+                                            }
+
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-
     }
 }
 
 
-@Preview(showBackground = true)
+@Preview()
 @Composable
 fun PrevStreetsScreen() {
     // Criando um contexto fake para a preview
@@ -372,7 +578,10 @@ fun PrevStreetsScreen() {
                 priority = true,
                 type = "INSTALLATION",
                 itemsQuantity = 7,
-                creationDate = ""
+                creationDate = "",
+                latitude = 0.0,
+                longitude = 0.0,
+                photoUri = ""
             ),
             Execution(
                 streetId = 2,
@@ -383,7 +592,10 @@ fun PrevStreetsScreen() {
                 priority = false,
                 type = "MAINTENANCE",
                 itemsQuantity = 5,
-                creationDate = ""
+                creationDate = "",
+                latitude = 0.0,
+                longitude = 0.0,
+                photoUri = ""
             ),
             Execution(
                 streetId = 3,
@@ -394,13 +606,85 @@ fun PrevStreetsScreen() {
                 priority = false,
                 type = "INSTALLATION",
                 itemsQuantity = 12,
-                creationDate = ""
+                creationDate = "",
+                latitude = 0.0,
+                longitude = 0.0,
+                photoUri = ""
             ),
         )
+
+    val reserves = listOf(
+        Reserve(
+            reserveId = 1,
+            materialId = 1,
+            materialName = "LED 120W",
+            materialQuantity = 12.0,
+            reserveStatus = "APPROVED",
+            streetId = 1,
+            depositId = 1,
+            depositName = "GALPÃO BH",
+            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
+            stockistName = "Elton Melo",
+            phoneNumber = "31999998090"
+        ),
+        Reserve(
+            reserveId = 1,
+            materialId = 1,
+            materialName = "BRAÇO DE 3,5",
+            materialQuantity = 16.0,
+            reserveStatus = "APPROVED",
+            streetId = 1,
+            depositId = 1,
+            depositName = "GALPÃO BH",
+            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
+            stockistName = "Elton Melo",
+            phoneNumber = "31999998090"
+        ),
+        Reserve(
+            reserveId = 1,
+            materialId = 1,
+            materialName = "BRAÇO DE 3,5",
+            materialQuantity = 16.0,
+            reserveStatus = "APPROVED",
+            streetId = 1,
+            depositId = 1,
+            depositName = "GALPÃO BH",
+            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
+            stockistName = "Elton Melo",
+            phoneNumber = "31999998090"
+        ),
+        Reserve(
+            reserveId = 1,
+            materialId = 1,
+            materialName = "CABO 1.5MM",
+            materialQuantity = 30.4,
+            reserveStatus = "APPROVED",
+            streetId = 1,
+            depositId = 2,
+            depositName = "GALPÃO ITAPECIRICA",
+            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
+            stockistName = "João Gomes",
+            phoneNumber = "31999999090"
+        ),
+        Reserve(
+            reserveId = 1,
+            materialId = 1,
+            materialName = "CABO 1.5MM",
+            materialQuantity = 30.4,
+            reserveStatus = "APPROVED",
+            streetId = 1,
+            depositId = 2,
+            depositName = "GALPÃO ITAPECIRICA",
+            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
+            stockistName = "João Gomes",
+            phoneNumber = "31999999090"
+        )
+    )
 
 
     Content(
         executions = values,
+        reserves = reserves,
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
@@ -412,5 +696,9 @@ fun PrevStreetsScreen() {
         loading = false,
         pSelected = BottomBar.HOME.value,
         select = {},
+        alert = false,
+        onDismiss = {},
+        onConfirmed = {}
     )
 }
+

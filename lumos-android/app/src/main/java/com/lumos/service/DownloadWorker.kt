@@ -25,7 +25,7 @@ class DownloadWorker(
 
     init {
         val secureStorage = SecureStorage(context)
-        val apiService = ApiService(secureStorage)
+        val apiService = ApiService(context, secureStorage)
         api = apiService.createApi(DownloadApi::class.java) // Agora pode ser atribuído corretamente
     }
 
@@ -67,7 +67,8 @@ class DownloadWorker(
 
     private fun showNotification(file: File) {
         // Criação do intent para abrir o arquivo armazenado no armazenamento privado
-        val uri = Uri.fromFile(file) // Usando Uri diretamente, já que o arquivo está no armazenamento privado
+        val uri =
+            Uri.fromFile(file) // Usando Uri diretamente, já que o arquivo está no armazenamento privado
 
         // Criação do intent para abrir o arquivo
         val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -77,7 +78,10 @@ class DownloadWorker(
 
         // Criação de um PendingIntent para o click na notificação
         val pendingIntent = PendingIntent.getActivity(
-            applicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            applicationContext,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         // Envio da notificação

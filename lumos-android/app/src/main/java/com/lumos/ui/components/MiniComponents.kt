@@ -18,12 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Loading(loading: Boolean) {
-    if (!loading) return
-
+fun Loading() {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -38,8 +37,7 @@ fun Loading(loading: Boolean) {
 }
 
 @Composable
-fun NothingData(data: Int, description: String) {
-    if (data > 0) return
+fun NothingData(description: String) {
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -49,4 +47,10 @@ fun NothingData(data: Int, description: String) {
         Icon(Icons.Default.Info, contentDescription = "Info")
         Text(description, Modifier.width(300.dp).padding(top = 10.dp), textAlign = TextAlign.Center)
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PrevComponents() {
+    NothingData("Nenhum dado encontrado")
 }

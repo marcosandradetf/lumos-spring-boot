@@ -5,14 +5,15 @@ import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Deposit
+import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Material
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.service.NotificationItem
+import com.lumos.domain.model.Reserve
+import com.lumos.domain.model.SyncQueueEntity
+import com.lumos.notifications.NotificationItem
 import java.util.concurrent.Executors
 
 @Database(
@@ -22,7 +23,10 @@ import java.util.concurrent.Executors
         (PreMeasurementStreet::class),
         (Material::class),
         (Contract::class),
-        (NotificationItem::class)],
+        (NotificationItem::class),
+        (SyncQueueEntity::class),
+        (Execution::class),
+        (Reserve::class)],
     version = 1,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +34,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
     abstract fun contractDao(): ContractDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun queueDao(): QueueDao
+    abstract fun executionDao(): ExecutionDao
+
 
 
     companion object {
@@ -39,18 +46,14 @@ abstract class AppDatabase : RoomDatabase() {
 
 //        private val MIGRATION_1_2 = object : Migration(1, 2) {
 //            override fun migrate(db: SupportSQLiteDatabase) {
-//                Log.d("RoomDB", "Executando MIGRATION_6_7")
+//                Log.d("RoomDB", "Executando MIGRATION_1_2")
 //
 //                // Desativa restrições de Foreign Key temporariamente
 //                db.execSQL("PRAGMA foreign_keys=OFF")
 //
-//                db.execSQL("ALTER TABLE contracts ADD COLUMN powers TEXT NULL")
-//                db.execSQL("ALTER TABLE contracts ADD COLUMN lengths TEXT NULL")
+
 //
-//                // Reativa restrições de Foreign Key
-//                db.execSQL("PRAGMA foreign_keys=ON")
-//
-//                Log.d("RoomDB", "MIGRATION_6_7 concluída com sucesso")
+//                Log.d("RoomDB", "MIGRATION_1_2 concluída com sucesso")
 //            }
 //        }
 

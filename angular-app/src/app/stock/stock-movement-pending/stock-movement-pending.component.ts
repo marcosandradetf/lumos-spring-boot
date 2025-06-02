@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
-import {NgForOf} from '@angular/common';
+import {CurrencyPipe, NgForOf} from '@angular/common';
 import {ReactiveFormsModule} from '@angular/forms';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
@@ -24,7 +24,8 @@ import {MenuItem} from 'primeng/api';
     ButtonComponent,
     ModalComponent,
     AlertMessageComponent,
-    Steps
+    Steps,
+    CurrencyPipe
   ],
   templateUrl: './stock-movement-pending.component.html',
   styleUrl: './stock-movement-pending.component.scss'
@@ -66,7 +67,7 @@ export class StockMovementPendingComponent implements OnInit {
       },
       {
         label: 'Aprovado',
-        routerLink: '/estoque/movimento/aprovado'
+        routerLink: '/estoque/movimento-aprovado'
       },
     ];
   }
@@ -103,6 +104,11 @@ export class StockMovementPendingComponent implements OnInit {
     return this.stockMovement.find((x) => x.id === Id);
   }
 
+  get movement() {
+    return this.getMovementmovement(this.movementId);
+  }
+
+
 
   RejectMovement() {
     this.stockService.rejectStockMovement(this.movementId).pipe(
@@ -120,4 +126,5 @@ export class StockMovementPendingComponent implements OnInit {
     )
   }
 
+  protected readonly Number = Number;
 }

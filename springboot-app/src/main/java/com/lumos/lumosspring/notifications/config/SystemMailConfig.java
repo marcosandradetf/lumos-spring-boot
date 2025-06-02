@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.notification;
+package com.lumos.lumosspring.notifications.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

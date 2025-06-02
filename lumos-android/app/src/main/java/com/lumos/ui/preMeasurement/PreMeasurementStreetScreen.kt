@@ -63,6 +63,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -101,12 +102,12 @@ import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
-import com.lumos.domain.service.SyncStock
 import com.lumos.ui.components.NetworkStatusBar
 import com.lumos.ui.components.TopBar
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.ui.viewmodel.StockViewModel
+import com.lumos.worker.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -169,39 +170,8 @@ fun PreMeasurementStreetScreen(
 
             stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
 
-            Log.e("DEBUG", "contract.powers: ${loadedContract.powers}")
-            Log.e("powersList", powersList.toString())
-            Log.e("lengthsList", lengthsList.toString())
-
             // Agendar o Worker assim que a tela for aberta
-            val workRequest = OneTimeWorkRequestBuilder<SyncStock>()
-                .setBackoffCriteria(
-                    BackoffPolicy.EXPONENTIAL,
-                    30, TimeUnit.MINUTES
-                )
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiresBatteryNotLow(false)
-                        .build()
-                )
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                "sync_stock", // Nome único para o trabalho
-                ExistingWorkPolicy.REPLACE, // Pode substituir o trabalho se já estiver agendado
-                workRequest
-            )
-
-            withContext(Dispatchers.Main) {
-                val workManager = WorkManager.getInstance(context)
-                workManager.getWorkInfoByIdLiveData(workRequest.id)
-                    .observe(lifecycleOwner) { workInfo ->
-                        if (workInfo?.state == WorkInfo.State.SUCCEEDED) {
-                            Log.e("syncStock screen street", "carregando materiais pos-worker")
-                            stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
-                        }
-                    }
-            }
+            stockViewModel.queueSyncStock(context)
         }
     }
 
@@ -357,8 +327,8 @@ fun PMSContent(
     var state by remember { mutableStateOf(pStreet.state ?: "") }
     var lastPower by remember { mutableStateOf("") }
 
-    val fileUri =
-        remember { mutableStateOf<Uri?>(Uri.parse("content://com.thryon.lumos.provider/my_images/photo_1743345161984.jpg")) }
+    val fileUri: MutableState<Uri?> = remember { mutableStateOf(null) }
+
     val imageSaved = remember { mutableStateOf(false) }
     val createFile: () -> Uri = {
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
@@ -655,7 +625,8 @@ fun PMSContent(
                     ) {
 
                         Card(
-                            modifier = Modifier.padding(end = 5.dp)
+                            modifier = Modifier
+                                .padding(end = 5.dp)
                                 .clickable {
                                     val newUri = createFile() // Gera um novo Uri
                                     fileUri.value = newUri // Atualiza o estado
@@ -1160,12 +1131,20 @@ fun PrevStreet() {
         takePhoto = { },
     )
 
-//    BottomSheetDialog(
-//        onDismissRequest = { },
-//        materials = materials,
-//        preMeasurementStreetId = 1,
-//        LocalContext.current,
-//    )
+    ItemLightRow(
+        material = Material(
+            materialId = 1,
+            materialName = "LED",
+            materialPower = "100W",
+            materialAmps = null,
+            materialLength = null
+        ),
+        onItemSelected = {  },
+        onQuantityChange = { _,_ ->},
+        context = LocalContext.current,
+        preSelected = true,
+        preQuantity = 12
+    )
 
 
 }

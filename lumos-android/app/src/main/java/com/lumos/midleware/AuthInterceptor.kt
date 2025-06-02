@@ -2,29 +2,24 @@ package com.lumos.midleware
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.rememberCoroutineScope
 import com.lumos.data.api.AuthApi
-import com.lumos.domain.model.RefreshTokenRequest
-import com.lumos.utils.ConnectivityUtils
-import kotlinx.coroutines.CoroutineScope
+import com.lumos.notifications.NotificationManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
-import okhttp3.Request
 import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Header
 
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AuthInterceptor(
+    context: Context,
     private val secureStorage: SecureStorage
 ) : Interceptor {
 
     private val isRefreshing = AtomicBoolean(false)
+    private val notificationManager = NotificationManager(context, secureStorage)
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val accessToken = secureStorage.getAccessToken()
@@ -71,7 +66,8 @@ class AuthInterceptor(
                             "Erro ao renovar o token: ${tokenResponse.code()}"
                         )
                         authApi.logout(refreshToken = refreshToken)
-                        secureStorage.clearTokens()
+                        notificationManager.unsubscribeFromSavedTopics()
+                        secureStorage.clearAll()
                         null
                     }
                 } catch (e: Exception) {

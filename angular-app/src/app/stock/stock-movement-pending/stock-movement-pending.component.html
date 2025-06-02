@@ -1,6 +1,6 @@
 <div class="flex">
   <div class="mb-5 w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/início">Início</a></li>
@@ -11,7 +11,7 @@
       <h3 class="text-medium pr-5 hidden lg:block">Clique nos materiais desejados para aprovar as movimentações</h3>
     </div>
 
-    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto 2xl:w-[99rem] min-h-[75vh]">
+    <div class="mt-4 p-2">
       <div class="card p-3">
         <p-steps [model]="items" [readonly]="false" />
       </div>
@@ -21,10 +21,10 @@
           <th>Codigo</th>
           <th>Comentário</th>
           <th>Material</th>
-          <th>Quantidade</th>
-          <th>Unid. Compra</th>
+          <th>Quantidade Total</th>
           <th>Unid. Requisição</th>
           <th>Preço total</th>
+          <th>Preço por Item</th>
           <th>Fornecedor</th>
           <th>Empresa</th>
           <th>Almoxarifado</th>
@@ -36,9 +36,9 @@
           <td>{{ row.description }}</td>
           <td>{{ row.materialName }}</td>
           <td>{{ row.inputQuantity }}</td>
-          <td>{{ row.buyUnit }}</td>
           <td>{{ row.requestUnit }}</td>
-          <td>{{ row.pricePerItem }}</td>
+          <td>{{ Number(row.pricePerItem) * row.inputQuantity | currency }}</td>
+          <td>{{ row.pricePerItem | currency }}</td>
           <td>{{ row.supplierName }}</td>
           <td>{{ row.company }}</td>
           <td>{{ row.deposit }}</td>
@@ -50,40 +50,61 @@
 
     <!--    modal confirmation-->
     @if (openModalAprovation) {
-      <app-modal [modalOpen]="openModalAprovation" [confirmation]="true" (modalClose)="closeAprovationModal()">
-        <div>
-          <h3 class="text-center mb-7">Confirma a transação?</h3>
-          <ul class="mb-5">
-            <li class="flex"><span class="material-icons">engineering</span>
-              Material: {{ getMovementmovement(movementId).materialName }}
+      <app-modal [modalOpen]="openModalAprovation" [confirmation]="true" (modalClose)="closeAprovationModal()" classModal="rounded">
+        <div class="px-6 py-4 text-gray-800 dark:text-gray-200">
+          <h3 class="text-center text-lg font-semibold mb-6 dark:text-white">
+            Confirma a transação?
+          </h3>
+
+          <ul class="space-y-2 text-sm">
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Material:</span>
+              {{ movement.materialName }}
             </li>
-            <li class="flex"><span class="material-icons">production_quantity_limits</span>
-              Quantidade: {{ getMovementmovement(movementId).inputQuantity }}
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Unid. Compra:</span>
+              {{ movement.buyUnit }}
             </li>
-            <li class="flex"><span class="material-icons">ad_units</span> Unid.
-              Compra: {{ getMovementmovement(movementId).buyUnit }}
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Quantidade:</span>
+              {{ movement.inputQuantity }}
             </li>
-            <li class="flex"><span class="material-icons">add</span> Qtde. p/
-              Unidade: {{ getMovementmovement(movementId).quantityPackage }}
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Qtde. p/ Embalagem:</span>
+              {{ movement.quantityPackage ?? 'Não se aplica'  }}
             </li>
-            <li class="flex"><span class="material-icons">attach_money</span>
-              Preço: {{ getMovementmovement(movementId).pricePerItem }}
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Preço Total:</span>
+              <span class="font-bold text-green-700 dark:text-green-400">
+          {{ movement.pricePerItem * movement.inputQuantity | currency:'BRL':'symbol':'1.2-2' }}
+        </span>
             </li>
-            <li class="flex"><span class="material-icons">local_offer</span>
-              Fornecedor: {{ getMovementmovement(movementId).supplierName }}
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Fornecedor:</span>
+              {{ movement.supplierName }}
             </li>
-            <li class="flex"><span class="material-icons">warehouse</span>
-              Almoxarifado: {{ getMovementmovement(movementId).deposit }}
+            <li>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Almoxarifado:</span>
+              {{ movement.deposit }}
             </li>
           </ul>
 
-          <div class="flex justify-around">
-            <app-button (click)="RejectMovement()" title="Rejeitar" classButton="btn bg-red-500 hover:bg-red-700"
-                        textColor="text-black"></app-button>
-            <app-button (click)="submitAprovationMovement()" title="Aprovar Movimento"></app-button>
+          <div class="flex justify-between gap-4 mt-8">
+            <app-button
+              (click)="RejectMovement()"
+              title="Rejeitar"
+              classButton="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded dark:bg-red-700 dark:hover:bg-red-800"
+            ></app-button>
+
+            <app-button
+              (click)="submitAprovationMovement()"
+              title="Aprovar Movimento"
+              classButton="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded dark:bg-indigo-500 dark:hover:bg-indigo-600"
+            ></app-button>
           </div>
         </div>
       </app-modal>
+
     }
 
     <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>

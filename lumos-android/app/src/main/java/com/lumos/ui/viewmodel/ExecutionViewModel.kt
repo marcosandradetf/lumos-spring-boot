@@ -1,5 +1,6 @@
 package com.lumos.ui.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,13 +19,16 @@ class ExecutionViewModel(
     private val _executions = MutableStateFlow<List<Execution>>(emptyList()) // estado da lista
     val executions: StateFlow<List<Execution>> = _executions // estado acessível externamente
 
+    private val _isLoading = MutableStateFlow<Boolean>(true)
+    val isLoading:  StateFlow<Boolean> = _isLoading
+
     private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
     val reserves: StateFlow<List<Reserve>> = _reserves
 
-    fun syncExecutions() {
+    fun queueSyncExecutions(context: Context) {
         viewModelScope.launch {
             try {
-                repository.syncExecutions()
+                repository.queueSyncExecutions(context)
             } catch (e: Exception) {
                 // Tratar erros aqui
             }
@@ -33,11 +37,14 @@ class ExecutionViewModel(
 
     fun loadFlowExecutions() {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 repository.getFlowExecutions().collectLatest { fetched ->
                     _executions.value = fetched // atualiza o estado com os dados obtidos
+                    _isLoading.value = false
                 }
             } catch (e: Exception) {
+                _isLoading.value = false
                 Log.e("Error loadMaterials", e.message.toString())
             }
         }
@@ -51,6 +58,36 @@ class ExecutionViewModel(
                 }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
+            }
+        }
+    }
+
+    fun setReserveStatus(streetId: Long, status: String) {
+        viewModelScope.launch {
+            try {
+                repository.setReserveStatus(streetId, status)
+            } catch (e: Exception) {
+                Log.e("Error setReserveStatus", e.message.toString())
+            }
+        }
+    }
+
+    fun setExecutionStatus(streetId: Long, status: String) {
+        viewModelScope.launch {
+            try {
+                repository.setExecutionStatus(streetId, status)
+            } catch (e: Exception) {
+                Log.e("Error setExecutionStatus", e.message.toString())
+            }
+        }
+    }
+
+    fun queueSyncFetchReservationStatus(streetId: Long, status: String, context: Context) {
+        viewModelScope.launch {
+            try {
+                repository.queueSyncFetchReservationStatus(context, streetId, status)
+            } catch (e: Exception) {
+                Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
             }
         }
     }

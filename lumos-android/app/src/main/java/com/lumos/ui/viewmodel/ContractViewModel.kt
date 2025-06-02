@@ -1,5 +1,6 @@
 package com.lumos.ui.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -23,25 +24,36 @@ class ContractViewModel(
     private val _contracts = MutableStateFlow<List<Contract>>(emptyList()) // estado da lista
     val contracts: StateFlow<List<Contract>> = _contracts // estado acessível externamente
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _hasError = MutableStateFlow(false)
+    val hasError: StateFlow<Boolean> = _hasError
+
 
     fun loadFlowContracts(status: String) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _hasError.value = false
             try {
                 repository.getFlowContracts(status).collectLatest { fetched ->
-                    _contracts.value = fetched // atualiza o estado com os dados obtidos
+                    _contracts.value = fetched
+                    _isLoading.value = false
                 }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
+                _hasError.value = true
+                _isLoading.value = false
             }
         }
     }
 
-    fun syncContracts() {
+    fun queueSyncContracts(context: Context) {
         viewModelScope.launch {
             try {
-                repository.syncContracts()
+                repository.queueSyncContracts(context)
             } catch (e: Exception) {
-                // Tratar erros aqui
+                Log.e("Erro view model - queueSyncContracts", e.message.toString())
             }
         }
     }
@@ -83,6 +95,8 @@ class ContractViewModel(
         }
 
     }
+
+
 
 
 }

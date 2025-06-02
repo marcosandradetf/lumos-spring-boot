@@ -42,7 +42,7 @@ import androidx.navigation.compose.rememberNavController
 import com.lumos.data.api.NotificationType
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
-import com.lumos.service.NotificationItem
+import com.lumos.notifications.NotificationItem
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.utils.Utils

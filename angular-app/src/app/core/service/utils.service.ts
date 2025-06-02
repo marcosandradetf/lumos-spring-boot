@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {MessageService} from 'primeng/api';
 import {BehaviorSubject, Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
+import {environment} from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -214,7 +215,7 @@ export class UtilsService {
   }
 
   getObject<T>(params: GetObjectRequest): Observable<T> {
-    return this.http.post<T>('/api/generic/get-object', params);
+    return this.http.post<T>(environment.springboot + '/api/util/generic/get-object', params);
   }
 
 }

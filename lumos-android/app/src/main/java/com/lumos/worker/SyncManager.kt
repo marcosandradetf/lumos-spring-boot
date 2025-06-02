@@ -1,0 +1,115 @@
+package com.lumos.worker
+
+import android.content.Context
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.lumos.data.database.AppDatabase
+import com.lumos.domain.model.SyncQueueEntity
+import java.util.concurrent.TimeUnit
+
+object SyncManager {
+
+    fun enqueueSync(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(false)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<SyncQueueWorker>()
+            .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                15, TimeUnit.MINUTES
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "SyncQueueWorker",
+            ExistingWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    fun schedulePeriodicSync(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(false) // roda mesmo com bateria baixa
+            .build()
+
+        val request = PeriodicWorkRequestBuilder<SyncQueueWorker>(
+            6, TimeUnit.HOURS // ajustável: 6h, 12h, 24h...
+        )
+            .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                15, TimeUnit.MINUTES
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "PeriodicSyncQueueWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    suspend fun queuePostPreMeasurement(context: Context, db: AppDatabase, contractId: Long) {
+        val syncItem = SyncQueueEntity(
+            relatedId = contractId,
+            type = SyncTypes.POST_PRE_MEASUREMENT,
+            priority = 30 // mais prioritário
+        )
+        db.queueDao().insert(syncItem)
+        enqueueSync(context)
+    }
+
+    suspend fun queueSyncStock(context: Context, db: AppDatabase) {
+        val syncItem = SyncQueueEntity(
+            type = SyncTypes.SYNC_STOCK,
+            priority = 40
+        )
+        db.queueDao().insert(syncItem)
+        enqueueSync(context)
+    }
+
+    suspend fun queueSyncContracts(context: Context, db: AppDatabase) {
+        val syncItem = SyncQueueEntity(
+            type = SyncTypes.SYNC_CONTRACTS,
+            priority = 50
+        )
+        db.queueDao().insert(syncItem)
+        enqueueSync(context)
+    }
+
+    suspend fun queueSyncExecutions(context: Context, db: AppDatabase) {
+        val syncItem = SyncQueueEntity(
+            type = SyncTypes.SYNC_EXECUTIONS,
+            priority = 20
+        )
+        db.queueDao().insert(syncItem)
+        enqueueSync(context)
+    }
+
+    suspend fun queueSyncPostGeneric(
+        context: Context,
+        db: AppDatabase,
+        streetId: Long,
+        status: String
+    ) {
+        val syncItem = SyncQueueEntity(
+            relatedId = streetId,
+            type = SyncTypes.POST_GENERIC,
+            priority = 100,
+            status = status
+        )
+        db.queueDao().insert(syncItem)
+        enqueueSync(context)
+    }
+
+}

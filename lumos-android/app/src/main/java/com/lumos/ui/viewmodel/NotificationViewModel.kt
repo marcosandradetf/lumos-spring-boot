@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.NotificationRepository
-import com.lumos.service.NotificationItem
+import com.lumos.notifications.NotificationItem
 import kotlinx.coroutines.launch
 
 class NotificationViewModel(

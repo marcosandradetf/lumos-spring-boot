@@ -17,6 +17,7 @@ export class TableComponent {
   @Input() large: boolean = false;
   @Output() onSearchApplied: EventEmitter<string> = new EventEmitter(); // <- Aqui é o callback
 
+
   // Atualiza o filtro de pesquisa e aplica os filtros combinados
   filterSearch(value: string): void {
     if (value.length > 2) {

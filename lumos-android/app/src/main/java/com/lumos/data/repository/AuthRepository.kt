@@ -44,6 +44,13 @@ class AuthRepository(
                 val body = response.body()
                 if (body != null) {
                     secureStorage.saveTokens(body.accessToken, body.refreshToken, body.userUUID)
+                    val roles = body.roles.trim().split(' ').toSet()
+                    val teams = body.teams.trim().split(' ').toSet()
+                    if (roles.isNotEmpty() && teams.isNotEmpty())
+                        secureStorage.saveAssignments(
+                            roles,
+                            teams
+                        )
                     onSuccess()
                 }
             } else {

@@ -141,14 +141,20 @@ class Util(
 
     private val allowedColumnsByTable = mapOf(
         "tb_users" to setOf("id_user", "name", "last_name", "email", "phone_number"),
-        "tb_teams" to setOf("id_team", "team_name", "team_phone"),
+        "tb_teams" to setOf("id_team", "team_name", "team_phone", "driver_id", "electrician_id"),
+        "tb_material_reservation" to setOf("pre_measurement_street_id", "status"),
     )
 
     val columnTypesByTable = mapOf(
         "tb_users" to mapOf(
             "id_user" to "uuid"
+        ),
+        "tb_teams" to mapOf(
+            "driver_id" to "uuid",
+            "electrician_id" to "uuid",
         )
     )
+
     fun getObject(request: UtilController.GetObjectRequest): List<Map<String, Any>> {
         val allowedColumns = allowedColumnsByTable[request.table.lowercase()]
             ?: throw IllegalArgumentException("Tabela não permitida: ${request.table}")
@@ -157,6 +163,10 @@ class Util(
             if (!allowedColumns.contains(field)) {
                 throw IllegalArgumentException("Campo $field não permitido para a tabela ${request.table}")
             }
+        }
+
+        if (!allowedColumns.contains(request.where)) {
+            throw IllegalArgumentException("Campo ${request.where} não permitido para a tabela ${request.table}")
         }
 
         val placeholders = request.equal.joinToString(",") { "?" }
@@ -172,6 +182,32 @@ class Util(
             jdbcTemplate.queryForList(sql, *request.equal.toTypedArray())
         }
     }
+
+    fun updateEntity(request: UtilController.UpdateEntity) {
+        val allowedColumns = allowedColumnsByTable[request.table.lowercase()]
+            ?: throw IllegalArgumentException("Tabela não permitida: ${request.table}")
+
+        if (!allowedColumns.contains(request.field) || !allowedColumns.contains(request.where)) {
+            throw IllegalArgumentException("Campo ${request.field} não permitido para a tabela ${request.table}")
+        }
+
+
+        val safeNameRegex = Regex("^[a-zA-Z0-9_]+\$")
+
+        if (!safeNameRegex.matches(request.table) ||
+            !safeNameRegex.matches(request.field) ||
+            !safeNameRegex.matches(request.where)) {
+            throw IllegalArgumentException("Identificadores inválidos")
+        }
+
+
+        // Validação do nome da tabela e campos — já feita acima.
+        // Agora construímos a query de forma segura, parametrizada:
+        val sql = "UPDATE ${request.table} SET ${request.field} = ? WHERE ${request.where} = ?"
+
+        jdbcTemplate.update(sql, request.set, request.equal)
+    }
+
 
 
 }

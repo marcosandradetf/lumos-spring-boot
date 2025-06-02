@@ -2,6 +2,7 @@ package com.lumos
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -13,13 +14,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
-import com.google.firebase.messaging.FirebaseMessaging
+import androidx.lifecycle.lifecycleScope
 import com.lumos.navigation.AppNavigation
 import com.lumos.ui.theme.LumosTheme
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -37,31 +38,45 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val app = application as MyApp
 
-        FirebaseMessaging.getInstance().subscribeToTopic("RESPONSAVEL_TECNICO")
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    println("✅ Inscrição no tópico realizada com sucesso!")
-                } else {
-                    println("❌ Falha ao se inscrever no tópico.")
-                }
-            }
+//        val currentVersion = packageManager.getPackageInfo(packageName, 0).longVersionCode
+
+        // Suponha que fetchMinVersion() seja uma função suspensa que chama sua API
+//        lifecycleScope.launch {
+//            val minVersion = fetchMinVersionFromApi()
+//            if (currentVersion < minVersion) {
+//                // Abre tela obrigatória para atualizar
+//                startActivity(Intent(this@MainActivity, UpdateRequiredActivity::class.java))
+//                finish() // Fecha MainActivity para não continuar
+//            } else {
+//                // Continua normalmente
+//                setContent {
+//                    val actionState =
+//                        remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }
+//
+//                    LumosTheme {
+//                        AppNavigation(
+//                            db = app.database,
+//                            retrofit = app.retrofit,
+//                            secureStorage = app.secureStorage,
+//                            context = this as Context,
+//                            actionState
+//                        )
+//                    }
+//                }
+//            }
+//        }
 
         setContent {
-            val actionState = remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }
-
-            // Observa mudanças de intent (caso o app já esteja aberto)
-            LaunchedEffect(Unit) {
-                intent?.getStringExtra("action")?.let {
-                    actionState.value = it
-                }
-            }
+            val actionState =
+                remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }
 
             LumosTheme {
                 AppNavigation(
-                    database = app.database,
+                    db = app.database,
                     retrofit = app.retrofit,
                     secureStorage = app.secureStorage,
-                    context = this
+                    context = this as Context,
+                    actionState
                 )
             }
         }
@@ -187,28 +202,36 @@ class MainActivity : ComponentActivity() {
         when (type) {
             "LOCATION" -> {
                 title = "Permissão Necessária"
-                message = "O aplicativo precisa de permissão de localização para funcionar corretamente. Por favor, permita o acesso."
+                message =
+                    "O aplicativo precisa de permissão de localização para funcionar corretamente. Por favor, permita o acesso."
                 permission = Manifest.permission.ACCESS_FINE_LOCATION
             }
+
             "NOTIFICATIONS" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     title = "Permissão de Notificações"
-                    message = "Para receber notificações, o app precisa da sua permissão. Deseja permitir?"
+                    message =
+                        "Para receber notificações, o app precisa da sua permissão. Deseja permitir?"
                     permission = Manifest.permission.POST_NOTIFICATIONS
                 } else {
                     return
                 }
             }
+
             "READ_PHONE_STATE" -> {
                 title = "Permissão de Rede"
-                message = "Para evitar instabilidade durante a sincronização, o app precisa dessa permissão. Por favor, permita o acesso."
+                message =
+                    "Para evitar instabilidade durante a sincronização, o app precisa dessa permissão. Por favor, permita o acesso."
                 permission = Manifest.permission.READ_PHONE_STATE
             }
+
             "CAMERA" -> {
                 title = "Permissão de Câmera"
-                message = "Para tirar fotos das pré-medições, o app precisa dessa permissão. Por favor, permita o acesso."
+                message =
+                    "Para tirar fotos das pré-medições, o app precisa dessa permissão. Por favor, permita o acesso."
                 permission = Manifest.permission.READ_PHONE_STATE
             }
+
             else -> throw IllegalArgumentException("Tipo de permissão inválido: $type")
         }
 
@@ -220,13 +243,16 @@ class MainActivity : ComponentActivity() {
                 requestPermissionLauncher.launch(arrayOf(permission)) // Solicita a permissão
             }
             .setNegativeButton("Cancelar") { _, _ ->
-                Toast.makeText(this, "Permissão crucial negada, fechando o app.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Permissão crucial negada, fechando o app.",
+                    Toast.LENGTH_SHORT
+                ).show()
                 finish() // Fecha o app se a permissão for crucial
             }
             .setCancelable(false)
             .show()
     }
-
 
 
     private fun showSettingsDialog() {

@@ -170,9 +170,9 @@
                     <p-tag [value]="material.materialPower ?? material.materialLength"
                            *ngIf="material.materialPower || material.materialLength" severity="contrast"/>
                   </td>
-                  <td>
-                    <p-tag [value]="material.stockQt ?? 'Sem Estoque'"
-                           [severity]="material.stockQt ? 'success' : 'danger'"></p-tag>
+                  <td class="text-center">
+                    <p-tag [value]="material.availableQuantity <= 0 ? 'Sem Estoque' : material.availableQuantity + ' ' + material.requestUnit"
+                           [severity]="material.availableQuantity ? 'success' : 'danger'"></p-tag>
                   </td>
                   <td>{{ material.deposit }}</td>
                   <td>
@@ -215,33 +215,51 @@
     </div>
   </div>
 
-  <p-dialog [header]="'Equipe' + street.teamName"
-            [modal]="true"
-            [(visible)]="showModalTeam"
-            position="bottom"
-            [style]="{ width: '25rem' }">
+  <p-dialog
+    [header]="'Equipe ' + street.teamName"
+    [modal]="true"
+    [(visible)]="showModalTeam"
+    position="bottom"
+    [style]="{ width: '25rem', padding: '1rem' }"
+    [dismissableMask]="true"
+  >
+    <ng-container *ngIf="loading">
+      <div class="flex h-40 w-full justify-center items-center">
+        <app-loading></app-loading>
+      </div>
+    </ng-container>
 
-
-    <div *ngIf="loading" class="flex h-full w-full justify-center items-center">
-      <app-loading></app-loading>
-    </div>
     <ng-container *ngIf="!loading && filteredUsers.length > 0">
-      <div *ngFor="let user of filteredUsers; index as i;">
-        <span class="text-surface-500 dark:text-surface-400 block mb-8">Colaborador {{ i }}</span>
-        <div class="flex items-center gap-4 mb-4">
-          <label for="username" class="font-semibold w-24">{{ user.name + ' ' + user.last_name }}</label>
-          <p id="username" class="flex-auto">{{ user.phone_number ?? 'Telefone não cadastrado' }}</p>
+      <div *ngFor="let user of filteredUsers; index as i;" class="mb-4 border-b pb-3">
+        <div class="flex items-center gap-3">
+          <i class="pi pi-phone"></i>
+          <div class="flex flex-col">
+            <span class="font-semibold text-gray-800 dark:text-neutral-100">{{ user.name + ' ' + user.last_name }}</span>
+            <a
+              *ngIf="user.phone_number"
+              [href]="'tel:' + user.phone_number"
+              class="text-blue-600 hover:underline flex items-center gap-1"
+            >
+              {{ user.phone_number | mask: '(00) 00000-0000' }}
+            </a>
+
+            <p *ngIf="!user.phone_number">
+              Telefone não cadastrado
+            </p>
+
+          </div>
         </div>
       </div>
     </ng-container>
-    <div *ngIf="!loading && filteredUsers.length === 0" class="flex h-full w-full justify-center items-center">
-      <p>Cadastro não encontrado para essa equipe</p>
-    </div>
 
-    <div class="flex justify-end gap-2">
-      <p-button label="Fechar" (click)="showModalTeam = false"/>
-    </div>
+    <ng-container *ngIf="!loading && filteredUsers.length === 0">
+      <div class="flex h-32 w-full justify-center items-center">
+        <p>Cadastro não encontrado para essa equipe</p>
+      </div>
+    </ng-container>
+
   </p-dialog>
+
   <p-toast/>
 </div>
 

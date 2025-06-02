@@ -24,6 +24,7 @@ data class MaterialInStockDTO(
     val materialType: String,
     val deposit: String,
     val availableQuantity: Double,
+    val requestUnit: String,
 )
 
 data class ReserveDTOResponse(

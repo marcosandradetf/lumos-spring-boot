@@ -50,7 +50,7 @@ export const routes: Routes = [
     data: {role: ['ADMIN', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
   },
   {
-    path: 'estoque/movimento/aprovado',
+    path: 'estoque/movimento-aprovado',
     loadComponent: () => import('./stock/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},

@@ -23,6 +23,11 @@ import {ExecutionService} from '../../executions/execution.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {Dialog} from 'primeng/dialog';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
+
+
+
+
 
 @Component({
   selector: 'app-reservation-management-select',
@@ -44,7 +49,9 @@ import {LoadingComponent} from '../../shared/components/loading/loading.componen
     Dialog,
     NgForOf,
     LoadingComponent,
+    NgxMaskPipe,
   ],
+  providers: [provideNgxMask()],
   templateUrl: './reservation-management-select.component.html',
   styleUrl: './reservation-management-select.component.scss'
 })

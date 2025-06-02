@@ -47,7 +47,7 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
             .connectTimeout(60, TimeUnit.SECONDS) // Timeout de conexão
             .writeTimeout(60, TimeUnit.SECONDS)   // Timeout de escrita
             .readTimeout(60, TimeUnit.SECONDS)    // Timeout de leitura
-            .addInterceptor(AuthInterceptor(secureStorage))
+            .addInterceptor(AuthInterceptor(this, secureStorage))
             .build()
 
         retrofit = Retrofit.Builder()

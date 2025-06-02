@@ -14,7 +14,7 @@ import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
-import com.lumos.lumosspring.notification.service.NotificationService;
+import com.lumos.lumosspring.notifications.service.NotificationService;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.*;

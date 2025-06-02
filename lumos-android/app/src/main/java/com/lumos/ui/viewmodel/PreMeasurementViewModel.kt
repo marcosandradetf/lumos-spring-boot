@@ -48,16 +48,6 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun sendPreMeasurementSync(contractId: Long) {
-        viewModelScope.launch {
-            try {
-                repository.syncMeasurement(contractId)
-            } catch (e: Exception) {
-                Log.e("Erro view model - sendPreMeasurementSync", e.message.toString())
-            }
-        }
-    }
-
     fun loadStreets(contractId: Long) {
         viewModelScope.launch {
             try {
@@ -68,5 +58,16 @@ class PreMeasurementViewModel(
             }
         }
     }
+
+    fun sendPreMeasurementSync(contractId: Long) {
+        viewModelScope.launch {
+            try {
+                repository.queueSyncMeasurement(contractId)
+            } catch (e: Exception) {
+                Log.e("Erro view model - sendPreMeasurementSync", e.message.toString())
+            }
+        }
+    }
+
 
 }

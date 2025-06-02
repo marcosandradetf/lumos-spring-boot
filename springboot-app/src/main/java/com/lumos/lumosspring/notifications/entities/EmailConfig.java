@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.notification;
+package com.lumos.lumosspring.notifications.entities;
 
 import com.lumos.lumosspring.stock.entities.Company;
 import jakarta.persistence.*;

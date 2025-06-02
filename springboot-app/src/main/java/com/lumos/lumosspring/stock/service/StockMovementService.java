@@ -51,7 +51,6 @@ public class StockMovementService {
         List<StockMovementResponse> response = new ArrayList<>();
         for (StockMovement movement : pendingMovements) {
             // Formatação de preço para substituir ponto por vírgula
-            String formattedPrice = this.util.formatPrice(movement.getPriceTotal());
             String employee = movement.getUserCreated().getName().concat(" ")
                     .concat(movement.getUserCreated().getLastName());
 
@@ -83,7 +82,7 @@ public class StockMovementService {
                     movement.getTotalQuantity(),
                     movement.getBuyUnit(),
                     movement.getRequestUnit(),
-                    formattedPrice,
+                    movement.getPricePerItem().toString(),
                     movement.getSupplier().getSupplierName(),
                     movement.getMaterialStock().getCompany().getSocialReason(),
                     movement.getMaterialStock().getDeposit().getDepositName(),
@@ -213,7 +212,6 @@ public class StockMovementService {
         List<StockMovementResponse> response = new ArrayList<>();
         for (StockMovement movement : approvedMovements) {
             // Formatação de preço para substituir ponto por vírgula
-            String formattedPrice = this.util.formatPrice(movement.getPricePerItem());
             String employee = movement.getUserFinished().getName().concat(" ")
                     .concat(movement.getUserCreated().getLastName());
             // Marca do material (evitando NullPointerException)
@@ -243,7 +241,7 @@ public class StockMovementService {
                     movement.getTotalQuantity(),
                     movement.getBuyUnit(),
                     movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
-                    formattedPrice,
+                    movement.getPricePerItem().toString(),
                     movement.getSupplier().getSupplierName(),
                     movement.getMaterialStock().getCompany().getSocialReason(),
                     movement.getMaterialStock().getDeposit().getDepositName(),

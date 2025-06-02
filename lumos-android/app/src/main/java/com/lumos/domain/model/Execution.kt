@@ -2,6 +2,7 @@ package com.lumos.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import okhttp3.Address
 
 @Entity(tableName = "executions")
 data class Execution(
@@ -13,7 +14,10 @@ data class Execution(
     val priority: Boolean,
     val type: String,
     val itemsQuantity: Int,
-    val creationDate: String
+    val creationDate: String,
+    val latitude: Double,
+    val longitude: Double,
+    val photoUri: String? = null,
 )
 
 @Entity(tableName = "reserves")
@@ -23,7 +27,12 @@ data class Reserve(
     val materialName: String,
     val materialQuantity: Double,
     val reserveStatus: String,
-    val streetId: Long
+    val streetId: Long,
+    val depositId: Long,
+    val depositName: String,
+    val depositAddress: String,
+    val stockistName: String,
+    val phoneNumber: String,
 )
 
 data class ExecutionDTO(
@@ -31,9 +40,11 @@ data class ExecutionDTO(
     val streetName: String,
     val teamId: Long,
     val teamName: String,
-    val reserves: List<Reserve>,
     val priority: Boolean,
     val type: String,
     val itemsQuantity: Int,
-    val creationDate: String
+    val creationDate: String,
+    val latitude: Double,
+    val longitude: Double,
+    val reserves: List<Reserve>,
 )
