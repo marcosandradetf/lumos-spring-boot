@@ -118,5 +118,15 @@ object SyncManager {
         enqueueSync(context)
     }
 
+    suspend fun queuePostExecution(context: Context, db: AppDatabase, streetId: Long) {
+        val syncItem = SyncQueueEntity(
+            relatedId = streetId,
+            type = SyncTypes.POST_EXECUTION,
+            priority = 19
+        )
+        db.queueDao().insert(syncItem)
+        enqueueSync(context)
+    }
+
 
 }

@@ -37,5 +37,16 @@ interface ExecutionDao {
     @Query("SELECT * FROM executions WHERE streetId = :lng LIMIT 1")
     suspend fun getExecution(lng: Long): Execution
 
+    @Query("UPDATE executions set photoUri = :photoUri where streetId = :streetId")
+    suspend fun setPhotoUri(photoUri: String, streetId: Long)
+
+    @Query("UPDATE reserves set reserveStatus = :status, quantityExecuted = :quantityExecuted where streetId = :streetId and materialId = :materialId ")
+    suspend fun finishMaterial(
+        materialId: Long,
+        streetId: Long,
+        quantityExecuted: Double,
+        status: String = ReservationStatus.FINISHED
+    )
+
 
 }

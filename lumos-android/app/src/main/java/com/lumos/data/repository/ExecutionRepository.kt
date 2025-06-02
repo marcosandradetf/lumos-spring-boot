@@ -127,5 +127,28 @@ class ExecutionRepository(
             equal = streetId.toString())
     }
 
+    suspend fun setPhotoUri(photoUri: String, streetId: Long){
+        db.executionDao().setPhotoUri(photoUri, streetId)
+    }
+
+    suspend fun finishMaterial(materialId: Long, streetId: Long, quantityExecuted: Double){
+        db.executionDao().finishMaterial(
+            materialId = materialId,
+            streetId = streetId,
+            quantityExecuted = quantityExecuted
+        )
+    }
+
+    suspend fun queuePostExecution(context: Context, streetId: Long) {
+        SyncManager.queuePostExecution(
+            context = context,
+            db = db,
+            streetId = streetId
+        )
+    }
+
+    fun postExecution(): Boolean {
+        TODO("Not yet implemented")
+    }
 
 }

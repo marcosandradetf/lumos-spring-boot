@@ -23,7 +23,7 @@ data class Execution(
     val creationDate: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val photoUri: String? = null,
+    var photoUri: String? = null,
 )
 
 @Entity(tableName = "reserves")

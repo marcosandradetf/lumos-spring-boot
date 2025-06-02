@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
@@ -82,7 +83,9 @@ import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils.formatDouble
 import java.io.File
 import androidx.core.net.toUri
+import com.lumos.data.repository.ReservationStatus
 import com.lumos.domain.model.Contract
+import com.lumos.ui.components.Alert
 import com.lumos.ui.components.Loading
 import com.lumos.utils.Utils.buildAddress
 
@@ -90,7 +93,6 @@ import com.lumos.utils.Utils.buildAddress
 fun MaterialScreen(
     streetId: Long,
     executionViewModel: ExecutionViewModel,
-    connection: ConnectivityUtils,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -103,9 +105,22 @@ fun MaterialScreen(
 ) {
     var execution by remember { mutableStateOf<Execution?>(null) }
     val reserves by executionViewModel.reserves.collectAsState()
+    var alertModal by remember { mutableStateOf(false) }
 
     LaunchedEffect(streetId) {
         execution = executionViewModel.getExecution(streetId)
+        executionViewModel.loadFlowReserves(
+            streetId,
+            status = listOf(ReservationStatus.COLLECTED)
+        )
+    }
+
+    LaunchedEffect(reserves) {
+        if (reserves.isEmpty()) {
+            execution?.let {
+                executionViewModel.queuePostExecution(it.streetId, context)
+            }
+        }
     }
 
     execution?.let {
@@ -120,14 +135,27 @@ fun MaterialScreen(
             context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
-            takePhoto = {
-                it.toString()
+            takePhoto = { uri ->
+                it.photoUri = uri.toString()
+                executionViewModel.setPhotoUri(
+                    photoUri = uri.toString(),
+                    streetId = it.streetId
+                )
             },
-            onFinishMaterial = {
-                it
-            },
-            sendExecution = {
+            onFinishMaterial = { materialId, quantityExecuted ->
+                if (reserves.size == 1 && it.photoUri == null)
+                    alertModal = true
+                else
+                    executionViewModel.finishMaterial(
+                        materialId = materialId,
+                        streetId = it.streetId,
+                        quantityExecuted = quantityExecuted
+                    )
 
+            },
+            alertModal = alertModal,
+            closeAlertModal = {
+                alertModal = false
             }
         )
     } ?: Loading()
@@ -147,8 +175,9 @@ fun MaterialsContent(
     navController: NavHostController,
     notificationsBadge: String,
     takePhoto: (uri: Uri) -> Unit,
-    onFinishMaterial: (Long) -> Unit,
-    sendExecution: () -> Unit,
+    onFinishMaterial: (Long, Double) -> Unit,
+    alertModal: Boolean,
+    closeAlertModal: () -> Unit,
 ) {
     val fileUri: MutableState<Uri?> = remember { mutableStateOf(null) }
     val imageSaved = remember { mutableStateOf(false) }
@@ -156,19 +185,12 @@ fun MaterialsContent(
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
         file.createNewFile() // Garante que o arquivo seja criado
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-
-        Log.d("ImageDebug", "URI criada: $uri") // 📌 Adiciona log aqui
-
         uri
     }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success) {
-                Log.d(
-                    "ImageDebug",
-                    "Foto tirada com sucesso! URI: ${fileUri.value}"
-                ) // 🔍 Verifica se foi salvo
                 fileUri.value?.let { uri ->
                     takePhoto(uri)
                     imageSaved.value = true
@@ -206,8 +228,8 @@ fun MaterialsContent(
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
                 ) {
                     items(reserves) {
-                        MaterialItem(material = it, finish = {
-                            onFinishMaterial(it.materialId)
+                        MaterialItem(material = it, finish = { quantityExecuted ->
+                            onFinishMaterial(it.materialId, quantityExecuted)
                         })
                     }
                 }
@@ -266,6 +288,15 @@ fun MaterialsContent(
 
                         }
                     }
+                }
+
+                if (alertModal) {
+                    Alert(
+                        title = "Você esqueceu da foto",
+                        body = "Antes de finalizar tire uma foto.",
+                        confirm = {
+                            closeAlertModal()
+                        })
                 }
 
 
@@ -357,7 +388,7 @@ fun MaterialsContent(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Execução pronta para envio!",
+                            text = "Missão cumprida!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
@@ -366,7 +397,7 @@ fun MaterialsContent(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Todas as reservas foram concluídas com sucesso.\nFinalize abaixo para enviar ao sistema.",
+                            text = "Todas as reservas foram concluídas com sucesso.\nOs dados serão enviados para o sistema.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -375,7 +406,7 @@ fun MaterialsContent(
 
                     Button(
                         onClick = {
-                            sendExecution()
+                            onNavigateToHome()
                         },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -383,11 +414,11 @@ fun MaterialsContent(
                             .height(56.dp),
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.Send,
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
                             contentDescription = null,
                             modifier = Modifier.padding(end = 8.dp)
                         )
-                        Text("Finalizar Execução")
+                        Text("Ok, voltar a tela anterior")
                     }
                 }
             }
@@ -397,7 +428,7 @@ fun MaterialsContent(
 }
 
 @Composable
-fun MaterialItem(material: Reserve, finish: () -> Unit) {
+fun MaterialItem(material: Reserve, finish: (Double) -> Unit) {
     var confirmModal by remember { mutableStateOf(false) }
     var quantityExecuted by remember { mutableDoubleStateOf(material.materialQuantity) }
 
@@ -558,14 +589,13 @@ fun MaterialItem(material: Reserve, finish: () -> Unit) {
                     }
                 }
             }
-
         }
 
         if (confirmModal)
             Confirm(
                 body = "Deseja confirmar a execução de $quantityExecuted 12 ${material.requestUnit}?",
                 confirm = {
-                    finish()
+                    finish(quantityExecuted)
                 },
                 cancel = {
                     confirmModal = false
@@ -715,7 +745,7 @@ fun PrevMScreen() {
 
     MaterialsContent(
         execution = values,
-        reserves = emptyList(),
+        reserves = reserves,
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
@@ -725,7 +755,8 @@ fun PrevMScreen() {
         notificationsBadge = "12",
         pSelected = BottomBar.HOME.value,
         takePhoto = {},
-        onFinishMaterial = {},
-        sendExecution = {}
+        onFinishMaterial = { _, _ -> },
+        alertModal = false,
+        closeAlertModal = {}
     )
 }

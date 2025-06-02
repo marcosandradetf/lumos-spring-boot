@@ -117,5 +117,39 @@ class ExecutionViewModel(
         }
     }
 
+    fun setPhotoUri(photoUri: String, streetId: Long) {
+        viewModelScope.launch {
+            try {
+                repository.setPhotoUri(photoUri, streetId)
+            } catch (e: Exception) {
+                Log.e("Error setPhotoUri", e.message.toString())
+            }
+        }
+    }
+
+    fun finishMaterial(materialId: Long, streetId: Long, quantityExecuted: Double) {
+        viewModelScope.launch {
+            try {
+                repository.finishMaterial(
+                    materialId = materialId,
+                    streetId = streetId,
+                    quantityExecuted = quantityExecuted
+                )
+            } catch (e: Exception) {
+                Log.e("Error finishMaterial", e.message.toString())
+            }
+        }
+    }
+
+    fun queuePostExecution(streetId: Long, context: Context) {
+        viewModelScope.launch {
+            try {
+                repository.queuePostExecution(context, streetId)
+            } catch (e: Exception) {
+                Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
+            }
+        }
+    }
+
 
 }

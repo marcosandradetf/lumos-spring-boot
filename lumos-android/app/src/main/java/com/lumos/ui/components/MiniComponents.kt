@@ -73,6 +73,7 @@ fun NothingData(description: String) {
         )
     }
 }
+
 @Composable
 fun Confirm(
     title: String = "Confirmação",
@@ -168,8 +169,79 @@ fun Confirm(
     )
 }
 
+@Composable
+fun Alert(
+    title: String = "Atenção",
+    body: String = "Você tem certeza?",
+    icon: ImageVector? = null,
+    confirm: () -> Unit,
+) {
+    AlertDialog(
+        shape = RoundedCornerShape(12.dp),
+        onDismissRequest = confirm,
+        icon = {
+            icon?.let {
+                Icon(it, contentDescription = "Icon")
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = body,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        },
+
+        confirmButton = {},
+        dismissButton = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 0.dp)
+            ) {
+
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { confirm() }
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Ok",
+                            color = Color.Blue,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                    }
+
+                }
+            }
+        },
+
+        )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-    Confirm(body = "Deseja confirmar a execução de 12 unidades?", confirm = {}, cancel = {})
+    Alert(title = "Você esqueceu da foto" ,body = "Antes de finalizar tire uma foto.", confirm = {})
 }

@@ -40,6 +40,7 @@ object SyncTypes {
     const val SYNC_STOCK = "SYNC_STOCK"
     const val POST_PRE_MEASUREMENT = "POST_PRE_MEASUREMENT"
     const val SYNC_EXECUTIONS = "SYNC_EXECUTIONS"
+    const val POST_EXECUTION = "POST_EXECUTION"
     const val POST_GENERIC = "POST_GENERIC"
     const val GET_GENERIC = "GET_GENERIC"
 
@@ -116,6 +117,7 @@ class SyncQueueWorker(
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
+                SyncTypes.POST_EXECUTION -> postExecution(item)
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
                     queueDao.update(item.copy(status = SyncStatus.FAILED))
@@ -192,7 +194,7 @@ class SyncQueueWorker(
             .build()
     }
 
-    suspend fun postPreMeasurement(item: SyncQueueEntity, uuid: String): Result {
+    private suspend fun postPreMeasurement(item: SyncQueueEntity, uuid: String): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -244,7 +246,7 @@ class SyncQueueWorker(
         }
     }
 
-    suspend fun syncStock(item: SyncQueueEntity): Result {
+    private suspend fun syncStock(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -276,7 +278,7 @@ class SyncQueueWorker(
         }
     }
 
-    suspend fun syncContract(item: SyncQueueEntity): Result {
+    private suspend fun syncContract(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -310,7 +312,7 @@ class SyncQueueWorker(
         }
     }
 
-    suspend fun syncExecutions(item: SyncQueueEntity): Result {
+    private suspend fun syncExecutions(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -328,6 +330,40 @@ class SyncQueueWorker(
             }
 
             val success = executionRepository.syncExecutions()
+
+            return if (success) {
+                queueDao.deleteById(item.id)
+                Result.success()
+            } else {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                Result.retry() // ainda quer tentar mais uma vez
+            }
+
+        } catch (e: Exception) {
+            Log.e("syncExecutions", "Erro ao sincronizar: ${e.message}")
+            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            Result.failure()
+        }
+    }
+
+    private suspend fun postExecution(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (!ConnectivityUtils.isNetworkGood(applicationContext)) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val success = executionRepository.postExecution()
 
             return if (success) {
                 queueDao.deleteById(item.id)
