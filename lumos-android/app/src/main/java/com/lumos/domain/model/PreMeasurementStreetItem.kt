@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class PreMeasurementStreetItem(
     @PrimaryKey(autoGenerate = true) val preMeasurementItemId: Long = 0,
     var preMeasurementStreetId: Long,
-    val materialId: Long,
-    val materialQuantity: Int,
+    val itemContractId: Long,
+    val itemContractQuantity: Int,
     val contractId: Long,
 )

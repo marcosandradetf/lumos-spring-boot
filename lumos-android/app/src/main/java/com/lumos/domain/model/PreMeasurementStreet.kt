@@ -8,12 +8,12 @@ data class PreMeasurementStreet(
     @PrimaryKey(autoGenerate = true) val preMeasurementStreetId: Long = 0,
     val contractId: Long,
     var lastPower: String?,
-    var latitude: Double,
-    var longitude: Double,
+    var latitude: Double?,
+    var longitude: Double?,
     var street: String,
     var number: String?,
     var neighborhood: String,
     var city: String,
     var state: String?,
-    var photoUri: String
+    var photoUri: String?
 )

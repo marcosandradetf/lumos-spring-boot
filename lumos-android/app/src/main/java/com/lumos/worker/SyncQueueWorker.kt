@@ -12,7 +12,6 @@ import com.lumos.data.api.ApiService
 import com.lumos.data.api.ContractApi
 import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.PreMeasurementApi
-import com.lumos.data.api.StockApi
 import com.lumos.data.api.UpdateEntity
 import com.lumos.data.api.UserExperience
 import com.lumos.data.database.AppDatabase
@@ -21,7 +20,6 @@ import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.ExecutionRepository
 import com.lumos.data.repository.GenericRepository
 import com.lumos.data.repository.PreMeasurementRepository
-import com.lumos.data.repository.StockRepository
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.ConnectivityUtils
@@ -36,6 +34,7 @@ object SyncStatus {
 }
 
 object SyncTypes {
+    const val SYNC_CONTRACT_ITEMS = "SYNC_CONTRACT_ITEMS"
     const val SYNC_CONTRACTS = "SYNC_CONTRACTS"
     const val SYNC_STOCK = "SYNC_STOCK"
     const val POST_PRE_MEASUREMENT = "POST_PRE_MEASUREMENT"
@@ -56,7 +55,6 @@ class SyncQueueWorker(
     private val secureStorage: SecureStorage = SecureStorage(appContext)
 
     private val preMeasurementRepository: PreMeasurementRepository
-    private val stockRepository: StockRepository
     private val contractRepository: ContractRepository
     private val executionRepository: ExecutionRepository
     private val genericRepository: GenericRepository
@@ -69,7 +67,6 @@ class SyncQueueWorker(
         queueDao = db.queueDao()
 
         val preMeasurementApi = api.createApi(PreMeasurementApi::class.java)
-        val stockApi = api.createApi(StockApi::class.java)
         val contractApi = api.createApi(ContractApi::class.java)
         val executionApi = api.createApi(ExecutionApi::class.java)
 
@@ -77,11 +74,6 @@ class SyncQueueWorker(
             db,
             preMeasurementApi,
             appContext
-        )
-
-        stockRepository = StockRepository(
-            db = db,
-            api = stockApi,
         )
 
         contractRepository = ContractRepository(
@@ -113,7 +105,7 @@ class SyncQueueWorker(
 
             val result = when (item.type) {
                 SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item, uuid)
-                SyncTypes.SYNC_STOCK -> syncStock(item)
+                SyncTypes.SYNC_CONTRACT_ITEMS -> syncContractItems(item)
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
@@ -246,7 +238,7 @@ class SyncQueueWorker(
         }
     }
 
-    private suspend fun syncStock(item: SyncQueueEntity): Result {
+    private suspend fun syncContractItems(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -260,7 +252,7 @@ class SyncQueueWorker(
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
                 Log.e("SyncStock", "Internet")
                 queueDao.update(inProgressItem)
-                val success = stockRepository.syncMaterials()
+                val success = contractRepository.syncContractItems()
                 if (success) {
                     queueDao.deleteById(item.id)
                     Result.success()

@@ -102,38 +102,25 @@ class ContractService(
             val createdBy: String,
             val createdAt: String,
             val status: String,
-            val powers: String? = null,
-            val lengths: String? = null,
+            val itemsIds: String? = null,
         )
 
         val contractList = mutableListOf<ContractForPreMeasurementDTO>()
 
         contractRepository.findAll().forEach { contract ->
-            val powers = StringBuilder()
-            val lengths = StringBuilder()
+            val ids = StringBuilder()
 
             contract.contractItemsQuantitative.forEach { item ->
-                val linking = item.referenceItem.linking
+                val id = item.referenceItem.contractReferenceItemId.toString()
 
-                if (!linking.isNullOrEmpty()) {
-                    val powerList = linking.split("#")
+                val listId = id.split("#")
 
-                    when (item.referenceItem.type) {
-                        "LED" -> {
-                            if (powers.isNotEmpty()) {
-                                powers.append("#")
-                            }
-                            powers.append(powerList.joinToString("#"))
-                        }
-
-                        "BRAÇO" -> {
-                            if (lengths.isNotEmpty()) {
-                                lengths.append("#")
-                            }
-                            lengths.append(powerList.joinToString("#"))
-                        }
-                    }
+                if (ids.isNotEmpty()) {
+                    ids.append("#")
                 }
+                ids.append(listId.joinToString("#"))
+
+
             }
 
 
@@ -145,8 +132,7 @@ class ContractService(
                     createdBy = contract.createdBy.name,
                     createdAt = contract.creationDate.toString(),
                     status = contract.status,
-                    powers = "$powers",
-                    lengths = "$lengths",
+                    itemsIds = "$ids",
                 )
             )
         }

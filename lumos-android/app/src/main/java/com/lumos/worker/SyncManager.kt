@@ -69,9 +69,9 @@ object SyncManager {
         enqueueSync(context)
     }
 
-    suspend fun queueSyncStock(context: Context, db: AppDatabase) {
+    suspend fun queueSyncContractItems(context: Context, db: AppDatabase) {
         val syncItem = SyncQueueEntity(
-            type = SyncTypes.SYNC_STOCK,
+            type = SyncTypes.SYNC_CONTRACT_ITEMS,
             priority = 40
         )
         db.queueDao().insert(syncItem)

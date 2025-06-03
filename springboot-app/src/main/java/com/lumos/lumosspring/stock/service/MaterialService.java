@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.stock.service;
 
-import com.lumos.lumosspring.stock.controller.dto.mobile.MaterialDTOMob;
 import com.lumos.lumosspring.stock.entities.*;
 import com.lumos.lumosspring.stock.repository.*;
 import com.lumos.lumosspring.user.UserRepository;
@@ -10,7 +9,6 @@ import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
 import com.lumos.lumosspring.util.Util;
 import jakarta.transaction.Transactional;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -265,31 +262,6 @@ public class MaterialService {
         return ResponseEntity.ok(convertToMaterialResponse(List.of(materialToUpdate)));
     }
 
-
-    @Cacheable("getMaterialsForMob")
-    public ResponseEntity<List<MaterialDTOMob>> findAllForMobile() {
-        var materials = materialRepository.getMaterialsForInstallation();
-        List<MaterialDTOMob> materialsDTO = new ArrayList<>();
-
-        materials.sort(Comparator
-                .comparing(Material::getMaterialName)
-                .thenComparing(m -> util.extractNumber(m.getMaterialLength()))
-                .thenComparing(m -> util.extractNumber(m.getMaterialPower()))
-        );
-
-        for (Material m : materials) {
-            materialsDTO.add(new MaterialDTOMob(
-                    m.getIdMaterial(),
-                    m.getMaterialName(),
-                    m.getMaterialBrand(),
-                    m.getMaterialPower(),
-                    m.getMaterialAmps(),
-                    m.getMaterialLength()
-            ));
-        }
-
-        return ResponseEntity.ok(materialsDTO);
-    }
 
     public ResponseEntity<?> findAllForImportPreMeasurement() {
         List<Material> materials = materialRepository.findAllForImportPreMeasurement(); // ou equivalente

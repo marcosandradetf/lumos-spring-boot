@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.contract.dto
 
-import jakarta.persistence.Column
 
 data class ContractReferenceItemDTO(
     var contractReferenceItemId: Long,
@@ -11,4 +10,13 @@ data class ContractReferenceItemDTO(
     var itemDependency : String?,
     var quantity : Double?,
     var price : String?,
+)
+
+data class PContractReferenceItemDTO(
+    var contractReferenceItemId: Long,
+    var description : String,
+    var nameForImport : String,
+    var type : String?,
+    var linking : String?,
+    var itemDependency : String?,
 )

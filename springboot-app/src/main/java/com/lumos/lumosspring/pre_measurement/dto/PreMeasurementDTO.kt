@@ -21,6 +21,7 @@ data class PreMeasurementStreetDTO(
     var neighborhood: String,
     var city: String,
     var state: String?,
+    var photoUri: String?
 )
 
 data class PreMeasurementStreetItemDTO(

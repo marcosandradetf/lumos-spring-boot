@@ -1,12 +1,16 @@
 package com.lumos.lumosspring.pre_measurement.controller;
 
+import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO;
 import com.lumos.lumosspring.pre_measurement.dto.ModificationsDTO;
 import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
 import com.lumos.lumosspring.pre_measurement.service.PreMeasurementService;
+import com.lumos.lumosspring.stock.controller.dto.mobile.ContractItemsDTO;
 import com.lumos.lumosspring.util.ContractStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -18,6 +22,10 @@ public class PreMeasurementController {
         this.preMeasurementService = preMeasurementService;
     }
 
+    @GetMapping("/mobile/pre-measurement/get-items")
+    public ResponseEntity<List<PContractReferenceItemDTO>> getItemsForMob() {
+        return preMeasurementService.getItems();
+    }
 
     @PostMapping("/mobile/execution/insert-pre-measurement")
     public ResponseEntity<?> saveMeasurement(@RequestBody PreMeasurementDTO measurementDTO, @RequestHeader("UUID") String userUUID) {

@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.Execution
-import com.lumos.domain.model.Material
+import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.Reserve
@@ -21,7 +21,7 @@ import java.util.concurrent.Executors
         (PreMeasurementStreetItem::class),
         (Deposit::class),
         (PreMeasurementStreet::class),
-        (Material::class),
+        (Item::class),
         (Contract::class),
         (NotificationItem::class),
         (SyncQueueEntity::class),
@@ -30,7 +30,6 @@ import java.util.concurrent.Executors
     version = 1,
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun stockDao(): StockDao
     abstract fun preMeasurementDao(): PreMeasurementDao
     abstract fun contractDao(): ContractDao
     abstract fun notificationDao(): NotificationDao

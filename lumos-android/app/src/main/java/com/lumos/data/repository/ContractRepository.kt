@@ -4,6 +4,7 @@ import android.content.Context
 import com.lumos.data.api.ContractApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.Item
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
@@ -62,4 +63,41 @@ class ContractRepository(
         )
     }
 
+    suspend fun syncContractItems(): Boolean {
+        var remoteItems: List<Item> = emptyList()
+
+        try {
+            val response = api.getItems()
+            if (response.isSuccessful) {
+                val body = response.body()
+                remoteItems = body!!
+
+            } else {
+                val code = response.code()
+            }
+        } catch (e: HttpException) {
+            val response = e.response()
+            val errorCode = e.code()
+        }
+
+        if(remoteItems.isNotEmpty()) {
+            db.contractDao().deleteAllItems()
+            remoteItems.forEach { item ->
+                db.contractDao().insertItem(item)
+            }
+            return true
+        }
+        return false
+    }
+
+    fun getItemsFromContract(powers: List<String>): Flow<List<Item>> =
+        db.contractDao().getItemsFromContract(powers)
+
+
+    suspend fun queueSyncContractItems(context: Context) {
+        SyncManager.queueSyncContractItems(
+            context,
+            db
+        )
+    }
 }

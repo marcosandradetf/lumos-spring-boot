@@ -1,8 +1,10 @@
 package com.lumos.lumosspring.pre_measurement.service;
 
+import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO;
 import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
+import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.pre_measurement.dto.*;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
@@ -15,6 +17,7 @@ import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.notifications.service.NotificationService;
+import com.lumos.lumosspring.stock.controller.dto.mobile.ContractItemsDTO;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.*;
@@ -42,8 +45,9 @@ public class PreMeasurementService {
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
     private final JdbcTemplate jdbcTemplate;
+    private final ContractReferenceItemRepository contractReferenceItemRepository;
 
-    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util, ContractRepository contractRepository, NotificationService notificationService, JdbcTemplate jdbcTemplate) {
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util, ContractRepository contractRepository, NotificationService notificationService, JdbcTemplate jdbcTemplate, ContractReferenceItemRepository contractReferenceItemRepository, ContractReferenceItemRepository contractReferenceItemRepository1) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.materialRepository = materialRepository;
         this.preMeasurementRepository = preMeasurementRepository;
@@ -53,6 +57,7 @@ public class PreMeasurementService {
         this.contractRepository = contractRepository;
         this.notificationService = notificationService;
         this.jdbcTemplate = jdbcTemplate;
+        this.contractReferenceItemRepository = contractReferenceItemRepository;
     }
 
     @Caching(evict = {
@@ -419,7 +424,7 @@ public class PreMeasurementService {
                 p.getCity(),
                 "",
                 p.getTypePreMeasurement(),
-                p.getTypePreMeasurement() == ContractType.INSTALLATION ? "badge-primary" : "badge-neutral",
+                Objects.equals(p.getTypePreMeasurement(), ContractType.INSTALLATION) ? "badge-primary" : "badge-neutral",
                 p.getTypePreMeasurement(),
                 p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
                 p.getStatus(),
@@ -688,4 +693,14 @@ public class PreMeasurementService {
         preMeasurementRepository.save(preMeasurement);
     }
 
+    public ResponseEntity<List<PContractReferenceItemDTO>> getItems() {
+        var items = contractReferenceItemRepository.findAllByPreMeasurement();
+
+        items.sort(Comparator
+                .comparing(PContractReferenceItemDTO::getDescription)
+                .thenComparing(m -> util.extractNumber(m.getLinking()))
+        );
+
+        return ResponseEntity.ok(items);
+    }
 }

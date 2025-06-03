@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.Item
 import kotlinx.coroutines.flow.Flow
 
 
@@ -30,4 +31,17 @@ interface ContractDao {
 
     @Query("DELETE FROM contracts WHERE contractId = :contractId")
     suspend fun deleteContract(contractId: Long)
+
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertItem(item: Item)
+
+    @Query("""
+        SELECT * FROM items 
+        WHERE contractReferenceItemId IN (:itemsIds)
+    """)
+    fun getItemsFromContract(itemsIds: List<String>): Flow<List<Item>>
+
+    @Query("DELETE FROM items")
+    suspend fun deleteAllItems()
 }

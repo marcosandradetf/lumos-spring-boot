@@ -86,18 +86,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.work.BackoffPolicy
-import androidx.work.Constraints
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
 import com.lumos.data.api.UserExperience
 import com.lumos.domain.model.Contract
-import com.lumos.domain.model.Material
+import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.service.AddressService
@@ -106,18 +100,12 @@ import com.lumos.ui.components.NetworkStatusBar
 import com.lumos.ui.components.TopBar
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
-import com.lumos.ui.viewmodel.StockViewModel
-import com.lumos.worker.SyncManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 @Composable
 fun PreMeasurementStreetScreen(
     back: (Long) -> Unit,
     context: Context,
-    stockViewModel: StockViewModel,
     preMeasurementViewModel: PreMeasurementViewModel,
     contractId: Long,
     contractViewModel: ContractViewModel,
@@ -133,7 +121,7 @@ fun PreMeasurementStreetScreen(
     var contract by remember { mutableStateOf<Contract?>(null) }
 
     // Obtém o estado atual dos depósitos
-    val materials by stockViewModel.materials.collectAsState()
+    val items by contractViewModel.items.collectAsState()
 
     val preMeasurementStreet by remember {
         mutableStateOf(
@@ -168,10 +156,10 @@ fun PreMeasurementStreetScreen(
             val lengthsList = loadedContract.lengths
                 ?.split("#")?.map { it.trim() } ?: emptyList()
 
-            stockViewModel.loadMaterialsOfContract(powersList, lengthsList)
+            contractViewModel.loadItemsFromContract(powersList, lengthsList)
 
             // Agendar o Worker assim que a tela for aberta
-            stockViewModel.queueSyncStock(context)
+            contractViewModel.queueSyncContractItems(context)
         }
     }
 
@@ -192,18 +180,14 @@ fun PreMeasurementStreetScreen(
                 preMeasurementStreet.neighborhood = neighborhood
                 preMeasurementStreet.city = city
                 preMeasurementStreet.state = state
-                preMeasurementStreet.latitude = vLatitude ?: 0.0
-                preMeasurementStreet.longitude = vLongitude ?: 0.0
+                preMeasurementStreet.latitude = vLatitude
+                preMeasurementStreet.longitude = vLongitude
 
             } else {
                 Log.e("GET Address", "Latitude ou Longitude são nulos.")
             }
         }
     }
-
-
-
-
 
     if (vLatitude == null || vLongitude == null) {
         Column(
@@ -281,7 +265,7 @@ fun PreMeasurementStreetScreen(
                 showModal = false
             },
             preList = preMeasurementStreetItems,
-            materials = materials,
+            items = items,
             preMeasurementStreetId = preMeasurementStreet.preMeasurementStreetId,
             contractId = contractId,
             context = context
@@ -774,7 +758,7 @@ fun DialogExit(
 @Composable
 fun BottomSheetDialog(
     onDismissRequest: (List<PreMeasurementStreetItem>) -> Unit,
-    materials: List<Material>,
+    items: List<Item>,
     preList: List<PreMeasurementStreetItem>,
     preMeasurementStreetId: Long,
     contractId: Long,
@@ -782,9 +766,9 @@ fun BottomSheetDialog(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val preMeasurementStreetItems = remember { mutableStateListOf<PreMeasurementStreetItem>() }
-    val filteredList = materials.filter {
-        it.materialName?.contains(searchQuery, ignoreCase = true) ?: false ||
-                it.materialPower?.contains(searchQuery, ignoreCase = true) ?: false
+    val filteredList = items.filter {
+        it.nameForImport.contains(searchQuery, ignoreCase = true) ||
+                it.linking?.contains(searchQuery, ignoreCase = true) ?: false
     }
 
     LaunchedEffect(preList) {
@@ -857,32 +841,32 @@ fun BottomSheetDialog(
             Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn {
-                items(filteredList) { material ->
-                    val selectedItem = preMeasurementStreetItems.find { it.materialId == material.materialId }
+                items(filteredList) { item ->
+                    val selectedItem = preMeasurementStreetItems.find { it.itemContractId == item.contractReferenceItemId }
                     // Passando diretamente o estado de 'selected' e 'quantity' do Composable 1
                     ItemLightRow(
-                        material = material,
+                        item = item,
                         preSelected = selectedItem != null,
-                        preQuantity = selectedItem?.materialQuantity
+                        preQuantity = selectedItem?.itemContractQuantity
                             ?: 0,
                         onItemSelected = { m ->
-                            if (preMeasurementStreetItems.find { item -> item.materialId == m.materialId } == null) {
+                            if (preMeasurementStreetItems.find { item -> item.itemContractId == m.contractReferenceItemId } == null) {
                                 preMeasurementStreetItems.add(
                                     PreMeasurementStreetItem(
                                         preMeasurementStreetId = preMeasurementStreetId,
-                                        materialId = m.materialId,
-                                        materialQuantity = 0,
+                                        itemContractId = m.contractReferenceItemId,
+                                        itemContractQuantity = 0,
                                         contractId = contractId
                                     )
                                 )
                             } else {
-                                preMeasurementStreetItems.removeAll { item -> item.materialId == m.materialId }
+                                preMeasurementStreetItems.removeAll { item -> item.itemContractId == m.contractReferenceItemId }
                             }
                         },
                         onQuantityChange = { materialId, quantity ->
                             preMeasurementStreetItems.replaceAll {
-                                if (it.materialId == materialId) it.copy(
-                                    materialQuantity = quantity
+                                if (it.itemContractId == materialId) it.copy(
+                                    itemContractQuantity = quantity
                                 ) else it
                             }
                         },
@@ -897,8 +881,8 @@ fun BottomSheetDialog(
 
 @Composable
 fun ItemLightRow(
-    material: Material,
-    onItemSelected: (Material) -> Unit,
+    item: Item,
+    onItemSelected: (Item) -> Unit,
     onQuantityChange: (Long, Int) -> Unit,
     context: Context,
     preSelected: Boolean,
@@ -907,15 +891,7 @@ fun ItemLightRow(
     var selected = preSelected
     var quantity = preQuantity
 
-    val materialChar = if (material.materialLength != null) {
-        "Tamanho: ${material.materialLength}"
-    } else if (material.materialAmps != null) {
-        "Corrente: ${material.materialAmps}"
-    } else if (material.materialPower != null) {
-        "Potência: ${material.materialPower}"
-    } else {
-        ""
-    }
+    val materialChar = item.linking
 
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.background,
@@ -932,7 +908,7 @@ fun ItemLightRow(
                         onLongPress = {
                             UserExperience.vibrate(context = context, 10)
                             selected = !selected
-                            onItemSelected(material)
+                            onItemSelected(item)
                         }
                     )
                 },
@@ -944,34 +920,38 @@ fun ItemLightRow(
                 disabledContentColor = MaterialTheme.colorScheme.onSecondary
             )
         ) {
-            Row(
-                modifier = if (materialChar.isNotEmpty()) Modifier.padding(16.dp)
-                else Modifier.padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = material.materialName ?: "",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
-                    )
-                    if (materialChar.isNotEmpty()) {
+            if (materialChar != null) {
+                Row(
+                    modifier = if (materialChar.isNotEmpty()) Modifier.padding(16.dp)
+                    else Modifier.padding(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = materialChar,
-                            fontSize = 14.sp,
-                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground
+                            text = item.nameForImport,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
                         )
-                    }
-                    // Só mostra o controle de quantidade se o item estiver selecionado
+                        if (materialChar != null) {
+                            if (materialChar.isNotEmpty()) {
+                                Text(
+                                    text = materialChar,
+                                    fontSize = 14.sp,
+                                    color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                        // Só mostra o controle de quantidade se o item estiver selecionado
 
+                    }
+                    Icon(
+                        imageVector = Icons.Default.Fingerprint,
+                        contentDescription = "Pressione e segure",
+                        modifier = Modifier.padding(top = 8.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
                 }
-                Icon(
-                    imageVector = Icons.Default.Fingerprint,
-                    contentDescription = "Pressione e segure",
-                    modifier = Modifier.padding(top = 8.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
             }
 
         }
@@ -987,7 +967,7 @@ fun ItemLightRow(
                         onLongPress = {
                             UserExperience.vibrate(context = context, 10)
                             selected = !selected
-                            onItemSelected(material)
+                            onItemSelected(item)
                         }
                     )
                 },
@@ -1008,7 +988,7 @@ fun ItemLightRow(
             ) {
                 // Texto para o nome do material ou outros detalhes, se necessário
                 Text(
-                    text = "${material.materialName ?: ""} -  $materialChar",
+                    text = "${item.nameForImport} -  $materialChar",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSecondary
@@ -1026,7 +1006,7 @@ fun ItemLightRow(
                             if (quantity > 0) {
                                 quantity -= 1
                                 onQuantityChange(
-                                    material.materialId,
+                                    item.contractReferenceItemId,
                                     quantity
                                 )
                             }
@@ -1056,7 +1036,7 @@ fun ItemLightRow(
                     IconButton(
                         onClick = {
                             quantity += 1
-                            onQuantityChange(material.materialId, quantity)
+                            onQuantityChange(item.contractReferenceItemId, quantity)
                         },
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
@@ -1092,13 +1072,13 @@ fun PrevStreet() {
     val list = listOf(
         PreMeasurementStreetItem(
             preMeasurementStreetId = 1,
-            materialId = 1,
-            materialQuantity = 1,
+            itemContractId = 1,
+            itemContractQuantity = 1,
             contractId = 1
         )
     )
 
-//    val materials = listOf(
+//    val items = listOf(
 //        Material(
 //            materialId = 1,
 //            materialName = "LED",
@@ -1131,20 +1111,20 @@ fun PrevStreet() {
         takePhoto = { },
     )
 
-    ItemLightRow(
-        material = Material(
-            materialId = 1,
-            materialName = "LED",
-            materialPower = "100W",
-            materialAmps = null,
-            materialLength = null
-        ),
-        onItemSelected = {  },
-        onQuantityChange = { _,_ ->},
-        context = LocalContext.current,
-        preSelected = true,
-        preQuantity = 12
-    )
+//    ItemLightRow(
+//        item = Item(
+//            contractReferenceItemId = 1,
+//            description = "LED",
+//            materialPower = "100W",
+//            materialAmps = null,
+//            materialLength = null
+//        ),
+//        onItemSelected = {  },
+//        onQuantityChange = { _,_ ->},
+//        context = LocalContext.current,
+//        preSelected = true,
+//        preQuantity = 12
+//    )
 
 
 }
