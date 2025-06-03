@@ -40,13 +40,21 @@ interface ExecutionDao {
     @Query("UPDATE executions set photoUri = :photoUri where streetId = :streetId")
     suspend fun setPhotoUri(photoUri: String, streetId: Long)
 
-    @Query("UPDATE reserves set reserveStatus = :status, quantityExecuted = :quantityExecuted where streetId = :streetId and materialId = :materialId ")
+    @Query("UPDATE reserves set reserveStatus = :status, quantityExecuted = :quantityExecuted where reserveId = :reserveId")
     suspend fun finishMaterial(
-        materialId: Long,
-        streetId: Long,
+        reserveId: Long,
         quantityExecuted: Double,
         status: String = ReservationStatus.FINISHED
     )
 
+    data class ReservePartial(
+        val reserveId: Long,
+        val quantityExecuted: Double,
+    )
+    @Query("SELECT streetId, reserveId, quantityExecuted FROM reserves WHERE streetId = :lng")
+    fun getReservesPartial(lng: Long): List<ReservePartial>
+
+    @Query("SELECT photoUri FROM executions WHERE streetId = :lng LIMIT 1")
+    suspend fun getPhotoUri(lng: Long): String
 
 }

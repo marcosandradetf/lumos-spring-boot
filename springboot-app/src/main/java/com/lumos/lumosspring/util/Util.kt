@@ -250,6 +250,7 @@ object NotificationType {
 object ReservationStatus {
     const val PENDING = "PENDING"
     const val APPROVED = "APPROVED"
+    const val REJECTED = "REJECTED"
     const val COLLECTED = "COLLECTED"
     const val CANCELLED = "CANCELLED"
     const val FINISHED = "FINISHED"

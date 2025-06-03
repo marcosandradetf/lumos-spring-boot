@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.pre_measurement.repository;
 
+import com.lumos.lumosspring.execution.dto.ExecutionPartial;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
 import com.lumos.lumosspring.team.entities.Team;
 import jakarta.transaction.Transactional;
@@ -35,4 +36,28 @@ public interface PreMeasurementStreetRepository extends JpaRepository<PreMeasure
     List<PreMeasurementStreet> getPreMeasurementNotAssignedById(long preMeasurementId, Integer step);
 
     List<PreMeasurementStreet> getAllByPreMeasurement_PreMeasurementIdAndStep(Long preMeasurement_preMeasurementId, Integer step);
+
+    @Query(
+            """
+            SELECT new com.lumos.lumosspring.execution.dto.ExecutionPartial(
+                s.preMeasurementStreetId,
+                s.street,
+                s.number,
+                s.neighborhood,
+                s.city,
+                s.state,
+                s.team.teamName,
+                s.prioritized,
+                'INSTALLATION',
+                size(s.items),
+                s.createdAt,
+                s.latitude,
+                s.longitude
+            )
+            FROM PreMeasurementStreet s
+            WHERE s.team.idTeam in :teamsId
+                  AND s.streetStatus = 'AVAILABLE_EXECUTION'
+            """
+    )
+    List<ExecutionPartial> findByTeam_IdTeam(List<Long> teamsId);
 }

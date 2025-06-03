@@ -1,5 +1,8 @@
 package com.lumos.utils
 
+import android.content.Context
+import android.net.Uri
+import java.io.File
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -76,6 +79,16 @@ object Utils {
             else -> text // volta como String se nada casar
         }
     }
+
+    fun getFileFromUri(context: Context, uri: Uri): File {
+        val inputStream = context.contentResolver.openInputStream(uri)!!
+        val fileName = "upload_${System.currentTimeMillis()}.jpg"
+        val file = File(context.cacheDir, fileName)
+        file.outputStream().use { inputStream.copyTo(it) }
+        return file
+    }
+
+
 
 
 

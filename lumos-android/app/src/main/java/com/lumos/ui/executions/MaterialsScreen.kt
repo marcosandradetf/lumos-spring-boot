@@ -29,16 +29,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
-import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.outlined.PhotoCamera
-import androidx.compose.material.icons.outlined.Warehouse
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.rounded.Navigation
 import androidx.compose.material.icons.rounded.PhotoCamera
-import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -69,25 +64,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.lumos.data.repository.ReservationStatus
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
 import com.lumos.navigation.BottomBar
+import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.Loading
 import com.lumos.ui.viewmodel.ExecutionViewModel
-import com.lumos.utils.ConnectivityUtils
+import com.lumos.utils.Utils.buildAddress
 import com.lumos.utils.Utils.formatDouble
 import java.io.File
-import androidx.core.net.toUri
-import com.lumos.data.repository.ReservationStatus
-import com.lumos.domain.model.Contract
-import com.lumos.ui.components.Alert
-import com.lumos.ui.components.Loading
-import com.lumos.utils.Utils.buildAddress
 
 @Composable
 fun MaterialScreen(
@@ -96,6 +89,7 @@ fun MaterialScreen(
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
+    onNavigateToExecutions: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     pSelected: Int,
@@ -129,6 +123,7 @@ fun MaterialScreen(
             reserves = reserves,
             onNavigateToHome = onNavigateToHome,
             onNavigateToMenu = onNavigateToMenu,
+            onNavigateToExecutions = onNavigateToExecutions,
             onNavigateToProfile = onNavigateToProfile,
             onNavigateToNotifications = onNavigateToNotifications,
             pSelected = pSelected,
@@ -142,13 +137,12 @@ fun MaterialScreen(
                     streetId = it.streetId
                 )
             },
-            onFinishMaterial = { materialId, quantityExecuted ->
+            onFinishMaterial = { reserveId, quantityExecuted ->
                 if (reserves.size == 1 && it.photoUri == null)
                     alertModal = true
                 else
                     executionViewModel.finishMaterial(
-                        materialId = materialId,
-                        streetId = it.streetId,
+                        reserveId = reserveId,
                         quantityExecuted = quantityExecuted
                     )
 
@@ -168,6 +162,7 @@ fun MaterialsContent(
     reserves: List<Reserve>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
+    onNavigateToExecutions: () -> Unit,
     onNavigateToProfile: () -> Unit,
     pSelected: Int,
     onNavigateToNotifications: () -> Unit,
@@ -211,7 +206,7 @@ fun MaterialsContent(
         sliderNavigateToNotifications = onNavigateToNotifications,
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
-        navigateBack = onNavigateToMenu,
+        navigateBack = onNavigateToExecutions,
         context = context,
         notificationsBadge = notificationsBadge
     ) {
@@ -229,7 +224,7 @@ fun MaterialsContent(
                 ) {
                     items(reserves) {
                         MaterialItem(material = it, finish = { quantityExecuted ->
-                            onFinishMaterial(it.materialId, quantityExecuted)
+                            onFinishMaterial(it.reserveId, quantityExecuted)
                         })
                     }
                 }
@@ -406,7 +401,7 @@ fun MaterialsContent(
 
                     Button(
                         onClick = {
-                            onNavigateToHome()
+                            onNavigateToExecutions()
                         },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -615,7 +610,6 @@ fun PrevMScreen() {
             streetId = 1,
             streetName = "Rua Dona Tina",
             streetNumber = "251",
-            teamId = 12,
             teamName = "Equipe Norte",
             executionStatus = "PENDING",
             priority = true,
@@ -630,7 +624,7 @@ fun PrevMScreen() {
     val reserves = listOf(
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "LED 120W",
             materialQuantity = 12.0,
             reserveStatus = "APPROVED",
@@ -644,7 +638,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "BRAÇO DE 3,5",
             materialQuantity = 16.0,
             reserveStatus = "APPROVED",
@@ -658,7 +652,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "BRAÇO DE 3,5",
             materialQuantity = 16.0,
             reserveStatus = "APPROVED",
@@ -672,7 +666,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",
@@ -686,7 +680,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",
@@ -700,7 +694,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",
@@ -714,7 +708,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",
@@ -728,7 +722,7 @@ fun PrevMScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
+
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",
@@ -745,10 +739,11 @@ fun PrevMScreen() {
 
     MaterialsContent(
         execution = values,
-        reserves = reserves,
+        reserves = emptyList(),
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
+        onNavigateToExecutions = {},
         onNavigateToNotifications = { },
         context = fakeContext,
         navController = rememberNavController(),

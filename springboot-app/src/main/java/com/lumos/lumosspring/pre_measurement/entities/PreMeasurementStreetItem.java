@@ -14,10 +14,6 @@ public class PreMeasurementStreetItem {
     @Column(name = "pre_measurement_street_item_id")
     private long preMeasurementStreetItemId;
 
-//    @ManyToOne
-//    @JoinColumn(name = "material_id")
-//    private Material material;
-
     @ManyToOne
     @JoinColumn(name = "contract_item_id")
     private ContractItemsQuantitative contractItem;

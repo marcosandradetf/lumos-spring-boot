@@ -115,7 +115,7 @@ public class MaterialStock {
         this.stockAvailable += quantityAvailable;
     }
 
-    public void removeStockQuantity(int quantityCompleted) {
+    public void removeStockQuantity(Double quantityCompleted) {
         this.stockQuantity -= quantityCompleted;
     }
 

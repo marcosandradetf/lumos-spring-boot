@@ -128,5 +128,4 @@ object SyncManager {
         enqueueSync(context)
     }
 
-
 }

@@ -4,6 +4,7 @@ import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
 import com.lumos.lumosspring.stock.entities.StockMovement.Status
 import com.lumos.lumosspring.team.entities.Team
+import com.lumos.lumosspring.util.ReservationStatus
 import jakarta.persistence.*
 
 @Entity
@@ -17,7 +18,7 @@ class MaterialReservation {
     @Column(columnDefinition = "TEXT")
     var description: String? = null
 
-    @ManyToOne(cascade = [(CascadeType.MERGE)])
+    @ManyToOne()
     @JoinColumn(name = "material_stock_id")
     var materialStock: MaterialStock? = null
 
@@ -30,45 +31,44 @@ class MaterialReservation {
 
     @Column(nullable = false)
     var reservedQuantity: Double = 0.0
-        private set
 
     @Column(nullable = false)
     var quantityCompleted: Double = 0.0
         private set
 
-    var status: String = "PENDING"
+    var status: String = ReservationStatus.PENDING
 
     @ManyToOne
     @JoinColumn(name = "team_id")
     var team: Team? = null
 
-    fun setReservedQuantity(reservedQuantity: Double) {
-        this.reservedQuantity = reservedQuantity
-    }
-
-    private fun removeStockAvailable() {
-        if (materialStock != null) {
-            materialStock!!.removeStockAvailable(reservedQuantity)
-        }
-    }
 
     fun confirmReservation() {
-        status = Status.APPROVED.name
-        removeStockAvailable()
+        materialStock?.removeStockAvailable(reservedQuantity)
+        status = ReservationStatus.APPROVED
     }
 
     fun rejectReservation() {
-        if (materialStock != null) {
-            materialStock!!.addStockAvailable(reservedQuantity)
+        materialStock?.let{
+            it.addStockAvailable(reservedQuantity)
             materialStock = null
-            status = Status.REJECTED.name
+            status = ReservationStatus.REJECTED
         }
     }
 
-    fun setQuantityCompleted(quantityCompleted: Int) {
-        this.quantityCompleted = quantityCompleted.toDouble()
+    fun setQuantityCompleted(quantityCompleted: Double) {
+        this.quantityCompleted = quantityCompleted
 
-        if (materialStock != null) materialStock!!.removeStockQuantity(quantityCompleted)
+        materialStock?.let {
+            it.removeStockQuantity(quantityCompleted)
+
+            if (reservedQuantity > quantityCompleted)
+                it.addStockAvailable(reservedQuantity - quantityCompleted)
+            else
+                it.addStockAvailable(  quantityCompleted - reservedQuantity)
+        }
+
+        status = ReservationStatus.FINISHED
     }
 
 }

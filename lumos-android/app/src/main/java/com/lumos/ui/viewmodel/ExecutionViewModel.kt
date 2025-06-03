@@ -127,12 +127,11 @@ class ExecutionViewModel(
         }
     }
 
-    fun finishMaterial(materialId: Long, streetId: Long, quantityExecuted: Double) {
+    fun finishMaterial(reserveId: Long, quantityExecuted: Double) {
         viewModelScope.launch {
             try {
                 repository.finishMaterial(
-                    materialId = materialId,
-                    streetId = streetId,
+                    reserveId = reserveId,
                     quantityExecuted = quantityExecuted
                 )
             } catch (e: Exception) {

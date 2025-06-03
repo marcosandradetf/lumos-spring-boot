@@ -78,6 +78,7 @@ public class PreMeasurementStreet {
     private Boolean prioritized;
 
     private String comment;
+    private String photoUri;
 
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
@@ -287,5 +288,13 @@ public class PreMeasurementStreet {
         this.comment = comment;
         this.reservationManagement = reservationManagement;
         this.streetStatus = ContractStatus.WAITING_STOCKIST;
+    }
+
+    public String getPhotoUri() {
+        return photoUri;
+    }
+
+    public void setPhotoUri(String photoUri) {
+        this.photoUri = photoUri;
     }
 }

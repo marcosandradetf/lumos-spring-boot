@@ -2,13 +2,21 @@ package com.lumos.data.repository
 
 import android.content.Context
 import android.util.Log
+import androidx.core.net.toUri
+import com.google.gson.Gson
 import com.lumos.data.api.ExecutionApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
 import com.lumos.domain.model.Reserve
+import com.lumos.domain.model.SendExecutionDto
+import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.util.UUID
 
@@ -17,9 +25,9 @@ class ExecutionRepository(
     private val api: ExecutionApi
 ) {
 
-    suspend fun syncExecutions(): Boolean {
+    suspend fun syncExecutions(uuid:  String): Boolean {
         return try {
-            val response = api.getExecutions(UUID.fromString(""))
+            val response = api.getExecutions(uuid)
             if (response.isSuccessful) {
                 val body = response.body() ?: return false
                 saveExecutionsToDb(body)
@@ -50,7 +58,6 @@ class ExecutionRepository(
                 city = executionDto.city,
                 state = executionDto.state,
 
-                teamId = executionDto.teamId,
                 teamName = executionDto.teamName,
                 executionStatus = "PENDING",
                 priority = executionDto.priority,
@@ -66,7 +73,6 @@ class ExecutionRepository(
             executionDto.reserves.forEach { r ->
                 val reserve = Reserve(
                     reserveId = r.reserveId,
-                    materialId = r.materialId,
                     materialName = r.materialName,
                     materialQuantity = r.materialQuantity,
                     reserveStatus = r.reserveStatus,
@@ -131,10 +137,9 @@ class ExecutionRepository(
         db.executionDao().setPhotoUri(photoUri, streetId)
     }
 
-    suspend fun finishMaterial(materialId: Long, streetId: Long, quantityExecuted: Double){
+    suspend fun finishMaterial(reserveId: Long, quantityExecuted: Double){
         db.executionDao().finishMaterial(
-            materialId = materialId,
-            streetId = streetId,
+            reserveId = reserveId,
             quantityExecuted = quantityExecuted
         )
     }
@@ -147,8 +152,33 @@ class ExecutionRepository(
         )
     }
 
-    fun postExecution(): Boolean {
-        TODO("Not yet implemented")
+
+
+
+    suspend fun postExecution(streetId: Long, context: Context): Boolean {
+        val gson = Gson()
+
+        val photoUri =  db.executionDao().getPhotoUri(streetId)
+        val reserves = db.executionDao().getReservesPartial(streetId)
+        val dto = SendExecutionDto(
+            streetId = streetId,
+            reserves = reserves
+        )
+
+        val json = gson.toJson(dto)
+        val jsonBody = json.toRequestBody("application/json".toMediaType())
+
+        val imageFile = getFileFromUri(context, photoUri.toUri())
+        val requestFile = imageFile.asRequestBody("image/jpeg".toMediaType())
+        val imagePart = MultipartBody.Part.createFormData("photo", imageFile.name, requestFile)
+
+        val response = api.uploadData(photo = imagePart, execution = jsonBody)
+        return try {
+            response.isSuccessful
+        } catch(e: Exception){
+            false
+        }
+
     }
 
 }

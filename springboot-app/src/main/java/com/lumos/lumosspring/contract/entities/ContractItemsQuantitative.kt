@@ -18,6 +18,8 @@ class ContractItemsQuantitative {
     var contract: Contract = Contract()
 
     var contractedQuantity : Double = 0.0
+    var quantityExecuted: Double = 0.0
+
     var unitPrice : BigDecimal = BigDecimal.ZERO;
     private var totalPrice : BigDecimal = BigDecimal.ZERO;
 

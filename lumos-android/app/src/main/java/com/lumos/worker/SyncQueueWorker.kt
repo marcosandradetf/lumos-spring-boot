@@ -319,6 +319,12 @@ class SyncQueueWorker(
         )
 
         return try {
+            val uuid = secureStorage.getUserUuid()
+            if (uuid == null){
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
             if (!ConnectivityUtils.isNetworkGood(applicationContext)) return Result.retry()
 
             queueDao.update(inProgressItem)
@@ -329,7 +335,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val success = executionRepository.syncExecutions()
+            val success = executionRepository.syncExecutions(uuid)
 
             return if (success) {
                 queueDao.deleteById(item.id)
@@ -353,6 +359,11 @@ class SyncQueueWorker(
         )
 
         return try {
+            if (item.relatedId == null) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
             if (!ConnectivityUtils.isNetworkGood(applicationContext)) return Result.retry()
 
             queueDao.update(inProgressItem)
@@ -363,7 +374,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val success = executionRepository.postExecution()
+            val success = executionRepository.postExecution(item.relatedId, applicationContext)
 
             return if (success) {
                 queueDao.deleteById(item.id)
@@ -374,7 +385,7 @@ class SyncQueueWorker(
             }
 
         } catch (e: Exception) {
-            Log.e("syncExecutions", "Erro ao sincronizar: ${e.message}")
+            Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
             queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
             Result.failure()
         }

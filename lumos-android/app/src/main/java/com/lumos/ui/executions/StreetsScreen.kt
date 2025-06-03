@@ -590,7 +590,6 @@ fun PrevStreetsScreen() {
             Execution(
                 streetId = 1,
                 streetName = "Rua Dona Tina, 251",
-                teamId = 12,
                 teamName = "Equipe Norte",
                 executionStatus = "PENDING",
                 priority = true,
@@ -604,7 +603,6 @@ fun PrevStreetsScreen() {
             Execution(
                 streetId = 2,
                 streetName = "Rua Marcos Coelho Neto, 960",
-                teamId = 12,
                 teamName = "Equipe Sul",
                 executionStatus = Status.IN_PROGRESS,
                 priority = false,
@@ -618,7 +616,6 @@ fun PrevStreetsScreen() {
             Execution(
                 streetId = 3,
                 streetName = "Rua Chopin, 35",
-                teamId = 12,
                 teamName = "Equipe BH",
                 executionStatus = Status.FINISHED,
                 priority = false,
@@ -634,7 +631,6 @@ fun PrevStreetsScreen() {
     val reserves = listOf(
         Reserve(
             reserveId = 1,
-            materialId = 1,
             materialName = "LED 120W",
             materialQuantity = 12.0,
             reserveStatus = "APPROVED",
@@ -648,7 +644,6 @@ fun PrevStreetsScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
             materialName = "BRAÇO DE 3,5",
             materialQuantity = 16.0,
             reserveStatus = "APPROVED",
@@ -662,7 +657,6 @@ fun PrevStreetsScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
             materialName = "BRAÇO DE 3,5",
             materialQuantity = 16.0,
             reserveStatus = "APPROVED",
@@ -676,7 +670,6 @@ fun PrevStreetsScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",
@@ -690,7 +683,6 @@ fun PrevStreetsScreen() {
         ),
         Reserve(
             reserveId = 1,
-            materialId = 1,
             materialName = "CABO 1.5MM",
             materialQuantity = 30.4,
             reserveStatus = "APPROVED",

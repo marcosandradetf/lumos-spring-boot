@@ -35,14 +35,6 @@ public class Team {
     )
     private List<User> complementaryMembers;
 
-//    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-//    @JoinTable(
-//            name = "tb_team_measurement",
-//            joinColumns = @JoinColumn(name = "id_team"),
-//            inverseJoinColumns = @JoinColumn(name = "id_measurement")
-//    )
-//    private List<PreMeasurement> preMeasurement;
-
     private String plateVehicle;
 
     @Column(columnDefinition = "TEXT")
@@ -98,7 +90,6 @@ public class Team {
     public void setComplementaryMembers(List<User> complementaryMembers) {
         this.complementaryMembers = complementaryMembers;
     }
-
     public String getPlateVehicle() {
         return plateVehicle;
     }
@@ -106,14 +97,6 @@ public class Team {
     public void setPlateVehicle(String plateVehicle) {
         this.plateVehicle = plateVehicle;
     }
-
-    //    public List<PreMeasurement> getPreMeasurement() {
-//        return preMeasurement;
-//    }
-//
-//    public void setPreMeasurement(List<PreMeasurement> preMeasurement) {
-//        this.preMeasurement = preMeasurement;
-//    }
 
     public Region getRegion() {
         return region;

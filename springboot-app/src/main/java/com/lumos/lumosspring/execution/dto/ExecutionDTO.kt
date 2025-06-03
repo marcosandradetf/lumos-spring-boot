@@ -1,5 +1,8 @@
 package com.lumos.lumosspring.execution.dto
 
+import com.lumos.lumosspring.team.entities.Stockist
+import java.time.Instant
+
 data class DelegateDTO(
     val preMeasurementId: Long,
     val description: String,
@@ -68,4 +71,62 @@ data class ReserveItemDTO(
 data class ReserveMaterialDTO (
     val materialId: Long,
     val materialQuantity: Double
+)
+
+////
+data class ExecutionPartial(
+    val streetId: Long,
+    val streetName: String,
+    val streetNumber: String? = null,
+    val streetHood: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val teamName: String,
+    val priority: Boolean,
+    val type: String,
+    val itemsQuantity: Int,
+    val creationDate: Instant,
+    val latitude: Double,
+    val longitude: Double,
+)
+
+data class ExecutionDTO(
+    val streetId: Long,
+    val streetName: String,
+    val streetNumber: String? = null,
+    val streetHood: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val teamName: String,
+    val priority: Boolean,
+    val type: String,
+    val itemsQuantity: Int,
+    val creationDate: String,
+    val latitude: Double,
+    val longitude: Double,
+    val reserves: List<Reserve>,
+)
+
+data class Reserve(
+    val reserveId: Long,
+    val materialName: String,
+    val materialQuantity: Double,
+    val reserveStatus: String,
+    val streetId: Long,
+    val depositId: Long,
+    val depositName: String,
+    val depositAddress: String,
+    val stockistName: String,
+    val phoneNumber: String,
+    val requestUnit: String,
+)
+
+data class SendExecutionDto(
+    val streetId: Long,
+    val reserves: List<ReservePartial>
+)
+
+data class ReservePartial(
+    val reserveId: Long,
+    val quantityExecuted: Double,
 )

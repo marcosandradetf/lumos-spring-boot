@@ -1,8 +1,10 @@
 package com.lumos.lumosspring.execution.service
 
+import com.google.protobuf.LazyStringArrayList.emptyList
 import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.entities.MaterialReservation
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
+import com.lumos.lumosspring.fileserver.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.ReservationManagement
@@ -16,7 +18,9 @@ import com.lumos.lumosspring.util.*
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import java.util.*
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -33,6 +37,8 @@ class ExecutionService(
     private val stockistRepository: StockistRepository,
     private val userRepository: UserRepository,
     private val reservationManagementRepository: ReservationManagementRepository,
+    private val minioService: MinioService,
+    private val jdbcTemplate: JdbcTemplate,
 ) {
     // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
@@ -210,7 +216,7 @@ class ExecutionService(
                     MaterialReservation().apply {
                         this.description = ""
                         this.materialStock = materialStock
-                        this.setReservedQuantity(materialReserve.materialQuantity)
+                        this.reservedQuantity = materialReserve.materialQuantity
                         this.street = preMeasurementStreet
                         this.contractItemId = contractItemId
                         if (teamMatch || stockistMatch) {
@@ -231,7 +237,7 @@ class ExecutionService(
                 "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
 
         } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
-            preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
+            preMeasurementStreet.streetStatus = ContractStatus.AVAILABLE_EXECUTION
             responseMessage =
                 "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
                         "Mas os materiais estão pendentes de coleta pela equipe."
@@ -332,6 +338,103 @@ class ExecutionService(
 
     }
 
+    @Transactional
+    fun uploadData(photo: MultipartFile, executionDTO: SendExecutionDto?): ResponseEntity<Any> {
+        if (executionDTO == null) {
+            return ResponseEntity.badRequest().body("Execution DTO está vazio.")
+        }
+
+        val fileUri = minioService.uploadFile(photo, "scl-construtora")
+
+        val execution = preMeasurementStreetRepository.findById(executionDTO.streetId)
+            .orElseThrow { IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada") }
+
+        if(execution.streetStatus != ContractStatus.AVAILABLE_EXECUTION) {
+            return ResponseEntity.badRequest().body("Execução já enviada")
+        }
+
+        execution.photoUri = fileUri
+        execution.streetStatus = ContractStatus.FINISHED
+        preMeasurementStreetRepository.save(execution)
+
+        for (r in executionDTO.reserves) {
+            val reserve = materialReservationRepository.findById(r.reserveId)
+                .orElseThrow { IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada") }
+
+            reserve.setQuantityCompleted(r.quantityExecuted)
+            materialReservationRepository.save(reserve)
+
+            val contractItemId = reserve.contractItemId
+            val sql = "UPDATE tb_contracts_items set quantity_executed = ? where contract_item_id = ?"
+            jdbcTemplate.update(sql, r.quantityExecuted, contractItemId)
+        }
+
+
+        return ResponseEntity.ok().build()
+    }
+
+    fun getExecutions(strUUID: String?): ResponseEntity<MutableList<ExecutionDTO>> {
+        val uuid = strUUID ?: return ResponseEntity.badRequest().body(arrayListOf())
+
+        val user = userRepository.findById(UUID.fromString(uuid))
+            .orElseThrow { IllegalArgumentException("Equipe não encontrada") }
+
+        val teamsId = when {
+            user.electricians.isNotEmpty() -> user.electricians.map { it.idTeam }
+            user.drivers.isNotEmpty() -> user.drivers.map { it.idTeam }
+            else -> return ResponseEntity.badRequest().body(arrayListOf())
+        }
+
+        val streets = preMeasurementStreetRepository.findByTeam_IdTeam(teamsId)
+
+        val reservationsByStreet = materialReservationRepository
+            .findAllByStreetInStreetId(streets.map { it.streetId })
+            .groupBy { it.street.preMeasurementStreetId }
+
+        val reservesByStreet = reservationsByStreet.mapValues { (_, reservations) ->
+            reservations.map { r ->
+                val materialStock = r.materialStock
+                val deposit = materialStock?.deposit
+                val stockist = deposit?.stockists?.firstOrNull()?.user
+
+                Reserve(
+                    reserveId = r.idMaterialReservation,
+                    materialName = materialStock?.material?.nameForImport ?: "",
+                    materialQuantity = r.reservedQuantity,
+                    reserveStatus = r.status,
+                    streetId = r.street.preMeasurementStreetId,
+                    depositId = deposit?.idDeposit ?: 0L,
+                    depositName = deposit?.depositName ?: "Desconhecido",
+                    depositAddress = deposit?.depositAddress ?: "Desconhecido",
+                    stockistName = stockist?.completedName ?: "Desconhecido",
+                    phoneNumber = stockist?.phoneNumber ?: "Desconhecido",
+                    requestUnit = materialStock?.requestUnit ?: "UN"
+                )
+            }
+        }
+
+        val executions = streets.map { street ->
+            ExecutionDTO(
+                streetId = street.streetId,
+                streetName = street.streetName,
+                streetNumber = street.streetNumber,
+                streetHood = street.streetHood,
+                city = street.city,
+                state = street.state,
+                teamName = street.teamName,
+                priority = street.priority,
+                type = street.type,
+                itemsQuantity = street.itemsQuantity,
+                creationDate = street.creationDate.toString(),
+                latitude = street.latitude,
+                longitude = street.longitude,
+                reserves = reservesByStreet[street.streetId] ?: listOf()
+            )
+        }.toMutableList()
+
+        return ResponseEntity.ok().body(executions)
+
+    }
 
 
 //
