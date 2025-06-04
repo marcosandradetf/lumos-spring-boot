@@ -80,7 +80,7 @@ fun MaintenanceStatusCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -92,7 +92,7 @@ fun MaintenanceStatusCard() {
                 imageVector = Icons.Outlined.Assignment, // Ícone de "tarefa"
                 contentDescription = "Execuçoes ícone",
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -100,7 +100,7 @@ fun MaintenanceStatusCard() {
             Text(
                 text = "Status das Execuções",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -108,7 +108,7 @@ fun MaintenanceStatusCard() {
             Text(
                 text = "Nenhuma execução alocada no momento.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
         }
@@ -147,7 +147,7 @@ fun ReportProblemButton() {
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer) // Azul
     ) {
-        Text(text = "Reportar Problema", color = MaterialTheme.colorScheme.secondary)
+        Text(text = "Reportar Problema", color = MaterialTheme.colorScheme.error)
     }
 }
 

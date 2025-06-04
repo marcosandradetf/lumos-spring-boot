@@ -121,8 +121,8 @@ fun PMContent(
                         .padding(6.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.onSecondary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
                     Column(
@@ -212,7 +212,7 @@ fun PMContent(
                                 }) {
                                     Text(
                                         text = "Acessar Pré-Medição",
-                                        color = Color(0xFF993500),
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp,
                                         textDecoration = TextDecoration.Underline

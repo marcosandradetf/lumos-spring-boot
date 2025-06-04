@@ -1,8 +1,12 @@
 package com.lumos.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -86,6 +90,27 @@ object Utils {
         val file = File(context.cacheDir, fileName)
         file.outputStream().use { inputStream.copyTo(it) }
         return file
+    }
+
+
+    fun compressImageFromUri(
+        context: Context,
+        imageUri: Uri,
+        quality: Int = 70 // Qualidade de 0 a 100
+    ): ByteArray? {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+
+            outputStream.toByteArray()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
 

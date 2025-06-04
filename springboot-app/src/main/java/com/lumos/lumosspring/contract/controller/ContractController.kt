@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.contract.controller
 
 import com.lumos.lumosspring.contract.dto.ContractDTO
+import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.service.ContractService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -37,5 +38,10 @@ class ContractController(
     @GetMapping("/contracts/get-contract-items/{contractId}")
     fun getContractItems(@PathVariable contractId: Long): ResponseEntity<Any> =
         contractService.getContractItems(contractId)
+
+    @GetMapping("/mobile/contracts/get-reference-items")
+    fun getItemsForMob(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
+        return contractService.getItems()
+    }
 
 }

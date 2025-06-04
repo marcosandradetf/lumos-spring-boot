@@ -9,6 +9,7 @@ import com.lumos.lumosspring.util.ContractStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,14 +23,19 @@ public class PreMeasurementController {
         this.preMeasurementService = preMeasurementService;
     }
 
-    @GetMapping("/mobile/pre-measurement/get-items")
-    public ResponseEntity<List<PContractReferenceItemDTO>> getItemsForMob() {
-        return preMeasurementService.getItems();
+    @PostMapping("/mobile/execution/insert-pre-measurement")
+    public ResponseEntity<?> saveMeasurement(
+            @RequestBody PreMeasurementDTO measurementDTO,
+            @RequestHeader("UUID") String userUUID
+    ) {
+        return preMeasurementService.savePreMeasurement(measurementDTO, userUUID);
     }
 
-    @PostMapping("/mobile/execution/insert-pre-measurement")
-    public ResponseEntity<?> saveMeasurement(@RequestBody PreMeasurementDTO measurementDTO, @RequestHeader("UUID") String userUUID) {
-        return preMeasurementService.savePreMeasurement(measurementDTO, userUUID);
+    @PostMapping("/mobile/pre-measurement-street/upload-photos")
+    public ResponseEntity<?> savePhotoPreMeasurement(
+            @RequestPart("photos") List<MultipartFile> photos
+    ) {
+        return preMeasurementService.saveStreetPhotos(photos);
     }
 
     @GetMapping("/execution/get-pre-measurement/{preMeasurementId}/{step}")
@@ -70,8 +76,8 @@ public class PreMeasurementController {
 
     @PostMapping("/pre-measurement/evolve-status/{id}/{step}")
     public ResponseEntity<?> evolveStatus(@PathVariable Long id, @PathVariable Integer step) {
-        var state =  preMeasurementService.setStatus(id, step);
-        if(state) {
+        var state = preMeasurementService.setStatus(id, step);
+        if (state) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();

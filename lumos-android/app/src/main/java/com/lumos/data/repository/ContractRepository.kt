@@ -1,6 +1,7 @@
 package com.lumos.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.lumos.data.api.ContractApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
@@ -65,22 +66,24 @@ class ContractRepository(
 
     suspend fun syncContractItems(): Boolean {
         var remoteItems: List<Item> = emptyList()
-
+        Log.e("tag", "buscando itens")
         try {
             val response = api.getItems()
             if (response.isSuccessful) {
                 val body = response.body()
                 remoteItems = body!!
+                Log.e("response", remoteItems.toString())
 
             } else {
                 val code = response.code()
+                Log.e("code", code.toString())
             }
         } catch (e: HttpException) {
             val response = e.response()
             val errorCode = e.code()
         }
 
-        if(remoteItems.isNotEmpty()) {
+        if (remoteItems.isNotEmpty()) {
             db.contractDao().deleteAllItems()
             remoteItems.forEach { item ->
                 db.contractDao().insertItem(item)

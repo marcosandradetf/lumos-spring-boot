@@ -4,15 +4,18 @@ import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -46,18 +49,18 @@ fun ProfileScreen(
         Column(
             modifier = modifier
         ) {
-            Text("Minha Conta")
+
             ListItem(
                 colors = ListItemColors(
-                    containerColor = Color.White,
-                    headlineColor = Color.Black,
-                    leadingIconColor = Color.Black,
-                    overlineColor = Color.Black,
-                    supportingTextColor = Color.Black,
-                    trailingIconColor = Color.Black,
-                    disabledHeadlineColor = Color.Black,
-                    disabledLeadingIconColor = Color.Black,
-                    disabledTrailingIconColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    headlineColor = MaterialTheme.colorScheme.onSurface,
+                    leadingIconColor = MaterialTheme.colorScheme.onSurface,
+                    overlineColor = MaterialTheme.colorScheme.surface,
+                    supportingTextColor = MaterialTheme.colorScheme.surface,
+                    trailingIconColor = MaterialTheme.colorScheme.surface,
+                    disabledHeadlineColor = MaterialTheme.colorScheme.surface,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.surface,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.surface
                 ),
                 headlineContent = { Text("Desconectar") },
                 leadingContent = {
@@ -69,6 +72,7 @@ fun ProfileScreen(
                 shadowElevation = 10.dp,
                 modifier = Modifier
                     .padding(bottom = 10.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .clickable {
                         coroutineScope.launch {
                             authViewModel.logout(

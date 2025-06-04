@@ -6,6 +6,7 @@ import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
+import com.lumos.lumosspring.fileserver.service.MinioService;
 import com.lumos.lumosspring.pre_measurement.dto.*;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
 import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
@@ -28,6 +29,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -37,27 +39,32 @@ import java.util.stream.Collectors;
 @Service
 public class PreMeasurementService {
     private final PreMeasurementStreetRepository preMeasurementStreetRepository;
-    private final MaterialRepository materialRepository;
     private final PreMeasurementRepository preMeasurementRepository;
     private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
     private final UserRepository userRepository;
     private final Util util;
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
+    private final MinioService minioService;
     private final JdbcTemplate jdbcTemplate;
-    private final ContractReferenceItemRepository contractReferenceItemRepository;
 
-    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository, MaterialRepository materialRepository, PreMeasurementRepository preMeasurementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, UserRepository userRepository, Util util, ContractRepository contractRepository, NotificationService notificationService, JdbcTemplate jdbcTemplate, ContractReferenceItemRepository contractReferenceItemRepository, ContractReferenceItemRepository contractReferenceItemRepository1) {
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository,
+                                 MaterialRepository materialRepository,
+                                 PreMeasurementRepository preMeasurementRepository,
+                                 PreMeasurementStreetItemRepository preMeasurementStreetItemRepository,
+                                 UserRepository userRepository, Util util,
+                                 ContractRepository contractRepository,
+                                 NotificationService notificationService,
+                                 MinioService minioService, JdbcTemplate jdbcTemplate) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
-        this.materialRepository = materialRepository;
         this.preMeasurementRepository = preMeasurementRepository;
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
         this.userRepository = userRepository;
         this.util = util;
         this.contractRepository = contractRepository;
         this.notificationService = notificationService;
+        this.minioService = minioService;
         this.jdbcTemplate = jdbcTemplate;
-        this.contractReferenceItemRepository = contractReferenceItemRepository;
     }
 
     @Caching(evict = {
@@ -148,9 +155,12 @@ public class PreMeasurementService {
                     return preMeasurementRepository.save(newPre);
                 });
 
-        preMeasurement.newStep();
-        preMeasurementRepository.save(preMeasurement);
+        if (preMeasurement.getSteps() != null) {
+            preMeasurement.newStep(); // <-- incrementa se já existia
+            preMeasurementRepository.save(preMeasurement);
+        }
         var step = preMeasurement.getSteps();
+
 
         var streets = preMeasurementDTO.getStreets();
 
@@ -171,6 +181,7 @@ public class PreMeasurementService {
             preMeasurementStreet.setStep(step);
             preMeasurementStreet.setCreatedBy(user.orElse(null));
             preMeasurementStreet.setCreatedAt(util.getDateTime());
+            preMeasurementStreet.setDeviceStreetId(street.getPreMeasurementStreetId());
 
             preMeasurementStreetRepository.save(preMeasurementStreet);
             for (var itemDTO : streetDTO.getItems()) {
@@ -405,7 +416,6 @@ public class PreMeasurementService {
 
         return ResponseEntity.ok(dtos);
     }
-
 
 
     @Cacheable("getPreMeasurementById")
@@ -693,14 +703,25 @@ public class PreMeasurementService {
         preMeasurementRepository.save(preMeasurement);
     }
 
-    public ResponseEntity<List<PContractReferenceItemDTO>> getItems() {
-        var items = contractReferenceItemRepository.findAllByPreMeasurement();
+    public ResponseEntity<?> saveStreetPhotos(List<MultipartFile> photos) {
+        for (MultipartFile photo : photos) {
+            try {
+                var parts = Objects.requireNonNull(photo.getOriginalFilename()).split("#");
+                if (parts.length < 2) continue;
 
-        items.sort(Comparator
-                .comparing(PContractReferenceItemDTO::getDescription)
-                .thenComparing(m -> util.extractNumber(m.getLinking()))
-        );
+                Long contractId = Long.parseLong(parts[0]);
+                Long deviceStreetId = Long.parseLong(parts[1]);
 
-        return ResponseEntity.ok(items);
+                var photoUri = minioService.uploadFile(photo, "scl-construtora", "photos", "rua");
+
+                var sql = "UPDATE tb_pre_measurements_streets SET photo_uri = ? WHERE contract_id = ? AND device_street_id = ?";
+                jdbcTemplate.update(sql, photoUri, contractId, deviceStreetId);
+            } catch (Exception e) {
+                // loga o erro e continua com a próxima foto
+                e.printStackTrace(); // ou log.error(...)
+            }
+        }
+
+        return ResponseEntity.ok().build();
     }
 }

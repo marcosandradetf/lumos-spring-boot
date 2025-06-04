@@ -1,6 +1,8 @@
 package com.lumos.worker
 
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -110,6 +112,7 @@ class SyncQueueWorker(
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_EXECUTION -> postExecution(item)
+//                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
                     queueDao.update(item.copy(status = SyncStatus.FAILED))
@@ -139,7 +142,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if(item.equal == null || item.table == null || item.where == null || item.field == null || item.set == null){
+            if (item.equal == null || item.table == null || item.where == null || item.field == null || item.set == null) {
                 queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
                 return Result.success()
             }
@@ -178,13 +181,28 @@ class SyncQueueWorker(
         val channelId = "sync_worker_channel"
         val channelName = "Sync Worker Notifications"
 
+
+        val channel = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Notificações do serviço de sincronização"
+        }
+
+        val notificationManager =
+            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+
+
         return NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle("Sincronizando dados")
             .setContentText("O aplicativo está sincronizando dados em segundo plano.")
-            .setSmallIcon(R.drawable.ic_lumos) // seu ícone
+            .setSmallIcon(R.drawable.ic_lumos) // ícone precisa existir!
             .setOngoing(true)
             .build()
     }
+
 
     private suspend fun postPreMeasurement(item: SyncQueueEntity, uuid: String): Result {
         val inProgressItem = item.copy(
@@ -214,18 +232,20 @@ class SyncQueueWorker(
                 contract,
                 streets,
                 items,
-                uuid
+                uuid,
+                applicationContext
             )
 
-            if (success) {
-                preMeasurementRepository.finishPreMeasurement(item.relatedId)
-                // Remover da fila
+            return if (success == 0) {
                 queueDao.deleteById(item.id)
                 Result.success()
+            } else if (success == -1) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                Result.retry() // ainda quer tentar mais uma vez
             } else {
-                // marcar como falha para tentar depois
-                Result.failure()
+                Result.retry()
             }
+
         } catch (e: Exception) {
             // Marcar falha ou retry conforme necessidade
             queueDao.update(item.copy(status = SyncStatus.FAILED))
@@ -312,7 +332,7 @@ class SyncQueueWorker(
 
         return try {
             val uuid = secureStorage.getUserUuid()
-            if (uuid == null){
+            if (uuid == null) {
                 queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
                 return Result.success()
             }

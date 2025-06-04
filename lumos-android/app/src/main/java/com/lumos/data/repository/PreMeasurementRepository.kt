@@ -2,6 +2,7 @@ package com.lumos.data.repository
 
 import android.content.Context
 import android.util.Log
+import androidx.core.net.toUri
 import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.api.PreMeasurementDto
 import com.lumos.data.api.PreMeasurementStreetDto
@@ -9,7 +10,15 @@ import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
+import com.lumos.domain.model.PreMeasurementStreetPhoto
+import com.lumos.utils.Utils.compressImageFromUri
+import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
+import com.lumos.worker.SyncTypes
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class PreMeasurementRepository(
     private val db: AppDatabase,
@@ -39,8 +48,9 @@ class PreMeasurementRepository(
         contract: Contract,
         preMeasurementStreet: List<PreMeasurementStreet>,
         preMeasurementStreetItems: List<PreMeasurementStreetItem>,
-        userUuid: String
-    ): Boolean {
+        userUuid: String,
+        applicationContext: Context
+    ): Int {
         return try {
             val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
             val itemsByStreetId = preMeasurementStreetItems.groupBy { it.preMeasurementStreetId }
@@ -60,14 +70,15 @@ class PreMeasurementRepository(
                 streets = streets
             )
             val response = api.sendPreMeasurement(dto, userUuid)
-            response.isSuccessful
+            if(response.isSuccessful)
+                uploadStreetPhotos(contract.contractId, applicationContext)
+            else -1
         } catch (e: Exception) {
-            false
+            -1
         }
     }
 
     suspend fun finishPreMeasurement(contractId: Long) {
-        db.contractDao().deleteContract(contractId)
         db.preMeasurementDao().deleteStreets(contractId)
         db.preMeasurementDao().deleteItems(contractId)
     }
@@ -76,11 +87,16 @@ class PreMeasurementRepository(
         db.preMeasurementDao().insertItem(preMeasurementStreetItem)
     }
 
+    suspend fun saveStreetPhoto(photo: PreMeasurementStreetPhoto) {
+        db.preMeasurementDao().insertPhoto(photo)
+    }
+
     suspend fun getItems(contractId: Long): List<PreMeasurementStreetItem> {
         return db.preMeasurementDao().getItems(contractId)
     }
 
     suspend fun queueSyncMeasurement(contractId: Long) {
+        db.preMeasurementDao().finishAll(contractId)
         SyncManager.queuePostPreMeasurement(
             context,
             db,
@@ -88,9 +104,58 @@ class PreMeasurementRepository(
         )
     }
 
+
     suspend fun getStreets(contractId: Long): List<PreMeasurementStreet> {
         return db.preMeasurementDao().getStreets(contractId)
     }
+
+    suspend fun uploadStreetPhotos(contractId: Long, context: Context): Int {
+        finishPreMeasurement(
+            contractId = contractId
+        )
+
+        val images = mutableListOf<MultipartBody.Part>()
+        val streets = db.preMeasurementDao().getStreetPhotos(contractId)
+        val streetsToDelete = mutableListOf<Long>() // lista para armazenar IDs das fotos a deletar
+        var quantity = 0
+
+        for (street in streets) {
+            if (quantity >= 6) break
+
+            street.photoUri?.let {
+                val bytes = compressImageFromUri(context, it.toUri())
+                bytes?.let { byteArray ->
+                    val requestFile = byteArray.toRequestBody("image/jpeg".toMediaType())
+                    images.add(
+                        MultipartBody.Part.createFormData(
+                            "photos",
+                            "${street.contractId}#${street.preMeasurementStreetId}",
+                            requestFile
+                        )
+                    )
+                    quantity++
+                    // Apenas adiciona o ID para deletar depois do upload bem-sucedido
+                    streetsToDelete.add(street.preMeasurementStreetId)
+                }
+            }
+        }
+
+        if (images.isEmpty()) return -1
+
+        return try {
+            val response = api.uploadStreetPhotos(images)
+            if (response.isSuccessful) {
+                // Só deleta as URIs se o upload foi realmente bem-sucedido
+                db.preMeasurementDao().deletePhotos(streetsToDelete)
+                db.preMeasurementDao().countPhotos(contractId)
+            } else {
+                -1
+            }
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
 
 }
 

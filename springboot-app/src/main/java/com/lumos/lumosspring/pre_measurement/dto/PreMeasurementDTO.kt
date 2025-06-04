@@ -14,12 +14,12 @@ data class PreMeasurementStreetDTO(
     val preMeasurementStreetId: Long,
     val contractId: Long,
     var lastPower: String?,
-    var latitude: Double,
-    var longitude: Double,
-    var street: String,
+    var latitude: Double?,
+    var longitude: Double?,
+    var street: String?,
     var number: String?,
-    var neighborhood: String,
-    var city: String,
+    var neighborhood: String?,
+    var city: String?,
     var state: String?,
     var photoUri: String?
 )

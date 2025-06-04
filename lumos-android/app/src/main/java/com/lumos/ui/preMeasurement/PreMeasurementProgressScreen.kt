@@ -208,7 +208,7 @@ fun PMPContent(
                                 .padding(6.dp),
                             elevation = CardDefaults.cardElevation(4.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.onSecondary,
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
@@ -227,7 +227,7 @@ fun PMPContent(
                                         text = contract.contractor,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
 
                                     Column(
@@ -237,14 +237,14 @@ fun PMPContent(
                                         Text(
                                             text = "Contrato",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
+                                            color = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.padding(bottom = 2.dp) // Pequeno espaço entre o texto e o ícone
                                         )
 
                                         Icon(
                                             imageVector = Icons.Default.Downloading,
                                             contentDescription = "Baixar Contrato",
-                                            tint = Color(0xFF007AFF),
+                                            tint = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.size(24.dp) // Ajuste do tamanho do ícone
                                         )
                                     }
@@ -273,17 +273,17 @@ fun PMPContent(
                                 onNavigateToStreet(contract.contractId)
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary) // Azul
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul
                         ) {
                             Text(
                                 text = "Adicionar rua",
-                                color = MaterialTheme.colorScheme.onSecondary
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                             Spacer(Modifier.width(5.dp))
                             Icon(
                                 imageVector = Icons.Default.AddCircle,
                                 contentDescription = "Adicionar",
-                                tint = MaterialTheme.colorScheme.onSecondary
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
@@ -327,8 +327,8 @@ fun Streets(
         elevation = CardDefaults.cardElevation(6.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.primary
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -377,7 +377,7 @@ fun Streets(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = street.street,
+                                text = street.street ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -395,7 +395,7 @@ fun FinishPreMeasurementButton(onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer) // Azul
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface) // Azul
         ,
         elevation = ButtonDefaults.elevatedButtonElevation(3.dp)
     ) {
@@ -407,11 +407,11 @@ fun FinishPreMeasurementButton(onClick: () -> Unit) {
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = "Finalizar",
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.secondary
+                tint = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurface,
                 text = "Finalizar Pré-Medição",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyLarge
@@ -450,7 +450,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -463,7 +462,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -476,7 +474,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -489,7 +486,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -502,7 +498,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -515,7 +510,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -528,7 +522,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -541,7 +534,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -554,7 +546,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -567,7 +558,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -580,7 +570,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -593,7 +582,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -606,7 +594,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -619,7 +606,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -632,7 +618,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -645,7 +630,6 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
-                photoUri = ""
             ),
         )
 

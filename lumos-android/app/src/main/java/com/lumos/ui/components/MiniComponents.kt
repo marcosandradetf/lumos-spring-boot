@@ -133,7 +133,7 @@ fun Confirm(
                     ) {
                         Text(
                             "Sim",
-                            color = Color.Blue,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp
                         )
@@ -141,12 +141,6 @@ fun Confirm(
 
 
 
-                    Box(
-                        modifier = Modifier
-                            .width(0.5.dp)
-                            .fillMaxHeight()
-                            .background(Color.LightGray)
-                    )
 
                     Box(
                         modifier = Modifier
@@ -157,7 +151,7 @@ fun Confirm(
                     ) {
                         Text(
                             "Não",
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp
                         )
@@ -227,7 +221,7 @@ fun Alert(
                     ) {
                         Text(
                             "Ok",
-                            color = Color.Blue,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp
                         )

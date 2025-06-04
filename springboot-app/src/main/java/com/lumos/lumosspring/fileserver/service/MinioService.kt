@@ -10,7 +10,7 @@ import java.io.InputStream
 @Service
 class MinioService(private val minioClient: MinioClient) {
 
-    fun uploadFile(file: MultipartFile, bucketName: String): String {
+    fun uploadFile(file: MultipartFile, bucketName: String, folder: String, type: String): String {
         try {
             // Verifica se o bucket existe, se não, cria
             val found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())
@@ -18,7 +18,8 @@ class MinioService(private val minioClient: MinioClient) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
 
-            val objectName = file.originalFilename ?: "file-${System.currentTimeMillis()}"
+            val extension = file.originalFilename?.substringAfterLast('.', "") ?: ""
+            val objectName = "$folder/${type}_file_${System.currentTimeMillis()}.$extension"
 
             minioClient.putObject(
                 PutObjectArgs.builder()

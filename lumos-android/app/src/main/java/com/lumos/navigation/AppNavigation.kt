@@ -26,20 +26,21 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.lumos.R
 import com.lumos.data.api.ContractApi
+import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.PreMeasurementApi
-import com.lumos.data.api.StockApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
+import com.lumos.data.repository.ExecutionRepository
 import com.lumos.data.repository.NotificationRepository
 import com.lumos.data.repository.PreMeasurementRepository
-import com.lumos.data.repository.StockRepository
 import com.lumos.midleware.SecureStorage
 import com.lumos.notifications.FCMService
 import com.lumos.notifications.FCMService.FCMBus
 import com.lumos.notifications.NotificationManager
 import com.lumos.notifications.NotificationsBadge
 import com.lumos.ui.auth.Login
+import com.lumos.ui.executions.StreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.notifications.NotificationsScreen
@@ -51,9 +52,10 @@ import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
+import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
-import com.lumos.ui.viewmodel.StockViewModel
+import com.lumos.utils.ConnectivityUtils
 import com.lumos.worker.SyncManager.enqueueSync
 import com.lumos.worker.SyncManager.schedulePeriodicSync
 import retrofit2.Retrofit
@@ -84,12 +86,6 @@ fun AppNavigation(
         AuthViewModel(authRepository, secureStorage)
     }
 
-    val stockViewModel: StockViewModel = viewModel {
-        val api = retrofit.create(StockApi::class.java)
-        val repository = StockRepository(db, api)
-
-        StockViewModel(repository)
-    }
 
     val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
         val api = retrofit.create(PreMeasurementApi::class.java)
@@ -106,6 +102,18 @@ fun AppNavigation(
             api = api
         )
         ContractViewModel(
+            repository = contractRepository
+        )
+    }
+
+    val executionViewModel: ExecutionViewModel = viewModel {
+        val api = retrofit.create(ExecutionApi::class.java)
+
+        val contractRepository = ExecutionRepository(
+            db = db,
+            api = api
+        )
+        ExecutionViewModel(
             repository = contractRepository
         )
     }
@@ -150,7 +158,7 @@ fun AppNavigation(
                 Routes.CONTRACT_SCREEN -> navController.navigate(Routes.CONTRACT_SCREEN)
                 Routes.NOTIFICATIONS -> navController.navigate(Routes.NOTIFICATIONS)
                 Routes.PROFILE -> navController.navigate(Routes.PROFILE)
-                Routes.EXECUTION_SCREEN -> null
+                Routes.EXECUTION_SCREEN -> navController.navigate(Routes.EXECUTION_SCREEN)
                 // Adicione mais cases conforme necessário
             }
 
@@ -404,14 +412,53 @@ fun AppNavigation(
                             navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
                         },
                         context = context,
-                        stockViewModel,
-                        preMeasurementViewModel,
+                        preMeasurementViewModel = preMeasurementViewModel,
                         contractId = contractId,
-                        contractViewModel
+                        contractViewModel = contractViewModel,
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString()
                     )
                 }
 
                 //
+
+                composable(Routes.EXECUTION_SCREEN) { backStackEntry ->
+                    StreetsScreen(
+                        executionViewModel = executionViewModel,
+                        connection = ConnectivityUtils,
+                        context = context,
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        pSelected = 1,
+                        onNavigateToExecution = {
+
+                        }
+                    )
+                }
 
 
             }

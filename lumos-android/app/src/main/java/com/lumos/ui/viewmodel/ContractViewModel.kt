@@ -32,14 +32,17 @@ class ContractViewModel(
     private val _items = MutableStateFlow<List<Item>>(emptyList()) // estado da lista
     val items: StateFlow<List<Item>> = _items
 
-    fun loadItemsFromContract(powers: List<String>, lengths: List<String>) {
+    fun loadItemsFromContract(itemsIds: List<String>) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                repository.getItemsFromContract(powers).collectLatest { entity ->
+                repository.getItemsFromContract(itemsIds).collectLatest { entity ->
                     _items.value = entity
+                    _isLoading.value = false
                 }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
+                _isLoading.value = false
             }
         }
     }
@@ -120,8 +123,15 @@ class ContractViewModel(
         }
     }
 
-
-
+    fun syncContractItems() {
+        viewModelScope.launch {
+            try {
+                repository.syncContractItems()
+            } catch (e: Exception) {
+                Log.e("Erro view model - queueSyncStock", e.message.toString())
+            }
+        }
+    }
 
 
 }

@@ -19,6 +19,8 @@ public class PreMeasurementStreet {
     @Column(name = "pre_measurement_street_id")
     private long preMeasurementStreetId;
 
+    private long deviceStreetId;
+
     private String description;
 
     private String lastPower;
@@ -29,8 +31,8 @@ public class PreMeasurementStreet {
     private String city;
     private String state;
 
-    private double latitude;
-    private double longitude;
+    private Double latitude;
+    private Double longitude;
 
     private String streetStatus = ItemStatus.PENDING;
 
@@ -132,7 +134,7 @@ public class PreMeasurementStreet {
         return latitude;
     }
 
-    public void setLatitude(double latitude) {
+    public void setLatitude(Double latitude) {
         this.latitude = latitude;
     }
 
@@ -140,7 +142,7 @@ public class PreMeasurementStreet {
         return longitude;
     }
 
-    public void setLongitude(double longitude) {
+    public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
 
@@ -296,5 +298,13 @@ public class PreMeasurementStreet {
 
     public void setPhotoUri(String photoUri) {
         this.photoUri = photoUri;
+    }
+
+    public long getDeviceStreetId() {
+        return deviceStreetId;
+    }
+
+    public void setDeviceStreetId(long deviceStreetId) {
+        this.deviceStreetId = deviceStreetId;
     }
 }

@@ -41,8 +41,10 @@
         </service>
 
 
+        <!--noinspection LockedOrientationActivity-->
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:theme="@style/Theme.Lumos">
             <intent-filter>

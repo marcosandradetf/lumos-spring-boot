@@ -10,7 +10,7 @@ class NotificationManager(private val context: Context, private val secureStorag
         val roles = secureStorage.getRoles()
         val teams = secureStorage.getTeams()
 
-        (roles + teams).forEach { topic ->
+        (roles + teams + "mobile_update").forEach { topic ->
             FirebaseMessaging.getInstance().subscribeToTopic(topic)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
@@ -26,7 +26,7 @@ class NotificationManager(private val context: Context, private val secureStorag
         val roles = secureStorage.getRoles()
         val teams = secureStorage.getTeams()
 
-        (roles + teams).forEach { topic ->
+        (roles + teams + "mobile_update").forEach { topic ->
             FirebaseMessaging.getInstance().unsubscribeFromTopic(topic)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {

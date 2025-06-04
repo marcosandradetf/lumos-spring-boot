@@ -344,7 +344,7 @@ class ExecutionService(
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
-        val fileUri = minioService.uploadFile(photo, "scl-construtora")
+        val fileUri = minioService.uploadFile(photo, "scl-construtora", "photos", "execution")
 
         val execution = preMeasurementStreetRepository.findById(executionDTO.streetId)
             .orElseThrow { IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada") }

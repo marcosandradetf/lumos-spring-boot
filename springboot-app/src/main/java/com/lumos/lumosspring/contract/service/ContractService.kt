@@ -2,6 +2,7 @@ package com.lumos.lumosspring.contract.service
 
 import com.lumos.lumosspring.contract.dto.ContractDTO
 import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
+import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.entities.Contract
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.*
+import java.util.function.Function
 
 @Service
 class ContractService(
@@ -261,6 +263,19 @@ class ContractService(
                     )
                 })
 
+    }
+
+
+    @Cacheable("GetItemsForMobPreMeasurement")
+    fun getItems(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
+        val items = contractReferenceItemRepository.findAllByPreMeasurement()
+
+        items.sortWith(
+            compareBy<PContractReferenceItemDTO> { it.description }
+                .thenBy { util.extractNumber(it.linking) }
+        )
+
+        return ResponseEntity.ok<MutableList<PContractReferenceItemDTO>>(items)
     }
 
 }

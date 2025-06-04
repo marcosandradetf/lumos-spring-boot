@@ -13,32 +13,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF0A84FF),   // Azul iOS moderno
-    secondary = Color(0xFF5E5CE6), // Roxo suave
-    tertiary = Color(0xFF30D158),  // Verde vibrante para destaques
+    primary = Color(0xFF0A84FF),       // Azul iOS – manter
+    secondary = Color(0xFF5E5CE6),     // Roxo suave – ok
+    tertiary = Color(0xFF30D158),      // Verde vibrante – ok
 
-    background = Color(0xFF1C1C1E),  // Preto suave (evita contraste extremo)
-    surface = Color(0xFF2C2C2E),     // Cinza escuro elegante
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.Black,        // Melhor contraste no verde
-    onBackground = Color(0xFFE5E5EA), // Texto cinza claro
-    onSurface = Color(0xFFD1D1D6)    // Texto levemente mais escuro que o background
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF007AFF),   // Azul vibrante Apple
-    secondary = Color(0xFF5856D6), // Roxo intenso
-    tertiary = Color(0xFF34C759),  // Verde destaque
-
-    background = Color(0xFFF2F2F7), // Cinza muito claro (quase branco)
-    surface = Color(0xFFFFFFFF),    // Branco puro para cards e elementos de destaque
+    background = Color(0xFF000000),    // Preto real, mais fiel ao dark mode do iOS
+    surface = Color(0xFF1C1C1E),       // "Card" mais destacado
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.Black,
-    onBackground = Color(0xFF1C1C1E), // Texto escuro no fundo claro
-    onSurface = Color(0xFF3A3A3C)    // Texto secundário
+    onBackground = Color(0xFFE5E5EA),  // Texto claro
+    onSurface = Color(0xFFB0B0B5)      // Cinza claro suave (menos contraste)
 )
+
+
+private val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF007AFF),       // Azul padrão iOS
+    secondary = Color(0xFF5E5CE6),     // Roxo mais alinhado com o dark
+    tertiary = Color(0xFF34C759),      // Verde destaque – ok
+
+    background = Color(0xFFF9F9F9),    // Ligeiramente mais quente que o `F2F2F7`
+    surface = Color(0xFFFFFFFF),       // Branco – manter
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onTertiary = Color.Black,
+    onBackground = Color(0xFF1C1C1E),  // Texto principal – ok
+    onSurface = Color(0xFF3C3C43)      // Padrão Apple para textos secundários
+)
+
 
 
 @Composable

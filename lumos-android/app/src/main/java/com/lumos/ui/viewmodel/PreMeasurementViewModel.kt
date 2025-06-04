@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
+import com.lumos.domain.model.PreMeasurementStreetPhoto
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
@@ -25,6 +26,16 @@ class PreMeasurementViewModel(
             } catch (e: Exception) {
                 Log.e("Error", e.message.toString())
                 callback(null) // Retorna um valor de erro ou qualquer valor que faça sentido
+            }
+        }
+    }
+
+    fun savePhotoOffLine(preMeasurementStreetPhoto: PreMeasurementStreetPhoto) {
+        viewModelScope.launch {
+            try {
+                repository.saveStreetPhoto(preMeasurementStreetPhoto)
+            } catch (e: Exception) {
+                Log.e("Error", e.message.toString())
             }
         }
     }

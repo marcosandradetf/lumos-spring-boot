@@ -9,6 +9,6 @@ interface ContractApi {
     @GET("/api/mobile/contracts/get-contracts")
     suspend fun getContracts(): Response<List<Contract>>
 
-    @GET("/mobile/contracts/get-reference-items")
+    @GET("/api/mobile/contracts/get-reference-items")
     suspend fun getItems(): Response<List<Item>>
 }

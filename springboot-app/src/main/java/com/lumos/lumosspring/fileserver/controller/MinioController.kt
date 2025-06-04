@@ -18,14 +18,14 @@ class MinioController(private val minioService: MinioService) {
 
     @PostMapping("/upload")
     fun uploadFile(@RequestParam("file") file: MultipartFile): ResponseEntity<String> {
-        val response = minioService.uploadFile(file, "scl-construtora")
+        val response = minioService.uploadFile(file, "scl-construtora","documents", "document")
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/upload-files")
     fun uploadFiles(@RequestParam("files") files: List<MultipartFile>): ResponseEntity<Any> {
         val responses = files.map { file ->
-            minioService.uploadFile(file, "scl-construtora")
+            minioService.uploadFile(file, "scl-construtora", "documents", "document")
         }
 
 

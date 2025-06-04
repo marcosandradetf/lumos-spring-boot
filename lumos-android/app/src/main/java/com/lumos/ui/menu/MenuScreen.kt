@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Map
@@ -69,6 +70,12 @@ fun CategoryMenu(navController: NavHostController) {
             action = listOf(Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS),
             icons = listOf(Icons.Default.Mail, Icons.Default.Map)
         ),
+        Category(
+            "Execução",
+            listOf("Execuções"),
+            action = listOf(Routes.EXECUTION_SCREEN),
+            icons = listOf(Icons.Default.Build)
+        ),
     )
 
     LazyColumn(
@@ -112,7 +119,7 @@ fun CategoryMenu(navController: NavHostController) {
                         .clickable { navController.navigate(category.action[index]) },
                     elevation = CardDefaults.cardElevation(4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.onSecondary,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {

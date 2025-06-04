@@ -10,6 +10,7 @@ import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
 import com.lumos.domain.model.Reserve
 import com.lumos.domain.model.SendExecutionDto
+import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +26,7 @@ class ExecutionRepository(
     private val api: ExecutionApi
 ) {
 
-    suspend fun syncExecutions(uuid:  String): Boolean {
+    suspend fun syncExecutions(uuid: String): Boolean {
         return try {
             val response = api.getExecutions(uuid)
             if (response.isSuccessful) {
@@ -115,7 +116,8 @@ class ExecutionRepository(
             field = "status",
             set = status,
             where = "pre_measurement_street_id",
-            equal = streetId.toString())
+            equal = streetId.toString()
+        )
     }
 
     suspend fun getExecution(lng: Long): Execution {
@@ -130,14 +132,15 @@ class ExecutionRepository(
             field = "street_status",
             set = Status.IN_PROGRESS,
             where = "pre_measurement_street_id",
-            equal = streetId.toString())
+            equal = streetId.toString()
+        )
     }
 
-    suspend fun setPhotoUri(photoUri: String, streetId: Long){
+    suspend fun setPhotoUri(photoUri: String, streetId: Long) {
         db.executionDao().setPhotoUri(photoUri, streetId)
     }
 
-    suspend fun finishMaterial(reserveId: Long, quantityExecuted: Double){
+    suspend fun finishMaterial(reserveId: Long, quantityExecuted: Double) {
         db.executionDao().finishMaterial(
             reserveId = reserveId,
             quantityExecuted = quantityExecuted
@@ -153,12 +156,10 @@ class ExecutionRepository(
     }
 
 
-
-
     suspend fun postExecution(streetId: Long, context: Context): Boolean {
         val gson = Gson()
 
-        val photoUri =  db.executionDao().getPhotoUri(streetId)
+        val photoUri = db.executionDao().getPhotoUri(streetId)
         val reserves = db.executionDao().getReservesPartial(streetId)
         val dto = SendExecutionDto(
             streetId = streetId,
@@ -168,17 +169,20 @@ class ExecutionRepository(
         val json = gson.toJson(dto)
         val jsonBody = json.toRequestBody("application/json".toMediaType())
 
-        val imageFile = getFileFromUri(context, photoUri.toUri())
-        val requestFile = imageFile.asRequestBody("image/jpeg".toMediaType())
-        val imagePart = MultipartBody.Part.createFormData("photo", imageFile.name, requestFile)
+        val byteArray = compressImageFromUri(context, photoUri.toUri())
+        byteArray?.let {
+            val requestFile = it.toRequestBody("image/jpeg".toMediaType())
+            val imagePart = MultipartBody.Part.createFormData("photo", "upload_${System.currentTimeMillis()}.jpg", requestFile)
+            val response = api.uploadData(photo = imagePart, execution = jsonBody)
 
-        val response = api.uploadData(photo = imagePart, execution = jsonBody)
-        return try {
-            response.isSuccessful
-        } catch(e: Exception){
-            false
+            return try {
+                response.isSuccessful
+            } catch (e: Exception) {
+                false
+            }
         }
 
+        return false
     }
 
 }

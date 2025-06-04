@@ -51,7 +51,7 @@ public class PreMeasurement {
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
     @Column(nullable = false)
-    private Integer steps;
+    private Integer steps = 0;
 
     public Long getPreMeasurementId() {
         return preMeasurementId;

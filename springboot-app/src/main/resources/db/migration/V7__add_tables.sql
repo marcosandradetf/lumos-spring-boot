@@ -1,8 +1,9 @@
 ALTER TABLE tb_contracts_items
-    ADD COLUMN IF NOT EXISTS quantity_executed float8 NULL;
+    ADD COLUMN IF NOT EXISTS quantity_executed float8 NOT NULL DEFAULT(0.0);
 
 ALTER TABLE tb_pre_measurements_streets
-    ADD COLUMN IF NOT EXISTS photo_uri varchar(255) NULL;
+    ADD COLUMN IF NOT EXISTS photo_uri varchar(255) NULL,
+    ADD COLUMN IF NOT EXISTS device_street_id bigint NULL;
 
 ALTER TABLE tb_pre_measurements_streets
     ALTER COLUMN latitude DROP NOT NULL,

@@ -11,6 +11,7 @@ import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
+import com.lumos.domain.model.PreMeasurementStreetPhoto
 import com.lumos.domain.model.Reserve
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.notifications.NotificationItem
@@ -26,7 +27,8 @@ import java.util.concurrent.Executors
         (NotificationItem::class),
         (SyncQueueEntity::class),
         (Execution::class),
-        (Reserve::class)],
+        (Reserve::class),
+        (PreMeasurementStreetPhoto::class)],
     version = 1,
 )
 abstract class AppDatabase : RoomDatabase() {
