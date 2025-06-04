@@ -2,7 +2,9 @@ package com.lumos.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ContractApi
+import com.lumos.data.api.RequestResult
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Item
@@ -64,43 +66,33 @@ class ContractRepository(
         )
     }
 
-    suspend fun syncContractItems(): Boolean {
-        var remoteItems: List<Item> = emptyList()
-        Log.e("tag", "buscando itens")
-        try {
-            val response = api.getItems()
-            if (response.isSuccessful) {
-                val body = response.body()
-                remoteItems = body!!
-                Log.e("response", remoteItems.toString())
+    suspend fun syncContractItems(context: Context): RequestResult<Unit> {
+        val response = ApiExecutor.execute { api.getItems() }
 
-            } else {
-                val code = response.code()
-                Log.e("code", code.toString())
+        return when (response) {
+            is RequestResult.Success -> {
+                db.contractDao().deleteAllItems()
+                db.contractDao().insertItems(response.data) // lista direta
+                RequestResult.Success(Unit)
             }
-        } catch (e: HttpException) {
-            val response = e.response()
-            val errorCode = e.code()
-        }
 
-        if (remoteItems.isNotEmpty()) {
-            db.contractDao().deleteAllItems()
-            remoteItems.forEach { item ->
-                db.contractDao().insertItem(item)
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncContractItems(context, db)
+                RequestResult.NoInternet
             }
-            return true
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
         }
-        return false
     }
+
 
     fun getItemsFromContract(powers: List<String>): Flow<List<Item>> =
         db.contractDao().getItemsFromContract(powers)
 
 
-    suspend fun queueSyncContractItems(context: Context) {
-        SyncManager.queueSyncContractItems(
-            context,
-            db
-        )
-    }
 }

@@ -4,8 +4,8 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lumos.data.api.RequestResult
 import com.lumos.data.repository.ExecutionRepository
-import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.Dispatchers
@@ -28,10 +28,12 @@ class ExecutionViewModel(
     private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
     val reserves: StateFlow<List<Reserve>> = _reserves
 
-    fun queueSyncExecutions(context: Context) {
+    fun  syncExecutions(context: Context) {
         viewModelScope.launch {
             try {
-                repository.queueSyncExecutions(context)
+                when(repository.syncExecutions(context)) {
+                    RequestResult.Timeout ->
+                }
             } catch (e: Exception) {
                 // Tratar erros aqui
             }

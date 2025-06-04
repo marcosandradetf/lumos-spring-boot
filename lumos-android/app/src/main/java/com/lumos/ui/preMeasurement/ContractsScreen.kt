@@ -125,7 +125,7 @@ fun ContractsScreenContent(
         navigateBack = onNavigateToMenu,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { _, showSnackbar ->
         if (isLoading)
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()

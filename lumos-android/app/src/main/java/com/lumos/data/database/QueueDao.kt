@@ -34,7 +34,20 @@ interface QueueDao {
     @Query("DELETE FROM sync_queue_entity WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    @Query("SELECT * FROM sync_queue_entity WHERE status IN (:statuses) ORDER BY priority ASC, createdAt ASC")
-    suspend fun getItemsByStatuses(statuses: List<String>): List<SyncQueueEntity>
+    @Query("SELECT COUNT(type) FROM sync_queue_entity WHERE type = :type")
+    suspend fun countPendingItemsByType(type: String): Int
+
+
+    @Query("SELECT COUNT(relatedId) FROM sync_queue_entity WHERE type = :type and relatedId = :id")
+    suspend fun countPendingItemsByTypeAndId(type: String, id: Long): Int
+
+    @Query("SELECT COUNT(relatedId) FROM sync_queue_entity WHERE `table` = :table and field = :field and `set` = :set and `where` = :where and equal = :equal")
+    suspend fun countPendingGeneric(
+        table: String,
+        field: String,
+        set: String,
+        where: String,
+        equal: String
+    ): Any
 
 }

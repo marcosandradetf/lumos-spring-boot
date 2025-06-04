@@ -393,7 +393,7 @@ fun PMSContent(
         },
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { _, showSnackBar ->
         Box(
             modifier = Modifier
                 .fillMaxSize()

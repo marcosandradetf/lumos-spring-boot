@@ -4,47 +4,54 @@ import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
+import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ExecutionApi
+import com.lumos.data.api.RequestResult
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
 import com.lumos.domain.model.Reserve
 import com.lumos.domain.model.SendExecutionDto
+import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
-import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.HttpException
-import java.util.UUID
 
 class ExecutionRepository(
     private val db: AppDatabase,
-    private val api: ExecutionApi
+    private val api: ExecutionApi,
+    private val secureStorage: SecureStorage
 ) {
 
-    suspend fun syncExecutions(uuid: String): Boolean {
-        return try {
-            val response = api.getExecutions(uuid)
-            if (response.isSuccessful) {
-                val body = response.body() ?: return false
-                saveExecutionsToDb(body)
-                true
-            } else {
-                val code = response.code()
-                Log.e("Sync", "Erro de resposta: $code")
-                false
-                // TODO handle the error
+    suspend fun syncExecutions(context: Context): RequestResult<Unit> {
+        val uuid = secureStorage.getUserUuid()
+            ?: return RequestResult.ServerError(-1, "UUID Não encontrado")
+
+        val response = ApiExecutor.execute { api.getExecutions(uuid) }
+        return when (response) {
+            is RequestResult.Success -> {
+                saveExecutionsToDb(response.data)
+                RequestResult.Success(Unit)
             }
-        } catch (e: HttpException) {
-            Log.e("Sync", "HttpException: ${e.code()}")
-            false
-        } catch (e: Exception) {
-            Log.e("Sync", "Erro inesperado: ${e.localizedMessage}")
-            false
+
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncExecutions(context, db)
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is RequestResult.ServerError -> RequestResult.ServerError(
+                response.code,
+                response.message
+            )
+
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
         }
     }
 
@@ -95,10 +102,6 @@ class ExecutionRepository(
 
     fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>> =
         db.executionDao().getFlowReserves(streetId, status)
-
-    suspend fun queueSyncExecutions(context: Context) {
-        SyncManager.queueSyncExecutions(context, db)
-    }
 
     suspend fun setReserveStatus(streetId: Long, status: String = ReservationStatus.COLLECTED) {
         db.executionDao().setReserveStatus(streetId, status)
@@ -172,7 +175,11 @@ class ExecutionRepository(
         val byteArray = compressImageFromUri(context, photoUri.toUri())
         byteArray?.let {
             val requestFile = it.toRequestBody("image/jpeg".toMediaType())
-            val imagePart = MultipartBody.Part.createFormData("photo", "upload_${System.currentTimeMillis()}.jpg", requestFile)
+            val imagePart = MultipartBody.Part.createFormData(
+                "photo",
+                "upload_${System.currentTimeMillis()}.jpg",
+                requestFile
+            )
             val response = api.uploadData(photo = imagePart, execution = jsonBody)
 
             return try {

@@ -95,8 +95,8 @@ fun StreetsScreen(
         if (!connection.isConnectedToInternet(context))
             internet = false
 
-        executionViewModel.queueSyncExecutions(context)
         executionViewModel.loadFlowExecutions()
+        executionViewModel.syncExecutions(context)
     }
 
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
@@ -362,7 +362,7 @@ fun Content(
         navigateBack = onNavigateToMenu,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { _, showSnackbar ->
         if (!internet) {
             Row(
                 modifier = Modifier
@@ -469,8 +469,8 @@ fun Content(
                                     ) {
                                         Icon(
                                             imageVector =
-                                                if (execution.type == "INSTALLATION") Icons.Default.Power
-                                                else Icons.Default.Build,
+                                            if (execution.type == "INSTALLATION") Icons.Default.Power
+                                            else Icons.Default.Build,
                                             contentDescription = "Local",
                                             tint = Color.White,
                                             modifier = Modifier.size(
@@ -560,7 +560,7 @@ fun Content(
                                                 ) {
                                                     Icon(
                                                         imageVector =
-                                                            Icons.Default.Warning,
+                                                        Icons.Default.Warning,
                                                         contentDescription = "Prioridade",
                                                         tint = Color(0xFFFC4705),
                                                         modifier = Modifier.size(22.dp)

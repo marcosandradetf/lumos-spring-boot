@@ -14,6 +14,7 @@ import com.lumos.data.api.ApiService
 import com.lumos.data.api.ContractApi
 import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.PreMeasurementApi
+import com.lumos.data.api.RequestResult
 import com.lumos.data.api.UpdateEntity
 import com.lumos.data.api.UserExperience
 import com.lumos.data.database.AppDatabase
@@ -272,13 +273,8 @@ class SyncQueueWorker(
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
                 Log.e("SyncStock", "Internet")
                 queueDao.update(inProgressItem)
-                val success = contractRepository.syncContractItems()
-                if (success) {
-                    queueDao.deleteById(item.id)
-                    Result.success()
-                } else {
-                    Result.failure()
-                }
+                val response = contractRepository.syncContractItems(applicationContext)
+                checkResponse(response, item)
 
             } else {
                 Log.e("SyncStock", "Sem Internet")
@@ -400,6 +396,30 @@ class SyncQueueWorker(
             Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
             queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
             Result.failure()
+        }
+    }
+
+
+    suspend fun checkResponse(response:  RequestResult<Unit>, inProgressItem: SyncQueueEntity): Result {
+        return when (response) {
+            is RequestResult.Success -> Result.success()
+            is RequestResult.NoInternet -> Result.retry()
+            is RequestResult.Timeout -> Result.retry()
+            is RequestResult.ServerError -> {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                Result.retry()
+            }
+            is RequestResult.UnknownError -> {
+
+                // Marca como failed para evitar retries automáticos
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+
+                // Pode enviar para um sistema de logs, Crashlytics etc
+//                Crashlytics.logException(Exception("Erro desconhecido na sync: $inProgressItem"))
+
+                return Result.failure()
+            }
+
         }
     }
 

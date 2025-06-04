@@ -36,6 +36,9 @@ interface ContractDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: Item)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertItems(items: List<Item>)
+
     @Query("""
         SELECT * FROM items 
         WHERE contractReferenceItemId IN (:itemsIds)
