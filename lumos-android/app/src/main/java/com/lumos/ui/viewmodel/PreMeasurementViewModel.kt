@@ -70,10 +70,10 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun sendPreMeasurementSync(contractId: Long) {
+    fun queueSendMeasurement(contractId: Long) {
         viewModelScope.launch {
             try {
-                repository.queueSyncMeasurement(contractId)
+                repository.queueSendMeasurement(contractId)
             } catch (e: Exception) {
                 Log.e("Erro view model - sendPreMeasurementSync", e.message.toString())
             }

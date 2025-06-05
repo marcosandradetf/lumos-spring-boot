@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Warehouse
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +71,8 @@ import com.lumos.utils.ConnectivityUtils
 import androidx.core.net.toUri
 import com.lumos.domain.model.Reserve
 import com.lumos.ui.components.Confirm
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 
 @Composable
 fun StreetsScreen(
@@ -87,7 +90,8 @@ fun StreetsScreen(
 ) {
     val executions by executionViewModel.executions.collectAsState()
     val reserves by executionViewModel.reserves.collectAsState()
-    val loading by executionViewModel.isLoading.collectAsState()
+    val loading by executionViewModel.isSyncing.collectAsState()
+    val error by executionViewModel.syncError.collectAsState()
 
     var showAlert by remember { mutableStateOf(false) }
     var internet by remember { mutableStateOf(true) }
@@ -95,7 +99,6 @@ fun StreetsScreen(
         if (!connection.isConnectedToInternet(context))
             internet = false
 
-        executionViewModel.loadFlowExecutions()
         executionViewModel.syncExecutions(context)
     }
 
@@ -149,6 +152,10 @@ fun StreetsScreen(
                 context
             )
             onNavigateToExecution(streetId)
+        },
+        error = error,
+        refresh = {
+            executionViewModel.syncExecutions(context)
         }
     )
 }
@@ -332,6 +339,7 @@ fun PendingMaterialsAlert(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Content(
     executions: List<Execution>,
@@ -350,6 +358,8 @@ fun Content(
     alert: Boolean,
     onDismiss: () -> Unit,
     onConfirmed: (Long) -> Unit,
+    error: String?,
+    refresh: () -> Unit,
 ) {
     AppLayout(
         title = "Execuções",
@@ -362,212 +372,226 @@ fun Content(
         navigateBack = onNavigateToMenu,
         context = context,
         notificationsBadge = notificationsBadge
-    ) { _, showSnackbar ->
-        if (!internet) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(5.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = Icons.Default.NetworkCell, contentDescription = "Alert")
-                Text(
-                    text = "Conecte-se a internet para obter novas execuções",
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 10.dp)
+    ) { _, showSnackBar ->
+
+        LaunchedEffect(error) {
+            error?.let {
+                showSnackBar(
+                    it,
+                    null
                 )
             }
         }
 
-        if (loading)
-            Loading()
-        else if (executions.isEmpty())
-            NothingData(
-                "Nenhuma execução disponível no momento, volte mais tarde!"
-            )
-        else {
-            AnimatedVisibility(visible = alert) {
-                PendingMaterialsAlert(
-                    reserves = reserves,
-                    onDismiss = { onDismiss() },
-                    onConfirmed = { onConfirmed(it) },
-                    context = context
-                )
-            }
-            AnimatedVisibility(visible = !alert) {
-                LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = loading,
+            onRefresh = { refresh() },
+        ) {
+            if (!internet) {
+                Row(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(2.dp, top = 40.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(5.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(executions) { execution -> // Iteração na lista
+                    Icon(imageVector = Icons.Default.NetworkCell, contentDescription = "Alert")
+                    Text(
+                        text = "Conecte-se a internet para obter novas execuções",
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+                }
+            }
+
+            else if (executions.isEmpty())
+                NothingData(
+                    "Nenhuma execução disponível no momento, volte mais tarde!"
+                )
+            else {
+                AnimatedVisibility(visible = alert) {
+                    PendingMaterialsAlert(
+                        reserves = reserves,
+                        onDismiss = { onDismiss() },
+                        onConfirmed = { onConfirmed(it) },
+                        context = context
+                    )
+                }
+                AnimatedVisibility(visible = !alert) {
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(2.dp, top = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+                    ) {
+                        items(executions) { execution -> // Iteração na lista
 //                val createdAt = "Criado por ${contract.createdBy} há ${
 //                    Utils.timeSinceCreation(
 //                        Instant.parse(contract.createdAt)
 //                    )
 //                }"
-                        val objective =
-                            if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
-                        val status = when (execution.executionStatus) {
-                            Status.PENDING -> "Pendente"
-                            Status.IN_PROGRESS -> "Em Progresso"
-                            Status.FINISHED -> "Finalizado"
-                            else -> "Status Desconhecido"
-                        }
+                            val objective =
+                                if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
+                            val status = when (execution.executionStatus) {
+                                Status.PENDING -> "Pendente"
+                                Status.IN_PROGRESS -> "Em Progresso"
+                                Status.FINISHED -> "Finalizado"
+                                else -> "Status Desconhecido"
+                            }
 
-                        Card(
-                            shape = RoundedCornerShape(5.dp),
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .padding(3.dp),
-                            elevation = CardDefaults.cardElevation(1.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.onSecondary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Row(
+                            Card(
+                                shape = RoundedCornerShape(5.dp),
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        select(execution.streetId)
-                                    }
-                                    .height(IntrinsicSize.Min) // Isso é o truque!
+                                    .fillMaxWidth(0.9f)
+                                    .padding(3.dp),
+                                elevation = CardDefaults.cardElevation(1.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
                             ) {
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxHeight()
-                                ) {
-                                    // Linha vertical com bolinha no meio
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxHeight(0.7f)
-                                            .padding(start = 20.dp)
-                                            .width(4.dp)
-                                            .background(
-                                                color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.tertiary
-                                            )
-                                    )
-
-                                    // Bolinha com ícone (no meio da linha)
-                                    Box(
-                                        modifier = Modifier
-                                            .offset(x = 10.dp) // posiciona sobre a linha
-                                            .size(24.dp) // tamanho do círculo
-                                            .clip(CircleShape)
-                                            .background(
-                                                color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.tertiary
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector =
-                                            if (execution.type == "INSTALLATION") Icons.Default.Power
-                                            else Icons.Default.Build,
-                                            contentDescription = "Local",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(
-                                                if (execution.type == "INSTALLATION") 18.dp
-                                                else 14.dp
-                                            )
-                                        )
-                                    }
-                                }
-
-
-                                Column(
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp)
+                                        .clickable {
+                                            select(execution.streetId)
+                                        }
+                                        .height(IntrinsicSize.Min) // Isso é o truque!
                                 ) {
+                                    Column(
+                                        verticalArrangement = Arrangement.Center,
+                                        modifier = Modifier.fillMaxHeight()
+                                    ) {
+                                        // Linha vertical com bolinha no meio
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight(0.7f)
+                                                .padding(start = 20.dp)
+                                                .width(4.dp)
+                                                .background(
+                                                    color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.tertiary
+                                                )
+                                        )
+
+                                        // Bolinha com ícone (no meio da linha)
+                                        Box(
+                                            modifier = Modifier
+                                                .offset(x = 10.dp) // posiciona sobre a linha
+                                                .size(24.dp) // tamanho do círculo
+                                                .clip(CircleShape)
+                                                .background(
+                                                    color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.tertiary
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector =
+                                                    if (execution.type == "INSTALLATION") Icons.Default.Power
+                                                    else Icons.Default.Build,
+                                                contentDescription = "Local",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(
+                                                    if (execution.type == "INSTALLATION") 18.dp
+                                                    else 14.dp
+                                                )
+                                            )
+                                        }
+                                    }
+
+
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .padding(16.dp)
                                     ) {
-                                        Row(
+                                        Column(
                                             modifier = Modifier
-                                                .fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-
-                                            ) {
-                                            Row {
-                                                Text(
-                                                    text = execution.streetName,
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                )
-                                            }
-                                        }
-
-                                        // Informação extra
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            modifier = Modifier.fillMaxWidth()
+                                                .fillMaxWidth()
                                         ) {
-                                            Text(
-                                                text = "$objective de ${execution.itemsQuantity} Itens",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Normal,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(5.dp))
-                                                    .background(Color(0xFFEDEBF6))
-                                                    .padding(5.dp)
-                                            ) {
-                                                Text(
-                                                    text = status,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                    fontSize = 12.sp
-                                                )
-                                            }
-
-                                        }
-
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = "Responsável: ${execution.teamName}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Normal,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-
-                                        // Informação extra
-                                        if (execution.priority)
                                             Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.End
-                                            ) {
-                                                Column(
-                                                    verticalArrangement = Arrangement.Center,
-                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                modifier = Modifier
+                                                    .fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+
                                                 ) {
-                                                    Icon(
-                                                        imageVector =
-                                                        Icons.Default.Warning,
-                                                        contentDescription = "Prioridade",
-                                                        tint = Color(0xFFFC4705),
-                                                        modifier = Modifier.size(22.dp)
+                                                Row {
+                                                    Text(
+                                                        text = execution.streetName,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                 }
                                             }
 
+                                            // Informação extra
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text(
+                                                    text = "$objective de ${execution.itemsQuantity} Itens",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Normal,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(5.dp))
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                                                        .padding(5.dp)
+                                                ) {
+                                                    Text(
+                                                        text = status,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        fontSize = 12.sp
+                                                    )
+                                                }
+
+                                            }
+
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "Responsável: ${execution.teamName}",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Normal,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+
+                                            // Informação extra
+                                            if (execution.priority)
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.End
+                                                ) {
+                                                    Column(
+                                                        verticalArrangement = Arrangement.Center,
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Icon(
+                                                            imageVector =
+                                                                Icons.Default.Warning,
+                                                            contentDescription = "Prioridade",
+                                                            tint = Color(0xFFFC4705),
+                                                            modifier = Modifier.size(22.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                        }
                                     }
                                 }
                             }
@@ -713,7 +737,9 @@ fun PrevStreetsScreen() {
         select = {},
         alert = true,
         onDismiss = {},
-        onConfirmed = {}
+        onConfirmed = {},
+        error = null,
+        refresh = {}
     )
 }
 

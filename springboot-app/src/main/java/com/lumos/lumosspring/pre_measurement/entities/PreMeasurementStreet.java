@@ -19,7 +19,9 @@ public class PreMeasurementStreet {
     @Column(name = "pre_measurement_street_id")
     private long preMeasurementStreetId;
 
-    private long deviceStreetId;
+    private Long deviceStreetId;
+
+    private String deviceId;
 
     private String description;
 
@@ -130,7 +132,7 @@ public class PreMeasurementStreet {
         this.state = state;
     }
 
-    public double getLatitude() {
+    public Double getLatitude() {
         return latitude;
     }
 
@@ -138,7 +140,7 @@ public class PreMeasurementStreet {
         this.latitude = latitude;
     }
 
-    public double getLongitude() {
+    public Double getLongitude() {
         return longitude;
     }
 
@@ -300,11 +302,19 @@ public class PreMeasurementStreet {
         this.photoUri = photoUri;
     }
 
-    public long getDeviceStreetId() {
+    public Long getDeviceStreetId() {
         return deviceStreetId;
     }
 
-    public void setDeviceStreetId(long deviceStreetId) {
+    public void setDeviceStreetId(Long deviceStreetId) {
         this.deviceStreetId = deviceStreetId;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
     }
 }

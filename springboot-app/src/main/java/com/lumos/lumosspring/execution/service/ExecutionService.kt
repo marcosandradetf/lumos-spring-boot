@@ -173,7 +173,7 @@ class ExecutionService(
             .orElse(null) ?: return ResponseEntity.status(404)
             .body(DefaultResponse("A rua ${executionReserve.preMeasurementStreetId} não foi encontrada"))
 
-        if (preMeasurementStreet.streetStatus !== ContractStatus.WAITING_STOCKIST)
+        if (preMeasurementStreet.streetStatus != ContractStatus.WAITING_STOCKIST)
             return ResponseEntity.status(500)
                 .body(DefaultResponse("Os itens dessa execução já foram todos reservados, inicie a próxima etapa."))
 

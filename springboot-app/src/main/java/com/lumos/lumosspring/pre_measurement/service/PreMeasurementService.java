@@ -1,10 +1,8 @@
 package com.lumos.lumosspring.pre_measurement.service;
 
-import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO;
 import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
 import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
-import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.fileserver.service.MinioService;
 import com.lumos.lumosspring.pre_measurement.dto.*;
@@ -18,7 +16,6 @@ import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
 import com.lumos.lumosspring.notifications.service.NotificationService;
-import com.lumos.lumosspring.stock.controller.dto.mobile.ContractItemsDTO;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.*;
@@ -26,6 +23,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -155,18 +153,18 @@ public class PreMeasurementService {
                     return preMeasurementRepository.save(newPre);
                 });
 
-        if (preMeasurement.getSteps() != null) {
-            preMeasurement.newStep(); // <-- incrementa se já existia
-            preMeasurementRepository.save(preMeasurement);
-        }
         var step = preMeasurement.getSteps();
-
 
         var streets = preMeasurementDTO.getStreets();
 
         for (var streetDTO : streets) {
             PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
             var street = streetDTO.getStreet();
+
+            var exists = preMeasurementStreetRepository.existsByDeviceIdAndDeviceStreetId(street.getDeviceId(), street.getPreMeasurementStreetId());
+            if (exists) {
+                continue;
+            }
 
             preMeasurementStreet.setPreMeasurement(preMeasurement);
             preMeasurementStreet.setStreet(street.getStreet());
@@ -178,10 +176,11 @@ public class PreMeasurementService {
             preMeasurementStreet.setLongitude(street.getLongitude());
             preMeasurementStreet.setLastPower(street.getLastPower());
             preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
-            preMeasurementStreet.setStep(step);
+            preMeasurementStreet.setStep(step + 1);
             preMeasurementStreet.setCreatedBy(user.orElse(null));
             preMeasurementStreet.setCreatedAt(util.getDateTime());
             preMeasurementStreet.setDeviceStreetId(street.getPreMeasurementStreetId());
+            preMeasurementStreet.setDeviceId(street.getDeviceId());
 
             preMeasurementStreetRepository.save(preMeasurementStreet);
             for (var itemDTO : streetDTO.getItems()) {
@@ -216,6 +215,8 @@ public class PreMeasurementService {
             }
         }
 
+        preMeasurement.newStep(); // <-- incrementa se já existia
+        preMeasurementRepository.save(preMeasurement);
 
         var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurement(preMeasurement);
 
@@ -706,22 +707,39 @@ public class PreMeasurementService {
     public ResponseEntity<?> saveStreetPhotos(List<MultipartFile> photos) {
         for (MultipartFile photo : photos) {
             try {
-                var parts = Objects.requireNonNull(photo.getOriginalFilename()).split("#");
+                var filename = photo.getOriginalFilename();
+                if (filename == null || !filename.contains("#")) continue;
+
+                var parts = filename.split("#");
                 if (parts.length < 2) continue;
 
-                Long contractId = Long.parseLong(parts[0]);
+                Long deviceId = Long.parseLong(parts[0]);
                 Long deviceStreetId = Long.parseLong(parts[1]);
 
-                var photoUri = minioService.uploadFile(photo, "scl-construtora", "photos", "rua");
+                // Verifica se já existe uma foto salva
+                String checkSql = "SELECT photo_uri FROM tb_pre_measurements_streets WHERE device_id = ? AND device_street_id = ?";
+                try {
+                    String existingUri = jdbcTemplate.queryForObject(checkSql, String.class, deviceId, deviceStreetId);
+                    if (existingUri != null && !existingUri.isBlank()) {
+                        // Já existe foto, pula essa
+                        continue;
+                    }
+                } catch (EmptyResultDataAccessException e) {
+                    // Não encontrou — segue para salvar
+                }
 
-                var sql = "UPDATE tb_pre_measurements_streets SET photo_uri = ? WHERE contract_id = ? AND device_street_id = ?";
-                jdbcTemplate.update(sql, photoUri, contractId, deviceStreetId);
+                // Salva a nova foto
+                String photoUri = minioService.uploadFile(photo, "scl-construtora", "photos", "rua");
+
+                String updateSql = "UPDATE tb_pre_measurements_streets SET photo_uri = ? WHERE device_id = ? AND device_street_id = ?";
+                jdbcTemplate.update(updateSql, photoUri, deviceId, deviceStreetId);
+
             } catch (Exception e) {
-                // loga o erro e continua com a próxima foto
-                e.printStackTrace(); // ou log.error(...)
+                e.printStackTrace(); // ou log.warn("Erro ao processar foto", e);
             }
         }
 
         return ResponseEntity.ok().build();
     }
+
 }

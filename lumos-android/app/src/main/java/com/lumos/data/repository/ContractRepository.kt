@@ -17,30 +17,49 @@ class ContractRepository(
     private val api: ContractApi
 ) {
 
-    suspend fun syncContracts(): Boolean {
-        var remoteContracts: List<Contract> = emptyList()
+    suspend fun syncContracts(context: Context): RequestResult<Unit>  {
+        val response = ApiExecutor.execute { api.getContracts() }
 
-        try {
-            val response = api.getContracts()
-            if (response.isSuccessful) {
-                val body = response.body()
-                remoteContracts = body!!
-
-            } else {
-                val code = response.code()
-                // TODO handle the error
+        return when (response) {
+            is RequestResult.Success -> {
+                db.contractDao().insertContracts(response.data)
+                RequestResult.Success(Unit)
             }
-        } catch (e: HttpException) {
-            val response = e.response()
-            val errorCode = e.code()
-            // TODO handle the error
+
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncContracts(context, db)
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
         }
 
-        if (remoteContracts.isNotEmpty()) {
-            remoteContracts.forEach { db.contractDao().insertContract(it) }
-            return true
+    }
+
+    suspend fun syncContractItems(context: Context): RequestResult<Unit> {
+        val response = ApiExecutor.execute { api.getItems() }
+
+        return when (response) {
+            is RequestResult.Success -> {
+                db.contractDao().insertItems(response.data) // lista direta
+                RequestResult.Success(Unit)
+            }
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncContractItems(context, db)
+                RequestResult.NoInternet
+            }
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
         }
-        return false
     }
 
     fun getFlowContracts(status: String): Flow<List<Contract>> =
@@ -64,30 +83,6 @@ class ContractRepository(
             context,
             db
         )
-    }
-
-    suspend fun syncContractItems(context: Context): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.getItems() }
-
-        return when (response) {
-            is RequestResult.Success -> {
-                db.contractDao().deleteAllItems()
-                db.contractDao().insertItems(response.data) // lista direta
-                RequestResult.Success(Unit)
-            }
-
-            is RequestResult.NoInternet -> {
-                SyncManager.queueSyncContractItems(context, db)
-                RequestResult.NoInternet
-            }
-
-            is RequestResult.Timeout -> RequestResult.Timeout
-            is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
-            is RequestResult.UnknownError -> {
-                Log.e("Sync", "Erro desconhecido", response.error)
-                RequestResult.UnknownError(response.error)
-            }
-        }
     }
 
 

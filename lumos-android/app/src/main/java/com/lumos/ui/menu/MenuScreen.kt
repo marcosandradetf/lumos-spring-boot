@@ -55,7 +55,7 @@ fun MenuScreen(
         navController = navController,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { modifier, snackBar ->
         CategoryMenu(navController = navController)
     }
 }

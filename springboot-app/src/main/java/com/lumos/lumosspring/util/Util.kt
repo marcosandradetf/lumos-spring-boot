@@ -125,7 +125,7 @@ class Util(
         where: String = "",
         equal: String = "",
         type: Class<T>,
-        order: String = ""
+        order: String = "",
     ): T? {
         var sql = "SELECT $field FROM $table"
         if (where.isNotBlank() && equal.isNotBlank()) sql += " WHERE $where = $equal"

@@ -106,7 +106,7 @@ fun NotificationsList(
         navController = navController,
         notificationsBadge = notificationsBadge,
         context = context,
-    ) {
+    ) {modifier, snackBar ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()

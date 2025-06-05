@@ -77,6 +77,7 @@ class ExecutionRepository(
             )
 
             db.executionDao().insertExecution(execution)
+            db.executionDao().setExecutionStatus(execution.streetId, execution.executionStatus)
 
             executionDto.reserves.forEach { r ->
                 val reserve = Reserve(
@@ -159,7 +160,7 @@ class ExecutionRepository(
     }
 
 
-    suspend fun postExecution(streetId: Long, context: Context): Boolean {
+    suspend fun postExecution(streetId: Long, context: Context): RequestResult<Unit> {
         val gson = Gson()
 
         val photoUri = db.executionDao().getPhotoUri(streetId)
@@ -180,16 +181,26 @@ class ExecutionRepository(
                 "upload_${System.currentTimeMillis()}.jpg",
                 requestFile
             )
-            val response = api.uploadData(photo = imagePart, execution = jsonBody)
 
-            return try {
-                response.isSuccessful
-            } catch (e: Exception) {
-                false
+            val response = ApiExecutor.execute { api.uploadData(photo = imagePart, execution = jsonBody) }
+
+            return when (response) {
+                is RequestResult.Success -> {
+                    RequestResult.Success(Unit)
+                }
+                is RequestResult.NoInternet -> {
+                    RequestResult.NoInternet
+                }
+                is RequestResult.Timeout -> RequestResult.Timeout
+                is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
+                is RequestResult.UnknownError -> {
+                    Log.e("Sync", "Erro desconhecido", response.error)
+                    RequestResult.UnknownError(response.error)
+                }
             }
         }
 
-        return false
+        return RequestResult.ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
 }

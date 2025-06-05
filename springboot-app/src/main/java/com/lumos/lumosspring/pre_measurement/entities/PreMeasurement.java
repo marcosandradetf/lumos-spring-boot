@@ -2,12 +2,9 @@ package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.contract.entities.Contract;
 import com.lumos.lumosspring.team.entities.Region;
-import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -139,9 +136,6 @@ public class PreMeasurement {
     }
 
     public void newStep() {
-        if (steps == null) {
-            steps = 0;
-        }
         steps++;
     }
 

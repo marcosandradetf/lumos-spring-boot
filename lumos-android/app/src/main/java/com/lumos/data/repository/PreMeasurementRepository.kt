@@ -3,21 +3,20 @@ package com.lumos.data.repository
 import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
+import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.api.PreMeasurementDto
 import com.lumos.data.api.PreMeasurementStreetDto
+import com.lumos.data.api.RequestResult
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreetPhoto
 import com.lumos.utils.Utils.compressImageFromUri
-import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
-import com.lumos.worker.SyncTypes
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class PreMeasurementRepository(
@@ -25,7 +24,6 @@ class PreMeasurementRepository(
     private val api: PreMeasurementApi,
     private val context: Context
 ) {
-
 
     suspend fun saveStreet(preMeasurementStreet: PreMeasurementStreet): Long? {
         return try {
@@ -49,38 +47,57 @@ class PreMeasurementRepository(
         preMeasurementStreet: List<PreMeasurementStreet>,
         preMeasurementStreetItems: List<PreMeasurementStreetItem>,
         userUuid: String,
-        applicationContext: Context
-    ): Int {
-        return try {
-            val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
-            val itemsByStreetId = preMeasurementStreetItems.groupBy { it.preMeasurementStreetId }
+        applicationContext: Context,
+    ): RequestResult<*> {
 
-            preMeasurementStreet.forEach { street ->
-                val items = itemsByStreetId[street.preMeasurementStreetId] ?: emptyList()
-                streets.add(
-                    PreMeasurementStreetDto(
-                        street = street,
-                        items = items
-                    )
+        val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
+        val itemsByStreetId = preMeasurementStreetItems.groupBy { it.preMeasurementStreetId }
+
+        preMeasurementStreet.forEach { street ->
+            val items = itemsByStreetId[street.preMeasurementStreetId] ?: emptyList()
+            streets.add(
+                PreMeasurementStreetDto(
+                    street = street,
+                    items = items
                 )
+            )
+        }
+
+        val dto = PreMeasurementDto(
+            contractId = contract.contractId,
+            streets = streets
+        )
+
+        Log.e("d", dto.toString())
+        val response = ApiExecutor.execute { api.sendPreMeasurement(dto, userUuid) }
+        return when (response) {
+            is RequestResult.Success -> {
+                uploadStreetPhotos(contract.contractId, applicationContext)
             }
 
-            val dto = PreMeasurementDto(
-                contractId = contract.contractId,
-                streets = streets
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncContractItems(context, db)
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is RequestResult.ServerError -> RequestResult.ServerError(
+                response.code,
+                response.message
             )
-            val response = api.sendPreMeasurement(dto, userUuid)
-            if(response.isSuccessful)
-                uploadStreetPhotos(contract.contractId, applicationContext)
-            else -1
-        } catch (e: Exception) {
-            -1
+
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
         }
+
     }
 
     suspend fun finishPreMeasurement(contractId: Long) {
         db.preMeasurementDao().deleteStreets(contractId)
         db.preMeasurementDao().deleteItems(contractId)
+        db.contractDao().deleteContract(contractId)
     }
 
     suspend fun saveItem(preMeasurementStreetItem: PreMeasurementStreetItem) {
@@ -95,7 +112,7 @@ class PreMeasurementRepository(
         return db.preMeasurementDao().getItems(contractId)
     }
 
-    suspend fun queueSyncMeasurement(contractId: Long) {
+    suspend fun queueSendMeasurement(contractId: Long) {
         db.preMeasurementDao().finishAll(contractId)
         SyncManager.queuePostPreMeasurement(
             context,
@@ -109,10 +126,16 @@ class PreMeasurementRepository(
         return db.preMeasurementDao().getStreets(contractId)
     }
 
-    suspend fun uploadStreetPhotos(contractId: Long, context: Context): Int {
+    suspend fun getAllStreets(contractId: Long): List<PreMeasurementStreet> {
+        return db.preMeasurementDao().getAllStreets(contractId)
+    }
+
+    suspend fun uploadStreetPhotos(contractId: Long, context: Context): RequestResult<*> {
         finishPreMeasurement(
             contractId = contractId
         )
+
+        Log.e("Enviando fotos","Enviando fotos")
 
         val images = mutableListOf<MultipartBody.Part>()
         val streets = db.preMeasurementDao().getStreetPhotos(contractId)
@@ -129,7 +152,7 @@ class PreMeasurementRepository(
                     images.add(
                         MultipartBody.Part.createFormData(
                             "photos",
-                            "${street.contractId}#${street.preMeasurementStreetId}",
+                            "${street.deviceId}#${street.preMeasurementStreetId}",
                             requestFile
                         )
                     )
@@ -140,19 +163,34 @@ class PreMeasurementRepository(
             }
         }
 
-        if (images.isEmpty()) return -1
+        if (images.isEmpty()) return RequestResult.ServerError(
+            -1,
+            "Imagens vazias"
+        )
 
-        return try {
-            val response = api.uploadStreetPhotos(images)
-            if (response.isSuccessful) {
-                // Só deleta as URIs se o upload foi realmente bem-sucedido
+        val response = ApiExecutor.execute { api.uploadStreetPhotos(images) }
+        return when (response) {
+            is RequestResult.Success -> {
                 db.preMeasurementDao().deletePhotos(streetsToDelete)
-                db.preMeasurementDao().countPhotos(contractId)
-            } else {
-                -1
+                val count = db.preMeasurementDao().countPhotos(contractId).toString()
+                RequestResult.Success(count)
             }
-        } catch (e: Exception) {
-            -1
+
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncContractItems(context, db)
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is RequestResult.ServerError -> RequestResult.ServerError(
+                response.code,
+                response.message
+            )
+
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
         }
     }
 

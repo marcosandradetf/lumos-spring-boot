@@ -19,7 +19,10 @@ interface PreMeasurementDao {
     @Query("SELECT * FROM pre_measurement_streets WHERE contractId = :preMeasurementId AND status = 'MEASURED'")
     suspend fun getStreets(preMeasurementId : Long): List<PreMeasurementStreet>
 
-    @Query("SELECT * FROM pre_measurement_street_photos WHERE contractId = :contractId")
+    @Query("SELECT * FROM pre_measurement_streets WHERE contractId = :preMeasurementId")
+    suspend fun getAllStreets(preMeasurementId : Long): List<PreMeasurementStreet>
+
+    @Query("SELECT * FROM pre_measurement_street_photos WHERE deviceId = :contractId")
     suspend fun getStreetPhotos(contractId : Long): List<PreMeasurementStreetPhoto>
 
     @Query("SELECT * FROM pre_measurement_street_items WHERE contractId = :contractId")

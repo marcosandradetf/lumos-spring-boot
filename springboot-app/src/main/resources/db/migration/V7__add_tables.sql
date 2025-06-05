@@ -3,7 +3,8 @@ ALTER TABLE tb_contracts_items
 
 ALTER TABLE tb_pre_measurements_streets
     ADD COLUMN IF NOT EXISTS photo_uri varchar(255) NULL,
-    ADD COLUMN IF NOT EXISTS device_street_id bigint NULL;
+    ADD COLUMN IF NOT EXISTS device_street_id bigint NULL,
+    ADD COLUMN IF NOT EXISTS device_id VARCHAR(36) null;
 
 ALTER TABLE tb_pre_measurements_streets
     ALTER COLUMN latitude DROP NOT NULL,

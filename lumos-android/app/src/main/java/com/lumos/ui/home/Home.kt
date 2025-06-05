@@ -54,7 +54,7 @@ fun HomeScreen(
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
         context = context
-    ) { modifier ->
+    ) { modifier, snackBar ->
         Column(
             modifier = modifier
                 .padding(2.dp)

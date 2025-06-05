@@ -41,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -106,7 +105,7 @@ fun PreMeasurementProgressScreen(
                         .show()
 //                    preMeasurementViewModel.
                     onNavigateToHome()
-                    preMeasurementViewModel.sendPreMeasurementSync(contractId)
+                    preMeasurementViewModel.queueSendMeasurement(contractId)
                 } else {
                     Toast
                         .makeText(
@@ -139,7 +138,7 @@ fun Loading(
         navController = navController,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { modifier, snackBar ->
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -187,7 +186,7 @@ fun PMPContent(
         navigateBack = onNavigateToPreMeasurements,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { modifier, snackBar ->
         var expanded by remember { mutableStateOf(false) }
 
         // Box para garantir que o conteúdo fique acima e o botão no final
@@ -450,6 +449,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -462,6 +462,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -474,6 +475,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -486,6 +488,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -498,6 +501,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -510,6 +514,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -522,6 +527,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -534,6 +540,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -546,6 +553,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -558,6 +566,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -570,6 +579,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -582,6 +592,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -594,6 +605,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -606,6 +618,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -618,6 +631,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
             PreMeasurementStreet(
                 preMeasurementStreetId = 1,
@@ -630,6 +644,7 @@ fun PrevPMP() {
                 neighborhood = "",
                 city = "",
                 state = "",
+                deviceId = ""
             ),
         )
 

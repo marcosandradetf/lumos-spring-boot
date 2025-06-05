@@ -45,7 +45,7 @@ fun ProfileScreen(
         navController = navController,
         context = context,
         notificationsBadge = notificationsBadge
-    ) { modifier ->
+    ) { modifier, snackBar ->
         Column(
             modifier = modifier
         ) {

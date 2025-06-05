@@ -15,5 +15,6 @@ data class PreMeasurementStreet(
     var neighborhood: String?,
     var city: String?,
     var state: String?,
-    var status: String? = "MEASURED"
+    var status: String? = "MEASURED",
+    var deviceId: String
 )

@@ -23,10 +23,12 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,8 +68,8 @@ fun ContractsScreen(
     notificationsBadge: String,
 ) {
     val contracts by contractViewModel.contracts.collectAsState()
-    val isLoading by contractViewModel.isLoading.collectAsState()
-    val hasError by contractViewModel.hasError.collectAsState()
+    val isLoading by contractViewModel.isSyncing.collectAsState()
+    val hasError by contractViewModel.syncError.collectAsState()
     val deviceId = Settings.Secure.getString(
         context.contentResolver,
         Settings.Secure.ANDROID_ID
@@ -75,7 +77,7 @@ fun ContractsScreen(
 
     LaunchedEffect(Unit) {
         contractViewModel.loadFlowContracts(Status.PENDING)
-        contractViewModel.queueSyncContracts(context)
+        contractViewModel.syncContracts(context)
     }
 
     ContractsScreenContent(
@@ -97,9 +99,14 @@ fun ContractsScreen(
                 .show()
         },
         isLoading = isLoading,
+        error = hasError,
+        refresh = {
+            contractViewModel.syncContracts(context)
+        }
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContractsScreenContent(
     contracts: List<Contract>,
@@ -112,7 +119,9 @@ fun ContractsScreenContent(
     notificationsBadge: String,
     start: (Long) -> Unit,
     download: (Long) -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    error: String?,
+    refresh: () -> Unit,
 ) {
     AppLayout(
         title = "Contratos",
@@ -125,141 +134,152 @@ fun ContractsScreenContent(
         navigateBack = onNavigateToMenu,
         context = context,
         notificationsBadge = notificationsBadge
-    ) { _, showSnackbar ->
-        if (isLoading)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    ) { _, snackBar ->
+
+        LaunchedEffect(error) {
+            error?.let {
+                snackBar(
+                    it,
+                    null
+                )
             }
-        else if (contracts.isEmpty())
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Nenhum contrato encontrado.")
-            }
-        else
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(2.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
-            ) {
-                items(contracts) { contract -> // Iteração na lista
-                    val createdAt = "Criado por ${contract.createdBy} há ${
-                        Utils.timeSinceCreation(
-                            Instant.parse(contract.createdAt)
-                        )
-                    }"
-                    val expand = remember { mutableStateOf(false) }
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(6.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Column(
+        }
+
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = { refresh() },
+        ) {
+            if (contracts.isEmpty())
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Nenhum contrato encontrado.")
+                }
+            else
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
+                ) {
+                    items(contracts) { contract -> // Iteração na lista
+                        val createdAt = "Criado por ${contract.createdBy} há ${
+                            Utils.timeSinceCreation(
+                                Instant.parse(contract.createdAt)
+                            )
+                        }"
+                        val expand = remember { mutableStateOf(false) }
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(6.dp),
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { expand.value = !expand.value },
+                                    .padding(16.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-
-                                    ) {
-                                    Text(
-                                        text = contract.contractor,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.ExpandMore,
-                                        contentDescription = "Expandir",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-
-                                }
-
-                                // Informação extra
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AccessTimeFilled,
-                                        contentDescription = "Horário",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
-                                    )
-                                    Text(
-                                        modifier = Modifier.padding(start = 5.dp),
-                                        text = createdAt,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Light,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-
-                            AnimatedVisibility(visible = expand.value) {
-                                // Linha inferior (Contrato + Ações)
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { }
-                                        .padding(top = 25.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .clickable { expand.value = !expand.value },
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally, // Centraliza os itens horizontalmente
-                                        verticalArrangement = Arrangement.Center, // Mantém o alinhamento vertical
-                                        modifier = Modifier.clickable {
-                                            download(contract.contractId)
-                                        }
-                                    ) {
-                                        Text(
-                                            text = "Contrato",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(bottom = 2.dp) // Pequeno espaço entre o texto e o ícone
-                                        )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
 
+                                        ) {
+                                        Text(
+                                            text = contract.contractor,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
                                         Icon(
-                                            imageVector = Icons.Default.Downloading,
-                                            contentDescription = "Baixar Contrato",
-                                            tint = Color(0xFF007AFF),
-                                            modifier = Modifier.size(24.dp) // Ajuste do tamanho do ícone
+                                            imageVector = Icons.Default.ExpandMore,
+                                            contentDescription = "Expandir",
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
 
                                     }
 
-
-                                    TextButton(onClick = {
-                                        start(contract.contractId)
-                                    }) {
-                                        Text(
-                                            text = "Iniciar Pré-Medição",
-                                            color = Color(0xFFFF2F55),
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
-                                            textDecoration = TextDecoration.Underline
+                                    // Informação extra
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AccessTimeFilled,
+                                            contentDescription = "Horário",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
                                         )
+                                        Text(
+                                            modifier = Modifier.padding(start = 5.dp),
+                                            text = createdAt,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Light,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+
+                                AnimatedVisibility(visible = expand.value) {
+                                    // Linha inferior (Contrato + Ações)
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { }
+                                            .padding(top = 25.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally, // Centraliza os itens horizontalmente
+                                            verticalArrangement = Arrangement.Center, // Mantém o alinhamento vertical
+                                            modifier = Modifier.clickable {
+                                                download(contract.contractId)
+                                            }
+                                        ) {
+                                            Text(
+                                                text = "Contrato",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier.padding(bottom = 2.dp) // Pequeno espaço entre o texto e o ícone
+                                            )
+
+                                            Icon(
+                                                imageVector = Icons.Default.Downloading,
+                                                contentDescription = "Baixar Contrato",
+                                                tint = Color(0xFF007AFF),
+                                                modifier = Modifier.size(24.dp) // Ajuste do tamanho do ícone
+                                            )
+
+                                        }
+
+
+                                        TextButton(onClick = {
+                                            start(contract.contractId)
+                                        }) {
+                                            Text(
+                                                text = "Iniciar Pré-Medição",
+                                                color = Color(0xFFFF2F55),
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp,
+                                                textDecoration = TextDecoration.Underline
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
+        }
 
 
     }
@@ -311,7 +331,9 @@ fun PrevContract() {
         "12",
         start = {},
         download = {},
-        isLoading = true
+        isLoading = true,
+        error = null,
+        refresh = { },
     )
 }
 

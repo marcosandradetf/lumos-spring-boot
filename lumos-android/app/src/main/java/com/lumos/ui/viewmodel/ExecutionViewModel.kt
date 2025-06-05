@@ -10,8 +10,10 @@ import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -19,41 +21,42 @@ class ExecutionViewModel(
     private val repository: ExecutionRepository,
 
     ) : ViewModel() {
-    private val _executions = MutableStateFlow<List<Execution>>(emptyList()) // estado da lista
-    val executions: StateFlow<List<Execution>> = _executions // estado acessível externamente
-
-    private val _isLoading = MutableStateFlow<Boolean>(true)
-    val isLoading:  StateFlow<Boolean> = _isLoading
+    val executions: StateFlow<List<Execution>> = repository.getFlowExecutions()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
     val reserves: StateFlow<List<Reserve>> = _reserves
 
-    fun  syncExecutions(context: Context) {
+
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing
+
+    private val _syncError = MutableStateFlow<String?>(null)
+    val syncError: StateFlow<String?> = _syncError
+
+    fun syncExecutions(context: Context) {
         viewModelScope.launch {
+            _isSyncing.value = true
+            _syncError.value = null
             try {
-                when(repository.syncExecutions(context)) {
-                    RequestResult.Timeout ->
+                val response = repository.syncExecutions(context)
+                when (response) {
+                    is RequestResult.Timeout -> _syncError.value =
+                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
+                    is RequestResult.NoInternet -> _syncError.value =
+                        "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
+                    is RequestResult.ServerError -> _syncError.value = response.message
+                    is RequestResult.Success -> null
+                    is RequestResult.UnknownError -> null
                 }
             } catch (e: Exception) {
-                // Tratar erros aqui
+                _syncError.value = e.message ?: "Erro inesperado."
+            } finally {
+                _isSyncing.value = false
             }
         }
     }
 
-    fun loadFlowExecutions() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                repository.getFlowExecutions().collectLatest { fetched ->
-                    _executions.value = fetched // atualiza o estado com os dados obtidos
-                    _isLoading.value = false
-                }
-            } catch (e: Exception) {
-                _isLoading.value = false
-                Log.e("Error loadMaterials", e.message.toString())
-            }
-        }
-    }
 
     fun loadFlowReserves(streetId: Long, status: List<String>) {
         viewModelScope.launch {

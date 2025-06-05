@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExecutionDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertExecution(execution: Execution): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertReserve(reserve: Reserve): Long
 
     @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus in (:status)")

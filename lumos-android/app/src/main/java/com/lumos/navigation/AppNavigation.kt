@@ -40,6 +40,7 @@ import com.lumos.notifications.FCMService.FCMBus
 import com.lumos.notifications.NotificationManager
 import com.lumos.notifications.NotificationsBadge
 import com.lumos.ui.auth.Login
+import com.lumos.ui.executions.MaterialScreen
 import com.lumos.ui.executions.StreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.menu.MenuScreen
@@ -111,7 +112,8 @@ fun AppNavigation(
 
         val contractRepository = ExecutionRepository(
             db = db,
-            api = api
+            api = api,
+            secureStorage
         )
         ExecutionViewModel(
             repository = contractRepository
@@ -434,7 +436,7 @@ fun AppNavigation(
 
                 //
 
-                composable(Routes.EXECUTION_SCREEN) { backStackEntry ->
+                composable(Routes.EXECUTION_SCREEN) {
                     StreetsScreen(
                         executionViewModel = executionViewModel,
                         connection = ConnectivityUtils,
@@ -453,9 +455,36 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        pSelected = 1,
+                        pSelected = 0,
                         onNavigateToExecution = {
+                            navController.navigate(Routes.EXECUTION_SCREEN_MATERIALS + "/$it")
+                        }
+                    )
+                }
 
+                composable(Routes.EXECUTION_SCREEN_MATERIALS + "/{streetId}") { backStackEntry ->
+                    val streetId = backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
+                    MaterialScreen(
+                        streetId = streetId,
+                        executionViewModel = executionViewModel,
+                        context = context,
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        pSelected = 0,
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        onNavigateToExecutions = {
+                            navController.navigate(Routes.EXECUTION_SCREEN)
                         }
                     )
                 }
@@ -481,4 +510,5 @@ object Routes {
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
     const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
     const val EXECUTION_SCREEN = "execution-screen"
+    const val EXECUTION_SCREEN_MATERIALS = "execution-screen-materials"
 }

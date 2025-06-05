@@ -1,7 +1,9 @@
 package com.lumos.ui.preMeasurement
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -36,7 +38,6 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.AlertDialog
@@ -70,7 +71,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -80,7 +80,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,6 +104,7 @@ import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import java.io.File
 
+@SuppressLint("HardwareIds")
 @Composable
 fun PreMeasurementStreetScreen(
     back: (Long) -> Unit,
@@ -121,7 +121,7 @@ fun PreMeasurementStreetScreen(
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coord = CoordinatesService(context, fusedLocationProvider)
-    val isLoading by contractViewModel.isLoading.collectAsState()
+    val isLoading by contractViewModel.isSyncing.collectAsState()
 
     var vLatitude by remember { mutableStateOf<Double?>(null) }
     var vLongitude by remember { mutableStateOf<Double?>(null) }
@@ -131,6 +131,11 @@ fun PreMeasurementStreetScreen(
 
     // Obtém o estado atual dos depósitos
     val items by contractViewModel.items.collectAsState()
+
+    val deviceId = Settings.Secure.getString(
+        context.contentResolver,
+        Settings.Secure.ANDROID_ID
+    )
 
     val preMeasurementStreet by remember {
         mutableStateOf(
@@ -144,6 +149,7 @@ fun PreMeasurementStreetScreen(
                 number = "",
                 city = "",
                 state = "",
+                deviceId = deviceId
             )
         )
     }
@@ -152,7 +158,7 @@ fun PreMeasurementStreetScreen(
         mutableStateOf(
             PreMeasurementStreetPhoto(
                 preMeasurementStreetId = 0,
-                contractId = contractId,
+                deviceId = deviceId,
                 photoUri = null,
             )
         )
@@ -175,7 +181,7 @@ fun PreMeasurementStreetScreen(
             contractViewModel.loadItemsFromContract(itemsIdsList)
 
             // Agendar o Worker assim que a tela for aberta
-            contractViewModel.queueSyncContractItems(context)
+            contractViewModel.syncContractItems(context)
         }
     }
 
@@ -302,7 +308,7 @@ fun PreMeasurementStreetScreen(
             context = context,
             isLoading = isLoading,
             refresh = {
-                contractViewModel.syncContractItems()
+                contractViewModel.syncContractItems(context)
             }
         )
     }
@@ -1197,6 +1203,7 @@ fun PrevStreet() {
             number = "",
             city = "",
             state = "",
+            deviceId = ""
         ),
         takePhoto = { },
         onNavigateToHome = { },

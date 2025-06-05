@@ -13,7 +13,7 @@ class ApiService(
     private val context: Context,
     private val secureStorage: SecureStorage,
 ) {
-    private val baseUrl = "https://75e9-2804-d45-365c-c100-a06b-fbb5-9d89-a752.ngrok-free.app"
+    private val baseUrl = "https://0659-2804-d45-365c-c100-a9d5-a14a-cbc4-96fd.ngrok-free.app"
 //    private val baseUrl = "http://192.168.2.13:8080"
 //    private val baseUrl = "https://spring.thryon.com.br"
 //    val apiKey = BuildConfig.API_URL

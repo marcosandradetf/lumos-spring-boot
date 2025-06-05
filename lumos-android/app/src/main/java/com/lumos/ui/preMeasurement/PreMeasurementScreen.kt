@@ -100,7 +100,7 @@ fun PMContent(
         navigateBack = onNavigateToMenu,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) {modifier, snackBar ->
 
         LazyColumn(
             modifier = Modifier

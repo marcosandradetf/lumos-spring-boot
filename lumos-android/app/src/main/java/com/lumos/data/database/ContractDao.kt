@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ContractDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertContract(measurement: Contract): Long
+    suspend fun insertContracts(contract: List<Contract>)
 
     @Query("SELECT * FROM contracts WHERE status = :status")
     fun getFlowContracts(status: String): Flow<List<Contract>>
@@ -32,7 +32,6 @@ interface ContractDao {
     @Query("DELETE FROM contracts WHERE contractId = :contractId")
     suspend fun deleteContract(contractId: Long)
 
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: Item)
 
@@ -44,7 +43,4 @@ interface ContractDao {
         WHERE contractReferenceItemId IN (:itemsIds)
     """)
     fun getItemsFromContract(itemsIds: List<String>): Flow<List<Item>>
-
-    @Query("DELETE FROM items")
-    suspend fun deleteAllItems()
 }

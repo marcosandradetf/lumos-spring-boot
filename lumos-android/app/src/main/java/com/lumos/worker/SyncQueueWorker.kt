@@ -86,7 +86,8 @@ class SyncQueueWorker(
 
         executionRepository = ExecutionRepository(
             db = db,
-            api = executionApi
+            api = executionApi,
+            secureStorage = secureStorage
         )
 
         genericRepository = GenericRepository(
@@ -111,7 +112,7 @@ class SyncQueueWorker(
                 SyncTypes.SYNC_CONTRACT_ITEMS -> syncContractItems(item)
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
-                SyncTypes.POST_GENERIC -> postGeneric(item)
+//                SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_EXECUTION -> postExecution(item)
 //                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
@@ -158,14 +159,8 @@ class SyncQueueWorker(
                     where = item.where,
                     equal = parseToAny(item.equal)
                 )
-                val success = genericRepository.setEntity(request)
-                if (success) {
-                    queueDao.deleteById(item.id)
-                    Result.success()
-                } else {
-                    queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                    Result.retry()
-                }
+                val response = genericRepository.setEntity(request)
+                checkResponse(response, item)
 
             } else {
                 Log.e("postGeneric", "Sem Internet")
@@ -226,10 +221,10 @@ class SyncQueueWorker(
 
             queueDao.update(inProgressItem)
             val contract = preMeasurementRepository.getPreMeasurement(item.relatedId)
-            val streets = preMeasurementRepository.getStreets(item.relatedId)
+            val streets = preMeasurementRepository.getAllStreets(item.relatedId)
             val items = preMeasurementRepository.getItems(item.relatedId)
 
-            val success = preMeasurementRepository.sendMeasurementToBackend(
+            val response = preMeasurementRepository.sendMeasurementToBackend(
                 contract,
                 streets,
                 items,
@@ -237,15 +232,10 @@ class SyncQueueWorker(
                 applicationContext
             )
 
-            return if (success == 0) {
-                queueDao.deleteById(item.id)
-                Result.success()
-            } else if (success == -1) {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                Result.retry() // ainda quer tentar mais uma vez
-            } else {
-                Result.retry()
-            }
+            checkResponse(
+                response,
+                item
+            )
 
         } catch (e: Exception) {
             // Marcar falha ou retry conforme necessidade
@@ -300,14 +290,8 @@ class SyncQueueWorker(
             if (ConnectivityUtils.isNetworkGood(applicationContext)) {
                 Log.e("syncContract", "Internet")
                 queueDao.update(inProgressItem)
-                val success = contractRepository.syncContracts()
-                if (success) {
-                    queueDao.deleteById(item.id)
-                    Result.success()
-                } else {
-                    queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                    Result.retry()
-                }
+                val response = contractRepository.syncContracts(applicationContext)
+                checkResponse(response, item)
 
             } else {
                 Log.e("syncContract", "Sem Internet")
@@ -327,12 +311,6 @@ class SyncQueueWorker(
         )
 
         return try {
-            val uuid = secureStorage.getUserUuid()
-            if (uuid == null) {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                return Result.success()
-            }
-
             if (!ConnectivityUtils.isNetworkGood(applicationContext)) return Result.retry()
 
             queueDao.update(inProgressItem)
@@ -343,15 +321,8 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val success = executionRepository.syncExecutions(uuid)
-
-            return if (success) {
-                queueDao.deleteById(item.id)
-                Result.success()
-            } else {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                Result.retry() // ainda quer tentar mais uma vez
-            }
+            val response = executionRepository.syncExecutions(applicationContext)
+            checkResponse(response, item)
 
         } catch (e: Exception) {
             Log.e("syncExecutions", "Erro ao sincronizar: ${e.message}")
@@ -382,15 +353,8 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val success = executionRepository.postExecution(item.relatedId, applicationContext)
-
-            return if (success) {
-                queueDao.deleteById(item.id)
-                Result.success()
-            } else {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                Result.retry() // ainda quer tentar mais uma vez
-            }
+            val response = executionRepository.postExecution(item.relatedId, applicationContext)
+            checkResponse(response, item)
 
         } catch (e: Exception) {
             Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
@@ -400,15 +364,25 @@ class SyncQueueWorker(
     }
 
 
-    suspend fun checkResponse(response:  RequestResult<Unit>, inProgressItem: SyncQueueEntity): Result {
+    suspend fun checkResponse(response: RequestResult<*>, inProgressItem: SyncQueueEntity): Result {
         return when (response) {
-            is RequestResult.Success -> Result.success()
+            is RequestResult.Success -> {
+                if (inProgressItem.type == SyncTypes.POST_PRE_MEASUREMENT) {
+                    val data = response.data as? String
+                    if (data != "0") return Result.retry()
+                }
+
+                Result.success()
+            }
+
+
             is RequestResult.NoInternet -> Result.retry()
             is RequestResult.Timeout -> Result.retry()
             is RequestResult.ServerError -> {
                 queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
                 Result.retry()
             }
+
             is RequestResult.UnknownError -> {
 
                 // Marca como failed para evitar retries automáticos

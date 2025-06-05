@@ -95,7 +95,6 @@ fun MaterialScreen(
     pSelected: Int,
     navController: NavHostController,
     notificationsBadge: String,
-    onNavigateToExecution: (Long) -> Unit,
 ) {
     var execution by remember { mutableStateOf<Execution?>(null) }
     val reserves by executionViewModel.reserves.collectAsState()
@@ -209,7 +208,7 @@ fun MaterialsContent(
         navigateBack = onNavigateToExecutions,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {
+    ) { _, _ ->
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -300,7 +299,7 @@ fun MaterialsContent(
                         val latitude = execution.latitude
                         val longitude = execution.longitude
 
-                        val gmmIntentUri: Uri = if (latitude != null && longitude != null)
+                        val gmmIntentUri: Uri = if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0)
                             "google.navigation:q=$latitude,$longitude".toUri()
                         else {
                             val fullAddress = buildAddress(
@@ -310,6 +309,7 @@ fun MaterialsContent(
                                 execution.city,
                                 execution.state
                             )
+
 
                             val encodedAddress = Uri.encode(fullAddress)
 
@@ -373,7 +373,7 @@ fun MaterialsContent(
                             modifier = Modifier
                                 .size(72.dp)
                                 .background(
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    color = MaterialTheme.colorScheme.surface,
                                     shape = CircleShape
                                 )
                                 .padding(16.dp),
@@ -434,8 +434,8 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit) {
             .padding(3.dp),
         elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onSecondary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
 
@@ -588,7 +588,7 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit) {
 
         if (confirmModal)
             Confirm(
-                body = "Deseja confirmar a execução de $quantityExecuted 12 ${material.requestUnit}?",
+                body = "Deseja confirmar a execução de ${formatDouble(quantityExecuted)} ${material.requestUnit}?",
                 confirm = {
                     finish(quantityExecuted)
                 },

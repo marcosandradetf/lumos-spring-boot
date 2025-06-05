@@ -38,10 +38,10 @@ data class ReserveDTOResponse(
 data class ReserveStreetDTOResponse(
     val preMeasurementStreetId: Long,
     val streetName: String,
-    val latitude: Double,
-    val longitude: Double,
+    val latitude: Double?,
+    val longitude: Double?,
     val prioritized: Boolean,
-    val comment: String,
+    val comment: String?,
     val assignedBy: String,
     val items: List<ItemResponseDTO>,
     val teamId: Long,
@@ -86,8 +86,8 @@ data class ExecutionPartial(
     val type: String,
     val itemsQuantity: Int,
     val creationDate: Instant,
-    val latitude: Double,
-    val longitude: Double,
+    val latitude: Double?,
+    val longitude: Double?,
 )
 
 data class ExecutionDTO(
@@ -102,8 +102,8 @@ data class ExecutionDTO(
     val type: String,
     val itemsQuantity: Int,
     val creationDate: String,
-    val latitude: Double,
-    val longitude: Double,
+    val latitude: Double?,
+    val longitude: Double?,
     val reserves: List<Reserve>,
 )
 
