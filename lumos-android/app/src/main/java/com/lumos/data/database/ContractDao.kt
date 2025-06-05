@@ -27,7 +27,7 @@ interface ContractDao {
     suspend fun startAt(contractId: Long, updated: String, deviceId: String)
 
     @Query("SELECT * FROM contracts WHERE contractId = :contractId")
-    suspend fun getContract(contractId: Long): Contract
+    suspend fun getContract(contractId: Long): Contract?
 
     @Query("DELETE FROM contracts WHERE contractId = :contractId")
     suspend fun deleteContract(contractId: Long)

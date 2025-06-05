@@ -48,6 +48,6 @@ interface QueueDao {
         set: String,
         where: String,
         equal: String
-    ): Any
+    ): Int
 
 }

@@ -112,7 +112,7 @@ class SyncQueueWorker(
                 SyncTypes.SYNC_CONTRACT_ITEMS -> syncContractItems(item)
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
-//                SyncTypes.POST_GENERIC -> postGeneric(item)
+                SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_EXECUTION -> postExecution(item)
 //                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
@@ -220,12 +220,11 @@ class SyncQueueWorker(
             }
 
             queueDao.update(inProgressItem)
-            val contract = preMeasurementRepository.getPreMeasurement(item.relatedId)
             val streets = preMeasurementRepository.getAllStreets(item.relatedId)
             val items = preMeasurementRepository.getItems(item.relatedId)
 
             val response = preMeasurementRepository.sendMeasurementToBackend(
-                contract,
+                item.relatedId,
                 streets,
                 items,
                 uuid,
@@ -364,7 +363,7 @@ class SyncQueueWorker(
     }
 
 
-    suspend fun checkResponse(response: RequestResult<*>, inProgressItem: SyncQueueEntity): Result {
+    private suspend fun checkResponse(response: RequestResult<*>, inProgressItem: SyncQueueEntity): Result {
         return when (response) {
             is RequestResult.Success -> {
                 if (inProgressItem.type == SyncTypes.POST_PRE_MEASUREMENT) {

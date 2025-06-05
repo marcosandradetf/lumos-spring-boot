@@ -38,17 +38,20 @@ class PreMeasurementRepository(
         return db.contractDao().getContracts(Status.FINISHED)
     }
 
-    suspend fun getPreMeasurement(contractId: Long): Contract {
+    suspend fun getPreMeasurement(contractId: Long): Contract? {
         return db.contractDao().getContract(contractId)
     }
 
     suspend fun sendMeasurementToBackend(
-        contract: Contract,
+        contractId: Long,
         preMeasurementStreet: List<PreMeasurementStreet>,
         preMeasurementStreetItems: List<PreMeasurementStreetItem>,
         userUuid: String,
         applicationContext: Context,
     ): RequestResult<*> {
+        if(preMeasurementStreet.isEmpty()) {
+            return uploadStreetPhotos(contractId, applicationContext)
+        }
 
         val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
         val itemsByStreetId = preMeasurementStreetItems.groupBy { it.preMeasurementStreetId }
@@ -64,7 +67,7 @@ class PreMeasurementRepository(
         }
 
         val dto = PreMeasurementDto(
-            contractId = contract.contractId,
+            contractId = contractId,
             streets = streets
         )
 
@@ -72,7 +75,7 @@ class PreMeasurementRepository(
         val response = ApiExecutor.execute { api.sendPreMeasurement(dto, userUuid) }
         return when (response) {
             is RequestResult.Success -> {
-                uploadStreetPhotos(contract.contractId, applicationContext)
+                uploadStreetPhotos(contractId, applicationContext)
             }
 
             is RequestResult.NoInternet -> {
@@ -94,7 +97,7 @@ class PreMeasurementRepository(
 
     }
 
-    suspend fun finishPreMeasurement(contractId: Long) {
+    private suspend fun finishPreMeasurement(contractId: Long) {
         db.preMeasurementDao().deleteStreets(contractId)
         db.preMeasurementDao().deleteItems(contractId)
         db.contractDao().deleteContract(contractId)
@@ -121,7 +124,6 @@ class PreMeasurementRepository(
         )
     }
 
-
     suspend fun getStreets(contractId: Long): List<PreMeasurementStreet> {
         return db.preMeasurementDao().getStreets(contractId)
     }
@@ -130,7 +132,7 @@ class PreMeasurementRepository(
         return db.preMeasurementDao().getAllStreets(contractId)
     }
 
-    suspend fun uploadStreetPhotos(contractId: Long, context: Context): RequestResult<*> {
+    private suspend fun uploadStreetPhotos(contractId: Long, context: Context): RequestResult<*> {
         finishPreMeasurement(
             contractId = contractId
         )

@@ -34,6 +34,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -95,7 +96,7 @@ fun AppLayout(
             snackBarHostState.showSnackbar(
                 message = message,
                 actionLabel = label,
-                duration = SnackbarDuration.Indefinite
+                duration = SnackbarDuration.Short
             )
         }
     }
@@ -103,7 +104,14 @@ fun AppLayout(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState)
+            SnackbarHost(hostState = snackBarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    actionColor = MaterialTheme.colorScheme.primary
+                )
+            }
         },
         topBar = {
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {

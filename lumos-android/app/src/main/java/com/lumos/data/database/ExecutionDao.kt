@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ExecutionDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertExecution(execution: Execution): Long
+    suspend fun insertExecution(execution: Execution)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertReserve(reserve: Reserve): Long
+    suspend fun insertReserve(reserve: Reserve)
 
     @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus in (:status)")
     fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>>
@@ -35,7 +35,7 @@ interface ExecutionDao {
     suspend fun setExecutionStatus(streetId: Long, status: String = Status.IN_PROGRESS)
 
     @Query("SELECT * FROM executions WHERE streetId = :lng LIMIT 1")
-    suspend fun getExecution(lng: Long): Execution
+    suspend fun getExecution(lng: Long): Execution?
 
     @Query("UPDATE executions set photoUri = :photoUri where streetId = :streetId")
     suspend fun setPhotoUri(photoUri: String, streetId: Long)
@@ -55,6 +55,6 @@ interface ExecutionDao {
     fun getReservesPartial(lng: Long): List<ReservePartial>
 
     @Query("SELECT photoUri FROM executions WHERE streetId = :lng LIMIT 1")
-    suspend fun getPhotoUri(lng: Long): String
+    suspend fun getPhotoUri(lng: Long): String?
 
 }

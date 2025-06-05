@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,6 +28,8 @@ class ExecutionViewModel(
     private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
     val reserves: StateFlow<List<Reserve>> = _reserves
 
+    private val _isLoadingReserves = MutableStateFlow(false)
+    val isLoadingReserves: StateFlow<Boolean> = _isLoadingReserves
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing
@@ -43,8 +46,10 @@ class ExecutionViewModel(
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
+
                     is RequestResult.NoInternet -> _syncError.value =
                         "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
+
                     is RequestResult.ServerError -> _syncError.value = response.message
                     is RequestResult.Success -> null
                     is RequestResult.UnknownError -> null
@@ -60,15 +65,22 @@ class ExecutionViewModel(
 
     fun loadFlowReserves(streetId: Long, status: List<String>) {
         viewModelScope.launch {
+            _isLoadingReserves.value = true
             try {
-                repository.getFlowReserves(streetId, status).collectLatest { fetched ->
-                    _reserves.value = fetched // atualiza o estado com os dados obtidos
-                }
+                repository.getFlowReserves(streetId, status)
+                    .onEach {
+                        _isLoadingReserves.value = false
+                    } // assim que o primeiro dado chega, desliga o loading
+                    .collectLatest { fetched ->
+                        _reserves.value = fetched
+                    }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
+                _isLoadingReserves.value = false
             }
         }
     }
+
 
     fun setReserveStatus(streetId: Long, status: String) {
         viewModelScope.launch {

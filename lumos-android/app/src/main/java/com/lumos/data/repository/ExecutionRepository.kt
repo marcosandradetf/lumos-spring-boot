@@ -120,7 +120,7 @@ class ExecutionRepository(
             field = "status",
             set = status,
             where = "pre_measurement_street_id",
-            equal = streetId.toString()
+            equal = streetId.toString(),
         )
     }
 

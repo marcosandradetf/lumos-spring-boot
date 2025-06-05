@@ -12,6 +12,8 @@ import {Title} from '@angular/platform-browser';
 import {catchError, tap, throwError} from 'rxjs';
 import {Steps} from 'primeng/steps';
 import {MenuItem} from 'primeng/api';
+import { UtilsService } from '../../core/service/utils.service';
+import { Toast } from 'primeng/toast';
 
 
 @Component({
@@ -25,7 +27,8 @@ import {MenuItem} from 'primeng/api';
     ModalComponent,
     AlertMessageComponent,
     Steps,
-    CurrencyPipe
+    CurrencyPipe,
+    Toast
   ],
   templateUrl: './stock-movement-pending.component.html',
   styleUrl: './stock-movement-pending.component.scss'
@@ -46,7 +49,9 @@ export class StockMovementPendingComponent implements OnInit {
   alertType: string | null = null;
   items: MenuItem[] | undefined;
 
-  constructor(private stockService: EstoqueService, private title: Title) {
+  constructor(private stockService: EstoqueService, 
+    private utils: UtilsService,
+    private title: Title) {
     this.title.setTitle('Estoque - Pendente');
     this.stockService.getStockMovement().subscribe(
       stockMovement => {
@@ -114,16 +119,16 @@ export class StockMovementPendingComponent implements OnInit {
     this.stockService.rejectStockMovement(this.movementId).pipe(
       tap(response => {
         this.closeAprovationModal();
+        this.utils.showMessage(response, 'success', 'Sucesso')
         this.serverMessage = response;
         this.alertType = 'alert-success';
       }),
       catchError(err => {
-        this.serverMessage = err.message;
-        this.alertType = 'alert-error';
+        this.utils.showMessage(err.message, 'error', 'Erro')
         this.closeAprovationModal();
         return throwError(() => err);
       })
-    )
+    ).subscribe();
   }
 
   protected readonly Number = Number;

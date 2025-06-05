@@ -93,6 +93,8 @@ fun StreetsScreen(
     val loading by executionViewModel.isSyncing.collectAsState()
     val error by executionViewModel.syncError.collectAsState()
 
+    val isLoadingReserves by executionViewModel.isLoadingReserves.collectAsState()
+
     var showAlert by remember { mutableStateOf(false) }
     var internet by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
@@ -104,14 +106,14 @@ fun StreetsScreen(
 
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
 
-    LaunchedEffect(reserves, selectedStreetId) {
-        selectedStreetId?.let { streetId ->
+    LaunchedEffect(isLoadingReserves) {
+        if (!isLoadingReserves && selectedStreetId != null) {
             if (reserves.isNotEmpty()) {
                 showAlert = true
             } else {
-                onNavigateToExecution(streetId)
+                onNavigateToExecution(selectedStreetId!!)
             }
-            selectedStreetId = null // evita loop
+            selectedStreetId = null
         }
     }
 

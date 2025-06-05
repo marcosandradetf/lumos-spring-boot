@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Navigation
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -100,6 +101,9 @@ fun MaterialScreen(
     val reserves by executionViewModel.reserves.collectAsState()
     var alertModal by remember { mutableStateOf(false) }
 
+    val isLoadingReserves by executionViewModel.isLoadingReserves.collectAsState()
+    var hasPosted by remember { mutableStateOf(false) }
+
     LaunchedEffect(streetId) {
         execution = executionViewModel.getExecution(streetId)
         executionViewModel.loadFlowReserves(
@@ -108,10 +112,11 @@ fun MaterialScreen(
         )
     }
 
-    LaunchedEffect(reserves) {
-        if (reserves.isEmpty()) {
+    LaunchedEffect(isLoadingReserves) {
+        if (!isLoadingReserves && reserves.isEmpty() && !hasPosted) {
             execution?.let {
                 executionViewModel.queuePostExecution(it.streetId, context)
+                hasPosted = true
             }
         }
     }
@@ -149,7 +154,9 @@ fun MaterialScreen(
             alertModal = alertModal,
             closeAlertModal = {
                 alertModal = false
-            }
+            },
+            loadingReserves = isLoadingReserves,
+            hasPosted = hasPosted,
         )
     } ?: Loading()
 
@@ -172,9 +179,14 @@ fun MaterialsContent(
     onFinishMaterial: (Long, Double) -> Unit,
     alertModal: Boolean,
     closeAlertModal: () -> Unit,
+    loadingReserves: Boolean,
+    hasPosted: Boolean
 ) {
-    val fileUri: MutableState<Uri?> = remember { mutableStateOf(null) }
-    val imageSaved = remember { mutableStateOf(false) }
+    val fileUri: MutableState<Uri?> = remember { mutableStateOf(
+        execution.photoUri?.toUri()
+    ) }
+
+//    val imageSaved = remember { mutableStateOf(false) }
     val createFile: () -> Uri = {
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
         file.createNewFile() // Garante que o arquivo seja criado
@@ -187,7 +199,7 @@ fun MaterialsContent(
             if (success) {
                 fileUri.value?.let { uri ->
                     takePhoto(uri)
-                    imageSaved.value = true
+//                    imageSaved.value = true
                 }
             } else {
                 Log.e("ImageDebug", "Erro ao tirar foto.")
@@ -207,13 +219,13 @@ fun MaterialsContent(
         navController = navController,
         navigateBack = onNavigateToExecutions,
         context = context,
-        notificationsBadge = notificationsBadge
+        notificationsBadge = notificationsBadge,
     ) { _, _ ->
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            if (reserves.isNotEmpty()) {
+            if (!hasPosted) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -224,7 +236,7 @@ fun MaterialsContent(
                     items(reserves) {
                         MaterialItem(material = it, finish = { quantityExecuted ->
                             onFinishMaterial(it.reserveId, quantityExecuted)
-                        })
+                        }, loadingReserves = loadingReserves)
                     }
                 }
 
@@ -239,7 +251,7 @@ fun MaterialsContent(
                         .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
                         .padding(16.dp)
                 ) {
-                    AnimatedVisibility(visible = imageSaved.value) {
+                    AnimatedVisibility(visible = fileUri.value != null) {
                         Image(
                             painter = rememberAsyncImagePainter(
                                 ImageRequest.Builder(LocalContext.current)
@@ -255,7 +267,7 @@ fun MaterialsContent(
                         )
                     }
 
-                    AnimatedVisibility(visible = !imageSaved.value) {
+                    AnimatedVisibility(visible = fileUri.value == null) {
                         Box(
                             modifier = Modifier
                                 .clip(
@@ -407,13 +419,21 @@ fun MaterialsContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
+                        colors =  ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
                             contentDescription = null,
                             modifier = Modifier.padding(end = 8.dp)
                         )
-                        Text("Ok, voltar a tela anterior")
+                        Text(
+                            "Ok, voltar a tela anterior"
+                        )
                     }
                 }
             }
@@ -423,7 +443,7 @@ fun MaterialsContent(
 }
 
 @Composable
-fun MaterialItem(material: Reserve, finish: (Double) -> Unit) {
+fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: Boolean) {
     var confirmModal by remember { mutableStateOf(false) }
     var quantityExecuted by remember { mutableDoubleStateOf(material.materialQuantity) }
 
@@ -509,6 +529,7 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit) {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Button(
+                            enabled = !loadingReserves,
                             shape = RoundedCornerShape(10.dp),
                             onClick = { confirmModal = true }
                         ) {
@@ -752,6 +773,8 @@ fun PrevMScreen() {
         takePhoto = {},
         onFinishMaterial = { _, _ -> },
         alertModal = false,
-        closeAlertModal = {}
+        closeAlertModal = {},
+        loadingReserves = true,
+        hasPosted = true
     )
 }
