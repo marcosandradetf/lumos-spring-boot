@@ -7,7 +7,8 @@
         <li>Movimentação de Estoque</li>
       </ul>
     </div>
-    <h3 class="text-medium pr-5 hidden lg:block font-medium">{{!currentDeposit ? 'Selecione um almoxarifado' : 'Selecione os materiais desejados para movimentar o estoque'}} </h3>
+    <h3
+      class="text-medium pr-5 hidden lg:block font-medium">{{ !currentDeposit ? 'Selecione um almoxarifado' : 'Selecione os materiais desejados para movimentar o estoque' }} </h3>
   </div>
 
   <div class="p-2">
@@ -45,7 +46,7 @@
         <th>Almoxarifado</th>
       </tr>
       <ng-container *ngIf="!loading && currentDeposit" body>
-        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" >
+        <tr *ngFor="let row of materials; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral">
           <td>
             <input
               type="checkbox"
@@ -133,7 +134,8 @@
     <div class="flex justify-between mt-auto absolute bottom-5 w-[90%]" *ngIf="!loading">
       <app-button [action]="handleClick" title="Continuar"></app-button>
 
-      <p-paginator (onPageChange)="onPageChange($event)" [first]="materialService.currentPage" [rows]="materialService.rows"
+      <p-paginator (onPageChange)="onPageChange($event)" [first]="materialService.currentPage"
+                   [rows]="materialService.rows"
                    [totalRecords]="materialService.totalElements"/>
 
     </div>
@@ -145,7 +147,7 @@
   <app-modal [modalOpen]="openMovementModal" classModal="rounded-none" (modalClose)="closeMovementModal()">
     <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
       <app-table>
-        <tr class="bg-indigo-700 text-white" header>
+        <tr header>
           <th>Codigo</th>
           <th class="min-w-64">Descrição</th>
           <th>Quantidade*</th>
@@ -157,7 +159,7 @@
           <th>UN. Requisição*</th>
           <th>Qtde. Total</th>
         </tr>
-        <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100" body>
+        <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
           <td><input
             readonly
             required
@@ -246,7 +248,7 @@
             #price="ngModel"
           />
             <div *ngIf="price.invalid && formSubmitted">
-              <small *ngIf="price.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              <small *ngIf="price.errors?.['required']" class="text-red-600">Obrigatório.</small>
             </div>
           </td>
           <td>
@@ -262,7 +264,7 @@
               }
             </select>
             <div *ngIf="supplier.invalid && formSubmitted">
-              <small *ngIf="supplier.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              <small *ngIf="supplier.errors?.['required']" class="text-red-600">Obrigatório.</small>
             </div>
           </td>
           <td><input
@@ -288,7 +290,7 @@
             </select>
             @if (requestUnit.invalid && formSubmitted) {
               @if (requestUnit.errors?.['required']) {
-                <small class="text-red-600">Preenchimento obrigatório.</small>
+                <small class="text-red-600">Obrigatório.</small>
               }
             }
           </td>
@@ -301,18 +303,18 @@
       </app-table>
       <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
         <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor" class="w-full"
-                    classButton="btn bg-neutral-300 hover:bg-orange-500 rounded-none w-full"
+                    classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-orange-500 rounded-none w-full"
                     textColor="text-black"></app-button>
         <app-button (click)="closeMovementModal()" title="Cancelar" class="w-full"
-                    classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
+                    classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-red-500 rounded-none w-full"
                     textColor="text-black"></app-button>
         <app-button typeButton="submit" title="Salvar Movimentação" class="w-full"
-                    classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+                    classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
       </div>
     </form>
   </app-modal>
 
-  <p-toast />
+  <p-toast/>
 
   <!--    modal confirmation-->
   <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">

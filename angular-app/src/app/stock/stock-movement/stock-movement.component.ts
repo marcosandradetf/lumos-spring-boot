@@ -349,9 +349,13 @@ export class StockMovementComponent implements OnInit {
           movement.quantityPackage = '1';
           this.calculateQuantity(movement);
           movement.totalQuantity = Number(movement.inputQuantity);
+          movement.requestUnit = this.filterUnits(movement.buyUnit.toUpperCase())[0];
+          console.log(movement);
           break;
         default:
+          movement.requestUnit = this.filterUnits(movement.buyUnit.toUpperCase())[0];
           this.calculateQuantity(movement);
+          console.log(movement);
           break;
       }
     });
