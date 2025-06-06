@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.repository.Status
+import com.lumos.data.repository.ContractStatus
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
@@ -68,7 +67,9 @@ fun ContractsScreen(
     notificationsBadge: String,
 ) {
     val contracts by contractViewModel.contracts.collectAsState()
-    val isLoading by contractViewModel.isSyncing.collectAsState()
+    val isSyncing by contractViewModel.isSyncing.collectAsState()
+
+
     val hasError by contractViewModel.syncError.collectAsState()
     val deviceId = Settings.Secure.getString(
         context.contentResolver,
@@ -76,7 +77,7 @@ fun ContractsScreen(
     )
 
     LaunchedEffect(Unit) {
-        contractViewModel.loadFlowContracts(Status.PENDING)
+        contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
         contractViewModel.syncContracts(context)
     }
 
@@ -98,7 +99,7 @@ fun ContractsScreen(
             Toast.makeText(context, "Recurso de download não implementado", Toast.LENGTH_SHORT)
                 .show()
         },
-        isLoading = isLoading,
+        isLoading = isSyncing,
         error = hasError,
         refresh = {
             contractViewModel.syncContracts(context)
@@ -148,12 +149,26 @@ fun ContractsScreenContent(
         PullToRefreshBox(
             isRefreshing = isLoading,
             onRefresh = { refresh() },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            if (contracts.isEmpty())
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Nenhum contrato encontrado.")
+            if (contracts.isEmpty() && !isLoading)
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp)
+                ) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxHeight()
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Nenhum contrato encontrado.")
+                        }
+                    }
                 }
-            else
+            else if(contracts.isNotEmpty() && !isLoading)
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -321,7 +336,7 @@ fun PrevContract() {
 
 
     ContractsScreenContent(
-        contracts = values,
+        contracts = emptyList(),
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },

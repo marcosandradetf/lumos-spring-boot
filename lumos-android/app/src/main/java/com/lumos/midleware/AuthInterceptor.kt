@@ -45,7 +45,7 @@ class AuthInterceptor(
 
                 // Usando Retrofit para renovar o token
                 val retrofit = Retrofit.Builder()
-                    .baseUrl("https://0659-2804-d45-365c-c100-a9d5-a14a-cbc4-96fd.ngrok-free.app") // URL base da sua API
+                    .baseUrl("https://b8b9-2804-d45-365c-c100-253e-1174-61ea-e6fe.ngrok-free.app") // URL base da sua API
 //                    .baseUrl("https://spring.thryon.com.br") // URL base da sua API
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()

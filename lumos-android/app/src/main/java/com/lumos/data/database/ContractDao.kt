@@ -33,9 +33,6 @@ interface ContractDao {
     suspend fun deleteContract(contractId: Long)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItem(item: Item)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItems(items: List<Item>)
 
     @Query("""

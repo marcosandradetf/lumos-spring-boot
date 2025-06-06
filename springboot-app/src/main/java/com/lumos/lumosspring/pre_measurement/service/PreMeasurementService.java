@@ -80,13 +80,13 @@ public class PreMeasurementService {
         for (var street : preMeasurement.get().getStreets()) {
             if (street.getStep().equals(step)) {
                 var status = switch (street.getStreetStatus()) {
-                    case (ContractStatus.PENDING) -> ContractStatus.WAITING_CONTRACTOR;
-                    case (ContractStatus.WAITING_CONTRACTOR) -> ContractStatus.AVAILABLE;
+                    case (ExecutionStatus.PENDING) -> ExecutionStatus.WAITING_CONTRACTOR;
+                    case (ExecutionStatus.WAITING_CONTRACTOR) -> ExecutionStatus.AVAILABLE;
 //            case (ContractStatus.VALIDATING):
 //                preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
 //                break;
-                    case (ContractStatus.AVAILABLE) -> ContractStatus.IN_PROGRESS;
-                    case (ContractStatus.IN_PROGRESS) -> ContractStatus.FINISHED;
+                    case (ExecutionStatus.AVAILABLE) -> ExecutionStatus.IN_PROGRESS;
+                    case (ExecutionStatus.IN_PROGRESS) -> ExecutionStatus.FINISHED;
                     default -> null;
                 };
                 if (status == null) return false;
@@ -128,27 +128,12 @@ public class PreMeasurementService {
             return ResponseEntity.badRequest().body(new ErrorResponse("User not found"));
         }
 
-//        if (!contract.getStatus().equals(ContractStatus.PENDING)) {
-//            notificationService.sendNotificationForRole(
-//                    "Pré-medição de ".concat(Objects.requireNonNull(contract.getContractor())),
-//                    "Sua pré-medição não foi salva, pois já foi enviada anteriormente pelo usuário ".concat(user.get().getName()).concat(" em caso de dúvidas, procure sua empresa para evitar inconsistências na pré-medição."),
-//                    Routes.PRE_MEASUREMENT_PROGRESS.concat("/").concat(String.valueOf(contract.getContractId())),
-//                    Role.Values.RESPONSAVEL_TECNICO,
-//                    util.getDateTime(),
-//                    NotificationType.WARNING
-//            );
-//            return ResponseEntity.ok().body(new ErrorResponse("Já foi enviada uma pré-medição anterior para este contrato."));
-//        }
-
-        contract.setStatus(ContractStatus.VALIDATING);
-        contractRepository.save(contract);
-
         var preMeasurement = preMeasurementRepository.findByContract_ContractId(contract.getContractId())
                 .orElseGet(() -> {
                     PreMeasurement newPre = new PreMeasurement();
                     newPre.setContract(contract);
                     newPre.setTypePreMeasurement(ContractType.INSTALLATION);
-                    newPre.setStatus(ContractStatus.PENDING);
+                    newPre.setStatus(ExecutionStatus.PENDING);
                     newPre.setCity(contract.getContractor());
                     return preMeasurementRepository.save(newPre);
                 });
@@ -537,7 +522,7 @@ public class PreMeasurementService {
 
         PreMeasurement preMeasurement = allStreets.getFirst().getPreMeasurement();
         preMeasurement.subtractTotalPrice(itemsPrices);
-        preMeasurement.setStatus(ContractStatus.AVAILABLE);
+        preMeasurement.setStatus(ExecutionStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
@@ -570,7 +555,7 @@ public class PreMeasurementService {
 
         PreMeasurement preMeasurement = allItems.getFirst().getPreMeasurement();
         preMeasurement.subtractTotalPrice(itemsPrices);
-        preMeasurement.setStatus(ContractStatus.AVAILABLE);
+        preMeasurement.setStatus(ExecutionStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 
@@ -640,7 +625,7 @@ public class PreMeasurementService {
         PreMeasurement preMeasurement = newItems.getFirst().getPreMeasurement();
         preMeasurement.subtractTotalPrice(oldItemsPrice);
         preMeasurement.sumTotalPrice(newItemsPrice.add(newItemsPrice));
-        preMeasurement.setStatus(ContractStatus.AVAILABLE);
+        preMeasurement.setStatus(ExecutionStatus.AVAILABLE);
         preMeasurementRepository.save(preMeasurement);
     }
 

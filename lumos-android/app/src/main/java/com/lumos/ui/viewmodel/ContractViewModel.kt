@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
 import com.lumos.data.repository.ContractRepository
-import com.lumos.data.repository.Status
+import com.lumos.data.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Item
 import com.lumos.utils.Utils
@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -95,7 +96,9 @@ class ContractViewModel(
     fun loadFlowContracts(status: String) {
         viewModelScope.launch {
             try {
-                repository.getFlowContracts(status).collectLatest { fetched ->
+                repository.getFlowContracts(status)
+                    .flowOn(Dispatchers.IO)
+                    .collectLatest { fetched ->
                     _contracts.value = fetched
                 }
             } catch (e: Exception) {
@@ -134,7 +137,7 @@ class ContractViewModel(
     fun startPreMeasurement(contractId: Long, deviceId: String) {
         viewModelScope.launch {
             try {
-                repository.setStatus(contractId, Status.IN_PROGRESS)
+                repository.setStatus(contractId, ExecutionStatus.IN_PROGRESS)
                 repository.startAt(contractId, Utils.dateTime.toString(), deviceId)
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())

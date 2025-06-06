@@ -1,6 +1,7 @@
 package com.lumos.navigation
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -139,6 +140,7 @@ fun AppNavigation(
         if (isAuthenticated) {
             isLoading = false
             NotificationsBadge._notificationBadge.value = notificationViewModel.countNotifications()
+            Log.e("n", "Antes de entrar no notification manager")
             notificationManager.subscribeToSavedTopics()
 
         } else {

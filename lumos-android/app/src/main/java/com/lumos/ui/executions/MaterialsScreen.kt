@@ -113,8 +113,10 @@ fun MaterialScreen(
     }
 
     LaunchedEffect(isLoadingReserves) {
+        Log.e("e", "flow")
         if (!isLoadingReserves && reserves.isEmpty() && !hasPosted) {
             execution?.let {
+                Log.e("e", "send")
                 executionViewModel.queuePostExecution(it.streetId, context)
                 hasPosted = true
             }
@@ -611,6 +613,7 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: B
             Confirm(
                 body = "Deseja confirmar a execução de ${formatDouble(quantityExecuted)} ${material.requestUnit}?",
                 confirm = {
+                    confirmModal = false
                     finish(quantityExecuted)
                 },
                 cancel = {

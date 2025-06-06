@@ -101,13 +101,6 @@ fun CategoryMenu(navController: NavHostController) {
                             color = MaterialTheme.colorScheme.primary, // Cor do título
                         ),
                     )
-                    Spacer(modifier = Modifier.width(8.dp)) // Espaço entre o ícone e o título
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown, // Exemplo de ícone
-                        contentDescription = "Icone Titulo",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp) // Ajusta o tamanho do ícone
-                    )
                 }
             }
 

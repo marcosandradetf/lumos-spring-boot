@@ -214,6 +214,17 @@ class Util(
 }
 
 object ContractStatus {
+    const val ACTIVE = "ACTIVE"
+    const val INACTIVE = "INACTIVE"
+    const val ARCHIVED = "ARCHIVED"
+}
+
+object ContractType {
+    const val INSTALLATION = "INSTALLATION"
+    const val MAINTENANCE = "MAINTENANCE"
+}
+
+object ExecutionStatus {
     const val PENDING = "PENDING"
     const val VALIDATING = "VALIDATING"
     const val WAITING_CONTRACTOR = "WAITING_CONTRACTOR"
@@ -225,17 +236,10 @@ object ContractStatus {
     const val FINISHED = "FINISHED"
 }
 
-object ContractType {
-    const val INSTALLATION = "INSTALLATION"
-    const val MAINTENANCE = "MAINTENANCE"
-}
-
 object ItemStatus {
     const val PENDING = "PENDING"
     const val CANCELLED = "CANCELLED"
     const val APPROVED = "APPROVED"
-    const val IN_PROGRESS = "IN_PROGRESS"
-    const val FINISHED = "FINISHED"
 }
 
 object NotificationType {

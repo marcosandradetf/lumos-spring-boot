@@ -12,7 +12,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,6 +25,7 @@ class ExecutionViewModel(
 
     ) : ViewModel() {
     val executions: StateFlow<List<Execution>> = repository.getFlowExecutions()
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
@@ -68,18 +71,35 @@ class ExecutionViewModel(
             _isLoadingReserves.value = true
             try {
                 repository.getFlowReserves(streetId, status)
-                    .onEach {
-                        _isLoadingReserves.value = false
-                    } // assim que o primeiro dado chega, desliga o loading
+                    .flowOn(Dispatchers.IO)
                     .collectLatest { fetched ->
                         _reserves.value = fetched
                     }
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
+            } finally {
                 _isLoadingReserves.value = false
             }
         }
     }
+
+    fun loadReserves(streetId: Long, status: List<String>) {
+        viewModelScope.launch {
+            _isLoadingReserves.value = true
+            try {
+                repository.getFlowReserves(streetId, status)
+                    .flowOn(Dispatchers.IO)
+                    .collect { fetched ->
+                        _reserves.value = fetched
+                    }
+            } catch (e: Exception) {
+                Log.e("Error loadReserves", e.message.toString())
+            } finally {
+                _isLoadingReserves.value = false
+            }
+        }
+    }
+
 
 
     fun setReserveStatus(streetId: Long, status: String) {
@@ -145,7 +165,8 @@ class ExecutionViewModel(
     }
 
     fun finishMaterial(reserveId: Long, quantityExecuted: Double) {
-        viewModelScope.launch {
+        viewModelScope
+            .launch {
             try {
                 repository.finishMaterial(
                     reserveId = reserveId,

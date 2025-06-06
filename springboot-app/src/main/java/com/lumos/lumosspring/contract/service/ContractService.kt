@@ -12,6 +12,7 @@ import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.user.Role
 import com.lumos.lumosspring.user.UserRepository
+import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
@@ -20,7 +21,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.*
-import java.util.function.Function
 
 @Service
 class ContractService(
@@ -94,54 +94,6 @@ class ContractService(
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }
 
-
-    @Cacheable("GetContractsForPreMeasurement")
-    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
-        data class ContractForPreMeasurementDTO(
-            val contractId: Long,
-            val contractor: String,
-            val contractFile: String?,
-            val createdBy: String,
-            val createdAt: String,
-            val status: String,
-            val itemsIds: String? = null,
-        )
-
-        val contractList = mutableListOf<ContractForPreMeasurementDTO>()
-
-        contractRepository.findAll().forEach { contract ->
-            val ids = StringBuilder()
-
-            contract.contractItemsQuantitative.forEach { item ->
-                val id = item.referenceItem.contractReferenceItemId.toString()
-
-                val listId = id.split("#")
-
-                if (ids.isNotEmpty()) {
-                    ids.append("#")
-                }
-                ids.append(listId.joinToString("#"))
-
-
-            }
-
-
-            contractList.add(
-                ContractForPreMeasurementDTO(
-                    contractId = contract.contractId,
-                    contractor = contract.contractor!!,
-                    contractFile = contract.contractFile,
-                    createdBy = contract.createdBy.name,
-                    createdAt = contract.creationDate.toString(),
-                    status = contract.status,
-                    itemsIds = "$ids",
-                )
-            )
-        }
-
-        return ResponseEntity.ok(contractList)
-    }
-
     fun getContract(contractId: Long): ResponseEntity<Any> {
         data class ItemsForReport(
             val number: Int,
@@ -200,7 +152,7 @@ class ContractService(
         )
     }
 
-    fun getAllContracts(): ResponseEntity<Any> {
+    fun getAllActiveContracts(): ResponseEntity<Any> {
         data class ContractResponseDTO(
             val contractId: Long,
             val number: String,
@@ -217,7 +169,7 @@ class ContractService(
             val additiveFile: String,
         )
 
-        return ResponseEntity.ok().body(contractRepository.findAll().map {
+        return ResponseEntity.ok().body(contractRepository.findAllByStatus(ContractStatus.ACTIVE).map {
             ContractResponseDTO(
                 contractId = it.contractId,
                 number = it.contractNumber ?: "",
@@ -265,9 +217,54 @@ class ContractService(
 
     }
 
+    @Cacheable("GetContractsForPreMeasurement")
+    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
+        data class ContractForPreMeasurementDTO(
+            val contractId: Long,
+            val contractor: String,
+            val contractFile: String?,
+            val createdBy: String,
+            val createdAt: String,
+            val status: String,
+            val itemsIds: String? = null,
+        )
+
+        val contractList = mutableListOf<ContractForPreMeasurementDTO>()
+
+        contractRepository.findAllByStatus(ContractStatus.ACTIVE).forEach { contract ->
+            val ids = StringBuilder()
+
+            contract.contractItemsQuantitative.forEach { item ->
+                val id = item.referenceItem.contractReferenceItemId.toString()
+
+                val listId = id.split("#")
+
+                if (ids.isNotEmpty()) {
+                    ids.append("#")
+                }
+                ids.append(listId.joinToString("#"))
+
+            }
+
+
+            contractList.add(
+                ContractForPreMeasurementDTO(
+                    contractId = contract.contractId,
+                    contractor = contract.contractor!!,
+                    contractFile = contract.contractFile,
+                    createdBy = contract.createdBy.name,
+                    createdAt = contract.creationDate.toString(),
+                    status = contract.status,
+                    itemsIds = "$ids",
+                )
+            )
+        }
+
+        return ResponseEntity.ok(contractList)
+    }
 
     @Cacheable("GetItemsForMobPreMeasurement")
-    fun getItems(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
+    fun getItemsForMob(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
         val items = contractReferenceItemRepository.findAllByPreMeasurement()
 
         items.sortWith(
@@ -275,7 +272,7 @@ class ContractService(
                 .thenBy { util.extractNumber(it.linking) }
         )
 
-        return ResponseEntity.ok<MutableList<PContractReferenceItemDTO>>(items)
+        return ResponseEntity.ok(items)
     }
 
 }

@@ -2,6 +2,7 @@ package com.lumos.ui.executions
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -60,11 +61,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.data.repository.ReservationStatus
-import com.lumos.data.repository.Status
+import com.lumos.data.repository.ExecutionStatus
 import com.lumos.domain.model.Execution
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.utils.ConnectivityUtils
@@ -72,7 +72,7 @@ import androidx.core.net.toUri
 import com.lumos.domain.model.Reserve
 import com.lumos.ui.components.Confirm
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import kotlinx.coroutines.delay
 
 @Composable
 fun StreetsScreen(
@@ -90,8 +90,9 @@ fun StreetsScreen(
 ) {
     val executions by executionViewModel.executions.collectAsState()
     val reserves by executionViewModel.reserves.collectAsState()
-    val loading by executionViewModel.isSyncing.collectAsState()
-    val error by executionViewModel.syncError.collectAsState()
+
+    val isSyncing by executionViewModel.isSyncing.collectAsState()
+    val responseError by executionViewModel.syncError.collectAsState()
 
     val isLoadingReserves by executionViewModel.isLoadingReserves.collectAsState()
 
@@ -106,7 +107,7 @@ fun StreetsScreen(
 
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
 
-    LaunchedEffect(isLoadingReserves) {
+    LaunchedEffect(isLoadingReserves, selectedStreetId) {
         if (!isLoadingReserves && selectedStreetId != null) {
             if (reserves.isNotEmpty()) {
                 showAlert = true
@@ -128,12 +129,13 @@ fun StreetsScreen(
         navController = navController,
         notificationsBadge = notificationsBadge,
         internet = internet,
-        loading = loading,
+        isSyncing = isSyncing,
+        isLoadingReserves = isLoadingReserves,
         pSelected = pSelected,
         select = { streetId ->
             selectedStreetId = streetId
-            executionViewModel.loadFlowReserves(
-                streetId,
+            executionViewModel.loadReserves(
+                streetId = streetId,
                 status = listOf(ReservationStatus.APPROVED)
             )
         },
@@ -143,7 +145,7 @@ fun StreetsScreen(
         },
         onConfirmed = { streetId ->
             executionViewModel.setReserveStatus(streetId, ReservationStatus.COLLECTED)
-            executionViewModel.setExecutionStatus(streetId, Status.IN_PROGRESS)
+            executionViewModel.setExecutionStatus(streetId, ExecutionStatus.IN_PROGRESS)
             executionViewModel.queueSyncFetchReservationStatus(
                 streetId,
                 ReservationStatus.COLLECTED,
@@ -155,7 +157,7 @@ fun StreetsScreen(
             )
             onNavigateToExecution(streetId)
         },
-        error = error,
+        error = responseError,
         refresh = {
             executionViewModel.syncExecutions(context)
         }
@@ -354,7 +356,8 @@ fun Content(
     navController: NavHostController,
     notificationsBadge: String,
     internet: Boolean,
-    loading: Boolean,
+    isSyncing: Boolean,
+    isLoadingReserves: Boolean,
     pSelected: Int,
     select: (Long) -> Unit,
     alert: Boolean,
@@ -386,8 +389,9 @@ fun Content(
         }
 
         PullToRefreshBox(
-            isRefreshing = loading,
+            isRefreshing = isSyncing,
             onRefresh = { refresh() },
+            modifier = Modifier.fillMaxWidth()
         ) {
             if (!internet) {
                 Row(
@@ -408,192 +412,190 @@ fun Content(
                 }
             }
 
-            else if (executions.isEmpty())
-                NothingData(
-                    "Nenhuma execução disponível no momento, volte mais tarde!"
+            AnimatedVisibility(visible = alert && !isLoadingReserves) {
+                PendingMaterialsAlert(
+                    reserves = reserves,
+                    onDismiss = { onDismiss() },
+                    onConfirmed = { onConfirmed(it) },
+                    context = context
                 )
-            else {
-                AnimatedVisibility(visible = alert) {
-                    PendingMaterialsAlert(
-                        reserves = reserves,
-                        onDismiss = { onDismiss() },
-                        onConfirmed = { onConfirmed(it) },
-                        context = context
-                    )
-                }
-                AnimatedVisibility(visible = !alert) {
+            }
+            AnimatedVisibility(visible = !alert && !isLoadingReserves) {
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(2.dp, top = 40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
-                    ) {
-                        items(executions) { execution -> // Iteração na lista
-//                val createdAt = "Criado por ${contract.createdBy} há ${
-//                    Utils.timeSinceCreation(
-//                        Instant.parse(contract.createdAt)
-//                    )
-//                }"
-                            val objective =
-                                if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
-                            val status = when (execution.executionStatus) {
-                                Status.PENDING -> "Pendente"
-                                Status.IN_PROGRESS -> "Em Progresso"
-                                Status.FINISHED -> "Finalizado"
-                                else -> "Status Desconhecido"
-                            }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp, top = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+                ) {
 
-                            Card(
-                                shape = RoundedCornerShape(5.dp),
+                    if (executions.isEmpty()) {
+                        item {
+                            NothingData(
+                                "Nenhuma execução disponível no momento, volte mais tarde!"
+                            )
+                        }
+                    }
+
+                    items(executions) { execution -> // Iteração na lista
+                        val objective =
+                            if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
+                        val status = when (execution.executionStatus) {
+                            ExecutionStatus.PENDING -> "Pendente"
+                            ExecutionStatus.IN_PROGRESS -> "Em Progresso"
+                            ExecutionStatus.FINISHED -> "Finalizado"
+                            else -> "Status Desconhecido"
+                        }
+
+                        Card(
+                            shape = RoundedCornerShape(5.dp),
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .padding(3.dp)
+                                .clickable {
+                                    select(execution.streetId)
+                                },
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.9f)
-                                    .padding(3.dp),
-                                elevation = CardDefaults.cardElevation(1.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min) // Isso é o truque!
                             ) {
-                                Row(
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxHeight()
+                                ) {
+                                    // Linha vertical com bolinha no meio
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight(0.7f)
+                                            .padding(start = 20.dp)
+                                            .width(4.dp)
+                                            .background(
+                                                color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.tertiary
+                                            )
+                                    )
+
+                                    // Bolinha com ícone (no meio da linha)
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 10.dp) // posiciona sobre a linha
+                                            .size(24.dp) // tamanho do círculo
+                                            .clip(CircleShape)
+                                            .background(
+                                                color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.tertiary
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector =
+                                                if (execution.type == "INSTALLATION") Icons.Default.Power
+                                                else Icons.Default.Build,
+                                            contentDescription = "Local",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(
+                                                if (execution.type == "INSTALLATION") 18.dp
+                                                else 14.dp
+                                            )
+                                        )
+                                    }
+                                }
+
+
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            select(execution.streetId)
-                                        }
-                                        .height(IntrinsicSize.Min) // Isso é o truque!
+                                        .padding(16.dp)
                                 ) {
-                                    Column(
-                                        verticalArrangement = Arrangement.Center,
-                                        modifier = Modifier.fillMaxHeight()
-                                    ) {
-                                        // Linha vertical com bolinha no meio
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxHeight(0.7f)
-                                                .padding(start = 20.dp)
-                                                .width(4.dp)
-                                                .background(
-                                                    color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                                    else MaterialTheme.colorScheme.tertiary
-                                                )
-                                        )
-
-                                        // Bolinha com ícone (no meio da linha)
-                                        Box(
-                                            modifier = Modifier
-                                                .offset(x = 10.dp) // posiciona sobre a linha
-                                                .size(24.dp) // tamanho do círculo
-                                                .clip(CircleShape)
-                                                .background(
-                                                    color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                                    else MaterialTheme.colorScheme.tertiary
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector =
-                                                    if (execution.type == "INSTALLATION") Icons.Default.Power
-                                                    else Icons.Default.Build,
-                                                contentDescription = "Local",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(
-                                                    if (execution.type == "INSTALLATION") 18.dp
-                                                    else 14.dp
-                                                )
-                                            )
-                                        }
-                                    }
-
-
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp)
                                     ) {
-                                        Column(
+                                        Row(
                                             modifier = Modifier
-                                                .fillMaxWidth()
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+
+                                            ) {
+                                            Row {
+                                                Text(
+                                                    text = execution.streetName,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                )
+                                            }
+                                        }
+
+                                        // Informação extra
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Row(
+                                            Text(
+                                                text = "$objective de ${execution.itemsQuantity} Itens",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Normal,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Box(
                                                 modifier = Modifier
-                                                    .fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically,
-
-                                                ) {
-                                                Row {
-                                                    Text(
-                                                        text = execution.streetName,
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        color = MaterialTheme.colorScheme.onSurface,
-                                                    )
-                                                }
-                                            }
-
-                                            // Informação extra
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                modifier = Modifier.fillMaxWidth()
+                                                    .clip(RoundedCornerShape(5.dp))
+                                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                                    .padding(5.dp)
                                             ) {
                                                 Text(
-                                                    text = "$objective de ${execution.itemsQuantity} Itens",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    fontWeight = FontWeight.Normal,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(5.dp))
-                                                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                                                        .padding(5.dp)
-                                                ) {
-                                                    Text(
-                                                        text = status,
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        fontWeight = FontWeight.Medium,
-                                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                        fontSize = 12.sp
-                                                    )
-                                                }
-
-                                            }
-
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "Responsável: ${execution.teamName}",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.Normal,
-                                                    color = MaterialTheme.colorScheme.onSurface
+                                                    text = status,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                    fontSize = 12.sp
                                                 )
                                             }
-
-                                            // Informação extra
-                                            if (execution.priority)
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.End
-                                                ) {
-                                                    Column(
-                                                        verticalArrangement = Arrangement.Center,
-                                                        horizontalAlignment = Alignment.CenterHorizontally
-                                                    ) {
-                                                        Icon(
-                                                            imageVector =
-                                                                Icons.Default.Warning,
-                                                            contentDescription = "Prioridade",
-                                                            tint = Color(0xFFFC4705),
-                                                            modifier = Modifier.size(22.dp)
-                                                        )
-                                                    }
-                                                }
 
                                         }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Responsável: ${execution.teamName}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Normal,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+
+                                        // Informação extra
+                                        if (execution.priority)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                Column(
+                                                    verticalArrangement = Arrangement.Center,
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Icon(
+                                                        imageVector =
+                                                            Icons.Default.Warning,
+                                                        contentDescription = "Prioridade",
+                                                        tint = Color(0xFFFC4705),
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                }
+                                            }
+
                                     }
                                 }
                             }
@@ -601,6 +603,7 @@ fun Content(
                     }
                 }
             }
+
         }
     }
 }
@@ -630,7 +633,7 @@ fun PrevStreetsScreen() {
                 streetId = 2,
                 streetName = "Rua Marcos Coelho Neto, 960",
                 teamName = "Equipe Sul",
-                executionStatus = Status.IN_PROGRESS,
+                executionStatus = ExecutionStatus.IN_PROGRESS,
                 priority = false,
                 type = "MAINTENANCE",
                 itemsQuantity = 5,
@@ -643,7 +646,7 @@ fun PrevStreetsScreen() {
                 streetId = 3,
                 streetName = "Rua Chopin, 35",
                 teamName = "Equipe BH",
-                executionStatus = Status.FINISHED,
+                executionStatus = ExecutionStatus.FINISHED,
                 priority = false,
                 type = "INSTALLATION",
                 itemsQuantity = 12,
@@ -734,10 +737,11 @@ fun PrevStreetsScreen() {
         navController = rememberNavController(),
         notificationsBadge = "12",
         internet = false,
-        loading = false,
+        isSyncing = false,
+        isLoadingReserves = false,
         pSelected = BottomBar.HOME.value,
         select = {},
-        alert = true,
+        alert = false,
         onDismiss = {},
         onConfirmed = {},
         error = null,

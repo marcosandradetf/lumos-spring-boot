@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.repository.Status
+import com.lumos.data.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
@@ -63,7 +63,7 @@ fun PreMeasurementScreen(
     val contracts by contractViewModel.contracts.collectAsState()
 
     LaunchedEffect(Unit) {
-        contractViewModel.loadFlowContracts(Status.IN_PROGRESS)
+        contractViewModel.loadFlowContracts(ExecutionStatus.IN_PROGRESS)
     }
 
     PMContent(

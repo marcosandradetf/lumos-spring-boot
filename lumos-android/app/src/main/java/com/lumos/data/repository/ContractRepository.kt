@@ -66,7 +66,7 @@ class ContractRepository(
         db.contractDao().getFlowContracts(status)
 
 
-    suspend fun getContract(contractId: Long): Contract {
+    suspend fun getContract(contractId: Long): Contract? {
         return db.contractDao().getContract(contractId)
     }
 

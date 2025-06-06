@@ -111,7 +111,7 @@ class ExecutionService(
             if (stockistMatch) {
                 val streets = reserve.streets
                     .sortedBy { it.prioritized == false }
-                    .filter { it.streetStatus == ContractStatus.WAITING_STOCKIST }
+                    .filter { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
                     .map { street ->
                         val items = street.items
                             .filter { item ->
@@ -173,7 +173,7 @@ class ExecutionService(
             .orElse(null) ?: return ResponseEntity.status(404)
             .body(DefaultResponse("A rua ${executionReserve.preMeasurementStreetId} não foi encontrada"))
 
-        if (preMeasurementStreet.streetStatus != ContractStatus.WAITING_STOCKIST)
+        if (preMeasurementStreet.streetStatus != ExecutionStatus.WAITING_STOCKIST)
             return ResponseEntity.status(500)
                 .body(DefaultResponse("Os itens dessa execução já foram todos reservados, inicie a próxima etapa."))
 
@@ -232,18 +232,18 @@ class ExecutionService(
 
         var responseMessage = ""
         if (reservation.all { it.status == ReservationStatus.COLLECTED }) {
-            preMeasurementStreet.streetStatus = ContractStatus.AVAILABLE_EXECUTION
+            preMeasurementStreet.streetStatus = ExecutionStatus.AVAILABLE_EXECUTION
             responseMessage =
                 "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
 
         } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
-            preMeasurementStreet.streetStatus = ContractStatus.AVAILABLE_EXECUTION
+            preMeasurementStreet.streetStatus = ExecutionStatus.AVAILABLE_EXECUTION
             responseMessage =
                 "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
                         "Mas os materiais estão pendentes de coleta pela equipe."
 
         } else if (reservation.any { it.status == ReservationStatus.PENDING }) {
-            preMeasurementStreet.streetStatus = ContractStatus.WAITING_RESERVE_CONFIRMATION
+            preMeasurementStreet.streetStatus = ExecutionStatus.WAITING_RESERVE_CONFIRMATION
 
             responseMessage =
                 "Como alguns itens foram reservadas em almoxarifados de terceiros. Será necessária aprovação. " +
@@ -255,7 +255,7 @@ class ExecutionService(
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
         if (preMeasurementStreet.reservationManagement.streets
-                .none { it.streetStatus == ContractStatus.WAITING_STOCKIST }
+                .none { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
         ) {
             preMeasurementStreet.reservationManagement.status = ReservationStatus.FINISHED
         }
@@ -349,12 +349,12 @@ class ExecutionService(
         val execution = preMeasurementStreetRepository.findById(executionDTO.streetId)
             .orElseThrow { IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada") }
 
-        if(execution.streetStatus != ContractStatus.AVAILABLE_EXECUTION) {
+        if(execution.streetStatus != ExecutionStatus.AVAILABLE_EXECUTION) {
             return ResponseEntity.badRequest().body("Execução já enviada")
         }
 
         execution.photoUri = fileUri
-        execution.streetStatus = ContractStatus.FINISHED
+        execution.streetStatus = ExecutionStatus.FINISHED
         preMeasurementStreetRepository.save(execution)
 
         for (r in executionDTO.reserves) {

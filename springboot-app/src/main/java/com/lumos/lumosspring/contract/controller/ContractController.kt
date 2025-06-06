@@ -20,28 +20,29 @@ class ContractController(
     @PostMapping("/contracts/insert-contract")
     fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> =
         contractService.saveContract(contractDTO)
-    
 
-    @GetMapping("/mobile/contracts/get-contracts")
-    fun getContracts(): ResponseEntity<Any> {
-        return contractService.getContractsForPreMeasurement()
-    }
 
     @GetMapping("/contracts/get-contract/{contractId}")
     fun getContract(@PathVariable contractId: Long): ResponseEntity<Any> =
          contractService.getContract(contractId)
 
     @GetMapping("/contracts/get-AllContracts")
-    fun getAllContracts(): ResponseEntity<Any> =
-        contractService.getAllContracts()
+    fun getAllActiveContracts(): ResponseEntity<Any> =
+        contractService.getAllActiveContracts()
 
     @GetMapping("/contracts/get-contract-items/{contractId}")
     fun getContractItems(@PathVariable contractId: Long): ResponseEntity<Any> =
         contractService.getContractItems(contractId)
 
+
+    @GetMapping("/mobile/contracts/get-contracts")
+    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
+        return contractService.getContractsForPreMeasurement()
+    }
+
     @GetMapping("/mobile/contracts/get-reference-items")
     fun getItemsForMob(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
-        return contractService.getItems()
+        return contractService.getItemsForMob()
     }
 
 }

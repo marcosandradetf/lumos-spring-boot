@@ -35,7 +35,7 @@ class PreMeasurementRepository(
     }
 
     suspend fun getFinishedPreMeasurements(): List<Contract> {
-        return db.contractDao().getContracts(Status.FINISHED)
+        return db.contractDao().getContracts(ExecutionStatus.FINISHED)
     }
 
     suspend fun getPreMeasurement(contractId: Long): Contract? {
@@ -199,7 +199,13 @@ class PreMeasurementRepository(
 
 }
 
-object Status {
+object ContractStatus {
+    const val ACTIVE = "ACTIVE"
+    const val INACTIVE = "INACTIVE"
+    const val ARCHIVED = "ARCHIVED"
+}
+
+object ExecutionStatus {
     const val PENDING = "PENDING"
     const val REJECTED = "REJECTED"
     const val IN_PROGRESS = "IN_PROGRESS"

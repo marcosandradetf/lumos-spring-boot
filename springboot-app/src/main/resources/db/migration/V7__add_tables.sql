@@ -10,4 +10,6 @@ ALTER TABLE tb_pre_measurements_streets
     ALTER COLUMN latitude DROP NOT NULL,
     ALTER COLUMN longitude DROP NOT NULL;
 
-update tb_pre_measurements_streets set neighborhood = null, number = null, latitude = null, longitude = null, last_power = null, comment = null;
+UPDATE tb_pre_measurements_streets set neighborhood = null, number = null, latitude = null, longitude = null, last_power = null, comment = null;
+
+UPDATE tb_Contracts SET status = 'ACTIVE';

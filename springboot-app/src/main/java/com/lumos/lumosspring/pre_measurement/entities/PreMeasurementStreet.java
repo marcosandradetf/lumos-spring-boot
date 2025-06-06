@@ -3,7 +3,7 @@ package com.lumos.lumosspring.pre_measurement.entities;
 import com.lumos.lumosspring.stock.entities.ReservationManagement;
 import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.user.User;
-import com.lumos.lumosspring.util.ContractStatus;
+import com.lumos.lumosspring.util.ExecutionStatus;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
 
@@ -291,7 +291,7 @@ public class PreMeasurementStreet {
         this.prioritized = prioritized;
         this.comment = comment;
         this.reservationManagement = reservationManagement;
-        this.streetStatus = ContractStatus.WAITING_STOCKIST;
+        this.streetStatus = ExecutionStatus.WAITING_STOCKIST;
     }
 
     public String getPhotoUri() {

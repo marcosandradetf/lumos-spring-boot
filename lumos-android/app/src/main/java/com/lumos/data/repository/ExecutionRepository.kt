@@ -108,7 +108,7 @@ class ExecutionRepository(
         db.executionDao().setReserveStatus(streetId, status)
     }
 
-    suspend fun setExecutionStatus(streetId: Long, status: String = Status.IN_PROGRESS) {
+    suspend fun setExecutionStatus(streetId: Long, status: String = ExecutionStatus.IN_PROGRESS) {
         db.executionDao().setExecutionStatus(streetId, status)
     }
 
@@ -124,7 +124,7 @@ class ExecutionRepository(
         )
     }
 
-    suspend fun getExecution(lng: Long): Execution {
+    suspend fun getExecution(lng: Long): Execution? {
         return db.executionDao().getExecution(lng)
     }
 
@@ -134,7 +134,7 @@ class ExecutionRepository(
             db = db,
             table = "tb_pre_measurements_streets",
             field = "street_status",
-            set = Status.IN_PROGRESS,
+            set = ExecutionStatus.IN_PROGRESS,
             where = "pre_measurement_street_id",
             equal = streetId.toString()
         )
@@ -164,6 +164,9 @@ class ExecutionRepository(
         val gson = Gson()
 
         val photoUri = db.executionDao().getPhotoUri(streetId)
+        if(photoUri == null) {
+            return RequestResult.ServerError(-1, "Foto da pré-medição não encontrada")
+        }
         val reserves = db.executionDao().getReservesPartial(streetId)
         val dto = SendExecutionDto(
             streetId = streetId,

@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.lumos.data.repository.ReservationStatus
-import com.lumos.data.repository.Status
+import com.lumos.data.repository.ExecutionStatus
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +32,7 @@ interface ExecutionDao {
     suspend fun setReserveStatus(streetId: Long, status: String = ReservationStatus.COLLECTED)
 
     @Query("UPDATE executions SET executionStatus = :status WHERE streetId = :streetId")
-    suspend fun setExecutionStatus(streetId: Long, status: String = Status.IN_PROGRESS)
+    suspend fun setExecutionStatus(streetId: Long, status: String = ExecutionStatus.IN_PROGRESS)
 
     @Query("SELECT * FROM executions WHERE streetId = :lng LIMIT 1")
     suspend fun getExecution(lng: Long): Execution?

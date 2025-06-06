@@ -1,12 +1,14 @@
 package com.lumos.notifications
 
 import android.content.Context
+import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.lumos.midleware.SecureStorage
 
 class NotificationManager(private val context: Context, private val secureStorage: SecureStorage) {
 
     fun subscribeToSavedTopics() {
+        Log.e("n", "No notification manager")
         val roles = secureStorage.getRoles()
         val teams = secureStorage.getTeams()
 
