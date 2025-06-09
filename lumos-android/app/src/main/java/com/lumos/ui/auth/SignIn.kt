@@ -55,7 +55,7 @@ fun Login(
     val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
 
-    suspend fun login() {
+    fun login() {
         authViewModel.login(
             username = username,
             password = password,

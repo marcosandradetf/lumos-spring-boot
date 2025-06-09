@@ -109,13 +109,13 @@ fun AppLayout(
                     snackbarData = data,
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-                    actionColor = MaterialTheme.colorScheme.primary
+                    actionColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 10.dp)
                 )
             }
         },
         topBar = {
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
-                NetworkStatusBar(context = context)
                 TopBar(
                     navigateBack = navigateBack,
                     title = title

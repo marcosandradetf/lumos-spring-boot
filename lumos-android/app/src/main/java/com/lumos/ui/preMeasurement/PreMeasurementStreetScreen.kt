@@ -80,6 +80,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -160,6 +161,7 @@ fun PreMeasurementStreetScreen(
                 preMeasurementStreetId = 0,
                 deviceId = deviceId,
                 photoUri = null,
+                contractId = contractId
             )
         )
     }
@@ -176,12 +178,14 @@ fun PreMeasurementStreetScreen(
 
         contract?.let { loadedContract ->
             val itemsIdsList = loadedContract.itemsIds
-                ?.split("#")?.map { it.trim() } ?: emptyList()
+                ?.split("#")
+                ?.mapNotNull { it.trim().toLongOrNull() } ?: emptyList()
+
+            Log.e("IDS", itemsIdsList.toString())
 
             contractViewModel.loadItemsFromContract(itemsIdsList)
 
-            // Agendar o Worker assim que a tela for aberta
-            contractViewModel.syncContractItems(context)
+            contractViewModel.syncContractItems()
         }
     }
 
@@ -308,7 +312,7 @@ fun PreMeasurementStreetScreen(
             context = context,
             isLoading = isLoading,
             refresh = {
-                contractViewModel.syncContractItems(context)
+                contractViewModel.syncContractItems()
             }
         )
     }
@@ -743,49 +747,6 @@ fun validFields(
     return listOf(street, number, neighborhood, city).all { !it.isNullOrEmpty() }
 }
 
-@Composable
-fun DialogExit(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    dialogTitle: String,
-    dialogText: String,
-    icon: ImageVector,
-) {
-    AlertDialog(
-        icon = {
-            Icon(icon, contentDescription = "Icon")
-        },
-        title = {
-            Text(text = dialogTitle)
-        },
-        text = {
-            Text(text = dialogText)
-        },
-        onDismissRequest = {
-            onDismissRequest()
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirmation()
-                }
-            ) {
-                Text("Confirmar")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onDismissRequest()
-                }
-            ) {
-                Text("Cancelar")
-            }
-        }
-    )
-}
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheetDialog(
@@ -888,7 +849,11 @@ fun BottomSheetDialog(
                 }
             }
         else
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .padding(top = 40.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -936,8 +901,25 @@ fun BottomSheetDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                Text(
+                    "Não se preocupe com cabos, relés e serviços",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "O sistema os trata automaticamente",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(10.dp))
+
                 LazyColumn {
-                    items(filteredList) { item ->
+                    items(
+                        items = filteredList,
+                        key = { it.contractReferenceItemId }
+                    ) { item ->
                         val selectedItem =
                             preMeasurementStreetItems.find { it.itemContractId == item.contractReferenceItemId }
                         // Passando diretamente o estado de 'selected' e 'quantity' do Composable 1
@@ -988,7 +970,7 @@ fun ItemLightRow(
     var selected = preSelected
     var quantity = preQuantity
 
-    val materialChar = item.linking
+    val materialChar = item.linking ?: ""
 
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.background,
@@ -1017,39 +999,37 @@ fun ItemLightRow(
                 disabledContentColor = MaterialTheme.colorScheme.onSecondary
             )
         ) {
-            if (materialChar != null) {
-                Row(
-                    modifier = if (materialChar.isNotEmpty()) Modifier.padding(16.dp)
-                    else Modifier.padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = item.nameForImport,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
-                        )
-                        if (materialChar != null) {
-                            if (materialChar.isNotEmpty()) {
-                                Text(
-                                    text = materialChar,
-                                    fontSize = 14.sp,
-                                    color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-                        // Só mostra o controle de quantidade se o item estiver selecionado
-
-                    }
-                    Icon(
-                        imageVector = Icons.Default.Fingerprint,
-                        contentDescription = "Pressione e segure",
-                        modifier = Modifier.padding(top = 8.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
+            Row(
+                modifier = if (materialChar.isNotEmpty()) Modifier.padding(16.dp)
+                else Modifier.padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.nameForImport,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
                     )
+                    if (materialChar.isNotEmpty()) {
+                        Text(
+                            text = materialChar,
+                            fontSize = 14.sp,
+                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+
+                    // Só mostra o controle de quantidade se o item estiver selecionado
+
                 }
+                Icon(
+                    imageVector = Icons.Default.Fingerprint,
+                    contentDescription = "Pressione e segure",
+                    modifier = Modifier.padding(top = 8.dp),
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
+
 
         }
     }
@@ -1085,7 +1065,8 @@ fun ItemLightRow(
             ) {
                 // Texto para o nome do material ou outros detalhes, se necessário
                 Text(
-                    text = "${item.nameForImport} -  $materialChar",
+                    text = if (materialChar.isNotEmpty()) "${item.nameForImport} - $materialChar"
+                    else item.nameForImport,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSecondary

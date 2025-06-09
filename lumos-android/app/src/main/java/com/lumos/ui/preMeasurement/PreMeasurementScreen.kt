@@ -58,11 +58,16 @@ fun PreMeasurementScreen(
     contractViewModel: ContractViewModel,
     navController: NavHostController,
     notificationsBadge: String,
+    roles: Set<String>,
 
     ) {
     val contracts by contractViewModel.contracts.collectAsState()
+    val requiredRoles = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
 
     LaunchedEffect(Unit) {
+        if (!roles.any { it in requiredRoles }) {
+            navController.navigate(Routes.NO_ACCESS + "/Pré-medição")
+        }
         contractViewModel.loadFlowContracts(ExecutionStatus.IN_PROGRESS)
     }
 
@@ -100,7 +105,7 @@ fun PMContent(
         navigateBack = onNavigateToMenu,
         context = context,
         notificationsBadge = notificationsBadge
-    ) {modifier, snackBar ->
+    ) { modifier, snackBar ->
 
         LazyColumn(
             modifier = Modifier

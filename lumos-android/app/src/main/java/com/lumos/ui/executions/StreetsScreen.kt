@@ -2,7 +2,6 @@ package com.lumos.ui.executions
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,10 +26,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.ProductionQuantityLimits
+import androidx.compose.material.icons.filled.SentimentVerySatisfied
 import androidx.compose.material.icons.filled.Warehouse
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
@@ -67,17 +66,19 @@ import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.ExecutionViewModel
-import com.lumos.utils.ConnectivityUtils
 import androidx.core.net.toUri
 import com.lumos.domain.model.Reserve
 import com.lumos.ui.components.Confirm
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import kotlinx.coroutines.delay
+import com.lumos.navigation.Routes
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun StreetsScreen(
+    contractId: Long,
+    contractor: String,
     executionViewModel: ExecutionViewModel,
-    connection: ConnectivityUtils,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -88,37 +89,49 @@ fun StreetsScreen(
     pSelected: Int,
     onNavigateToExecution: (Long) -> Unit,
 ) {
-    val executions by executionViewModel.executions.collectAsState()
-    val reserves by executionViewModel.reserves.collectAsState()
+    var executions by remember { mutableStateOf<List<Execution>>(emptyList()) }
+    var reserves by remember { mutableStateOf<List<Reserve>>(emptyList()) }
 
     val isSyncing by executionViewModel.isSyncing.collectAsState()
     val responseError by executionViewModel.syncError.collectAsState()
-
     val isLoadingReserves by executionViewModel.isLoadingReserves.collectAsState()
-
     var showAlert by remember { mutableStateOf(false) }
-    var internet by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        if (!connection.isConnectedToInternet(context))
-            internet = false
 
-        executionViewModel.syncExecutions(context)
+    LaunchedEffect(Unit) {
+        executionViewModel.syncExecutions()
+        val fetched = executionViewModel.getExecutionsByContract(contractId)
+
+        withContext(Dispatchers.Main) {
+            executions = fetched
+        }
+
     }
 
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
 
-    LaunchedEffect(isLoadingReserves, selectedStreetId) {
-        if (!isLoadingReserves && selectedStreetId != null) {
-            if (reserves.isNotEmpty()) {
-                showAlert = true
-            } else {
-                onNavigateToExecution(selectedStreetId!!)
+    LaunchedEffect(selectedStreetId) {
+        if (selectedStreetId != null) {
+            val fetchedReserves = executionViewModel.getReservesOnce(
+                selectedStreetId!!,
+                listOf(ReservationStatus.APPROVED)
+            )
+
+            withContext(Dispatchers.Main) {
+                reserves = fetchedReserves
+
+                if (reserves.isNotEmpty()) {
+                    showAlert = true
+                } else {
+                    onNavigateToExecution(selectedStreetId!!)
+                }
+                selectedStreetId = null
             }
-            selectedStreetId = null
         }
     }
 
+
     Content(
+        contractor=  contractor,
         executions = executions,
         reserves = reserves,
         onNavigateToHome = onNavigateToHome,
@@ -128,16 +141,11 @@ fun StreetsScreen(
         context = context,
         navController = navController,
         notificationsBadge = notificationsBadge,
-        internet = internet,
         isSyncing = isSyncing,
         isLoadingReserves = isLoadingReserves,
         pSelected = pSelected,
         select = { streetId ->
             selectedStreetId = streetId
-            executionViewModel.loadReserves(
-                streetId = streetId,
-                status = listOf(ReservationStatus.APPROVED)
-            )
         },
         alert = showAlert,
         onDismiss = {
@@ -159,7 +167,7 @@ fun StreetsScreen(
         },
         error = responseError,
         refresh = {
-            executionViewModel.syncExecutions(context)
+            executionViewModel.syncExecutions()
         }
     )
 }
@@ -184,7 +192,7 @@ fun PendingMaterialsAlert(
         // Alerta superior tipo "balao do WhatsApp"
         Card(
             shape = MaterialTheme.shapes.small,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.inverseSurface),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 2.dp)
@@ -193,13 +201,13 @@ fun PendingMaterialsAlert(
                 Text(
                     "Pendência Encontrada",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Existem materiais pendentes de coleta para essa execução.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -346,6 +354,7 @@ fun PendingMaterialsAlert(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Content(
+    contractor: String,
     executions: List<Execution>,
     reserves: List<Reserve>,
     onNavigateToHome: () -> Unit,
@@ -355,7 +364,6 @@ fun Content(
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
-    internet: Boolean,
     isSyncing: Boolean,
     isLoadingReserves: Boolean,
     pSelected: Int,
@@ -367,33 +375,26 @@ fun Content(
     refresh: () -> Unit,
 ) {
     AppLayout(
-        title = "Execuções",
+        title = contractor,
         pSelected = pSelected,
         sliderNavigateToMenu = onNavigateToMenu,
         sliderNavigateToHome = onNavigateToHome,
         sliderNavigateToNotifications = onNavigateToNotifications,
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
-        navigateBack = onNavigateToMenu,
+        navigateBack = {
+            navController.navigate(Routes.EXECUTION_SCREEN)
+        },
         context = context,
         notificationsBadge = notificationsBadge
     ) { _, showSnackBar ->
-
-        LaunchedEffect(error) {
-            error?.let {
-                showSnackBar(
-                    it,
-                    null
-                )
-            }
-        }
 
         PullToRefreshBox(
             isRefreshing = isSyncing,
             onRefresh = { refresh() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            if (!internet) {
+            if (error != null && executions.isNotEmpty()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -402,9 +403,13 @@ fun Content(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Default.NetworkCell, contentDescription = "Alert")
+                    Icon(
+                        imageVector = Icons.Filled.SentimentVerySatisfied,
+                        contentDescription = "Alert",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                     Text(
-                        text = "Conecte-se a internet para obter novas execuções",
+                        text = error,
                         color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 10.dp)
@@ -425,7 +430,7 @@ fun Content(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(2.dp, top = 40.dp),
+                        .padding(top = if (error != null) 60.dp else 0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
                 ) {
@@ -442,10 +447,10 @@ fun Content(
                         val objective =
                             if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
                         val status = when (execution.executionStatus) {
-                            ExecutionStatus.PENDING -> "Pendente"
-                            ExecutionStatus.IN_PROGRESS -> "Em Progresso"
-                            ExecutionStatus.FINISHED -> "Finalizado"
-                            else -> "Status Desconhecido"
+                            ExecutionStatus.PENDING -> "PENDENTE"
+                            ExecutionStatus.IN_PROGRESS -> "EM PROGRESSO"
+                            ExecutionStatus.FINISHED -> "FINALIZADO"
+                            else -> "STATUS DESCONHECIDO"
                         }
 
                         Card(
@@ -627,7 +632,9 @@ fun PrevStreetsScreen() {
                 creationDate = "",
                 latitude = 0.0,
                 longitude = 0.0,
-                photoUri = ""
+                photoUri = "",
+                contractId = 1,
+                contractor = ""
             ),
             Execution(
                 streetId = 2,
@@ -640,7 +647,9 @@ fun PrevStreetsScreen() {
                 creationDate = "",
                 latitude = 0.0,
                 longitude = 0.0,
-                photoUri = ""
+                photoUri = "",
+                contractId = 1,
+                contractor = ""
             ),
             Execution(
                 streetId = 3,
@@ -653,7 +662,10 @@ fun PrevStreetsScreen() {
                 creationDate = "",
                 latitude = 0.0,
                 longitude = 0.0,
-                photoUri = ""
+                photoUri = "",
+                contractId = 1,
+                contractor = ""
+
             ),
         )
 
@@ -736,7 +748,6 @@ fun PrevStreetsScreen() {
         context = fakeContext,
         navController = rememberNavController(),
         notificationsBadge = "12",
-        internet = false,
         isSyncing = false,
         isLoadingReserves = false,
         pSelected = BottomBar.HOME.value,
@@ -744,8 +755,9 @@ fun PrevStreetsScreen() {
         alert = false,
         onDismiss = {},
         onConfirmed = {},
-        error = null,
-        refresh = {}
+        error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
+        refresh = {},
+        contractor = "contractor"
     )
 }
 

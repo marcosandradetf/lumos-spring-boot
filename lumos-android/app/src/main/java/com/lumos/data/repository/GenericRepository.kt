@@ -21,11 +21,15 @@ class GenericRepository(
             is RequestResult.Success -> {
                 RequestResult.Success(Unit)
             }
-            is RequestResult.NoInternet -> {
-                RequestResult.NoInternet
-            }
+
+            is RequestResult.SuccessEmptyBody -> RequestResult.SuccessEmptyBody
+            is RequestResult.NoInternet -> RequestResult.NoInternet
             is RequestResult.Timeout -> RequestResult.Timeout
-            is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
+            is RequestResult.ServerError -> RequestResult.ServerError(
+                response.code,
+                response.message
+            )
+
             is RequestResult.UnknownError -> {
                 Log.e("Sync", "Erro desconhecido", response.error)
                 RequestResult.UnknownError(response.error)

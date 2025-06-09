@@ -88,6 +88,8 @@ data class ExecutionPartial(
     val creationDate: Instant,
     val latitude: Double?,
     val longitude: Double?,
+    val contractId: Long,
+    val contractor: String,
 )
 
 data class ExecutionDTO(
@@ -104,6 +106,8 @@ data class ExecutionDTO(
     val creationDate: String,
     val latitude: Double?,
     val longitude: Double?,
+    val contractId: Long,
+    val contractor: String,
     val reserves: List<Reserve>,
 )
 

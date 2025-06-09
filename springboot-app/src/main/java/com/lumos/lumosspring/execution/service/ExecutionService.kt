@@ -344,16 +344,20 @@ class ExecutionService(
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
-        val fileUri = minioService.uploadFile(photo, "scl-construtora", "photos", "execution")
-
         val execution = preMeasurementStreetRepository.findById(executionDTO.streetId)
             .orElseThrow { IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada") }
 
-        if(execution.streetStatus != ExecutionStatus.AVAILABLE_EXECUTION) {
+        if (execution.streetStatus != ExecutionStatus.AVAILABLE_EXECUTION) {
             return ResponseEntity.badRequest().body("Execução já enviada")
         }
 
-        execution.photoUri = fileUri
+        val city: String? = execution.city
+        val folder = if (city == null) "photos"
+        else "photos/$city"
+
+        val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
+
+        execution.executionPhotoUri = fileUri
         execution.streetStatus = ExecutionStatus.FINISHED
         preMeasurementStreetRepository.save(execution)
 
@@ -397,9 +401,18 @@ class ExecutionService(
                 val deposit = materialStock?.deposit
                 val stockist = deposit?.stockists?.firstOrNull()?.user
 
+                var name = materialStock?.material?.materialName
+                val length = materialStock?.material?.materialLength
+                val power = materialStock?.material?.materialPower
+                if (power != null) {
+                    name += " $power"
+                } else if (length != null) {
+                    name += " $length"
+                }
+
                 Reserve(
                     reserveId = r.idMaterialReservation,
-                    materialName = materialStock?.material?.nameForImport ?: "",
+                    materialName = name ?: "",
                     materialQuantity = r.reservedQuantity,
                     reserveStatus = r.status,
                     streetId = r.street.preMeasurementStreetId,
@@ -413,24 +426,37 @@ class ExecutionService(
             }
         }
 
-        val executions = streets.map { street ->
-            ExecutionDTO(
-                streetId = street.streetId,
-                streetName = street.streetName,
-                streetNumber = street.streetNumber,
-                streetHood = street.streetHood,
-                city = street.city,
-                state = street.state,
-                teamName = street.teamName,
-                priority = street.priority,
-                type = street.type,
-                itemsQuantity = street.itemsQuantity,
-                creationDate = street.creationDate.toString(),
-                latitude = street.latitude,
-                longitude = street.longitude,
-                reserves = reservesByStreet[street.streetId] ?: listOf()
-            )
+        val executions = streets.mapNotNull { street ->
+            val reserves = reservesByStreet[street.streetId] ?: listOf()
+
+            // Verifica se existe algum item PENDENTE
+            val hasPending = reserves.any { it.reserveStatus == ReservationStatus.PENDING }
+
+            if (hasPending) {
+                // Ignora essa rua
+                null
+            } else {
+                ExecutionDTO(
+                    streetId = street.streetId,
+                    streetName = street.streetName,
+                    streetNumber = street.streetNumber,
+                    streetHood = street.streetHood,
+                    city = street.city,
+                    state = street.state,
+                    teamName = street.teamName,
+                    priority = street.priority,
+                    type = street.type,
+                    itemsQuantity = street.itemsQuantity,
+                    creationDate = street.creationDate.toString(),
+                    latitude = street.latitude,
+                    longitude = street.longitude,
+                    contractId = street.contractId,
+                    contractor = street.contractor,
+                    reserves = reserves
+                )
+            }
         }.toMutableList()
+
 
         return ResponseEntity.ok().body(executions)
 

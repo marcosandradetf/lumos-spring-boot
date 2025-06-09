@@ -1,10 +1,10 @@
 package com.lumos.ui.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
+import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
@@ -34,18 +34,21 @@ class ContractViewModel(
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
-    fun syncContracts(context: Context) {
-        viewModelScope.launch {
+    fun syncContracts() {
+        viewModelScope.launch(Dispatchers.IO) {
             _isSyncing.value = true
             _syncError.value = null
             try {
-                val response = repository.syncContracts(context)
+                val response = repository.syncContracts()
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
                     is RequestResult.NoInternet -> _syncError.value =
                         "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
-                    is RequestResult.ServerError -> _syncError.value = response.message
+                    is ServerError -> _syncError.value = response.message
+                    is RequestResult.SuccessEmptyBody -> {
+                        ServerError(204, "Resposta 204 inesperada")
+                    }
                     is RequestResult.Success -> null
                     is RequestResult.UnknownError -> null
                 }
@@ -57,18 +60,21 @@ class ContractViewModel(
         }
     }
 
-    fun syncContractItems(context: Context) {
-        viewModelScope.launch {
+    fun syncContractItems() {
+        viewModelScope.launch(Dispatchers.IO) {
             _isSyncing.value = true
             _syncError.value = null
             try {
-                val response = repository.syncContractItems(context)
+                val response = repository.syncContractItems()
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
                     is RequestResult.NoInternet -> _syncError.value =
                         "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
                     is RequestResult.ServerError -> _syncError.value = response.message
+                    is RequestResult.SuccessEmptyBody -> {
+                        ServerError(204, "Resposta 204 inesperada")
+                    }
                     is RequestResult.Success -> null
                     is RequestResult.UnknownError -> null
                 }
@@ -81,8 +87,8 @@ class ContractViewModel(
     }
 
 
-    fun loadItemsFromContract(itemsIds: List<String>) {
-        viewModelScope.launch {
+    fun loadItemsFromContract(itemsIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.getItemsFromContract(itemsIds).collectLatest { entity ->
                     _items.value = entity
@@ -107,6 +113,20 @@ class ContractViewModel(
         }
     }
 
+    fun loadFlowContractsByExecution(executionsIds: List<Long>) {
+        viewModelScope.launch {
+            try {
+                repository.getFlowContractsByExecution(executionsIds)
+                    .flowOn(Dispatchers.IO)
+                    .collectLatest { fetched ->
+                        _contracts.value = fetched
+                    }
+            } catch (e: Exception) {
+                Log.e("Error loadMaterials", e.message.toString())
+            }
+        }
+    }
+
 
     suspend fun getContract(contractId: Long): Contract? {
         return withContext(Dispatchers.IO) {
@@ -120,22 +140,12 @@ class ContractViewModel(
     }
 
 
-    fun setStatus(contractId: Long, status: String) {
-        viewModelScope.launch {
-            try {
-                repository.setStatus(contractId, status)
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-            }
-        }
-    }
-
     fun downloadContract(contractId: Long) {
         return
     }
 
     fun startPreMeasurement(contractId: Long, deviceId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.setStatus(contractId, ExecutionStatus.IN_PROGRESS)
                 repository.startAt(contractId, Utils.dateTime.toString(), deviceId)

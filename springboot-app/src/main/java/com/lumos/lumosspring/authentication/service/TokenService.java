@@ -109,7 +109,7 @@ public class TokenService {
         }
 
         if (isMobile) {
-            var allowedRoles = new HashSet<>(Set.of(Role.Values.OPERADOR.name(), Role.Values.ADMIN.name(), Role.Values.RESPONSAVEL_TECNICO.name()));
+            var allowedRoles = new HashSet<>(Set.of(Role.Values.MOTORISTA.name(), Role.Values.ELETRICISTA.name(), Role.Values.ANALISTA.name(), Role.Values.ADMIN.name(), Role.Values.RESPONSAVEL_TECNICO.name()));
             var roles = user.get().getRoles();
             boolean hasAccess = roles.stream().anyMatch(roleName -> allowedRoles.contains(roleName.getRoleName()));
 

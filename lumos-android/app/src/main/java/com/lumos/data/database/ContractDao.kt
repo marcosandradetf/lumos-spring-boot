@@ -39,5 +39,12 @@ interface ContractDao {
         SELECT * FROM items 
         WHERE contractReferenceItemId IN (:itemsIds)
     """)
-    fun getItemsFromContract(itemsIds: List<String>): Flow<List<Item>>
+    fun getItemsFromContract(itemsIds: List<Long>): Flow<List<Item>>
+
+    @Query("""
+        SELECT * FROM contracts 
+        WHERE contractId IN (:longs)
+    """)
+    fun getFlowContractsByExecution(longs: List<Long>) : Flow<List<Contract>>
+
 }

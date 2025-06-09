@@ -24,6 +24,8 @@ data class Execution(
     val latitude: Double? = null,
     val longitude: Double? = null,
     var photoUri: String? = null,
+    var contractId: Long,
+    var contractor: String,
 )
 
 @Entity(tableName = "reserves")
@@ -57,6 +59,8 @@ data class ExecutionDTO(
     val creationDate: String,
     val latitude: Double,
     val longitude: Double,
+    val contractId: Long,
+    val contractor: String,
     val reserves: List<Reserve>,
 )
 

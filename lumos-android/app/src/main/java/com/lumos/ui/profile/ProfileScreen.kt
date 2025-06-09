@@ -74,11 +74,10 @@ fun ProfileScreen(
                     .padding(bottom = 10.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .clickable {
-                        coroutineScope.launch {
-                            authViewModel.logout(
-                                onLogoutSuccess
-                            )
-                        }
+
+                        authViewModel.logout(
+                            onLogoutSuccess
+                        )
 
                     }
             )

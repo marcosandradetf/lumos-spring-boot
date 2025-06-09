@@ -72,10 +72,8 @@ class MainActivity : ComponentActivity() {
 
             LumosTheme {
                 AppNavigation(
-                    db = app.database,
-                    retrofit = app.retrofit,
+                    app = app,
                     secureStorage = app.secureStorage,
-                    context = this as Context,
                     actionState
                 )
             }

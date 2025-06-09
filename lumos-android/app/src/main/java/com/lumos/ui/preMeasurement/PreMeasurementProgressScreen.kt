@@ -50,6 +50,7 @@ import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
@@ -69,12 +70,12 @@ fun PreMeasurementProgressScreen(
     navController: NavHostController,
     notificationsBadge: String,
     contractId: Long,
-
     ) {
     var contract by remember { mutableStateOf<Contract?>(null) }
     val streets by preMeasurementViewModel.streets
 
     LaunchedEffect(contractId) {
+
         contract = contractViewModel.getContract(contractId)
         preMeasurementViewModel.loadStreets(contractId)
     }

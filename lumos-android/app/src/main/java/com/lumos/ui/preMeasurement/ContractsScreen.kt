@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -48,7 +50,9 @@ import androidx.navigation.compose.rememberNavController
 import com.lumos.data.repository.ContractStatus
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.home.PreMeasurementCard
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.utils.Utils
 import java.time.Instant
@@ -65,7 +69,10 @@ fun ContractsScreen(
     contractViewModel: ContractViewModel,
     navController: NavHostController,
     notificationsBadge: String,
+    roles: Set<String>,
 ) {
+    val requiredRoles = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
+
     val contracts by contractViewModel.contracts.collectAsState()
     val isSyncing by contractViewModel.isSyncing.collectAsState()
 
@@ -77,8 +84,12 @@ fun ContractsScreen(
     )
 
     LaunchedEffect(Unit) {
+        if (!roles.any { it in requiredRoles }) {
+            navController.navigate(Routes.NO_ACCESS + "/Contratos")
+        }
+
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
-        contractViewModel.syncContracts(context)
+        contractViewModel.syncContracts()
     }
 
     ContractsScreenContent(
@@ -102,7 +113,7 @@ fun ContractsScreen(
         isLoading = isSyncing,
         error = hasError,
         refresh = {
-            contractViewModel.syncContracts(context)
+            contractViewModel.syncContracts()
         }
     )
 }
@@ -336,7 +347,7 @@ fun PrevContract() {
 
 
     ContractsScreenContent(
-        contracts = emptyList(),
+        contracts = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
@@ -346,7 +357,7 @@ fun PrevContract() {
         "12",
         start = {},
         download = {},
-        isLoading = true,
+        isLoading = false,
         error = null,
         refresh = { },
     )

@@ -1,5 +1,6 @@
 package com.lumos.worker
 
+import android.app.Application
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -50,12 +51,14 @@ object SyncTypes {
 
 
 class SyncQueueWorker(
-    appContext: Context,
+    context: Context,
     workerParams: WorkerParameters,
-) : CoroutineWorker(appContext, workerParams) {
+) : CoroutineWorker(context, workerParams) {
+
+    private val app = context.applicationContext as Application
 
     private val queueDao: QueueDao
-    private val secureStorage: SecureStorage = SecureStorage(appContext)
+    private val secureStorage: SecureStorage = SecureStorage(app.applicationContext)
 
     private val preMeasurementRepository: PreMeasurementRepository
     private val contractRepository: ContractRepository
@@ -64,8 +67,8 @@ class SyncQueueWorker(
 
 
     init {
-        val api = ApiService(appContext, secureStorage)
-        val db = AppDatabase.getInstance(appContext)
+        val api = ApiService(app.applicationContext, secureStorage)
+        val db = AppDatabase.getInstance(app.applicationContext)
 
         queueDao = db.queueDao()
 
@@ -76,18 +79,20 @@ class SyncQueueWorker(
         preMeasurementRepository = PreMeasurementRepository(
             db,
             preMeasurementApi,
-            appContext
+            app
         )
 
         contractRepository = ContractRepository(
             db = db,
-            api = contractApi
+            api = contractApi,
+            app = app
         )
 
         executionRepository = ExecutionRepository(
             db = db,
             api = executionApi,
-            secureStorage = secureStorage
+            secureStorage = secureStorage,
+            app = app
         )
 
         genericRepository = GenericRepository(
@@ -149,7 +154,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (ConnectivityUtils.isNetworkGood(applicationContext)) {
+            if (ConnectivityUtils.isNetworkGood(applicationContext) && ConnectivityUtils.hasRealInternetConnection()) {
                 Log.e("postGeneric", "Internet")
                 queueDao.update(inProgressItem)
                 val request = UpdateEntity(
@@ -207,7 +212,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.isNetworkGood(applicationContext)) {
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) {
                 return Result.retry()
             }
 
@@ -227,8 +232,7 @@ class SyncQueueWorker(
                 item.relatedId,
                 streets,
                 items,
-                uuid,
-                applicationContext
+                uuid
             )
 
             checkResponse(
@@ -259,10 +263,10 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if (ConnectivityUtils.isNetworkGood(applicationContext)) {
+            if (ConnectivityUtils.isNetworkGood(applicationContext) && ConnectivityUtils.hasRealInternetConnection()) {
                 Log.e("SyncStock", "Internet")
                 queueDao.update(inProgressItem)
-                val response = contractRepository.syncContractItems(applicationContext)
+                val response = contractRepository.syncContractItems()
                 checkResponse(response, item)
 
             } else {
@@ -286,10 +290,10 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if (ConnectivityUtils.isNetworkGood(applicationContext)) {
+            if (ConnectivityUtils.isNetworkGood(applicationContext) && ConnectivityUtils.hasRealInternetConnection()) {
                 Log.e("syncContract", "Internet")
                 queueDao.update(inProgressItem)
-                val response = contractRepository.syncContracts(applicationContext)
+                val response = contractRepository.syncContracts()
                 checkResponse(response, item)
 
             } else {
@@ -310,7 +314,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.isNetworkGood(applicationContext)) return Result.retry()
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -320,7 +324,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = executionRepository.syncExecutions(applicationContext)
+            val response = executionRepository.syncExecutions()
             checkResponse(response, item)
 
         } catch (e: Exception) {
@@ -342,7 +346,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext)) return Result.retry()
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -352,7 +356,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = executionRepository.postExecution(item.relatedId, applicationContext)
+            val response = executionRepository.postExecution(item.relatedId)
             checkResponse(response, item)
 
         } catch (e: Exception) {
@@ -368,12 +372,18 @@ class SyncQueueWorker(
             is RequestResult.Success -> {
                 if (inProgressItem.type == SyncTypes.POST_PRE_MEASUREMENT) {
                     val data = response.data as? String
+                    Log.e("data", data.toString())
                     if (data != "0") return Result.retry()
                 }
 
+                queueDao.deleteById(inProgressItem.id)
                 Result.success()
             }
 
+            is RequestResult.SuccessEmptyBody -> {
+                queueDao.deleteById(inProgressItem.id)
+                Result.success()
+            }
 
             is RequestResult.NoInternet -> Result.retry()
             is RequestResult.Timeout -> Result.retry()
@@ -390,7 +400,7 @@ class SyncQueueWorker(
                 // Pode enviar para um sistema de logs, Crashlytics etc
 //                Crashlytics.logException(Exception("Erro desconhecido na sync: $inProgressItem"))
 
-                return Result.failure()
+                return Result.retry()
             }
 
         }

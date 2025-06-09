@@ -22,7 +22,7 @@ interface PreMeasurementDao {
     @Query("SELECT * FROM pre_measurement_streets WHERE contractId = :preMeasurementId")
     suspend fun getAllStreets(preMeasurementId : Long): List<PreMeasurementStreet>
 
-    @Query("SELECT * FROM pre_measurement_street_photos WHERE deviceId = :contractId")
+    @Query("SELECT * FROM pre_measurement_street_photos WHERE contractId = :contractId")
     suspend fun getStreetPhotos(contractId : Long): List<PreMeasurementStreetPhoto>
 
     @Query("SELECT * FROM pre_measurement_street_items WHERE contractId = :contractId")
@@ -34,7 +34,7 @@ interface PreMeasurementDao {
     @Query("DELETE FROM pre_measurement_street_items WHERE contractId = :contractId")
     suspend fun deleteItems(contractId: Long)
 
-    @Query("SELECT COUNT(preMeasurementStreetId) from pre_measurement_streets WHERE contractId = :lng")
+    @Query("SELECT COUNT(preMeasurementStreetId) from pre_measurement_street_photos WHERE contractId = :lng")
     suspend fun countPhotos(lng: Long): Int
 
     @Query("UPDATE pre_measurement_streets SET status = 'FINISHED' WHERE contractId = (:lng)")

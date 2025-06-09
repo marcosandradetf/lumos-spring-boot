@@ -246,9 +246,9 @@ object NotificationType {
     const val CONTRACT = "CONTRACT"
     const val UPDATE = "UPDATE"
     const val EVENT = "EVENT"
-    const val WARNING = "ALERT"
+    const val WARNING = "WARNING"
     const val CASH = "CASH"
-    const val ALERT = "CASH"
+    const val ALERT = "ALERT"
 }
 
 object ReservationStatus {
@@ -258,4 +258,6 @@ object ReservationStatus {
     const val COLLECTED = "COLLECTED"
     const val CANCELLED = "CANCELLED"
     const val FINISHED = "FINISHED"
+    const val EXECUTION = "EXECUTION"
+
 }

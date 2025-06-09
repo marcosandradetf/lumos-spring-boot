@@ -698,11 +698,11 @@ public class PreMeasurementService {
                 var parts = filename.split("#");
                 if (parts.length < 2) continue;
 
-                Long deviceId = Long.parseLong(parts[0]);
+                String deviceId = parts[0];
                 Long deviceStreetId = Long.parseLong(parts[1]);
 
                 // Verifica se já existe uma foto salva
-                String checkSql = "SELECT photo_uri FROM tb_pre_measurements_streets WHERE device_id = ? AND device_street_id = ?";
+                String checkSql = "SELECT pre_measurement_photo_uri FROM tb_pre_measurements_streets WHERE device_id = ? AND device_street_id = ?";
                 try {
                     String existingUri = jdbcTemplate.queryForObject(checkSql, String.class, deviceId, deviceStreetId);
                     if (existingUri != null && !existingUri.isBlank()) {
@@ -714,9 +714,9 @@ public class PreMeasurementService {
                 }
 
                 // Salva a nova foto
-                String photoUri = minioService.uploadFile(photo, "scl-construtora", "photos", "rua");
+                String photoUri = minioService.uploadFile(photo, "scl-construtora", "photos/pre_measurement", "rua");
 
-                String updateSql = "UPDATE tb_pre_measurements_streets SET photo_uri = ? WHERE device_id = ? AND device_street_id = ?";
+                String updateSql = "UPDATE tb_pre_measurements_streets SET pre_measurement_photo_uri = ? WHERE device_id = ? AND device_street_id = ?";
                 jdbcTemplate.update(updateSql, photoUri, deviceId, deviceStreetId);
 
             } catch (Exception e) {

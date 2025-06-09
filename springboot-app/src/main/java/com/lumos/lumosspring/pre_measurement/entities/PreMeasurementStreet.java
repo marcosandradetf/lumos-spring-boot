@@ -82,7 +82,8 @@ public class PreMeasurementStreet {
     private Boolean prioritized;
 
     private String comment;
-    private String photoUri;
+    private String preMeasurementPhotoUri;
+    private String executionPhotoUri;
 
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
@@ -294,12 +295,20 @@ public class PreMeasurementStreet {
         this.streetStatus = ExecutionStatus.WAITING_STOCKIST;
     }
 
-    public String getPhotoUri() {
-        return photoUri;
+    public String getPreMeasurementPhotoUri() {
+        return preMeasurementPhotoUri;
     }
 
-    public void setPhotoUri(String photoUri) {
-        this.photoUri = photoUri;
+    public void setPreMeasurementPhotoUri(String preMeasurementPhotoUri) {
+        this.preMeasurementPhotoUri = preMeasurementPhotoUri;
+    }
+
+    public String getExecutionPhotoUri() {
+        return executionPhotoUri;
+    }
+
+    public void setExecutionPhotoUri(String executionPhotoUri) {
+        this.executionPhotoUri = executionPhotoUri;
     }
 
     public Long getDeviceStreetId() {

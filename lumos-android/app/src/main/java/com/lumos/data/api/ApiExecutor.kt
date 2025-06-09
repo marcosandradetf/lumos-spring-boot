@@ -12,14 +12,13 @@ object ApiExecutor {
 
             if (response.isSuccessful) {
                 val body = response.body()
-                if (body != null) {
-                    RequestResult.Success(body)
+
+                if (response.code() == 204 || body == null) {
+                    RequestResult.SuccessEmptyBody
                 } else {
-                    RequestResult.ServerError(
-                        response.code(),
-                        "Corpo da resposta vazio"
-                    )
+                    RequestResult.Success(body)
                 }
+
             } else {
                 RequestResult.ServerError(
                     response.code(),
@@ -45,6 +44,7 @@ object ApiExecutor {
 
 sealed class RequestResult<out T> {
     data class Success<out T>(val data: T) : RequestResult<T>()
+    object SuccessEmptyBody : RequestResult<Nothing>()
     object NoInternet : RequestResult<Nothing>()
     object Timeout : RequestResult<Nothing>()
     data class ServerError(val code: Int, val message: String?) : RequestResult<Nothing>()

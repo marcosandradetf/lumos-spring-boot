@@ -14,8 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.BuildCircle
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Texture
@@ -106,7 +109,7 @@ fun NotificationsList(
         navController = navController,
         notificationsBadge = notificationsBadge,
         context = context,
-    ) {modifier, snackBar ->
+    ) { modifier, snackBar ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,11 +130,11 @@ fun NotificationsList(
                                 Icon(
                                     imageVector = Icons.Default.ClearAll,
                                     contentDescription = "Limpar Notificações",
-                                    tint = MaterialTheme.colorScheme.onPrimary
+                                    tint = MaterialTheme.colorScheme.onBackground
                                 )
                                 Text(
                                     text = "Limpar Notificações",
-                                    color = MaterialTheme.colorScheme.onPrimary
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                             }
 
@@ -166,7 +169,8 @@ fun NotificationsList(
                         onClick(it)
                     },
                     onNavigate = {
-                        onNavigate(it)
+                        if (it.isNotEmpty())
+                            onNavigate(it)
                     }
                 )
             }
@@ -186,6 +190,8 @@ fun NotificationCard(
         NotificationType.EVENT -> Icons.Default.Event
         NotificationType.WARNING -> Icons.Default.Warning
         NotificationType.CASH -> Icons.Default.AttachMoney
+        NotificationType.ALERT -> Icons.Default.Lightbulb
+        NotificationType.EXECUTION -> Icons.Default.Lightbulb
 
         else -> Icons.Default.Texture
     }

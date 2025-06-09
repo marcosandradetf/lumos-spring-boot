@@ -39,25 +39,27 @@ public interface PreMeasurementStreetRepository extends JpaRepository<PreMeasure
 
     @Query(
             """
-            SELECT new com.lumos.lumosspring.execution.dto.ExecutionPartial(
-                s.preMeasurementStreetId,
-                s.street,
-                s.number,
-                s.neighborhood,
-                s.city,
-                s.state,
-                s.team.teamName,
-                s.prioritized,
-                'INSTALLATION',
-                size(s.items),
-                s.createdAt,
-                s.latitude,
-                s.longitude
-            )
-            FROM PreMeasurementStreet s
-            WHERE s.team.idTeam in :teamsId
-                  AND s.streetStatus = 'AVAILABLE_EXECUTION'
-            """
+                    SELECT new com.lumos.lumosspring.execution.dto.ExecutionPartial(
+                        s.preMeasurementStreetId,
+                        s.street,
+                        s.number,
+                        s.neighborhood,
+                        s.city,
+                        s.state,
+                        s.team.teamName,
+                        s.prioritized,
+                        'INSTALLATION',
+                        size(s.items),
+                        s.createdAt,
+                        s.latitude,
+                        s.longitude,
+                        s.preMeasurement.contract.contractId,
+                        s.preMeasurement.contract.contractor
+                    )
+                    FROM PreMeasurementStreet s
+                    WHERE s.team.idTeam in :teamsId
+                          AND s.streetStatus = 'AVAILABLE_EXECUTION'
+                    """
     )
     List<ExecutionPartial> findByTeam_IdTeam(List<Long> teamsId);
 

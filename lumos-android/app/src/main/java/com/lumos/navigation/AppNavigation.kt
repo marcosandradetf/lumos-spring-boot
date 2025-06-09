@@ -1,6 +1,5 @@
 package com.lumos.navigation
 
-import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,11 +12,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,11 +22,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.lumos.MyApp
 import com.lumos.R
 import com.lumos.data.api.ContractApi
 import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.PreMeasurementApi
-import com.lumos.data.database.AppDatabase
 import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.ExecutionRepository
@@ -41,10 +38,12 @@ import com.lumos.notifications.FCMService.FCMBus
 import com.lumos.notifications.NotificationManager
 import com.lumos.notifications.NotificationsBadge
 import com.lumos.ui.auth.Login
+import com.lumos.ui.executions.CitiesScreen
 import com.lumos.ui.executions.MaterialScreen
 import com.lumos.ui.executions.StreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.menu.MenuScreen
+import com.lumos.ui.noAccess.NoAccessScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.preMeasurement.ContractsScreen
 import com.lumos.ui.preMeasurement.MeasurementHome
@@ -57,10 +56,10 @@ import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
-import com.lumos.utils.ConnectivityUtils
 import com.lumos.worker.SyncManager.enqueueSync
 import com.lumos.worker.SyncManager.schedulePeriodicSync
-import retrofit2.Retrofit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class BottomBar(val value: Int) {
     MENU(0),
@@ -71,37 +70,37 @@ enum class BottomBar(val value: Int) {
 
 @Composable
 fun AppNavigation(
-    db: AppDatabase,
-    retrofit: Retrofit,
+    app: MyApp,
     secureStorage: SecureStorage,
-    context: Context,
     actionState: MutableState<String?>
 ) {
     val notificationItem by FCMBus.notificationItem.collectAsState()
 
     val navController = rememberNavController()
-    var isLoading by remember { mutableStateOf(true) }
 
     // Usar viewModel para armazenar o ViewModel corretamente
     val authViewModel: AuthViewModel = viewModel {
-        val authRepository = AuthRepository(retrofit, secureStorage, context)
+        val authRepository = AuthRepository(app.retrofit, secureStorage, app)
         AuthViewModel(authRepository, secureStorage)
     }
 
+    val isLoading by authViewModel.isLoading.collectAsState()
+
 
     val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
-        val api = retrofit.create(PreMeasurementApi::class.java)
+        val api = app.retrofit.create(PreMeasurementApi::class.java)
 
-        val preMeasurementRepository = PreMeasurementRepository(db, api, context)
+        val preMeasurementRepository = PreMeasurementRepository(app.database, api, app)
         PreMeasurementViewModel(preMeasurementRepository)
     }
 
     val contractViewModel: ContractViewModel = viewModel {
-        val api = retrofit.create(ContractApi::class.java)
+        val api = app.retrofit.create(ContractApi::class.java)
 
         val contractRepository = ContractRepository(
-            db = db,
-            api = api
+            db = app.database,
+            api = api,
+            app = app
         )
         ContractViewModel(
             repository = contractRepository
@@ -109,12 +108,13 @@ fun AppNavigation(
     }
 
     val executionViewModel: ExecutionViewModel = viewModel {
-        val api = retrofit.create(ExecutionApi::class.java)
+        val api = app.retrofit.create(ExecutionApi::class.java)
 
         val contractRepository = ExecutionRepository(
-            db = db,
+            db = app.database,
             api = api,
-            secureStorage
+            secureStorage = secureStorage,
+            app = app
         )
         ExecutionViewModel(
             repository = contractRepository
@@ -124,7 +124,7 @@ fun AppNavigation(
     val isAuthenticated by authViewModel.isAuthenticated
 
     val notificationViewModel: NotificationViewModel = viewModel {
-        val notificationDao = db.notificationDao()
+        val notificationDao = app.database.notificationDao()
 
         val notificationRepository = NotificationRepository(
             dao = notificationDao,
@@ -134,36 +134,37 @@ fun AppNavigation(
         )
     }
 
-    val notificationManager = NotificationManager(context, secureStorage)
+    val notificationManager = NotificationManager(app.applicationContext, secureStorage)
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) {
-            isLoading = false
             NotificationsBadge._notificationBadge.value = notificationViewModel.countNotifications()
             Log.e("n", "Antes de entrar no notification manager")
             notificationManager.subscribeToSavedTopics()
 
         } else {
-            isLoading = false
-            authViewModel.authenticate(context)
+            authViewModel.authenticate()
         }
     }
 
     LaunchedEffect(Unit) {
         if (isAuthenticated) {
-            enqueueSync(context)
-            schedulePeriodicSync(context)
+            enqueueSync(app.applicationContext)
+            schedulePeriodicSync(app.applicationContext)
         }
     }
 
     LaunchedEffect(isAuthenticated, actionState.value) {
         if (isAuthenticated && actionState.value != null) {
-            when (actionState.value) {
-                Routes.CONTRACT_SCREEN -> navController.navigate(Routes.CONTRACT_SCREEN)
-                Routes.NOTIFICATIONS -> navController.navigate(Routes.NOTIFICATIONS)
-                Routes.PROFILE -> navController.navigate(Routes.PROFILE)
-                Routes.EXECUTION_SCREEN -> navController.navigate(Routes.EXECUTION_SCREEN)
-                // Adicione mais cases conforme necessário
+            withContext(Dispatchers.Main) {
+                when (actionState.value) {
+                    Routes.CONTRACT_SCREEN -> navController.navigate(Routes.CONTRACT_SCREEN)
+                    Routes.NOTIFICATIONS -> navController.navigate(Routes.NOTIFICATIONS)
+                    Routes.PROFILE -> navController.navigate(Routes.PROFILE)
+                    Routes.EXECUTION_SCREEN -> navController.navigate(Routes.EXECUTION_SCREEN)
+                    // Adicione mais cases conforme necessário
+
+                }
             }
 
             // Zerar para evitar reexecução desnecessária
@@ -201,7 +202,6 @@ fun AppNavigation(
 
         }
     } else {
-
         NavHost(
             navController = navController,
             startDestination = if (isAuthenticated) Routes.MAIN else Routes.LOGIN
@@ -238,7 +238,7 @@ fun AppNavigation(
                             }
                         },
                         navController = navController,
-                        context = context,
+                        context = LocalContext.current,
                         notificationsBadge = notifications.size.toString()
                     )
                 }
@@ -261,7 +261,35 @@ fun AppNavigation(
                             }
                         },
                         navController = navController,
-                        notificationsBadge = notifications.size.toString()
+                        notificationsBadge = notifications.size.toString(),
+                        executionViewModel = executionViewModel,
+                        contractViewModel = contractViewModel,
+                        roles = secureStorage.getRoles()
+                    )
+                }
+
+                composable(Routes.NO_ACCESS + "/{screenOrigin}") { backStackEntry ->
+                    val screenOrigin =
+                        backStackEntry.arguments?.getString("screenOrigin") ?: ""
+                    NoAccessScreen(
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU) {
+                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+                            }
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS) {
+                                popUpTo(Routes.HOME) { inclusive = true }
+                            }
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE) {
+                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+                            }
+                        },
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        screen = screenOrigin,
                     )
                 }
 
@@ -284,7 +312,7 @@ fun AppNavigation(
                             }
                         },
                         navController = navController,
-                        context = context,
+                        context = LocalContext.current,
                         notificationViewModel = notificationViewModel,
 
                         )
@@ -309,7 +337,7 @@ fun AppNavigation(
                             }
                         },
                         navController = navController,
-                        context = context,
+                        context = LocalContext.current,
                         onLogoutSuccess = {
                             notificationManager.unsubscribeFromSavedTopics()
                             secureStorage.clearAll()
@@ -341,15 +369,17 @@ fun AppNavigation(
                         onNavigateToPreMeasurement = {
                             navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
                         },
-                        context = context,
+                        context = LocalContext.current,
                         contractViewModel = contractViewModel,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString()
+                        notificationsBadge = notifications.size.toString(),
+                        roles = secureStorage.getRoles()
                     )
                 }
 
                 composable(Routes.PRE_MEASUREMENT_PROGRESS + "/{contractId}") { backStackEntry ->
-                    val contractId = backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                    val contractId =
+                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
                     PreMeasurementProgressScreen(
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -369,12 +399,12 @@ fun AppNavigation(
                         onNavigateToStreet = {
                             navController.navigate(Routes.PRE_MEASUREMENT_STREET + "/$it")
                         },
-                        context = context,
+                        context = LocalContext.current,
                         contractViewModel = contractViewModel,
                         preMeasurementViewModel = preMeasurementViewModel,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        contractId = contractId
+                        contractId = contractId,
                     )
                 }
 
@@ -392,10 +422,11 @@ fun AppNavigation(
                         onNavigateToNotifications = {
                             navController.navigate(Routes.NOTIFICATIONS)
                         },
-                        context = context,
+                        context = LocalContext.current,
                         contractViewModel = contractViewModel,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString()
+                        notificationsBadge = notifications.size.toString(),
+                        roles = secureStorage.getRoles()
                     )
                 }
 
@@ -405,17 +436,18 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         navController = navController,
-                        context = context
+                        context = LocalContext.current
                     )
                 }
 
-                composable(Routes.PRE_MEASUREMENT_STREET+ "/{contractId}") { backStackEntry ->
-                    val contractId = backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                composable(Routes.PRE_MEASUREMENT_STREET + "/{contractId}") { backStackEntry ->
+                    val contractId =
+                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
                     PreMeasurementStreetScreen(
                         back = {
                             navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
                         },
-                        context = context,
+                        context = LocalContext.current,
                         preMeasurementViewModel = preMeasurementViewModel,
                         contractId = contractId,
                         contractViewModel = contractViewModel,
@@ -439,10 +471,41 @@ fun AppNavigation(
                 //
 
                 composable(Routes.EXECUTION_SCREEN) {
-                    StreetsScreen(
+                    CitiesScreen(
                         executionViewModel = executionViewModel,
-                        connection = ConnectivityUtils,
-                        context = context,
+                        context = LocalContext.current,
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        pSelected = 0,
+                        onNavigateToStreetScreen = { contractId, contractor ->
+                            navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
+                        },
+                        roles = secureStorage.getRoles()
+                    )
+                }
+
+                composable(Routes.EXECUTION_SCREEN_STREETS + "/{contractId}/{contractor}") { backStackEntry ->
+                    val contractId =
+                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                    val contractor =
+                        backStackEntry.arguments?.getString("contractor") ?: ""
+                    StreetsScreen(
+                        contractId = contractId,
+                        contractor = contractor,
+                        executionViewModel = executionViewModel,
+                        context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
                         },
@@ -465,11 +528,12 @@ fun AppNavigation(
                 }
 
                 composable(Routes.EXECUTION_SCREEN_MATERIALS + "/{streetId}") { backStackEntry ->
-                    val streetId = backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
+                    val streetId =
+                        backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
                     MaterialScreen(
                         streetId = streetId,
                         executionViewModel = executionViewModel,
-                        context = context,
+                        context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
                         },
@@ -502,6 +566,7 @@ object Routes {
     const val LOGIN = "login"
     const val MAIN = "main"
     const val HOME = "home"
+    const val NO_ACCESS = "no-access"
     const val MENU = "menu"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
@@ -512,5 +577,6 @@ object Routes {
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
     const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
     const val EXECUTION_SCREEN = "execution-screen"
+    const val EXECUTION_SCREEN_STREETS = "execution-screen-streets"
     const val EXECUTION_SCREEN_MATERIALS = "execution-screen-materials"
 }

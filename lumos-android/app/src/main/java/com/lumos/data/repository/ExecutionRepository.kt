@@ -1,5 +1,6 @@
 package com.lumos.data.repository
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
@@ -7,6 +8,8 @@ import com.google.gson.Gson
 import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.RequestResult
+import com.lumos.data.api.RequestResult.ServerError
+import com.lumos.data.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
@@ -23,12 +26,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class ExecutionRepository(
     private val db: AppDatabase,
     private val api: ExecutionApi,
-    private val secureStorage: SecureStorage
+    private val secureStorage: SecureStorage,
+    private val app: Application
 ) {
 
-    suspend fun syncExecutions(context: Context): RequestResult<Unit> {
+    suspend fun syncExecutions(): RequestResult<Unit> {
         val uuid = secureStorage.getUserUuid()
-            ?: return RequestResult.ServerError(-1, "UUID Não encontrado")
+            ?: return ServerError(-1, "UUID Não encontrado")
 
         val response = ApiExecutor.execute { api.getExecutions(uuid) }
         return when (response) {
@@ -36,14 +40,17 @@ class ExecutionRepository(
                 saveExecutionsToDb(response.data)
                 RequestResult.Success(Unit)
             }
+            is SuccessEmptyBody -> {
+                ServerError(204, "Resposta 204 inesperada")
+            }
 
             is RequestResult.NoInternet -> {
-                SyncManager.queueSyncExecutions(context, db)
+                SyncManager.queueSyncExecutions(app.applicationContext, db)
                 RequestResult.NoInternet
             }
 
             is RequestResult.Timeout -> RequestResult.Timeout
-            is RequestResult.ServerError -> RequestResult.ServerError(
+            is ServerError -> ServerError(
                 response.code,
                 response.message
             )
@@ -74,6 +81,8 @@ class ExecutionRepository(
                 creationDate = executionDto.creationDate,
                 latitude = executionDto.latitude,
                 longitude = executionDto.longitude,
+                contractId = executionDto.contractId,
+                contractor = executionDto.contractor
             )
 
             db.executionDao().insertExecution(execution)
@@ -91,7 +100,7 @@ class ExecutionRepository(
                     depositAddress = r.depositAddress,
                     stockistName = r.stockistName,
                     phoneNumber = r.phoneNumber,
-                    requestUnit = r.requestUnit
+                    requestUnit = r.requestUnit,
                 )
                 db.executionDao().insertReserve(reserve)
             }
@@ -112,9 +121,9 @@ class ExecutionRepository(
         db.executionDao().setExecutionStatus(streetId, status)
     }
 
-    suspend fun queueSyncFetchReservationStatus(context: Context, streetId: Long, status: String) {
+    suspend fun queueSyncFetchReservationStatus(streetId: Long, status: String) {
         SyncManager.queueSyncPostGeneric(
-            context = context,
+            context = app.applicationContext,
             db = db,
             table = "tb_material_reservation",
             field = "status",
@@ -128,9 +137,9 @@ class ExecutionRepository(
         return db.executionDao().getExecution(lng)
     }
 
-    suspend fun queueSyncStartExecution(context: Context, streetId: Long) {
+    suspend fun queueSyncStartExecution(streetId: Long) {
         SyncManager.queueSyncPostGeneric(
-            context = context,
+            context = app.applicationContext,
             db = db,
             table = "tb_pre_measurements_streets",
             field = "street_status",
@@ -151,21 +160,21 @@ class ExecutionRepository(
         )
     }
 
-    suspend fun queuePostExecution(context: Context, streetId: Long) {
+    suspend fun queuePostExecution(streetId: Long) {
         SyncManager.queuePostExecution(
-            context = context,
+            context = app.applicationContext,
             db = db,
             streetId = streetId
         )
     }
 
 
-    suspend fun postExecution(streetId: Long, context: Context): RequestResult<Unit> {
+    suspend fun postExecution(streetId: Long ): RequestResult<Unit> {
         val gson = Gson()
 
         val photoUri = db.executionDao().getPhotoUri(streetId)
         if(photoUri == null) {
-            return RequestResult.ServerError(-1, "Foto da pré-medição não encontrada")
+            return ServerError(-1, "Foto da pré-medição não encontrada")
         }
         val reserves = db.executionDao().getReservesPartial(streetId)
         val dto = SendExecutionDto(
@@ -176,7 +185,7 @@ class ExecutionRepository(
         val json = gson.toJson(dto)
         val jsonBody = json.toRequestBody("application/json".toMediaType())
 
-        val byteArray = compressImageFromUri(context, photoUri.toUri())
+        val byteArray = compressImageFromUri(app.applicationContext, photoUri.toUri())
         byteArray?.let {
             val requestFile = it.toRequestBody("image/jpeg".toMediaType())
             val imagePart = MultipartBody.Part.createFormData(
@@ -189,7 +198,16 @@ class ExecutionRepository(
 
             return when (response) {
                 is RequestResult.Success -> {
+                    db.executionDao().deleteExecution(streetId)
+                    db.executionDao().deleteReserves(streetId)
+
                     RequestResult.Success(Unit)
+                }
+                is SuccessEmptyBody -> {
+                    db.executionDao().deleteExecution(streetId)
+                    db.executionDao().deleteReserves(streetId)
+
+                    SuccessEmptyBody
                 }
                 is RequestResult.NoInternet -> {
                     RequestResult.NoInternet
@@ -203,7 +221,14 @@ class ExecutionRepository(
             }
         }
 
-        return RequestResult.ServerError(-1, "Erro na criacao da foto da execucao")
+        return ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
+    suspend fun getReservesOnce(streetId: Long, statusList: List<String>): List<Reserve> {
+        return db.executionDao().getReservesOnce(streetId, statusList)
+    }
+
+    suspend fun getExecutionsByContract(lng: Long): List<Execution> {
+        return db.executionDao().getExecutionsByContract(lng)
+    }
 }

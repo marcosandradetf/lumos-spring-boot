@@ -191,12 +191,21 @@ export const routes: Routes = [
   },
   //end
 
+  // out
+
+  {
+    path: 'app/download',
+    loadComponent: () => import('./app-download/app-download.component').then(a => a.AppDownloadComponent),
+  },
+
+
   {
     path: 'dashboard',
     loadComponent: () => import('./dashboard/dashboard.component').then(d => d.DashboardComponent),
     canActivate: [AuthGuard],
     data: {role: [], path: 'dashboard'},
   },
-  {path: '**', redirectTo: 'dashboard'}
+  {path: '**', redirectTo: 'dashboard'},
+
 
 ];

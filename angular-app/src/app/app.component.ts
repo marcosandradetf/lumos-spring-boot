@@ -1,10 +1,11 @@
 import {Component, OnInit} from '@angular/core';
-import {RouterOutlet} from '@angular/router';
+import {NavigationEnd, Router, RouterOutlet} from '@angular/router';
 import {HeaderComponent} from './shared/components/header/header.component';
 import {FooterComponent} from './shared/components/footer/footer.component';
 import {AuthService} from './core/auth/auth.service';
 import {AsyncPipe, NgClass} from '@angular/common';
 import {SidebarComponent} from './shared/components/sidebar/sidebar.component';
+import {filter} from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -13,8 +14,15 @@ import {SidebarComponent} from './shared/components/sidebar/sidebar.component';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent implements OnInit  {
-  constructor(public authService: AuthService) {
+export class AppComponent implements OnInit {
+  currentUrl: string = '';
+
+  constructor(public authService: AuthService, private router: Router) {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.currentUrl = event.urlAfterRedirects;
+    });
   }
 
   menuOpen = false;  // Definir o estado do menu no componente pai

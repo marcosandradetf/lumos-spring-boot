@@ -1,30 +1,34 @@
-<div class="flex flex-col space-y-2 max-h-screen overflow-auto">
-  @if (authService.isLoading$ | async) {
-    <div class="h-screen w-screen flex justify-center items-center max-h-screen overflow-auto">
-      <span class="loading loading-infinity loading-lg"></span>
-    </div>
-  } @else {
-    @if (authService.isLoggedIn$ | async) {
-      <app-header></app-header>
-    }
-
-    <!-- Conteúdo principal -->
-    <div class="flex space-x-2 max-h-screen overflow-auto">
+@if(currentUrl !== "/app/download") {
+  <div class="flex flex-col space-y-2 max-h-screen overflow-auto">
+    @if (authService.isLoading$ | async) {
+      <div class="h-screen w-screen flex justify-center items-center max-h-screen overflow-auto">
+        <span class="loading loading-infinity loading-lg"></span>
+      </div>
+    } @else {
       @if (authService.isLoggedIn$ | async) {
-        <div class="border rounded overflow-y-auto overflow-x-hidden max-h-screen" >
-          <app-sidebar></app-sidebar>
-        </div>
+        <app-header></app-header>
       }
-      <div class="border rounded max-h-screen overflow-auto w-screen" >
-        <router-outlet></router-outlet>
+
+      <!-- Conteúdo principal -->
+      <div class="flex space-x-2 max-h-screen overflow-auto">
+        @if (authService.isLoggedIn$ | async) {
+          <div class="border rounded overflow-y-auto overflow-x-hidden max-h-screen">
+            <app-sidebar></app-sidebar>
+          </div>
+        }
+        <div class="border rounded max-h-screen overflow-auto w-screen">
+          <router-outlet></router-outlet>
+        </div>
+
       </div>
 
-    </div>
+      <!--    <div class="border rounded max-h-screen overflow-none" >-->
+        <!--      <app-footer></app-footer>-->
+        <!--    </div>-->
 
-<!--    <div class="border rounded max-h-screen overflow-none" >-->
-<!--      <app-footer></app-footer>-->
-<!--    </div>-->
+    }
 
-  }
-
-</div>
+  </div>
+} @else {
+  <router-outlet></router-outlet>
+}

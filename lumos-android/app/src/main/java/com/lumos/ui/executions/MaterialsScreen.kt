@@ -52,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,7 +82,9 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.viewmodel.ExecutionViewModel
 import com.lumos.utils.Utils.buildAddress
 import com.lumos.utils.Utils.formatDouble
+import kotlinx.coroutines.coroutineScope
 import java.io.File
+import java.math.BigDecimal
 
 @Composable
 fun MaterialScreen(
@@ -97,30 +100,19 @@ fun MaterialScreen(
     navController: NavHostController,
     notificationsBadge: String,
 ) {
-    var execution by remember { mutableStateOf<Execution?>(null) }
-    val reserves by executionViewModel.reserves.collectAsState()
-    var alertModal by remember { mutableStateOf(false) }
-
-    val isLoadingReserves by executionViewModel.isLoadingReserves.collectAsState()
+    var reserves by remember { mutableStateOf<List<Reserve>>(emptyList()) }
     var hasPosted by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var execution by remember { mutableStateOf<Execution?>(null) }
+    var alertModal by remember { mutableStateOf(false) }
+    val isLoading by executionViewModel.isLoadingReserves.collectAsState()
 
     LaunchedEffect(streetId) {
         execution = executionViewModel.getExecution(streetId)
-        executionViewModel.loadFlowReserves(
+        reserves = executionViewModel.getReservesOnce(
             streetId,
-            status = listOf(ReservationStatus.COLLECTED)
+            listOf(ReservationStatus.COLLECTED)
         )
-    }
-
-    LaunchedEffect(isLoadingReserves) {
-        Log.e("e", "flow")
-        if (!isLoadingReserves && reserves.isEmpty() && !hasPosted) {
-            execution?.let {
-                Log.e("e", "send")
-                executionViewModel.queuePostExecution(it.streetId, context)
-                hasPosted = true
-            }
-        }
     }
 
     execution?.let {
@@ -144,21 +136,30 @@ fun MaterialScreen(
                 )
             },
             onFinishMaterial = { reserveId, quantityExecuted ->
-                if (reserves.size == 1 && it.photoUri == null)
+                if (reserves.size == 1 && execution?.photoUri == null) {
                     alertModal = true
-                else
-                    executionViewModel.finishMaterial(
+                } else {
+                    executionViewModel.finishAndCheckPostExecution(
                         reserveId = reserveId,
-                        quantityExecuted = quantityExecuted
+                        quantityExecuted = quantityExecuted,
+                        streetId = streetId,
+                        context = context,
+                        hasPosted = hasPosted,
+                        onPostExecuted = { hasPosted = true },
+                        onReservesUpdated = { reserves = it },
+                        onError = {
+                            errorMessage = it
+                        }
                     )
-
+                }
             },
             alertModal = alertModal,
             closeAlertModal = {
                 alertModal = false
             },
-            loadingReserves = isLoadingReserves,
+            loadingReserves = isLoading,
             hasPosted = hasPosted,
+            errorMessage = errorMessage
         )
     } ?: Loading()
 
@@ -182,13 +183,16 @@ fun MaterialsContent(
     alertModal: Boolean,
     closeAlertModal: () -> Unit,
     loadingReserves: Boolean,
-    hasPosted: Boolean
+    hasPosted: Boolean,
+    errorMessage: String?
 ) {
-    val fileUri: MutableState<Uri?> = remember { mutableStateOf(
-        execution.photoUri?.toUri()
-    ) }
+    val fileUri: MutableState<Uri?> = remember {
+        mutableStateOf(
+            execution.photoUri?.toUri()
+        )
+    }
 
-//    val imageSaved = remember { mutableStateOf(false) }
+    val imageSaved = remember { mutableStateOf(execution.photoUri != null) }
     val createFile: () -> Uri = {
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
         file.createNewFile() // Garante que o arquivo seja criado
@@ -201,7 +205,7 @@ fun MaterialsContent(
             if (success) {
                 fileUri.value?.let { uri ->
                     takePhoto(uri)
-//                    imageSaved.value = true
+                    imageSaved.value = true
                 }
             } else {
                 Log.e("ImageDebug", "Erro ao tirar foto.")
@@ -222,10 +226,15 @@ fun MaterialsContent(
         navigateBack = onNavigateToExecutions,
         context = context,
         notificationsBadge = notificationsBadge,
-    ) { _, _ ->
+    ) { _, snackBar ->
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
+
+            LaunchedEffect(errorMessage) {
+                if (errorMessage != null)
+                    snackBar(errorMessage, null)
+            }
 
             if (!hasPosted) {
                 LazyColumn(
@@ -235,7 +244,10 @@ fun MaterialsContent(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
                 ) {
-                    items(reserves) {
+                    items(
+                        items = reserves,
+                        key = { it.reserveId }
+                    ) {
                         MaterialItem(material = it, finish = { quantityExecuted ->
                             onFinishMaterial(it.reserveId, quantityExecuted)
                         }, loadingReserves = loadingReserves)
@@ -253,7 +265,7 @@ fun MaterialsContent(
                         .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
                         .padding(16.dp)
                 ) {
-                    AnimatedVisibility(visible = fileUri.value != null) {
+                    AnimatedVisibility(visible = imageSaved.value) {
                         Image(
                             painter = rememberAsyncImagePainter(
                                 ImageRequest.Builder(LocalContext.current)
@@ -269,7 +281,7 @@ fun MaterialsContent(
                         )
                     }
 
-                    AnimatedVisibility(visible = fileUri.value == null) {
+                    AnimatedVisibility(visible = !imageSaved.value) {
                         Box(
                             modifier = Modifier
                                 .clip(
@@ -313,22 +325,22 @@ fun MaterialsContent(
                         val latitude = execution.latitude
                         val longitude = execution.longitude
 
-                        val gmmIntentUri: Uri = if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0)
-                            "google.navigation:q=$latitude,$longitude".toUri()
-                        else {
-                            val fullAddress = buildAddress(
-                                execution.streetName,
-                                execution.streetNumber,
-                                execution.streetHood,
-                                execution.city,
-                                execution.state
-                            )
+                        val gmmIntentUri: Uri =
+                            if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0)
+                                "google.navigation:q=$latitude,$longitude".toUri()
+                            else {
+                                val fullAddress = buildAddress(
+                                    execution.streetName,
+                                    execution.streetNumber,
+                                    execution.streetHood,
+                                    execution.city,
+                                    execution.state
+                                )
 
+                                val encodedAddress = Uri.encode(fullAddress)
 
-                            val encodedAddress = Uri.encode(fullAddress)
-
-                            "google.navigation:q=$encodedAddress".toUri()
-                        }
+                                "google.navigation:q=$encodedAddress".toUri()
+                            }
 
                         val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
                             setPackage("com.google.android.apps.maps")
@@ -421,7 +433,7 @@ fun MaterialsContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        colors =  ButtonColors(
+                        colors = ButtonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                             disabledContainerColor = MaterialTheme.colorScheme.primary,
@@ -445,9 +457,17 @@ fun MaterialsContent(
 }
 
 @Composable
-fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: Boolean) {
+fun MaterialItem(
+    material: Reserve,
+    finish: (Double) -> Unit,
+    loadingReserves: Boolean
+) {
     var confirmModal by remember { mutableStateOf(false) }
-    var quantityExecuted by remember { mutableDoubleStateOf(material.materialQuantity) }
+
+    var quantityExecuted by remember(material.reserveId) {
+        mutableStateOf(BigDecimal(material.materialQuantity.toString()))
+    }
+
 
     Card(
         shape = RoundedCornerShape(5.dp),
@@ -533,7 +553,7 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: B
                         Button(
                             enabled = !loadingReserves,
                             shape = RoundedCornerShape(10.dp),
-                            onClick = { confirmModal = true }
+                            onClick = { confirmModal = true },
                         ) {
                             Text("Concluir")
                         }
@@ -555,7 +575,10 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: B
 
                         IconButton(
                             onClick = {
-                                quantityExecuted += 1
+                                val hasDecimalPart = material.materialQuantity % 1 != 0.0
+                                val increment =
+                                    if (hasDecimalPart) BigDecimal("0.1") else BigDecimal("1")
+                                quantityExecuted = quantityExecuted.add(increment)
                             },
                             modifier = Modifier
                                 .background(
@@ -576,7 +599,7 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: B
                         Spacer(modifier = Modifier.height(6.dp)) // Espaçamento entre os ícones
 
                         Text(
-                            text = formatDouble(quantityExecuted),
+                            text = formatDouble(quantityExecuted.toDouble()),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -586,9 +609,15 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: B
 
                         IconButton(
                             onClick = {
-                                if (quantityExecuted > 0) {
-                                    quantityExecuted -= 1
+                                if (quantityExecuted > BigDecimal.ZERO) {
+                                    val hasDecimalPart = material.materialQuantity % 1 != 0.0
+                                    val decrement =
+                                        if (hasDecimalPart) BigDecimal("0.1") else BigDecimal("1")
+
+                                    quantityExecuted =
+                                        (quantityExecuted - decrement).coerceAtLeast(BigDecimal.ZERO) // para não ficar negativo
                                 }
+
                             },
                             modifier = Modifier
                                 .background(
@@ -611,10 +640,10 @@ fun MaterialItem(material: Reserve, finish: (Double) -> Unit, loadingReserves: B
 
         if (confirmModal)
             Confirm(
-                body = "Deseja confirmar a execução de ${formatDouble(quantityExecuted)} ${material.requestUnit}?",
+                body = "Deseja confirmar a execução de ${formatDouble(quantityExecuted.toDouble())} ${material.requestUnit}?",
                 confirm = {
                     confirmModal = false
-                    finish(quantityExecuted)
+                    finish(quantityExecuted.toDouble())
                 },
                 cancel = {
                     confirmModal = false
@@ -643,6 +672,8 @@ fun PrevMScreen() {
             latitude = 0.0,
             longitude = 0.0,
             photoUri = "",
+            contractId = 1,
+            contractor = ""
         )
 
     val reserves = listOf(
@@ -763,7 +794,7 @@ fun PrevMScreen() {
 
     MaterialsContent(
         execution = values,
-        reserves = emptyList(),
+        reserves = reserves,
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
@@ -778,6 +809,7 @@ fun PrevMScreen() {
         alertModal = false,
         closeAlertModal = {},
         loadingReserves = true,
-        hasPosted = true
+        hasPosted = false,
+        errorMessage = null
     )
 }

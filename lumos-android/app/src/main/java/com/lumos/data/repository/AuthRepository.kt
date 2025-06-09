@@ -1,11 +1,15 @@
 package com.lumos.data.repository
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.JsonParser
+import com.lumos.data.api.ApiExecutor
 import com.lumos.midleware.SecureStorage
 import com.lumos.data.api.AuthApi
+import com.lumos.data.api.RequestResult
+import com.lumos.data.api.RequestResult.*
 import com.lumos.domain.model.LoginRequest
 import com.lumos.domain.model.LoginResponse
 import retrofit2.Call
@@ -18,7 +22,7 @@ import retrofit2.Retrofit
 class AuthRepository(
     retrofit: Retrofit,
     private val secureStorage: SecureStorage,
-    private val context: Context
+    private val app: Application
 ) {
 
     fun isAuthenticated(): Boolean {
@@ -31,18 +35,17 @@ class AuthRepository(
         username: String,
         email: String,
         password: String,
-        onSuccess: () -> Unit,
-        onFailure: () -> Unit
-    ) {
+    ): RequestResult<Unit> {
         val loginRequest = LoginRequest(username, email, password)
 
-        try {
+        return try {
             // Faz a chamada de forma assíncrona e aguarda a resposta
-            val response = authApi.login(request = loginRequest)
+            val response = ApiExecutor.execute { authApi.login(request = loginRequest) }
 
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
+            when (response) {
+                is Success -> {
+                    val body = response.data
+
                     secureStorage.saveTokens(body.accessToken, body.refreshToken, body.userUUID)
                     val roles = body.roles.trim().split(' ').toSet()
                     val teams = body.teams.trim().split(' ').toSet()
@@ -51,20 +54,24 @@ class AuthRepository(
                             roles,
                             teams
                         )
-                    onSuccess()
+                    Success(Unit)
                 }
-            } else {
-                val body = response.body()
-                if (body != null) {
-                    val errorMessage = response.errorBody()?.string() ?: "Erro desconhecido"
-                    showToast(errorMessage)
-                    onFailure()
+
+                is SuccessEmptyBody -> {
+                    // Se seu login retorna 204 mas está ok, então trate isso como sucesso.
+                    ServerError(204, "Resposta 204 inesperada no login")
                 }
+
+                is NoInternet -> NoInternet
+                is ServerError -> ServerError(response.code, response.message)
+                is Timeout -> Timeout
+                is UnknownError -> UnknownError(response.error)
             }
+
         } catch (e: Exception) {
             // Se der erro na requisição, trata a falha
             Log.e("Login Error", "Erro ao fazer login: ${e.localizedMessage}")
-            onFailure()
+            RequestResult.ServerError(-1, "${e.localizedMessage}")
         }
     }
 
@@ -87,7 +94,7 @@ class AuthRepository(
 
     // Função simplificada para mostrar o Toast
     private fun showToast(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        Toast.makeText(app.applicationContext, message, Toast.LENGTH_SHORT).show()
     }
 
 }

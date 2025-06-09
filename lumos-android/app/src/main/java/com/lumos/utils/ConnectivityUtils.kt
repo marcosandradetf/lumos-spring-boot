@@ -8,13 +8,28 @@ import android.net.NetworkCapabilities
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
 
 object ConnectivityUtils {
-    fun isConnectedToInternet(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivityManager.activeNetwork
-        val capabilities = connectivityManager.getNetworkCapabilities(network)
-        return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    suspend fun hasRealInternetConnection(): Boolean = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val client = OkHttpClient.Builder()
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .build()
+
+            val request = Request.Builder()
+                .url("https://clients3.google.com/generate_204") // Não redireciona, resposta rápida
+                .build()
+
+            val response = client.newCall(request).execute()
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun isNetworkGood(context: Context): Boolean {
@@ -41,7 +56,7 @@ object ConnectivityUtils {
                             val level = signalStrength?.level ?: 0
 
                             // Condição para 4G (LTE) ou superior
-                            level >= 3 // Pode ajustar o nível conforme necessário
+                            level >= 2 // Pode ajustar o nível conforme necessário
                         }
 
                         else -> false

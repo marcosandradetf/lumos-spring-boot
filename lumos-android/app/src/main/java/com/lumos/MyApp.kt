@@ -4,11 +4,9 @@ import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
 import android.os.Bundle
 import androidx.room.Room
 import com.google.firebase.FirebaseApp
-import com.lumos.data.api.AuthApi
 import com.lumos.data.database.AppDatabase
 import com.lumos.midleware.AuthInterceptor
 import com.lumos.midleware.SecureStorage
@@ -20,7 +18,6 @@ import java.util.concurrent.TimeUnit
 class MyApp : Application(), Application.ActivityLifecycleCallbacks {
     lateinit var database: AppDatabase
     lateinit var retrofit: Retrofit
-    lateinit var authApi: AuthApi
     lateinit var secureStorage: SecureStorage
     private var currentActivity: Activity? = null
 
@@ -51,8 +48,8 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
             .build()
 
         retrofit = Retrofit.Builder()
-//            .baseUrl("https://spring.thryon.com.br")
-            .baseUrl("https://b8b9-2804-d45-365c-c100-253e-1174-61ea-e6fe.ngrok-free.app")
+            .baseUrl("https://spring.thryon.com.br")
+//            .baseUrl("https://42e7-177-177-118-174.ngrok-free.app")
 //            .baseUrl("http://192.168.2.13:8080")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())

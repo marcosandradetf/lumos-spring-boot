@@ -11,6 +11,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.Locale
 
 object Utils {
     val dateTime: Instant
@@ -47,7 +48,12 @@ object Utils {
     }
 
     fun formatDouble(value: Double): String {
-        return value.toBigDecimal().stripTrailingZeros().toPlainString()
+        val formatted = String.format(Locale.US, "%.1f", value)
+        return if (formatted.endsWith(".0")) {
+            formatted.dropLast(2)
+        } else {
+            formatted
+        }
     }
 
     fun buildAddress(

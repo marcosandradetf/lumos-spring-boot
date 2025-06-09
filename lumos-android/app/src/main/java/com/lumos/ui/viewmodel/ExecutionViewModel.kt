@@ -5,17 +5,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
+import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.repository.ExecutionRepository
+import com.lumos.data.repository.ReservationStatus
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,9 +27,6 @@ class ExecutionViewModel(
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _reserves = MutableStateFlow<List<Reserve>>(emptyList())
-    val reserves: StateFlow<List<Reserve>> = _reserves
-
     private val _isLoadingReserves = MutableStateFlow(false)
     val isLoadingReserves: StateFlow<Boolean> = _isLoadingReserves
 
@@ -40,22 +36,25 @@ class ExecutionViewModel(
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
-    fun syncExecutions(context: Context) {
-        viewModelScope.launch {
+    fun syncExecutions() {
+        viewModelScope.launch(Dispatchers.IO) {
             _isSyncing.value = true
             _syncError.value = null
             try {
-                val response = repository.syncExecutions(context)
+                val response = repository.syncExecutions()
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
-                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
+                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui - ou puxe para atualizar agora mesmo."
 
                     is RequestResult.NoInternet -> _syncError.value =
-                        "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
+                        "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
 
-                    is RequestResult.ServerError -> _syncError.value = response.message
-                    is RequestResult.Success -> null
-                    is RequestResult.UnknownError -> null
+                    is ServerError -> _syncError.value = response.message
+                    is RequestResult.Success -> _syncError.value = null
+                    is RequestResult.UnknownError -> _syncError.value = null
+                    is RequestResult.SuccessEmptyBody -> {
+                        ServerError(204, "Resposta 204 inesperada")
+                    }
                 }
             } catch (e: Exception) {
                 _syncError.value = e.message ?: "Erro inesperado."
@@ -64,43 +63,6 @@ class ExecutionViewModel(
             }
         }
     }
-
-
-    fun loadFlowReserves(streetId: Long, status: List<String>) {
-        viewModelScope.launch {
-            _isLoadingReserves.value = true
-            try {
-                repository.getFlowReserves(streetId, status)
-                    .flowOn(Dispatchers.IO)
-                    .collectLatest { fetched ->
-                        _reserves.value = fetched
-                    }
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-            } finally {
-                _isLoadingReserves.value = false
-            }
-        }
-    }
-
-    fun loadReserves(streetId: Long, status: List<String>) {
-        viewModelScope.launch {
-            _isLoadingReserves.value = true
-            try {
-                repository.getFlowReserves(streetId, status)
-                    .flowOn(Dispatchers.IO)
-                    .collect { fetched ->
-                        _reserves.value = fetched
-                    }
-            } catch (e: Exception) {
-                Log.e("Error loadReserves", e.message.toString())
-            } finally {
-                _isLoadingReserves.value = false
-            }
-        }
-    }
-
-
 
     fun setReserveStatus(streetId: Long, status: String) {
         viewModelScope.launch {
@@ -125,7 +87,7 @@ class ExecutionViewModel(
     fun queueSyncFetchReservationStatus(streetId: Long, status: String, context: Context) {
         viewModelScope.launch {
             try {
-                repository.queueSyncFetchReservationStatus(context, streetId, status)
+                repository.queueSyncFetchReservationStatus(streetId, status)
             } catch (e: Exception) {
                 Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
             }
@@ -147,7 +109,9 @@ class ExecutionViewModel(
     fun queueSyncStartExecution(streetId: Long, context: Context) {
         viewModelScope.launch {
             try {
-                repository.queueSyncStartExecution(context, streetId)
+                withContext(Dispatchers.IO) {
+                    repository.queueSyncStartExecution(streetId)
+                }
             } catch (e: Exception) {
                 Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
             }
@@ -157,34 +121,65 @@ class ExecutionViewModel(
     fun setPhotoUri(photoUri: String, streetId: Long) {
         viewModelScope.launch {
             try {
-                repository.setPhotoUri(photoUri, streetId)
+                withContext(Dispatchers.IO) {
+                    repository.setPhotoUri(photoUri, streetId)
+                }
             } catch (e: Exception) {
                 Log.e("Error setPhotoUri", e.message.toString())
             }
         }
     }
 
-    fun finishMaterial(reserveId: Long, quantityExecuted: Double) {
-        viewModelScope
-            .launch {
+    suspend fun getReservesOnce(streetId: Long, statusList: List<String>): List<Reserve> {
+        return withContext(Dispatchers.IO) {
+            repository.getReservesOnce(streetId, statusList)
+        }
+    }
+
+    fun finishAndCheckPostExecution(
+        reserveId: Long,
+        quantityExecuted: Double,
+        streetId: Long,
+        context: Context,
+        hasPosted: Boolean,
+        onReservesUpdated: (List<Reserve>) -> Unit,
+        onPostExecuted: () -> Unit,
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _isLoadingReserves.value = true
             try {
-                repository.finishMaterial(
-                    reserveId = reserveId,
-                    quantityExecuted = quantityExecuted
-                )
+                val reserves = withContext(Dispatchers.IO) {
+                    repository.finishMaterial(reserveId, quantityExecuted)
+                    repository.getReservesOnce(streetId, listOf(ReservationStatus.COLLECTED))
+                }
+
+                if (!hasPosted && reserves.isEmpty()) {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            repository.queuePostExecution(streetId)
+                        }
+                        onPostExecuted()
+                    } catch (e: Exception) {
+                        Log.e("ViewModel", "Erro ao enviar execução", e)
+                        onError("Erro ao enviar execução: ${e.localizedMessage}")
+                    }
+                } else {
+                    onReservesUpdated(reserves)
+                }
+
             } catch (e: Exception) {
-                Log.e("Error finishMaterial", e.message.toString())
+                Log.e("ViewModel", "Erro ao finalizar material ou buscar dados", e)
+                onError("Erro ao finalizar material: ${e.localizedMessage}")
+            } finally {
+                _isLoadingReserves.value = false
             }
         }
     }
 
-    fun queuePostExecution(streetId: Long, context: Context) {
-        viewModelScope.launch {
-            try {
-                repository.queuePostExecution(context, streetId)
-            } catch (e: Exception) {
-                Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
-            }
+    suspend fun getExecutionsByContract(lng: Long): List<Execution> {
+        return withContext(Dispatchers.IO) {
+            repository.getExecutionsByContract(lng)
         }
     }
 

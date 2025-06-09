@@ -17,7 +17,6 @@ object SyncManager {
 
     fun enqueueSync(context: Context) {
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
             .setRequiresBatteryNotLow(false)
             .build()
 
@@ -31,14 +30,13 @@ object SyncManager {
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             "SyncQueueWorker",
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             request
         )
     }
 
     fun schedulePeriodicSync(context: Context) {
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
             .setRequiresBatteryNotLow(false) // roda mesmo com bateria baixa
             .build()
 

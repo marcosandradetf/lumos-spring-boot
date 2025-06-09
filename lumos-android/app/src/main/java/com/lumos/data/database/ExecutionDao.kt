@@ -22,6 +22,9 @@ interface ExecutionDao {
     @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus in (:status)")
     fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>>
 
+    @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus in (:status)")
+    suspend fun getReservesOnce(streetId: Long, status: List<String>): List<Reserve>
+
     @Query("SELECT * FROM executions WHERE executionStatus <> 'FINISHED' ORDER BY priority DESC, creationDate ASC")
     fun getFlowExecutions(): Flow<List<Execution>>
 
@@ -56,5 +59,20 @@ interface ExecutionDao {
 
     @Query("SELECT photoUri FROM executions WHERE streetId = :lng LIMIT 1")
     suspend fun getPhotoUri(lng: Long): String?
+
+    @Query("Select * from executions where contractId = (:lng) AND executionStatus in (:status)")
+    suspend fun getExecutionsByContract(
+        lng: Long,
+        status: List<String> = listOf(
+            ExecutionStatus.PENDING,
+            ExecutionStatus.IN_PROGRESS
+        ),
+    ): List<Execution>
+
+    @Query("DELETE FROM executions WHERE streetId = :lng")
+    suspend fun deleteExecution(lng: Long)
+
+    @Query("DELETE FROM reserves WHERE streetId = :lng")
+    suspend fun deleteReserves(lng: Long)
 
 }

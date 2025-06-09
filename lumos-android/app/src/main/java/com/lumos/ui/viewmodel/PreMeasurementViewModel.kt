@@ -9,8 +9,10 @@ import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetPhoto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PreMeasurementViewModel(
     private val repository: PreMeasurementRepository,
@@ -21,7 +23,9 @@ class PreMeasurementViewModel(
     fun saveStreetOffline(preMeasurementStreet: PreMeasurementStreet, callback: (Long?) -> Unit) {
         viewModelScope.launch {
             try {
-                val result = repository.saveStreet(preMeasurementStreet)
+                val result = withContext(Dispatchers.IO) {
+                    repository.saveStreet(preMeasurementStreet)
+                }
                 callback(result) // Passando o resultado para a função de callback
             } catch (e: Exception) {
                 Log.e("Error", e.message.toString())
@@ -31,7 +35,7 @@ class PreMeasurementViewModel(
     }
 
     fun savePhotoOffLine(preMeasurementStreetPhoto: PreMeasurementStreetPhoto) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.saveStreetPhoto(preMeasurementStreetPhoto)
             } catch (e: Exception) {
@@ -44,7 +48,7 @@ class PreMeasurementViewModel(
         preMeasurementStreetItems: List<PreMeasurementStreetItem>,
         preMeasurementStreetId: Long
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Usando async para executar o salvamento dos itens de forma paralela
                 preMeasurementStreetItems.map { item ->
@@ -60,7 +64,7 @@ class PreMeasurementViewModel(
     }
 
     fun loadStreets(contractId: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val fetched = repository.getStreets(contractId)
                 _streets.value = fetched // atualiza o estado com os dados obtidos
@@ -71,7 +75,7 @@ class PreMeasurementViewModel(
     }
 
     fun queueSendMeasurement(contractId: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.queueSendMeasurement(contractId)
             } catch (e: Exception) {

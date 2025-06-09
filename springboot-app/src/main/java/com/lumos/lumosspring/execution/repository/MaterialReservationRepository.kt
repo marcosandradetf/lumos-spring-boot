@@ -11,6 +11,6 @@ import java.util.Optional
 
 
 interface MaterialReservationRepository : JpaRepository<MaterialReservation, Long> {
-    @Query("SELECT m FROM MaterialReservation m WHERE m.street.preMeasurementStreetId in :streetIds")
+    @Query("SELECT m FROM MaterialReservation m WHERE m.street.preMeasurementStreetId in :streetIds AND m.status in ('PENDING', 'COLLECTED')")
     fun findAllByStreetInStreetId(streetIds: List<Long>): List<MaterialReservation>
 }
