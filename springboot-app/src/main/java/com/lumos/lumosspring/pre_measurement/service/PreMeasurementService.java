@@ -119,8 +119,8 @@ public class PreMeasurementService {
         }
 
         var contract = contractRepository.findContractByContractId(preMeasurementDTO.getContractId()).orElse(null);
-        if (contract == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("Contract not found"));
+        if (contract == null || !contract.getStatus().equals(ContractStatus.ACTIVE)) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("O Contrato selecionado não está ativo no sistema."));
         }
 
         var user = userRepository.findByIdUser(UUID.fromString(userUUID));
@@ -146,9 +146,13 @@ public class PreMeasurementService {
             PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
             var street = streetDTO.getStreet();
 
-            var exists = preMeasurementStreetRepository.existsByDeviceIdAndDeviceStreetId(street.getDeviceId(), street.getPreMeasurementStreetId());
-            if (exists) {
-                continue;
+            if (street.getPreMeasurementStreetId() > 0) {
+                var exists = preMeasurementStreetRepository.existsByDeviceIdAndDeviceStreetId(street.getDeviceId(), street.getPreMeasurementStreetId());
+                if (exists) {
+                    continue;
+                }
+                preMeasurementStreet.setDeviceStreetId(street.getPreMeasurementStreetId());
+                preMeasurementStreet.setDeviceId(street.getDeviceId());
             }
 
             preMeasurementStreet.setPreMeasurement(preMeasurement);
@@ -164,8 +168,6 @@ public class PreMeasurementService {
             preMeasurementStreet.setStep(step + 1);
             preMeasurementStreet.setCreatedBy(user.orElse(null));
             preMeasurementStreet.setCreatedAt(util.getDateTime());
-            preMeasurementStreet.setDeviceStreetId(street.getPreMeasurementStreetId());
-            preMeasurementStreet.setDeviceId(street.getDeviceId());
 
             preMeasurementStreetRepository.save(preMeasurementStreet);
             for (var itemDTO : streetDTO.getItems()) {
@@ -216,7 +218,12 @@ public class PreMeasurementService {
         preMeasurement.setTotalPrice(itemsPrices);
         preMeasurementRepository.save(preMeasurement);
 
-        return ResponseEntity.ok().body(new DefaultResponse(preMeasurement.getPreMeasurementId().toString()));
+        return ResponseEntity.ok().body(
+                new DefaultResponse(
+                        preMeasurement.getPreMeasurementId().toString()
+                                .concat("/").concat(step.toString())
+                )
+        );
     }
 
     /**

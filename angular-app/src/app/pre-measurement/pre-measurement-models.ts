@@ -9,14 +9,14 @@ export interface PreMeasurementStreetItemsDTO {
 }
 
 export interface PreMeasurementStreetDTO {
-  lastPower: string,
-  latitude: string,
-  longitude: string,
-  street: string,
-  number: string,
-  neighborhood: string,
-  city: string,
-  state: string,
+  lastPower: string | null,
+  latitude: number | null,
+  longitude: number | null,
+  street: string | null,
+  number: string | null,
+  neighborhood: string | null,
+  city: string | null,
+  state: string | null,
 }
 
 export interface PreMeasurementStreetItemDTO {

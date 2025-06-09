@@ -161,6 +161,14 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
+
+  {
+    path: 'execucoes/iniciar-sem-pre-medicao',
+    loadComponent: () => import('./executions/execution-without-pre-measurement/execution-without-pre-measurement.component').then(e => e.ExecutionWithoutPreMeasurementComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+  },
+
   {
     path: 'execucoes/em-progresso',
     loadComponent: () => import('./executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),

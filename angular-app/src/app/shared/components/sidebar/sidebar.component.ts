@@ -141,6 +141,12 @@ export class SidebarComponent implements OnInit {
         },
         items: [
           {
+            label: 'Execução Sem Pré-Medição',
+            icon: 'pi pi-chart-line',
+            routerLink: ['/execucoes/iniciar-sem-pre-medicao'],
+            routerLinkActiveOptions: { exact: true },
+          },
+          {
             label: 'Em progresso',
             icon: 'pi pi-spinner',
             routerLink: ['/execucoes/em-progresso'],

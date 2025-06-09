@@ -208,14 +208,14 @@ export class ImportPreMeasurementsComponent implements OnInit {
       }
 
       const street: PreMeasurementStreetDTO = {
-        lastPower: row[colIndex['potencia atual']] || '',
-        latitude: row[colIndex['latitude']] || '',
-        longitude: row[colIndex['longitude']] || '',
-        street: row[colIndex['rua']] || '',
-        number: row[colIndex['numero']] || '',
-        neighborhood: row[colIndex['bairro']] || '',
-        city: row[colIndex['cidade']] || '',
-        state: row[colIndex['estado']] || '',
+        lastPower: row[colIndex['potencia atual']] || null,
+        latitude: row[colIndex['latitude']] || null,
+        longitude: row[colIndex['longitude']] ||  null,
+        street: row[colIndex['rua']] || null,
+        number: row[colIndex['numero']] || null,
+        neighborhood: row[colIndex['bairro']] || null,
+        city: row[colIndex['cidade']] || null,
+        state: row[colIndex['estado']] || null,
       };
 
       const items: PreMeasurementStreetItemDTO[] = [];
