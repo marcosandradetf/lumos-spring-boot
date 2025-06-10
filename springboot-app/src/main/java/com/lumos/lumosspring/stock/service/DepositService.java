@@ -10,6 +10,7 @@ import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.repository.RegionRepository;
+import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -35,7 +36,7 @@ public class DepositService {
     private RegionRepository regionRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private StockistRepository stockistRepository;
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
@@ -160,56 +161,24 @@ public class DepositService {
         return ResponseEntity.ok(this.findAll());
     }
 
-    @Cacheable("getAllDepositsForMob")
-    public ResponseEntity<List<DepositResponseMobile>> findAllForMobile() {
-        var deposits = depositRepository.findAllByOrderByIdDeposit();
-        List<DepositResponseMobile> depositResponses = new ArrayList<>();
-        String companyName;
-        String depositRegion;
-
-        for (var deposit : deposits) {
-            // Verifica se o campo 'company' é nulo
-            if (deposit.getCompany() != null) {
-                companyName = deposit.getCompany().getSocialReason();
-            } else {
-                companyName = "Não definido";  // Valor padrão
-            }
-
-            if (deposit.getRegion() != null) {
-                depositRegion = deposit.getRegion().getRegionName();
-            } else {
-                depositRegion = "Não definido";  // Valor padrão
-            }
-
-            depositResponses.add(new DepositResponseMobile(
-                    deposit.getIdDeposit(),
-                    deposit.getDepositName(),
-                    depositRegion,
-                    companyName
-            ));
-        }
-        return ResponseEntity.ok(depositResponses);
-    }
 
     public ResponseEntity<?> getStockists() {
-        var users = userRepository.getUsersByRoles(listOf("ESTOQUISTA_CHEFE", "ESTOQUISTA"));
-        List<StockistModel> stockists = new ArrayList<>();
+        var stockists = stockistRepository.findAll();
+        List<StockistModel> stockistsDto = new ArrayList<>();
 
-        for (var user : users) {
+        for (var stockist : stockists) {
             var depositName = "Não Informado no Sistema";
             var depositAddress = "Não Informado no Sistema";
             var depositPhone = "Não Informado no Sistema";
             var region = "Não Informado no Sistema";
+            var user = stockist.getUser();
 
-            var stockist = user.getStockist();
-            if(stockist != null) {
-                depositName = stockist.getDeposit().getDepositName();
-                depositAddress = stockist.getDeposit().getDepositAddress();
-                depositPhone = stockist.getDeposit().getDepositPhone();
-                region = stockist.getDeposit().getRegion().getRegionName();
-            }
+            depositName = stockist.getDeposit().getDepositName();
+            depositAddress = stockist.getDeposit().getDepositAddress();
+            depositPhone = stockist.getDeposit().getDepositPhone();
+            region = stockist.getDeposit().getRegion().getRegionName();
 
-            stockists.add(new StockistModel(
+            stockistsDto.add(new StockistModel(
                     user.getIdUser().toString(),
                     user.getCompletedName(),
                     depositName, depositAddress,
@@ -217,6 +186,6 @@ public class DepositService {
             ));
         }
 
-        return ResponseEntity.ok(stockists);
+        return ResponseEntity.ok(stockistsDto);
     }
 }

@@ -221,7 +221,7 @@ public class PreMeasurementService {
         return ResponseEntity.ok().body(
                 new DefaultResponse(
                         preMeasurement.getPreMeasurementId().toString()
-                                .concat("/").concat(step.toString())
+                                .concat("/").concat(String.valueOf((step + 1)))
                 )
         );
     }

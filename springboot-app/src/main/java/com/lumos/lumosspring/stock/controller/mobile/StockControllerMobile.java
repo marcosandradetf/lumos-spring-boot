@@ -11,12 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/mobile/stock")
 public class StockControllerMobile {
-    @Autowired
-    private DepositService almoxarifadoService;
 
-    @GetMapping("get-deposits")
-    public ResponseEntity<List<DepositResponseMobile>> getAllMobile() {
-        return almoxarifadoService.findAllForMobile();
-    }
 
 }

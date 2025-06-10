@@ -14,11 +14,8 @@ import {Ripple} from 'primeng/ripple';
   selector: 'app-sidebar',
   standalone: true,
   imports: [
-    Toast,
     PanelMenu,
     NgIf,
-    Menu,
-    Badge,
     NgForOf,
     RouterLinkActive,
     RouterLink
@@ -140,12 +137,14 @@ export class SidebarComponent implements OnInit {
           this.toggleExecution();
         },
         items: [
-          {
-            label: 'Execução Sem Pré-Medição',
-            icon: 'pi pi-chart-line',
-            routerLink: ['/execucoes/iniciar-sem-pre-medicao'],
-            routerLinkActiveOptions: { exact: true },
-          },
+          // {
+          //   label: 'Execução Sem Pré-Medição',
+          //   icon: 'pi pi-chart-line',
+          //   command: () => {
+          //     void this.router.navigate(['contratos/listar'], {queryParams: {for: 'execution'}});
+          //   },
+          //   routerLinkActiveOptions: { exact: true },
+          // },
           {
             label: 'Em progresso',
             icon: 'pi pi-spinner',
@@ -275,6 +274,10 @@ export class SidebarComponent implements OnInit {
             command: () => {
               void this.router.navigate(['configuracoes/equipes']);
             },
+          },
+          {
+            label: 'Estoquistas',
+            icon: 'pi pi-warehouse',
           },
         ]
       }

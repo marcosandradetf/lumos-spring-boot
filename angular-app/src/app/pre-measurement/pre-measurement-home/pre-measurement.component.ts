@@ -18,7 +18,6 @@ import {Title} from '@angular/platform-browser';
     NgForOf,
     FormsModule,
     NgIf,
-    ScreenMessageComponent,
     ModalComponent,
     LoadingComponent,
     Toast
@@ -33,7 +32,6 @@ export class PreMeasurementComponent implements OnInit {
   protected status: string = "";
   openModal: boolean = false;
   preMeasurementId: number = 0;
-  city: string = '';
   step: number = 0;
 
   constructor(
@@ -85,7 +83,6 @@ export class PreMeasurementComponent implements OnInit {
     this.preMeasurementService.getPreMeasurements(statusParam).subscribe({
       next: (preMeasurements) => {
         this.preMeasurements = preMeasurements;
-        this.city = this.preMeasurements[0]?.streets[0]?.city;
       },
       error: (err) => {
         console.error('Erro ao carregar pré-medições:', err);

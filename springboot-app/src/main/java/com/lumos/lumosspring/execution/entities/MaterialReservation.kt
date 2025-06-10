@@ -49,7 +49,7 @@ class MaterialReservation {
     }
 
     fun rejectReservation() {
-        materialStock?.let{
+        materialStock?.let {
             it.addStockAvailable(reservedQuantity)
             materialStock = null
             status = ReservationStatus.REJECTED
@@ -61,11 +61,8 @@ class MaterialReservation {
 
         materialStock?.let {
             it.removeStockQuantity(quantityCompleted)
-
-            if (reservedQuantity > quantityCompleted)
-                it.addStockAvailable(reservedQuantity - quantityCompleted)
-            else
-                it.addStockAvailable(  quantityCompleted - reservedQuantity)
+            it.addStockAvailable(reservedQuantity)
+            it.removeStockAvailable(quantityCompleted)
         }
 
         status = ReservationStatus.FINISHED

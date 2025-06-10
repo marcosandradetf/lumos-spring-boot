@@ -195,10 +195,12 @@ class ExecutionService(
                         .body(DefaultResponse("O material ${materialStock.material.materialName} não possuí estoque suficiente"))
 
                 val deposit = materialStock.deposit
-                val stockistMatch = preMeasurementStreet.reservationManagement.stockist.idUser == userUUID ||
-                        deposit.stockists.any { it.user.idUser == userUUID } ||
-                        preMeasurementStreet.reservationManagement
-                            .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
+//                val stockistMatch = preMeasurementStreet.reservationManagement.stockist.idUser == userUUID ||
+//                        deposit.stockists.any { it.user.idUser == userUUID } ||
+//                        preMeasurementStreet.reservationManagement
+//                            .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
+
+                val stockistMatch = deposit.stockists.any { it.user.idUser == userUUID }
 
                 val teamMatch = materialStock.deposit.teams.isNotEmpty()
                 val contractItemId = util.getDescription(

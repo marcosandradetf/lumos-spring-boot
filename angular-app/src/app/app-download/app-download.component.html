@@ -1,0 +1,66 @@
+<div class="card pb-2">
+  <p-menubar styleClass="h-12">
+    <ng-template #start>
+      <a href="/">
+        <h3 class="bg-gradient-to-r  from-indigo-800 via-indigo-500 to-indigo-300 text-transparent bg-clip-text cursor-pointer">
+          Thryon System™
+        </h3>
+      </a>
+
+    </ng-template>
+
+  </p-menubar>
+</div>
+<div class="border rounded min-h-[calc(100vh-66px)] flex items-center justify-center p-6">
+
+  <div class="max-w-5xl w-full flex flex-col lg:flex-row items-center gap-48">
+
+    <div class="text-center">
+      <img src="public/ic_lumos.png" width="80" alt="Lumos App" class="mx-auto max-w-xs mb-6" />
+      <h2 class="text-2xl font-semibold mb-4">Celular Android</h2>
+
+      <p class="text-sm leading-normal mb-3 text-justify max-w-sm mx-auto">
+        Para usar o app Lumos no seu celular Android, você precisa de um aparelho com Android 9.0 ou superior. O app funciona melhor em dispositivos atualizados, garantindo uma experiência rápida e segura.
+      </p>
+
+      <p class="text-sm leading-normal mb-3 text-justify max-w-sm mx-auto">
+        Na primeira vez que você abre o app, é necessário estar conectado à internet para fazer login e carregar as informações iniciais. Após isso, o app continua funcionando normalmente mesmo sem conexão.
+      </p>
+
+      <p class="text-sm leading-normal mb-3 text-justify max-w-sm mx-auto">
+        Os dados que você preenche ou atualiza ficam salvos no seu celular e são enviados para nossos servidores assim que a internet estiver disponível novamente. Você pode continuar usando o app, sem perder nada.
+      </p>
+
+      <p class="text-sm leading-normal mb-3 text-justify max-w-sm mx-auto">
+        O app irá pedir permissões como acesso à localização ou ao câmera. Isso é esperado, necessário e ajuda o sistema a funcionar da melhor forma.
+      </p>
+    </div>
+
+
+
+
+
+    <!-- Texto e instruções -->
+    <div class="flex-1">
+      <h1 class="text-3xl font-bold mb-6">
+        Instalar o sistema Lumos no seu <span class="text-primary dark:text-primary">celular Android</span>
+      </h1>
+
+      <ul class="space-y-3 text-base">
+        <li><i class="fa-solid fa-circle-down text-primary pr-2"></i> Clique no botão "Baixar" que aparece mais abaixo.</li>
+        <li><i class="fa-solid fa-folder text-primary pr-2"></i> Busque o arquivo na seção de downloads do seu dispositivo.</li>
+        <li><i class="fa-solid fa-circle-check text-primary pr-2"></i> Selecione-o, conceda as permissões necessárias e conclua a instalação.</li>
+        <li><i class="fa-solid fa-rocket text-primary pr-2"></i> Pronto! Agora é só abrir o Lumos e aproveitar.</li>
+      </ul>
+
+      <!-- Botões -->
+      <div class="mt-8 flex flex-wrap gap-4">
+        <button
+          class="btn btn-wide btn-primary text-white px-6 py-3 rounded-full font-medium"
+          (click)="downloadApk()">
+          Baixar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

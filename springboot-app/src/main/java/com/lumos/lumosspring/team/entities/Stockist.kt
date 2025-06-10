@@ -10,7 +10,7 @@ import java.util.stream.DoubleStream
 class Stockist {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     val stockistId: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)

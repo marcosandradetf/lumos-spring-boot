@@ -71,10 +71,10 @@
             </span>
 
             <h3 class="text-xl leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
-              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ city }}</h3>
+              com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ p.city }}</h3>
             <span class="text-sm  flex items-center">Por {{ p.streets[0].createdBy }}<span
               class="material-icons text-sm ml-1 text-blue-500 dark:text-[#88f4ff]">verified</span></span>
-            <span class="text-xs">{{ p.streets[0].createdAt }} em {{ city }}</span>
+            <span class="text-xs">{{ p.streets[0].createdAt }} em {{ p.city }}</span>
           </div>
         </li>
       </ol>

@@ -13,7 +13,7 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let c of contracts; index as i;"
             class=" cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
-            (click)="reason === 'view' ? showItems(c.contractId) : router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])">
+            (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ? router.navigate(['/pre-medicao/importar/contrato/' + c.contractId]) : router.navigate(['/execucoes/iniciar-sem-pre-medicao/' + c.contractId])">
           <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full">
             <div class="flex flex-col items-center justify-center mr-10">
               <div class="h-full w-1 bg-neutral dark:bg-neutral-100 dark:text-neutral"></div>
