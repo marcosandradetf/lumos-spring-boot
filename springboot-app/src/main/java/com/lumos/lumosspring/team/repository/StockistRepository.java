@@ -15,7 +15,7 @@ public interface StockistRepository extends JpaRepository<Stockist, Long> {
                 SELECT s FROM Stockist s\s
                 WHERE s.user.idUser = :userId\s
            \s""")
-    Optional<Stockist> findByUserUUID(UUID userId);
+    List<Stockist> findByUserUUID(UUID userId);
 
 
 

@@ -42,6 +42,11 @@ class ExecutionController(
         @PathVariable userUUID: String
     ): ResponseEntity<Any> = executionService.reserveMaterialsForExecution(reserveDTOCreate, userUUID)
 
+    @PostMapping("/execution/get-reservations-by-status-and-stockist")
+    fun getReservationsByStatusAndStockist(
+        @RequestParam uuid: String,
+        @RequestParam status: String,
+    ) = executionService.getReservationsByStatusAndStockist(uuid, status)
 
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],

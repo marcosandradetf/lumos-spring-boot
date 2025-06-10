@@ -216,7 +216,7 @@ class ExecutionService(
 
                 reservation.add(
                     MaterialReservation().apply {
-                        this.description = ""
+                        this.description = preMeasurementStreet.street
                         this.materialStock = materialStock
                         this.reservedQuantity = materialReserve.materialQuantity
                         this.street = preMeasurementStreet
@@ -265,6 +265,73 @@ class ExecutionService(
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
         return ResponseEntity.ok().body(DefaultResponse(responseMessage))
+    }
+
+    fun getReservationsByStatusAndStockist(strUserUUID: String, status: String): ResponseEntity<Any> {
+        val userUUID = try {
+            UUID.fromString(strUserUUID)
+        } catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        val stockists = stockistRepository.findByUserUUID(userUUID)
+
+        data class ReservationDto(
+            val reserveId: Long,
+            val reserveQuantity: Double,
+            val materialName: String,
+            val description: String?,
+            val teamId: Long?,
+            val teamName: String?
+        )
+
+        data class ReservationsByPreMeasurementDto(
+            val preMeasurementName: String,
+            val reservations: List<ReservationDto>
+        )
+
+        val response: MutableList<ReservationsByPreMeasurementDto> = mutableListOf()
+
+        for (stockist in stockists) {
+            val materials = stockist.deposit.materialStocks
+            for (material in materials) {
+                var materialName = material.material.materialName
+                val power: String? = material.material.materialPower
+                val length: String? = material.material.materialLength
+                materialName += if (power != null) " $power" else " $length"
+
+                val reservationsGroup = material.reservations
+                    .filter { it.status == status }
+                    .groupBy { it.street.preMeasurement.city }
+
+                for ((preMeasurementName, reservations) in reservationsGroup) {
+                    val list = mutableListOf<ReservationDto>()
+                    for (reserve in reservations) {
+                        list.add(
+                            ReservationDto(
+                                reserveId = reserve.idMaterialReservation,
+                                reserveQuantity = reserve.reservedQuantity,
+                                materialName = materialName,
+                                description = reserve.description,
+                                teamId = reserve.team?.idTeam,
+                                teamName = reserve.team?.teamName,
+                            )
+                        )
+                    }
+                    response.add(
+                        ReservationsByPreMeasurementDto(
+                            preMeasurementName = preMeasurementName,
+                            reservations = list
+                        )
+                    )
+                }
+
+
+            }
+        }
+
+
+        return ResponseEntity.ok().body(response)
     }
 
     private fun notify(reservation: List<MaterialReservation>, preMeasurementStreetId: String) {

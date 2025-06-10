@@ -1,8 +1,11 @@
 package com.lumos.lumosspring.stock.entities;
 
+import com.lumos.lumosspring.execution.entities.MaterialReservation;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_material_stock")
@@ -42,6 +45,9 @@ public class MaterialStock {
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inactive;
+
+    @OneToMany(mappedBy = "materialStock")
+    private List<MaterialReservation> reservations = new ArrayList<>();
 
     public Long getMaterialIdStock() {
         return materialIdStock;
@@ -145,5 +151,13 @@ public class MaterialStock {
 
     public void setCostPerItem(BigDecimal costPerItem) {
         this.costPerItem = costPerItem;
+    }
+
+    public List<MaterialReservation> getReservations() {
+        return reservations;
+    }
+
+    public void setReservations(List<MaterialReservation> materialReservation) {
+        this.reservations = materialReservation;
     }
 }

@@ -18,7 +18,7 @@ class MaterialReservation {
     @Column(columnDefinition = "TEXT")
     var description: String? = null
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "material_stock_id")
     var materialStock: MaterialStock? = null
 
