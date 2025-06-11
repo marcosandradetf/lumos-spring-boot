@@ -77,7 +77,7 @@ export class ReservationManagementSelectComponent {
       numVisible: 1,
       numScroll: 1
     }
-  ]
+  ];
   reserve: ReserveDTOResponse = {
     description: '',
     streets: []
@@ -127,14 +127,6 @@ export class ReservationManagementSelectComponent {
 
     this.userUUID = this.authService.getUser().uuid;
 
-  }
-
-  scrollLeft(slider: HTMLElement) {
-    slider.scrollBy({left: -300, behavior: 'smooth'});
-  }
-
-  scrollRight(slider: HTMLElement) {
-    slider.scrollBy({left: 300, behavior: 'smooth'});
   }
 
   startReservation(street: ReserveStreetDTOResponse) {
