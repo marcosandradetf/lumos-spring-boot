@@ -49,3 +49,11 @@ export interface MaterialInStockDTO{
    availableQuantity: number,
    requestUnit: string,
 }
+
+export interface executionWithoutPreMeasurement {
+  contractId: number,
+  teamId: number,
+  items: {
+    contractReferenceItemId: number,
+  }[],
+}

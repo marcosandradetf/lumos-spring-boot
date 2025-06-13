@@ -137,14 +137,14 @@ export class SidebarComponent implements OnInit {
           this.toggleExecution();
         },
         items: [
-          // {
-          //   label: 'Execução Sem Pré-Medição',
-          //   icon: 'pi pi-chart-line',
-          //   command: () => {
-          //     void this.router.navigate(['contratos/listar'], {queryParams: {for: 'execution'}});
-          //   },
-          //   routerLinkActiveOptions: { exact: true },
-          // },
+          {
+            label: 'Execução Sem Pré-Medição',
+            icon: 'pi pi-chart-line',
+            command: () => {
+              void this.router.navigate(['contratos/listar'], {queryParams: {for: 'execution'}});
+            },
+            routerLinkActiveOptions: { exact: true },
+          },
           {
             label: 'Em progresso',
             icon: 'pi pi-spinner',
