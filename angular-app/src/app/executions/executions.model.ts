@@ -54,6 +54,7 @@ export interface executionWithoutPreMeasurement {
   contractId: number,
   teamId: number,
   items: {
-    contractReferenceItemId: number,
+    contractItemId: number,
+    quantity: number,
   }[],
 }

@@ -191,8 +191,8 @@ export class UtilsService {
   }
 
   getStatus(status
-            :
-            string
+              :
+              string
   ):
     string {
     if (status === 'PENDING') {
