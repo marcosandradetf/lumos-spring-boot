@@ -223,9 +223,11 @@ public class TokenService {
                 .map(Team::getTeamCode)
                 .collect(Collectors.joining(" "));
 
-        var sTeams = Optional.ofNullable(user.getStockist())
+        var sTeams = Optional.ofNullable(user.getStockists())
+                .orElse(Collections.emptyList())
+                .stream()
                 .map(Stockist::getStockistCode)
-                .orElse("");
+                .collect(Collectors.joining(" "));
 
         // Junta todos com espaços, ignorando vazios
         return Stream.of(eTeams, dTeams, sTeams)

@@ -1,6 +1,6 @@
 import {Component, ElementRef, ViewChild} from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {FormsModule, NgForm} from '@angular/forms';
@@ -64,7 +64,7 @@ export class DepositsComponent {
   @ViewChild('collapseDiv') collapseDiv!: ElementRef;
   @ViewChild('top') top!: ElementRef;
 
-  constructor(private stockService: EstoqueService,
+  constructor(private stockService: StockService,
               private title: Title, protected router: Router,
               private ibgeService: IbgeService) {
     this.title.setTitle('Gerenciar - Almoxarifados');

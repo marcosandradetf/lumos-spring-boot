@@ -90,7 +90,8 @@ export class ImportPreMeasurementsComponent implements OnInit {
           contractItemId: 0,
           description: '',
           unitPrice: '',
-          contractedQuantity: 0,
+          contractedQuantity: 0.0,
+          executedQuantity: 0.0,
           linking: '',
           nameForImport: col
         });

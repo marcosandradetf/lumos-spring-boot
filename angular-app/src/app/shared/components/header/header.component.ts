@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {AsyncPipe, NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
-import {EstoqueService} from '../../../stock/services/estoque.service';
+import {StockService} from '../../../stock/services/stock.service';
 import {Router} from '@angular/router';
 import {AuthService} from '../../../core/auth/auth.service';
 import {User} from '../../../models/user.model';
@@ -41,7 +41,7 @@ export class HeaderComponent implements OnInit {
   items: MenuItem[] | undefined;
   options: MenuItem[] | undefined;
 
-  constructor(private estoqueService: EstoqueService, protected authService: AuthService, private router: Router,
+  constructor(private estoqueService: StockService, protected authService: AuthService, private router: Router,
               private utils: UtilsService) {
     if (typeof window !== 'undefined' && window.localStorage) {
       const storedUser = window.localStorage.getItem('user');

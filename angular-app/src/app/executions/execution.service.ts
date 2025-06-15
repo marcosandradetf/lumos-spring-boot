@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {environment} from '../../environments/environment';
 import {HttpClient} from '@angular/common/http';
 import * as http from 'node:http';
-import {MaterialInStockDTO, ReserveDTOResponse, ReserveStreetDTOResponse} from './executions.model';
+import {DirectExecutionDTO, MaterialInStockDTO, ReserveDTOResponse, ReserveStreetDTOResponse} from './executions.model';
 
 @Injectable({
   providedIn: 'root'
@@ -65,5 +65,8 @@ export class ExecutionService {
     return this.http.post(this.baseUrl + `/execution/reserve-materials-for-execution/${userUUID}`, currentStreet);
   }
 
+  delegateDirectExecution(execution: DirectExecutionDTO) {
+    return this.http.post(this.baseUrl + "/execution/delegate-direct-execution", execution);
+  }
 
 }

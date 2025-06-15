@@ -7,7 +7,7 @@ import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {StockMovementResponse} from '../../models/stock-movement-response.dto';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {catchError, tap, throwError} from 'rxjs';
 import {Steps} from 'primeng/steps';
@@ -49,7 +49,7 @@ export class StockMovementPendingComponent implements OnInit {
   alertType: string | null = null;
   items: MenuItem[] | undefined;
 
-  constructor(private stockService: EstoqueService, 
+  constructor(private stockService: StockService,
     private utils: UtilsService,
     private title: Title) {
     this.title.setTitle('Estoque - Pendente');

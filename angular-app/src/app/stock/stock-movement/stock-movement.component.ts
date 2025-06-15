@@ -12,7 +12,7 @@ import {Deposit} from '../../models/almoxarifado.model';
 import {MaterialResponse} from '../../models/material-response.dto';
 import {StockMovementDTO} from '../../models/stock-movement.dto';
 import {MaterialService} from '../services/material.service';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {SupplierDTO} from '../../models/supplier.dto';
 import {Steps} from 'primeng/steps';
@@ -91,7 +91,7 @@ export class StockMovementComponent implements OnInit {
 
 
   constructor(protected materialService: MaterialService,
-              private estoqueService: EstoqueService,
+              private estoqueService: StockService,
               protected utils: UtilsService,
               private titleService: Title) {
     this.loadMaterials();

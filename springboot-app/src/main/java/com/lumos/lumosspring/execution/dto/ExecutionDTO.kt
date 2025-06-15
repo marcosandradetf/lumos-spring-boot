@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.execution.dto
 
-import com.lumos.lumosspring.team.entities.Stockist
 import java.time.Instant
 
 data class DelegateDTO(
@@ -17,6 +16,20 @@ data class DelegateStreetDTO(
     val teamId: Long,
     val prioritized: Boolean,
     val comment: String,
+)
+
+data class ExecutionWithoutPreMeasurementItems(
+    val contractItemId: Long,
+    val quantity: Double,
+)
+
+data class DirectExecutionDTO(
+    val contractId: Long,
+    val teamId: Long,
+    val currentUserUUID: String,
+    val stockistId: String,
+    val instructions: String?,
+    val items: List<ExecutionWithoutPreMeasurementItems>
 )
 
 data class MaterialInStockDTO(
@@ -43,10 +56,10 @@ data class ReserveStreetDTOResponse(
     val prioritized: Boolean,
     val comment: String?,
     val assignedBy: String,
-    val items: List<ItemResponseDTO>,
     val teamId: Long,
     val teamName: String,
-    val truckDepositName: String
+    val truckDepositName: String,
+    val items: List<ItemResponseDTO>,
 )
 
 data class ItemResponseDTO(

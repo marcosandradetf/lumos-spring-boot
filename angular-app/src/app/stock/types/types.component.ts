@@ -3,7 +3,7 @@ import {FormsModule, NgForm} from '@angular/forms';
 import {NgIf} from '@angular/common';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {Type} from '../../models/tipo.model';
@@ -51,7 +51,7 @@ export class TypesComponent {
   @ViewChild('top') top!: ElementRef;
 
 
-  constructor(private stockService: EstoqueService,
+  constructor(private stockService: StockService,
               private title: Title, protected router: Router) {
     this.title.setTitle('Gerenciar - Tipos');
     this.stockService.getTypes().subscribe(

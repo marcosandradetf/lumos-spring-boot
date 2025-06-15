@@ -6,7 +6,7 @@ import {CurrencyPipe, NgForOf} from '@angular/common';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {StockMovementResponse} from '../../models/stock-movement-response.dto';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {Steps} from 'primeng/steps';
 import {MenuItem} from 'primeng/api';
@@ -36,7 +36,7 @@ export class StockMovementApprovatedComponent implements OnInit {
   stockMovement: StockMovementResponse[] = [];
   items: MenuItem[] | undefined;
 
-  constructor(private stockService: EstoqueService, private title: Title) {
+  constructor(private stockService: StockService, private title: Title) {
     this.title.setTitle('Estoque - Aprovado');
     this.stockService.getStockMovementApproved().subscribe(
       stockMovement => {

@@ -10,7 +10,7 @@ import {Deposit} from '../../../models/almoxarifado.model';
 import {CreateMaterialRequest} from '../../../models/create-material-request.dto';
 import {Type} from '../../../models/tipo.model';
 import {MaterialService, State} from '../../services/material.service';
-import {EstoqueService} from '../../services/estoque.service';
+import {StockService} from '../../services/stock.service';
 import {AuthService} from '../../../core/auth/auth.service';
 import {UtilsService} from '../../../core/service/utils.service';
 
@@ -65,7 +65,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   ];
 
   constructor(protected materialService: MaterialService,
-              private estoqueService: EstoqueService, private authService: AuthService,
+              private estoqueService: StockService, private authService: AuthService,
               protected utils: UtilsService) {
     this.materialService.getMaterialObservable().subscribe(material => {
       this.material = material;

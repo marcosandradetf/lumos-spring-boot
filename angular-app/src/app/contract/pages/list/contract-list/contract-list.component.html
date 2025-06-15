@@ -3,7 +3,11 @@
     <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <p-breadcrumb class="max-w-full" [model]="items" [home]="home"/>
       <h3
-        class="text-medium pr-5 hidden lg:block font-medium  ">{{ reason === 'view' ? 'Selecione um contrato para ver os detalhes' : 'Selecione um contrato para importar a pré-medição' }}</h3>
+        class="text-medium pr-5 hidden lg:block font-medium  ">{{
+          reason === 'view' ? 'Selecione um contrato para ver os detalhes' :
+            reason === 'preMeasurement' ? 'Selecione um contrato para importar a pré-medição'
+              : 'Selecione um contrato para iniciar execução'
+        }}</h3>
     </div>
 
 
@@ -13,7 +17,9 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let c of contracts; index as i;"
             class=" cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
-            (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ? router.navigate(['/pre-medicao/importar/contrato/' + c.contractId]) : router.navigate(['/execucoes/iniciar-sem-pre-medicao/' + c.contractId])">
+            (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ?
+              router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])
+                : router.navigate(['/execucoes/iniciar-sem-pre-medicao/'],{queryParams: { codigo: c.contractId, nome: c.contractor }})">
           <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full">
             <div class="flex flex-col items-center justify-center mr-10">
               <div class="h-full w-1 bg-neutral dark:bg-neutral-100 dark:text-neutral"></div>

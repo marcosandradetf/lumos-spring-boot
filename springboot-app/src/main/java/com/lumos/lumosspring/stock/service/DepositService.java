@@ -9,6 +9,7 @@ import com.lumos.lumosspring.stock.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.team.entities.Region;
+import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.UserRepository;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 
@@ -163,10 +166,21 @@ public class DepositService {
 
 
     public ResponseEntity<?> getStockists() {
-        var stockists = stockistRepository.findAll();
+        List<Stockist> allStockists = stockistRepository.findAll();
+
+        List<Stockist> distinctStockists = new ArrayList<>(
+                allStockists.stream()
+                        .collect(Collectors.toMap(
+                                s -> s.getUser().getIdUser(), // chave: user.idUser
+                                Function.identity(),          // valor: o próprio Stockist
+                                (existing, replacement) -> existing // se houver duplicata, mantém o primeiro
+                        ))
+                        .values()
+        );
+
         List<StockistModel> stockistsDto = new ArrayList<>();
 
-        for (var stockist : stockists) {
+        for (var stockist : distinctStockists) {
             var depositName = "Não Informado no Sistema";
             var depositAddress = "Não Informado no Sistema";
             var depositPhone = "Não Informado no Sistema";

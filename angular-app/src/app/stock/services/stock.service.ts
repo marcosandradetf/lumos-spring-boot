@@ -17,7 +17,7 @@ import {StockistModel} from '../../executions/executions.model';
 @Injectable({
   providedIn: 'root'
 })
-export class EstoqueService {
+export class StockService {
   private endpoint = environment.springboot + '/api';
 
   private onPathSubject = new BehaviorSubject<string>(''); // Inicializa o caminho

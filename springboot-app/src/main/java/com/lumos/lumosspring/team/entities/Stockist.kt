@@ -16,7 +16,7 @@ class Stockist {
     @ManyToOne(fetch = FetchType.LAZY)
     val deposit: Deposit = Deposit()
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     val user: User = User()
 
     fun getStockistCode(): String {

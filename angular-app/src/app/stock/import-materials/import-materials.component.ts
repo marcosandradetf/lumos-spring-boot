@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {MaterialService} from '../services/material.service';

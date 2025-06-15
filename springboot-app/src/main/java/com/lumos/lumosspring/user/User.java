@@ -5,6 +5,7 @@ import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.entities.Team;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -48,8 +49,8 @@ public class User {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean status;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
-    private Stockist stockist;
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Stockist> stockists = new ArrayList<>();
 
     @OneToMany(mappedBy = "driver", fetch = FetchType.LAZY)
     private List<Team> drivers;
@@ -154,12 +155,12 @@ public class User {
         this.cpf = cpf;
     }
 
-    public Stockist getStockist() {
-        return stockist;
+    public List<Stockist> getStockists() {
+        return stockists;
     }
 
-    public void setStockist(Stockist stockist) {
-        this.stockist = stockist;
+    public void setStockists(List<Stockist> stockist) {
+        this.stockists = stockist;
     }
 
     public List<Team> getDrivers() {

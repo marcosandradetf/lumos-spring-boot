@@ -195,6 +195,7 @@ class ContractService(
             val description: String,
             val unitPrice: String,
             val contractedQuantity: Double,
+            val executedQuantity: Double,
             val linking: String,
             val nameForImport: String
         )
@@ -210,6 +211,7 @@ class ContractService(
                         description = it.referenceItem.description,
                         unitPrice = it.unitPrice.toPlainString(),
                         contractedQuantity = it.contractedQuantity,
+                        executedQuantity = it.quantityExecuted,
                         linking = it.referenceItem.linking ?: "",
                         nameForImport = it.referenceItem.nameForImport ?: ""
                     )

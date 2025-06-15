@@ -12,11 +12,9 @@ import java.util.UUID;
 
 public interface StockistRepository extends JpaRepository<Stockist, Long> {
     @Query("""
-                SELECT s FROM Stockist s\s
-                WHERE s.user.idUser = :userId\s
-           \s""")
+                 SELECT s FROM Stockist s\s
+                 WHERE s.user.idUser = :userId\s
+            \s""")
     List<Stockist> findByUserUUID(UUID userId);
-
-
 
 }

@@ -2,7 +2,7 @@
   <div class="pt-2 w-full pl-2 flex items-center justify-between">
     <p-breadcrumb class="max-w-full" [model]="items" [home]="home"/>
     <h3
-      class="text-medium pr-5 hidden lg:block font-medium">Prefeitura tal</h3>
+      class="text-medium pr-5 hidden lg:block font-medium">{{ contractor }}</h3>
   </div>
 
   @if (loading) {
@@ -10,15 +10,94 @@
       <app-loading></app-loading>
     </div>
 
-  } @else if (showMessage && !loading) {
-    <div class="flex items-center flex-col w-full h-full">
-      <span class="material-icons mt-20 text-orange-600">thumb_up</span>
-      <h2 class="mt-2 font-semibold text-xl">Execução delegada com sucesso</h2>
-      <p>A pré-medição se encontra disponível na tela <span class="badge badge-info rounded py-3 px-2 cursor-pointer"
-                                                            (click)="router.navigate(['/requisicoes/gerenciamento'])">Gerenciamento de Reservas</span>
-      </p>
-    </div>
+  } @else if (nextStep && !loading) {
+    @if (finish) {
+      <div class="max-w-5xl mx-auto px-6 py-10 text-center">
+        <i class="fa-solid fa-check text-2xl rounded-full bg-success p-4 mb-4"></i>
+        <p class="mb-1 text-gray-700 text-base dark:text-gray-100">
+          Ordem gerada com sucesso.
+        </p>
+        <p>O estoquista {{ 'Fulano de tal' }} foi notificado e já pode fazer o gerenciamento na tela
+          <p-tag severity="info" styleClass="ml-2 align-middle" value="Gerenciamento de Reservas"/>
+        </p>
+        <p-button
+          label="Nova Execução"
+          size="small"
+          (click)="router.navigate(['contratos/listar'], {queryParams: {for: 'execution'}})"
+          styleClass="p-button-raised p-button-rounded p-button-primary shadow-md mt-4"
+          severity="info"
+        ></p-button>
+      </div>
+    } @else {
+      <div class="max-w-5xl mx-auto px-6 py-10 text-center">
+        <h2 class="text-3xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Revisão</h2>
+
+        <p class="mb-1 text-gray-700 text-base dark:text-gray-100">
+          Será gerada uma ordem a partir dos itens contratuais selecionados.
+        </p>
+        <p class="mb-4 text-gray-700 text-base dark:text-gray-100">
+          A ordem estará disponível em
+          <p-tag severity="info" styleClass="ml-2 align-middle" value="Gerenciamento de Reservas"/>
+        </p>
+
+        <p class="mb-6 text-gray-600 leading-relaxed max-w-xl mx-auto dark:text-gray-100">
+          O estoquista selecionado deverá fazer o gerenciamento junto à equipe responsável. A equipe deverá seguir todas
+          as instruções do estoquista e depois poderá iniciar a execução.
+        </p>
+
+        <p-select
+          [options]="stockists"
+          [(ngModel)]="execution.stockistId"
+          optionLabel="name"
+          optionValue="userId"
+          placeholder="Selecione o estoquista"
+          class="p-fluid max-w-sm mx-auto"
+        ></p-select>
+      </div>
+      <div class="w-full flex justify-center mt-5">
+        <p-floatlabel variant="in">
+        <textarea pTextarea id="over_label"
+                  [(ngModel)]="execution.instructions"
+                  rows="3"
+                  cols="70"
+                  style="resize: none"
+                  class="h-full"></textarea>
+          <label for="in_label">Instruções para a equipe</label>
+        </p-floatlabel>
+      </div>
+      <div class="max-w-4xl mx-auto px-6 mt-10 flex justify-center gap-6">
+        <p-button
+          label="Concluir"
+          size="large"
+          (click)="sendData()"
+          styleClass="p-button-raised p-button-rounded p-button-primary shadow-md"
+        ></p-button>
+
+        <p-button
+          label="Revisar Itens Selecionados"
+          size="large"
+          (click)="nextStep = false"
+          variant="text"
+          severity="info"
+          styleClass="p-button-rounded"
+        ></p-button>
+      </div>
+    }
+
   } @else if (!loading) {
+    <div class="mb-10 mt-4 px-2" *ngIf="execution.teamId === 0">
+      <p-select
+        [(ngModel)]="execution.teamId"
+        (onChange)="teamName = getTeamById($event.value)"
+        [options]="teams"
+        optionLabel="teamName"
+        optionValue="idTeam"
+        [filter]="true" filterBy="teamName"
+        size="small"
+        placeholder="Selecione a equipe responsável"
+        class="w-full"/>
+    </div>
+
     <div>
       <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="execution.teamId === 0" [value]="tableSk">
         <ng-template pTemplate="header">
@@ -57,9 +136,6 @@
             <td>
               <p-skeleton/>
             </td>
-            <td>
-              <p-skeleton/>
-            </td>
           </tr>
         </ng-template>
       </p-table>
@@ -84,8 +160,8 @@
             <th pSortableColumn="linking">Especificação
               <p-sortIcon field="linking"/>
             </th>
-            <th pSortableColumn="category">Equipe Responsável
-              <p-sortIcon field="category"/>
+            <th pSortableColumn="teamName">Equipe Responsável
+              <p-sortIcon field="teamName"/>
             </th>
             <th pSortableColumn="quantity">Quantidade
               <p-sortIcon field="quantity"/>
@@ -104,23 +180,31 @@
             <td>
               <p-tag [value]="item.linking" *ngIf="item.linking" severity="contrast"/>
             </td>
-            <td (click)="verifyTeamData()">
-              <!--              <p-tag severity="info" styleClass="cursor-pointer" pTooltip="Clique para detalhes">{{ street.teamName }}-->
-              <!--              </p-tag>-->
+            <td>
+              <button (click)="showTeamModal = true">
+                <p-tag severity="info" styleClass="cursor-pointer" pTooltip="Clique para detalhes">{{ teamName }}
+                </p-tag>
+              </button>
             </td>
             <td>
               <p-cellEditor>
                 <ng-template pTemplate="output">{{ getQuantity(item.contractItemId) }}</ng-template>
                 <ng-template pTemplate="input">
-                  <input pInputText (input)="utils.formatFloatNumber($event)" placeholder="Informe a quantidade"
+                  <input pInputText
+                         #qtyInput
+                         (keydown.enter)="Confirm(item, rowElement)"
+                         (keydown.escape)="Cancel(item, rowElement)"
+                         (input)="utils.formatFloatNumber($event)"
+                         placeholder="Informe a quantidade"
                          [(ngModel)]="quantity"/>
                 </ng-template>
               </p-cellEditor>
             </td>
-            @if(currentItemId > 0) {
+            @if (currentItemId > 0) {
               <td class="space-x-2">
-                <p-button label="Remover" icon="pi pi-trash" size="small" variant="text" severity="contrast"
-                          *ngIf="existsMaterial(item.contractItemId)"
+                <p-button [label]="existsMaterial(item.contractItemId) ? 'Remover' : 'Cancelar'" size="small"
+                          variant="text" severity="contrast"
+                          *ngIf="currentItemId === item.contractItemId"
                           (click)="Cancel(item, rowElement)"/>
                 <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"
                           *ngIf="currentItemId === item.contractItemId"
@@ -136,84 +220,14 @@
         </ng-template>
       </p-table>
 
-      <!--          <ng-template pTemplate="rowexpansion">-->
-      <!--            <tr>-->
-      <!--              <td colspan="7">-->
-
-      <!--                <p-table #table_collapse-->
-      <!--                         [value]="filteredMaterials"-->
-      <!--                         editMode="row"-->
-      <!--                         selectionMode="single"-->
-      <!--                         [(selection)]="selectedMaterial"-->
-      <!--                         dataKey="materialId">-->
-
-      <!--                  <ng-template pTemplate="header">-->
-      <!--                    <tr>-->
-      <!--                      <th>Descrição</th>-->
-      <!--                      <th>Especificação</th>-->
-      <!--                      <th>Estoque</th>-->
-      <!--                      <th>Depósito</th>-->
-      <!--                      <th>Quantidade</th>-->
-      <!--                      <th></th>-->
-      <!--                    </tr>-->
-      <!--                  </ng-template>-->
-
-      <!--                  <ng-template pTemplate="body" let-material let-editing="editing">-->
-      <!--                    <tr [pSelectableRow]="material" [pEditableColumn]="material.materialId"-->
-      <!--                        (click)="onRowClick($event, material.materialId)"-->
-      <!--                        pEditableColumnField="materialId">-->
-      <!--                      <td>-->
-      <!--                        {{ material.materialName }}-->
-      <!--                      </td>-->
-      <!--                      <td>-->
-      <!--                        <p-tag [value]="material.materialPower ?? material.materialLength"-->
-      <!--                               *ngIf="material.materialPower || material.materialLength" severity="contrast"/>-->
-      <!--                      </td>-->
-      <!--                      <td class="text-center">-->
-      <!--                        <p-tag-->
-      <!--                          [value]="material.availableQuantity <= 0 ? 'Sem Estoque' : material.availableQuantity + ' ' + material.requestUnit"-->
-      <!--                          [severity]="material.availableQuantity ? 'success' : 'danger'"></p-tag>-->
-      <!--                      </td>-->
-      <!--                      <td>{{ material.deposit }}</td>-->
-      <!--                      <td>-->
-      <!--                        <p-cellEditor>-->
-      <!--                          <ng-template pTemplate="output">{{ getQuantity(material.materialId) ?? 0 }}</ng-template>-->
-      <!--                          <ng-template pTemplate="input">-->
-      <!--                            <input pInputText (input)="utils.formatFloatNumber($event)" placeholder="Informe a quantidade"-->
-      <!--                                   [(ngModel)]="setQuantity.quantity"/>-->
-      <!--                          </ng-template>-->
-      <!--                        </p-cellEditor>-->
-      <!--                      </td>-->
-      <!--                      <td class="space-x-2">-->
-      <!--                        <p-button label="Remover" icon="pi pi-trash" size="small" variant="text" severity="contrast"-->
-      <!--                                  *ngIf="existsMaterial(material.materialId)"-->
-      <!--                                  (click)="Cancel(material)"/>-->
-      <!--                        <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"-->
-      <!--                                  *ngIf="currentMaterialId === material.materialId"-->
-      <!--                                  (click)="Confirm(material)"/>-->
-      <!--                      </td>-->
-      <!--                    </tr>-->
-      <!--                  </ng-template>-->
-      <!--                </p-table>-->
-      <!--              </td>-->
-      <!--            </tr>-->
-      <!--          </ng-template>-->
-      <!--        </p-table>-->
-
-      <!--        <div class="w-full flex justify-center mt-10">-->
-      <!--          &lt;!&ndash;      <p-skeleton *ngIf="streetId === 0" width="20" height="100px" class="mr-2"></p-skeleton>&ndash;&gt;-->
-      <!--          <button class="w-1/5" *ngIf="streetId === 0">-->
-      <!--            <p-skeleton height="2.5rem"/>-->
-      <!--          </button>-->
-
-      <!--          <button-->
-      <!--            pButton type="button"-->
-      <!--            label="Salvar tudo"-->
-      <!--            (click)="sendData()" class="w-1/5"-->
-      <!--            *ngIf="streetId > 0">-->
-      <!--          </button>-->
-      <!--        </div>-->
     </div>
+
+
+    <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
+         *ngIf="execution.teamId > 0">
+      <p-button label="Continuar" size="large" (click)="goToNextStep()"/>
+    </div>
+
 
   }
 

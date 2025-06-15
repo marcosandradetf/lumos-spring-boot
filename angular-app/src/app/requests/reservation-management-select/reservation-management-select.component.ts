@@ -26,9 +26,6 @@ import {LoadingComponent} from '../../shared/components/loading/loading.componen
 import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
 
 
-
-
-
 @Component({
   selector: 'app-reservation-management-select',
   standalone: true,
@@ -121,6 +118,11 @@ export class ReservationManagementSelectComponent {
     if (state?.reserve) {
       this.reserve = state.reserve;
       this.description = this.reserve.description;
+      if (this.reserve.streets[0].comment === 'DIRECT_EXECUTION') {
+        this.streetId = -1;
+        this.street = this.reserve.streets[0];
+
+      }
     } else {
       void this.router.navigate(['/requisicoes/execucoes/reservas/gerenciamento']);
     }

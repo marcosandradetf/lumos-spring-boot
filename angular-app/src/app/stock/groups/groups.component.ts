@@ -5,7 +5,7 @@ import {SidebarComponent} from '../../shared/components/sidebar/sidebar.componen
 import {TableComponent} from '../../shared/components/table/table.component';
 import {Group} from '../../models/grupo.model';
 import {Router} from '@angular/router';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
@@ -48,7 +48,7 @@ export class GroupsComponent {
   @ViewChild('collapseDiv') collapseDiv!: ElementRef;
   @ViewChild('top') top!: ElementRef;
 
-  constructor(protected router: Router, private stockService: EstoqueService,
+  constructor(protected router: Router, private stockService: StockService,
               private title: Title,) {
     this.title.setTitle('Gerenciar - Grupos');
     this.stockService.getGroups().subscribe(

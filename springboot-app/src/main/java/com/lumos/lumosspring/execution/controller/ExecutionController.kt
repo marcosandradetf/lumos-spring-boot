@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.execution.controller
 
 import com.lumos.lumosspring.execution.dto.DelegateDTO
+import com.lumos.lumosspring.execution.dto.DirectExecutionDTO
 import com.lumos.lumosspring.execution.dto.ExecutionDTO
 import com.lumos.lumosspring.execution.dto.ReserveDTOCreate
 import com.lumos.lumosspring.execution.dto.SendExecutionDto
@@ -19,6 +20,9 @@ class ExecutionController(
 
     @PostMapping("/execution/delegate")
     fun delegate(@RequestBody delegateDTO: DelegateDTO): ResponseEntity<Any> = executionService.delegate(delegateDTO)
+
+    @PostMapping("/execution/delegate-direct-execution")
+    fun delegateDirectExecution(@RequestBody execution: DirectExecutionDTO): ResponseEntity<Any> = executionService.delegateDirectExecution(execution)
 
     @GetMapping("execution/get-reservations/{userUUID}")
     fun getPendingReservesForStockist(@PathVariable userUUID: String): ResponseEntity<Any> =

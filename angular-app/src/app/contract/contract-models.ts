@@ -39,6 +39,7 @@ export interface ContractItemsResponse {
   description: string;
   unitPrice: string;
   contractedQuantity: number;
+  executedQuantity: number;
   linking: string;
   nameForImport: string;
 }

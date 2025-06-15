@@ -94,7 +94,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "WHERE LOWER(ms.material.materialType.typeName) = :type " +
             "AND ms.inactive = false " +
             "AND (LOWER(ms.deposit.depositName) = LOWER(:depositName) " +
-            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%') order by ms.material.materialName")
+            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%') order by  ms.deposit.depositName")
     List<MaterialInStockDTO> findAllByType(@Param("type") String type, @Param("depositName") String depositName);
 
     @Query("SELECT new com.lumos.lumosspring.execution.dto.MaterialInStockDTO(" +
@@ -106,7 +106,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "   OR LOWER(ms.material.materialLength) = :linking) " +
             "AND ms.inactive = false " +
             "AND (LOWER(ms.deposit.depositName) = LOWER(:depositName) " +
-            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%') order by ms.material.materialName")
+            "     OR LOWER(ms.deposit.depositName) NOT LIKE '%caminhão%') order by ms.deposit.depositName")
     List<MaterialInStockDTO> findAllByLinkingAndType(@Param("linking") String linking, @Param("type") String type, @Param("depositName") String depositName);
 
 

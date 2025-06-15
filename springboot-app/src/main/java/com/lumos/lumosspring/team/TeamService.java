@@ -57,6 +57,7 @@ public class TeamService {
                                 .map(Deposit::getDepositName)
                                 .orElseThrow(() -> new IllegalStateException("Equipe sem depósito associado, faça a correção na tela de gerenciamento de equipes!"))
                 ))
+                .sorted(Comparator.comparing(TeamResponse::teamName))
                 .toList(); // Convertendo para List<TeamResponse>
 
         return ResponseEntity.ok(teamsResponses);

@@ -50,9 +50,12 @@ export interface MaterialInStockDTO{
    requestUnit: string,
 }
 
-export interface executionWithoutPreMeasurement {
+export interface DirectExecutionDTO {
   contractId: number,
   teamId: number,
+  stockistId: string,
+  currentUserUUID: string,
+  instructions: string | null;
   items: {
     contractItemId: number,
     quantity: number,

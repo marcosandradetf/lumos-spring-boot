@@ -11,7 +11,7 @@ import {UtilsService} from '../../core/service/utils.service';
 
 import {animate, style, transition, trigger} from '@angular/animations';
 import {FormsModule} from '@angular/forms';
-import {EstoqueService} from '../../stock/services/estoque.service';
+import {StockService} from '../../stock/services/stock.service';
 import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
 import {Toast} from 'primeng/toast';
 import {StockistModel} from '../executions.model';
@@ -144,7 +144,7 @@ export class MeasurementDetailsComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
               private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,
-              private stockService: EstoqueService, private messageService: MessageService, private authService: AuthService,) {
+              private stockService: StockService, private messageService: MessageService, private authService: AuthService,) {
   }
 
   ngOnInit() {

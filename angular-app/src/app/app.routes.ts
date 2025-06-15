@@ -163,7 +163,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'execucoes/iniciar-sem-pre-medicao/:id',
+    path: 'execucoes/iniciar-sem-pre-medicao',
     loadComponent: () => import('./executions/execution-no-pre-measurement/execution-no-pre-measurement.component').then(e => e.ExecutionNoPreMeasurementComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},

@@ -8,7 +8,7 @@ import {TabelaComponent} from './tabela/tabela.component';
 import {Title} from '@angular/platform-browser';
 import {MaterialResponse} from '../../models/material-response.dto';
 import {MaterialService} from '../services/material.service';
-import {EstoqueService} from '../services/estoque.service';
+import {StockService} from '../services/stock.service';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 
 
@@ -31,7 +31,7 @@ export class MaterialPageComponent {
     { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
   ];
 
-  constructor(private materialService: MaterialService, private estoque: EstoqueService,
+  constructor(private materialService: MaterialService, private estoque: StockService,
               private titleService:Title, protected router: Router) {
     this.titleService.setTitle("Gerenciar - Materiais");
   }
