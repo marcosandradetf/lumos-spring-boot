@@ -63,6 +63,6 @@ class ExecutionController(
 
 
     @GetMapping("/mobile/execution/get-executions")
-    fun getExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<ExecutionDTO>> = executionService.getExecutions(uuid)
+    fun getExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<ExecutionDTO>> = executionService.getExecutionsByStreets(uuid)
 
 }

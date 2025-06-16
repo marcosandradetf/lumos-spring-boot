@@ -72,7 +72,8 @@ data class ItemResponseDTO(
 
 //////
 data class ReserveDTOCreate(
-    val preMeasurementStreetId: Long,
+    val preMeasurementStreetId: Long?,
+    val directExecutionId: Long?,
     val items: List<ReserveItemDTO>
 )
 

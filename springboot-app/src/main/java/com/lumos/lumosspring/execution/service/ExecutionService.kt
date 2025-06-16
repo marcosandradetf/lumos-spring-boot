@@ -11,6 +11,7 @@ import com.lumos.lumosspring.execution.repository.DirectExecutionRepositoryItem
 import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
 import com.lumos.lumosspring.fileserver.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.DepositRepository
@@ -124,12 +125,13 @@ class ExecutionService(
             .body(DefaultResponse("Usuário atual não encontrado"))
 
         val management = ReservationManagement()
-        management.description = execution.instructions
+        management.description = contract.contractor
         management.stockist = stockist
         reservationManagementRepository.save(management)
 
         val directExecution = DirectExecution()
         directExecution.contract = contract
+        directExecution.instructions = execution.instructions
         directExecution.team = team
         directExecution.assignedBy = user
         directExecution.reservationManagement = management
@@ -260,39 +262,42 @@ class ExecutionService(
 
     @Transactional
     fun reserveMaterialsForExecution(executionReserve: ReserveDTOCreate, strUserUUID: String): ResponseEntity<Any> {
-        val preMeasurementStreet = preMeasurementStreetRepository.findById(executionReserve.preMeasurementStreetId)
-            .orElse(null) ?: return ResponseEntity.status(404)
-            .body(DefaultResponse("A rua ${executionReserve.preMeasurementStreetId} não foi encontrada"))
+        val preMeasurementStreetId = executionReserve.preMeasurementStreetId
+        val preMeasurementStreet = if (preMeasurementStreetId != null) {
+            preMeasurementStreetRepository.findById(preMeasurementStreetId)
+                .orElseThrow { IllegalStateException("Street not found for id: $preMeasurementStreetId") }
+        } else null
 
-        if (preMeasurementStreet.streetStatus != ExecutionStatus.WAITING_STOCKIST)
-            return ResponseEntity.status(500)
-                .body(DefaultResponse("Os itens dessa execução já foram todos reservados, inicie a próxima etapa."))
+        if (preMeasurementStreet != null)
+            if (preMeasurementStreet.streetStatus != ExecutionStatus.WAITING_STOCKIST) {
+                return ResponseEntity.status(500)
+                    .body(DefaultResponse("Os itens dessa execução já foram todos reservados, inicie a próxima etapa."))
+            }
+
+
+        val directExecution = executionReserve.directExecutionId?.let {
+            directExecutionRepository.findById(it)
+                .orElseThrow { IllegalArgumentException("Execução não encontrada: $it") }
+        }
+
 
         val reservation = mutableListOf<MaterialReservation>()
         val userUUID = try {
             UUID.fromString(strUserUUID)
         } catch (e: IllegalArgumentException) {
-            return ResponseEntity.badRequest().build()
+            IllegalArgumentException(e.message)
         }
 
         for (item in executionReserve.items) {
             for (materialReserve in item.materials) {
                 val materialStock = materialStockRepository.findById(materialReserve.materialId)
-                    .orElse(null) ?: return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(DefaultResponse("Material não encontrado"))
+                    .orElse(null) ?: throw IllegalStateException("Material não encontrado")
 
                 if (materialStock.stockAvailable < materialReserve.materialQuantity)
-                    return ResponseEntity.status(500)
-                        .body(DefaultResponse("O material ${materialStock.material.materialName} não possuí estoque suficiente"))
+                    throw IllegalArgumentException("O material ${materialStock.material.materialName} não possuí estoque suficiente")
 
                 val deposit = materialStock.deposit
-//                val stockistMatch = preMeasurementStreet.reservationManagement.stockist.idUser == userUUID ||
-//                        deposit.stockists.any { it.user.idUser == userUUID } ||
-//                        preMeasurementStreet.reservationManagement
-//                            .stockist.stockist?.deposit?.stockists?.any { it.user.idUser == userUUID } == true
-
                 val stockistMatch = deposit.stockists.any { it.user.idUser == userUUID }
-
                 val teamMatch = materialStock.deposit.teams.isNotEmpty()
                 val contractItemId = util.getDescription(
                     field = "contract_item_id",
@@ -301,16 +306,20 @@ class ExecutionService(
                     equal = item.itemId.toString(),
                     type = Long::class.java,
                 )
-                if (contractItemId == null)
-                    return ResponseEntity.status(500)
-                        .body(DefaultResponse("Contrato do item ${item.itemId} enviado não foi encontrado"))
+
+                if (contractItemId == null) throw IllegalStateException("Contrato do item ${item.itemId} enviado não foi encontrado")
 
                 reservation.add(
                     MaterialReservation().apply {
-                        this.description = preMeasurementStreet.street
                         this.materialStock = materialStock
                         this.reservedQuantity = materialReserve.materialQuantity
-                        this.street = preMeasurementStreet
+                        if (preMeasurementStreet != null) {
+                            this.description = preMeasurementStreet.street
+                            this.street = preMeasurementStreet
+                        } else if (directExecution != null) {
+                            this.description = directExecution.contract.contractor
+                            this.directExecution = directExecution
+                        }
                         this.contractItemId = contractItemId
                         if (teamMatch || stockistMatch) {
                             this.confirmReservation()
@@ -323,6 +332,17 @@ class ExecutionService(
 
         materialReservationRepository.saveAll(reservation)
 
+        val responseMessage =
+            if (preMeasurementStreet != null) verifyStreetReservations(reservation, preMeasurementStreet)
+            else if (directExecution != null) verifyDirectExecutionReservations(reservation, directExecution) else ""
+
+        return ResponseEntity.ok().body(DefaultResponse(responseMessage))
+    }
+
+    private fun verifyStreetReservations(
+        reservation: List<MaterialReservation>,
+        preMeasurementStreet: PreMeasurementStreet
+    ): String {
         var responseMessage = ""
         if (reservation.all { it.status == ReservationStatus.COLLECTED }) {
             preMeasurementStreet.streetStatus = ExecutionStatus.AVAILABLE_EXECUTION
@@ -355,7 +375,113 @@ class ExecutionService(
 
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
-        return ResponseEntity.ok().body(DefaultResponse(responseMessage))
+        return responseMessage
+    }
+
+    private fun verifyDirectExecutionReservations(
+        reservation: List<MaterialReservation>,
+        directExecution: DirectExecution
+    ): String {
+        var responseMessage = ""
+        if (reservation.all { it.status == ReservationStatus.COLLECTED }) {
+            directExecution.directExecutionStatus = ExecutionStatus.AVAILABLE_EXECUTION
+            responseMessage =
+                "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
+
+        } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
+            directExecution.directExecutionStatus = ExecutionStatus.AVAILABLE_EXECUTION
+            responseMessage =
+                "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
+                        "Mas os materiais estão pendentes de coleta pela equipe."
+
+        } else if (reservation.any { it.status == ReservationStatus.PENDING }) {
+            directExecution.directExecutionStatus = ExecutionStatus.WAITING_RESERVE_CONFIRMATION
+            responseMessage =
+                "Como alguns itens foram reservadas em almoxarifados de terceiros. Será necessária aprovação. " +
+                        "Após isso estes materiais estarão disponíveis para coleta."
+        }
+
+        notify(reservation, directExecution.directExecutionId.toString())
+
+        directExecution.reservationManagement.status = ReservationStatus.FINISHED
+
+        directExecutionRepository.save(directExecution)
+
+        return responseMessage
+    }
+
+
+    private fun notify(reservation: List<MaterialReservation>, streetIdOrExecutionId: String) {
+        var bodyMessage: String
+        val companyPhone = util.getDescription(
+            field = "company_phone",
+            table = "tb_companies",
+            type = String::class.java,
+        )
+
+        val groupedByDepositPending = reservation
+            .filter { it.status == ReservationStatus.PENDING }
+            .groupBy { it.materialStock?.deposit }
+
+        val groupedByDepositApproved = reservation
+            .filter { it.status == ReservationStatus.APPROVED }
+            .groupBy { it.materialStock?.deposit }
+
+        // Itera sobre os grupos e envia notificação para equipe por depósito
+        groupedByDepositPending.forEach { (deposit, reserve) ->
+            val teamCodes = deposit?.teams?.map { it.teamCode } ?: emptyList()
+
+            bodyMessage = """
+                Por favor, aceite ou negar as reservas com urgência!
+                """.trimIndent()
+
+            teamCodes.forEach { it ->
+                notificationService.sendNotificationForTeam(
+                    team = it,
+                    title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
+                    body = bodyMessage,
+                    action = "REPLY_RESERVE",
+                    time = util.dateTime,
+                    type = NotificationType.ALERT,
+                    persistCode = streetIdOrExecutionId
+                )
+            }
+
+        }
+
+        // Itera sobre os grupos e envia notificação para equipe por depósito
+        groupedByDepositApproved.forEach { (deposit, reserve) ->
+            val teamCode = reserve.first().team?.teamCode ?: ""
+            val quantity = reserve.size
+
+            val depositName = deposit?.depositName ?: "Desconhecido"
+            val address = deposit?.depositAddress ?: "Endereço não informado"
+            val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
+            val responsible = deposit?.stockists
+                ?.firstOrNull()
+                ?.user
+                ?.completedName
+                ?: "Responsável não informado"
+
+            val bodyMessage = """
+                    Local: $depositName"
+                    Endereço: $address"
+                    Telefone: $phone"
+                    Responsável: $responsible"
+                """.trimIndent()
+
+            notificationService.sendNotificationForTeam(
+                team = teamCode,
+                title = "Existem $quantity materiais pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
+                body = bodyMessage,
+                action = "",
+                time = util.dateTime,
+                type = NotificationType.ALERT,
+                persistCode = streetIdOrExecutionId
+            )
+
+        }
+
     }
 
     fun getReservationsByStatusAndStockist(strUserUUID: String, status: String): ResponseEntity<Any> {
@@ -425,79 +551,6 @@ class ExecutionService(
         return ResponseEntity.ok().body(response)
     }
 
-    private fun notify(reservation: List<MaterialReservation>, preMeasurementStreetId: String) {
-        var bodyMessage: String
-        val companyPhone = util.getDescription(
-            field = "company_phone",
-            table = "tb_companies",
-            type = String::class.java,
-        )
-
-        val groupedByDepositPending = reservation
-            .filter { it.status == ReservationStatus.PENDING }
-            .groupBy { it.materialStock?.deposit }
-
-        val groupedByDepositApproved = reservation
-            .filter { it.status == ReservationStatus.APPROVED }
-            .groupBy { it.materialStock?.deposit }
-
-        // Itera sobre os grupos e envia notificação para equipe por depósito
-        groupedByDepositPending.forEach { (deposit, reserve) ->
-            val teamCodes = deposit?.teams?.map { it.teamCode } ?: emptyList()
-
-            bodyMessage = """
-                Por favor, aceite ou negar as reservas com urgência!
-                """.trimIndent()
-
-            teamCodes.forEach { it ->
-                notificationService.sendNotificationForTeam(
-                    team = it,
-                    title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
-                    body = bodyMessage,
-                    action = "REPLY_RESERVE",
-                    time = util.dateTime,
-                    type = NotificationType.ALERT,
-                    persistCode = preMeasurementStreetId
-                )
-            }
-
-        }
-
-        // Itera sobre os grupos e envia notificação para equipe por depósito
-        groupedByDepositApproved.forEach { (deposit, reserve) ->
-            val teamCode = reserve.first().team?.teamCode ?: ""
-            val quantity = reserve.size
-
-            val depositName = deposit?.depositName ?: "Desconhecido"
-            val address = deposit?.depositAddress ?: "Endereço não informado"
-            val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
-            val responsible = deposit?.stockists
-                ?.firstOrNull()
-                ?.user
-                ?.completedName
-                ?: "Responsável não informado"
-
-            val bodyMessage = """
-                    Local: $depositName"
-                    Endereço: $address"
-                    Telefone: $phone"
-                    Responsável: $responsible"
-                """.trimIndent()
-
-            notificationService.sendNotificationForTeam(
-                team = teamCode,
-                title = "Existem $quantity materiais pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
-                body = bodyMessage,
-                action = "",
-                time = util.dateTime,
-                type = NotificationType.ALERT,
-                persistCode = preMeasurementStreetId
-            )
-
-        }
-
-    }
-
     @Transactional
     fun uploadData(photo: MultipartFile, executionDTO: SendExecutionDto?): ResponseEntity<Any> {
         if (executionDTO == null) {
@@ -537,7 +590,7 @@ class ExecutionService(
         return ResponseEntity.ok().build()
     }
 
-    fun getExecutions(strUUID: String?): ResponseEntity<MutableList<ExecutionDTO>> {
+    fun getExecutionsByStreets(strUUID: String?): ResponseEntity<MutableList<ExecutionDTO>> {
         val uuid = strUUID ?: return ResponseEntity.badRequest().body(arrayListOf())
 
         val user = userRepository.findById(UUID.fromString(uuid))
@@ -553,37 +606,130 @@ class ExecutionService(
 
         val reservationsByStreet = materialReservationRepository
             .findAllByStreetInStreetId(streets.map { it.streetId })
-            .groupBy { it.street.preMeasurementStreetId }
+            .filter { it.street != null }
+            .groupBy { it.street!!.preMeasurementStreetId }
 
         val reservesByStreet = reservationsByStreet.mapValues { (_, reservations) ->
-            reservations.map { r ->
-                val materialStock = r.materialStock
-                val deposit = materialStock?.deposit
-                val stockist = deposit?.stockists?.firstOrNull()?.user
+            reservations
+                .filter { it.street != null }
+                .map { r ->
+                    val materialStock = r.materialStock
+                    val deposit = materialStock?.deposit
+                    val stockist = deposit?.stockists?.firstOrNull()?.user
 
-                var name = materialStock?.material?.materialName
-                val length = materialStock?.material?.materialLength
-                val power = materialStock?.material?.materialPower
-                if (power != null) {
-                    name += " $power"
-                } else if (length != null) {
-                    name += " $length"
+                    var name = materialStock?.material?.materialName
+                    val length = materialStock?.material?.materialLength
+                    val power = materialStock?.material?.materialPower
+                    if (power != null) {
+                        name += " $power"
+                    } else if (length != null) {
+                        name += " $length"
+                    }
+
+                    Reserve(
+                        reserveId = r.idMaterialReservation,
+                        materialName = name ?: "",
+                        materialQuantity = r.reservedQuantity,
+                        reserveStatus = r.status,
+                        streetId = r.street!!.preMeasurementStreetId,
+                        depositId = deposit?.idDeposit ?: 0L,
+                        depositName = deposit?.depositName ?: "Desconhecido",
+                        depositAddress = deposit?.depositAddress ?: "Desconhecido",
+                        stockistName = stockist?.completedName ?: "Desconhecido",
+                        phoneNumber = stockist?.phoneNumber ?: "Desconhecido",
+                        requestUnit = materialStock?.requestUnit ?: "UN"
+                    )
+
                 }
+        }
 
-                Reserve(
-                    reserveId = r.idMaterialReservation,
-                    materialName = name ?: "",
-                    materialQuantity = r.reservedQuantity,
-                    reserveStatus = r.status,
-                    streetId = r.street.preMeasurementStreetId,
-                    depositId = deposit?.idDeposit ?: 0L,
-                    depositName = deposit?.depositName ?: "Desconhecido",
-                    depositAddress = deposit?.depositAddress ?: "Desconhecido",
-                    stockistName = stockist?.completedName ?: "Desconhecido",
-                    phoneNumber = stockist?.phoneNumber ?: "Desconhecido",
-                    requestUnit = materialStock?.requestUnit ?: "UN"
+        val executions = streets.mapNotNull { street ->
+            val reserves = reservesByStreet[street.streetId] ?: listOf()
+
+            // Verifica se existe algum item PENDENTE
+            val hasPending = reserves.any { it.reserveStatus == ReservationStatus.PENDING }
+
+            if (hasPending) {
+                // Ignora essa rua
+                null
+            } else {
+                ExecutionDTO(
+                    streetId = street.streetId,
+                    streetName = street.streetName,
+                    streetNumber = street.streetNumber,
+                    streetHood = street.streetHood,
+                    city = street.city,
+                    state = street.state,
+                    teamName = street.teamName,
+                    priority = street.priority,
+                    type = street.type,
+                    itemsQuantity = street.itemsQuantity,
+                    creationDate = street.creationDate.toString(),
+                    latitude = street.latitude,
+                    longitude = street.longitude,
+                    contractId = street.contractId,
+                    contractor = street.contractor,
+                    reserves = reserves
                 )
             }
+        }.toMutableList()
+
+
+        return ResponseEntity.ok().body(executions)
+
+    }
+
+    fun getDirectExecutions(strUUID: String?): ResponseEntity<MutableList<ExecutionDTO>> {
+        val uuid = strUUID ?: return ResponseEntity.badRequest().body(arrayListOf())
+
+        val user = userRepository.findById(UUID.fromString(uuid))
+            .orElseThrow { IllegalArgumentException("Equipe não encontrada") }
+
+        val teamsId = when {
+            user.electricians.isNotEmpty() -> user.electricians.map { it.idTeam }
+            user.drivers.isNotEmpty() -> user.drivers.map { it.idTeam }
+            else -> return ResponseEntity.badRequest().body(arrayListOf())
+        }
+
+        val executions = directExecutionRepository.findByTeam_IdTeam(teamsId)
+
+        val reservationsByStreet = materialReservationRepository
+            .findAllByStreetInStreetId(streets.map { it.streetId })
+            .filter { it.street != null }
+            .groupBy { it.street!!.preMeasurementStreetId }
+
+        val reservesByStreet = reservationsByStreet.mapValues { (_, reservations) ->
+            reservations
+                .filter { it.street != null }
+                .map { r ->
+                    val materialStock = r.materialStock
+                    val deposit = materialStock?.deposit
+                    val stockist = deposit?.stockists?.firstOrNull()?.user
+
+                    var name = materialStock?.material?.materialName
+                    val length = materialStock?.material?.materialLength
+                    val power = materialStock?.material?.materialPower
+                    if (power != null) {
+                        name += " $power"
+                    } else if (length != null) {
+                        name += " $length"
+                    }
+
+                    Reserve(
+                        reserveId = r.idMaterialReservation,
+                        materialName = name ?: "",
+                        materialQuantity = r.reservedQuantity,
+                        reserveStatus = r.status,
+                        streetId = r.street!!.preMeasurementStreetId,
+                        depositId = deposit?.idDeposit ?: 0L,
+                        depositName = deposit?.depositName ?: "Desconhecido",
+                        depositAddress = deposit?.depositAddress ?: "Desconhecido",
+                        stockistName = stockist?.completedName ?: "Desconhecido",
+                        phoneNumber = stockist?.phoneNumber ?: "Desconhecido",
+                        requestUnit = materialStock?.requestUnit ?: "UN"
+                    )
+
+                }
         }
 
         val executions = streets.mapNotNull { street ->

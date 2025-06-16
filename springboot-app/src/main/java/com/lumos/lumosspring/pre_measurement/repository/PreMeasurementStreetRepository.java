@@ -63,5 +63,6 @@ public interface PreMeasurementStreetRepository extends JpaRepository<PreMeasure
     )
     List<ExecutionPartial> findByTeam_IdTeam(List<Long> teamsId);
 
+
     boolean existsByDeviceIdAndDeviceStreetId(String deviceId, long deviceStreetId);
 }

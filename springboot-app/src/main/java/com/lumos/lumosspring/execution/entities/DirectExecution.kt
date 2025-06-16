@@ -15,6 +15,8 @@ class DirectExecution {
     @Column(name = "direct_execution_id")
     var directExecutionId: Long = 0
 
+    var instructions: String? = null
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contractId", nullable = false)
     var contract = Contract()

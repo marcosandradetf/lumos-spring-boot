@@ -24,7 +24,11 @@ class MaterialReservation {
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "pre_measurement_street_id")
-    var street: PreMeasurementStreet = PreMeasurementStreet()
+    var street: PreMeasurementStreet? = null
+
+    @ManyToOne(cascade = [(CascadeType.MERGE)])
+    @JoinColumn(name = "direct_execution_id")
+    var directExecution: DirectExecution? = null
 
     @JoinColumn(name = "contract_item_id")
     var contractItemId: Long = 0
