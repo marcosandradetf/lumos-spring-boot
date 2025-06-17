@@ -11,6 +11,9 @@ import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
+import com.lumos.data.database.ContractHolder
+import com.lumos.domain.model.DirectExecution
+import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
 import com.lumos.domain.model.Reserve
@@ -101,13 +104,78 @@ class ExecutionRepository(
                     stockistName = r.stockistName,
                     phoneNumber = r.phoneNumber,
                     requestUnit = r.requestUnit,
+                    contractId = executionDto.contractId
                 )
                 db.executionDao().insertReserve(reserve)
             }
         }
     }
 
-    fun getFlowExecutions(): Flow<List<Execution>> =
+    suspend fun syncDirectExecutions(): RequestResult<Unit> {
+        val uuid = secureStorage.getUserUuid()
+            ?: return ServerError(-1, "UUID Não encontrado")
+
+        val response = ApiExecutor.execute { api.getDirectExecutions(uuid) }
+        return when (response) {
+            is RequestResult.Success -> {
+                saveDirectExecutionsToDb(response.data)
+                RequestResult.Success(Unit)
+            }
+            is SuccessEmptyBody -> {
+                ServerError(204, "Resposta 204 inesperada")
+            }
+
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncExecutions(app.applicationContext, db)
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(
+                response.code,
+                response.message
+            )
+
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
+        }
+    }
+
+    private suspend fun saveDirectExecutionsToDb(fetchedExecutions: List<DirectExecutionDTOResponse>) {
+        fetchedExecutions.forEach { executionDto ->
+            val execution = DirectExecution(
+                contractId = executionDto.contractId,
+                instructions = executionDto.instructions,
+                contractor = executionDto.contractor,
+                executionStatus = "PENDING"
+            )
+
+            db.executionDao().insertDirectExecution(execution)
+            db.executionDao().setDirectExecutionStatus(execution.contractId, execution.executionStatus)
+
+            executionDto.reserves.forEach { r ->
+                val reserve = Reserve(
+                    reserveId = r.reserveId,
+                    materialName = r.materialName,
+                    materialQuantity = r.materialQuantity,
+                    reserveStatus = r.reserveStatus,
+                    streetId = -1,
+                    contractId = executionDto.contractId,
+                    depositId = r.depositId,
+                    depositName = r.depositName,
+                    depositAddress = r.depositAddress,
+                    stockistName = r.stockistName,
+                    phoneNumber = r.phoneNumber,
+                    requestUnit = r.requestUnit,
+                )
+                db.executionDao().insertReserve(reserve)
+            }
+        }
+    }
+
+    fun getFlowExecutions(): Flow<List<ContractHolder>> =
         db.executionDao().getFlowExecutions()
 
     fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>> =
@@ -231,4 +299,8 @@ class ExecutionRepository(
     suspend fun getExecutionsByContract(lng: Long): List<Execution> {
         return db.executionDao().getExecutionsByContract(lng)
     }
+
+
+    fun getFlowDirectExecutions(): Flow<List<ContractHolder>> =
+        db.executionDao().getFlowDirectExecutions()
 }

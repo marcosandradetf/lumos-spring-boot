@@ -73,6 +73,7 @@ import androidx.core.net.toUri
 import com.lumos.domain.model.Reserve
 import com.lumos.ui.components.Confirm
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.lumos.data.database.ContractHolder
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.Routes
 import com.lumos.ui.viewmodel.ContractViewModel
@@ -93,14 +94,22 @@ fun CitiesScreen(
     notificationsBadge: String,
     pSelected: Int,
     onNavigateToStreetScreen: (Long, String) -> Unit,
-    roles: Set<String>
+    roles: Set<String>,
+    directExecution: Boolean
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
 
-    val allExecutions by executionViewModel.executions.collectAsState()
+//    val allExecutions by executionViewModel.executions.collectAsState()
+    val allExecutions by if (directExecution) {
+        executionViewModel.directExecutions.collectAsState()
+    } else {
+        executionViewModel.executions.collectAsState()
+    }
+
+
     val isSyncing by executionViewModel.isSyncing.collectAsState()
     val responseError by executionViewModel.syncError.collectAsState()
-    var executions by remember { mutableStateOf<List<Execution>>(emptyList()) }
+    var executions by remember { mutableStateOf<List<ContractHolder>>(emptyList()) }
 
 
     LaunchedEffect(Unit) {
@@ -129,7 +138,8 @@ fun CitiesScreen(
         isSyncing = isSyncing,
         pSelected = pSelected,
         select = { contractId, contractor ->
-            onNavigateToStreetScreen(contractId, contractor)
+            if(directExecution) null
+            else onNavigateToStreetScreen(contractId, contractor)
         },
         error = responseError,
         refresh = {
@@ -142,7 +152,7 @@ fun CitiesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentCitiesScreen(
-    executions: List<Execution>,
+    executions: List<ContractHolder>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -343,34 +353,22 @@ fun PrevContentCitiesScreen() {
     val fakeContext = LocalContext.current
     val values =
         listOf(
-            Contract(
+            ContractHolder(
                 contractId = 1,
-                contractor = "Prefeitura Municipal de Belo Horizonte",
-                contractFile = "arquivo.pdf",
-                createdBy = "Gabriela",
-                createdAt = Instant.parse("2025-03-20T20:00:50.765Z").toString(),
-                status = ""
+                contractor = "Contagem"
             ),
-            Contract(
+            ContractHolder(
                 contractId = 1,
-                contractor = "Prefeitura Municipal de Ibirité",
-                contractFile = "arquivo.pdf",
-                createdBy = "Renato",
-                createdAt = Instant.parse("2025-03-19T23:29:50.765Z").toString(),
-                status = ""
+                contractor = "Ibrite"
             ),
-            Contract(
+            ContractHolder(
                 contractId = 1,
-                contractor = "Prefeitura Municipal de Poté",
-                contractFile = "arquivo.pdf",
-                createdBy = "Daniela",
-                createdAt = Instant.parse("2025-03-18T23:29:50.765Z").toString(),
-                status = ""
-            )
+                contractor = "Belo Horizonte"
+            ),
         )
 
     ContentCitiesScreen(
-        executions = emptyList(),
+        executions = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },

@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.lumos.data.repository.ReservationStatus
 import com.lumos.data.repository.ExecutionStatus
+import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.flow.Flow
@@ -24,9 +25,6 @@ interface ExecutionDao {
 
     @Query("SELECT * FROM reserves WHERE streetId = :streetId AND reserveStatus in (:status)")
     suspend fun getReservesOnce(streetId: Long, status: List<String>): List<Reserve>
-
-    @Query("SELECT * FROM executions WHERE executionStatus <> 'FINISHED' ORDER BY priority DESC, creationDate ASC")
-    fun getFlowExecutions(): Flow<List<Execution>>
 
     @Query("SELECT * FROM executions WHERE executionStatus = :status ORDER BY priority DESC, creationDate ASC")
     fun getFlowExecutions(status: String): Flow<List<Execution>>
@@ -75,4 +73,22 @@ interface ExecutionDao {
     @Query("DELETE FROM reserves WHERE streetId = :lng")
     suspend fun deleteReserves(lng: Long)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertDirectExecution(execution: DirectExecution)
+
+    @Query("UPDATE direct_executions SET executionStatus = :status WHERE contractId = :contractId")
+    suspend fun setDirectExecutionStatus(contractId: Long, status: String = ExecutionStatus.IN_PROGRESS)
+
+
+    @Query("SELECT contractId, contractor  FROM executions WHERE executionStatus = :status ORDER BY priority DESC, creationDate ASC")
+    fun getFlowExecutions(): Flow<List<ContractHolder>>
+
+    @Query("SELECT contractId, contractor FROM direct_executions WHERE executionStatus <> 'FINISHED'")
+    fun getFlowDirectExecutions(): Flow<List<ContractHolder>>
+
 }
+
+data class ContractHolder (
+    val contractId: Long,
+    val contractor: String
+)

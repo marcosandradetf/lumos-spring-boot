@@ -5,8 +5,11 @@ import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Deposit
+import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
@@ -28,8 +31,9 @@ import java.util.concurrent.Executors
         (SyncQueueEntity::class),
         (Execution::class),
         (Reserve::class),
-        (PreMeasurementStreetPhoto::class)],
-    version = 1,
+        (PreMeasurementStreetPhoto::class),
+        (DirectExecution::class)],
+    version = 2,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -39,24 +43,33 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun executionDao(): ExecutionDao
 
 
-
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
 
-//        private val MIGRATION_1_2 = object : Migration(1, 2) {
-//            override fun migrate(db: SupportSQLiteDatabase) {
-//                Log.d("RoomDB", "Executando MIGRATION_1_2")
-//
-//                // Desativa restrições de Foreign Key temporariamente
-//                db.execSQL("PRAGMA foreign_keys=OFF")
-//
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Criar a nova tabela 'direct_executions'
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS direct_executions (
+                            contractId INTEGER NOT NULL PRIMARY KEY,
+                            instructions TEXT NOT NULL,
+                            contractor TEXT NOT NULL,
+                            executionStatus TEXT NOT NULL
+                        )
+                    """.trimIndent()
+                )
 
-//
-//                Log.d("RoomDB", "MIGRATION_1_2 concluída com sucesso")
-//            }
-//        }
+                // Adicionar a nova coluna 'contractId' na tabela 'executions'
+                db.execSQL(
+                    """
+                        ALTER TABLE reserves ADD COLUMN contractId INTEGER NOT NULL DEFAULT 0
+                    """.trimIndent()
+                )
+            }
+        }
 
 
         fun getInstance(context: Context): AppDatabase {
@@ -67,7 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "app_database"
                 )
                     .addMigrations(
-//                        MIGRATION_1_2,
+                        MIGRATION_1_2,
                     )
                     .setQueryCallback({ sqlQuery, bindArgs ->
                         Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")

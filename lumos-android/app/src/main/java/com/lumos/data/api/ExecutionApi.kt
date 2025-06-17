@@ -1,6 +1,7 @@
 package com.lumos.data.api
 
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.ExecutionDTO
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -17,6 +18,11 @@ interface ExecutionApi {
     suspend fun getExecutions(
         @Query("uuid") uuid: String
     ): Response<List<ExecutionDTO>>
+
+    @GET("/api/mobile/execution/get-direct-executions")
+    suspend fun getDirectExecutions(
+        @Query("uuid") uuid: String
+    ): Response<List<DirectExecutionDTOResponse>>
 
     @Multipart
     @POST("/api/mobile/execution/upload")

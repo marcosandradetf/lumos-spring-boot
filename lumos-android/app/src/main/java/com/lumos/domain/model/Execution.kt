@@ -35,6 +35,7 @@ data class Reserve(
     val materialQuantity: Double,
     val reserveStatus: String,
     val streetId: Long,
+    val contractId: Long,
     val depositId: Long,
     val depositName: String,
     val depositAddress: String,
@@ -44,6 +45,16 @@ data class Reserve(
 
     val quantityExecuted: Double? = null
 )
+
+
+@Entity(tableName = "direct_executions")
+data class DirectExecution(
+    @PrimaryKey val contractId: Long,
+    var instructions: String,
+    var contractor: String,
+    var executionStatus: String
+)
+
 
 data class ExecutionDTO(
     val streetId: Long,
@@ -64,8 +75,30 @@ data class ExecutionDTO(
     val reserves: List<Reserve>,
 )
 
+data class DirectExecutionDTOResponse(
+    val contractId: Long,
+    val contractor: String,
+    val instructions: String,
+    val executionStatus: String,
+    val reserves: List<Reserve>,
+)
+
 data class SendExecutionDto(
     val streetId: Long,
+    val reserves: List<ReservePartial>
+)
+
+data class SendDirectExecutionDto(
+    val directExecutionId: Long,
+    val deviceStreetId: Long,
+    val deviceId: String,
+    val latitude: Double,
+    val longitude: Double,
+    val streetName: String,
+    val number: Int,
+    val hood: String,
+    val city: String,
+    val lastPower: String?,
     val reserves: List<ReservePartial>
 )
 

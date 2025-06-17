@@ -689,7 +689,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "Elton Melo",
             phoneNumber = "31999998090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -703,7 +704,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "Elton Melo",
             phoneNumber = "31999998090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -717,7 +719,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "Elton Melo",
             phoneNumber = "31999998090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -731,7 +734,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
             phoneNumber = "31999999090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -745,7 +749,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
             phoneNumber = "31999999090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -759,7 +764,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
             phoneNumber = "31999999090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -773,7 +779,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
             phoneNumber = "31999999090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         ),
         Reserve(
             reserveId = 1,
@@ -787,7 +794,8 @@ fun PrevMScreen() {
             depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
             stockistName = "João Gomes",
             phoneNumber = "31999999090",
-            requestUnit = "UN"
+            requestUnit = "UN",
+            contractId = -1
         )
     )
 
