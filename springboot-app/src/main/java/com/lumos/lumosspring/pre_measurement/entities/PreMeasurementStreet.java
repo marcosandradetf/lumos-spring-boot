@@ -36,7 +36,7 @@ public class PreMeasurementStreet {
     private Double latitude;
     private Double longitude;
 
-    private String streetStatus = ItemStatus.PENDING;
+    private String streetStatus = ExecutionStatus.PENDING;
 
     @Column(nullable = false)
     private Integer step;

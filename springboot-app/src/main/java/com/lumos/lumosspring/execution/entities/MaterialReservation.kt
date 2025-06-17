@@ -2,18 +2,17 @@ package com.lumos.lumosspring.execution.entities
 
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.stock.entities.MaterialStock
-import com.lumos.lumosspring.stock.entities.StockMovement.Status
 import com.lumos.lumosspring.team.entities.Team
 import com.lumos.lumosspring.util.ReservationStatus
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "tb_material_reservation")
+@Table(name = "tb_materials_reservations")
 class MaterialReservation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_material_reservation")
-    var idMaterialReservation: Long = 0
+    @Column(name = "material_id_reservation")
+    var materialIdReservation: Long = 0
 
     @Column(columnDefinition = "TEXT")
     var description: String? = null
@@ -44,8 +43,7 @@ class MaterialReservation {
 
     @ManyToOne
     @JoinColumn(name = "team_id")
-    var team: Team? = null
-
+    var team: Team = Team()
 
     fun confirmReservation() {
         materialStock?.removeStockAvailable(reservedQuantity)

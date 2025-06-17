@@ -106,7 +106,7 @@ data class ExecutionPartial(
     val contractor: String,
 )
 
-data class ExecutionDTO(
+data class IndirectExecutionDTO(
     val streetId: Long,
     val streetName: String,
     val streetNumber: String? = null,
@@ -122,6 +122,13 @@ data class ExecutionDTO(
     val longitude: Double?,
     val contractId: Long,
     val contractor: String,
+    val reserves: List<Reserve>,
+)
+
+data class DirectExecutionDTOResponse(
+    val contractId: Long,
+    val contractor: String,
+    val instructions: String,
     val reserves: List<Reserve>,
 )
 
@@ -147,4 +154,18 @@ data class SendExecutionDto(
 data class ReservePartial(
     val reserveId: Long,
     val quantityExecuted: Double,
+)
+
+data class SendDirectExecutionDto(
+    val directExecutionId: Long,
+    val deviceStreetId: Long,
+    val deviceId: String,
+    val latitude: Double,
+    val longitude: Double,
+    val streetName: String,
+    val number: Int,
+    val hood: String,
+    val city: String,
+    val lastPower: String?,
+    val reserves: List<ReservePartial>
 )

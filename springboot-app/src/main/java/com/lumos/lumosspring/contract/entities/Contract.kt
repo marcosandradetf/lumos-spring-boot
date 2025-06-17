@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.contract.entities
 
+import com.lumos.lumosspring.execution.entities.DirectExecution
 import com.lumos.lumosspring.user.User
 import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.ExecutionStatus
@@ -27,6 +28,9 @@ class Contract {
     var noticeFile : String? = null
     var contractFile : String? = null
     var status : String = ContractStatus.ACTIVE
+
+    @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "contract")
+    val directExecutions: List<DirectExecution> = arrayListOf()
 
     @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true, mappedBy = "contract")
     var contractItemsQuantitative: Set<ContractItemsQuantitative> = hashSetOf()

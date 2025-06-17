@@ -2,8 +2,10 @@ package com.lumos.lumosspring.execution.controller
 
 import com.lumos.lumosspring.execution.dto.DelegateDTO
 import com.lumos.lumosspring.execution.dto.DirectExecutionDTO
-import com.lumos.lumosspring.execution.dto.ExecutionDTO
+import com.lumos.lumosspring.execution.dto.DirectExecutionDTOResponse
+import com.lumos.lumosspring.execution.dto.IndirectExecutionDTO
 import com.lumos.lumosspring.execution.dto.ReserveDTOCreate
+import com.lumos.lumosspring.execution.dto.SendDirectExecutionDto
 import com.lumos.lumosspring.execution.dto.SendExecutionDto
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.MediaType
@@ -56,13 +58,24 @@ class ExecutionController(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
         value = ["/mobile/execution/upload"]
     )
-    fun uploadData(
+    fun uploadIndirectExecution(
         @RequestPart("photo") photo: MultipartFile,
         @RequestPart("execution") execution: SendExecutionDto?
-    ): ResponseEntity<Any> = executionService.uploadData(photo, execution)
+    ): ResponseEntity<Any> = executionService.uploadIndirectExecution(photo, execution)
 
+    @PostMapping(
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
+        value = ["/mobile/execution/upload-direct-execution"]
+    )
+    fun uploadDirectExecution(
+        @RequestPart("photo") photo: MultipartFile,
+        @RequestPart("execution") execution: SendDirectExecutionDto?
+    ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
 
     @GetMapping("/mobile/execution/get-executions")
-    fun getExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<ExecutionDTO>> = executionService.getExecutionsByStreets(uuid)
+    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<IndirectExecutionDTO>> = executionService.getIndirectExecutions(uuid)
+
+    @GetMapping("/mobile/execution/get-direct-executions")
+    fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)
 
 }
