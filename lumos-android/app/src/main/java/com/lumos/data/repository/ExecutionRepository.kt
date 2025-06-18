@@ -143,14 +143,10 @@ class ExecutionRepository(
         fetchedExecutions.forEach { executionDto ->
             val execution = DirectExecution(
                 contractId = executionDto.contractId,
-                address = null,
                 executionStatus = "PENDING",
                 type = "",
                 itemsQuantity = executionDto.reserves.size,
                 creationDate = "",
-                latitude = 0.0,
-                longitude = 0.0,
-                photoUri = "",
                 contractor = executionDto.contractor,
                 instructions = executionDto.instructions
             )

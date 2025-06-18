@@ -157,7 +157,8 @@ public class MaterialStock {
         return reservations;
     }
 
-    public void setReservations(List<MaterialReservation> materialReservation) {
-        this.reservations = materialReservation;
+    public void addStocks(double reservedQuantity) {
+        this.stockQuantity += reservedQuantity;
+        this.stockAvailable += reservedQuantity;
     }
 }

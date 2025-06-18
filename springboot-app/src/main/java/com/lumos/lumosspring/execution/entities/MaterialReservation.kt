@@ -19,7 +19,7 @@ class MaterialReservation {
 
     @ManyToOne
     @JoinColumn(name = "material_stock_id")
-    var materialStock: MaterialStock? = null
+    var materialStock: MaterialStock = MaterialStock()
 
     @ManyToOne(cascade = [(CascadeType.MERGE)])
     @JoinColumn(name = "pre_measurement_street_id")
@@ -35,9 +35,9 @@ class MaterialReservation {
     @Column(nullable = false)
     var reservedQuantity: Double = 0.0
 
-    @Column(nullable = false)
-    var quantityCompleted: Double = 0.0
-        private set
+//    @Column(nullable = false)
+//    var quantityCompleted: Double = 0.0
+//        private set
 
     var status: String = ReservationStatus.PENDING
 
@@ -46,28 +46,20 @@ class MaterialReservation {
     var team: Team = Team()
 
     fun confirmReservation() {
-        materialStock?.removeStockAvailable(reservedQuantity)
+        materialStock.removeStockAvailable(reservedQuantity)
         status = ReservationStatus.APPROVED
     }
 
     fun rejectReservation() {
-        materialStock?.let {
-            it.addStockAvailable(reservedQuantity)
-            materialStock = null
-            status = ReservationStatus.REJECTED
-        }
+        status = ReservationStatus.REJECTED
     }
 
-    fun setQuantityCompleted(quantityCompleted: Double) {
-        this.quantityCompleted = quantityCompleted
 
-        materialStock?.let {
-            it.removeStockQuantity(quantityCompleted)
-            it.addStockAvailable(reservedQuantity)
-            it.removeStockAvailable(quantityCompleted)
-        }
-
-        status = ReservationStatus.FINISHED
+    fun markAsCollected() {
+        status = ReservationStatus.COLLECTED
+        materialStock.removeStockQuantity(reservedQuantity)
+        team.deposit.materialStocks.find { it.material.idMaterial == materialStock.material.idMaterial }
+            ?.addStocks(reservedQuantity)
     }
 
 }

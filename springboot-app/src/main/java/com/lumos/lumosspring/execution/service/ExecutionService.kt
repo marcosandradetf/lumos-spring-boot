@@ -294,7 +294,7 @@ class ExecutionService(
 
         for (item in executionReserve.items) {
             for (materialReserve in item.materials) {
-                val materialStock = materialStockRepository.findById(materialReserve.materialId)
+                val materialStock = materialStockRepository.findById(materialReserve.materialId) // conferir
                     .orElse(null) ?: throw IllegalStateException("Material não encontrado")
 
                 if (materialStock.stockAvailable < materialReserve.materialQuantity)
@@ -329,10 +329,13 @@ class ExecutionService(
                         this.contractItemId = contractItemId
                         if (teamMatch || stockistMatch) {
                             this.confirmReservation()
-                            if (teamMatch) this.status = ReservationStatus.COLLECTED
+                            if (teamMatch) {
+                                this.markAsCollected()
+                            }
                         }
                     }
                 )
+
             }
         }
 
@@ -583,11 +586,14 @@ class ExecutionService(
         for (r in executionDTO.reserves) {
             val reserve = materialReservationRepository.findById(r.reserveId)
                 .orElseThrow { IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada") }
-
-            reserve.setQuantityCompleted(r.quantityExecuted)
-            materialReservationRepository.save(reserve)
-
             val contractItemId = reserve.contractItemId
+
+            // melhorar
+            /*
+            /
+             */
+            //
+
             val sql = "UPDATE tb_contracts_items set quantity_executed = ? where contract_item_id = ?"
             jdbcTemplate.update(sql, r.quantityExecuted, contractItemId)
         }
@@ -635,11 +641,14 @@ class ExecutionService(
         for (r in executionDTO.reserves) {
             val reserve = materialReservationRepository.findById(r.reserveId)
                 .orElseThrow { IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada") }
-
-            reserve.setQuantityCompleted(r.quantityExecuted)
-            materialReservationRepository.save(reserve)
-
             val contractItemId = reserve.contractItemId
+
+            // melhorar
+            /*
+            /
+             */
+            //
+
             val sql = "UPDATE tb_contracts_items set quantity_executed = ? where contract_item_id = ?"
             jdbcTemplate.update(sql, r.quantityExecuted, contractItemId)
         }
