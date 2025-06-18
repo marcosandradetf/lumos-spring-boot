@@ -1,7 +1,6 @@
 package com.lumos.data.repository
 
 import android.app.Application
-import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
@@ -11,11 +10,11 @@ import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
-import com.lumos.data.database.ContractHolder
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
+import com.lumos.domain.model.ExecutionHolder
 import com.lumos.domain.model.Reserve
 import com.lumos.domain.model.SendExecutionDto
 import com.lumos.midleware.SecureStorage
@@ -69,14 +68,11 @@ class ExecutionRepository(
         fetchedExecutions.forEach { executionDto ->
             val execution = Execution(
                 streetId = executionDto.streetId,
-
                 streetName = executionDto.streetName,
                 streetNumber = executionDto.streetNumber,
                 streetHood = executionDto.streetHood,
                 city = executionDto.city,
                 state = executionDto.state,
-
-                teamName = executionDto.teamName,
                 executionStatus = "PENDING",
                 priority = executionDto.priority,
                 type = executionDto.type,
@@ -147,13 +143,21 @@ class ExecutionRepository(
         fetchedExecutions.forEach { executionDto ->
             val execution = DirectExecution(
                 contractId = executionDto.contractId,
-                instructions = executionDto.instructions,
+                address = null,
+                executionStatus = "PENDING",
+                type = "",
+                itemsQuantity = executionDto.reserves.size,
+                creationDate = "",
+                latitude = 0.0,
+                longitude = 0.0,
+                photoUri = "",
                 contractor = executionDto.contractor,
-                executionStatus = "PENDING"
+                instructions = executionDto.instructions
             )
 
+
+
             db.executionDao().insertDirectExecution(execution)
-            db.executionDao().setDirectExecutionStatus(execution.contractId, execution.executionStatus)
 
             executionDto.reserves.forEach { r ->
                 val reserve = Reserve(
@@ -175,7 +179,7 @@ class ExecutionRepository(
         }
     }
 
-    fun getFlowExecutions(): Flow<List<ContractHolder>> =
+    fun getFlowExecutions(): Flow<List<ExecutionHolder>> =
         db.executionDao().getFlowExecutions()
 
     fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>> =
@@ -281,7 +285,7 @@ class ExecutionRepository(
                     RequestResult.NoInternet
                 }
                 is RequestResult.Timeout -> RequestResult.Timeout
-                is RequestResult.ServerError -> RequestResult.ServerError(response.code, response.message)
+                is ServerError -> ServerError(response.code, response.message)
                 is RequestResult.UnknownError -> {
                     Log.e("Sync", "Erro desconhecido", response.error)
                     RequestResult.UnknownError(response.error)
@@ -301,6 +305,6 @@ class ExecutionRepository(
     }
 
 
-    fun getFlowDirectExecutions(): Flow<List<ContractHolder>> =
+    fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>> =
         db.executionDao().getFlowDirectExecutions()
 }

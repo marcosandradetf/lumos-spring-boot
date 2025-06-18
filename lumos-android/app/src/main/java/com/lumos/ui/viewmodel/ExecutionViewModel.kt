@@ -6,11 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
-import com.lumos.data.database.ContractHolder
 import com.lumos.data.repository.ExecutionRepository
 import com.lumos.data.repository.ReservationStatus
-import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.Execution
+import com.lumos.domain.model.ExecutionHolder
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,11 +24,11 @@ class ExecutionViewModel(
     private val repository: ExecutionRepository,
 
     ) : ViewModel() {
-    val executions: StateFlow<List<ContractHolder>> = repository.getFlowExecutions()
+    val executions: StateFlow<List<ExecutionHolder>> = repository.getFlowExecutions()
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val directExecutions: StateFlow<List<ContractHolder>> = repository.getFlowDirectExecutions()
+    val directExecutions: StateFlow<List<ExecutionHolder>> = repository.getFlowDirectExecutions()
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

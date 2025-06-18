@@ -32,6 +32,7 @@ import androidx.navigation.NavHostController
 import com.lumos.data.repository.ContractStatus
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Execution
+import com.lumos.domain.model.ExecutionHolder
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -102,7 +103,7 @@ fun HomeScreen(
 
 @Composable
 fun MaintenanceStatusCard(
-    executions: List<Execution>,
+    executions: List<ExecutionHolder>,
     navController: NavHostController
 ) {
     val text = if (executions.size > 1) "Sua equipe possuí ${executions.size} execuções alocadas"

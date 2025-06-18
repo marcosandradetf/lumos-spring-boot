@@ -8,14 +8,13 @@ import okhttp3.Address
 @Entity(tableName = "executions")
 data class Execution(
     @PrimaryKey val streetId: Long,
+    val contractId: Long,
 
     val streetName: String,
     val streetNumber: String? = null,
     val streetHood: String? = null,
     val city: String? = null,
     val state: String? = null,
-
-    val teamName: String,
     val executionStatus: String,
     val priority: Boolean,
     val type: String,
@@ -24,8 +23,22 @@ data class Execution(
     val latitude: Double? = null,
     val longitude: Double? = null,
     var photoUri: String? = null,
-    var contractId: Long,
     var contractor: String,
+)
+
+@Entity(tableName = "direct_executions")
+data class DirectExecution(
+    @PrimaryKey val contractId: Long,
+    val address: String? = null,
+    val executionStatus: String,
+    val type: String,
+    val itemsQuantity: Int,
+    val creationDate: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    var photoUri: String? = null,
+    var contractor: String,
+    var instructions: String? = null,
 )
 
 @Entity(tableName = "reserves")
@@ -42,19 +55,8 @@ data class Reserve(
     val stockistName: String,
     val phoneNumber: String,
     val requestUnit: String,
-
     val quantityExecuted: Double? = null
 )
-
-
-@Entity(tableName = "direct_executions")
-data class DirectExecution(
-    @PrimaryKey val contractId: Long,
-    var instructions: String,
-    var contractor: String,
-    var executionStatus: String
-)
-
 
 data class ExecutionDTO(
     val streetId: Long,
@@ -63,7 +65,6 @@ data class ExecutionDTO(
     val streetHood: String? = null,
     val city: String? = null,
     val state: String? = null,
-    val teamName: String,
     val priority: Boolean,
     val type: String,
     val itemsQuantity: Int,
@@ -102,3 +103,23 @@ data class SendDirectExecutionDto(
     val reserves: List<ReservePartial>
 )
 
+
+data class ExecutionHolder(
+    val streetId: Long? = null,
+    val contractId: Long,
+    val streetName: String? = null,
+    val streetNumber: String? = null,
+    val streetHood: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val executionStatus: String,
+    val priority: Boolean? = null,
+    val type: String,
+    val itemsQuantity: Int,
+    val creationDate: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    var photoUri: String? = null,
+    var contractor: String,
+    var instructions: String? = null,
+)

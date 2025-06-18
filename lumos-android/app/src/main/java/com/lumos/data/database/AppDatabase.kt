@@ -55,10 +55,28 @@ abstract class AppDatabase : RoomDatabase() {
                     """
                         CREATE TABLE IF NOT EXISTS direct_executions (
                             contractId INTEGER NOT NULL PRIMARY KEY,
-                            instructions TEXT NOT NULL,
+                            streetName TEXT,
+                            streetNumber TEXT,
+                            streetHood TEXT,
+                            city TEXT,
+                            state TEXT,
+                            executionStatus TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            itemsQuantity INTEGER NOT NULL,
+                            creationDate TEXT NOT NULL,
+                            latitude REAL,
+                            longitude REAL,
+                            photoUri TEXT,
                             contractor TEXT NOT NULL,
-                            executionStatus TEXT NOT NULL
-                        )
+                            instructions TEXT
+                        );
+                    """.trimIndent()
+                )
+
+                // Adicionar a nova coluna 'contractId' na tabela 'executions'
+                db.execSQL(
+                    """
+                        ALTER TABLE executions DROP COLUMN teamName
                     """.trimIndent()
                 )
 

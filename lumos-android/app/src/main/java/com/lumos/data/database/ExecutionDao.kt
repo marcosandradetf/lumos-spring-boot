@@ -4,10 +4,12 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.lumos.data.repository.ReservationStatus
 import com.lumos.data.repository.ExecutionStatus
+import com.lumos.data.repository.ReservationStatus
+import com.lumos.domain.model.Contract
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.Execution
+import com.lumos.domain.model.ExecutionHolder
 import com.lumos.domain.model.Reserve
 import kotlinx.coroutines.flow.Flow
 
@@ -70,25 +72,25 @@ interface ExecutionDao {
     @Query("DELETE FROM executions WHERE streetId = :lng")
     suspend fun deleteExecution(lng: Long)
 
+    @Query("DELETE FROM direct_executions WHERE contractId = :contractId")
+    suspend fun deleteDirectExecution(contractId: Long)
+
     @Query("DELETE FROM reserves WHERE streetId = :lng")
     suspend fun deleteReserves(lng: Long)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertDirectExecution(execution: DirectExecution)
+    @Query("DELETE FROM reserves WHERE contractId = :contractId")
+    suspend fun deleteDirectReserves(contractId: Long)
 
-    @Query("UPDATE direct_executions SET executionStatus = :status WHERE contractId = :contractId")
-    suspend fun setDirectExecutionStatus(contractId: Long, status: String = ExecutionStatus.IN_PROGRESS)
+    @Query("SELECT streetId, contractId, streetName, streetNumber, streetHood, city, state, executionStatus, priority, type, itemsQuantity, creationDate, latitude, longitude, photoUri, contractor, null" +
+            " FROM executions WHERE executionStatus <> 'FINISHED' ORDER BY priority DESC, creationDate ASC")
+    fun getFlowExecutions(): Flow<List<ExecutionHolder>>
 
+    @Query("SELECT null, contractId, address, null, null, null, null, executionStatus, null, type, itemsQuantity, creationDate, latitude, longitude, photoUri, contractor, instructions" +
+            " FROM direct_executions WHERE executionStatus <> 'FINISHED'")
+    fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>>
 
-    @Query("SELECT contractId, contractor  FROM executions WHERE executionStatus = :status ORDER BY priority DESC, creationDate ASC")
-    fun getFlowExecutions(): Flow<List<ContractHolder>>
-
-    @Query("SELECT contractId, contractor FROM direct_executions WHERE executionStatus <> 'FINISHED'")
-    fun getFlowDirectExecutions(): Flow<List<ContractHolder>>
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertDirectExecution(execution: DirectExecution)
 
 }
 
-data class ContractHolder (
-    val contractId: Long,
-    val contractor: String
-)

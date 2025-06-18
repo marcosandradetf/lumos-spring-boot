@@ -432,7 +432,7 @@ fun Content(
                         .fillMaxSize()
                         .padding(top = if (error != null) 60.dp else 0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+                    verticalArrangement = Arrangement.spacedBy(5.dp) // Espaço entre os cards
                 ) {
 
                     if (executions.isEmpty()) {
@@ -570,21 +570,12 @@ fun Content(
 
                                         }
 
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = "Responsável: ${execution.teamName}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Normal,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
 
                                         // Informação extra
                                         if (execution.priority)
                                             Row(
-                                                modifier = Modifier.fillMaxWidth(),
+                                                modifier = Modifier.fillMaxWidth()
+                                                    .padding(top=10.dp),
                                                 horizontalArrangement = Arrangement.End
                                             ) {
                                                 Column(
@@ -624,7 +615,6 @@ fun PrevStreetsScreen() {
             Execution(
                 streetId = 1,
                 streetName = "Rua Dona Tina, 251",
-                teamName = "Equipe Norte",
                 executionStatus = "PENDING",
                 priority = true,
                 type = "INSTALLATION",
@@ -639,7 +629,6 @@ fun PrevStreetsScreen() {
             Execution(
                 streetId = 2,
                 streetName = "Rua Marcos Coelho Neto, 960",
-                teamName = "Equipe Sul",
                 executionStatus = ExecutionStatus.IN_PROGRESS,
                 priority = false,
                 type = "MAINTENANCE",
@@ -654,7 +643,6 @@ fun PrevStreetsScreen() {
             Execution(
                 streetId = 3,
                 streetName = "Rua Chopin, 35",
-                teamName = "Equipe BH",
                 executionStatus = ExecutionStatus.FINISHED,
                 priority = false,
                 type = "INSTALLATION",

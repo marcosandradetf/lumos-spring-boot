@@ -492,7 +492,8 @@ fun AppNavigation(
                         onNavigateToStreetScreen = { contractId, contractor ->
                             navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
                         },
-                        roles = secureStorage.getRoles()
+                        roles = secureStorage.getRoles(),
+                        directExecution = false
                     )
                 }
 

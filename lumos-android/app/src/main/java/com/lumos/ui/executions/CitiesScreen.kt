@@ -1,9 +1,6 @@
 package com.lumos.ui.executions
 
 import android.content.Context
-import android.content.Intent
-import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,24 +21,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddReaction
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.NetworkCell
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Power
-import androidx.compose.material.icons.filled.ProductionQuantityLimits
 import androidx.compose.material.icons.filled.SentimentVerySatisfied
-import androidx.compose.material.icons.filled.Warehouse
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,31 +43,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.repository.ReservationStatus
-import com.lumos.data.repository.ExecutionStatus
-import com.lumos.domain.model.Execution
+import com.lumos.domain.model.ExecutionHolder
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.ExecutionViewModel
-import androidx.core.net.toUri
-import com.lumos.domain.model.Reserve
-import com.lumos.ui.components.Confirm
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import com.lumos.data.database.ContractHolder
-import com.lumos.domain.model.Contract
-import com.lumos.navigation.Routes
-import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.utils.Utils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.time.Instant
 
 @Composable
 fun CitiesScreen(
@@ -109,7 +82,7 @@ fun CitiesScreen(
 
     val isSyncing by executionViewModel.isSyncing.collectAsState()
     val responseError by executionViewModel.syncError.collectAsState()
-    var executions by remember { mutableStateOf<List<ContractHolder>>(emptyList()) }
+    var executions by remember { mutableStateOf<List<ExecutionHolder>>(emptyList()) }
 
 
     LaunchedEffect(Unit) {
@@ -152,7 +125,7 @@ fun CitiesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentCitiesScreen(
-    executions: List<ContractHolder>,
+    executions: List<ExecutionHolder>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -353,17 +326,29 @@ fun PrevContentCitiesScreen() {
     val fakeContext = LocalContext.current
     val values =
         listOf(
-            ContractHolder(
+            ExecutionHolder(
                 contractId = 1,
-                contractor = "Contagem"
+                contractor = "Contagem",
+                executionStatus = "PENDING",
+                type = "",
+                itemsQuantity = 12,
+                creationDate = "",
             ),
-            ContractHolder(
+            ExecutionHolder(
                 contractId = 1,
-                contractor = "Ibrite"
+                contractor = "Ibrite",
+                executionStatus = "PENDING",
+                type = "",
+                itemsQuantity = 12,
+                creationDate = "",
             ),
-            ContractHolder(
+            ExecutionHolder(
                 contractId = 1,
-                contractor = "Belo Horizonte"
+                contractor = "Belo Horizonte",
+                executionStatus = "PENDING",
+                type = "",
+                itemsQuantity = 12,
+                creationDate = "",
             ),
         )
 
