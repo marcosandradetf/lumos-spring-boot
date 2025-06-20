@@ -3,8 +3,7 @@ package com.lumos.lumosspring.stock.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "tb_types")
-public class Type {
+public class MaterialType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_type")
@@ -13,7 +12,7 @@ public class Type {
     private String typeName;
     @ManyToOne
     @JoinColumn(name = "id_group", nullable = false)
-    private Group group;
+    private MaterialGroup materialGroup;
 
     public long getIdType() {
         return idType;
@@ -31,11 +30,11 @@ public class Type {
         this.typeName = typeName;
     }
 
-    public Group getGroup() {
-        return group;
+    public MaterialGroup getGroup() {
+        return materialGroup;
     }
 
-    public void setGroup(Group group) {
-        this.group = group;
+    public void setGroup(MaterialGroup materialGroup) {
+        this.materialGroup = materialGroup;
     }
 }

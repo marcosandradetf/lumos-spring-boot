@@ -3,7 +3,6 @@ package com.lumos.lumosspring.team.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "tb_regions")
 public class Region {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

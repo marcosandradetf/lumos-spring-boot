@@ -1,16 +1,12 @@
 package com.lumos.lumosspring.execution.service
 
-import com.google.protobuf.LazyStringArrayList.emptyList
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.entities.DirectExecution
 import com.lumos.lumosspring.execution.entities.DirectExecutionItem
 import com.lumos.lumosspring.execution.entities.DirectExecutionStreet
 import com.lumos.lumosspring.execution.entities.MaterialReservation
-import com.lumos.lumosspring.execution.repository.DirectExecutionRepository
-import com.lumos.lumosspring.execution.repository.DirectExecutionRepositoryItem
-import com.lumos.lumosspring.execution.repository.DirectExecutionRepositoryStreet
-import com.lumos.lumosspring.execution.repository.MaterialReservationRepository
+import com.lumos.lumosspring.execution.repository.*
 import com.lumos.lumosspring.fileserver.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
@@ -23,16 +19,20 @@ import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
+import com.lumos.lumosspring.util.JdbcUtil.existsRaw
+import com.lumos.lumosspring.util.JdbcUtil.getDataNamed
+import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import jakarta.transaction.Transactional
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
+import kotlin.math.max
+import kotlin.math.min
 
 @Service
 class ExecutionService(
@@ -48,17 +48,18 @@ class ExecutionService(
     private val reservationManagementRepository: ReservationManagementRepository,
     private val minioService: MinioService,
     private val jdbcTemplate: JdbcTemplate,
+    private val namedJdbc: NamedParameterJdbcTemplate,
     private val contractRepository: ContractRepository,
     private val directExecutionRepository: DirectExecutionRepository,
     private val directExecutionItemRepository: DirectExecutionRepositoryItem,
+    private val jdbcGetExecutionRepository: JdbcGetExecutionRepository,
     private val directExecutionRepositoryStreet: DirectExecutionRepositoryStreet,
-
-    ) {
+) {
     // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
     @Transactional
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
         val stockist =
-            userRepository.findByIdUser(UUID.fromString(delegateDTO.stockistId))
+            userRepository.findByUserId(UUID.fromString(delegateDTO.stockistId))
                 .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(DefaultResponse("Estoquista não encontrado"))
 
@@ -91,7 +92,7 @@ class ExecutionService(
         for (delegateStreet in delegateDTO.street) {
             val team = teamRepository.findById(delegateStreet.teamId)
                 .orElse(null) ?: throw IllegalStateException()
-            val assignBy = userRepository.findByIdUser(currentUserUUID)
+            val assignBy = userRepository.findByUserId(currentUserUUID)
                 .orElse(null) ?: throw IllegalStateException()
             val prioritized = delegateStreet.prioritized
             val comment = delegateStreet.comment
@@ -110,7 +111,7 @@ class ExecutionService(
     @Transactional
     fun delegateDirectExecution(execution: DirectExecutionDTO): ResponseEntity<Any> {
         val stockist =
-            userRepository.findByIdUser(UUID.fromString(execution.stockistId))
+            userRepository.findByUserId(UUID.fromString(execution.stockistId))
                 .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(DefaultResponse("Estoquista não encontrado"))
 
@@ -124,7 +125,7 @@ class ExecutionService(
 
         val currentUserUUID = UUID.fromString(execution.currentUserUUID)
 
-        val user = userRepository.findByIdUser(currentUserUUID)
+        val user = userRepository.findByUserId(currentUserUUID)
             .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(DefaultResponse("Usuário atual não encontrado"))
 
@@ -133,26 +134,27 @@ class ExecutionService(
         management.stockist = stockist
         reservationManagementRepository.save(management)
 
-        val directExecution = DirectExecution()
-        directExecution.contract = contract
-        directExecution.instructions = execution.instructions
-        directExecution.team = team
-        directExecution.assignedBy = user
-        directExecution.reservationManagement = management
-        directExecutionRepository.save(directExecution)
+        val directExecution = DirectExecution(
+            instructions = execution.instructions,
+            contractId = execution.contractId,
+            teamId = execution.teamId,
+            assignedBy = currentUserUUID,
+            reservationManagementId = management.reservationManagementId
+        )
 
         for (item in execution.items) {
-            val ciq = contract.contractItemsQuantitative
+            val ciq = contract.contractItem
                 .find { it.contractItemId == item.contractItemId }
 
             if (ciq != null) {
                 if ((ciq.contractedQuantity - ciq.quantityExecuted) < item.quantity) {
                     throw IllegalStateException("Não há saldo disponível para o item ${ciq.referenceItem.nameForImport}")
                 }
-                val directExecutionItem = DirectExecutionItem()
-                directExecutionItem.contractItem = ciq
-                directExecutionItem.measuredItemQuantity = item.quantity
-                directExecutionItem.directExecution = directExecution
+                val directExecutionItem = DirectExecutionItem(
+                    measuredItemQuantity = item.quantity,
+                    contractItemId = ciq.contractItemId,
+                    directExecutionId = directExecution.directExecutionId
+                )
                 directExecutionItemRepository.save(directExecutionItem)
             }
         }
@@ -167,86 +169,109 @@ class ExecutionService(
             return ResponseEntity.badRequest().build()
         }
 
-        val reserves =
-            reservationManagementRepository.findAllByStatusAndStockistIdUser(ReservationStatus.PENDING, userUUID)
         val response = mutableListOf<ReserveDTOResponse>()
+        val pendingManagement = getRawData(
+            namedJdbc,
+            "select rm.reservation_management_id, rm.description from reservation_management rm \n" +
+                    "where rm.status = :status and rm.stockist_id = :stockist_id",
+            mapOf("status" to ReservationStatus.PENDING, "stockist_id" to userUUID)
+        )
 
-        for (reserve in reserves) {
-            val description = reserve.description ?: ""
-            if (reserve.directExecutions.isNotEmpty()) {
-                val directExecutions = reserve.directExecutions
-                    .filter { it.directExecutionStatus == ExecutionStatus.WAITING_STOCKIST }
-                    .map { execution ->
-                        val items = execution.directItems
-                            .map { directItem ->
-                                val ref = directItem.contractItem.referenceItem
-                                ItemResponseDTO(
-                                    itemId = directItem.directExecutionItemId,
-                                    description = ref.nameForImport ?: "",
-                                    quantity = directItem.measuredItemQuantity,
-                                    type = ref.type,
-                                    linking = ref.linking
-                                )
-                            }
+        for (row in pendingManagement) {
+            val reservationManagementId = (row["reservation_management_id"] as? Number)?.toLong() ?: 0L
+            val description = row["description"] as? String ?: ""
+            val directExecutionWaiting = getRawData(
+                namedJdbc,
+                "select de.direct_execution_id, au.name || ' ' || au.last_name as completedName ,  t.id_team, t.team_name, d.deposit_name from direct_execution de \n" +
+                        "inner join team t on t.id_team = de.team_id \n" +
+                        "inner join deposit d on d.id_deposit = t.deposit_id_deposit \n" +
+                        "inner join app_user au on au.user_id = de.assigned_user_id \n" +
+                        "where de.reservation_management_id = :reservation_management_id",
+                mapOf("reservation_management_id" to reservationManagementId)
+            )
 
-                        ReserveStreetDTOResponse(
-                            preMeasurementStreetId = 0,
-                            streetName = "",
-                            latitude = null,
-                            longitude = null,
-                            prioritized = false,
-                            comment = "DIRECT_EXECUTION",
-                            assignedBy = execution.assignedBy.completedName,
-                            teamId = execution.team.idTeam,
-                            teamName = execution.team.teamName,
-                            truckDepositName = execution.team.deposit?.depositName ?: "",
-                            items = items
-                        )
-                    }
+            val directExecutions: List<ReserveStreetDTOResponse> = directExecutionWaiting.map { row ->
+                val directExecutionId = (row["direct_execution_id"] as? Number)?.toLong() ?: 0L
 
-                response.add(ReserveDTOResponse(description, directExecutions))
-            } else {
-                val streets = reserve.streets
-                    .sortedBy { it.prioritized == false }
-                    .filter { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
-                    .map { street ->
-                        val items = street.items
-                            .filter { item ->
-                                val type = item.contractItem.referenceItem.type
-                                !listOf("SERVIÇO", "PROJETO").contains(type)
-                            }
-                            .map { item ->
-                                val ref = item.contractItem.referenceItem
-                                ItemResponseDTO(
-                                    itemId = item.preMeasurementStreetItemId,
-                                    description = ref.nameForImport ?: "",
-                                    quantity = item.measuredItemQuantity,
-                                    type = ref.type,
-                                    linking = ref.linking
-                                )
-                            }
+                val items = getDataNamed<ItemResponseDTO>(
+                    namedJdbc = namedJdbc,
+                    sql =
+                        """
+                            SELECT dei.direct_execution_item_id, cri.name_for_import, cri.type, cri.linking 
+                            FROM direct_execution_item dei
+                            INNER JOIN contract_item ci ON ci.contract_item_id = dei.contract_item_id
+                            INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
+                            WHERE dei.direct_execution_id = :direct_execution_id    
+                        """.trimIndent(),
+                    params = mapOf("direct_execution_id" to directExecutionId)
+                )
 
-                        ReserveStreetDTOResponse(
-                            preMeasurementStreetId = street.preMeasurementStreetId,
-                            streetName = street.street,
-                            latitude = street.latitude,
-                            longitude = street.longitude,
-                            prioritized = street.prioritized,
-                            comment = street.comment,
-                            assignedBy = street.assignedBy.completedName,
-                            teamId = street.team?.idTeam ?: 0L,
-                            teamName = street.team?.teamName ?: "",
-                            truckDepositName = street.team?.deposit?.depositName ?: "",
-                            items = items
-                        )
-                    }
-
-                response.add(ReserveDTOResponse(description, streets))
+                ReserveStreetDTOResponse(
+                    preMeasurementStreetId = 0,
+                    streetName = "",
+                    latitude = null,
+                    longitude = null,
+                    prioritized = false,
+                    comment = "DIRECT_EXECUTION",
+                    assignedBy = row["completedName"]?.toString() ?: "",
+                    teamId = (row["id_team"] as? Number)?.toLong() ?: 0L,
+                    teamName = row["team_name"]?.toString() ?: "",
+                    truckDepositName = row["deposit_name"]?.toString() ?: "",
+                    items = items
+                )
             }
+
+            val inDirectExecutionWaiting = getRawData(
+                namedJdbc,
+                "select pms.pre_measurement_street_id, pms.street, pms.latitude, pms.longitude, pms.prioritized, rm.description, \n" +
+                        "pms.comment, au.name || ' ' || au.last_name as completedName , t.id_team, t.team_name, d.deposit_name \n" +
+                        "from pre_measurement_street pms \n" +
+                        "inner join team t on t.id_team = pms.team_id \n" +
+                        "inner join deposit d on d.id_deposit = t.deposit_id_deposit \n" +
+                        "inner join app_user au on au.user_id = pms.assigned_by_user_id \n" +
+                        "where pms.reservation_management_id = :reservation_management_id",
+                mapOf("reservation_management_id" to reservationManagementId)
+            )
+
+            val indirectExecutions: List<ReserveStreetDTOResponse> = inDirectExecutionWaiting.map { row ->
+                val preMeasurementStreetId = (row["pre_measurement_street_id"] as? Number)?.toLong() ?: 0L
+
+                val items = getDataNamed<ItemResponseDTO>(
+                    namedJdbc = namedJdbc,
+                    sql =
+                        """
+                            SELECT pmsi.pre_measurement_street_item_id, pmsi.measured_item_quantity, cri.name_for_import, cri.type, cri.linking 
+                            FROM pre_measurement_street_item pmsi
+                            INNER JOIN contract_item ci ON ci.contract_item_id = pmsi.contract_item_id
+                            INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
+                            WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id       
+                        """.trimIndent(),
+                    params = mapOf("pre_measurement_street_id" to preMeasurementStreetId)
+                )
+
+                ReserveStreetDTOResponse(
+                    preMeasurementStreetId = preMeasurementStreetId,
+                    streetName = row["street"]?.toString() ?: "",
+                    latitude = (row["latitude"] as? Number)?.toDouble() ?: 0.0,
+                    longitude = (row["longitude"] as? Number)?.toDouble() ?: 0.0,
+                    prioritized = (row["prioritized"] as? Boolean) ?: false,
+                    comment = (row["comment"] as? String) ?: "",
+                    assignedBy = (row["completedName"] as? String) ?: "",
+                    teamId = (row["id_team"] as? Number)?.toLong() ?: 0L,
+                    teamName = row["team_name"]?.toString() ?: "",
+                    truckDepositName = (row["deposit_name"] as? String) ?: "",
+                    items = items
+                )
+            }
+
+
+            val executions = directExecutions.ifEmpty { indirectExecutions }
+            response.add(ReserveDTOResponse(description, executions))
         }
 
         return ResponseEntity.ok(response)
     }
+
 
     fun getStockMaterialForLinking(linking: String, type: String, truckDepositName: String): ResponseEntity<Any> {
         var materials: List<MaterialInStockDTO>
@@ -285,7 +310,7 @@ class ExecutionService(
         }
 
 
-        val reservation = mutableListOf<MaterialReservation>()
+        val reservations = mutableListOf<MaterialReservation>()
         val userUUID = try {
             UUID.fromString(strUserUUID)
         } catch (e: IllegalArgumentException) {
@@ -294,16 +319,9 @@ class ExecutionService(
 
         for (item in executionReserve.items) {
             for (materialReserve in item.materials) {
-                val materialStock = materialStockRepository.findById(materialReserve.materialId) // conferir
-                    .orElse(null) ?: throw IllegalStateException("Material não encontrado")
 
-                if (materialStock.stockAvailable < materialReserve.materialQuantity)
-                    throw IllegalArgumentException("O material ${materialStock.material.materialName} não possuí estoque suficiente")
-
-                val deposit = materialStock.deposit
-                val stockistMatch = deposit.stockists.any { it.user.idUser == userUUID }
-                val teamMatch = materialStock.deposit.teams.isNotEmpty()
-                val contractItemId = util.getDescription(
+                val contractItemId = JdbcUtil.getDescription(
+                    jdbcTemplate,
                     field = "contract_item_id",
                     table = "tb_pre_measurements_streets_items",
                     where = "pre_measurement_street_item_id",
@@ -313,37 +331,69 @@ class ExecutionService(
 
                 if (contractItemId == null) throw IllegalStateException("Contrato do item ${item.itemId} enviado não foi encontrado")
 
-                reservation.add(
-                    MaterialReservation().apply {
-                        this.materialStock = materialStock
-                        this.reservedQuantity = materialReserve.materialQuantity
-                        if (preMeasurementStreet != null) {
-                            this.description = preMeasurementStreet.street
-                            this.street = preMeasurementStreet
-                            this.team = preMeasurementStreet.team
-                        } else if (directExecution != null) {
-                            this.description = directExecution.contract.contractor
-                            this.directExecution = directExecution
-                            this.team = directExecution.team
-                        }
-                        this.contractItemId = contractItemId
-                        if (teamMatch || stockistMatch) {
-                            this.confirmReservation()
-                            if (teamMatch) {
-                                this.markAsCollected()
-                            }
-                        }
-                    }
-                )
+                val reservation = if (materialReserve.centralMaterialStockId != null) {
+                    val materialStock =
+                        materialStockRepository.findById(materialReserve.centralMaterialStockId) // conferir
+                            .orElse(null) ?: throw IllegalStateException("Material não encontrado")
 
+                    if (materialStock.stockAvailable < materialReserve.materialQuantity)
+                        throw IllegalArgumentException("O material ${materialStock.material.materialName} não possuí estoque suficiente")
+
+                    val stockistMatch = existsRaw(
+                        jdbcTemplate,
+                        """
+                    select 1 from material_stock ms
+                    inner join stockist s on s.deposit_id_deposit = ms.deposit_id
+                    where ms.material_id_stock = ? and s.user_id_user = ?
+                    limit 1
+                    """.trimIndent(),
+                        listOf(materialReserve.centralMaterialStockId, userUUID)
+                    )
+
+                    val status = if (stockistMatch) ReservationStatus.APPROVED else ReservationStatus.PENDING
+
+                    val sql =
+                        "UPDATE material_stock set stock_available = stock_available - ? where material_id_stock = ?"
+                    jdbcTemplate.update(sql, materialReserve.materialQuantity, materialReserve.centralMaterialStockId)
+
+                    MaterialReservation(
+                        description = preMeasurementStreet?.street,
+                        reservedQuantity = materialReserve.materialQuantity,
+                        preMeasurementStreetId = executionReserve.preMeasurementStreetId,
+                        directExecution = executionReserve.directExecutionId,
+                        contractItemId = contractItemId,
+                        teamId = executionReserve.teamId,
+                        centralMaterialStockId = materialReserve.centralMaterialStockId,
+                        truckMaterialStockId = materialReserve.truckMaterialStockId,
+                        status = status
+                    )
+
+                } else {
+                    val sql =
+                        "UPDATE material_stock set stock_available = stock_available - ? where material_id_stock = ?"
+                    jdbcTemplate.update(sql, materialReserve.materialQuantity, materialReserve.truckMaterialStockId)
+
+                    MaterialReservation(
+                        description = preMeasurementStreet?.street,
+                        reservedQuantity = materialReserve.materialQuantity,
+                        preMeasurementStreetId = executionReserve.preMeasurementStreetId,
+                        directExecution = executionReserve.directExecutionId,
+                        contractItemId = contractItemId,
+                        teamId = executionReserve.teamId,
+                        truckMaterialStockId = materialReserve.truckMaterialStockId,
+                        status = ReservationStatus.IN_STOCK
+                    )
+                }
+
+                reservations.add(reservation)
             }
         }
 
-        materialReservationRepository.saveAll(reservation)
+        materialReservationRepository.saveAll(reservations)
 
         val responseMessage =
-            if (preMeasurementStreet != null) verifyStreetReservations(reservation, preMeasurementStreet)
-            else if (directExecution != null) verifyDirectExecutionReservations(reservation, directExecution) else ""
+            if (preMeasurementStreet != null) verifyStreetReservations(reservations, preMeasurementStreet)
+            else if (directExecution != null) verifyDirectExecutionReservations(reservations, directExecution) else ""
 
         return ResponseEntity.ok().body(DefaultResponse(responseMessage))
     }
@@ -353,13 +403,13 @@ class ExecutionService(
         preMeasurementStreet: PreMeasurementStreet
     ): String {
         var responseMessage = ""
-        if (reservation.all { it.status == ReservationStatus.COLLECTED }) {
+        if (reservation.all { it.status == ReservationStatus.IN_STOCK }) {
             preMeasurementStreet.streetStatus = ExecutionStatus.AVAILABLE_EXECUTION
             responseMessage =
                 "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
 
         } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
-            preMeasurementStreet.streetStatus = ExecutionStatus.AVAILABLE_EXECUTION
+            preMeasurementStreet.streetStatus = ExecutionStatus.WAITING_COLLECT
             responseMessage =
                 "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
                         "Mas os materiais estão pendentes de coleta pela equipe."
@@ -398,7 +448,7 @@ class ExecutionService(
                 "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
 
         } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
-            directExecution.directExecutionStatus = ExecutionStatus.AVAILABLE_EXECUTION
+            directExecution.directExecutionStatus = ExecutionStatus.WAITING_COLLECT
             responseMessage =
                 "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
                         "Mas os materiais estão pendentes de coleta pela equipe."
@@ -412,7 +462,8 @@ class ExecutionService(
 
         notify(reservation, directExecution.directExecutionId.toString())
 
-        directExecution.reservationManagement.status = ReservationStatus.FINISHED
+        val sql = "UPDATE reservation_management set status = ? where reservation_management_id = ?"
+        jdbcTemplate.update(sql, ReservationStatus.FINISHED, directExecution.reservationManagementId)
 
         directExecutionRepository.save(directExecution)
 
@@ -420,33 +471,50 @@ class ExecutionService(
     }
 
 
-    private fun notify(reservation: List<MaterialReservation>, streetIdOrExecutionId: String) {
+    private fun notify(reservations: List<MaterialReservation>, streetIdOrExecutionId: String) {
+        val reservationIds = reservations.map { it.materialIdReservation }
+        val statuses = listOf(ReservationStatus.PENDING, ReservationStatus.APPROVED)
         var bodyMessage: String
-        val companyPhone = util.getDescription(
+        val companyPhone = JdbcUtil.getDescription(
+            jdbcTemplate,
             field = "company_phone",
             table = "tb_companies",
             type = String::class.java,
         )
 
-        val groupedByDepositPending = reservation
-            .filter { it.status == ReservationStatus.PENDING }
-            .groupBy { it.materialStock?.deposit }
+        val pendingReserves = getRawData(
+            namedJdbc,
+            "select mr.status, ms.deposit_id, t.id_team, rm.stockist_id from material_reservation mr \n" +
+                    "inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id \n" +
+                    "inner join deposit d on d.id_deposit = ms.deposit_id \n" +
+                    "inner join team t on t.id_team = mr.team_id" +
+                    "where mr.material_id_reservation in (:material_id_reservations) and mr.status in (:statuses)",
+            mapOf("material_id_reservations" to reservationIds, "statuses" to statuses)
+        )
 
-        val groupedByDepositApproved = reservation
-            .filter { it.status == ReservationStatus.APPROVED }
-            .groupBy { it.materialStock?.deposit }
+        val groupedByDepositPending = pendingReserves
+            .filter { row -> (row["status"] as? String) == ReservationStatus.PENDING }
+            .groupBy { row -> (row["deposit_id"] as? Number)?.toLong() }
+
+        val groupedByDepositApproved = pendingReserves
+            .filter { row -> (row["status"] as? String) == ReservationStatus.APPROVED }
+            .groupBy { row -> (row["deposit_id"] as? Number)?.toLong() }
+
 
         // Itera sobre os grupos e envia notificação para equipe por depósito
-        groupedByDepositPending.forEach { (deposit, reserve) ->
-            val teamCodes = deposit?.teams?.map { it.teamCode } ?: emptyList()
+        groupedByDepositPending.forEach { (depositId, reserve) ->
+            val deposit = depositRepository.findById(depositId ?: 0).orElse(null)
+            val teamId = (reserve.first()["id_team"] as? Number)?.toLong()
+            val team = teamRepository.findById(teamId ?: 0).orElse(null)
+            val teamCode = team?.teamCode
 
             bodyMessage = """
                 Por favor, aceite ou negar as reservas com urgência!
                 """.trimIndent()
 
-            teamCodes.forEach { it ->
+            if (teamCode != null)
                 notificationService.sendNotificationForTeam(
-                    team = it,
+                    team = teamCode,
                     title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
                     body = bodyMessage,
                     action = "REPLY_RESERVE",
@@ -454,23 +522,31 @@ class ExecutionService(
                     type = NotificationType.ALERT,
                     persistCode = streetIdOrExecutionId
                 )
-            }
 
         }
 
         // Itera sobre os grupos e envia notificação para equipe por depósito
-        groupedByDepositApproved.forEach { (deposit, reserve) ->
-            val teamCode = reserve.first().team?.teamCode ?: ""
+        groupedByDepositApproved.forEach { (depositId, reserve) ->
+            val deposit = depositRepository.findById(depositId ?: 0).orElse(null)
+            val teamId = (reserve.first()["id_team"] as? Number)?.toLong()
+            val stockistUUID = (reserve.first()["stockist_id"] as? UUID)
+            val team = teamRepository.findById(teamId ?: 0).orElse(null)
+
+            val teamCode = team?.teamCode ?: ""
             val quantity = reserve.size
+            val stockistName = JdbcUtil.getDescription(
+                jdbcTemplate,
+                field = "name || ' ' || last_name",
+                table = "app_user",
+                where = "user_id",
+                equal = stockistUUID ?: UUID(0L, 0L),
+                type = String::class.java,
+            )
 
             val depositName = deposit?.depositName ?: "Desconhecido"
             val address = deposit?.depositAddress ?: "Endereço não informado"
             val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
-            val responsible = deposit?.stockists
-                ?.firstOrNull()
-                ?.user
-                ?.completedName
-                ?: "Responsável não informado"
+            val responsible = stockistName ?: "Responsável não informado"
 
             val bodyMessage = """
                     Local: $depositName"
@@ -500,7 +576,7 @@ class ExecutionService(
             return ResponseEntity.badRequest().build()
         }
 
-        val stockists = stockistRepository.findByUserUUID(userUUID).distinctBy { it.user.idUser }
+        val stockists = stockistRepository.findAllByUserId(userUUID)
 
         data class ReservationDto(
             val reserveId: Long,
@@ -519,43 +595,56 @@ class ExecutionService(
         val response: MutableList<ReservationsByPreMeasurementDto> = mutableListOf()
 
         for (stockist in stockists) {
-            val materials = stockist.deposit.materialStocks
-            for (material in materials) {
-                var materialName = material.material.materialName
-                val power: String? = material.material.materialPower
-                val length: String? = material.material.materialLength
-                materialName += if (power != null) " $power" else " $length"
+            val reservations = JdbcUtil.getRawData(
+                namedJdbc,
+                """
+                        select pms.city, c.contractor, mr.material_id_reservation, mr.reserved_quantity, mr.description, 
+                        ms.material_id_stock, m.material_name, m.material_power, m.material_length from material_stock ms,
+                        mr.team_id, t.team_name
+                        from material_reservation mr
+                        inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
+                        inner join material m on m.id_material = ms.material_id
+                        inner join direct_execution de ON mr.direct_execution_id = de.direct_execution_id 
+                        inner join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
+                        inner join team t on t.id_team = mr.team_id
+                        inner join contract c on de.contract_id = c.contract_id 
+                        where ms.deposit_id = :deposit_id and mr.status = :status
+                    """.trimIndent(),
+                mapOf("deposit_id" to stockist.depositId, "status" to status)
+            )
 
-                val reservationsGroup = material.reservations
-                    .filter { it.status == status }
-                    .groupBy { it.street?.preMeasurement?.city ?: it.directExecution?.contract?.contractor ?: "Desconhecido" }
+            val reservationsGroup = reservations
+                .groupBy {
+                    (it["city"] as? String) ?: (it["contractor"] as? String) ?: "Desconhecido"
+                }
 
-                for ((preMeasurementName, reservations) in reservationsGroup) {
-                    val list = mutableListOf<ReservationDto>()
-                    for (reserve in reservations) {
-                        list.add(
-                            ReservationDto(
-                                reserveId = reserve.materialIdReservation,
-                                reserveQuantity = reserve.reservedQuantity,
-                                materialName = materialName,
-                                description = reserve.description,
-                                teamId = reserve.team.idTeam,
-                                teamName = reserve.team.teamName,
-                            )
-                        )
-                    }
-                    response.add(
-                        ReservationsByPreMeasurementDto(
-                            preMeasurementName = preMeasurementName,
-                            reservations = list
+            for ((preMeasurementName, reservations) in reservationsGroup) {
+                val list = mutableListOf<ReservationDto>()
+                for (reserve in reservations) {
+                    var materialName = (reserve["material_name"] as String)
+                    val power: String? = (reserve["material_power"] as? String)
+                    val length: String? = (reserve["material_length"] as? String)
+                    materialName += if (power != null) " $power" else " $length"
+
+                    list.add(
+                        ReservationDto(
+                            reserveId = (reserve["material_id_reservation"] as Number).toLong(),
+                            reserveQuantity = (reserve["reserved_quantity"] as Number).toDouble(),
+                            materialName = materialName,
+                            description = (reserve["description"] as? String),
+                            teamId = (reserve["team_id"] as Number).toLong(),
+                            teamName = (reserve["team_name"] as String?)
                         )
                     )
                 }
-
-
+                response.add(
+                    ReservationsByPreMeasurementDto(
+                        preMeasurementName = preMeasurementName,
+                        reservations = list
+                    )
+                )
             }
         }
-
 
         return ResponseEntity.ok().body(response)
     }
@@ -566,38 +655,97 @@ class ExecutionService(
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
-        val execution = preMeasurementStreetRepository.findById(executionDTO.streetId)
-            .orElseThrow { IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada") }
+        val execution = JdbcUtil.getSingleRow(
+            namedJdbc,
+            """
+                    SELECT street_status, city FROM pre_measurement_street
+                    WHERE pre_measurement_street_id = :streetId
+                """.trimIndent(),
+            mapOf("streetId" to executionDTO.streetId)
+        )
+        if (execution == null) throw IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada")
 
-        if (execution.streetStatus != ExecutionStatus.AVAILABLE_EXECUTION) {
+        if (execution["street_status"] as String != ExecutionStatus.AVAILABLE_EXECUTION) {
             return ResponseEntity.badRequest().body("Execução já enviada")
         }
 
-        val city: String? = execution.city
+        val city: String? = execution["city"] as String?
         val folder = if (city == null) "photos"
         else "photos/$city"
 
         val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
 
-        execution.executionPhotoUri = fileUri
-        execution.streetStatus = ExecutionStatus.FINISHED
-        preMeasurementStreetRepository.save(execution)
+        val sql = """
+            UPDATE pre_measurement_street
+            SET execution_photo_uri = :fileUri,
+            street_status = :streetStatus
+            WHERE pre_measurement_street_id = :streetId
+        """.trimIndent()
+        namedJdbc.update(
+            sql, mapOf(
+                "fileUri" to fileUri,
+                "streetStatus" to ExecutionStatus.FINISHED,
+                "streetId" to executionDTO.streetId
+            )
+        )
 
         for (r in executionDTO.reserves) {
-            val reserve = materialReservationRepository.findById(r.reserveId)
-                .orElseThrow { IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada") }
-            val contractItemId = reserve.contractItemId
+            val exists = existsRaw(
+                jdbcTemplate,
+                """
+                    SELECT 1 FROM material_reservation
+                    WHERE material_id_reservation = ?
+                """.trimIndent(),
+                listOf(r.reserveId)
+            )
 
-            // melhorar
-            /*
-            /
-             */
-            //
+            if (!exists) {
+                throw IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada")
+            }
 
-            val sql = "UPDATE tb_contracts_items set quantity_executed = ? where contract_item_id = ?"
-            jdbcTemplate.update(sql, r.quantityExecuted, contractItemId)
+            val quantityReturned = JdbcUtil.getSingleRow(
+                namedJdbc,
+                """
+                    SELECT stock_quantity FROM material_stock 
+                    WHERE material_id_stock = :truckMaterialIdStock
+                """.trimIndent(),
+                mapOf("truckMaterialIdStock" to r.truckMaterialStockId)
+            )?.get("stock_quantity") as? Double ?: 0.0
+
+
+            namedJdbc.update(
+                """
+                    UPDATE material_stock 
+                    SET stock_available = stock_available + :quantityReturned,
+                        stock_quantity = stock_quantity + :quantityReturned
+                    WHERE material_id_stock = :truckMaterialIdStock
+                """.trimIndent(),
+                mapOf(
+                    "quantityReturned" to quantityReturned,
+                    "truckMaterialIdStock" to r.truckMaterialStockId
+                )
+            )
+
+            namedJdbc.update(
+                "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
+                mapOf(
+                    "quantityExecuted" to r.quantityExecuted,
+                    "contractItemId" to r.contractItemId
+                ),
+            )
+
+            namedJdbc.update(
+                "UPDATE material_reservation " +
+                        "SET status = :status, " +
+                        "quantity_completed = :quantityCompleted " +
+                        "WHERE material_id_reservation = :reserveId",
+                mapOf(
+                    "status" to ReservationStatus.FINISHED,
+                    "quantityCompleted" to r.quantityExecuted,
+                    "reserveId" to r.reserveId,
+                ),
+            )
         }
-
 
         return ResponseEntity.ok().build()
     }
@@ -609,13 +757,11 @@ class ExecutionService(
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
-        val sql = "SELECT 1 FROM tb_direct_executions_streets WHERE deviceStreetId = ? AND deviceId = ?"
-        val exists = try {
-            jdbcTemplate.queryForObject(sql, Int::class.java, executionDTO.deviceStreetId, executionDTO.deviceId)
-            true
-        } catch (ex: EmptyResultDataAccessException) {
-            false
-        }
+        val exists = JdbcUtil.getSingleRow(
+            namedJdbc,
+            "SELECT true as result FROM direct_execution_street WHERE device_street_id = :deviceStreetId AND device_id = :deviceId",
+            mapOf("deviceStreetId" to executionDTO.deviceStreetId, "deviceId" to executionDTO.deviceId)
+        )?.get("result") as? Boolean ?: false
 
         if (exists) {
             return ResponseEntity.ok().build()
@@ -638,182 +784,117 @@ class ExecutionService(
 
         directExecutionRepositoryStreet.save(executionStreet)
 
-        for (r in executionDTO.reserves) {
-            val reserve = materialReservationRepository.findById(r.reserveId)
-                .orElseThrow { IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada") }
-            val contractItemId = reserve.contractItemId
+        for (m in executionDTO.materials) {
+            val reserves = getRawData(
+                namedJdbc,
+                """
+                    SELECT material_id_reservation FROM material_reservation
+                    WHERE truck_material_stock_id = :truckMaterialStockId
+                    AND contract_item_id = :contractItemId
+                """.trimIndent(),
+                mapOf(
+                    "contractItemId" to m.contractItemId,
+                    "truckMaterialStockId" to m.truckMaterialStockId,
+                )
+            )
 
-            // melhorar
-            /*
-            /
-             */
-            //
+            if (reserves.isEmpty()) {
+                throw IllegalArgumentException("Reservas do material com ID ${m.truckMaterialStockId} não encontrada")
+            }
 
-            val sql = "UPDATE tb_contracts_items set quantity_executed = ? where contract_item_id = ?"
-            jdbcTemplate.update(sql, r.quantityExecuted, contractItemId)
+            for (r in reserves) {
+                val quantities = JdbcUtil.getSingleRow(
+                    namedJdbc,
+                    """
+                        SELECT quantity_completed, reserved_quantity FROM material_reservation
+                        WHERE material_id_reservation = :materialIdReservation
+                    """.trimIndent(), mapOf("materialIdReservation" to r["material_id_reservation"] as Long)
+                )
+
+                val reservedQuantity = (quantities?.get("reserved_quantity") as? Double ?: 0.0) // 13
+                val executedQuantity = m.quantityExecuted // 5
+
+                val min = min(reservedQuantity, executedQuantity) // 5
+                val max = max(reservedQuantity, executedQuantity) // 13
+                val difference = max - min // 8
+
+                m.quantityExecuted = executedQuantity - difference
+                // deu errado
+
+                if(m.quantityExecuted == 0.0) {
+                    break
+                }
+
+            }
+
+
+            val quantityReturned = JdbcUtil.getSingleRow(
+                namedJdbc,
+                """
+                    SELECT stock_quantity FROM material_stock 
+                    WHERE material_id_stock = :truckMaterialIdStock
+                """.trimIndent(),
+                mapOf("truckMaterialIdStock" to m.truckMaterialStockId)
+            )?.get("stock_quantity") as? Double ?: 0.0
+
+
+            namedJdbc.update(
+                """
+                    UPDATE material_stock 
+                    SET stock_available = stock_available + :quantityReturned,
+                        stock_quantity = stock_quantity + :quantityReturned
+                    WHERE material_id_stock = :truckMaterialIdStock
+                """.trimIndent(),
+                mapOf(
+                    "quantityReturned" to quantityReturned,
+                    "truckMaterialIdStock" to r.truckMaterialStockId
+                )
+            )
+
+            namedJdbc.update(
+                "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
+                mapOf(
+                    "quantityExecuted" to r.quantityExecuted,
+                    "contractItemId" to r.contractItemId
+                ),
+            )
+
+            namedJdbc.update(
+                "UPDATE material_reservation " +
+                        "SET status = :status, " +
+                        "quantity_completed = :quantityCompleted " +
+                        "WHERE material_id_reservation = :reserveId",
+                mapOf(
+                    "status" to ReservationStatus.FINISHED,
+                    "quantityCompleted" to r.quantityExecuted,
+                    "reserveId" to r.reserveId,
+                ),
+            )
         }
 
         return ResponseEntity.ok().build()
     }
 
-    fun getIndirectExecutions(strUUID: String?): ResponseEntity<MutableList<IndirectExecutionDTO>> {
-
-        val uuid = strUUID ?: return ResponseEntity.badRequest().body(arrayListOf())
-
-        val user = userRepository.findById(UUID.fromString(uuid))
-            .orElseThrow { IllegalArgumentException("Equipe não encontrada") }
-
-        val teamsId = when {
-            user.electricians.isNotEmpty() -> user.electricians.map { it.idTeam }
-            user.drivers.isNotEmpty() -> user.drivers.map { it.idTeam }
-            else -> return ResponseEntity.badRequest().body(arrayListOf())
+    fun getIndirectExecutions(strUUID: String?): ResponseEntity<List<IndirectExecutionDTO>> {
+        val userUUID = try {
+            UUID.fromString(strUUID)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Usuário não encontrado")
         }
 
-        val streets = preMeasurementStreetRepository.findByTeam_IdTeam(teamsId)
-
-        val reservationsByStreet = materialReservationRepository
-            .findAllToIndirectExecution(streets.map { it.streetId })
-            .filter { it.street != null }
-            .groupBy { it.street!!.preMeasurementStreetId }
-
-        val reservesByStreet = reservationsByStreet.mapValues { (_, reservations) ->
-            reservations
-                .filter { it.street != null }
-                .map { r ->
-                    val materialStock = r.materialStock
-                    val deposit = materialStock?.deposit
-                    val stockist = deposit?.stockists?.firstOrNull()?.user
-
-                    var name = materialStock?.material?.materialName
-                    val length = materialStock?.material?.materialLength
-                    val power = materialStock?.material?.materialPower
-                    if (power != null) {
-                        name += " $power"
-                    } else if (length != null) {
-                        name += " $length"
-                    }
-
-                    Reserve(
-                        reserveId = r.materialIdReservation,
-                        materialName = name ?: "",
-                        materialQuantity = r.reservedQuantity,
-                        reserveStatus = r.status,
-                        streetId = r.street!!.preMeasurementStreetId,
-                        depositId = deposit?.idDeposit ?: 0L,
-                        depositName = deposit?.depositName ?: "Desconhecido",
-                        depositAddress = deposit?.depositAddress ?: "Desconhecido",
-                        stockistName = stockist?.completedName ?: "Desconhecido",
-                        phoneNumber = stockist?.phoneNumber ?: "Desconhecido",
-                        requestUnit = materialStock?.requestUnit ?: "UN"
-                    )
-
-                }
-        }
-
-        val executions = streets.mapNotNull { street ->
-            val reserves = reservesByStreet[street.streetId] ?: listOf()
-
-            // Verifica se existe algum item PENDENTE
-            val hasPending = reserves.any { it.reserveStatus == ReservationStatus.PENDING }
-
-            if (hasPending) {
-                // Ignora essa rua
-                null
-            } else {
-                IndirectExecutionDTO(
-                    streetId = street.streetId,
-                    streetName = street.streetName,
-                    streetNumber = street.streetNumber,
-                    streetHood = street.streetHood,
-                    city = street.city,
-                    state = street.state,
-                    teamName = street.teamName,
-                    priority = street.priority,
-                    type = street.type,
-                    itemsQuantity = street.itemsQuantity,
-                    creationDate = street.creationDate.toString(),
-                    latitude = street.latitude,
-                    longitude = street.longitude,
-                    contractId = street.contractId,
-                    contractor = street.contractor,
-                    reserves = reserves
-                )
-            }
-        }.toMutableList()
-
+        val executions = jdbcGetExecutionRepository.getIndirectExecutions(userUUID)
 
         return ResponseEntity.ok().body(executions)
-
     }
 
-    fun getDirectExecutions(strUUID: String?): ResponseEntity<MutableList<DirectExecutionDTOResponse>> {
-        val uuid = strUUID ?: return ResponseEntity.badRequest().body(arrayListOf())
-
-        val user = userRepository.findById(UUID.fromString(uuid))
-            .orElseThrow { IllegalArgumentException("Equipe não encontrada") }
-
-        val teamsId = when {
-            user.electricians.isNotEmpty() -> user.electricians.map { it.idTeam }
-            user.drivers.isNotEmpty() -> user.drivers.map { it.idTeam }
-            else -> return ResponseEntity.badRequest().body(arrayListOf())
+    fun getDirectExecutions(strUUID: String?): ResponseEntity<List<DirectExecutionDTOResponse>> {
+        val userUUID = try {
+            UUID.fromString(strUUID)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Usuário não encontrado")
         }
 
-        val reservations = materialReservationRepository.findAllToDirectExecution(teamsId)
-        val contracts = reservations.map { it.directExecution!!.contract }
-        val reservationsGroupByContract = reservations
-            .groupBy { it.directExecution!!.contract.contractId }
-
-        val reservationsByContract = reservationsGroupByContract.mapValues { (_, reservations) ->
-            reservations
-                .map { r ->
-                    val materialStock = r.materialStock
-                    val deposit = materialStock?.deposit
-                    val stockist = deposit?.stockists?.firstOrNull()?.user
-
-                    var name = materialStock?.material?.materialName
-                    val length = materialStock?.material?.materialLength
-                    val power = materialStock?.material?.materialPower
-                    if (power != null) {
-                        name += " $power"
-                    } else if (length != null) {
-                        name += " $length"
-                    }
-
-                    Reserve(
-                        reserveId = r.materialIdReservation,
-                        materialName = name ?: "",
-                        materialQuantity = r.reservedQuantity,
-                        reserveStatus = r.status,
-                        streetId = r.street!!.preMeasurementStreetId,
-                        depositId = deposit?.idDeposit ?: 0L,
-                        depositName = deposit?.depositName ?: "Desconhecido",
-                        depositAddress = deposit?.depositAddress ?: "Desconhecido",
-                        stockistName = stockist?.completedName ?: "Desconhecido",
-                        phoneNumber = stockist?.phoneNumber ?: "Desconhecido",
-                        requestUnit = materialStock?.requestUnit ?: "UN"
-                    )
-
-                }
-        }
-
-        val executions = contracts.mapNotNull { contract ->
-            val reserves = reservationsByContract[contract.contractId] ?: listOf()
-
-            // Verifica se existe algum item PENDENTE
-            val hasPending = reserves.any { it.reserveStatus == ReservationStatus.PENDING }
-
-            if (hasPending) {
-                // Ignora esse contrato
-                null
-            } else {
-                DirectExecutionDTOResponse(
-                    contractId = contract.contractId,
-                    contractor = contract.contractor ?: "",
-                    instructions = contract.directExecutions.first().instructions ?: "",
-                    reserves = reserves
-                )
-            }
-        }.toMutableList()
+        val executions = jdbcGetExecutionRepository.getDirectExecutions(userUUID)
 
         return ResponseEntity.ok().body(executions)
     }

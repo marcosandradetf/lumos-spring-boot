@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.util
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository
-import com.lumos.lumosspring.user.User
+import com.lumos.lumosspring.user.AppUser
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
@@ -39,7 +39,7 @@ class Util(
         }
     }
 
-    fun getUserFromRToken(rToken: String?): User? {
+    fun getUserFromRToken(rToken: String?): AppUser? {
         val tokenFromDb = refreshTokenRepository.findByToken(rToken)
         if (tokenFromDb.isEmpty) {
             return null
@@ -106,38 +106,6 @@ class Util(
             .map { it.toLong() }
     }
 
-    fun <T> getDescriptions(
-        field: String,
-        table: String,
-        where: String,
-        type: Class<T>,
-        order: String = "",
-    ): List<T> {
-        var sql = "SELECT $field FROM $table WHERE $where"
-        if (order != "") sql += " ORDER BY $order"
-
-        return jdbcTemplate.queryForList(sql, type)
-    }
-
-    fun <T> getDescription(
-        field: String,
-        table: String,
-        where: String = "",
-        equal: String = "",
-        type: Class<T>,
-        order: String = "",
-    ): T? {
-        var sql = "SELECT $field FROM $table"
-        if (where.isNotBlank() && equal.isNotBlank()) sql += " WHERE $where = $equal"
-        if (order.isNotBlank()) sql += " ORDER BY $order"
-        sql += " LIMIT 1"
-
-        return try {
-            jdbcTemplate.queryForObject(sql, type)
-        } catch (ex: EmptyResultDataAccessException) {
-            null // ou você pode lançar uma exceção customizada, se preferir
-        }
-    }
 
     private val allowedColumnsByTable = mapOf(
         "tb_users" to setOf("id_user", "name", "last_name", "email", "phone_number"),
@@ -231,6 +199,7 @@ object ExecutionStatus {
     const val AVAILABLE = "AVAILABLE"
     const val WAITING_STOCKIST = "WAITING_STOCKIST"
     const val WAITING_RESERVE_CONFIRMATION = "WAITING_RESERVE_CONFIRMATION"
+    const val WAITING_COLLECT = "WAITING_COLLECT"
     const val AVAILABLE_EXECUTION = "AVAILABLE_EXECUTION"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
@@ -256,6 +225,7 @@ object ReservationStatus {
     const val APPROVED = "APPROVED"
     const val REJECTED = "REJECTED"
     const val COLLECTED = "COLLECTED"
+    const val IN_STOCK = "IN_STOCK" // ✅ novo status claro
     const val CANCELLED = "CANCELLED"
     const val FINISHED = "FINISHED"
     const val EXECUTION = "EXECUTION"

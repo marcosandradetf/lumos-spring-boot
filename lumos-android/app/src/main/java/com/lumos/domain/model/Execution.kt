@@ -5,11 +5,25 @@ import androidx.room.PrimaryKey
 import com.lumos.data.database.ExecutionDao.ReservePartial
 import okhttp3.Address
 
-@Entity(tableName = "executions")
-data class Execution(
+@Entity(tableName = "reserve")
+data class Reserve(
+    @PrimaryKey val reserveId: Long, // *_*
+    val contractId: Long,
+    val contractItemId: Long,
+    val truckMaterialStockId: Long?, // *_*
+    val centralMaterialStockId: Long?, // *_*
+    val materialName: String,
+    val materialQuantity: Double,
+    val reserveStatus: String,
+    val streetId: Long,
+    val requestUnit: String,
+    val quantityExecuted: Double? = null
+)
+
+@Entity(tableName = "indirect_execution")
+data class IndirectExecution(
     @PrimaryKey val streetId: Long,
     val contractId: Long,
-
     val streetName: String,
     val streetNumber: String? = null,
     val streetHood: String? = null,
@@ -48,8 +62,6 @@ data class SendExecutionDto(
     val streetId: Long,
     val reserves: List<ReservePartial>
 )
-
-
 
 data class ExecutionHolder(
     val streetId: Long? = null,

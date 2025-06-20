@@ -1,13 +1,12 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
-import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
+import com.lumos.lumosspring.contract.entities.ContractItem;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "tb_pre_measurements_streets_items")
 public class PreMeasurementStreetItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,7 +15,7 @@ public class PreMeasurementStreetItem {
 
     @ManyToOne
     @JoinColumn(name = "contract_item_id")
-    private ContractItemsQuantitative contractItem;
+    private ContractItem contractItem;
 
     @ManyToOne
     @JoinColumn(name = "pre_measurement_street_id")
@@ -106,11 +105,11 @@ public class PreMeasurementStreetItem {
         this.preMeasurementStreet = preMeasurementStreet;
     }
 
-    public ContractItemsQuantitative getContractItem() {
+    public ContractItem getContractItem() {
         return contractItem;
     }
 
-    public void setContractItem(ContractItemsQuantitative contractItem) {
+    public void setContractItem(ContractItem contractItem) {
         this.contractItem = contractItem;
         this.setUnitPrice(contractItem.getUnitPrice());
     }

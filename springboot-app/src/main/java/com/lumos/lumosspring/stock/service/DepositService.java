@@ -3,7 +3,6 @@ package com.lumos.lumosspring.stock.service;
 import com.lumos.lumosspring.stock.StockistModel;
 import com.lumos.lumosspring.stock.controller.dto.DepositDTO;
 import com.lumos.lumosspring.stock.controller.dto.DepositResponse;
-import com.lumos.lumosspring.stock.controller.dto.mobile.DepositResponseMobile;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
@@ -40,6 +39,8 @@ public class DepositService {
 
     @Autowired
     private StockistRepository stockistRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
@@ -166,34 +167,40 @@ public class DepositService {
 
 
     public ResponseEntity<?> getStockists() {
-        List<Stockist> allStockists = stockistRepository.findAll();
-
-        List<Stockist> distinctStockists = new ArrayList<>(
-                allStockists.stream()
-                        .collect(Collectors.toMap(
-                                s -> s.getUser().getIdUser(), // chave: user.idUser
-                                Function.identity(),          // valor: o próprio Stockist
-                                (existing, replacement) -> existing // se houver duplicata, mantém o primeiro
-                        ))
-                        .values()
-        );
-
         List<StockistModel> stockistsDto = new ArrayList<>();
+        Iterable<Stockist> allStockists = stockistRepository.findAll();
+
+        List<Stockist> allStockistsList = new ArrayList<>();
+        allStockists.forEach(allStockistsList::add);
+
+        List<Stockist> distinctStockists = allStockistsList.stream()
+                .collect(Collectors.toMap(
+                        Stockist::getUserId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ))
+                .values()
+                .stream()
+                .toList();
 
         for (var stockist : distinctStockists) {
             var depositName = "Não Informado no Sistema";
             var depositAddress = "Não Informado no Sistema";
             var depositPhone = "Não Informado no Sistema";
             var region = "Não Informado no Sistema";
-            var user = stockist.getUser();
 
-            depositName = stockist.getDeposit().getDepositName();
-            depositAddress = stockist.getDeposit().getDepositAddress();
-            depositPhone = stockist.getDeposit().getDepositPhone();
-            region = stockist.getDeposit().getRegion().getRegionName();
+            var user = userRepository.findById(stockist.getUserId())
+                    .orElseThrow();
+            var deposit = depositRepository.findById(stockist.getDepositId())
+                    .orElseThrow();
+
+            depositName = deposit.getDepositName();
+            depositAddress = deposit.getDepositAddress();
+            depositPhone = deposit.getDepositPhone();
+            region = deposit.getRegion().getRegionName();
 
             stockistsDto.add(new StockistModel(
-                    user.getIdUser().toString(),
+                    stockist.getUserId().toString(),
                     user.getCompletedName(),
                     depositName, depositAddress,
                     depositPhone, region

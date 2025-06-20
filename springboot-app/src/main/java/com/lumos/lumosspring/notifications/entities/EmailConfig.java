@@ -4,7 +4,6 @@ import com.lumos.lumosspring.stock.entities.Company;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "tb_email_config")
 public class EmailConfig {
 
     @Id

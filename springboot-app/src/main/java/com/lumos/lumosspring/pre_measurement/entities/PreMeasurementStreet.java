@@ -2,7 +2,7 @@ package com.lumos.lumosspring.pre_measurement.entities;
 
 import com.lumos.lumosspring.stock.entities.ReservationManagement;
 import com.lumos.lumosspring.team.entities.Team;
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import com.lumos.lumosspring.util.ExecutionStatus;
 import com.lumos.lumosspring.util.ItemStatus;
 import jakarta.persistence.*;
@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "tb_pre_measurements_streets")
 public class PreMeasurementStreet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,15 +60,15 @@ public class PreMeasurementStreet {
 
     @ManyToOne
     @JoinColumn(name = "created_by_user_id")
-    private User createdBy;
+    private AppUser createdBy;
 
     @ManyToOne
     @JoinColumn(name = "assigned_by_user_id")
-    private User assignedBy;
+    private AppUser assignedBy;
 
     @ManyToOne
     @JoinColumn(name = "finished_by_user_id")
-    private User finishedBy;
+    private AppUser finishedBy;
 
     private Instant createdAt;
     private Instant assignedAt;
@@ -237,23 +236,23 @@ public class PreMeasurementStreet {
         this.finishedAt = finishedAt;
     }
 
-    public User getCreatedBy() {
+    public AppUser getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(User createdBy) {
+    public void setCreatedBy(AppUser createdBy) {
         this.createdBy = createdBy;
     }
 
-    public User getAssignedBy() {
+    public AppUser getAssignedBy() {
         return assignedBy;
     }
 
-    public void setAssignedBy(User assignedBy) {
+    public void setAssignedBy(AppUser assignedBy) {
         this.assignedBy = assignedBy;
     }
 
-    public User getFinishedBy() {
+    public AppUser getFinishedBy() {
         return finishedBy;
     }
 
@@ -265,7 +264,7 @@ public class PreMeasurementStreet {
         this.reservationManagement = reservationManagement;
     }
 
-    public void setFinishedBy(User finishedBy) {
+    public void setFinishedBy(AppUser finishedBy) {
         this.finishedBy = finishedBy;
     }
 
@@ -285,7 +284,7 @@ public class PreMeasurementStreet {
         this.comment = comment;
     }
 
-    public void assignToStockistAndTeam(Team team, User assignedBy, Instant assignedAt, boolean prioritized, String comment, ReservationManagement reservationManagement) {
+    public void assignToStockistAndTeam(Team team, AppUser assignedBy, Instant assignedAt, boolean prioritized, String comment, ReservationManagement reservationManagement) {
         this.team = team;
         this.assignedBy = assignedBy;
         this.assignedAt = assignedAt;

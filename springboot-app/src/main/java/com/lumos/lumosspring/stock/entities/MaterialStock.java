@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "tb_material_stock")
 public class MaterialStock {
 
     @Id
@@ -46,8 +45,6 @@ public class MaterialStock {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inactive;
 
-    @OneToMany(mappedBy = "materialStock")
-    private List<MaterialReservation> reservations = new ArrayList<>();
 
     public Long getMaterialIdStock() {
         return materialIdStock;
@@ -153,12 +150,4 @@ public class MaterialStock {
         this.costPerItem = costPerItem;
     }
 
-    public List<MaterialReservation> getReservations() {
-        return reservations;
-    }
-
-    public void addStocks(double reservedQuantity) {
-        this.stockQuantity += reservedQuantity;
-        this.stockAvailable += reservedQuantity;
-    }
 }

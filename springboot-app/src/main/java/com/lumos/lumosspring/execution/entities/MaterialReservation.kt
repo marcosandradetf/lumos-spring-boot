@@ -1,68 +1,41 @@
 package com.lumos.lumosspring.execution.entities
 
-import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
-import com.lumos.lumosspring.stock.entities.MaterialStock
-import com.lumos.lumosspring.team.entities.Team
 import com.lumos.lumosspring.util.ReservationStatus
-import jakarta.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Table
 
-@Entity
-@Table(name = "tb_materials_reservations")
-class MaterialReservation {
+@Table("material_reservation")
+data class MaterialReservation(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "material_id_reservation")
-    var materialIdReservation: Long = 0
+    var materialIdReservation: Long = 0,
+    var description: String? = null,
+    var centralMaterialStockId: Long? = null,
+    var truckMaterialStockId: Long,
+    var preMeasurementStreetId: Long? = null,
+    var directExecution: Long? = null,
+    var contractItemId: Long,
+    var reservedQuantity: Double,
+    var quantityCompleted: Double = 0.0,
+    var status: String = ReservationStatus.PENDING,
+    var teamId: Long,
+    )
 
-    @Column(columnDefinition = "TEXT")
-    var description: String? = null
-
-    @ManyToOne
-    @JoinColumn(name = "material_stock_id")
-    var materialStock: MaterialStock = MaterialStock()
-
-    @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "pre_measurement_street_id")
-    var street: PreMeasurementStreet? = null
-
-    @ManyToOne(cascade = [(CascadeType.MERGE)])
-    @JoinColumn(name = "direct_execution_id")
-    var directExecution: DirectExecution? = null
-
-    @JoinColumn(name = "contract_item_id")
-    var contractItemId: Long = 0
-
-    @Column(nullable = false)
-    var reservedQuantity: Double = 0.0
-
-//    @Column(nullable = false)
-//    var quantityCompleted: Double = 0.0
-//        private set
-
-    var status: String = ReservationStatus.PENDING
-
-    @ManyToOne
-    @JoinColumn(name = "team_id")
-    var team: Team = Team()
-
-    fun confirmReservation() {
-        materialStock.removeStockAvailable(reservedQuantity)
-        status = ReservationStatus.APPROVED
-    }
-
-    fun rejectReservation() {
-        status = ReservationStatus.REJECTED
-    }
-
-
-    fun markAsCollected() {
-        status = ReservationStatus.COLLECTED
-        materialStock.removeStockQuantity(reservedQuantity)
-        team.deposit.materialStocks.find { it.material.idMaterial == materialStock.material.idMaterial }
-            ?.addStocks(reservedQuantity)
-    }
-
-}
+//fun confirmReservation() {
+//    materialStock.removeStockAvailable(reservedQuantity)
+//    status = ReservationStatus.APPROVED
+//}
+//
+//fun rejectReservation() {
+//    status = ReservationStatus.REJECTED
+//}
+//
+//
+//fun markAsCollected() {
+//    status = ReservationStatus.COLLECTED
+//    materialStock.removeStockQuantity(reservedQuantity)
+//    team.deposit.materialStocks.find { it.material.idMaterial == materialStock.material.idMaterial }
+//        ?.addStocks(reservedQuantity)
+//}
 
 
 

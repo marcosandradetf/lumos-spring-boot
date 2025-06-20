@@ -9,8 +9,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Deposit
-import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.Execution
+import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
@@ -50,10 +50,12 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Criar a nova tabela 'direct_executions'
+                db.execSQL("drop table executions")
+                db.execSQL("drop table reserves")
+
                 db.execSQL(
                     """
-                        CREATE TABLE IF NOT EXISTS direct_executions (
+                        CREATE TABLE IF NOT EXISTS direct_execution (
                             contractId INTEGER NOT NULL PRIMARY KEY,
                             streetName TEXT,
                             streetNumber TEXT,
@@ -70,20 +72,6 @@ abstract class AppDatabase : RoomDatabase() {
                             contractor TEXT NOT NULL,
                             instructions TEXT
                         );
-                    """.trimIndent()
-                )
-
-                // Adicionar a nova coluna 'contractId' na tabela 'executions'
-                db.execSQL(
-                    """
-                        ALTER TABLE executions DROP COLUMN teamName
-                    """.trimIndent()
-                )
-
-                // Adicionar a nova coluna 'contractId' na tabela 'executions'
-                db.execSQL(
-                    """
-                        ALTER TABLE reserves ADD COLUMN contractId INTEGER NOT NULL DEFAULT 0
                     """.trimIndent()
                 )
             }

@@ -3,8 +3,7 @@ package com.lumos.lumosspring.stock.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "tb_groups")
-public class Group {
+public class MaterialGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_group")

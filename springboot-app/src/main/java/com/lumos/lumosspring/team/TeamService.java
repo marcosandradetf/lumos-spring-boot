@@ -6,7 +6,7 @@ import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
 import org.springframework.cache.annotation.Cacheable;
@@ -36,16 +36,16 @@ public class TeamService {
                         team.getIdTeam(),
                         team.getTeamName(),
                         new Driver(
-                                team.getDriver().getIdUser().toString(),
+                                team.getDriver().getUserId().toString(),
                                 STR."\{team.getDriver().getName()} \{team.getDriver().getLastName()}"
                         ),
                         new Electrician(
-                                team.getElectrician().getIdUser().toString(),
+                                team.getElectrician().getUserId().toString(),
                                 STR."\{team.getElectrician().getName()} \{team.getElectrician().getLastName()}"
                         ),
                         team.getComplementaryMembers().stream()
                                 .map(member -> new Member(
-                                        member.getIdUser().toString(),
+                                        member.getUserId().toString(),
                                         STR."\{member.getName()} \{member.getLastName()}"
                                 ))
                                 .toList(), // Convertendo para List<Member>
@@ -81,8 +81,8 @@ public class TeamService {
                 return ResponseEntity.badRequest().body(new ErrorResponse(STR."Equipe \{t.teamName()} já existe no sistema."));
             }
 
-            var driver = userRepository.findByIdUser(UUID.fromString(t.driver().driverId()));
-            var electrician = userRepository.findByIdUser(UUID.fromString(t.electrician().electricianId()));
+            var driver = userRepository.findByUserId(UUID.fromString(t.driver().driverId()));
+            var electrician = userRepository.findByUserId(UUID.fromString(t.electrician().electricianId()));
 
             if (electrician.isEmpty() || driver.isEmpty()) {
                 return ResponseEntity.badRequest().body(new ErrorResponse("Motorista ou eletricista não encontrado no sistema."));
@@ -112,9 +112,9 @@ public class TeamService {
                 return ResponseEntity.badRequest().body(new ErrorResponse(STR."O motorista ou o eletricista foram repetidos na seção integrantes complementares da equipe \{t.teamName()}"));
             }
 
-            var otherMembers = new ArrayList<User>();
+            var otherMembers = new ArrayList<AppUser>();
             for(Member m : t.othersMembers()){
-                var member = userRepository.findByIdUser(UUID.fromString(m.memberId()));
+                var member = userRepository.findByUserId(UUID.fromString(m.memberId()));
                 if (member.isEmpty()) {
                     return ResponseEntity.badRequest().body(new ErrorResponse("Algum Colaborador adicional informado não foi encontrado"));
                 }
@@ -163,8 +163,8 @@ public class TeamService {
                 continue;
             }
 
-            var driver = userRepository.findByIdUser(UUID.fromString(t.driver().driverId()));
-            var electrician = userRepository.findByIdUser(UUID.fromString(t.electrician().electricianId()));
+            var driver = userRepository.findByUserId(UUID.fromString(t.driver().driverId()));
+            var electrician = userRepository.findByUserId(UUID.fromString(t.electrician().electricianId()));
 
             if (electrician.isEmpty() || driver.isEmpty()) {
                 return ResponseEntity.badRequest().body(new ErrorResponse("Motorista ou eletricista não encontrado no sistema."));
@@ -199,9 +199,9 @@ public class TeamService {
                 return ResponseEntity.badRequest().body(new ErrorResponse(STR."O motorista ou o eletricista foram repetidos na seção integrantes complementares da equipe \{t.teamName()}"));
             }
 
-            var otherMembers = new ArrayList<User>();
+            var otherMembers = new ArrayList<AppUser>();
             for(Member m : t.othersMembers()){
-                var member = userRepository.findByIdUser(UUID.fromString(m.memberId()));
+                var member = userRepository.findByUserId(UUID.fromString(m.memberId()));
                 if (member.isEmpty()) {
                     return ResponseEntity.badRequest().body(new ErrorResponse("Algum Colaborador adicional informado não foi encontrado"));
                 }

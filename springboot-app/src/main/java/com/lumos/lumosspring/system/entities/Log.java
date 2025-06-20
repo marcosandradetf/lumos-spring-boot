@@ -1,16 +1,14 @@
 package com.lumos.lumosspring.system.entities;
 
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "tb_logs")
 public class Log {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_log")
     private long idLog;
 
@@ -18,7 +16,7 @@ public class Log {
 
     @ManyToOne
     @JoinColumn(name = "id_user")
-    private User user;
+    private AppUser appUser;
 
     @CreationTimestamp
     private Instant creationTimestamp;
@@ -43,12 +41,12 @@ public class Log {
         this.message = message;
     }
 
-    public User getUser() {
-        return user;
+    public AppUser getUser() {
+        return appUser;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(AppUser appUser) {
+        this.appUser = appUser;
     }
 
     public Instant getCreationTimestamp() {

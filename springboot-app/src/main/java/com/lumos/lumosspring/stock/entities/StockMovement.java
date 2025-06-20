@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -8,7 +8,6 @@ import java.math.RoundingMode;
 import java.time.Instant;
 
 @Entity
-@Table(name = "tb_stock_movement")
 public class StockMovement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,10 +25,12 @@ public class StockMovement {
     private Instant stockMovementRefresh;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private User userCreated;
+    @JoinColumn(name = "user_created_id_user")
+    private AppUser appUserCreated;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private User userFinished;
+    @JoinColumn(name = "user_finished_id_user")
+    private AppUser appUserFinished;
 
     @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double inputQuantity;
@@ -173,20 +174,20 @@ public class StockMovement {
         this.status = status;
     }
 
-    public User getUserCreated() {
-        return userCreated;
+    public AppUser getUserCreated() {
+        return appUserCreated;
     }
 
-    public void setUserCreated(User userCreated) {
-        this.userCreated = userCreated;
+    public void setUserCreated(AppUser appUserCreated) {
+        this.appUserCreated = appUserCreated;
     }
 
-    public User getUserFinished() {
-        return userFinished;
+    public AppUser getUserFinished() {
+        return appUserFinished;
     }
 
-    public void setUserFinished(User userFinished) {
-        this.userFinished = userFinished;
+    public void setUserFinished(AppUser appUserFinished) {
+        this.appUserFinished = appUserFinished;
     }
 
     public void setInputQuantity(double inputQuantity) {

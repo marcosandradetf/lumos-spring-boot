@@ -3,15 +3,16 @@ package com.lumos.lumosspring.execution.repository
 import com.lumos.lumosspring.execution.entities.DirectExecution
 import com.lumos.lumosspring.execution.entities.DirectExecutionItem
 import com.lumos.lumosspring.execution.entities.DirectExecutionStreet
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.repository.CrudRepository
 
 
-interface DirectExecutionRepository : JpaRepository<DirectExecution, Long> {
-
+interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
+    fun findAllByDirectExecutionStatus(status: String): List<DirectExecution>
 }
 
-interface DirectExecutionRepositoryItem : JpaRepository<DirectExecutionItem, Long> {
+interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
 }
 
-interface DirectExecutionRepositoryStreet : JpaRepository<DirectExecutionStreet, Long> {
+
+interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet, Long> {
 }

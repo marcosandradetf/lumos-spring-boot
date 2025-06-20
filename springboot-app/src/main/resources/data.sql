@@ -92,8 +92,8 @@ FROM (VALUES ('RESPONSAVEL_TECNICO')) AS roles(role_name)
 WHERE NOT EXISTS (SELECT 1
                   FROM tb_roles);
 --
--- INSERT INTO tb_contract_reference_items (complete_description, description, type, linking, item_dependency)
--- SELECT complete_description, description, type, linking, item_dependency
+-- INSERT INTO tb_contract_reference_items (complete_description, description, materialType, linking, item_dependency)
+-- SELECT complete_description, description, materialType, linking, item_dependency
 -- FROM (VALUES ('SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED', 'SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED', 'SERVIÇO', NULL,
 --               'LED'),
 --              ('SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS', 'SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS', 'SERVIÇO', NULL, 'BRAÇO'),
@@ -150,7 +150,7 @@ WHERE NOT EXISTS (SELECT 1
 --              ('POSTE ORNAMENTAL GALVANIZADO 10M', 'POSTE ORNAMENTAL GALVANIZADO 10M', 'POSTE GALVANIZADO',
 --               '10M', NULL),
 --              ('POSTE ORNAMENTAL FORNECIMENTO E INSTALAÇÃO DE POSTE ORNAMENTAL GALVANIZADO 12M LIVRE, 4 PARA 3 1/2 COM SUPORTE PARA (03) TRÊS LUMINÁRIAS PUBLICA DE LED 100W, CERTIFICADA INMETRO – PORTARIA 20, INCLUINDO, MÃO DE OBRA ESPECIALIZADA, COM EQUIPAMENTOS DE SEGURANÇA INDIVIDUAL (EPI),  EQUIPAMENTOS DE SEGURANÇA COLETIVA (EPC) E TODO MATERIAL NECESSARIO PARA REALIZAÇÃO DO SERVIÇO, ASSENTAMENTO E CAIXA DE PASSAGEM.',
---               'POSTE ORNAMENTAL GALVANIZADO 12M', 'POSTE GALVANIZADO', '12M',NULL)) AS items(complete_description, description, type, linking, item_dependency)
+--               'POSTE ORNAMENTAL GALVANIZADO 12M', 'POSTE GALVANIZADO', '12M',NULL)) AS items(complete_description, description, materialType, linking, item_dependency)
 -- WHERE NOT EXISTS (SELECT 1
 --                   FROM tb_contract_reference_items);
 

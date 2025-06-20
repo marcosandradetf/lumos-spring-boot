@@ -4,8 +4,7 @@ import jakarta.persistence.*
 import java.math.BigDecimal
 
 @Entity
-@Table(name = "tb_contracts_items")
-class ContractItemsQuantitative {
+class ContractItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var contractItemId : Long = 0

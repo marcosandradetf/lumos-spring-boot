@@ -4,7 +4,7 @@ import com.lumos.lumosspring.contract.dto.ContractDTO
 import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.entities.Contract
-import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative
+import com.lumos.lumosspring.contract.entities.ContractItem
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
@@ -61,7 +61,7 @@ class ContractService(
         contract.cnpj = contractDTO.cnpj
         contract.address = contractDTO.address
         contract.creationDate = util.dateTime
-        contract.createdBy = userRepository.findByIdUser(UUID.fromString(contractDTO.userUUID)).orElseThrow()
+        contract.createdBy = userRepository.findByUserId(UUID.fromString(contractDTO.userUUID)).orElseThrow()
         contract.unifyServices = contractDTO.unifyServices
         contract.noticeFile = if ((contractDTO.noticeFile?.length ?: 0) > 0) contractDTO.noticeFile else null
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
@@ -70,7 +70,7 @@ class ContractService(
 
 
         contractDTO.items.forEach { item ->
-            val ci = ContractItemsQuantitative()
+            val ci = ContractItem()
             val reference = contractReferenceItemRepository.findById(item.contractReferenceItemId)
             if (!reference.isPresent) {
                 throw RuntimeException("Item ${item.contractReferenceItemId} not found")
@@ -121,7 +121,7 @@ class ContractService(
 
         val contract = contractRepository.findContractByContractId(contractId).orElseThrow()
         var number = 1
-        contract.contractItemsQuantitative.sortedBy { it.referenceItem.description }
+        contract.contractItem.sortedBy { it.referenceItem.description }
             .forEach { item ->
                 items.add(
                     ItemsForReport(
@@ -179,7 +179,7 @@ class ContractService(
                 cnpj = it.cnpj ?: "",
                 noticeFile = it.noticeFile ?: "",
                 contractFile = it.contractFile ?: "",
-                itemQuantity = it.contractItemsQuantitative.size,
+                itemQuantity = it.contractItem.size,
                 createdBy = it.createdBy.completedName,
                 contractStatus = it.status,
                 contractValue = it.contractValue.toString(),
@@ -202,7 +202,7 @@ class ContractService(
 
         return ResponseEntity.ok().body(
             contractRepository.findById(contractId).orElseThrow()
-                .contractItemsQuantitative
+                .contractItem
                 .sortedBy { it.referenceItem.description }
                 .mapIndexed { index, it ->
                     ContractItemsResponse(
@@ -234,7 +234,7 @@ class ContractService(
         val notAllowedTypes = listOf("SERVIÇO", "PROJETO", "CABO", "RELÉ")
         val contractList = contractRepository.findAllByStatus(ContractStatus.ACTIVE).map { contract ->
 
-            val filteredIds = contract.contractItemsQuantitative
+            val filteredIds = contract.contractItem
                 .filter { it.referenceItem.type.trim().uppercase() !in notAllowedTypes }
                 .map { it.referenceItem.contractReferenceItemId }
                 .joinToString("#")

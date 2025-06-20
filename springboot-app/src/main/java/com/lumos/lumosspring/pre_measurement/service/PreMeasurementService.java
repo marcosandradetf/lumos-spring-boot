@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.pre_measurement.service;
 
 import com.lumos.lumosspring.contract.entities.Contract;
-import com.lumos.lumosspring.contract.entities.ContractItemsQuantitative;
+import com.lumos.lumosspring.contract.entities.ContractItem;
 import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.fileserver.service.MinioService;
@@ -123,7 +123,7 @@ public class PreMeasurementService {
             return ResponseEntity.badRequest().body(new ErrorResponse("O Contrato selecionado não está ativo no sistema."));
         }
 
-        var user = userRepository.findByIdUser(UUID.fromString(userUUID));
+        var user = userRepository.findByUserId(UUID.fromString(userUUID));
         if (user.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("User not found"));
         }
@@ -171,7 +171,7 @@ public class PreMeasurementService {
 
             preMeasurementStreetRepository.save(preMeasurementStreet);
             for (var itemDTO : streetDTO.getItems()) {
-                for (var contractItem : contract.getContractItemsQuantitative()) {
+                for (var contractItem : contract.getContractItem()) {
                     if (contractItem.getContractItemId() == itemDTO.getItemContractId()) {
                         var continueLoop = false;
                         for (var type : List.of("SERVIÇO", "PROJETO", "CABO", "RELÉ")) {
@@ -237,7 +237,7 @@ public class PreMeasurementService {
         var currentContractItem = currentStreetItem.getContractItem().getReferenceItem();
         var currentContractItemType = currentContractItem.getType().toUpperCase();
 
-        for (var service : contract.getContractItemsQuantitative()) {
+        for (var service : contract.getContractItem()) {
             var serviceType = service.getReferenceItem().getType();
             if (serviceType.equalsIgnoreCase("SERVIÇO")) {
                 var serviceItemDependency = service.getReferenceItem().getItemDependency();
@@ -268,7 +268,7 @@ public class PreMeasurementService {
         var currentContractItem = currentStreetItem.getContractItem().getReferenceItem();
         var currentContractItemType = currentContractItem.getType().toUpperCase();
 
-        for (var project : contract.getContractItemsQuantitative()) {
+        for (var project : contract.getContractItem()) {
             var projectType = project.getReferenceItem().getType();
             if (projectType.equalsIgnoreCase("PROJETO")) {
                 var projectItemDependency = project.getReferenceItem().getItemDependency();
@@ -302,7 +302,7 @@ public class PreMeasurementService {
         var currentContractItem = currentStreetItem.getContractItem().getReferenceItem();
         var currentContractItemType = currentContractItem.getType().toUpperCase();
 
-        for (var contractItem : contract.getContractItemsQuantitative()) {
+        for (var contractItem : contract.getContractItem()) {
             var reference = contractItem.getReferenceItem();
             if (reference.getItemDependency() != null && reference.getItemDependency().equalsIgnoreCase(currentContractItemType)) {
                 insertOrUpdateItem(
@@ -318,7 +318,7 @@ public class PreMeasurementService {
     @Transactional
     protected void insertOrUpdateItem(ContractReferenceItem currentContractItem,
                                       PreMeasurementStreet preMeasurementStreet,
-                                      ContractItemsQuantitative newContractItem,
+                                      ContractItem newContractItem,
                                       Double quantity) {
         //ex.: itemInsert = CABO FLEXÍVEL 1,5MM
         //ex.: referenceItem = BRAÇO

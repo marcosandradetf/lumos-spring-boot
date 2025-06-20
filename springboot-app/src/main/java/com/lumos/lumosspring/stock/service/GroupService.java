@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.stock.service;
 
-import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
-import com.lumos.lumosspring.stock.entities.Group;
+import com.lumos.lumosspring.stock.entities.MaterialGroup;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.TypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +20,11 @@ public class GroupService {
     private TypeRepository typeRepository;
 
     @Cacheable("getAllGroups")
-    public List<Group> findAll() {
+    public List<MaterialGroup> findAll() {
         return groupRepository.findAllByOrderByIdGroupAsc();
     }
 
-    public Group findById(Long id) {
+    public MaterialGroup findById(Long id) {
         return groupRepository.findById(id).orElse(null);
     }
 
@@ -34,7 +33,7 @@ public class GroupService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este grupo já existe."));
         }
 
-        var group = new Group();
+        var group = new MaterialGroup();
         group.setGroupName(groupName);
         groupRepository.save(group);
 

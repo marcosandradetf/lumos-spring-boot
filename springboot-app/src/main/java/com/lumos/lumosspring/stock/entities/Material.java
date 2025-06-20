@@ -3,12 +3,10 @@ package com.lumos.lumosspring.stock.entities;
 import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "tb_materials")
 public class Material {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +30,7 @@ public class Material {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_material_type", nullable = false)
-    private Type materialType;
+    private MaterialType materialType;
 
     private Boolean inactive;
 
@@ -41,7 +39,7 @@ public class Material {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "tb_related_materials",
+            name = "related_material",
             joinColumns = @JoinColumn(name = "material_id"),
             inverseJoinColumns = @JoinColumn(name = "related_id")
     )
@@ -50,19 +48,12 @@ public class Material {
     @ManyToOne
     private ContractReferenceItem contractReferenceItem;
 
-    @ManyToMany
-    @JoinTable(
-            name = "tb_materials_services_materials",
-            joinColumns = @JoinColumn(name = "material_id"),
-            inverseJoinColumns = @JoinColumn(name = "material_service_id")
-    )
-
-    public Type getMaterialType() {
+    public MaterialType getMaterialType() {
         return materialType;
     }
 
-    public void setMaterialType(Type typeMaterial) {
-        this.materialType = typeMaterial;
+    public void setMaterialType(MaterialType materialTypeMaterial) {
+        this.materialType = materialTypeMaterial;
     }
 
     public Material() { }

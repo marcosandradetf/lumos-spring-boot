@@ -109,7 +109,7 @@ public class MaterialService {
     private List<MaterialStock> convertToMaterial(MaterialRequest material) {
         List<MaterialStock> materialList = new ArrayList<>();
 
-        Type type = tipoRepository.findById(material.materialType())
+        MaterialType materialType = tipoRepository.findById(material.materialType())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tipo informado não encontrado."));
 
         Company company = companyRepository.findById(material.company())
@@ -122,7 +122,7 @@ public class MaterialService {
             }
             for (Deposit deposit : deposits) {
                 MaterialStock materialStock = new MaterialStock();
-                materialStock.setMaterial(createMaterial(material, type));
+                materialStock.setMaterial(createMaterial(material, materialType));
                 materialStock.setCompany(company);
                 materialStock.setDeposit(deposit);
                 materialStock.setBuyUnit(material.buyUnit());
@@ -131,7 +131,7 @@ public class MaterialService {
             }
         } else {
             MaterialStock materialStock = new MaterialStock();
-            materialStock.setMaterial(createMaterial(material, type));
+            materialStock.setMaterial(createMaterial(material, materialType));
             materialStock.setCompany(company);
             Deposit deposit = depositRepository.findById(material.deposit())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Almoxarifado não encontrado."));
@@ -147,7 +147,7 @@ public class MaterialService {
         return materialList;
     }
 
-    private Material createMaterial(MaterialRequest material, Type type) {
+    private Material createMaterial(MaterialRequest material, MaterialType materialType) {
         Material newMaterial = new Material();
         newMaterial.setMaterialName(material.materialName());
         newMaterial.setMaterialBrand(material.materialBrand());
@@ -155,7 +155,7 @@ public class MaterialService {
         newMaterial.setMaterialAmps(material.materialAmps());  // Corrigido
         newMaterial.setMaterialLength(material.materialLength());  // Corrigido
 
-        newMaterial.setMaterialType(type);
+        newMaterial.setMaterialType(materialType);
         return newMaterial;
     }
 

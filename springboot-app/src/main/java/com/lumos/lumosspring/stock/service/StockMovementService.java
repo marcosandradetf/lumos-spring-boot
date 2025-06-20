@@ -99,7 +99,7 @@ public class StockMovementService {
         if (validationError != null) {
             return validationError;
         }
-        return convertToStockMovementAndSave(stockMovementRequest, util.getUserFromRToken(refreshToken).getIdUser());
+        return convertToStockMovementAndSave(stockMovementRequest, util.getUserFromRToken(refreshToken).getUserId());
 
     }
 
@@ -140,7 +140,7 @@ public class StockMovementService {
             newMovement.setTotalQuantity(movement.totalQuantity());
             newMovement.setPricePerItem(util.convertToBigDecimal(movement.priceTotal()), movement.totalQuantity());
             newMovement.setPriceTotal(util.convertToBigDecimal(movement.priceTotal()));
-            newMovement.setUserCreated(userRepository.findByIdUser(userUUID).orElse(null));
+            newMovement.setUserCreated(userRepository.findByUserId(userUUID).orElse(null));
             newMovement.setMaterialStock(material.get());
             newMovement.setSupplier(supplierRepository.findById(Long.parseLong(movement.supplierId())).orElse(null));
             newMovement.setStatus(StockMovement.Status.PENDING);

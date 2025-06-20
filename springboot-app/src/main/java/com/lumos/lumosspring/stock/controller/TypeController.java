@@ -1,9 +1,8 @@
 package com.lumos.lumosspring.stock.controller;
 
 import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
-import com.lumos.lumosspring.stock.entities.Type;
+import com.lumos.lumosspring.stock.entities.MaterialType;
 import com.lumos.lumosspring.stock.service.TypeService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +18,14 @@ public class TypeController {
     }
 
     @GetMapping
-    public List<Type> getAll() {
+    public List<MaterialType> getAll() {
         return typeService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
-        Type type = typeService.findById(id);
-        return type != null ? ResponseEntity.ok(type) : ResponseEntity.notFound().build();
+        MaterialType materialType = typeService.findById(id);
+        return materialType != null ? ResponseEntity.ok(materialType) : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/insert")

@@ -1,12 +1,12 @@
 package com.lumos.lumosspring.authentication.entities;
 
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import jakarta.persistence.*;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "tb_refresh_token")
+@Table(name = "refresh_token")
 public class RefreshToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +23,7 @@ public class RefreshToken {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_user", nullable = false)
-    private User user;
+    private AppUser appUser;
 
     public long getIdToken() {
         return idToken;
@@ -57,11 +57,11 @@ public class RefreshToken {
         this.revoked = revoked;
     }
 
-    public User getUser() {
-        return user;
+    public AppUser getUser() {
+        return appUser;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(AppUser appUser) {
+        this.appUser = appUser;
     }
 }

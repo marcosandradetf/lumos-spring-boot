@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.config;
 
+import com.lumos.lumosspring.user.AppUser;
 import com.lumos.lumosspring.user.Role;
-import com.lumos.lumosspring.user.User;
 import com.lumos.lumosspring.user.RoleRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import jakarta.transaction.Transactional;
@@ -35,7 +35,7 @@ public class AdminUserConfig implements CommandLineRunner {
         userAdmin.ifPresentOrElse(
                 _ -> System.out.println("Admin já existe!"),
                 () -> {
-                    var user = new User();
+                    var user = new AppUser();
                     user.setUsername("admin");
                     user.setName("Usuário");
                     user.setLastName("Administrador");
@@ -52,7 +52,7 @@ public class AdminUserConfig implements CommandLineRunner {
         supportUser.ifPresentOrElse(
                 _ -> System.out.println("Suporte já existe!"),
                 () -> {
-                    var user = new User();
+                    var user = new AppUser();
                     user.setUsername("support");
                     user.setName("Usuário");
                     user.setLastName("Suporte");

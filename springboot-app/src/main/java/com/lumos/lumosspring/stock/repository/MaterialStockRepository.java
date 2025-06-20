@@ -26,7 +26,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "ms.materialIdStock, ms.material.materialName, ms.material.materialBrand," +
             "ms.material.materialPower, ms.material.materialAmps, ms.material.materialLength," +
             "ms.buyUnit, ms.requestUnit, ms.stockQuantity, ms.inactive, ms.material.materialType.typeName," +
-            "ms.material.materialType.group.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
+            "ms.material.materialType.materialGroup.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
             "from MaterialStock ms order by ms.materialIdStock",
             countQuery = "select count(ms.materialIdStock) from MaterialStock ms"
     )
@@ -36,7 +36,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "ms.materialIdStock, ms.material.materialName, ms.material.materialBrand," +
             "ms.material.materialPower, ms.material.materialAmps, ms.material.materialLength," +
             "ms.buyUnit, ms.requestUnit, ms.stockQuantity, ms.inactive, ms.material.materialType.typeName," +
-            "ms.material.materialType.group.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
+            "ms.material.materialType.materialGroup.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
             "from MaterialStock ms where ms.deposit.idDeposit = :depositId order by ms.materialIdStock",
             countQuery = "select count(ms.materialIdStock) from MaterialStock ms where ms.deposit.idDeposit = :depositId"
     )
@@ -53,7 +53,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "ms.materialIdStock, ms.material.materialName, ms.material.materialBrand," +
             "ms.material.materialPower, ms.material.materialAmps, ms.material.materialLength," +
             "ms.buyUnit, ms.requestUnit, ms.stockQuantity, ms.inactive, ms.material.materialType.typeName," +
-            "ms.material.materialType.group.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
+            "ms.material.materialType.materialGroup.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
             "FROM MaterialStock ms " +
             "WHERE LOWER(ms.material.materialName) LIKE concat('%', :name, '%') OR " +
             "LOWER(ms.material.materialType.typeName) LIKE concat('%', :name, '%') OR " +
@@ -71,7 +71,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
             "ms.materialIdStock, ms.material.materialName, ms.material.materialBrand," +
             "ms.material.materialPower, ms.material.materialAmps, ms.material.materialLength," +
             "ms.buyUnit, ms.requestUnit, ms.stockQuantity, ms.inactive, ms.material.materialType.typeName," +
-            "ms.material.materialType.group.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
+            "ms.material.materialType.materialGroup.groupName, ms.deposit.depositName, ms.company.fantasyName) " +
             "FROM MaterialStock ms " +
             "WHERE ms.deposit.idDeposit = :depositId AND " +
             "(LOWER(ms.material.materialName) LIKE concat('%', :name, '%') OR " +

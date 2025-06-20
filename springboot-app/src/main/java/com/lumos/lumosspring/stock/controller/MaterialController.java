@@ -93,7 +93,7 @@ public class MaterialController {
         if (tokenFromDb.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        var userUUID = tokenFromDb.get().getUser().getIdUser();
+        var userUUID = tokenFromDb.get().getUser().getUserId();
 
         return materialService.update(material, materialId, userUUID);
     }
@@ -105,7 +105,7 @@ public class MaterialController {
         if (tokenFromDb.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        var userUUID = tokenFromDb.get().getUser().getIdUser();
+        var userUUID = tokenFromDb.get().getUser().getUserId();
 
         return materialService.deleteById(id, userUUID);
     }

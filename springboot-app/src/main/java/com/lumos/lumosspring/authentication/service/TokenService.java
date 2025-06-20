@@ -7,8 +7,9 @@ import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.entities.Team;
+import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.Role;
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.user.UserService;
 import com.lumos.lumosspring.util.ErrorResponse;
@@ -42,8 +43,9 @@ public class TokenService {
     private final JwtDecoder jwtDecoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final Util util;
+    private final StockistRepository stockistRepository;
 
-    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository, Util util) {
+    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository, Util util, StockistRepository stockistRepository) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
@@ -51,6 +53,7 @@ public class TokenService {
         this.jwtDecoder = jwtDecoder;
         this.refreshTokenRepository = refreshTokenRepository;
         this.util = util;
+        this.stockistRepository = stockistRepository;
     }
 
     @Scheduled(cron = "0 0 3 * * *") // Roda todo dia às 3 da manhã
@@ -66,7 +69,7 @@ public class TokenService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        return userService.resetPassword(user.get().getIdUser().toString());
+        return userService.resetPassword(user.get().getUserId().toString());
     }
 
     public ResponseEntity<LoginResponse> refreshToken(String refreshToken, boolean isMobile) {
@@ -138,7 +141,7 @@ public class TokenService {
 
         var refreshTokenClaims = JwtClaimsSet.builder()
                 .issuer("LumosSoftware")
-                .subject(user.get().getIdUser().toString())
+                .subject(user.get().getUserId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(refreshExpiresIn))
                 .claim("jti", UUID.randomUUID().toString())
@@ -165,7 +168,7 @@ public class TokenService {
 
             return ResponseEntity.ok(new LoginResponse(accessTokenValue, expiresIn, getRoles(user.get()), getTeams(user.get())));
         } else {
-            var responseBody = new LoginResponseMobile(accessTokenValue, expiresIn, getRoles(user.get()), getTeams(user.get()), refreshTokenValue, user.get().getIdUser().toString());
+            var responseBody = new LoginResponseMobile(accessTokenValue, expiresIn, getRoles(user.get()), getTeams(user.get()), refreshTokenValue, user.get().getUserId().toString());
 
             return ResponseEntity.ok(responseBody);
         }
@@ -194,36 +197,37 @@ public class TokenService {
         return ResponseEntity.noContent().build();
     }
 
-    private String getScope(User user) {
-        var roles = getRoles(user);
-        var teams = getTeams(user);
+    private String getScope(AppUser appUser) {
+        var roles = getRoles(appUser);
+        var teams = getTeams(appUser);
 
         if (roles.isBlank()) return teams;
         if (teams.isBlank()) return roles;
         return roles + " " + teams;
     }
 
-    private String getRoles(User user) {
-        return user.getRoles()
+    private String getRoles(AppUser appUser) {
+        return appUser.getRoles()
                 .stream()
                 .map(Role::getRoleName)
                 .collect(Collectors.joining(" "));
     }
 
-    private String getTeams(User user) {
-        var eTeams = Optional.ofNullable(user.getElectricians())
+    private String getTeams(AppUser appUser) {
+        var eTeams = Optional.ofNullable(appUser.getElectricians())
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(Team::getTeamCode)
                 .collect(Collectors.joining(" "));
 
-        var dTeams = Optional.ofNullable(user.getDrivers())
+        var dTeams = Optional.ofNullable(appUser.getDrivers())
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(Team::getTeamCode)
                 .collect(Collectors.joining(" "));
 
-        var sTeams = Optional.ofNullable(user.getStockists())
+        var stockists = stockistRepository.findAllByUserId(appUser.getUserId());
+        var sTeams = Optional.ofNullable(stockists)
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(Stockist::getStockistCode)
@@ -235,10 +239,10 @@ public class TokenService {
                 .collect(Collectors.joining(" "));
     }
 
-    private JwtClaimsSet getAccessClaims(User user, Instant now, Long expiresIn, String scope) {
+    private JwtClaimsSet getAccessClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
         return JwtClaimsSet.builder()
                 .issuer("LumosSoftware")
-                .subject(user.getIdUser().toString())
+                .subject(appUser.getUserId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiresIn))
                 .claim("scope", scope)

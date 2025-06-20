@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.stock.service;
 
 import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
-import com.lumos.lumosspring.stock.entities.Type;
+import com.lumos.lumosspring.stock.entities.MaterialType;
 import com.lumos.lumosspring.stock.repository.GroupRepository;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
@@ -29,11 +29,11 @@ public class TypeService {
     }
 
     @Cacheable("getAllTypes")
-    public List<Type> findAll() {
+    public List<MaterialType> findAll() {
         return tipoRepository.findAllByOrderByIdTypeAsc();
     }
 
-    public Type findById(Long id) {
+    public MaterialType findById(Long id) {
         return tipoRepository.findById(id).orElse(null);
     }
 
@@ -42,10 +42,10 @@ public class TypeService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este tipo já existe."));
         }
 
-        Type type = new Type();
-        type.setTypeName(typeDTO.typeName());
-        type.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));
-        tipoRepository.save(type);
+        MaterialType materialType = new MaterialType();
+        materialType.setTypeName(typeDTO.typeName());
+        materialType.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));
+        tipoRepository.save(materialType);
 
         return ResponseEntity.ok(this.findAll());
     }

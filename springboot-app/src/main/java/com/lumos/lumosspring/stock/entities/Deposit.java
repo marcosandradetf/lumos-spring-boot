@@ -3,14 +3,12 @@ package com.lumos.lumosspring.stock.entities;
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.entities.Team;
-import com.lumos.lumosspring.user.User;
 import jakarta.persistence.*;
 
 import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "tb_deposits")
 public class Deposit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,9 +36,6 @@ public class Deposit {
     @ManyToOne
     @JoinColumn(name = "region_id")
     private Region region;
-
-    @OneToMany(mappedBy = "deposit")
-    private List<Stockist> stockists;
 
     @OneToMany(mappedBy = "deposit")
     private List<Team> teams;
@@ -122,14 +117,6 @@ public class Deposit {
 
     public void setMaterialStocks(Set<MaterialStock> productStocks) {
         this.materialStocks = productStocks;
-    }
-
-    public List<Stockist> getStockists() {
-        return stockists;
-    }
-
-    public void setStockists(List<Stockist> stockists) {
-        this.stockists = stockists;
     }
 
     public List<Team> getTeams() {

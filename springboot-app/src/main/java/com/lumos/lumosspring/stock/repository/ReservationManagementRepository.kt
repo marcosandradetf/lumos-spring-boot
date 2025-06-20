@@ -10,6 +10,6 @@ interface ReservationManagementRepository : JpaRepository<ReservationManagement,
         step: Int
     ): Boolean
 
-    fun findAllByStatusAndStockistIdUser(status: String, uuid: UUID): MutableList<ReservationManagement>
+    fun findAllByStatusAndStockistUserId(status: String, uuid: UUID): MutableList<ReservationManagement>
 
 }

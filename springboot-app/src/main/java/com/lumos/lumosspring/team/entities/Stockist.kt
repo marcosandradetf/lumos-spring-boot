@@ -1,25 +1,20 @@
 package com.lumos.lumosspring.team.entities
 
-import com.lumos.lumosspring.stock.entities.Deposit
-import com.lumos.lumosspring.user.User
-import jakarta.persistence.*
-import java.util.stream.DoubleStream
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
+import java.util.*
 
-@Entity
-@Table(name = "tb_stockists")
-class Stockist {
-
+@Table("stockist")
+data class Stockist(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val stockistId: Long = 0
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    val deposit: Deposit = Deposit()
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    val user: User = User()
-
+    val stockistId: Long = 0,
+    @Column("deposit_id_deposit")
+    val depositId: Long,
+    @Column("user_id_user")
+    val userId: UUID
+) {
     fun getStockistCode(): String {
-        return "${stockistId}_${user.idUser}"
+        return "${stockistId}_$userId"
     }
 }

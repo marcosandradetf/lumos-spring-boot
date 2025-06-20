@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull
 import java.util.HashSet
 
 @Entity
-@Table(name = "tb_contract_reference_items")
 class ContractReferenceItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +20,7 @@ class ContractReferenceItem {
     var itemDependency : String? = null
 
     @OneToMany(mappedBy = "referenceItem", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    var contractsItems: MutableSet<ContractItemsQuantitative> = HashSet()
+    var contractsItems: MutableSet<ContractItem> = HashSet()
 
     @OneToMany(mappedBy = "contractReferenceItem", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var materials: MutableSet<Material> = HashSet()

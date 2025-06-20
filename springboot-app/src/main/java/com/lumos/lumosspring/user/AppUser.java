@@ -12,12 +12,10 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
-@Table(name = "tb_users")
-public class User {
+public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id_user")
-    private UUID idUser;
+    private UUID userId;
 
     @Column(unique = true)
     private String username;
@@ -38,7 +36,7 @@ public class User {
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(
-            name = "tb_users_roles",
+            name = "user_role",
             joinColumns = @JoinColumn(name = "id_user"),
             inverseJoinColumns = @JoinColumn(name = "id_role")
     )
@@ -49,9 +47,6 @@ public class User {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean status;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Stockist> stockists = new ArrayList<>();
-
     @OneToMany(mappedBy = "driver", fetch = FetchType.LAZY)
     private List<Team> drivers;
 
@@ -59,12 +54,12 @@ public class User {
     private List<Team> electricians;
 
 
-    public UUID getIdUser() {
-        return idUser;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setIdUser(UUID idUser) {
-        this.idUser = idUser;
+    public void setUserId(UUID idUser) {
+        this.userId = idUser;
     }
 
     public String getUsername() {
@@ -153,14 +148,6 @@ public class User {
 
     public void setCpf(String cpf) {
         this.cpf = cpf;
-    }
-
-    public List<Stockist> getStockists() {
-        return stockists;
-    }
-
-    public void setStockists(List<Stockist> stockist) {
-        this.stockists = stockist;
     }
 
     public List<Team> getDrivers() {

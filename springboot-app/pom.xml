@@ -31,6 +31,11 @@
         <kotlin.version>2.1.10</kotlin.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>org.flywaydb</groupId>

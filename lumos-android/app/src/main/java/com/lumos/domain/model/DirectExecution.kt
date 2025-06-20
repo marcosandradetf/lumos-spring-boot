@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.lumos.data.database.ExecutionDao.ReservePartial
 
-@Entity(tableName = "direct_executions")
+@Entity(tableName = "direct_execution")
 data class DirectExecution( //tabela nova
     @PrimaryKey val contractId: Long,
     val executionStatus: String,
@@ -15,7 +15,7 @@ data class DirectExecution( //tabela nova
     var instructions: String? = null,
 )
 
-@Entity(tableName = "direct_executions_streets")
+@Entity(tableName = "direct_execution_street")
 data class DirectExecutionStreet( //tabela nova
     @PrimaryKey(autoGenerate = true) val directStreetId: Long,
     val address: String? = null,
@@ -25,7 +25,7 @@ data class DirectExecutionStreet( //tabela nova
     var photoUri: String? = null,
 )
 
-@Entity(tableName = "direct_executions_streets_items")
+@Entity(tableName = "direct_execution_street_item")
 data class DirectExecutionStreetItem( //tabela nova
     @PrimaryKey(autoGenerate = true) val directStreetItemId: Long,
     val directStreetId: Long,

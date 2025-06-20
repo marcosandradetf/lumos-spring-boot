@@ -1,15 +1,13 @@
 package com.lumos.lumosspring.team.entities;
 
 import com.lumos.lumosspring.stock.entities.Deposit;
-import com.lumos.lumosspring.user.User;
+import com.lumos.lumosspring.user.AppUser;
 import jakarta.persistence.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 
 @Entity
-@Table(name = "tb_teams")
 public class Team {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,19 +19,19 @@ public class Team {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", nullable = false)
-    private User driver;
+    private AppUser driver;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "electrician_id", nullable = false)
-    private User electrician;
+    private AppUser electrician;
 
     @ManyToMany
     @JoinTable(
-            name = "tb_team_complementary_members",
+            name = "team_complementary_member",
             joinColumns = @JoinColumn(name = "team_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private List<User> complementaryMembers;
+    private List<AppUser> complementaryMembers;
 
     private String plateVehicle;
 
@@ -67,27 +65,27 @@ public class Team {
         this.teamName = teamName;
     }
 
-    public User getDriver() {
+    public AppUser getDriver() {
         return driver;
     }
 
-    public void setDriver(User driver) {
+    public void setDriver(AppUser driver) {
         this.driver = driver;
     }
 
-    public User getElectrician() {
+    public AppUser getElectrician() {
         return electrician;
     }
 
-    public void setElectrician(User electrician) {
+    public void setElectrician(AppUser electrician) {
         this.electrician = electrician;
     }
 
-    public List<User> getComplementaryMembers() {
+    public List<AppUser> getComplementaryMembers() {
         return complementaryMembers;
     }
 
-    public void setComplementaryMembers(List<User> complementaryMembers) {
+    public void setComplementaryMembers(List<AppUser> complementaryMembers) {
         this.complementaryMembers = complementaryMembers;
     }
     public String getPlateVehicle() {
@@ -131,7 +129,7 @@ public class Team {
     }
 
     public String getTeamCode() {
-        return driver.getIdUser().toString().concat("_").concat(String.valueOf(idTeam));
+        return driver.getUserId().toString().concat("_").concat(String.valueOf(idTeam));
     }
 
     public String getTeamPhone() {

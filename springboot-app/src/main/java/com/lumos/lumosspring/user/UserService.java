@@ -39,25 +39,25 @@ public class UserService {
 
     @Cacheable("getAllUsers")
     public ResponseEntity<List<UserResponse>> findAll() {
-        List<User> users = userRepository.findByStatusTrueOrderByNameAsc();
+        List<AppUser> appUsers = userRepository.findByStatusTrueOrderByNameAsc();
         List<UserResponse> userResponses = new ArrayList<>();
-        for (User user : users) {
-            if (user.getStatus()) {
-                LocalDate dateOfBirth = user.getDateOfBirth();
+        for (AppUser appUser : appUsers) {
+            if (appUser.getStatus()) {
+                LocalDate dateOfBirth = appUser.getDateOfBirth();
                 userResponses.add(new UserResponse(
-                        user.getIdUser().toString(),
-                        user.getUsername(),
-                        user.getName(),
-                        user.getLastName(),
-                        user.getEmail(),
-                        user.getCpf(),
-                        user.getRoles().stream()
+                        appUser.getUserId().toString(),
+                        appUser.getUsername(),
+                        appUser.getName(),
+                        appUser.getLastName(),
+                        appUser.getEmail(),
+                        appUser.getCpf(),
+                        appUser.getRoles().stream()
                                 .map(Role::getRoleName) // Pega apenas o nome de cada Role
                                 .collect(Collectors.toList()), // Coleta como uma lista
                         dateOfBirth != null ? dateOfBirth.getYear() : null,
                         dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
                         dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
-                        user.getStatus()
+                        appUser.getStatus()
                 ));
             }
         }
@@ -67,13 +67,13 @@ public class UserService {
 
     @Cacheable("getUserByUUID")
     public ResponseEntity<UserResponse> find(String uuid) {
-        var user = userRepository.findByIdUser(UUID.fromString(uuid));
+        var user = userRepository.findByUserId(UUID.fromString(uuid));
         if (user.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         LocalDate dateOfBirth = user.get().getDateOfBirth();
         UserResponse userResponse = new UserResponse(
-                user.get().getIdUser().toString(),
+                user.get().getUserId().toString(),
                 user.get().getUsername(),
                 user.get().getName(),
                 user.get().getLastName(),
@@ -92,12 +92,12 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
-    public Optional<User> findUserByUsernameOrCpf(String username) {
+    public Optional<AppUser> findUserByUsernameOrCpf(String username) {
         return userRepository.findByUsernameOrCpfIgnoreCase(username, username);
     }
 
     public ResponseEntity<?> resetPassword(String userId) {
-        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
         }
@@ -111,7 +111,7 @@ public class UserService {
     }
 
     public ResponseEntity<?> changePassword(String userId, String oldPassword, String newPassword) {
-        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
         }
@@ -127,7 +127,7 @@ public class UserService {
     }
 
     public ResponseEntity<?> forgotPassword(String userId, String email) {
-        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
         }
@@ -150,7 +150,7 @@ public class UserService {
     }
 
     private ResponseEntity<?> confirmCode(String userId, String code) {
-        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
         }
@@ -163,7 +163,7 @@ public class UserService {
     }
 
     private ResponseEntity<?> recoveryPassword(String userId, String code, String newPassword) {
-        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
         }
@@ -203,7 +203,7 @@ public class UserService {
             if (!u.sel()) {
                 continue;
             }
-            var user = userRepository.findByIdUser(UUID.fromString(u.userId()));
+            var user = userRepository.findByUserId(UUID.fromString(u.userId()));
             if (user.isEmpty()) {
                 continue;
             }
@@ -218,8 +218,8 @@ public class UserService {
             }
 
             // Verifica se o username já existe no sistema
-            Optional<User> userOptional = userRepository.findByUsernameIgnoreCase(u.username());
-            if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
+            Optional<AppUser> userOptional = userRepository.findByUsernameIgnoreCase(u.username());
+            if (userOptional.isPresent() && !userOptional.get().getUserId().equals(UUID.fromString(u.userId()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         new ErrorResponse(String.format("Username %s já existente no sistema.", u.username()))
                 );
@@ -227,7 +227,7 @@ public class UserService {
 
             // Verifica se o e-mail já existe no banco de dados
             userOptional = userRepository.findByCpfIgnoreCase(u.cpf());
-            if (userOptional.isPresent() && !userOptional.get().getIdUser().equals(UUID.fromString(u.userId()))) {
+            if (userOptional.isPresent() && !userOptional.get().getUserId().equals(UUID.fromString(u.userId()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         new ErrorResponse(String.format("CPF %s já existente no sistema.", u.cpf()))
                 );
@@ -256,7 +256,7 @@ public class UserService {
             Set<String> newRoleNames = new HashSet<>(u.role());
 
             if (!u.status() || !oldRoleNames.equals(newRoleNames)) {
-                refreshTokenRepository.findByUser(user.get())
+                refreshTokenRepository.findByAppUser(user.get())
                         .ifPresent(tokens -> tokens.forEach(token -> {
                             token.setRevoked(true);
                             refreshTokenRepository.save(token);
@@ -320,7 +320,7 @@ public class UserService {
             }
 
             Set<Role> userRoles = new HashSet<>();
-            var user = new User();
+            var user = new AppUser();
             var date = LocalDate.of(u.year(), u.month(), u.day());
             var password = UUID.randomUUID().toString();
 
@@ -356,7 +356,7 @@ public class UserService {
 
 
     public ResponseEntity<?> setPassword(String userId, PasswordDTO dto) {
-        var user = userRepository.findByIdUser(UUID.fromString(userId));
+        var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado."));
         }

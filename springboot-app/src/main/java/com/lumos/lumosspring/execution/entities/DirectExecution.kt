@@ -1,40 +1,20 @@
 package com.lumos.lumosspring.execution.entities
 
-import com.lumos.lumosspring.contract.entities.Contract
-import com.lumos.lumosspring.stock.entities.ReservationManagement
-import com.lumos.lumosspring.team.entities.Team
-import com.lumos.lumosspring.user.User
 import com.lumos.lumosspring.util.ExecutionStatus
-import jakarta.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
+import java.util.UUID
 
-@Table(name = "tb_direct_executions")
-@Entity
-class DirectExecution {
+@Table("direct_execution")
+data class DirectExecution(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "direct_execution_id")
-    var directExecutionId: Long = 0
-
-    var instructions: String? = null
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contractId", nullable = false)
-    var contract = Contract()
-
-    var directExecutionStatus: String = ExecutionStatus.WAITING_STOCKIST
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "directExecution", cascade = [CascadeType.ALL])
-    var directItems: MutableList<DirectExecutionItem> = ArrayList()
-
-    @ManyToOne
-    @JoinColumn(name = "team_id")
-    var team: Team = Team()
-
-    @ManyToOne
-    @JoinColumn(name = "assigned_user_id")
-    var assignedBy: User = User()
-
-    @ManyToOne
-    @JoinColumn(name = "reservation_management_id")
-    var reservationManagement: ReservationManagement = ReservationManagement()
-}
+    var directExecutionId: Long = 0,
+    var instructions: String? = null,
+    var contractId: Long,
+    var directExecutionStatus: String = ExecutionStatus.WAITING_STOCKIST,
+    var teamId: Long,
+    @Column("assigned_user_id")
+    var assignedBy: UUID,
+    var reservationManagementId: Long
+)
