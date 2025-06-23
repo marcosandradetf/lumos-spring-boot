@@ -223,11 +223,12 @@ object NotificationType {
 object ReservationStatus {
     const val PENDING = "PENDING"
     const val APPROVED = "APPROVED"
-    const val REJECTED = "REJECTED"
-    const val COLLECTED = "COLLECTED"
-    const val IN_STOCK = "IN_STOCK" // ✅ novo status claro
-    const val CANCELLED = "CANCELLED"
-    const val FINISHED = "FINISHED"
-    const val EXECUTION = "EXECUTION"
 
+    const val REJECTED = "REJECTED"
+    const val CANCELLED = "CANCELLED"
+
+    const val IN_STOCK = "IN_STOCK"
+    const val COLLECTED = "COLLECTED"
+
+    const val FINISHED = "FINISHED"
 }

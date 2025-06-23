@@ -8,7 +8,7 @@ import java.time.Instant
 @Table("direct_execution_street")
 data class DirectExecutionStreet (
     @Id
-    private var directExecutionStreetId: Long? = null,
+    var directExecutionStreetId: Long? = null,
     var lastPower: String? = null,
     var address: String? = null,
     var latitude: Double? = null,

@@ -63,14 +63,14 @@ class ExecutionController(
         @RequestPart("execution") execution: SendExecutionDto?
     ): ResponseEntity<Any> = executionService.uploadIndirectExecution(photo, execution)
 
-//    @PostMapping(
-//        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
-//        value = ["/mobile/execution/upload-direct-execution"]
-//    )
-//    fun uploadDirectExecution(
-//        @RequestPart("photo") photo: MultipartFile,
-//        @RequestPart("execution") execution: SendDirectExecutionDto?
-//    ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
+    @PostMapping(
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
+        value = ["/mobile/execution/upload-direct-execution"]
+    )
+    fun uploadDirectExecution(
+        @RequestPart("photo") photo: MultipartFile,
+        @RequestPart("execution") execution: SendDirectExecutionDto?
+    ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
 
     @GetMapping("/mobile/execution/get-executions")
     fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<IndirectExecutionDTO>> = executionService.getIndirectExecutions(uuid)

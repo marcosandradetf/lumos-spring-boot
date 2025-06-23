@@ -2,10 +2,7 @@ package com.lumos.lumosspring.execution.service
 
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.execution.dto.*
-import com.lumos.lumosspring.execution.entities.DirectExecution
-import com.lumos.lumosspring.execution.entities.DirectExecutionItem
-import com.lumos.lumosspring.execution.entities.DirectExecutionStreet
-import com.lumos.lumosspring.execution.entities.MaterialReservation
+import com.lumos.lumosspring.execution.entities.*
 import com.lumos.lumosspring.execution.repository.*
 import com.lumos.lumosspring.fileserver.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
@@ -20,10 +17,8 @@ import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
 import com.lumos.lumosspring.util.JdbcUtil.existsRaw
-import com.lumos.lumosspring.util.JdbcUtil.getDataNamed
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import jakarta.transaction.Transactional
-import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
@@ -33,8 +28,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
 
 @Service
 class ExecutionService(
@@ -56,6 +49,7 @@ class ExecutionService(
     private val directExecutionItemRepository: DirectExecutionRepositoryItem,
     private val jdbcGetExecutionRepository: JdbcGetExecutionRepository,
     private val directExecutionRepositoryStreet: DirectExecutionRepositoryStreet,
+    private val directExecutionRepositoryStreetItem: DirectExecutionRepositoryStreetItem,
 ) {
     // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
     @Transactional
@@ -121,15 +115,7 @@ class ExecutionService(
             .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(DefaultResponse("Contrato não encontrado"))
 
-        val team = teamRepository.findById(execution.teamId)
-            .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(DefaultResponse("Equipe não encontrada"))
-
         val currentUserUUID = UUID.fromString(execution.currentUserUUID)
-
-        val user = userRepository.findByUserId(currentUserUUID)
-            .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(DefaultResponse("Usuário atual não encontrado"))
 
         val management = ReservationManagement()
         management.description = contract.contractor
@@ -160,7 +146,7 @@ class ExecutionService(
                 val directExecutionItem = DirectExecutionItem(
                     measuredItemQuantity = item.quantity,
                     contractItemId = ciq.contractItemId,
-                    directExecutionId = directExecution.directExecutionId
+                    directExecutionId = directExecution?.directExecutionId
                         ?: throw IllegalStateException("Id da execução não encontrado")
                 )
                 directExecutionItemRepository.save(directExecutionItem)
@@ -219,17 +205,16 @@ class ExecutionService(
                             WHERE dei.direct_execution_id = :direct_execution_id
                             ORDER BY cri.name_for_import
                         """.trimIndent(),
-                    MapSqlParameterSource(mapOf("direct_execution_id" to directExecutionId)),
-                    RowMapper { rs, _ ->
-                        ItemResponseDTO(
-                            itemId = rs.getLong("itemId"),
-                            description = rs.getString("description"),
-                            quantity = rs.getDouble("quantity"),
-                            type = rs.getString("type"),
-                            linking = rs.getString("linking")
-                        )
-                    }
-                )
+                    MapSqlParameterSource(mapOf("direct_execution_id" to directExecutionId))
+                ) { rs, _ ->
+                    ItemResponseDTO(
+                        itemId = rs.getLong("itemId"),
+                        description = rs.getString("description"),
+                        quantity = rs.getDouble("quantity"),
+                        type = rs.getString("type"),
+                        linking = rs.getString("linking")
+                    )
+                }
 
 
                 ReserveStreetDTOResponse(
@@ -301,7 +286,6 @@ class ExecutionService(
                 )
             }
 
-
             val executions = directExecutions.ifEmpty { indirectExecutions }
             response.add(ReserveDTOResponse(description, executions))
         }
@@ -310,16 +294,14 @@ class ExecutionService(
     }
 
     fun getStockMaterialForLinking(linking: String, type: String, truckDepositName: String): ResponseEntity<Any> {
-        var materials: List<MaterialInStockDTO>
-
-        if (type != "NULL" && linking != "NULL") {
-            materials = materialStockRepository.findAllByLinkingAndType(
+        val materials: List<MaterialInStockDTO> = if (type != "NULL" && linking != "NULL") {
+            materialStockRepository.findAllByLinkingAndType(
                 linking.lowercase(),
                 type.lowercase(),
                 truckDepositName.lowercase()
             )
         } else {
-            materials = materialStockRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
+            materialStockRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
         }
 
         return ResponseEntity.ok(materials)
@@ -418,7 +400,8 @@ class ExecutionService(
                             and deposit_id = :depositId
                         """.trimIndent(),
                         mapOf("materialId" to materialReserve.materialId, "depositId" to depositId)
-                    )?.get("material_id_stock") as? Long ?: throw IllegalStateException("Truck Material stock not found ${materialReserve.materialId} - deposit: $depositId")
+                    )?.get("material_id_stock") as? Long
+                        ?: throw IllegalStateException("Truck Material stock not found ${materialReserve.materialId} - deposit: $depositId")
 
                     MaterialReservation(
                         description = preMeasurementStreet?.street,
@@ -535,7 +518,6 @@ class ExecutionService(
         return responseMessage
     }
 
-
     private fun notify(reservations: List<MaterialReservation>, streetIdOrExecutionId: String) {
         val reservationIds = reservations.map { it.materialIdReservation }
         val statuses = listOf(ReservationStatus.PENDING, ReservationStatus.APPROVED)
@@ -624,7 +606,7 @@ class ExecutionService(
             val phone = deposit?.depositPhone ?: companyPhone ?: "Telefone não Informado"
             val responsible = stockistName ?: "Responsável não informado"
 
-            val bodyMessage = """
+            bodyMessage = """
                     Local: $depositName"
                     Endereço: $address"
                     Telefone: $phone"
@@ -671,7 +653,7 @@ class ExecutionService(
         val response: MutableList<ReservationsByPreMeasurementDto> = mutableListOf()
 
         for (stockist in stockists) {
-            val reservations = getRawData(
+            val rawReservations = getRawData(
                 namedJdbc,
                 """
                         select pms.city, c.contractor, mr.material_id_reservation, mr.reserved_quantity, mr.description, 
@@ -689,7 +671,7 @@ class ExecutionService(
                 mapOf("deposit_id" to stockist.depositId, "status" to status)
             )
 
-            val reservationsGroup = reservations
+            val reservationsGroup = rawReservations
                 .groupBy {
                     (it["city"] as? String) ?: (it["contractor"] as? String) ?: "Desconhecido"
                 }
@@ -779,29 +761,6 @@ class ExecutionService(
                 throw IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada")
             }
 
-            val quantityReturned = JdbcUtil.getSingleRow(
-                namedJdbc,
-                """
-                    SELECT stock_quantity FROM material_stock 
-                    WHERE material_id_stock = :truckMaterialIdStock
-                """.trimIndent(),
-                mapOf("truckMaterialIdStock" to r.truckMaterialStockId)
-            )?.get("stock_quantity") as? Double ?: 0.0
-
-
-            namedJdbc.update(
-                """
-                    UPDATE material_stock 
-                    SET stock_available = stock_available + :quantityReturned,
-                        stock_quantity = stock_quantity + :quantityReturned
-                    WHERE material_id_stock = :truckMaterialIdStock
-                """.trimIndent(),
-                mapOf(
-                    "quantityReturned" to quantityReturned,
-                    "truckMaterialIdStock" to r.truckMaterialStockId
-                )
-            )
-
             namedJdbc.update(
                 "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
                 mapOf(
@@ -810,170 +769,187 @@ class ExecutionService(
                 ),
             )
 
-            namedJdbc.update(
-                "UPDATE material_reservation " +
-                        "SET status = :status, " +
-                        "quantity_completed = :quantityCompleted " +
-                        "WHERE material_id_reservation = :reserveId",
+            val remaining = namedJdbc.queryForObject(
+                """
+                    UPDATE material_reservation
+                    SET status = :status, quantity_completed = :quantityCompleted
+                    WHERE material_id_reservation = :reserveId
+                    RETURNING reserved_quantity - quantity_completed AS remaining_quantity
+                """.trimIndent(),
                 mapOf(
                     "status" to ReservationStatus.FINISHED,
                     "quantityCompleted" to r.quantityExecuted,
                     "reserveId" to r.reserveId,
                 ),
-            )
+            ) { rs, _ -> rs.getDouble("remaining_quantity") }
+
+            if (remaining!! > 0.1)
+                namedJdbc.update(
+                    """
+                        UPDATE material_stock
+                        SET stock_available = stock_available + :remaining,
+                            stock_quantity = stock_quantity + :remaining
+                        WHERE material_id_stock = :truckMaterialIdStock
+                    """.trimIndent(),
+                    mapOf(
+                        "remaining" to remaining,
+                        "truckMaterialIdStock" to r.truckMaterialStockId
+                    )
+                )
         }
 
         return ResponseEntity.ok().build()
     }
 
     @Transactional
-//    fun uploadDirectExecution(photo: MultipartFile, executionDTO: SendDirectExecutionDto?): ResponseEntity<Any> {
-//
-//        if (executionDTO == null) {
-//            return ResponseEntity.badRequest().body("Execution DTO está vazio.")
-//        }
-//
-//        val exists = JdbcUtil.getSingleRow(
-//            namedJdbc,
-//            "SELECT true as result FROM direct_execution_street WHERE device_street_id = :deviceStreetId AND device_id = :deviceId",
-//            mapOf("deviceStreetId" to executionDTO.deviceStreetId, "deviceId" to executionDTO.deviceId)
-//        )?.get("result") as? Boolean ?: false
-//
-//        if (exists) {
-//            return ResponseEntity.ok().build()
-//        }
-//
-//        val executionStreet = DirectExecutionStreet(
-//            lastPower = executionDTO.lastPower,
-//            address = executionDTO.address,
-//            latitude = executionDTO.latitude,
-//            longitude = executionDTO.longitude,
-//            deviceStreetId = executionDTO.deviceStreetId,
-//            deviceId = executionDTO.deviceId,
-//            finishedAt = util.dateTime,
-//            contractId = executionDTO.contractId
-//        )
-//
-//        val folder = "photos/${executionDTO.contractor.replace("\\s+".toRegex(), "_")}"
-//        val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
-//        executionStreet.executionPhotoUri = fileUri
-//
-//        directExecutionRepositoryStreet.save(executionStreet)
-//
-//        for (m in executionDTO.materials) {
-//            val reserves = getRawData(
-//                namedJdbc,
-//                """
-//                    SELECT material_id_reservation FROM material_reservation
-//                    WHERE truck_material_stock_id = :truckMaterialStockId
-//                    AND contract_item_id = :contractItemId
-//                """.trimIndent(),
-//                mapOf(
-//                    "contractItemId" to m.contractItemId,
-//                    "truckMaterialStockId" to m.truckMaterialStockId,
-//                )
-//            )
-//
-//            if (reserves.isEmpty()) {
-//                throw IllegalArgumentException("Reservas do material com ID ${m.truckMaterialStockId} não encontrada")
-//            }
-//
-//            for (r in reserves) {
-//                if (m.quantityExecuted == 0.0) break
-//
-//                val reserve = JdbcUtil.getSingleRow(
-//                    namedJdbc,
-//                    """
-//                        SELECT reserved_quantity, quantity_completed, status FROM material_reservation
-//                        WHERE material_id_reservation = :materialIdReservation
-//                    """.trimIndent(), mapOf("materialIdReservation" to r["material_id_reservation"] as Long)
-//                )
-//
-//                if (reserve?.get("status") as String == ReservationStatus.FINISHED) {
-//                    continue
-//                }
-//
-//                val executedQuantity = m.quantityExecuted // 13
-//                val reservedQuantity = reserve["reserved_quantity"] as Double // 5
-//                val quantityCompleted = reserve["quantity_completed"] as Double // 2
-//
-//                if (quantityCompleted >= reservedQuantity) {
-//                    """
-//                        UPDATE material_reservation
-//                        set quantityCompleted = :reservedQuantity,
-//                        status = :Finished
-//                        WHERE material_id_reservation = :materialIdReservation
-//                    """.trimIndent()
-//                    continue
-//                }
-//                val balance = reservedQuantity - quantityCompleted //3
-//
-//                //3 - 13
-//                if (balance >= executedQuantity) {
-//                    val sql =
-//                        """
-//                            UPDATE material_reservation
-//                            SET quantity_completed = quantity_completed + :executedQuantity"
-//                        """.trimIndent()
-//                    m.quantityExecuted = 0.0
-//                } else {
-//                    val sql =
-//                        """
-//                            UPDATE material_reservation
-//                            SET quantity_completed = quantity_completed + :balance"
-//                        """.trimIndent()
-//                    m.quantityExecuted = executedQuantity - reservedQuantity //10
-//                }
-//
-//            }
-//
-//
-//            val quantityReturned = JdbcUtil.getSingleRow(
-//                namedJdbc,
-//                """
-//                    SELECT stock_quantity FROM material_stock
-//                    WHERE material_id_stock = :truckMaterialIdStock
-//                """.trimIndent(),
-//                mapOf("truckMaterialIdStock" to m.truckMaterialStockId)
-//            )?.get("stock_quantity") as? Double ?: 0.0
-//
-//
-//            namedJdbc.update(
-//                """
-//                    UPDATE material_stock
-//                    SET stock_available = stock_available + :quantityReturned,
-//                        stock_quantity = stock_quantity + :quantityReturned
-//                    WHERE material_id_stock = :truckMaterialIdStock
-//                """.trimIndent(),
-//                mapOf(
-//                    "quantityReturned" to quantityReturned,
-//                    "truckMaterialIdStock" to r.truckMaterialStockId
-//                )
-//            )
-//
-//            namedJdbc.update(
-//                "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
-//                mapOf(
-//                    "quantityExecuted" to r.quantityExecuted,
-//                    "contractItemId" to r.contractItemId
-//                ),
-//            )
-//
-//            namedJdbc.update(
-//                "UPDATE material_reservation " +
-//                        "SET status = :status, " +
-//                        "quantity_completed = :quantityCompleted " +
-//                        "WHERE material_id_reservation = :reserveId",
-//                mapOf(
-//                    "status" to ReservationStatus.FINISHED,
-//                    "quantityCompleted" to r.quantityExecuted,
-//                    "reserveId" to r.reserveId,
-//                ),
-//            )
-//        }
-//
-//        return ResponseEntity.ok().build()
-//    }
+    fun uploadDirectExecution(photo: MultipartFile, executionDTO: SendDirectExecutionDto?): ResponseEntity<Any> {
+
+        if (executionDTO == null) {
+            return ResponseEntity.badRequest().body("Execution DTO está vazio.")
+        }
+
+        val exists = JdbcUtil.getSingleRow(
+            namedJdbc,
+            "SELECT true as result FROM direct_execution_street WHERE device_street_id = :deviceStreetId AND device_id = :deviceId",
+            mapOf("deviceStreetId" to executionDTO.deviceStreetId, "deviceId" to executionDTO.deviceId)
+        )?.get("result") as? Boolean ?: false
+
+        if (exists) {
+            return ResponseEntity.ok().build()
+        }
+
+        var executionStreet = DirectExecutionStreet(
+            lastPower = executionDTO.lastPower,
+            address = executionDTO.address,
+            latitude = executionDTO.latitude,
+            longitude = executionDTO.longitude,
+            deviceStreetId = executionDTO.deviceStreetId,
+            deviceId = executionDTO.deviceId,
+            finishedAt = util.dateTime,
+            contractId = executionDTO.contractId
+        )
+
+        val folder = "photos/${executionDTO.contractor.replace("\\s+".toRegex(), "_")}"
+        val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
+        executionStreet.executionPhotoUri = fileUri
+
+        executionStreet = directExecutionRepositoryStreet.save(executionStreet)
+
+        for (m in executionDTO.materials) {
+            val item = DirectExecutionStreetItem(
+                executedQuantity = m.quantityExecuted,
+                materialStockId = m.truckMaterialStockId,
+                contractItemId = m.contractItemId,
+                directExecutionStreetId = executionStreet.directExecutionStreetId
+                    ?: throw IllegalStateException("directExecutionStreetId not setted")
+            )
+            directExecutionRepositoryStreetItem.save(item)
+
+            val reserves = getRawData(
+                namedJdbc,
+                """
+                    SELECT material_id_reservation, reserved_quantity, quantity_completed, status
+                    FROM material_reservation
+                    WHERE truck_material_stock_id = :truckMaterialStockId
+                    AND contract_item_id = :contractItemId AND  status = in (:status)
+                """.trimIndent(),
+                mapOf(
+                    "contractItemId" to m.contractItemId,
+                    "truckMaterialStockId" to m.truckMaterialStockId,
+                    "status" to listOf(ReservationStatus.IN_STOCK, ReservationStatus.COLLECTED)
+                )
+            )
+
+            if (reserves.isEmpty()) {
+                throw IllegalArgumentException("Reservas do material com ID ${m.truckMaterialStockId} não encontrada")
+            }
+
+            namedJdbc.update(
+                "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
+                mapOf(
+                    "quantityExecuted" to m.quantityExecuted,
+                    "contractItemId" to m.contractItemId
+                ),
+            )
+
+            for (r in reserves) {
+                if (m.quantityExecuted == 0.0) break
+
+                val executedQuantity = m.quantityExecuted // 13.0
+
+                val reservedQuantity = r["reserved_quantity"] as Double // 7.0
+                val quantityCompleted = r["quantity_completed"] as Double // 3.0
+                val balance = reservedQuantity - quantityCompleted // 4.0
+
+                if (executedQuantity > balance) {
+                    val remaining = namedJdbc.queryForObject(
+                        """
+                            UPDATE material_reservation
+                            SET quantity_completed = quantity_completed + :balance,
+                                status = :status
+                            WHERE material_id_reservation = :materialIdReservation
+                            RETURNING reserved_quantity - quantity_completed AS remaining_quantity
+                        """.trimIndent(),
+                        mapOf(
+                            "balance" to balance,
+                            "status" to ReservationStatus.FINISHED,
+                            "materialIdReservation" to r["material_id_reservation"],
+                        )
+                    ) { rs, _ -> rs.getDouble("remaining_quantity") }
+
+                    if (remaining!! > 0.1)
+                        namedJdbc.update(
+                            """
+                            UPDATE material_stock
+                            SET stock_available = stock_available + :remaining,
+                                stock_quantity = stock_quantity + :remaining
+                            WHERE material_id_stock = :truckMaterialIdStock
+                        """.trimIndent(),
+                            mapOf(
+                                "remaining" to remaining,
+                                "truckMaterialIdStock" to m.truckMaterialStockId
+                            )
+                        )
+
+                    m.quantityExecuted = executedQuantity - balance
+                } else if (balance >= executedQuantity) {
+                    //3 - 13
+                    val remaining = namedJdbc.queryForObject(
+                        """
+                            UPDATE material_reservation
+                            SET quantity_completed = quantity_completed + :executedQuantity
+                            WHERE material_id_reservation = :materialIdReservation
+                            RETURNING reserved_quantity - quantity_completed AS remaining_quantity
+                        """.trimIndent(),
+                        mapOf(
+                            "balance" to balance,
+                            "status" to ReservationStatus.FINISHED,
+                            "materialIdReservation" to r["material_id_reservation"],
+                        )
+                    ) { rs, _ -> rs.getDouble("remaining_quantity") }
+
+                    if (remaining!! > 0.1)
+                        namedJdbc.update(
+                            """
+                            UPDATE material_stock
+                            SET stock_available = stock_available + :remaining,
+                                stock_quantity = stock_quantity + :remaining
+                            WHERE material_id_stock = :truckMaterialIdStock
+                        """.trimIndent(),
+                            mapOf(
+                                "remaining" to remaining,
+                                "truckMaterialIdStock" to m.truckMaterialStockId
+                            )
+                        )
+
+                    m.quantityExecuted = 0.0
+                }
+
+            }
+        }
+
+        return ResponseEntity.ok().build()
+    }
 
     fun getIndirectExecutions(strUUID: String?): ResponseEntity<List<IndirectExecutionDTO>> {
         val userUUID = try {

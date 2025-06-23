@@ -7,7 +7,8 @@ import org.springframework.data.relational.core.mapping.Table
 data class DirectExecutionStreetItem (
     @Id
     var directExecutionStreetItemId: Long? = null,
-    var measuredItemQuantity: Double = 0.0,
+    var executedQuantity: Double = 0.0,
+    var materialStockId: Long,
     var contractItemId: Long,
     var directExecutionStreetId: Long
 )
