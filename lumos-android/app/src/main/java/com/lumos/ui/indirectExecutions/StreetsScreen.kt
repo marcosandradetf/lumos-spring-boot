@@ -1,7 +1,6 @@
-package com.lumos.ui.executions
+package com.lumos.ui.indirectExecutions
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,21 +23,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Power
-import androidx.compose.material.icons.filled.ProductionQuantityLimits
 import androidx.compose.material.icons.filled.SentimentVerySatisfied
-import androidx.compose.material.icons.filled.Warehouse
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,24 +46,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.repository.ReservationStatus
 import com.lumos.data.repository.ExecutionStatus
-import com.lumos.domain.model.Execution
+import com.lumos.domain.model.IndirectExecution
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.ExecutionViewModel
-import androidx.core.net.toUri
-import com.lumos.domain.model.Reserve
-import com.lumos.ui.components.Confirm
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import com.lumos.navigation.Routes
+import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -78,7 +65,7 @@ import kotlinx.coroutines.withContext
 fun StreetsScreen(
     contractId: Long,
     contractor: String,
-    executionViewModel: ExecutionViewModel,
+    indirectExecutionViewModel: IndirectExecutionViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -89,17 +76,13 @@ fun StreetsScreen(
     pSelected: Int,
     onNavigateToExecution: (Long) -> Unit,
 ) {
-    var executions by remember { mutableStateOf<List<Execution>>(emptyList()) }
-    var reserves by remember { mutableStateOf<List<Reserve>>(emptyList()) }
-
-    val isSyncing by executionViewModel.isSyncing.collectAsState()
-    val responseError by executionViewModel.syncError.collectAsState()
-    val isLoadingReserves by executionViewModel.isLoadingReserves.collectAsState()
-    var showAlert by remember { mutableStateOf(false) }
+    var executions by remember { mutableStateOf<List<IndirectExecution>>(emptyList()) }
+    val isSyncing by indirectExecutionViewModel.isSyncing.collectAsState()
+    val responseError by indirectExecutionViewModel.syncError.collectAsState()
 
     LaunchedEffect(Unit) {
-        executionViewModel.syncExecutions()
-        val fetched = executionViewModel.getExecutionsByContract(contractId)
+        indirectExecutionViewModel.syncExecutions()
+        val fetched = indirectExecutionViewModel.getExecutionsByContract(contractId)
 
         withContext(Dispatchers.Main) {
             executions = fetched
@@ -110,30 +93,12 @@ fun StreetsScreen(
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(selectedStreetId) {
-        if (selectedStreetId != null) {
-            val fetchedReserves = executionViewModel.getReservesOnce(
-                selectedStreetId!!,
-                listOf(ReservationStatus.APPROVED)
-            )
-
-            withContext(Dispatchers.Main) {
-                reserves = fetchedReserves
-
-                if (reserves.isNotEmpty()) {
-                    showAlert = true
-                } else {
-                    onNavigateToExecution(selectedStreetId!!)
-                }
-                selectedStreetId = null
-            }
-        }
+        onNavigateToExecution(selectedStreetId!!)
     }
-
 
     Content(
         contractor=  contractor,
         executions = executions,
-        reserves = reserves,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
         onNavigateToProfile = onNavigateToProfile,
@@ -142,212 +107,15 @@ fun StreetsScreen(
         navController = navController,
         notificationsBadge = notificationsBadge,
         isSyncing = isSyncing,
-        isLoadingReserves = isLoadingReserves,
         pSelected = pSelected,
         select = { streetId ->
             selectedStreetId = streetId
         },
-        alert = showAlert,
-        onDismiss = {
-            showAlert = false
-        },
-        onConfirmed = { streetId ->
-            executionViewModel.setReserveStatus(streetId, ReservationStatus.COLLECTED)
-            executionViewModel.setExecutionStatus(streetId, ExecutionStatus.IN_PROGRESS)
-            executionViewModel.queueSyncFetchReservationStatus(
-                streetId,
-                ReservationStatus.COLLECTED,
-                context
-            )
-            executionViewModel.queueSyncStartExecution(
-                streetId,
-                context
-            )
-            onNavigateToExecution(streetId)
-        },
         error = responseError,
         refresh = {
-            executionViewModel.syncExecutions()
+            indirectExecutionViewModel.syncExecutions()
         }
     )
-}
-
-@Composable
-fun PendingMaterialsAlert(
-    reserves: List<Reserve>,
-    onDismiss: () -> Unit = {},
-    onConfirmed: (Long) -> Unit,
-    context: Context
-) {
-    val groupedReserves = reserves.groupBy { it.depositId }
-    var confirmModal by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-
-        // Alerta superior tipo "balao do WhatsApp"
-        Card(
-            shape = MaterialTheme.shapes.small,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(10.dp)) {
-                Text(
-                    "Pendência Encontrada",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Existem materiais pendentes de coleta para essa execução.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        LazyColumn {
-            groupedReserves.forEach { (_, reservesForDeposit) ->
-
-                val firstReserve = reservesForDeposit.first()
-
-                item {
-                    // --- Bloco de contato + infos do depósito ---
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-                        // Contato
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                firstReserve.stockistName,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            TextButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_DIAL).apply {
-                                        data = "tel:${firstReserve.phoneNumber}".toUri()
-                                    }
-                                    context.startActivity(intent)
-                                }
-                            ) {
-                                Icon(
-                                    Icons.Default.Phone,
-                                    contentDescription = "Ligar",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-
-                        // Detalhes
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Warehouse,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                firstReserve.depositName,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.LocationOn,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                firstReserve.depositAddress,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.ProductionQuantityLimits,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                "${reservesForDeposit.size} Materiais",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            "Em caso de dúvida, entre em contato",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                }
-            }
-        }
-
-
-        // final
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            HorizontalDivider()
-            Spacer(Modifier.height(10.dp))
-
-            TextButton(
-                onClick = { onDismiss() },
-            ) {
-                Text("Voltar", color = MaterialTheme.colorScheme.error)
-            }
-
-            TextButton(
-                onClick = { confirmModal = true },
-            ) {
-                Text("Marcar todos como coletados e prosseguir")
-            }
-
-        }
-
-        if (confirmModal)
-            Confirm(
-                body = "Confirma que já coletou todos os materiais?",
-                confirm = {
-                    onConfirmed(reserves.first().streetId)
-                },
-                cancel = {
-                    confirmModal = false
-                }
-            )
-
-    }
 }
 
 
@@ -355,8 +123,7 @@ fun PendingMaterialsAlert(
 @Composable
 fun Content(
     contractor: String,
-    executions: List<Execution>,
-    reserves: List<Reserve>,
+    executions: List<IndirectExecution>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -365,12 +132,8 @@ fun Content(
     navController: NavHostController,
     notificationsBadge: String,
     isSyncing: Boolean,
-    isLoadingReserves: Boolean,
     pSelected: Int,
     select: (Long) -> Unit,
-    alert: Boolean,
-    onDismiss: () -> Unit,
-    onConfirmed: (Long) -> Unit,
     error: String?,
     refresh: () -> Unit,
 ) {
@@ -417,15 +180,8 @@ fun Content(
                 }
             }
 
-            AnimatedVisibility(visible = alert && !isLoadingReserves) {
-                PendingMaterialsAlert(
-                    reserves = reserves,
-                    onDismiss = { onDismiss() },
-                    onConfirmed = { onConfirmed(it) },
-                    context = context
-                )
-            }
-            AnimatedVisibility(visible = !alert && !isLoadingReserves) {
+
+            AnimatedVisibility(visible = !isSyncing) {
 
                 LazyColumn(
                     modifier = Modifier
@@ -612,7 +368,7 @@ fun PrevStreetsScreen() {
     val fakeContext = LocalContext.current
     val values =
         listOf(
-            Execution(
+            IndirectExecution(
                 streetId = 1,
                 streetName = "Rua Dona Tina, 251",
                 executionStatus = "PENDING",
@@ -626,7 +382,7 @@ fun PrevStreetsScreen() {
                 contractId = 1,
                 contractor = ""
             ),
-            Execution(
+            IndirectExecution(
                 streetId = 2,
                 streetName = "Rua Marcos Coelho Neto, 960",
                 executionStatus = ExecutionStatus.IN_PROGRESS,
@@ -640,7 +396,7 @@ fun PrevStreetsScreen() {
                 contractId = 1,
                 contractor = ""
             ),
-            Execution(
+            IndirectExecution(
                 streetId = 3,
                 streetName = "Rua Chopin, 35",
                 executionStatus = ExecutionStatus.FINISHED,
@@ -657,83 +413,11 @@ fun PrevStreetsScreen() {
             ),
         )
 
-    val reserves = listOf(
-        Reserve(
-            reserveId = 1,
-            materialName = "LED 120W",
-            materialQuantity = 12.0,
-            reserveStatus = "APPROVED",
-            streetId = 1,
-            depositId = 1,
-            depositName = "GALPÃO BH",
-            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
-            stockistName = "Elton Melo",
-            phoneNumber = "31999998090",
-            requestUnit = "UN",
-            contractId = -1
-        ),
-        Reserve(
-            reserveId = 1,
-            materialName = "BRAÇO DE 3,5",
-            materialQuantity = 16.0,
-            reserveStatus = "APPROVED",
-            streetId = 1,
-            depositId = 1,
-            depositName = "GALPÃO BH",
-            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
-            stockistName = "Elton Melo",
-            phoneNumber = "31999998090",
-            requestUnit = "UN",
-            contractId = -1
-        ),
-        Reserve(
-            reserveId = 1,
-            materialName = "BRAÇO DE 3,5",
-            materialQuantity = 16.0,
-            reserveStatus = "APPROVED",
-            streetId = 1,
-            depositId = 1,
-            depositName = "GALPÃO BH",
-            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
-            stockistName = "Elton Melo",
-            phoneNumber = "31999998090",
-            requestUnit = "UN",
-            contractId = -1
-        ),
-        Reserve(
-            reserveId = 1,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            reserveStatus = "APPROVED",
-            streetId = 1,
-            depositId = 2,
-            depositName = "GALPÃO ITAPECIRICA",
-            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
-            stockistName = "João Gomes",
-            phoneNumber = "31999999090",
-            requestUnit = "UN",
-            contractId = -1
-        ),
-        Reserve(
-            reserveId = 1,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            reserveStatus = "APPROVED",
-            streetId = 1,
-            depositId = 2,
-            depositName = "GALPÃO ITAPECIRICA",
-            depositAddress = "Av. Raja Gabaglia, 1200 - Belo Horizonte, MG",
-            stockistName = "João Gomes",
-            phoneNumber = "31999999090",
-            requestUnit = "UN",
-            contractId = -1
-        )
-    )
+
 
 
     Content(
         executions = values,
-        reserves = reserves,
         onNavigateToHome = { },
         onNavigateToMenu = { },
         onNavigateToProfile = { },
@@ -742,12 +426,8 @@ fun PrevStreetsScreen() {
         navController = rememberNavController(),
         notificationsBadge = "12",
         isSyncing = false,
-        isLoadingReserves = false,
         pSelected = BottomBar.HOME.value,
         select = {},
-        alert = false,
-        onDismiss = {},
-        onConfirmed = {},
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {},
         contractor = "contractor"

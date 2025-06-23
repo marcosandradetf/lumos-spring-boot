@@ -8,13 +8,9 @@ import java.time.Instant
 @Table("direct_execution_street")
 data class DirectExecutionStreet (
     @Id
-    var directExecutionStreetId: Long = 0,
+    private var directExecutionStreetId: Long? = null,
     var lastPower: String? = null,
-    var streetName: String? = null,
-    var number: Int? = null,
-    var neighborhood: String? = null,
-    var city: String? = null,
-    var state: String? = null,
+    var address: String? = null,
     var latitude: Double? = null,
     var longitude: Double? = null,
     var finishedAt: Instant? = null,
@@ -22,4 +18,5 @@ data class DirectExecutionStreet (
     var deviceStreetId: Long? = null,
     var deviceId: String? = null,
     var executionPhotoUri: String? = null,
+    var contractId: Long
 )

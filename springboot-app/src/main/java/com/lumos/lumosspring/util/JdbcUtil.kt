@@ -42,11 +42,11 @@ object JdbcUtil {
 
 
     fun existsRaw(
-        jdbcTemplate: JdbcTemplate,
+        namedJdbcTemplate: NamedParameterJdbcTemplate,
         sql: String,
-        params: List<Any> = emptyList()
+        params: Map<String, Any?> = emptyMap()
     ): Boolean {
-        return jdbcTemplate.queryForList(sql, params.toTypedArray()).isNotEmpty()
+        return namedJdbcTemplate.queryForList(sql, params).isNotEmpty()
     }
 
     fun <T> getDescription(

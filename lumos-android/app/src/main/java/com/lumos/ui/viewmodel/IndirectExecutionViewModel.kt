@@ -6,11 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
-import com.lumos.data.repository.ExecutionRepository
-import com.lumos.data.repository.ReservationStatus
-import com.lumos.domain.model.Execution
+import com.lumos.data.repository.IndirectExecutionRepository
 import com.lumos.domain.model.ExecutionHolder
-import com.lumos.domain.model.Reserve
+import com.lumos.domain.model.IndirectExecution
+import com.lumos.domain.model.IndirectReserve
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,15 +19,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ExecutionViewModel(
-    private val repository: ExecutionRepository,
+class IndirectExecutionViewModel(
+    private val repository: IndirectExecutionRepository,
 
     ) : ViewModel() {
     val executions: StateFlow<List<ExecutionHolder>> = repository.getFlowExecutions()
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val directExecutions: StateFlow<List<ExecutionHolder>> = repository.getFlowDirectExecutions()
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -69,15 +64,6 @@ class ExecutionViewModel(
         }
     }
 
-    fun setReserveStatus(streetId: Long, status: String) {
-        viewModelScope.launch {
-            try {
-                repository.setReserveStatus(streetId, status)
-            } catch (e: Exception) {
-                Log.e("Error setReserveStatus", e.message.toString())
-            }
-        }
-    }
 
     fun setExecutionStatus(streetId: Long, status: String) {
         viewModelScope.launch {
@@ -100,25 +86,13 @@ class ExecutionViewModel(
     }
 
 
-    suspend fun getExecution(streetId: Long): Execution? {
+    suspend fun getExecution(streetId: Long): IndirectExecution? {
         return withContext(Dispatchers.IO) {
             try {
                 repository.getExecution(streetId)
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
                 null  // Retorna null em caso de erro
-            }
-        }
-    }
-
-    fun queueSyncStartExecution(streetId: Long, context: Context) {
-        viewModelScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    repository.queueSyncStartExecution(streetId)
-                }
-            } catch (e: Exception) {
-                Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
             }
         }
     }
@@ -135,9 +109,9 @@ class ExecutionViewModel(
         }
     }
 
-    suspend fun getReservesOnce(streetId: Long, statusList: List<String>): List<Reserve> {
+    suspend fun getReservesOnce(streetId: Long): List<IndirectReserve> {
         return withContext(Dispatchers.IO) {
-            repository.getReservesOnce(streetId, statusList)
+            repository.getReservesOnce(streetId)
         }
     }
 
@@ -147,7 +121,7 @@ class ExecutionViewModel(
         streetId: Long,
         context: Context,
         hasPosted: Boolean,
-        onReservesUpdated: (List<Reserve>) -> Unit,
+        onReservesUpdated: (List<IndirectReserve>) -> Unit,
         onPostExecuted: () -> Unit,
         onError: (String) -> Unit = {}
     ) {
@@ -156,7 +130,7 @@ class ExecutionViewModel(
             try {
                 val reserves = withContext(Dispatchers.IO) {
                     repository.finishMaterial(reserveId, quantityExecuted)
-                    repository.getReservesOnce(streetId, listOf(ReservationStatus.COLLECTED))
+                    repository.getReservesOnce(streetId)
                 }
 
                 if (!hasPosted && reserves.isEmpty()) {
@@ -182,7 +156,7 @@ class ExecutionViewModel(
         }
     }
 
-    suspend fun getExecutionsByContract(lng: Long): List<Execution> {
+    suspend fun getExecutionsByContract(lng: Long): List<IndirectExecution> {
         return withContext(Dispatchers.IO) {
             repository.getExecutionsByContract(lng)
         }

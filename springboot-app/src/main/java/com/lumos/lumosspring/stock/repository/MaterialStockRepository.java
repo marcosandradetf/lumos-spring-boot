@@ -88,7 +88,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
     Page<MaterialResponse> searchMaterialWithDeposit(Pageable pageable, String name, long depositId);
 
     @Query("SELECT new com.lumos.lumosspring.execution.dto.MaterialInStockDTO(" +
-            "ms.materialIdStock, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
+            "ms.materialIdStock, ms.material.idMaterial, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
             "ms.material.materialType.typeName, ms.deposit.depositName, ms.stockAvailable, ms.requestUnit) " +
             "FROM MaterialStock ms " +
             "WHERE LOWER(ms.material.materialType.typeName) = :type " +
@@ -98,7 +98,7 @@ public interface MaterialStockRepository extends JpaRepository<MaterialStock, Lo
     List<MaterialInStockDTO> findAllByType(@Param("type") String type, @Param("depositName") String depositName);
 
     @Query("SELECT new com.lumos.lumosspring.execution.dto.MaterialInStockDTO(" +
-            "ms.materialIdStock, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
+            "ms.materialIdStock, ms.material.idMaterial, ms.material.materialName, ms.material.materialPower, ms.material.materialLength," +
             "ms.material.materialType.typeName, ms.deposit.depositName, ms.stockAvailable, ms.requestUnit) " +
             "FROM MaterialStock ms " +
             "WHERE LOWER(ms.material.materialType.typeName) = :type " +

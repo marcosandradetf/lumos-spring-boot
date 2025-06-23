@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun Loading() {
+fun Loading(label: String? = null) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -51,9 +52,13 @@ fun Loading() {
     ) {
         CircularProgressIndicator(
             modifier = Modifier.width(34.dp),
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onBackground,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
         )
+        if (label != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(label, color = MaterialTheme.colorScheme.onBackground)
+        }
     }
 }
 
@@ -160,7 +165,7 @@ fun Confirm(
             }
         },
 
-    )
+        )
 }
 
 @Composable
@@ -237,5 +242,5 @@ fun Alert(
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-    Alert(title = "Você esqueceu da foto" ,body = "Antes de finalizar tire uma foto.", confirm = {})
+    Loading("Tentando carregar as coordenadas...")
 }

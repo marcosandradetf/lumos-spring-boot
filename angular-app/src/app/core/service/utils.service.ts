@@ -150,12 +150,12 @@ export class UtilsService {
               summary: string = typeMessage,
               stick: boolean = false,) {
     switch (typeMessage) {
+
       case 'success':
         this.messageService.add({severity: 'success', summary: summary, detail: messageContent, sticky: stick});
         break;
       case 'info':
         this.messageService.add({severity: 'info', summary: summary, detail: messageContent, sticky: stick});
-        break;
         break;
       case 'warn':
         this.messageService.add({severity: 'warn', summary: summary, detail: messageContent, sticky: stick});

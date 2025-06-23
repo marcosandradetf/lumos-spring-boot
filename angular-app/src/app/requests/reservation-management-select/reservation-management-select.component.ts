@@ -81,10 +81,13 @@ export class ReservationManagementSelectComponent {
   };
   description: string = "";
 
-  streetId: number = 0;
+  streetId: number | null = null;
+  directExecutionId: number | null = null;
   currentItemId: number = 0;
+
   street: ReserveStreetDTOResponse = {
-    preMeasurementStreetId: 0,
+    preMeasurementStreetId: null,
+    directExecutionId: null,
     streetName: '',
     latitude: 0,
     longitude: 0,
@@ -119,9 +122,10 @@ export class ReservationManagementSelectComponent {
       this.reserve = state.reserve;
       this.description = this.reserve.description;
       if (this.reserve.streets[0].comment === 'DIRECT_EXECUTION') {
-        this.streetId = -1;
+        this.streetId = null;
         this.street = this.reserve.streets[0];
-
+        this.directExecutionId = this.street.directExecutionId;
+        this.currentTeamId = this.street.teamId;
       }
     } else {
       void this.router.navigate(['/requisicoes/execucoes/reservas/gerenciamento']);
@@ -187,7 +191,7 @@ export class ReservationManagementSelectComponent {
         next: (response) => {
           const news = response.filter(n =>
             !this.materials.some(m =>
-              m.materialId === n.materialId && m.deposit === n.deposit
+              m.materialStockId === n.materialStockId && m.deposit === n.deposit
             )
           );
 
@@ -234,19 +238,41 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    const newMaterial = {
-      materialId: material.materialId,
-      materialQuantity: Number(this.setQuantity.quantity)
+    const truckMaterialStockId = this.filteredMaterials.find(m => m.materialId === material.materialId && m.deposit === this.street.truckDepositName)?.materialStockId
+    if(!truckMaterialStockId){
+      this.utils.showMessage("Referência do material do caminhão não encontrada", "error", "Erro ao salvar referência")
+      return;
     }
 
-    if (!this.existsMaterial(newMaterial.materialId)) {
+    const newMaterial = material.deposit.includes("CAMINHÃO")
+      ? {
+        centralMaterialStockId: null,
+        truckMaterialStockId: material.materialStockId,
+        materialQuantity: Number(this.setQuantity.quantity),
+        materialId: material.materialId,
+      }
+      : {
+        centralMaterialStockId: material.materialStockId,
+        truckMaterialStockId: null,
+        materialQuantity: Number(this.setQuantity.quantity),
+        materialId: material.materialId,
+      };
+
+    const materialId = material.deposit.includes("CAMINHÃO") ? newMaterial.truckMaterialStockId : newMaterial.centralMaterialStockId;
+    if(materialId == null){
+      this.utils.showMessage("Id do material não encontrado", "error", "Erro ao salvar referência")
+      return;
+    }
+
+    if (!this.existsMaterial(materialId, material.deposit)) {
       const materials = this.street.items[currentItemIndex].materials;
       if (!materials) this.street.items[currentItemIndex].materials = [];
       this.street.items[currentItemIndex].materials.push(newMaterial);
       this.utils.showMessage(`QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
     } else {
+      const propToCompare = material.deposit.includes("CAMINHÃO") ? 'truckMaterialStockId' : 'centralMaterialStockId';
       const matIndex = this.street.items[currentItemIndex].materials
-        .findIndex(i => i.materialId === newMaterial.materialId);
+        .findIndex(i => i[propToCompare] === materialId);
 
       if (matIndex === -1) {
         this.utils.showMessage("Erro ao editar item, tente novamente", 'error');
@@ -269,21 +295,26 @@ export class ReservationManagementSelectComponent {
     this.currentItemId = 0;
     this.currentMaterialId = 0;
   }
-
-
+  
   sendData() {
-    for (const i of this.street.items) {
-      if (i.materials.length === 0) {
-        this.utils.showMessage("Existem itens pendentes", 'error', 'Não foi possível salvar');
-        return;
-      }
+    const hasUndefinedItems = this.street.items.some(i => i.materials === undefined);
+    if (hasUndefinedItems) {
+      this.utils.showMessage("Existem itens pendentes", 'error', 'Não foi possível salvar');
+      return;
+    }
+
+    const hasPendingItems = this.street.items.some(i => i.materials.length === 0);
+    if (hasPendingItems) {
+      this.utils.showMessage("Existem itens pendentes", 'error', 'Não foi possível salvar');
+      return;
     }
 
     this.loading = true;
     this.executionService.reserveMaterialsForExecution(this.street, this.userUUID).subscribe({
       next: (response: any) => {
         this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
-        this.streetId = 0;
+        this.streetId = null;
+        this.directExecutionId = null;
         this.utils.showMessage(response.message, 'success', 'Reserva realizada com sucesso', true);
       },
       error: (error) => {
@@ -296,14 +327,24 @@ export class ReservationManagementSelectComponent {
 
   }
 
-  getQuantity(materialId: number) {
-    return this.street.items.find(i => i.itemId === this.currentItemId)
-      ?.materials?.find(m => m.materialId == materialId)?.materialQuantity || 0;
+  getQuantity(materialId: number, deposit: string) {
+    if(deposit.includes("CAMINHÃO")) {
+      return this.street.items.find(i => i.itemId === this.currentItemId)
+        ?.materials?.find(m => m.truckMaterialStockId == materialId)?.materialQuantity || 0;
+    } else {
+      return this.street.items.find(i => i.itemId === this.currentItemId)
+        ?.materials?.find(m => m.centralMaterialStockId == materialId)?.materialQuantity || 0;
+    }
   }
 
-  existsMaterial(materialId: number): boolean {
-    return this.street.items.find(i => i.itemId === this.currentItemId)
-      ?.materials?.some(m => m.materialId == materialId) || false;
+  existsMaterial(materialId: number, deposit: any): boolean {
+    if(deposit.includes("CAMINHÃO")) {
+      return this.street.items.find(i => i.itemId === this.currentItemId)
+        ?.materials?.some(m => m.truckMaterialStockId == materialId) || false;
+    } else  {
+      return this.street.items.find(i => i.itemId === this.currentItemId)
+        ?.materials?.some(m => m.centralMaterialStockId == materialId) || false;
+    }
   }
 
   Cancel(material: MaterialInStockDTO) {
@@ -313,8 +354,14 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    this.street.items[index].materials = this.street.items[index].materials
-      .filter(m => m.materialId !== material.materialId);
+    if(material.deposit.includes("CAMINHÃO")) {
+      this.street.items[index].materials = this.street.items[index].materials
+        .filter(m => m.truckMaterialStockId !== material.materialStockId);
+    } else {
+      this.street.items[index].materials = this.street.items[index].materials
+        .filter(m => m.centralMaterialStockId !== material.materialStockId);
+    }
+
 
     // 2. Colapsa a linha expandida
     const item = this.street.items.find(i => i.itemId === this.currentItemId);
@@ -369,7 +416,7 @@ export class ReservationManagementSelectComponent {
 
     this.utils.getObject<Array<{ driver_id: string; electrician_id: string }>>({
       fields: ['driver_id', 'electrician_id'],
-      table: 'tb_teams',
+      table: 'team',
       where: 'id_team',
       equal: [this.currentTeamId]
     }).subscribe({
@@ -388,8 +435,8 @@ export class ReservationManagementSelectComponent {
 
         this.utils.getObject<Array<{ name: string; last_name: string, phone_number: string }>>({
           fields: ['name', 'last_name', 'phone_number'],
-          table: 'tb_users',
-          where: 'id_user',
+          table: 'app_user',
+          where: 'user_id',
           equal: uuid
         }).subscribe({
           next: (userData) => {

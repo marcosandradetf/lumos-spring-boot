@@ -33,11 +33,7 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
         secureStorage = SecureStorage(this)
 
         // Inicializar Room
-        database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "app_database"
-        ).build()
+        database = AppDatabase.getInstance(this)
 
         // Inicializar Retrofit
         val okHttpClient = OkHttpClient.Builder()
@@ -48,9 +44,8 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
             .build()
 
         retrofit = Retrofit.Builder()
-            .baseUrl("https://spring.thryon.com.br")
-//            .baseUrl("https://42e7-177-177-118-174.ngrok-free.app")
-//            .baseUrl("http://192.168.2.13:8080")
+//            .baseUrl("https://spring.thryon.com.br")
+            .baseUrl("https://368b-2804-d45-360f-7a00-d0e4-4bc8-a0be-5f5.ngrok-free.app")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

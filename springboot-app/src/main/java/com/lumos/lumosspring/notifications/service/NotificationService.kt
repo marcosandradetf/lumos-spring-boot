@@ -84,6 +84,36 @@ class NotificationService {
         }
     }
 
+    fun sendNotificationForUserId(
+        title: String,
+        body: String,
+        action: String? = null,
+        userId: String,
+        time: Instant,
+        type: String
+    ) {
+        // Criar a mensagem para o tópico
+        val messageBuilder = Message.builder()
+            .setTopic(userId)  // Nome do tópico
+            .putData("title", title)  // 🔹 Agora a notificação será tratada no onMessageReceived
+            .putData("body", body)
+            .putData("time", time.toString())
+            .putData("type", type)
+
+        action?.let {
+            messageBuilder.putData("action", it)
+        }
+
+        val message = messageBuilder.build()
+
+        // Enviar a notificação
+        try {
+            val response = FirebaseMessaging.getInstance().send(message)
+            println("✅ Notificação enviada para o tópico $userId com sucesso: $response")
+        } catch (e: Exception) {
+            println("❌ Erro ao enviar notificação: ${e.message}")
+        }
+    }
 
 }
 

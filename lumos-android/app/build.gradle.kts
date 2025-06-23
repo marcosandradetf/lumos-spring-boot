@@ -66,21 +66,29 @@ android {
         }
     }
 
-//    signingConfigs {
-//        create("release") {
-//            storeFile = file("/home/marcos/projects/lumos/lumos-android/key-store-path/key.jks")
-//            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-//            keyAlias = System.getenv("KEY_ALIAS") ?: ""
-//            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-//        }
-//    }
-//
-//    buildTypes {
-//        getByName("release") {
-//            isMinifyEnabled = false //  ProGuard
-//            signingConfig = signingConfigs.getByName("release")
-//        }
-//    }
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
+            storePassword = "4dejulho_"
+            keyAlias = "key0"
+            keyPassword = "4dejulho_"
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        getByName("debug") {
+            // Opcional: assinar debug com mesma chave
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
 
 }
 

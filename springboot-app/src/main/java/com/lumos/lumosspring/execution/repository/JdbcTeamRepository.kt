@@ -53,18 +53,19 @@ class JdbcGetExecutionRepository(
         if (teamsId.isEmpty()) return emptyList()
 
         val directExecutions = getDirectExecutionsByTeam(teamsId)
-        val directExecutionsIds = directExecutions.map { it["pre_measurement_street_id"] as Long }
+        val directExecutionsIds = directExecutions.map { it["direct_execution_id"] as Long }
 
         val reservesGrouped = getReservesGroupedByDirectExecution(directExecutionsIds)
 
         return directExecutions.map { execution ->
-            val streetId = execution["pre_measurement_street_id"] as Long
-            val reserves = reservesGrouped[streetId] ?: emptyList()
+            val directExecutionId = execution["direct_execution_id"] as Long
+            val reserves = reservesGrouped[directExecutionId] ?: emptyList()
 
             DirectExecutionDTOResponse(
                 contractId = execution["contract_id"] as Long,
                 contractor = execution["contractor"] as String,
                 instructions = execution["instructions"] as? String,
+                creationDate = (execution["assigned_at"] as Instant).toString(),
                 reserves = reserves
             )
         }
@@ -103,7 +104,7 @@ class JdbcGetExecutionRepository(
         return JdbcUtil.getRawData(
             namedJdbc,
             """
-                SELECT de.direct_execution_id, de.contract_id, de.instructions, c.contractor
+                SELECT de.direct_execution_id, de.contract_id, de.instructions, c.contractor, de.assigned_at
                 FROM direct_execution de
                 INNER JOIN contract c ON c.contract_id = de.contract_id
                 WHERE de.team_id IN (:teams_ids) AND de.direct_execution_status = :status
@@ -159,7 +160,7 @@ class JdbcGetExecutionRepository(
             """
                 SELECT mr.material_id_reservation, mr.reserved_quantity, mr.status, 
                        mr.truck_material_stock_id, mr.central_material_stock_id,
-                       mr.pre_measurement_street_id, m.material_name, mr.contract_item_id,
+                       mr.direct_execution_id, m.material_name, mr.contract_item_id,
                        m.material_power, m.material_length, ms.request_unit
                 FROM material_reservation mr
                 INNER JOIN material_stock ms ON ms.material_id_stock = mr.truck_material_stock_id
@@ -170,7 +171,7 @@ class JdbcGetExecutionRepository(
             mapOf("direct_execution_ids" to directExecutionIds)
         )
 
-        return raw.groupBy { it["pre_measurement_street_id"] as Long }
+        return raw.groupBy { it["direct_execution_id"] as Long }
             .mapValues { (_, reservations) ->
                 reservations.map { r ->
                     var name = r["material_name"] as String

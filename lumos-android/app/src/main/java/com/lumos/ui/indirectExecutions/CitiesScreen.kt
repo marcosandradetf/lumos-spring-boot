@@ -1,4 +1,4 @@
-package com.lumos.ui.executions
+package com.lumos.ui.indirectExecutions
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -53,11 +53,13 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.ExecutionViewModel
+import com.lumos.ui.viewmodel.DirectExecutionViewModel
+import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 
 @Composable
 fun CitiesScreen(
-    executionViewModel: ExecutionViewModel,
+    indirectExecutionViewModel: IndirectExecutionViewModel,
+    directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -71,17 +73,17 @@ fun CitiesScreen(
     directExecution: Boolean
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
+    val title = if(directExecution) "Execuções sem pré-medição" else "Execuções com pré-medição"
 
 //    val allExecutions by executionViewModel.executions.collectAsState()
     val allExecutions by if (directExecution) {
-        executionViewModel.directExecutions.collectAsState()
+        directExecutionViewModel.directExecutions.collectAsState()
     } else {
-        executionViewModel.executions.collectAsState()
+        indirectExecutionViewModel.executions.collectAsState()
     }
 
-
-    val isSyncing by executionViewModel.isSyncing.collectAsState()
-    val responseError by executionViewModel.syncError.collectAsState()
+    val isSyncing by indirectExecutionViewModel.isSyncing.collectAsState()
+    val responseError by indirectExecutionViewModel.syncError.collectAsState()
     var executions by remember { mutableStateOf<List<ExecutionHolder>>(emptyList()) }
 
 
@@ -90,7 +92,10 @@ fun CitiesScreen(
             navController.navigate(Routes.NO_ACCESS + "/Execuções")
         }
 
-        executionViewModel.syncExecutions()
+        if (directExecution)
+            directExecutionViewModel.syncExecutions()
+        else
+            indirectExecutionViewModel.syncExecutions()
     }
 
     LaunchedEffect(allExecutions) {
@@ -100,6 +105,7 @@ fun CitiesScreen(
     }
 
     ContentCitiesScreen(
+        title = title,
         executions = executions,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
@@ -111,12 +117,15 @@ fun CitiesScreen(
         isSyncing = isSyncing,
         pSelected = pSelected,
         select = { contractId, contractor ->
-            if(directExecution) null
+            if (directExecution) null
             else onNavigateToStreetScreen(contractId, contractor)
         },
         error = responseError,
         refresh = {
-            executionViewModel.syncExecutions()
+            if (directExecution)
+                directExecutionViewModel.syncExecutions()
+            else
+                indirectExecutionViewModel.syncExecutions()
         },
     )
 }
@@ -125,6 +134,7 @@ fun CitiesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentCitiesScreen(
+    title: String,
     executions: List<ExecutionHolder>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -141,7 +151,7 @@ fun ContentCitiesScreen(
 ) {
 
     AppLayout(
-        title = "Execuções",
+        title = title,
         pSelected = pSelected,
         sliderNavigateToMenu = onNavigateToMenu,
         sliderNavigateToHome = onNavigateToHome,
@@ -353,6 +363,7 @@ fun PrevContentCitiesScreen() {
         )
 
     ContentCitiesScreen(
+        title = "Execuções sem pré-medição",
         executions = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },
@@ -363,7 +374,7 @@ fun PrevContentCitiesScreen() {
         notificationsBadge = "12",
         isSyncing = false,
         pSelected = BottomBar.HOME.value,
-        select = { _ ,_ ->},
+        select = { _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {}
     )

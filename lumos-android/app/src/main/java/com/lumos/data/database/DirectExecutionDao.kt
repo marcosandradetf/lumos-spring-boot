@@ -1,0 +1,132 @@
+package com.lumos.data.database
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy.Companion.IGNORE
+import androidx.room.Query
+import androidx.room.Transaction
+import com.lumos.domain.model.DirectExecution
+import com.lumos.domain.model.DirectExecutionStreet
+import com.lumos.domain.model.DirectExecutionStreetItem
+import com.lumos.domain.model.DirectReserve
+import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.ReservePartial
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface DirectExecutionDao {
+    @Query(
+        """
+        UPDATE direct_reserve 
+        SET materialQuantity = materialQuantity + :sumQuantity 
+        WHERE materialStockId = :materialStockId AND contractItemId = :contractItemId
+    """
+    )
+    suspend fun updateSumQuantity(
+        materialStockId: Long,
+        contractItemId: Long,
+        sumQuantity: Double
+    ): Int
+
+    @Insert
+    suspend fun insertReservation(reservation: DirectReserve)
+
+    @Transaction
+    suspend fun upsertReservation(reservation: DirectReserve) {
+        val updated = updateSumQuantity(
+            materialStockId = reservation.materialStockId,
+            contractItemId = reservation.contractItemId,
+            sumQuantity = reservation.materialQuantity
+        )
+
+        if (updated == 0) {
+            insertReservation(reservation)
+        }
+    }
+
+    @Query(
+        """
+        UPDATE direct_execution 
+        SET instructions = :newInstructions,
+        itemsQuantity = itemsQuantity + :newItemsQuantity
+        WHERE contractId = :contractId
+    """
+    )
+    suspend fun updateExistingExecution(
+        newInstructions: String?,
+        newItemsQuantity: Int,
+        contractId: Long
+    ): Int
+
+    @Insert
+    suspend fun insertExecution(execution: DirectExecution)
+
+    @Transaction
+    suspend fun upsertExecution(execution: DirectExecution) {
+        val updated = updateExistingExecution(
+            newInstructions = execution.instructions,
+            newItemsQuantity = execution.itemsQuantity,
+            contractId = execution.contractId
+        )
+
+        if (updated == 0) {
+            insertExecution(execution)
+        }
+    }
+
+    @Query("DELETE FROM direct_execution WHERE contractId = :contractId")
+    suspend fun deleteDirectExecution(contractId: Long)
+
+    @Query("DELETE FROM direct_reserve WHERE contractId = :contractId")
+    suspend fun deleteDirectReserves(contractId: Long)
+
+    @Query(
+        "SELECT null, contractId, null, null, null, null, null, executionStatus, null, type, itemsQuantity, creationDate, null, null, null, contractor, instructions" +
+                " FROM direct_execution WHERE executionStatus <> 'FINISHED'"
+    )
+    fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>>
+
+    @Query("select * from direct_execution where contractId = :contractId")
+    suspend fun getExecution(contractId: Long): DirectExecution
+
+    @Query("select * from direct_reserve where contractId = :contractId")
+    suspend fun getReservesOnce(contractId: Long): List<DirectReserve>
+
+    @Insert(onConflict = IGNORE)
+    suspend fun createStreet(street: DirectExecutionStreet): Long
+
+    @Insert
+    suspend fun insertDirectExecutionStreetItem(item: DirectExecutionStreetItem)
+
+    @Query("""
+        update direct_reserve
+        set materialQuantity = materialQuantity - :quantityExecuted
+        where materialStockId = :materialStockId 
+        and contractItemId = :contractItemId
+    """)
+    suspend fun debitMaterial(materialStockId: Long, contractItemId: Long, quantityExecuted: Double)
+
+    @Query("select photoUri from direct_execution_street where directStreetId = :streetId")
+    suspend fun getPhotoUri(streetId: Long): String?
+
+    @Query("""
+        SELECT 0 as reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted 
+        FROM direct_execution_street_item 
+        WHERE directStreetId = :streetId
+    """)
+    suspend fun getStreetItems(streetId: Long): List<ReservePartial>
+
+    @Query("""
+        SELECT *
+        FROM direct_execution_street
+        WHERE directStreetId = :streetId
+    """)
+    suspend fun getStreet(streetId: Long): DirectExecutionStreet
+
+    @Query("DELETE FROM direct_execution_street WHERE directStreetId = :streetId")
+    suspend fun deleteStreet(streetId: Long)
+
+    @Query("DELETE FROM direct_execution_street_item WHERE directStreetId = :streetId")
+    suspend fun deleteItems(streetId: Long)
+}

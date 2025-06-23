@@ -103,8 +103,8 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
     this.execution.currentUserUUID = this.authService.getUser().uuid;
 
     this.contractService.getContractItems(this.contractId).subscribe({
-      next: item => {
-        this.referenceItems = item;
+      next: items => {
+        this.referenceItems = items.filter(i => i.type !== 'SERVIÇO' && i.type !== 'PROJETO');
       },
       error: err => {
         this.loading = false;

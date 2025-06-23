@@ -21,7 +21,8 @@ import com.lumos.data.api.UserExperience
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.database.QueueDao
 import com.lumos.data.repository.ContractRepository
-import com.lumos.data.repository.ExecutionRepository
+import com.lumos.data.repository.DirectExecutionRepository
+import com.lumos.data.repository.IndirectExecutionRepository
 import com.lumos.data.repository.GenericRepository
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.domain.model.SyncQueueEntity
@@ -43,7 +44,8 @@ object SyncTypes {
     const val SYNC_STOCK = "SYNC_STOCK"
     const val POST_PRE_MEASUREMENT = "POST_PRE_MEASUREMENT"
     const val SYNC_EXECUTIONS = "SYNC_EXECUTIONS"
-    const val POST_EXECUTION = "POST_EXECUTION"
+    const val POST_INDIRECT_EXECUTION = "POST_INDIRECT_EXECUTION"
+    const val POST_DIRECT_EXECUTION = "POST_DIRECT_EXECUTION"
     const val POST_GENERIC = "POST_GENERIC"
     const val GET_GENERIC = "GET_GENERIC"
 
@@ -62,7 +64,8 @@ class SyncQueueWorker(
 
     private val preMeasurementRepository: PreMeasurementRepository
     private val contractRepository: ContractRepository
-    private val executionRepository: ExecutionRepository
+    private val indirectExecutionRepository: IndirectExecutionRepository
+    private val directExecutionRepository: DirectExecutionRepository
     private val genericRepository: GenericRepository
 
 
@@ -88,7 +91,14 @@ class SyncQueueWorker(
             app = app
         )
 
-        executionRepository = ExecutionRepository(
+        indirectExecutionRepository = IndirectExecutionRepository(
+            db = db,
+            api = executionApi,
+            secureStorage = secureStorage,
+            app = app
+        )
+
+        directExecutionRepository = DirectExecutionRepository(
             db = db,
             api = executionApi,
             secureStorage = secureStorage,
@@ -118,7 +128,8 @@ class SyncQueueWorker(
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
-                SyncTypes.POST_EXECUTION -> postExecution(item)
+                SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
+                SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
 //                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
@@ -324,7 +335,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = executionRepository.syncExecutions()
+            val response = indirectExecutionRepository.syncExecutions()
             checkResponse(response, item)
 
         } catch (e: Exception) {
@@ -334,7 +345,7 @@ class SyncQueueWorker(
         }
     }
 
-    private suspend fun postExecution(item: SyncQueueEntity): Result {
+    private suspend fun postIndirectExecution(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -356,7 +367,39 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = executionRepository.postExecution(item.relatedId)
+            val response = indirectExecutionRepository.postExecution(item.relatedId)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
+            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            Result.failure()
+        }
+    }
+
+    private suspend fun postDirectExecution(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedId == null) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = directExecutionRepository.postDirectExecution(item.relatedId)
             checkResponse(response, item)
 
         } catch (e: Exception) {

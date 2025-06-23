@@ -13,7 +13,8 @@ export interface ReserveDTOResponse {
 }
 
 export interface ReserveStreetDTOResponse {
-  preMeasurementStreetId: number,
+  preMeasurementStreetId: number | null,
+  directExecutionId: number | null,
   streetName: string,
   latitude: number,
   longitude: number,
@@ -34,20 +35,23 @@ export interface ItemResponseDTO {
   linking: string,
 
   materials: {
-    materialId: number,
+    centralMaterialStockId: number | null,
+    truckMaterialStockId: number | null,
+    materialId: number | null,
     materialQuantity: number,
   }[]
 }
 
-export interface MaterialInStockDTO{
-   materialId: number,
-   materialName: string,
-   materialPower: string,
-   materialLength: string,
-   materialType: string,
-   deposit: string,
-   availableQuantity: number,
-   requestUnit: string,
+export interface MaterialInStockDTO {
+  materialStockId: number,
+  materialId: number,
+  materialName: string,
+  materialPower: string,
+  materialLength: string,
+  materialType: string,
+  deposit: string,
+  availableQuantity: number,
+  requestUnit: string,
 }
 
 export interface DirectExecutionDTO {

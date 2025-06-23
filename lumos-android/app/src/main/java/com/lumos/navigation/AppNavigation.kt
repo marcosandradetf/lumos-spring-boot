@@ -29,7 +29,8 @@ import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
-import com.lumos.data.repository.ExecutionRepository
+import com.lumos.data.repository.DirectExecutionRepository
+import com.lumos.data.repository.IndirectExecutionRepository
 import com.lumos.data.repository.NotificationRepository
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.midleware.SecureStorage
@@ -38,9 +39,10 @@ import com.lumos.notifications.FCMService.FCMBus
 import com.lumos.notifications.NotificationManager
 import com.lumos.notifications.NotificationsBadge
 import com.lumos.ui.auth.Login
-import com.lumos.ui.executions.CitiesScreen
-import com.lumos.ui.executions.MaterialScreen
-import com.lumos.ui.executions.StreetsScreen
+import com.lumos.ui.directExecutions.StreetMaterialScreen
+import com.lumos.ui.indirectExecutions.CitiesScreen
+import com.lumos.ui.indirectExecutions.MaterialScreen
+import com.lumos.ui.indirectExecutions.StreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.noAccess.NoAccessScreen
@@ -53,7 +55,8 @@ import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.ExecutionViewModel
+import com.lumos.ui.viewmodel.DirectExecutionViewModel
+import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.worker.SyncManager.enqueueSync
@@ -107,17 +110,31 @@ fun AppNavigation(
         )
     }
 
-    val executionViewModel: ExecutionViewModel = viewModel {
+    val indirectExecutionViewModel: IndirectExecutionViewModel = viewModel {
         val api = app.retrofit.create(ExecutionApi::class.java)
 
-        val contractRepository = ExecutionRepository(
+        val contractRepository = IndirectExecutionRepository(
             db = app.database,
             api = api,
             secureStorage = secureStorage,
             app = app
         )
-        ExecutionViewModel(
+        IndirectExecutionViewModel(
             repository = contractRepository
+        )
+    }
+
+    val directExecutionViewModel: DirectExecutionViewModel = viewModel {
+        val api = app.retrofit.create(ExecutionApi::class.java)
+
+        val repository = DirectExecutionRepository(
+            db = app.database,
+            api = api,
+            secureStorage = secureStorage,
+            app = app
+        )
+        DirectExecutionViewModel(
+            repository = repository
         )
     }
 
@@ -162,6 +179,7 @@ fun AppNavigation(
                     Routes.NOTIFICATIONS -> navController.navigate(Routes.NOTIFICATIONS)
                     Routes.PROFILE -> navController.navigate(Routes.PROFILE)
                     Routes.EXECUTION_SCREEN -> navController.navigate(Routes.EXECUTION_SCREEN)
+                    Routes.DIRECT_EXECUTION_SCREEN -> navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
                     // Adicione mais cases conforme necessário
 
                 }
@@ -262,7 +280,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        executionViewModel = executionViewModel,
+                        indirectExecutionViewModel = indirectExecutionViewModel,
                         contractViewModel = contractViewModel,
                         roles = secureStorage.getRoles()
                     )
@@ -472,7 +490,8 @@ fun AppNavigation(
 
                 composable(Routes.EXECUTION_SCREEN) {
                     CitiesScreen(
-                        executionViewModel = executionViewModel,
+                        indirectExecutionViewModel = indirectExecutionViewModel,
+                        directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -488,7 +507,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        pSelected = 0,
+                        pSelected = BottomBar.MENU.value,
                         onNavigateToStreetScreen = { contractId, contractor ->
                             navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
                         },
@@ -505,7 +524,7 @@ fun AppNavigation(
                     StreetsScreen(
                         contractId = contractId,
                         contractor = contractor,
-                        executionViewModel = executionViewModel,
+                        indirectExecutionViewModel = indirectExecutionViewModel,
                         context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -521,7 +540,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        pSelected = 0,
+                        pSelected = BottomBar.MENU.value,
                         onNavigateToExecution = {
                             navController.navigate(Routes.EXECUTION_SCREEN_MATERIALS + "/$it")
                         }
@@ -533,7 +552,7 @@ fun AppNavigation(
                         backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
                     MaterialScreen(
                         streetId = streetId,
-                        executionViewModel = executionViewModel,
+                        indirectExecutionViewModel = indirectExecutionViewModel,
                         context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -547,7 +566,7 @@ fun AppNavigation(
                         onNavigateToNotifications = {
                             navController.navigate(Routes.NOTIFICATIONS)
                         },
-                        pSelected = 0,
+                        pSelected = BottomBar.MENU.value,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
                         onNavigateToExecutions = {
@@ -556,6 +575,66 @@ fun AppNavigation(
                     )
                 }
 
+                // direct executions
+                composable(Routes.DIRECT_EXECUTION_SCREEN) {
+                    CitiesScreen(
+                        indirectExecutionViewModel = indirectExecutionViewModel,
+                        directExecutionViewModel = directExecutionViewModel,
+                        context = LocalContext.current,
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        pSelected = BottomBar.MENU.value,
+                        onNavigateToStreetScreen = { contractId, contractor ->
+                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/$contractId/$contractor")
+                        },
+                        roles = secureStorage.getRoles(),
+                        directExecution = true
+                    )
+                }
+
+                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{contractId}/{contractor}") { backStackEntry ->
+                    val contractId =
+                        backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
+                    val contractor =
+                        backStackEntry.arguments?.getString("contractor") ?: ""
+
+                    StreetMaterialScreen(
+                        contractId = contractId,
+                        contractor = contractor,
+                        directExecutionViewModel = directExecutionViewModel,
+                        context = LocalContext.current,
+                        onNavigateToHome = {
+                            navController.navigate(Routes.HOME)
+                        },
+                        onNavigateToMenu = {
+                            navController.navigate(Routes.MENU)
+                        },
+                        onNavigateToProfile = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        onNavigateToNotifications = {
+                            navController.navigate(Routes.NOTIFICATIONS)
+                        },
+                        pSelected = BottomBar.MENU.value,
+                        navController = navController,
+                        notificationsBadge = notifications.size.toString(),
+                        onNavigateToExecutions = {
+                            navController.navigate(Routes.EXECUTION_SCREEN)
+                        }
+                    )
+                }
 
             }
         }
@@ -580,4 +659,7 @@ object Routes {
     const val EXECUTION_SCREEN = "execution-screen"
     const val EXECUTION_SCREEN_STREETS = "execution-screen-streets"
     const val EXECUTION_SCREEN_MATERIALS = "execution-screen-materials"
+
+    const val DIRECT_EXECUTION_SCREEN = "direct-execution-screen"
+    const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
 }

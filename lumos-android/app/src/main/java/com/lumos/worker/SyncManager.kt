@@ -5,7 +5,6 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -133,19 +132,33 @@ object SyncManager {
         }
     }
 
-    suspend fun queuePostExecution(context: Context, db: AppDatabase, streetId: Long) {
-        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_EXECUTION, streetId)
+    suspend fun queuePostIndirectExecution(context: Context, db: AppDatabase, streetId: Long) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_INDIRECT_EXECUTION, streetId)
         if (count == 0) {
 
             val syncItem = SyncQueueEntity(
                 relatedId = streetId,
-                type = SyncTypes.POST_EXECUTION,
+                type = SyncTypes.POST_INDIRECT_EXECUTION,
                 priority = 19
             )
             db.queueDao().insert(syncItem)
             enqueueSync(context)
         }
 
+    }
+
+    suspend fun queuePostDirectExecution(context: Context, db: AppDatabase, streetId: Long) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_DIRECT_EXECUTION, streetId)
+        if (count == 0) {
+
+            val syncItem = SyncQueueEntity(
+                relatedId = streetId,
+                type = SyncTypes.POST_DIRECT_EXECUTION,
+                priority = 18
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
     }
 
 }

@@ -108,17 +108,17 @@ class Util(
 
 
     private val allowedColumnsByTable = mapOf(
-        "tb_users" to setOf("id_user", "name", "last_name", "email", "phone_number"),
-        "tb_teams" to setOf("id_team", "team_name", "team_phone", "driver_id", "electrician_id"),
-        "tb_material_reservation" to setOf("pre_measurement_street_id", "status"),
-        "tb_pre_measurements_streets" to setOf("pre_measurement_street_id", "street_status"),
+        "app_user" to setOf("user_id", "name", "last_name", "email", "phone_number"),
+        "team" to setOf("id_team", "team_name", "team_phone", "driver_id", "electrician_id"),
+        "material_reservation" to setOf("pre_measurement_street_id", "status"),
+        "pre_measurement_street" to setOf("pre_measurement_street_id", "street_status"),
     )
 
     val columnTypesByTable = mapOf(
-        "tb_users" to mapOf(
-            "id_user" to "uuid"
+        "app_user" to mapOf(
+            "user_id" to "uuid"
         ),
-        "tb_teams" to mapOf(
+        "team" to mapOf(
             "driver_id" to "uuid",
             "electrician_id" to "uuid",
         )

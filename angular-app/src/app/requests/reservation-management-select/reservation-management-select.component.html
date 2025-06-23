@@ -36,7 +36,7 @@
   </div>
 
   <div>
-    <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="streetId === 0" [value]="tableSk">
+    <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="streetId === null && directExecutionId === null" [value]="tableSk">
       <ng-template pTemplate="header">
         <tr>
           <th></th>
@@ -82,7 +82,7 @@
     </p-table>
 
     <p-table
-      *ngIf="streetId !== 0"
+      *ngIf="streetId !== null || directExecutionId !== null"
       #table_parent
       [value]="street.items" dataKey="itemId" [tableStyle]="{ 'min-width': '60rem' }"
       [expandedRowKeys]="expandedRows"
@@ -160,9 +160,9 @@
               </ng-template>
 
               <ng-template pTemplate="body" let-material let-editing="editing">
-                <tr [pSelectableRow]="material" [pEditableColumn]="material.materialId"
-                    (click)="onRowClick($event, material.materialId)"
-                    pEditableColumnField="materialId">
+                <tr [pSelectableRow]="material" [pEditableColumn]="material.materialStockId"
+                    (click)="onRowClick($event, material.materialStockId)"
+                    pEditableColumnField="materialStockId">
                   <td>
                     {{ material.materialName }}
                   </td>
@@ -177,7 +177,7 @@
                   <td>{{ material.deposit }}</td>
                   <td>
                     <p-cellEditor>
-                      <ng-template pTemplate="output">{{ getQuantity(material.materialId) ?? 0 }}</ng-template>
+                      <ng-template pTemplate="output">{{ getQuantity(material.materialStockId, material.deposit) ?? 0 }}</ng-template>
                       <ng-template pTemplate="input">
                         <input pInputText (input)="utils.formatFloatNumber($event)" placeholder="Informe a quantidade"
                                [(ngModel)]="setQuantity.quantity"/>
@@ -186,10 +186,10 @@
                   </td>
                   <td class="space-x-2">
                     <p-button label="Remover" icon="pi pi-trash" size="small" variant="text" severity="contrast"
-                              *ngIf="existsMaterial(material.materialId)"
+                              *ngIf="existsMaterial(material.materialStockId, material.deposit)"
                               (click)="Cancel(material)"/>
                     <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"
-                              *ngIf="currentMaterialId === material.materialId"
+                              *ngIf="currentMaterialId === material.materialStockId"
                               (click)="Confirm(material)"/>
                   </td>
                 </tr>
@@ -202,7 +202,7 @@
 
     <div class="w-full flex justify-center mt-10">
       <!--      <p-skeleton *ngIf="streetId === 0" width="20" height="100px" class="mr-2"></p-skeleton>-->
-      <button class="w-1/5" *ngIf="streetId === 0">
+      <button class="w-1/5" *ngIf="streetId === null && directExecutionId === null">
         <p-skeleton height="2.5rem"/>
       </button>
 
@@ -210,7 +210,7 @@
         pButton type="button"
         label="Salvar tudo"
         (click)="sendData()" class="w-1/5"
-        *ngIf="streetId !== 0">
+        *ngIf="streetId !== null || directExecutionId !== null">
       </button>
     </div>
   </div>
@@ -260,7 +260,7 @@
 
   </p-dialog>
 
-  <p-toast/>
+  <p-toast />
 </div>
 
 

@@ -63,19 +63,19 @@ class ExecutionController(
         @RequestPart("execution") execution: SendExecutionDto?
     ): ResponseEntity<Any> = executionService.uploadIndirectExecution(photo, execution)
 
-    @PostMapping(
-        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
-        value = ["/mobile/execution/upload-direct-execution"]
-    )
-    fun uploadDirectExecution(
-        @RequestPart("photo") photo: MultipartFile,
-        @RequestPart("execution") execution: SendDirectExecutionDto?
-    ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
+//    @PostMapping(
+//        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
+//        value = ["/mobile/execution/upload-direct-execution"]
+//    )
+//    fun uploadDirectExecution(
+//        @RequestPart("photo") photo: MultipartFile,
+//        @RequestPart("execution") execution: SendDirectExecutionDto?
+//    ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
 
     @GetMapping("/mobile/execution/get-executions")
-    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<IndirectExecutionDTO>> = executionService.getIndirectExecutions(uuid)
+    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<IndirectExecutionDTO>> = executionService.getIndirectExecutions(uuid)
 
     @GetMapping("/mobile/execution/get-direct-executions")
-    fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<MutableList<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)
+    fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)
 
 }

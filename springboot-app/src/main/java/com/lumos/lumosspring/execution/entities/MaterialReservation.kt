@@ -7,12 +7,12 @@ import org.springframework.data.relational.core.mapping.Table
 @Table("material_reservation")
 data class MaterialReservation(
     @Id
-    var materialIdReservation: Long = 0,
+    var materialIdReservation: Long? = null,
     var description: String? = null,
     var centralMaterialStockId: Long? = null,
     var truckMaterialStockId: Long,
     var preMeasurementStreetId: Long? = null,
-    var directExecution: Long? = null,
+    var directExecutionId: Long? = null,
     var contractItemId: Long,
     var reservedQuantity: Double,
     var quantityCompleted: Double = 0.0,

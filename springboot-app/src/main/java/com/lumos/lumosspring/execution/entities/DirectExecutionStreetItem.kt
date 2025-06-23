@@ -3,11 +3,11 @@ package com.lumos.lumosspring.execution.entities
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 
-@Table("direct_execution_item")
-data class DirectExecutionItem (
+@Table("direct_execution_street_item")
+data class DirectExecutionStreetItem (
     @Id
-    var directExecutionItemId: Long? = null,
+    var directExecutionStreetItemId: Long? = null,
     var measuredItemQuantity: Double = 0.0,
     var contractItemId: Long,
-    var directExecutionId: Long
+    var directExecutionStreetId: Long
 )

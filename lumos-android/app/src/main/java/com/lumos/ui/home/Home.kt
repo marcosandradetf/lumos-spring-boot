@@ -31,13 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.lumos.data.repository.ContractStatus
 import com.lumos.domain.model.Contract
-import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionHolder
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.ExecutionViewModel
+import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 
 @Composable
 fun HomeScreen(
@@ -46,18 +45,18 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    executionViewModel: ExecutionViewModel,
+    indirectExecutionViewModel: IndirectExecutionViewModel,
     contractViewModel: ContractViewModel,
     roles: Set<String>,
 ) {
     val context = LocalContext.current
-    val executions = executionViewModel.executions.collectAsState()
+    val executions = indirectExecutionViewModel.executions.collectAsState()
     val contracts = contractViewModel.contracts.collectAsState()
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
 
     LaunchedEffect(Unit) {
-        executionViewModel.syncExecutions()
+        indirectExecutionViewModel.syncExecutions()
         contractViewModel.syncContracts()
 
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)

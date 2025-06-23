@@ -10,12 +10,10 @@ import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.DirectExecution
-import com.lumos.domain.model.DirectExecutionDTOResponse
-import com.lumos.domain.model.Execution
 import com.lumos.domain.model.ExecutionDTO
 import com.lumos.domain.model.ExecutionHolder
-import com.lumos.domain.model.Reserve
+import com.lumos.domain.model.IndirectExecution
+import com.lumos.domain.model.IndirectReserve
 import com.lumos.domain.model.SendExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
@@ -25,7 +23,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
-class ExecutionRepository(
+class IndirectExecutionRepository(
     private val db: AppDatabase,
     private val api: ExecutionApi,
     private val secureStorage: SecureStorage,
@@ -66,7 +64,7 @@ class ExecutionRepository(
 
     private suspend fun saveExecutionsToDb(fetchedExecutions: List<ExecutionDTO>) {
         fetchedExecutions.forEach { executionDto ->
-            val execution = Execution(
+            val execution = IndirectExecution(
                 streetId = executionDto.streetId,
                 streetName = executionDto.streetName,
                 streetNumber = executionDto.streetNumber,
@@ -84,109 +82,32 @@ class ExecutionRepository(
                 contractor = executionDto.contractor
             )
 
-            db.executionDao().insertExecution(execution)
-            db.executionDao().setExecutionStatus(execution.streetId, execution.executionStatus)
+            db.indirectExecutionDao().insertIndirectExecution(execution)
+            db.indirectExecutionDao().setIndirectExecutionStatus(execution.streetId, execution.executionStatus)
 
             executionDto.reserves.forEach { r ->
-                val reserve = Reserve(
+                val reserve = IndirectReserve(
                     reserveId = r.reserveId,
                     materialName = r.materialName,
                     materialQuantity = r.materialQuantity,
-                    reserveStatus = r.reserveStatus,
                     streetId = executionDto.streetId,
-                    depositId = r.depositId,
-                    depositName = r.depositName,
-                    depositAddress = r.depositAddress,
-                    stockistName = r.stockistName,
-                    phoneNumber = r.phoneNumber,
                     requestUnit = r.requestUnit,
-                    contractId = executionDto.contractId
+                    contractId = r.contractId,
+                    contractItemId = r.contractItemId,
                 )
-                db.executionDao().insertReserve(reserve)
-            }
-        }
-    }
-
-    suspend fun syncDirectExecutions(): RequestResult<Unit> {
-        val uuid = secureStorage.getUserUuid()
-            ?: return ServerError(-1, "UUID Não encontrado")
-
-        val response = ApiExecutor.execute { api.getDirectExecutions(uuid) }
-        return when (response) {
-            is RequestResult.Success -> {
-                saveDirectExecutionsToDb(response.data)
-                RequestResult.Success(Unit)
-            }
-            is SuccessEmptyBody -> {
-                ServerError(204, "Resposta 204 inesperada")
-            }
-
-            is RequestResult.NoInternet -> {
-                SyncManager.queueSyncExecutions(app.applicationContext, db)
-                RequestResult.NoInternet
-            }
-
-            is RequestResult.Timeout -> RequestResult.Timeout
-            is ServerError -> ServerError(
-                response.code,
-                response.message
-            )
-
-            is RequestResult.UnknownError -> {
-                Log.e("Sync", "Erro desconhecido", response.error)
-                RequestResult.UnknownError(response.error)
-            }
-        }
-    }
-
-    private suspend fun saveDirectExecutionsToDb(fetchedExecutions: List<DirectExecutionDTOResponse>) {
-        fetchedExecutions.forEach { executionDto ->
-            val execution = DirectExecution(
-                contractId = executionDto.contractId,
-                executionStatus = "PENDING",
-                type = "",
-                itemsQuantity = executionDto.reserves.size,
-                creationDate = "",
-                contractor = executionDto.contractor,
-                instructions = executionDto.instructions
-            )
-
-
-
-            db.executionDao().insertDirectExecution(execution)
-
-            executionDto.reserves.forEach { r ->
-                val reserve = Reserve(
-                    reserveId = r.reserveId,
-                    materialName = r.materialName,
-                    materialQuantity = r.materialQuantity,
-                    reserveStatus = r.reserveStatus,
-                    streetId = -1,
-                    contractId = executionDto.contractId,
-                    depositId = r.depositId,
-                    depositName = r.depositName,
-                    depositAddress = r.depositAddress,
-                    stockistName = r.stockistName,
-                    phoneNumber = r.phoneNumber,
-                    requestUnit = r.requestUnit,
-                )
-                db.executionDao().insertReserve(reserve)
+                db.indirectExecutionDao().insertIndirectReserve(reserve)
             }
         }
     }
 
     fun getFlowExecutions(): Flow<List<ExecutionHolder>> =
-        db.executionDao().getFlowExecutions()
+        db.indirectExecutionDao().getFlowIndirectExecution()
 
-    fun getFlowReserves(streetId: Long, status: List<String>): Flow<List<Reserve>> =
-        db.executionDao().getFlowReserves(streetId, status)
-
-    suspend fun setReserveStatus(streetId: Long, status: String = ReservationStatus.COLLECTED) {
-        db.executionDao().setReserveStatus(streetId, status)
-    }
+    fun getFlowReserves(streetId: Long): Flow<List<IndirectReserve>> =
+        db.indirectExecutionDao().getFlowIndirectReserve(streetId)
 
     suspend fun setExecutionStatus(streetId: Long, status: String = ExecutionStatus.IN_PROGRESS) {
-        db.executionDao().setExecutionStatus(streetId, status)
+        db.indirectExecutionDao().setIndirectExecutionStatus(streetId, status)
     }
 
     suspend fun queueSyncFetchReservationStatus(streetId: Long, status: String) {
@@ -201,8 +122,8 @@ class ExecutionRepository(
         )
     }
 
-    suspend fun getExecution(lng: Long): Execution? {
-        return db.executionDao().getExecution(lng)
+    suspend fun getExecution(lng: Long): IndirectExecution? {
+        return db.indirectExecutionDao().getExecution(lng)
     }
 
     suspend fun queueSyncStartExecution(streetId: Long) {
@@ -218,33 +139,32 @@ class ExecutionRepository(
     }
 
     suspend fun setPhotoUri(photoUri: String, streetId: Long) {
-        db.executionDao().setPhotoUri(photoUri, streetId)
+        db.indirectExecutionDao().setIndirectExecutionPhotoUri(photoUri, streetId)
     }
 
     suspend fun finishMaterial(reserveId: Long, quantityExecuted: Double) {
-        db.executionDao().finishMaterial(
+        db.indirectExecutionDao().finishMaterial(
             reserveId = reserveId,
             quantityExecuted = quantityExecuted
         )
     }
 
     suspend fun queuePostExecution(streetId: Long) {
-        SyncManager.queuePostExecution(
+        SyncManager.queuePostIndirectExecution(
             context = app.applicationContext,
             db = db,
             streetId = streetId
         )
     }
 
-
     suspend fun postExecution(streetId: Long ): RequestResult<Unit> {
         val gson = Gson()
 
-        val photoUri = db.executionDao().getPhotoUri(streetId)
+        val photoUri = db.indirectExecutionDao().getPhotoUri(streetId)
         if(photoUri == null) {
             return ServerError(-1, "Foto da pré-medição não encontrada")
         }
-        val reserves = db.executionDao().getReservesPartial(streetId)
+        val reserves = db.indirectExecutionDao().getReservesPartial(streetId)
         val dto = SendExecutionDto(
             streetId = streetId,
             reserves = reserves
@@ -266,14 +186,14 @@ class ExecutionRepository(
 
             return when (response) {
                 is RequestResult.Success -> {
-                    db.executionDao().deleteExecution(streetId)
-                    db.executionDao().deleteReserves(streetId)
+                    db.indirectExecutionDao().deleteExecution(streetId)
+                    db.indirectExecutionDao().deleteReserves(streetId)
 
                     RequestResult.Success(Unit)
                 }
                 is SuccessEmptyBody -> {
-                    db.executionDao().deleteExecution(streetId)
-                    db.executionDao().deleteReserves(streetId)
+                    db.indirectExecutionDao().deleteExecution(streetId)
+                    db.indirectExecutionDao().deleteReserves(streetId)
 
                     SuccessEmptyBody
                 }
@@ -292,15 +212,12 @@ class ExecutionRepository(
         return ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
-    suspend fun getReservesOnce(streetId: Long, statusList: List<String>): List<Reserve> {
-        return db.executionDao().getReservesOnce(streetId, statusList)
+    suspend fun getReservesOnce(streetId: Long): List<IndirectReserve> {
+        return db.indirectExecutionDao().getIndirectReserveOnce(streetId)
     }
 
-    suspend fun getExecutionsByContract(lng: Long): List<Execution> {
-        return db.executionDao().getExecutionsByContract(lng)
+    suspend fun getExecutionsByContract(lng: Long): List<IndirectExecution> {
+        return db.indirectExecutionDao().getExecutionsByContract(lng)
     }
 
-
-    fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>> =
-        db.executionDao().getFlowDirectExecutions()
 }

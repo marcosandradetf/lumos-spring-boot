@@ -8,6 +8,8 @@ import org.springframework.data.repository.CrudRepository
 
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     fun findAllByDirectExecutionStatus(status: String): List<DirectExecution>
+
+    fun findByContractId(contractId: Long): DirectExecution?
 }
 
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {

@@ -8,31 +8,41 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumos.domain.model.Contract
-import com.lumos.domain.model.Deposit
-import com.lumos.domain.model.Execution
 import com.lumos.domain.model.DirectExecution
+import com.lumos.domain.model.DirectExecutionStreet
+import com.lumos.domain.model.DirectExecutionStreetItem
+import com.lumos.domain.model.DirectReserve
+import com.lumos.domain.model.IndirectExecution
+import com.lumos.domain.model.IndirectReserve
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreetPhoto
-import com.lumos.domain.model.Reserve
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.notifications.NotificationItem
 import java.util.concurrent.Executors
 
 @Database(
     entities = [
-        (PreMeasurementStreetItem::class),
-        (Deposit::class),
         (PreMeasurementStreet::class),
-        (Item::class),
-        (Contract::class),
-        (NotificationItem::class),
-        (SyncQueueEntity::class),
-        (Execution::class),
-        (Reserve::class),
+        (PreMeasurementStreetItem::class),
         (PreMeasurementStreetPhoto::class),
-        (DirectExecution::class)],
+
+        (Contract::class),
+        (Item::class),
+
+        (NotificationItem::class),
+
+        (SyncQueueEntity::class),
+
+        (IndirectExecution::class),
+        (IndirectReserve::class),
+
+        (DirectExecution::class),
+        (DirectReserve::class),
+        (DirectExecutionStreet::class),
+        (DirectExecutionStreetItem::class),
+    ],
     version = 2,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,7 +50,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun contractDao(): ContractDao
     abstract fun notificationDao(): NotificationDao
     abstract fun queueDao(): QueueDao
-    abstract fun executionDao(): ExecutionDao
+    abstract fun indirectExecutionDao(): IndirectExecutionDao
+    abstract fun directExecutionDao(): DirectExecutionDao
 
 
     companion object {
@@ -50,30 +61,107 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("drop table executions")
-                db.execSQL("drop table reserves")
+                db.execSQL("DROP TABLE IF EXISTS executions;")
+                db.execSQL("DROP TABLE IF EXISTS reserves;")
+                db.execSQL("DROP TABLE IF EXISTS deposits;")
 
                 db.execSQL(
                     """
-                        CREATE TABLE IF NOT EXISTS direct_execution (
+                        CREATE TABLE IF NOT EXISTS direct_reserve (
+                            materialStockId INTEGER NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            contractId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            materialQuantity REAL NOT NULL,
+                            requestUnit TEXT NOT NULL,
+                            PRIMARY KEY(materialStockId, contractItemId)
+                        );
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_execution (
                             contractId INTEGER NOT NULL PRIMARY KEY,
-                            streetName TEXT,
-                            streetNumber TEXT,
-                            streetHood TEXT,
-                            city TEXT,
-                            state TEXT,
                             executionStatus TEXT NOT NULL,
                             type TEXT NOT NULL,
                             itemsQuantity INTEGER NOT NULL,
                             creationDate TEXT NOT NULL,
-                            latitude REAL,
-                            longitude REAL,
-                            photoUri TEXT,
                             contractor TEXT NOT NULL,
                             instructions TEXT
                         );
-                    """.trimIndent()
+                """.trimIndent()
                 )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_execution_street (
+                            directStreetId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            address TEXT NOT NULL,
+                            latitude REAL,
+                            longitude REAL,
+                            photoUri TEXT,
+                            deviceId TEXT NOT NULL,
+                            contractId INTEGER NOT NULL,
+                            contractor TEXT NOT NULL,
+                            lastPower TEXT,
+                            UNIQUE(address)
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS index_direct_execution_street_address 
+                        ON direct_execution_street(address);
+                """.trimIndent())
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_execution_street_item (
+                            directStreetItemId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            materialStockId INTEGER NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            directStreetId INTEGER NOT NULL,
+                            quantityExecuted REAL NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS indirect_reserve (
+                        reserveId INTEGER NOT NULL PRIMARY KEY,
+                        contractId INTEGER NOT NULL,
+                        contractItemId INTEGER NOT NULL,
+                        materialName TEXT NOT NULL,
+                        materialQuantity REAL NOT NULL,
+                        streetId INTEGER NOT NULL,
+                        requestUnit TEXT NOT NULL,
+                        quantityExecuted REAL
+                    );
+                """.trimIndent()
+                )
+
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS indirect_execution (
+                        streetId INTEGER NOT NULL PRIMARY KEY,
+                        contractId INTEGER NOT NULL,
+                        streetName TEXT NOT NULL,
+                        streetNumber TEXT,
+                        streetHood TEXT,
+                        city TEXT,
+                        state TEXT,
+                        executionStatus TEXT NOT NULL,
+                        priority INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        itemsQuantity INTEGER NOT NULL,
+                        creationDate TEXT NOT NULL,
+                        latitude REAL,
+                        longitude REAL,
+                        photoUri TEXT,
+                        contractor TEXT NOT NULL
+                    );
+                """.trimIndent())
             }
         }
 

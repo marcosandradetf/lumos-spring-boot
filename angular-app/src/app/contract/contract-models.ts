@@ -40,8 +40,9 @@ export interface ContractItemsResponse {
   unitPrice: string;
   contractedQuantity: number;
   executedQuantity: number;
-  linking: string;
-  nameForImport: string;
+  linking: string | null;
+  nameForImport: string | null;
+  type: string;
 }
 
 export interface CreateContractDTO {

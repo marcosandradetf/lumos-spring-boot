@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Start
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -72,9 +73,9 @@ fun CategoryMenu(navController: NavHostController) {
         ),
         Category(
             "Execução",
-            listOf("Execuções"),
-            action = listOf(Routes.EXECUTION_SCREEN),
-            icons = listOf(Icons.Default.Build)
+            listOf("Execuções Com Pré-Medição", "Execuções Sem Pré-medição"),
+            action = listOf(Routes.EXECUTION_SCREEN, Routes.DIRECT_EXECUTION_SCREEN),
+            icons = listOf(Icons.Default.Build, Icons.Default.Start)
         ),
     )
 

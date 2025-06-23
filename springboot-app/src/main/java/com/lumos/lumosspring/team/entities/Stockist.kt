@@ -8,7 +8,7 @@ import java.util.*
 @Table("stockist")
 data class Stockist(
     @Id
-    val stockistId: Long = 0,
+    val stockistId: Long? = null,
     @Column("deposit_id_deposit")
     val depositId: Long,
     @Column("user_id_user")

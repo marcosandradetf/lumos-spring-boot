@@ -196,8 +196,9 @@ class ContractService(
             val unitPrice: String,
             val contractedQuantity: Double,
             val executedQuantity: Double,
-            val linking: String,
-            val nameForImport: String
+            val linking: String?,
+            val nameForImport: String?,
+            val type: String
         )
 
         return ResponseEntity.ok().body(
@@ -212,8 +213,9 @@ class ContractService(
                         unitPrice = it.unitPrice.toPlainString(),
                         contractedQuantity = it.contractedQuantity,
                         executedQuantity = it.quantityExecuted,
-                        linking = it.referenceItem.linking ?: "",
-                        nameForImport = it.referenceItem.nameForImport ?: ""
+                        linking = it.referenceItem.linking,
+                        nameForImport = it.referenceItem.nameForImport,
+                        type = it.referenceItem.type
                     )
                 })
 
