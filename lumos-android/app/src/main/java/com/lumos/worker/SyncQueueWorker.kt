@@ -46,6 +46,7 @@ object SyncTypes {
     const val SYNC_EXECUTIONS = "SYNC_EXECUTIONS"
     const val POST_INDIRECT_EXECUTION = "POST_INDIRECT_EXECUTION"
     const val POST_DIRECT_EXECUTION = "POST_DIRECT_EXECUTION"
+    const val FINISHED_DIRECT_EXECUTION = "FINISHED_DIRECT_EXECUTION"
     const val POST_GENERIC = "POST_GENERIC"
     const val GET_GENERIC = "GET_GENERIC"
 
@@ -130,6 +131,7 @@ class SyncQueueWorker(
                 SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
                 SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
+                SyncTypes.FINISHED_DIRECT_EXECUTION -> finishedDirectExecution(item)
 //                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
@@ -409,6 +411,37 @@ class SyncQueueWorker(
         }
     }
 
+    private suspend fun finishedDirectExecution(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedId == null) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = directExecutionRepository.finishedDirectExecution(item.relatedId)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
+            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            Result.failure()
+        }
+    }
 
     private suspend fun checkResponse(response: RequestResult<*>, inProgressItem: SyncQueueEntity): Result {
         return when (response) {

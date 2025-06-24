@@ -92,7 +92,7 @@ class IndirectExecutionRepository(
                     materialQuantity = r.materialQuantity,
                     streetId = executionDto.streetId,
                     requestUnit = r.requestUnit,
-                    contractId = r.contractId,
+                    contractId = executionDto.contractId,
                     contractItemId = r.contractItemId,
                 )
                 db.indirectExecutionDao().insertIndirectReserve(reserve)

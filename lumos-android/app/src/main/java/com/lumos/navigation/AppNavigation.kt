@@ -87,9 +87,6 @@ fun AppNavigation(
         AuthViewModel(authRepository, secureStorage)
     }
 
-    val isLoading by authViewModel.isLoading.collectAsState()
-
-
     val preMeasurementViewModel: PreMeasurementViewModel = viewModel {
         val api = app.retrofit.create(PreMeasurementApi::class.java)
 
@@ -138,7 +135,8 @@ fun AppNavigation(
         )
     }
 
-    val isAuthenticated by authViewModel.isAuthenticated
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+
 
     val notificationViewModel: NotificationViewModel = viewModel {
         val notificationDao = app.database.notificationDao()
@@ -154,7 +152,7 @@ fun AppNavigation(
     val notificationManager = NotificationManager(app.applicationContext, secureStorage)
 
     LaunchedEffect(isAuthenticated) {
-        if (isAuthenticated) {
+        if (isAuthenticated == true) {
             NotificationsBadge._notificationBadge.value = notificationViewModel.countNotifications()
             Log.e("n", "Antes de entrar no notification manager")
             notificationManager.subscribeToSavedTopics()
@@ -165,14 +163,14 @@ fun AppNavigation(
     }
 
     LaunchedEffect(Unit) {
-        if (isAuthenticated) {
+        if (isAuthenticated == true) {
             enqueueSync(app.applicationContext)
             schedulePeriodicSync(app.applicationContext)
         }
     }
 
     LaunchedEffect(isAuthenticated, actionState.value) {
-        if (isAuthenticated && actionState.value != null) {
+        if (isAuthenticated == true && actionState.value != null) {
             withContext(Dispatchers.Main) {
                 when (actionState.value) {
                     Routes.CONTRACT_SCREEN -> navController.navigate(Routes.CONTRACT_SCREEN)
@@ -205,7 +203,7 @@ fun AppNavigation(
 
     // Rotas protegidas
     // Tela preta enquanto a autenticação está sendo verificada
-    if (isLoading) {
+    if (isAuthenticated == null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -222,7 +220,7 @@ fun AppNavigation(
     } else {
         NavHost(
             navController = navController,
-            startDestination = if (isAuthenticated) Routes.MAIN else Routes.LOGIN
+            startDestination = if (isAuthenticated == true) Routes.MAIN else Routes.LOGIN
         ) {
 
             // tela de Login
@@ -280,6 +278,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
+                        directExecutionViewModel = directExecutionViewModel,
                         indirectExecutionViewModel = indirectExecutionViewModel,
                         contractViewModel = contractViewModel,
                         roles = secureStorage.getRoles()
@@ -606,7 +605,7 @@ fun AppNavigation(
 
                 composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{contractId}/{contractor}") { backStackEntry ->
                     val contractId =
-                        backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
+                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
                     val contractor =
                         backStackEntry.arguments?.getString("contractor") ?: ""
 
@@ -615,24 +614,9 @@ fun AppNavigation(
                         contractor = contractor,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
                         pSelected = BottomBar.MENU.value,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        onNavigateToExecutions = {
-                            navController.navigate(Routes.EXECUTION_SCREEN)
-                        }
                     )
                 }
 

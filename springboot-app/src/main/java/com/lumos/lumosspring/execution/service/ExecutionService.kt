@@ -122,18 +122,37 @@ class ExecutionService(
         management.stockist = stockist
         reservationManagementRepository.save(management)
 
-        var directExecution = directExecutionRepository.findByContractId(execution.contractId)
-        if (directExecution == null) {
-            directExecution = DirectExecution(
-                instructions = execution.instructions,
-                contractId = execution.contractId,
-                teamId = execution.teamId,
-                assignedBy = currentUserUUID,
-                reservationManagementId = management.reservationManagementId,
-                assignedAt = util.dateTime,
+        val exists = JdbcUtil.getSingleRow(
+            namedJdbc,
+            """
+                select true as result from direct_execution
+                where contract_id = :contractId
+                and direct_execution_status <> :status
+                limit 1
+            """.trimIndent(),
+            mapOf(
+                "contractId" to execution.contractId,
+                "status" to ExecutionStatus.FINISHED
             )
-            directExecution = directExecutionRepository.save(directExecution)
+        )?.get("result") as? Boolean ?: false
+
+        if (exists) {
+            throw IllegalStateException(
+                """
+                Já existe uma execução criada para essa prefeitura, caso deseje continuar. Verifique o andamento no sistema.
+                """.trimIndent()
+            )
         }
+
+        var directExecution = DirectExecution(
+            instructions = execution.instructions,
+            contractId = execution.contractId,
+            teamId = execution.teamId,
+            assignedBy = currentUserUUID,
+            reservationManagementId = management.reservationManagementId,
+            assignedAt = util.dateTime,
+        )
+        directExecution = directExecutionRepository.save(directExecution)
 
         for (item in execution.items) {
             val ciq = contract.contractItem
@@ -256,7 +275,8 @@ class ExecutionService(
                             FROM pre_measurement_street_item pmsi
                             INNER JOIN contract_item ci ON ci.contract_item_id = pmsi.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                            WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id       
+                            WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id   
+                            AND cri.type not in ('SERVIÇO', 'PROJETO')
                         """.trimIndent(),
                     MapSqlParameterSource(mapOf("pre_measurement_street_id" to preMeasurementStreetId)),
                     RowMapper { rs, _ ->
@@ -388,9 +408,16 @@ class ExecutionService(
 
                     val status = if (stockistMatch) ReservationStatus.APPROVED else ReservationStatus.PENDING
 
-                    val sql =
-                        "UPDATE material_stock set stock_available = stock_available - ? where material_id_stock = ?"
-                    jdbcTemplate.update(sql, materialReserve.materialQuantity, materialReserve.centralMaterialStockId)
+                    namedJdbc.update(
+                        """
+                            UPDATE material_stock set stock_available = stock_available - :materialQuantity 
+                            WHERE material_id_stock = :centralMaterialStockId
+                        """.trimIndent(),
+                        mapOf(
+                            "materialQuantity" to materialReserve.materialQuantity,
+                            "centralMaterialStockId" to materialReserve.centralMaterialStockId
+                        )
+                    )
 
                     val truckMaterialStockId = JdbcUtil.getSingleRow(
                         namedJdbc,
@@ -416,9 +443,18 @@ class ExecutionService(
                     )
 
                 } else {
-                    val sql =
-                        "UPDATE material_stock set stock_available = stock_available - ? where material_id_stock = ?"
-                    jdbcTemplate.update(sql, materialReserve.materialQuantity, materialReserve.truckMaterialStockId)
+
+                    namedJdbc.update(
+                        """
+                            UPDATE material_stock set stock_available = stock_available - :materialQuantity,
+                            stock_quantity = stock_quantity - :materialQuantity
+                            WHERE material_id_stock = :truckMaterialStockId
+                        """.trimIndent(),
+                        mapOf(
+                            "materialQuantity" to materialReserve.materialQuantity,
+                            "truckMaterialStockId" to materialReserve.truckMaterialStockId
+                        )
+                    )
 
                     MaterialReservation(
                         description = preMeasurementStreet?.street,
@@ -851,7 +887,7 @@ class ExecutionService(
                     SELECT material_id_reservation, reserved_quantity, quantity_completed, status
                     FROM material_reservation
                     WHERE truck_material_stock_id = :truckMaterialStockId
-                    AND contract_item_id = :contractItemId AND  status = in (:status)
+                    AND contract_item_id = :contractItemId AND status in (:status)
                 """.trimIndent(),
                 mapOf(
                     "contractItemId" to m.contractItemId,
@@ -882,66 +918,34 @@ class ExecutionService(
                 val balance = reservedQuantity - quantityCompleted // 4.0
 
                 if (executedQuantity > balance) {
-                    val remaining = namedJdbc.queryForObject(
+                    namedJdbc.update(
                         """
                             UPDATE material_reservation
                             SET quantity_completed = quantity_completed + :balance,
                                 status = :status
                             WHERE material_id_reservation = :materialIdReservation
-                            RETURNING reserved_quantity - quantity_completed AS remaining_quantity
                         """.trimIndent(),
                         mapOf(
                             "balance" to balance,
                             "status" to ReservationStatus.FINISHED,
                             "materialIdReservation" to r["material_id_reservation"],
                         )
-                    ) { rs, _ -> rs.getDouble("remaining_quantity") }
-
-                    if (remaining!! > 0.1)
-                        namedJdbc.update(
-                            """
-                            UPDATE material_stock
-                            SET stock_available = stock_available + :remaining,
-                                stock_quantity = stock_quantity + :remaining
-                            WHERE material_id_stock = :truckMaterialIdStock
-                        """.trimIndent(),
-                            mapOf(
-                                "remaining" to remaining,
-                                "truckMaterialIdStock" to m.truckMaterialStockId
-                            )
-                        )
+                    )
 
                     m.quantityExecuted = executedQuantity - balance
                 } else if (balance >= executedQuantity) {
                     //3 - 13
-                    val remaining = namedJdbc.queryForObject(
+                    namedJdbc.update(
                         """
                             UPDATE material_reservation
                             SET quantity_completed = quantity_completed + :executedQuantity
                             WHERE material_id_reservation = :materialIdReservation
-                            RETURNING reserved_quantity - quantity_completed AS remaining_quantity
                         """.trimIndent(),
                         mapOf(
-                            "balance" to balance,
-                            "status" to ReservationStatus.FINISHED,
+                            "executedQuantity" to executedQuantity,
                             "materialIdReservation" to r["material_id_reservation"],
                         )
-                    ) { rs, _ -> rs.getDouble("remaining_quantity") }
-
-                    if (remaining!! > 0.1)
-                        namedJdbc.update(
-                            """
-                            UPDATE material_stock
-                            SET stock_available = stock_available + :remaining,
-                                stock_quantity = stock_quantity + :remaining
-                            WHERE material_id_stock = :truckMaterialIdStock
-                        """.trimIndent(),
-                            mapOf(
-                                "remaining" to remaining,
-                                "truckMaterialIdStock" to m.truckMaterialStockId
-                            )
-                        )
-
+                    )
                     m.quantityExecuted = 0.0
                 }
 
@@ -951,7 +955,7 @@ class ExecutionService(
         return ResponseEntity.ok().build()
     }
 
-    fun getIndirectExecutions(strUUID: String?): ResponseEntity<List<IndirectExecutionDTO>> {
+    fun getIndirectExecutions(strUUID: String?): ResponseEntity<List<IndirectExecutionDTOResponse>> {
         val userUUID = try {
             UUID.fromString(strUUID)
         } catch (e: IllegalArgumentException) {

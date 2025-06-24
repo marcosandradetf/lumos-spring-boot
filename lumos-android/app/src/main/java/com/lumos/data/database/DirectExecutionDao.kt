@@ -1,7 +1,6 @@
 package com.lumos.data.database
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
@@ -29,51 +28,11 @@ interface DirectExecutionDao {
         sumQuantity: Double
     ): Int
 
-    @Insert
-    suspend fun insertReservation(reservation: DirectReserve)
+    @Insert(onConflict = IGNORE)
+    suspend fun insertReservations(reservation: List<DirectReserve>)
 
-    @Transaction
-    suspend fun upsertReservation(reservation: DirectReserve) {
-        val updated = updateSumQuantity(
-            materialStockId = reservation.materialStockId,
-            contractItemId = reservation.contractItemId,
-            sumQuantity = reservation.materialQuantity
-        )
-
-        if (updated == 0) {
-            insertReservation(reservation)
-        }
-    }
-
-    @Query(
-        """
-        UPDATE direct_execution 
-        SET instructions = :newInstructions,
-        itemsQuantity = itemsQuantity + :newItemsQuantity
-        WHERE contractId = :contractId
-    """
-    )
-    suspend fun updateExistingExecution(
-        newInstructions: String?,
-        newItemsQuantity: Int,
-        contractId: Long
-    ): Int
-
-    @Insert
+    @Insert(onConflict = IGNORE)
     suspend fun insertExecution(execution: DirectExecution)
-
-    @Transaction
-    suspend fun upsertExecution(execution: DirectExecution) {
-        val updated = updateExistingExecution(
-            newInstructions = execution.instructions,
-            newItemsQuantity = execution.itemsQuantity,
-            contractId = execution.contractId
-        )
-
-        if (updated == 0) {
-            insertExecution(execution)
-        }
-    }
 
     @Query("DELETE FROM direct_execution WHERE contractId = :contractId")
     suspend fun deleteDirectExecution(contractId: Long)
@@ -129,4 +88,7 @@ interface DirectExecutionDao {
 
     @Query("DELETE FROM direct_execution_street_item WHERE directStreetId = :streetId")
     suspend fun deleteItems(streetId: Long)
+
+    @Query("UPDATE direct_execution set executionStatus = 'FINISHED' WHERE contractId = :contractId")
+    suspend fun markAsFinished(contractId: Long)
 }

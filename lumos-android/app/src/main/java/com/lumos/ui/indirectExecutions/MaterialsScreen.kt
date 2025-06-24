@@ -84,8 +84,7 @@ import java.math.BigDecimal
 
 @Composable
 fun MaterialScreen(
-    streetId: Long = 0,
-    contractId: Long = 0,
+    streetId: Long,
     indirectExecutionViewModel: IndirectExecutionViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
@@ -104,9 +103,9 @@ fun MaterialScreen(
     var alertModal by remember { mutableStateOf(false) }
     val isLoading by indirectExecutionViewModel.isLoadingReserves.collectAsState()
 
-    LaunchedEffect(Unit) {
-        execution = indirectExecutionViewModel.getExecution(contractId)
-        reserves = indirectExecutionViewModel.getReservesOnce(contractId)
+    LaunchedEffect(streetId) {
+        execution = indirectExecutionViewModel.getExecution(streetId)
+        reserves = indirectExecutionViewModel.getReservesOnce(streetId)
     }
 
     execution?.let {

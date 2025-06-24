@@ -36,6 +36,7 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.ContractViewModel
+import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 
 @Composable
@@ -46,17 +47,18 @@ fun HomeScreen(
     navController: NavHostController,
     notificationsBadge: String,
     indirectExecutionViewModel: IndirectExecutionViewModel,
+    directExecutionViewModel: DirectExecutionViewModel,
     contractViewModel: ContractViewModel,
     roles: Set<String>,
 ) {
     val context = LocalContext.current
-    val executions = indirectExecutionViewModel.executions.collectAsState()
+    val executions = directExecutionViewModel.directExecutions.collectAsState()
     val contracts = contractViewModel.contracts.collectAsState()
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
 
     LaunchedEffect(Unit) {
-        indirectExecutionViewModel.syncExecutions()
+        directExecutionViewModel.syncExecutions()
         contractViewModel.syncContracts()
 
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
@@ -111,7 +113,7 @@ fun MaintenanceStatusCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate(Routes.EXECUTION_SCREEN) },
+            .clickable { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {

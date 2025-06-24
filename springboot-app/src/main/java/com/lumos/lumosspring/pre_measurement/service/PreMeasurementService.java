@@ -385,7 +385,7 @@ public class PreMeasurementService {
 //
 //    }
 
-    @Cacheable("getPreMeasurements")
+//    @Cacheable("getPreMeasurements")
     public ResponseEntity<?> getAll(String status) {
         List<PreMeasurementStreet> streets = preMeasurementStreetRepository.getAllPreMeasurementsGroupByStep(status);
 

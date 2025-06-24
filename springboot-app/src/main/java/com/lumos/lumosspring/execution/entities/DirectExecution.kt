@@ -18,5 +18,5 @@ data class DirectExecution(
     @Column("assigned_user_id")
     var assignedBy: UUID,
     var assignedAt: Instant,
-    var reservationManagementId: Long
+    var reservationManagementId: Long,
 )

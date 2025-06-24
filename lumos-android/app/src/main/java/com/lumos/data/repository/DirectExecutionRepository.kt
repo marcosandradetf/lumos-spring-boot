@@ -17,7 +17,6 @@ import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ExecutionHolder
 import com.lumos.domain.model.SendDirectExecutionDto
-import com.lumos.domain.model.SendExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
@@ -68,6 +67,7 @@ class DirectExecutionRepository(
 
     private suspend fun saveDirectExecutionsToDb(fetchedExecutions: List<DirectExecutionDTOResponse>) {
         fetchedExecutions.forEach { executionDto ->
+
             val execution = DirectExecution(
                 contractId = executionDto.contractId,
                 executionStatus = "PENDING",
@@ -75,22 +75,23 @@ class DirectExecutionRepository(
                 itemsQuantity = executionDto.reserves.size,
                 creationDate = executionDto.creationDate,
                 contractor = executionDto.contractor,
-                instructions = executionDto.instructions
+                instructions = executionDto.instructions,
             )
 
-            db.directExecutionDao().upsertExecution(execution)
+            db.directExecutionDao().insertExecution(execution)
 
-            executionDto.reserves.forEach { r ->
-                val reserve = DirectReserve(
+            val reservations = executionDto.reserves.map { r ->
+                DirectReserve(
                     materialStockId = r.materialStockId,
                     contractItemId = r.contractItemId,
+                    contractId = executionDto.contractId,
                     materialName = r.materialName,
                     materialQuantity = r.materialQuantity,
-                    contractId = executionDto.contractId,
-                    requestUnit = r.requestUnit,
+                    requestUnit = r.requestUnit
                 )
-                db.directExecutionDao().upsertReservation(reserve)
             }
+
+            db.directExecutionDao().insertReservations(reservations)
         }
     }
 
@@ -122,11 +123,11 @@ class DirectExecutionRepository(
         )
     }
 
-    suspend fun postDirectExecution(streetId: Long): RequestResult<Unit>  {
+    suspend fun postDirectExecution(streetId: Long): RequestResult<Unit> {
         val gson = Gson()
 
         val photoUri = db.directExecutionDao().getPhotoUri(streetId)
-        if(photoUri == null) {
+        if (photoUri == null) {
             return ServerError(-1, "Foto da pré-medição não encontrada")
         }
         val street = db.directExecutionDao().getStreet(streetId)
@@ -155,7 +156,13 @@ class DirectExecutionRepository(
                 requestFile
             )
 
-            val response = ApiExecutor.execute { api.uploadData(photo = imagePart, execution = jsonBody) }
+            val response =
+                ApiExecutor.execute {
+                    api.uploadDirectExecutionData(
+                        photo = imagePart,
+                        execution = jsonBody
+                    )
+                }
 
             return when (response) {
                 is RequestResult.Success -> {
@@ -164,15 +171,18 @@ class DirectExecutionRepository(
 
                     RequestResult.Success(Unit)
                 }
+
                 is SuccessEmptyBody -> {
                     db.directExecutionDao().deleteStreet(streetId)
                     db.directExecutionDao().deleteStreet(streetId)
 
                     SuccessEmptyBody
                 }
+
                 is RequestResult.NoInternet -> {
                     RequestResult.NoInternet
                 }
+
                 is RequestResult.Timeout -> RequestResult.Timeout
                 is ServerError -> ServerError(response.code, response.message)
                 is RequestResult.UnknownError -> {
@@ -183,6 +193,47 @@ class DirectExecutionRepository(
         }
 
         return ServerError(-1, "Erro na criacao da foto da execucao")
+    }
+
+    suspend fun finishedDirectExecution(contractId: Long): RequestResult<Unit> {
+        val response = ApiExecutor.execute { api.finishDirectExecution(contractId = contractId) }
+
+        return when (response) {
+            is RequestResult.Success -> {
+                db.directExecutionDao().deleteDirectExecution(contractId)
+                db.directExecutionDao().deleteDirectReserves(contractId)
+
+                RequestResult.Success(Unit)
+            }
+
+            is SuccessEmptyBody -> {
+                db.directExecutionDao().deleteDirectExecution(contractId)
+                db.directExecutionDao().deleteDirectReserves(contractId)
+
+                SuccessEmptyBody
+            }
+
+            is RequestResult.NoInternet -> {
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
+        }
+    }
+
+
+    suspend fun markAsFinished(contractId: Long) {
+        db.directExecutionDao().markAsFinished(contractId)
+        SyncManager.markAsDirectExecutionAsFinished(
+            context = app.applicationContext,
+            db = db,
+            contractId = contractId
+        )
     }
 
 }

@@ -51,8 +51,7 @@ data class DirectExecutionStreetItem( //tabela nova
 data class DirectExecutionDTOResponse(
     val contractId: Long,
     val contractor: String,
-    val instructions: String,
-    val executionStatus: String,
+    val instructions: String?,
     val creationDate: String,
     val reserves: List<DirectReserve>,
 )

@@ -3,7 +3,7 @@ package com.lumos.lumosspring.execution.controller
 import com.lumos.lumosspring.execution.dto.DelegateDTO
 import com.lumos.lumosspring.execution.dto.DirectExecutionDTO
 import com.lumos.lumosspring.execution.dto.DirectExecutionDTOResponse
-import com.lumos.lumosspring.execution.dto.IndirectExecutionDTO
+import com.lumos.lumosspring.execution.dto.IndirectExecutionDTOResponse
 import com.lumos.lumosspring.execution.dto.ReserveDTOCreate
 import com.lumos.lumosspring.execution.dto.SendDirectExecutionDto
 import com.lumos.lumosspring.execution.dto.SendExecutionDto
@@ -73,7 +73,7 @@ class ExecutionController(
     ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
 
     @GetMapping("/mobile/execution/get-executions")
-    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<IndirectExecutionDTO>> = executionService.getIndirectExecutions(uuid)
+    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<IndirectExecutionDTOResponse>> = executionService.getIndirectExecutions(uuid)
 
     @GetMapping("/mobile/execution/get-direct-executions")
     fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)

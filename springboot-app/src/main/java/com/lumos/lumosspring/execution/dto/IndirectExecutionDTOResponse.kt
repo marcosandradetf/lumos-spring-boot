@@ -85,7 +85,7 @@ data class ReserveItemDTO(
     val materials: List<ReserveMaterialDTO>
 )
 
-data class ReserveMaterialDTO (
+data class ReserveMaterialDTO(
     val centralMaterialStockId: Long? = null,
     val truckMaterialStockId: Long? = null,
     val materialId: Long,
@@ -111,7 +111,7 @@ data class ExecutionPartial(
     val contractor: String,
 )
 
-data class IndirectExecutionDTO(
+data class IndirectExecutionDTOResponse(
     val streetId: Long,
     val streetName: String,
     val streetNumber: String? = null,
@@ -126,26 +126,35 @@ data class IndirectExecutionDTO(
     val longitude: Double?,
     val contractId: Long,
     val contractor: String,
-    val reserves: List<Reserve>,
+    val reserves: List<IndirectReserve>,
 )
 
 data class DirectExecutionDTOResponse(
     val contractId: Long,
+    val currentDirectExecutionId: Long,
     val contractor: String,
     val instructions: String?,
     val creationDate: String,
-    val reserves: List<Reserve>,
+    val reserves: List<DirectReserve>,
 )
 
-data class Reserve(
-    val reserveId: Long,
+data class IndirectReserve(
+    val reserveId: Long, // *_*
+    val contractId: Long,
     val contractItemId: Long,
-    val truckMaterialStockId: Long? = null,
-    val centralMaterialStockId: Long? = null,
     val materialName: String,
     val materialQuantity: Double,
-    val reserveStatus: String,
-    val streetId: Long? = null,
+    val streetId: Long,
+    val requestUnit: String,
+    val quantityExecuted: Double? = null
+)
+
+data class DirectReserve(
+    val materialStockId: Long, // *_*
+    val contractItemId: Long,
+    val contractId: Long,
+    val materialName: String,
+    val materialQuantity: Double,
     val requestUnit: String,
 )
 

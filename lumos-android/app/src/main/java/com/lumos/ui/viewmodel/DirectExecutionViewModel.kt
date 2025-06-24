@@ -47,7 +47,7 @@ class DirectExecutionViewModel(
                 val response = repository.syncDirectExecutions()
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
-                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui - ou puxe para atualizar agora mesmo."
+                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
 
                     is RequestResult.NoInternet -> _syncError.value =
                         "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
@@ -145,6 +145,20 @@ class DirectExecutionViewModel(
                 onError("Erro: ${e.localizedMessage}")
             } finally {
                 _isLoadingReserves.value = false
+            }
+        }
+    }
+
+    fun markAsFinished(contractId: kotlin.Long) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    repository.markAsFinished(contractId)
+                }
+            } catch (e: IllegalStateException) {
+                null
+            } catch (e: Exception) {
+                null
             }
         }
     }

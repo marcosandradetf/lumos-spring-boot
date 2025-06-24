@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface ContractRepository extends JpaRepository<Contract, Long> {
-    @EntityGraph(attributePaths = {"contractItemsQuantitative"})
+    @EntityGraph(attributePaths = {"contractItem"})
     Optional<Contract> findContractByContractId(long contractId);
 
     List<Contract> findAllByStatus(String status);

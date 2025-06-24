@@ -295,7 +295,7 @@ export class ReservationManagementSelectComponent {
     this.currentItemId = 0;
     this.currentMaterialId = 0;
   }
-  
+
   sendData() {
     const hasUndefinedItems = this.street.items.some(i => i.materials === undefined);
     if (hasUndefinedItems) {
@@ -312,9 +312,14 @@ export class ReservationManagementSelectComponent {
     this.loading = true;
     this.executionService.reserveMaterialsForExecution(this.street, this.userUUID).subscribe({
       next: (response: any) => {
-        this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
-        this.streetId = null;
-        this.directExecutionId = null;
+        if (this.reserve.streets[0].comment === 'DIRECT_EXECUTION') {
+          this.reserve.streets = this.reserve.streets.filter(s => s.directExecutionId !== this.directExecutionId);
+          this.directExecutionId = null;
+        } else {
+          this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
+          this.streetId = null;
+        }
+
         this.utils.showMessage(response.message, 'success', 'Reserva realizada com sucesso', true);
       },
       error: (error) => {

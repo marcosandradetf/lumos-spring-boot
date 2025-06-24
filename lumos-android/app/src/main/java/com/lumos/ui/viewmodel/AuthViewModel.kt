@@ -17,16 +17,8 @@ class AuthViewModel(
     private val authRepository: AuthRepository,
     private val secureStorage: SecureStorage
 ) : ViewModel() {
-    private val _isAuthenticated = mutableStateOf(false)
-    val isAuthenticated: State<Boolean> get() = _isAuthenticated
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading:StateFlow<Boolean> = _isLoading
-
-
-    fun checkAuthentication() {
-        _isAuthenticated.value = authRepository.isAuthenticated()
-    }
+    private val _isAuthenticated = MutableStateFlow<Boolean?>(null)
+    val isAuthenticated: StateFlow<Boolean?> = _isAuthenticated
 
     fun login(
         username: String,
@@ -66,11 +58,9 @@ class AuthViewModel(
     }
 
     fun authenticate() {
-        viewModelScope.launch(Dispatchers.Main) {
-            _isLoading.value = true
+        viewModelScope.launch {
             val accessToken = secureStorage.getAccessToken()
             _isAuthenticated.value = accessToken != null
-            _isLoading.value = false
         }
     }
 

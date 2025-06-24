@@ -161,4 +161,18 @@ object SyncManager {
         }
     }
 
+    suspend fun markAsDirectExecutionAsFinished(context: Context, db: AppDatabase, contractId: Long) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.FINISHED_DIRECT_EXECUTION, contractId)
+        if (count == 0) {
+
+            val syncItem = SyncQueueEntity(
+                relatedId = contractId,
+                type = SyncTypes.FINISHED_DIRECT_EXECUTION,
+                priority = 20
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
 }

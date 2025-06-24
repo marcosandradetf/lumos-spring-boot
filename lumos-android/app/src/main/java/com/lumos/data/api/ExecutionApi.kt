@@ -31,4 +31,16 @@ interface ExecutionApi {
         @Part("execution") execution: RequestBody
     ): Response<Void>
 
+    @Multipart
+    @POST("/api/mobile/execution/upload-direct-execution")
+    suspend fun uploadDirectExecutionData(
+        @Part photo: MultipartBody.Part,
+        @Part("execution") execution: RequestBody
+    ): Response<Void>
+
+    @POST("/api/mobile/execution/finish-direct-execution")
+    suspend fun finishDirectExecution(
+        @Query("contractId") contractId: Long
+    ): Response<Void>
+
 }

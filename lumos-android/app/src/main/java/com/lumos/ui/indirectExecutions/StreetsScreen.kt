@@ -93,7 +93,9 @@ fun StreetsScreen(
     var selectedStreetId by remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(selectedStreetId) {
-        onNavigateToExecution(selectedStreetId!!)
+        selectedStreetId?.let {
+            onNavigateToExecution(it)
+        }
     }
 
     Content(
@@ -231,6 +233,7 @@ fun Content(
                                 Column(
                                     verticalArrangement = Arrangement.Center,
                                     modifier = Modifier.fillMaxHeight()
+                                        .padding(10.dp)
                                 ) {
                                     // Linha vertical com bolinha no meio
                                     Box(

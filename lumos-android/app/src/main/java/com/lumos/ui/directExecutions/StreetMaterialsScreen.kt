@@ -12,6 +12,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.rounded.PhotoCamera
@@ -47,12 +47,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.LocalTextStyle
@@ -64,7 +61,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,8 +72,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -89,13 +91,13 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
-import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
@@ -113,11 +115,6 @@ fun StreetMaterialScreen(
     contractor: String,
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
-    onNavigateToHome: () -> Unit,
-    onNavigateToMenu: () -> Unit,
-    onNavigateToExecutions: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     pSelected: Int,
     navController: NavHostController,
     notificationsBadge: String,
@@ -125,18 +122,23 @@ fun StreetMaterialScreen(
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
 
-    var street = DirectExecutionStreet(
-        address = "",
-        latitude = null,
-        longitude = null,
-        photoUri = null,
-        deviceId = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ANDROID_ID
-        ),
-        contractId = contractId,
-        contractor = contractor,
-    )
+    var street by remember {
+        mutableStateOf(
+            DirectExecutionStreet(
+                address = "",
+                latitude = null,
+                longitude = null,
+                photoUri = null,
+                deviceId = Settings.Secure.getString(
+                    context.contentResolver,
+                    Settings.Secure.ANDROID_ID
+                ),
+                contractId = contractId,
+                contractor = contractor,
+            )
+        )
+    }
+
     var streetItems by remember { mutableStateOf(listOf<DirectExecutionStreetItem>()) }
     var hasPosted by remember { mutableStateOf(false) }
     var alertModal by remember { mutableStateOf(false) }
@@ -151,10 +153,12 @@ fun StreetMaterialScreen(
 
     var reserves by remember { mutableStateOf<List<DirectReserve>>(emptyList()) }
 
-    val message = mutableMapOf(
-        "title" to "Título da mensagem",
-        "body" to "Conteúdo da mensagem"
-    )
+    val message = remember {
+        mutableStateMapOf(
+            "title" to "Título da mensagem",
+            "body" to "Você está na rua da execução neste momento?"
+        )
+    }
 
 
     LaunchedEffect(Unit) {
@@ -193,55 +197,69 @@ fun StreetMaterialScreen(
             contractor = contractor,
             reserves = reserves,
             street = street,
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToMenu = onNavigateToMenu,
-            onNavigateToExecutions = onNavigateToExecutions,
-            onNavigateToProfile = onNavigateToProfile,
-            onNavigateToNotifications = onNavigateToNotifications,
             pSelected = pSelected,
             context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
             takePhoto = { uri ->
-                street.photoUri = uri.toString()
+                street = street.copy(photoUri = uri.toString())
             },
-            saveAndSend = {
-                confirmModal = false
-                if (street.address.contains("[nº não informado]")) {
-                    message["title"] = "Número do endereço não preenchido"
+            changeStreet = {
+                street = street.copy(address = it)
+            },
+            openModal = { action ->
+                if (action == "SEND") {
                     message["body"] =
-                        "Por favor, informe o número do endereço antes de finalizar."
-                    alertModal = true
-                } else if (street.photoUri == null) {
-                    message["title"] = "Você esqueceu da foto"
-                    message["body"] = "Antes de finalizar, tire uma foto."
-                    alertModal = true
-                } else if (street.address.isEmpty()) {
-                    message["title"] = "Aviso Importante"
-                    message["body"] =
-                        "Você esqueceu de preencher o endereço, o envio é obrigatório."
-                    alertModal = true
-                } else if (streetItems.isEmpty()) {
-                    message["title"] = "Aviso Importante"
-                    message["body"] = "Selecione os itens executados para continuar."
-                    alertModal = true
+                        "Deseja confirmar o envio dessa execução?"
                 } else {
-                    val quantities = streetItems.map { it.quantityExecuted }
-                    if (quantities.any { it == 0.0 }) {
-                        message["title"] = "Quantidade inválida"
+                    message["body"] =
+                        "Deseja sair?"
+                }
+                confirmModal = true
+            },
+            confirmModal = { action ->
+                if (action == "SEND") {
+                    confirmModal = false
+                    if (street.address.contains("[nº não informado]")) {
+                        message["title"] = "Número do endereço não preenchido"
                         message["body"] =
-                            "Não é permitido salvar itens com quantidade igual a 0."
+                            "Por favor, informe o número do endereço antes de finalizar."
+                        alertModal = true
+                    } else if (street.photoUri == null) {
+                        message["title"] = "Você esqueceu da foto"
+                        message["body"] = "Antes de finalizar, tire uma foto."
+                        alertModal = true
+                    } else if (street.address.isEmpty()) {
+                        message["title"] = "Aviso Importante"
+                        message["body"] =
+                            "Você esqueceu de preencher o endereço, o envio é obrigatório."
+                        alertModal = true
+                    } else if (streetItems.isEmpty()) {
+                        message["title"] = "Aviso Importante"
+                        message["body"] = "Selecione os itens executados para continuar."
                         alertModal = true
                     } else {
-                        directExecutionViewModel.saveAndPost(
-                            street = street,
-                            items = streetItems,
-                            onPostExecuted = { hasPosted = true },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
+                        val quantities = streetItems.map { it.quantityExecuted }
+                        if (quantities.any { it == 0.0 }) {
+                            message["title"] = "Quantidade inválida"
+                            message["body"] =
+                                "Não é permitido salvar itens com quantidade igual a 0."
+                            alertModal = true
+                        } else {
+                            directExecutionViewModel.saveAndPost(
+                                street = street,
+                                items = streetItems,
+                                onPostExecuted = { hasPosted = true },
+                                onError = {
+                                    errorMessage = it
+                                }
+                            )
+                        }
                     }
+                } else if (action == "CLOSE") {
+                    confirmModal = false
+                } else {
+                    navController.navigate(action)
                 }
             },
             alertModal = alertModal,
@@ -283,10 +301,6 @@ fun StreetMaterialScreen(
             },
             hasPosted = hasPosted,
             errorMessage = errorMessage,
-            confirmModal = confirmModal,
-            closeConfirmModal = {
-                confirmModal = false
-            },
             alertMessage = message,
             locationModal = locationModal,
             confirmLocation = {
@@ -297,6 +311,8 @@ fun StreetMaterialScreen(
                     locationModal = false
                 }
             },
+            streetItems = streetItems,
+            openConfirmModal = confirmModal
         )
 
 }
@@ -306,33 +322,28 @@ fun StreetMaterialsContent(
     contractor: String,
     reserves: List<DirectReserve>,
     street: DirectExecutionStreet,
-    onNavigateToHome: () -> Unit,
-    onNavigateToMenu: () -> Unit,
-    onNavigateToExecutions: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     pSelected: Int,
-    onNavigateToNotifications: () -> Unit,
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
     takePhoto: (uri: Uri) -> Unit,
-    saveAndSend: () -> Unit,
+    changeStreet: (address: String) -> Unit,
+    confirmModal: (String) -> Unit,
+    openConfirmModal: Boolean,
+    openModal: (String) -> Unit,
     alertModal: Boolean,
-
     closeAlertModal: () -> Unit,
-    confirmModal: Boolean,
-    closeConfirmModal: () -> Unit,
-
     locationModal: Boolean,
     confirmLocation: (Boolean) -> Unit,
-
     changeMaterial: (Long, Long, Boolean) -> Unit,
     changeQuantity: (Long, Long, Double, Double) -> Unit,
     hasPosted: Boolean,
     errorMessage: String?,
-    alertMessage: MutableMap<String, String>
+    alertMessage: MutableMap<String, String>,
+    streetItems: List<DirectExecutionStreetItem>
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     val fileUri: MutableState<Uri?> = remember {
         mutableStateOf(
@@ -360,15 +371,32 @@ fun StreetMaterialsContent(
             }
         }
 
+    var action by remember { mutableStateOf("") }
+
     AppLayout(
         title = contractor,
         pSelected = pSelected,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
+        sliderNavigateToMenu = {
+            action = Routes.MENU
+            openModal(Routes.MENU)
+        },
+        sliderNavigateToHome = {
+            action = Routes.HOME
+            openModal(Routes.HOME)
+        },
+        sliderNavigateToNotifications = {
+            action = Routes.NOTIFICATIONS
+            openModal(Routes.NOTIFICATIONS)
+        },
+        sliderNavigateToProfile = {
+            action = Routes.PROFILE
+            openModal(Routes.PROFILE)
+        },
         navController = navController,
-        navigateBack = onNavigateToExecutions,
+        navigateBack = {
+            action = Routes.DIRECT_EXECUTION_SCREEN
+            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+        },
         context = context,
         notificationsBadge = notificationsBadge,
     ) { _, snackBar ->
@@ -381,21 +409,27 @@ fun StreetMaterialsContent(
                     snackBar(errorMessage, null)
             }
 
-            if(reserves.isEmpty())
+            if (reserves.isEmpty())
                 NothingData("Nenhuma reserva disponível")
 
             if (!hasPosted && reserves.isNotEmpty()) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = 90.dp),// deixa espaço pros botões
+                        .padding(bottom = 90.dp)// deixa espaço pros botões
+                        .pointerInput(Unit) {
+                            detectTapGestures(onTap = {
+                                focusManager.clearFocus() // ⌨️ Fecha o teclado
+                            })
+                        },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+
                 ) {
                     item {
                         TextField(
                             value = street.address,
-                            onValueChange = { street.address = it },
+                            onValueChange = { changeStreet(it) },
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
                                 focusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
@@ -455,7 +489,7 @@ fun StreetMaterialsContent(
                             changeMaterial = { materialStockId, contractItemId, selected ->
                                 changeMaterial(materialStockId, contractItemId, selected)
                             },
-                            streetItems = emptyList(),
+                            streetItems = streetItems,
                         )
                     }
                 }
@@ -517,7 +551,8 @@ fun StreetMaterialsContent(
 
                 FloatingActionButton(
                     onClick = {
-                        saveAndSend()
+                        action = "SEND"
+                        openModal("SEND")
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
@@ -560,14 +595,14 @@ fun StreetMaterialsContent(
                         })
                 }
 
-                if (confirmModal) {
+                if (openConfirmModal) {
                     Confirm(
-                        body = "Deseja confirmar o envio dessa execução?",
+                        body = alertMessage["body"] ?: "",
                         confirm = {
-                            saveAndSend()
+                            confirmModal(action)
                         },
                         cancel = {
-                            closeConfirmModal()
+                            confirmModal("CLOSE")
                         }
                     )
                 }
@@ -618,7 +653,7 @@ fun StreetMaterialsContent(
 
                     Button(
                         onClick = {
-                            onNavigateToExecutions()
+                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
                         },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -654,16 +689,20 @@ fun MaterialItem(
     changeQuantity: (Long, Long, Double, Double) -> Unit,
     streetItems: List<DirectExecutionStreetItem>
 ) {
-    var confirmModal by remember { mutableStateOf(false) }
 
-    var quantityExecuted by remember(material.materialStockId) {
-        mutableStateOf(BigDecimal(0.0.toString()))
+    var text by remember(material.materialStockId) { mutableStateOf("") }
+    val quantityExecuted = text.toDoubleOrNull() ?: 0.0
+
+
+    val selected = remember(streetItems, material) {
+        derivedStateOf {
+            streetItems.any {
+                it.materialStockId == material.materialStockId &&
+                        it.contractItemId == material.contractItemId
+            }
+        }
     }
 
-    val selected = streetItems.any {
-        it.materialStockId == material.materialStockId &&
-                it.contractItemId == material.contractItemId
-    }
 
     LaunchedEffect(quantityExecuted) {
         changeQuantity(
@@ -757,12 +796,12 @@ fun MaterialItem(
                             )
 
                             IconToggleButton(
-                                checked = selected,
-                                onCheckedChange = {
+                                checked = selected.value,
+                                onCheckedChange = { isChecked ->
                                     changeMaterial(
                                         material.materialStockId,
                                         material.contractItemId,
-                                        selected
+                                        isChecked
                                     )
                                 },
                                 colors = IconToggleButtonColors(
@@ -776,13 +815,13 @@ fun MaterialItem(
                                 modifier = Modifier
                                     .border(
                                         border = BorderStroke(
-                                            if (!selected) 2.dp else 0.dp,
+                                            if (!selected.value) 2.dp else 0.dp,
                                             MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                                         ), shape = CircleShape
                                     )
                                     .size(30.dp)
                             ) {
-                                if (selected)
+                                if (selected.value)
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "Check",
@@ -792,7 +831,7 @@ fun MaterialItem(
 
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        AnimatedVisibility(!selected) {
+                        AnimatedVisibility(!selected.value) {
                             Text(
                                 text = "Quantidade disponível: ${formatDouble(material.materialQuantity)}",
                                 style = MaterialTheme.typography.bodySmall,
@@ -800,14 +839,14 @@ fun MaterialItem(
                             )
                         }
 
-                        AnimatedVisibility(visible = selected) {
+                        AnimatedVisibility(visible = selected.value) {
 
                             Row(
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = "Quantidade Executada",
+                                    text = "Qtde.\nExecutada",
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 13.sp,
                                     textAlign = TextAlign.Center
@@ -825,17 +864,8 @@ fun MaterialItem(
                                 ) {
                                     IconButton(
                                         onClick = {
-                                            if (quantityExecuted > BigDecimal.ZERO) {
-                                                val hasDecimalPart =
-                                                    material.materialQuantity % 1 != 0.0
-                                                val decrement =
-                                                    if (hasDecimalPart) BigDecimal("0.1") else BigDecimal(
-                                                        "1"
-                                                    )
-                                                quantityExecuted =
-                                                    (quantityExecuted - decrement).coerceAtLeast(
-                                                        BigDecimal.ZERO
-                                                    )
+                                            if (quantityExecuted > 0.0) {
+                                                text = (quantityExecuted - 0.1).toString()
                                             }
                                         },
                                         modifier = Modifier
@@ -854,19 +884,14 @@ fun MaterialItem(
                                     }
 
                                     BasicTextField(
-                                        value = quantityExecuted.toPlainString(),
-                                        onValueChange = { input ->
-                                            // Permitir apenas números e um único ponto
-                                            val filtered =
-                                                input.filter { it.isDigit() || it == '.' }
+                                        value = text,
+                                        onValueChange =  { newText ->
+                                            // Permitir só dígitos e ponto
+                                            val filtered = newText.filter { it.isDigit() || it == '.' }
 
-                                            val result =
-                                                if (filtered.count { it == '.' } <= 1) filtered else quantityExecuted.toPlainString()
-
-                                            // Evita erro de conversão
-                                            val parsed = result.toBigDecimalOrNull()
-                                            if (parsed != null) {
-                                                quantityExecuted = parsed
+                                            // Permitir apenas um ponto
+                                            if (filtered.count { it == '.' } <= 1) {
+                                                text = filtered
                                             }
                                         },
                                         textStyle = LocalTextStyle.current.copy(
@@ -896,13 +921,7 @@ fun MaterialItem(
 
                                     IconButton(
                                         onClick = {
-                                            val hasDecimalPart =
-                                                material.materialQuantity % 1 != 0.0
-                                            val increment =
-                                                if (hasDecimalPart) BigDecimal("0.1") else BigDecimal(
-                                                    "1"
-                                                )
-                                            quantityExecuted = quantityExecuted.add(increment)
+                                            text = (quantityExecuted + 0.1).toString()
                                         },
                                         modifier = Modifier
                                             .background(
@@ -1022,30 +1041,27 @@ fun PrevMStreetScreen() {
             contractId = 1,
             contractor = "",
         ),
-        onNavigateToHome = { },
-        onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToExecutions = { },
-        onNavigateToNotifications = { },
         context = fakeContext,
         navController = rememberNavController(),
         notificationsBadge = "12",
         pSelected = BottomBar.HOME.value,
         takePhoto = { },
-        saveAndSend = { },
+        confirmModal = { },
         alertModal = false,
         closeAlertModal = { },
         hasPosted = false,
         errorMessage = null,
         changeMaterial = { _, _, _ -> },
-        confirmModal = false,
-        closeConfirmModal = { },
+        openConfirmModal = false,
         changeQuantity = { _, _, _, _ -> },
         alertMessage = mutableMapOf(
             "title" to "Título da mensagem",
             "body" to "Conteúdo da mensagem"
         ),
         locationModal = true,
-        confirmLocation = {  },
+        confirmLocation = { },
+        streetItems = emptyList(),
+        changeStreet = {},
+        openModal = {}
     )
 }

@@ -74,7 +74,7 @@ fun CategoryMenu(navController: NavHostController) {
         Category(
             "Execução",
             listOf("Execuções Com Pré-Medição", "Execuções Sem Pré-medição"),
-            action = listOf(Routes.EXECUTION_SCREEN, Routes.DIRECT_EXECUTION_SCREEN),
+            action = listOf(Routes.NO_ACCESS + "/Execuções", Routes.DIRECT_EXECUTION_SCREEN),
             icons = listOf(Icons.Default.Build, Icons.Default.Start)
         ),
     )
