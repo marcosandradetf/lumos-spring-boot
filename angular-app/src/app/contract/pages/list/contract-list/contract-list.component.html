@@ -105,7 +105,9 @@
         <tr>
           <th>Item</th>
           <th>Descrição</th>
-          <th>Qtde. Total Contratada</th>
+          <th>Qtde. Contratada</th>
+          <th>Qtde. Executada</th>
+          <th>Saldo</th>
           <th>Preço Unitário</th>
           <th>Preço Total</th>
           <th>Ações</th>
@@ -135,6 +137,25 @@
                 {{ item.contractedQuantity }}
               </ng-template>
             </p-cellEditor>
+          </td>
+
+          <td>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.executedQuantity"
+                />
+              </ng-template>
+              <ng-template pTemplate="output">
+                {{ item.executedQuantity }}
+              </ng-template>
+            </p-cellEditor>
+          </td>
+
+          <td>
+            {{ item.contractedQuantity - item.executedQuantity }}
           </td>
 
           <td>

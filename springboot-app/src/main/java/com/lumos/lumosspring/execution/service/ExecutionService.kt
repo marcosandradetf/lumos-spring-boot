@@ -681,12 +681,12 @@ class ExecutionService(
             val teamName: String?
         )
 
-        data class ReservationsByPreMeasurementDto(
-            val preMeasurementName: String,
+        data class ReservationsByCaseDtoResponse(
+            val description: String,
             val reservations: List<ReservationDto>
         )
 
-        val response: MutableList<ReservationsByPreMeasurementDto> = mutableListOf()
+        val response: MutableList<ReservationsByCaseDtoResponse> = mutableListOf()
 
         for (stockist in stockists) {
             val rawReservations = getRawData(
@@ -731,9 +731,10 @@ class ExecutionService(
                         )
                     )
                 }
+
                 response.add(
-                    ReservationsByPreMeasurementDto(
-                        preMeasurementName = preMeasurementName,
+                    ReservationsByCaseDtoResponse(
+                        description = preMeasurementName,
                         reservations = list
                     )
                 )

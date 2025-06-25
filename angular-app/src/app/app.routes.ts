@@ -197,6 +197,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
   },
+  {
+    path: 'requisicoes/pendentes',
+    loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+  },
   //end
 
   // out

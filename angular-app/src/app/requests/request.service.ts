@@ -1,12 +1,22 @@
-import { Injectable } from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {ReservationsByCaseDtoResponse} from './reservation.models';
+import {environment} from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RequestService {
+  private baseUrl = environment.springboot + "/api";
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+  }
 
+  getReservation(userId: string, status: string) {
+    const params = new HttpParams()
+      .set('uuid', userId)
+      .set('status', status);
+    return this.http.get<ReservationsByCaseDtoResponse[]>(this.baseUrl + "/execution/get-reservations-by-status-and-stockist", {params});
+  }
 
 }
