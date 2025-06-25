@@ -119,6 +119,34 @@ object Utils {
         }
     }
 
+    fun sanitizeDecimalInput(input: String): String {
+        var replaced = input.replace(',', '.')
+
+        // Adiciona 0 à esquerda se começar com ponto
+        if (replaced.startsWith(".")) replaced = "0$replaced"
+
+        // Remove caracteres inválidos (mantém só dígitos e ponto)
+        replaced = replaced.filter { it.isDigit() || it == '.' }
+
+        // Garante apenas um ponto: mantém só o primeiro ponto
+        val firstDotIndex = replaced.indexOf('.')
+        if (firstDotIndex != -1) {
+            val before = replaced.substring(0, firstDotIndex).trimStart('0').ifEmpty { "0" }
+            val afterRaw = replaced.substring(firstDotIndex + 1)
+
+            // Remove pontos extras de afterRaw (caso o usuário tenha digitado mais de um ponto)
+            val afterClean = afterRaw.filter { it.isDigit() }
+
+            val after = afterClean.take(1) // Limita a 1 dígito
+            return "$before.$after"
+        }
+
+        // Caso não tenha ponto, remove zeros à esquerda
+        return replaced.trimStart('0').ifEmpty { "0" }
+    }
+
+
+
 
 
 

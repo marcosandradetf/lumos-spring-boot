@@ -43,4 +43,13 @@ interface ExecutionApi {
         @Query("contractId") contractId: Long
     ): Response<Void>
 
+    @GET("/api/mobile/check-update")
+    suspend fun checkUpdate(@Query("version") version: Long): Response<Update>
+
 }
+
+data class Update(
+    val latestVersionCode: Long,
+    val latestVersionName: String,
+    val apkUrl: String
+)

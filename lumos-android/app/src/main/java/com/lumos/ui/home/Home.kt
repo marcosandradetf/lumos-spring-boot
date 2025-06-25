@@ -1,5 +1,7 @@
 package com.lumos.ui.home
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -57,11 +59,28 @@ fun HomeScreen(
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
 
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val currentVersionCode =
+        packageInfo.longVersionCode
+
+
     LaunchedEffect(Unit) {
         directExecutionViewModel.syncExecutions()
         contractViewModel.syncContracts()
 
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
+
+        directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
+            Log.e("v", newVersion.toString())
+            newVersion?.let {
+                if(newVersion > currentVersionCode) {
+                    apkUrl?.let {
+                        val encodedUrl = Uri.encode(apkUrl)
+                        navController.navigate(Routes.UPDATE + "/$encodedUrl")
+                    }
+                }
+            }
+        }
     }
 
 

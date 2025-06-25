@@ -9,6 +9,7 @@ import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.api.RequestResult.SuccessEmptyBody
+import com.lumos.data.api.Update
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
@@ -32,6 +33,37 @@ class DirectExecutionRepository(
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
+
+    suspend fun checkUpdate(currentVersion: Long): RequestResult<Update> {
+
+        val response = ApiExecutor.execute { api.checkUpdate(currentVersion) }
+        return when (response) {
+            is RequestResult.Success -> {
+                RequestResult.Success(response.data)
+            }
+
+            is SuccessEmptyBody -> {
+                ServerError(204, "Resposta 204 inesperada")
+            }
+
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncExecutions(app.applicationContext, db)
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(
+                response.code,
+                response.message
+            )
+
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
+        }
+    }
+
     suspend fun syncDirectExecutions(): RequestResult<Unit> {
         val uuid = secureStorage.getUserUuid()
             ?: return ServerError(-1, "UUID Não encontrado")

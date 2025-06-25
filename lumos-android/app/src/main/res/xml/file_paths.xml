@@ -7,4 +7,7 @@
     <files-path
         name="my_images"
         path="." />
+    <external-path
+        name="download"
+        path="Download/" />
 </paths>

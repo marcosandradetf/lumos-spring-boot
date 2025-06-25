@@ -35,7 +35,7 @@
     </p-carousel>
   </div>
 
-  <div>
+  <div *ngIf="streetId !== null || directExecutionId !== null">
     <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="streetId === null && directExecutionId === null" [value]="tableSk">
       <ng-template pTemplate="header">
         <tr>

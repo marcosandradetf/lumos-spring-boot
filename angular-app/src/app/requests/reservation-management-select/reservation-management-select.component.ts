@@ -239,7 +239,7 @@ export class ReservationManagementSelectComponent {
     }
 
     const truckMaterialStockId = this.filteredMaterials.find(m => m.materialId === material.materialId && m.deposit === this.street.truckDepositName)?.materialStockId
-    if(!truckMaterialStockId){
+    if (!truckMaterialStockId) {
       this.utils.showMessage("Referência do material do caminhão não encontrada", "error", "Erro ao salvar referência")
       return;
     }
@@ -259,7 +259,7 @@ export class ReservationManagementSelectComponent {
       };
 
     const materialId = material.deposit.includes("CAMINHÃO") ? newMaterial.truckMaterialStockId : newMaterial.centralMaterialStockId;
-    if(materialId == null){
+    if (materialId == null) {
       this.utils.showMessage("Id do material não encontrado", "error", "Erro ao salvar referência")
       return;
     }
@@ -313,7 +313,7 @@ export class ReservationManagementSelectComponent {
     this.executionService.reserveMaterialsForExecution(this.street, this.userUUID).subscribe({
       next: (response: any) => {
         if (this.reserve.streets[0].comment === 'DIRECT_EXECUTION') {
-          this.reserve.streets = this.reserve.streets.filter(s => s.directExecutionId !== this.directExecutionId);
+          this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
           this.directExecutionId = null;
         } else {
           this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
@@ -333,7 +333,7 @@ export class ReservationManagementSelectComponent {
   }
 
   getQuantity(materialId: number, deposit: string) {
-    if(deposit.includes("CAMINHÃO")) {
+    if (deposit.includes("CAMINHÃO")) {
       return this.street.items.find(i => i.itemId === this.currentItemId)
         ?.materials?.find(m => m.truckMaterialStockId == materialId)?.materialQuantity || 0;
     } else {
@@ -343,10 +343,10 @@ export class ReservationManagementSelectComponent {
   }
 
   existsMaterial(materialId: number, deposit: any): boolean {
-    if(deposit.includes("CAMINHÃO")) {
+    if (deposit.includes("CAMINHÃO")) {
       return this.street.items.find(i => i.itemId === this.currentItemId)
         ?.materials?.some(m => m.truckMaterialStockId == materialId) || false;
-    } else  {
+    } else {
       return this.street.items.find(i => i.itemId === this.currentItemId)
         ?.materials?.some(m => m.centralMaterialStockId == materialId) || false;
     }
@@ -359,7 +359,7 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    if(material.deposit.includes("CAMINHÃO")) {
+    if (material.deposit.includes("CAMINHÃO")) {
       this.street.items[index].materials = this.street.items[index].materials
         .filter(m => m.truckMaterialStockId !== material.materialStockId);
     } else {

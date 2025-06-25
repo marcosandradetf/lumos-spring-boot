@@ -2,7 +2,6 @@ package com.lumos
 
 import android.Manifest
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -17,10 +16,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import com.lumos.navigation.AppNavigation
 import com.lumos.ui.theme.LumosTheme
-import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -29,42 +26,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Instancie o FusedLocationProviderClient corretamente
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // Solicite as permissões de localização
         checkAndRequestPermissions()
 
         enableEdgeToEdge()
         val app = application as MyApp
-
-//        val currentVersion = packageManager.getPackageInfo(packageName, 0).longVersionCode
-
-        // Suponha que fetchMinVersion() seja uma função suspensa que chama sua API
-//        lifecycleScope.launch {
-//            val minVersion = fetchMinVersionFromApi()
-//            if (currentVersion < minVersion) {
-//                // Abre tela obrigatória para atualizar
-//                startActivity(Intent(this@MainActivity, UpdateRequiredActivity::class.java))
-//                finish() // Fecha MainActivity para não continuar
-//            } else {
-//                // Continua normalmente
-//                setContent {
-//                    val actionState =
-//                        remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }
-//
-//                    LumosTheme {
-//                        AppNavigation(
-//                            db = app.database,
-//                            retrofit = app.retrofit,
-//                            secureStorage = app.secureStorage,
-//                            context = this as Context,
-//                            actionState
-//                        )
-//                    }
-//                }
-//            }
-//        }
 
         setContent {
             val actionState =

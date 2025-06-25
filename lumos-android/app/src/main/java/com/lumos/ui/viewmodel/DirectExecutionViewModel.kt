@@ -39,6 +39,30 @@ class DirectExecutionViewModel(
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
+    fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isSyncing.value = true
+            _syncError.value = null
+            try {
+                val response = repository.checkUpdate(currentVersion)
+                val result = when (response) {
+                    is RequestResult.Timeout  -> null to null
+                    is RequestResult.NoInternet  -> null to null
+                    is ServerError  -> null to null
+                    is RequestResult.UnknownError  -> null to null
+                    is RequestResult.SuccessEmptyBody -> null to null
+                    is RequestResult.Success -> response.data.latestVersionCode to response.data.apkUrl
+                }
+
+                withContext(Dispatchers.Main) {
+                    callback(result.first, result.second)
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
     fun syncExecutions() {
         viewModelScope.launch(Dispatchers.IO) {
             _isSyncing.value = true

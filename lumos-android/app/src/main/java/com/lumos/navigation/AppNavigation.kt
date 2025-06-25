@@ -1,5 +1,6 @@
 package com.lumos.navigation
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -53,6 +55,7 @@ import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
 import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
+import com.lumos.ui.updater.ApkUpdateDownloader
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
@@ -163,6 +166,7 @@ fun AppNavigation(
     }
 
     LaunchedEffect(Unit) {
+
         if (isAuthenticated == true) {
             enqueueSync(app.applicationContext)
             schedulePeriodicSync(app.applicationContext)
@@ -620,6 +624,17 @@ fun AppNavigation(
                     )
                 }
 
+                composable(Routes.UPDATE + "/{apk}") { backStackEntry ->
+                    val encodedUrl = backStackEntry.arguments?.getString("apk") ?: ""
+                    val apkUrl = Uri.decode(encodedUrl)
+                    ApkUpdateDownloader(
+                        apkUrl = apkUrl,
+                        context = LocalContext.current,
+                        navController,
+                        notifications.size.toString()
+                    )
+                }
+
             }
         }
     }
@@ -646,4 +661,5 @@ object Routes {
 
     const val DIRECT_EXECUTION_SCREEN = "direct-execution-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
+    const val UPDATE = "update"
 }

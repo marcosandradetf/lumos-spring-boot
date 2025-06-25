@@ -54,6 +54,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -77,9 +78,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -105,6 +108,7 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.utils.Utils.formatDouble
+import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
 import java.math.BigDecimal
 
@@ -690,8 +694,8 @@ fun MaterialItem(
     streetItems: List<DirectExecutionStreetItem>
 ) {
 
-    var text by remember(material.materialStockId) { mutableStateOf("") }
-    val quantityExecuted = text.toDoubleOrNull() ?: 0.0
+    var text by remember(material.materialStockId) { mutableStateOf(TextFieldValue("0")) }
+    val quantityExecuted = text.text.toDoubleOrNull() ?: 0.0
 
 
     val selected = remember(streetItems, material) {
@@ -794,7 +798,43 @@ fun MaterialItem(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            AnimatedVisibility(!selected.value) {
+                                Text(
+                                    text = "Quantidade disponível: ${formatDouble(material.materialQuantity)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
 
+                            AnimatedVisibility(visible = selected.value) {
+                                OutlinedTextField(
+                                    value = text,
+                                    onValueChange = { newValue ->
+                                        val sanitized = sanitizeDecimalInput(newValue.text)
+                                        text = TextFieldValue(sanitized, TextRange(sanitized.length))
+                                    },
+                                    label = { Text("Qtde Exec") },
+                                    textStyle = LocalTextStyle.current.copy(
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    modifier = Modifier
+                                        .size(width = 90.dp, height = 60.dp),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Number,
+                                        imeAction = ImeAction.Done
+                                    ),
+                                )
+                            }
                             IconToggleButton(
                                 checked = selected.value,
                                 onCheckedChange = { isChecked ->
@@ -828,120 +868,6 @@ fun MaterialItem(
                                         tint = MaterialTheme.colorScheme.onPrimary
                                     )
                             }
-
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        AnimatedVisibility(!selected.value) {
-                            Text(
-                                text = "Quantidade disponível: ${formatDouble(material.materialQuantity)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        AnimatedVisibility(visible = selected.value) {
-
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = "Qtde.\nExecutada",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 13.sp,
-                                    textAlign = TextAlign.Center
-                                )
-
-                                Spacer(Modifier.width(20.dp))
-
-                                Row(
-                                    modifier = Modifier
-                                        .border(
-                                            0.7.dp,
-                                            MaterialTheme.colorScheme.onSurface,
-                                            RoundedCornerShape(8.dp)
-                                        )
-                                ) {
-                                    IconButton(
-                                        onClick = {
-                                            if (quantityExecuted > 0.0) {
-                                                text = (quantityExecuted - 0.1).toString()
-                                            }
-                                        },
-                                        modifier = Modifier
-                                            .background(
-                                                MaterialTheme.colorScheme.primaryContainer,
-                                                shape = RoundedCornerShape(5.dp)
-                                            )
-                                            .size(40.dp)
-                                            .padding(5.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Remove,
-                                            contentDescription = "Diminuir",
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-
-                                    BasicTextField(
-                                        value = text,
-                                        onValueChange =  { newText ->
-                                            // Permitir só dígitos e ponto
-                                            val filtered = newText.filter { it.isDigit() || it == '.' }
-
-                                            // Permitir apenas um ponto
-                                            if (filtered.count { it == '.' } <= 1) {
-                                                text = filtered
-                                            }
-                                        },
-                                        textStyle = LocalTextStyle.current.copy(
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 14.sp,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        ),
-                                        modifier = Modifier.size(
-                                            width = 60.dp,
-                                            height = 40.dp
-                                        ),
-                                        singleLine = true,
-                                        decorationBox = { innerTextField ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .padding(2.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                innerTextField()
-                                            }
-                                        },
-                                        keyboardOptions = KeyboardOptions.Default.copy(
-                                            keyboardType = KeyboardType.Number
-                                        )
-                                    )
-
-                                    IconButton(
-                                        onClick = {
-                                            text = (quantityExecuted + 0.1).toString()
-                                        },
-                                        modifier = Modifier
-                                            .background(
-                                                MaterialTheme.colorScheme.primaryContainer,
-                                                shape = RoundedCornerShape(5.dp)
-                                            )
-                                            .size(40.dp)
-                                            .padding(5.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Add,
-                                            contentDescription = "Aumentar",
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
-
-                            }
-
-
                         }
 
 
