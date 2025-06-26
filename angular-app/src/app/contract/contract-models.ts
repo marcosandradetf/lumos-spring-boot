@@ -23,14 +23,14 @@ export interface ContractResponse {
   address: string,
   phone: string,
   cnpj: string,
-  noticeFile: string,
-  contractFile: string,
+  noticeFile: string | null,
+  contractFile: string | null,
   createdBy: string,
   createdAt: string,
   itemQuantity: number,
   contractStatus: string,
   contractValue: string,
-  additiveFile: string
+  additiveFile: string | null,
 }
 
 export interface ContractItemsResponse {

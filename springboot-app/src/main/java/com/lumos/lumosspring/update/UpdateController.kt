@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 class UpdateController {
 
     // Simulação dos dados da última versão (normalmente você buscaria do banco)
-    private val latestVersionCode = 5L
+    private val latestVersionCode = 2L
     private val latestVersionName = "1.4.0"
     private val apkUrl = "https://minio.thryon.com.br/apk/com.thryon.lumos_v2.apk"
 

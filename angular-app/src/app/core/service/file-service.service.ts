@@ -27,4 +27,11 @@ export class FileService {
     return this.http.post<string[]>(this.endpoint + '/upload-files', formData);
   }
 
+  downloadFile(fileName: string) {
+    return this.http.get(this.endpoint + `/download/${fileName}`, {
+      responseType: 'blob',
+      observe: 'response'
+    });
+  }
+
 }

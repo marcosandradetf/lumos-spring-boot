@@ -26,11 +26,11 @@ class ExecutionController(
     @PostMapping("/execution/delegate-direct-execution")
     fun delegateDirectExecution(@RequestBody execution: DirectExecutionDTO): ResponseEntity<Any> = executionService.delegateDirectExecution(execution)
 
-    @GetMapping("execution/get-reservations/{userUUID}")
+    @GetMapping("/execution/get-reservations/{userUUID}")
     fun getPendingReservesForStockist(@PathVariable userUUID: String): ResponseEntity<Any> =
         executionService.getPendingReservesForStockist(userUUID)
 
-    @GetMapping("execution/get-stock-materials/{linking}/{type}/{truckDepositName}")
+    @GetMapping("/execution/get-stock-materials/{linking}/{type}/{truckDepositName}")
     fun getStockMaterialForLinking(
         @PathVariable linking: String,
         @PathVariable type: String,
@@ -48,7 +48,7 @@ class ExecutionController(
         @PathVariable userUUID: String
     ): ResponseEntity<Any> = executionService.reserveMaterialsForExecution(reserveDTOCreate, userUUID)
 
-    @PostMapping("/execution/get-reservations-by-status-and-stockist")
+    @GetMapping("/execution/get-reservations-by-status-and-stockist")
     fun getReservationsByStatusAndStockist(
         @RequestParam uuid: String,
         @RequestParam status: String,

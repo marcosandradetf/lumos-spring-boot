@@ -16,6 +16,7 @@ import {Toast} from 'primeng/toast';
 import {Breadcrumb} from 'primeng/breadcrumb';
 import {MenuItem} from 'primeng/api';
 import {Title} from '@angular/platform-browser';
+import {FileService} from '../../../../core/service/file-service.service';
 
 @Component({
   selector: 'app-contract-list',
@@ -56,7 +57,8 @@ export class ContractListComponent implements OnInit {
     protected utils: UtilsService,
     protected router: Router,
     private route: ActivatedRoute,
-    private titleService: Title
+    private titleService: Title,
+    private minioService: FileService
   ) {
   }
 
@@ -66,7 +68,7 @@ export class ContractListComponent implements OnInit {
       this.reason = params['for'];
     });
 
-    if(this.reason.toLowerCase() !== 'premeasurement') {
+    if (this.reason.toLowerCase() !== 'premeasurement') {
       this.titleService.setTitle("Visualizar Contratos");
     } else {
       this.titleService.setTitle("Importar Pré-Medição");
@@ -163,4 +165,69 @@ export class ContractListComponent implements OnInit {
   }
 
 
+  download(file: 'contract' | 'notice' | 'additive') {
+    const contract = this.contracts.find(c => c.contractId == this.contractId);
+    switch (file) {
+      case 'contract':
+        const contractFile = contract?.contractFile;
+        if (contractFile) {
+          this.minioService.downloadFile(contractFile).subscribe(response => {
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+            const filename = filenameMatch ? filenameMatch[1] : contractFile;
+
+            const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+
+            window.URL.revokeObjectURL(url);
+          });
+        } else this.utils.showMessage('Nenhum contrato foi encontrado', "warn", 'Arquivo não existente')
+        break;
+      case 'notice':
+        const noticeFile = contract?.noticeFile;
+        if (noticeFile) {
+          this.minioService.downloadFile(noticeFile).subscribe(response => {
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+            const filename = filenameMatch ? filenameMatch[1] : noticeFile;
+
+            const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+
+            window.URL.revokeObjectURL(url);
+          });
+        } else this.utils.showMessage('Nenhum edital foi encontrado', "warn", 'Arquivo não existente')
+          break
+      case 'additive':
+        const additiveFile = contract?.additiveFile;
+        if (additiveFile) {
+          this.minioService.downloadFile(additiveFile).subscribe(response => {
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+            const filename = filenameMatch ? filenameMatch[1] : additiveFile;
+
+            const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+
+            window.URL.revokeObjectURL(url);
+          });
+        } else this.utils.showMessage('Nenhum aditivo foi encontrado', "warn", 'Arquivo não existente')
+          break;
+    }
+  }
 }

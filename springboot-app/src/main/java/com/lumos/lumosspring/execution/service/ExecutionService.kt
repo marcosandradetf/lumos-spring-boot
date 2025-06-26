@@ -693,13 +693,12 @@ class ExecutionService(
                 namedJdbc,
                 """
                         select pms.city, c.contractor, mr.material_id_reservation, mr.reserved_quantity, mr.description, 
-                        ms.material_id_stock, m.material_name, m.material_power, m.material_length from material_stock ms,
-                        mr.team_id, t.team_name
+                        ms.material_id_stock, m.material_name, m.material_power, m.material_length, mr.team_id, t.team_name
                         from material_reservation mr
                         inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
                         inner join material m on m.id_material = ms.material_id
-                        inner join direct_execution de ON mr.direct_execution_id = de.direct_execution_id 
-                        inner join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
+                        left join direct_execution de ON mr.direct_execution_id = de.direct_execution_id 
+                        left join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
                         inner join team t on t.id_team = mr.team_id
                         inner join contract c on de.contract_id = c.contract_id 
                         where ms.deposit_id = :deposit_id and mr.status = :status

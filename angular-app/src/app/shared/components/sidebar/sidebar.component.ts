@@ -83,7 +83,6 @@ export class SidebarComponent implements OnInit {
           border: 'none'
         },
         label: 'Pré-Medições',
-        icon: 'pi pi-chart-line',
         expanded: this.bTogglePreMeasurement,
         command: () => {
           this.togglePreMeasurement(!this.bTogglePreMeasurement);
@@ -91,38 +90,29 @@ export class SidebarComponent implements OnInit {
         items: [
           {
             label: 'Pendente',
-            icon: 'pi pi-clock',
-            command: () => {
-              void this.router.navigate(['pre-medicao/pendente']);
-            },
+            icon: 'pi pi-clock text-neutral-800 dark:text-neutral-200',
+            routerLink: 'pre-medicao/pendente',
           },
           {
             label: 'Aguardando Retorno',
-            icon: 'pi pi-inbox',
-            command: () => {
-              void this.router.navigate(['pre-medicao/aguardando-retorno']);
-            },
+            icon: 'pi pi-inbox text-neutral-800 dark:text-neutral-200',
+            routerLink: 'pre-medicao/aguardando-retorno',
           },
           {
             label: 'Validando',
-            icon: 'pi pi-sync',
-            command: () => {
-              void this.router.navigate(['pre-medicao/validando']);
-            },
+            icon: 'pi pi-sync text-neutral-800 dark:text-neutral-200',
+            routerLink: 'pre-medicao/validando',
           },
           {
             label: 'Disponível para execução',
-            icon: 'pi pi-check-circle',
-            command: () => {
-              void this.router.navigate(['pre-medicao/disponivel']);
-            },
+            icon: 'pi pi-check-circle text-neutral-800 dark:text-neutral-200',
+            routerLink: 'pre-medicao/disponivel',
           },
           {
             label: 'Importar pré-medição (.xlx)',
-            icon: 'pi pi-file-excel',
-            command: () => {
-              void this.router.navigate(['contratos/listar'], {queryParams: {for: 'preMeasurement'}});
-            },
+            icon: 'pi pi-file-excel text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/contratos/listar'],
+            queryParams: { for: 'preMeasurement' }
           },
         ]
       },
@@ -131,7 +121,6 @@ export class SidebarComponent implements OnInit {
           border: 'none'
         },
         label: 'Execuções',
-        icon: 'pi pi-lightbulb',
         expanded: this.bToggleExecution,
         command: () => {
           this.toggleExecution();
@@ -139,24 +128,21 @@ export class SidebarComponent implements OnInit {
         items: [
           {
             label: 'Execução Sem Pré-Medição',
-            icon: 'pi pi-chart-line',
-            command: () => {
-              void this.router.navigate(['contratos/listar'], {queryParams: {for: 'execution'}});
-            },
+            icon: 'pi pi-lightbulb text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/contratos/listar'],
+            queryParams: { for: 'execution' },
             routerLinkActiveOptions: { exact: true },
           },
           {
             label: 'Em progresso',
-            icon: 'pi pi-spinner',
+            icon: 'pi pi-spinner  text-neutral-800 dark:text-neutral-200',
             routerLink: ['/execucoes/em-progresso'],
             routerLinkActiveOptions: { exact: true },
           },
           {
             label: 'Finalizada',
-            icon: 'pi pi-check',
-            command: () => {
-              void this.router.navigate(['execucoes/finalizadas']);
-            },
+            icon: 'pi pi-check text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/execucoes/finalizadas'],
           },
         ]
       },
@@ -165,7 +151,6 @@ export class SidebarComponent implements OnInit {
           border: 'none'
         },
         label: 'Requisições',
-        icon: 'pi  pi-list',
         expanded: this.bToggleRequest,
         command: () => {
           this.toggleRequest();
@@ -173,8 +158,20 @@ export class SidebarComponent implements OnInit {
         items: [
           {
             label: 'Gerenciamento de Reservas',
-            icon: 'pi pi-box',
+            icon: 'pi pi-box text-black text-neutral-800 dark:text-neutral-200',
             routerLink: ['/requisicoes/execucoes/reservas/gerenciamento'],
+          },
+          {
+            label: 'Materiais pendentes de Aprovação',
+            icon: 'fa-solid fa-hourglass-half text-base text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/requisicoes/pendentes'],
+            disabled: true,
+          },
+          {
+            label: 'Materiais disponíveis para Coleta',
+            icon: 'fa-solid fa-list-check text-base text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/requisicoes/execucoes/reservas/gerenciamento'],
+            disabled: true,
           },
         ]
       },
@@ -183,7 +180,6 @@ export class SidebarComponent implements OnInit {
           border: 'none'
         },
         label: 'Contratos',
-        icon: 'pi pi-folder',
         expanded: this.bToggleContracts,
         command: () => {
           this.toggleContracts(!this.bToggleContracts);
@@ -191,17 +187,14 @@ export class SidebarComponent implements OnInit {
         items: [
           {
             label: 'Novo contrato',
-            icon: 'pi pi-plus-circle',
-            command: () => {
-              void this.router.navigate(['contratos/criar']);
-            },
+            icon: 'pi pi-plus-circle text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/contratos/criar'],
           },
           {
             label: 'Exibir Contratos',
-            icon: 'pi pi-folder-open',
-            command: () => {
-              void this.router.navigate(['contratos/listar'], {queryParams: {for: 'view'}});
-            },
+            icon: 'pi pi-folder-open text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/contratos/listar'],
+            queryParams: { for: 'view' },
           },
         ]
       },
@@ -210,7 +203,6 @@ export class SidebarComponent implements OnInit {
           border: 'none'
         },
         label: 'Estoque',
-        icon: 'pi pi-briefcase',
         expanded: this.bToggleStock,
         command: () => {
           this.toggleStock(!this.bToggleStock);
@@ -218,31 +210,23 @@ export class SidebarComponent implements OnInit {
         items: [
           {
             label: 'Movimentar Estoque',
-            icon: 'pi pi-building',
-            command: () => {
-              void this.router.navigate(['estoque/movimento']);
-            },
+            icon: 'pi pi-box text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/movimento'],
           },
           {
             label: 'Movimentações Pendentes',
-            icon: 'pi pi-building',
-            command: () => {
-              void this.router.navigate(['estoque/movimento-pendente']);
-            },
+            icon: 'pi pi-clock text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/movimento-pendente'],
           },
           {
             label: 'Gerenciar Materiais',
-            icon: 'pi pi-box',
-            command: () => {
-              void this.router.navigate(['estoque/materiais']);
-            },
+            icon: 'pi pi-briefcase text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/materiais'],
           },
           {
             label: 'Gerenciar Almoxarifados',
-            icon: 'pi pi-warehouse',
-            command: () => {
-              void this.router.navigate(['estoque/almoxarifados']);
-            },
+            icon: 'pi pi-warehouse text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/almoxarifados'],
           },
         ]
       },
@@ -251,33 +235,26 @@ export class SidebarComponent implements OnInit {
           border: 'none'
         },
         label: 'Configurações',
-        icon: 'pi pi-cog',
         expanded: false,
         items: [
           {
             label: 'Usuários',
-            icon: 'pi pi-users',
-            command: () => {
-              void this.router.navigate(['configuracoes/usuarios']);
-            },
+            icon: 'pi pi-users text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/configuracoes/usuarios'],
           },
           {
             label: 'Minha Conta',
-            icon: 'pi pi-user',
-            command: () => {
-              void this.router.navigate(['configuracoes/conta']);
-            },
+            icon: 'pi pi-user text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/configuracoes/conta'],
           },
           {
             label: 'Equipes Operacionais',
-            icon: 'pi pi-sitemap',
-            command: () => {
-              void this.router.navigate(['configuracoes/equipes']);
-            },
+            icon: 'pi pi-sitemap  text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/configuracoes/equipes'],
           },
           {
             label: 'Estoquistas',
-            icon: 'pi pi-warehouse',
+            icon: 'pi pi-warehouse text-neutral-800 dark:text-neutral-200',
           },
         ]
       }

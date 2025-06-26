@@ -2,7 +2,7 @@
   <div class="pt-2 w-full pl-2 flex items-center justify-between">
     <p-breadcrumb class="max-w-full" [model]="items" [home]="home"/>
     <h3
-      class="text-medium pr-5 hidden lg:block font-medium">{{ contractor }}</h3>
+      class="text-medium pr-5 hidden lg:block font-medium">teste</h3>
   </div>
 
   @if (loading) {
@@ -10,96 +10,9 @@
       <app-loading></app-loading>
     </div>
 
-  } @else if (nextStep && !loading) {
-    @if (finish) {
-      <div class="max-w-5xl mx-auto px-6 py-10 text-center">
-        <i class="fa-solid fa-check text-2xl rounded-full bg-success p-4 mb-4"></i>
-        <p class="mb-1 text-gray-700 text-base dark:text-gray-100">
-          Ordem gerada com sucesso.
-        </p>
-        <p>O estoquista foi notificado e já pode fazer o gerenciamento na tela
-          <p-tag severity="info" styleClass="ml-2 align-middle" value="Gerenciamento de Reservas"/>
-        </p>
-        <p-button
-          label="Nova Execução"
-          size="small"
-          (click)="router.navigate(['contratos/listar'], {queryParams: {for: 'execution'}})"
-          styleClass="p-button-raised p-button-rounded p-button-primary shadow-md mt-4"
-          severity="info"
-        ></p-button>
-      </div>
-    } @else {
-      <div class="max-w-5xl mx-auto px-6 py-10 text-center">
-        <h2 class="text-3xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Revisão</h2>
-
-        <p class="mb-1 text-gray-700 text-base dark:text-gray-100">
-          Será gerada uma ordem a partir dos itens contratuais selecionados.
-        </p>
-        <p class="mb-4 text-gray-700 text-base dark:text-gray-100">
-          A ordem estará disponível em
-          <p-tag severity="info" styleClass="ml-2 align-middle" value="Gerenciamento de Reservas"/>
-        </p>
-
-        <p class="mb-6 text-gray-600 leading-relaxed max-w-xl mx-auto dark:text-gray-100">
-          O estoquista selecionado deverá fazer o gerenciamento junto à equipe responsável. A equipe deverá seguir todas
-          as instruções do estoquista e depois poderá iniciar a execução.
-        </p>
-
-        <p-select
-          [options]="stockists"
-          [(ngModel)]="execution.stockistId"
-          optionLabel="name"
-          optionValue="userId"
-          placeholder="Selecione o estoquista"
-          class="p-fluid max-w-sm mx-auto"
-        ></p-select>
-      </div>
-      <div class="w-full flex justify-center mt-5">
-        <p-floatlabel variant="in">
-        <textarea pTextarea id="over_label"
-                  [(ngModel)]="execution.instructions"
-                  rows="3"
-                  cols="70"
-                  style="resize: none"
-                  class="h-full"></textarea>
-          <label for="in_label">Instruções para a equipe</label>
-        </p-floatlabel>
-      </div>
-      <div class="max-w-4xl mx-auto px-6 mt-10 flex justify-center gap-6">
-        <p-button
-          label="Concluir"
-          size="large"
-          (click)="sendData()"
-          styleClass="p-button-raised p-button-rounded p-button-primary shadow-md"
-        ></p-button>
-
-        <p-button
-          label="Revisar Itens Selecionados"
-          size="large"
-          (click)="nextStep = false"
-          variant="text"
-          severity="info"
-          styleClass="p-button-rounded"
-        ></p-button>
-      </div>
-    }
-
-  } @else if (!loading) {
-    <div class="mb-10 mt-4 px-2" *ngIf="execution.teamId === 0">
-      <p-select
-        [(ngModel)]="execution.teamId"
-        (onChange)="teamName = getTeamById($event.value)"
-        [options]="teams"
-        optionLabel="teamName"
-        optionValue="idTeam"
-        [filter]="true" filterBy="teamName"
-        size="small"
-        placeholder="Selecione a equipe responsável"
-        class="w-full"/>
-    </div>
-
+  } @else {
     <div>
-      <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="execution.teamId === 0" [value]="tableSk">
+      <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="reservations.length === 0" [value]="tableSk">
         <ng-template pTemplate="header">
           <tr>
             <th pSortableColumn="description">Descrição
@@ -140,93 +53,80 @@
         </ng-template>
       </p-table>
 
-      <p-table
-        *ngIf="execution.teamId > 0"
-        #table_parent
-        [value]="referenceItems" [tableStyle]="{ 'min-width': '60rem' }"
-        editMode="row"
-        selectionMode="single"
-        dataKey="contractItemId"
-      >
+      <div *ngFor="let group of reservations" class="px-10">
+        <h3 class="text-xl pb-2">{{ group.description }}</h3>
+        <p-table
+          #table_parent
+          [value]="group.reservations" [tableStyle]="{ 'min-width': '60rem' }"
+          editMode="row"
+          selectionMode="single"
+          dataKey="contractItemId">
 
-        <ng-template pTemplate="header">
-          <tr>
-            <!--          <th pSortableColumn="itemId">Id-->
-            <!--            <p-sortIcon field="itemId"/>-->
-            <!--          </th>-->
-            <th pSortableColumn="description">Descrição
-              <p-sortIcon field="description"/>
-            </th>
-            <th pSortableColumn="linking">Especificação
-              <p-sortIcon field="linking"/>
-            </th>
-            <th pSortableColumn="teamName">Equipe Responsável
-              <p-sortIcon field="teamName"/>
-            </th>
-            <th pSortableColumn="quantity">Quantidade
-              <p-sortIcon field="quantity"/>
-            </th>
-            <th pSortableColumn="inventoryStatus">Status
-              <p-sortIcon field="inventoryStatus"/>
-            </th>
-          </tr>
-        </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              <!--          <th pSortableColumn="itemId">Id-->
+              <!--            <p-sortIcon field="itemId"/>-->
+              <!--          </th>-->
+              <th pSortableColumn="description">Material
+                <p-sortIcon field="description"/>
+              </th>
+              <th pSortableColumn="linking">Quantidade
+                <p-sortIcon field="linking"/>
+              </th>
+              <th pSortableColumn="teamName">Equipe Responsável
+                <p-sortIcon field="teamName"/>
+              </th>
+              <th pSortableColumn="inventoryStatus">Status
+                <p-sortIcon field="inventoryStatus"/>
+              </th>
+            </tr>
+          </ng-template>
 
-        <ng-template pTemplate="body" let-item>
-          <tr #rowElement [pEditableRow]="item"
-              [pSelectableRow]="item"
-              (click)="onRowClick($event, item)">
-            <td>{{ item.description }}</td>
-            <td>
-              <p-tag [value]="item.linking" *ngIf="item.linking" severity="contrast"/>
-            </td>
-            <td>
-              <button (click)="showTeamModal = true">
-                <p-tag severity="info" styleClass="cursor-pointer" pTooltip="Clique para detalhes">{{ teamName }}
-                </p-tag>
-              </button>
-            </td>
-            <td>
-              <p-cellEditor>
-                <ng-template pTemplate="output">{{ getQuantity(item.contractItemId) }}</ng-template>
-                <ng-template pTemplate="input">
-                  <input pInputText
-                         #qtyInput
-                         (keydown.enter)="Confirm(item, rowElement)"
-                         (keydown.escape)="Cancel(item, rowElement)"
-                         (input)="utils.formatFloatNumber($event)"
-                         placeholder="Informe a quantidade"
-                         [(ngModel)]="quantity"/>
-                </ng-template>
-              </p-cellEditor>
-            </td>
-            @if (currentItemId > 0) {
-              <td class="space-x-2">
-                <p-button [label]="existsMaterial(item.contractItemId) ? 'Remover' : 'Cancelar'" size="small"
-                          variant="text" severity="contrast"
-                          *ngIf="currentItemId === item.contractItemId"
-                          (click)="Cancel(item, rowElement)"/>
-                <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"
-                          *ngIf="currentItemId === item.contractItemId"
-                          (click)="Confirm(item, rowElement)"/>
-              </td>
-            } @else {
+          <ng-template pTemplate="body" let-reserve>
+            <tr #rowElement [pEditableRow]="reserve"
+                [pSelectableRow]="reserve">
+              <td>{{ reserve.materialName }}</td>
               <td>
-                <p-tag [value]="existsMaterial(item.contractItemId) ? 'SELECIONADO' : 'NÃO SELECIONADO'"
-                       [severity]="existsMaterial(item.contractItemId) ? 'success' : 'danger'"/>
+                {{ reserve.reserveQuantity }}
               </td>
-            }
-          </tr>
-        </ng-template>
-      </p-table>
+              <td>
+                <button (click)="showTeamModal = true">
+                  <p-tag severity="info" styleClass="cursor-pointer"
+                         pTooltip="Clique para detalhes">{{ reserve.teamName }}
+                  </p-tag>
+                </button>
+              </td>
+              <td>
+                <p-tag severity="contrast">PENDENTE</p-tag>
+              </td>
+<!--              @if (currentItemId > 0) {-->
+<!--                <td class="space-x-2">-->
+<!--                  <p-button [label]="existsMaterial(item.contractItemId) ? 'Remover' : 'Cancelar'" size="small"-->
+<!--                            variant="text" severity="contrast"-->
+<!--                            *ngIf="currentItemId === item.contractItemId"-->
+<!--                            (click)="Cancel(item, rowElement)"/>-->
+<!--                  <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"-->
+<!--                            *ngIf="currentItemId === item.contractItemId"-->
+<!--                            (click)="Confirm(item, rowElement)"/>-->
+<!--                </td>-->
+<!--              } @else {-->
+<!--                <td>-->
+<!--                  <p-tag [value]="existsMaterial(item.contractItemId) ? 'SELECIONADO' : 'NÃO SELECIONADO'"-->
+<!--                         [severity]="existsMaterial(item.contractItemId) ? 'success' : 'danger'"/>-->
+<!--                </td>-->
+<!--              }-->
+            </tr>
+          </ng-template>
+        </p-table>
+        <div class="py-4 px-10 flex justify-end">
+          <p-button label="APROVAR" size="small" />
+        </div>
+
+      </div>
+
 
     </div>
 
-
-    <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
-         *ngIf="execution.teamId > 0">
-      <p-button label="Continuar" size="large" (click)="goToNextStep()"/>
-    </div>
 
 
   }

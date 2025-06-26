@@ -9,8 +9,8 @@ import {Button} from 'primeng/button';
 import {FloatLabel} from 'primeng/floatlabel';
 import {InputText} from 'primeng/inputtext';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {NgIf} from '@angular/common';
-import {PrimeTemplate} from 'primeng/api';
+import {NgForOf, NgIf} from '@angular/common';
+import {MenuItem, PrimeTemplate} from 'primeng/api';
 import {ReactiveFormsModule} from '@angular/forms';
 import {Select} from 'primeng/select';
 import {Skeleton} from 'primeng/skeleton';
@@ -38,14 +38,24 @@ import {Tooltip} from 'primeng/tooltip';
     Tag,
     Textarea,
     Toast,
-    Tooltip
+    Tooltip,
+    NgForOf
   ],
   templateUrl: './reservation-pending.component.html',
   styleUrl: './reservation-pending.component.scss'
 })
 export class ReservationPendingComponent {
+  home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
+  items: MenuItem[] = [
+    {label: 'Requisições'},
+    {label: 'Iniciar sem pré-medição'},
+  ];
+
   loading = false;
   reservations: ReservationsByCaseDtoResponse[] = [];
+  tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
+  showTeamModal: boolean = false;
+
 
   constructor(
     private requestService: RequestService,
@@ -55,7 +65,7 @@ export class ReservationPendingComponent {
   ) {
     this.loading = true
     const userId = this.authService.getUser().uuid;
-    this.requestService.getReservation(userId, "pending").subscribe({
+    this.requestService.getReservation(userId, "PENDING").subscribe({
       next: (response) => {
         this.reservations = response;
       },
