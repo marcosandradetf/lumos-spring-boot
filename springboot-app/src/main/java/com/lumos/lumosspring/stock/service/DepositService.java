@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.service;
 
+import com.lumos.lumosspring.stock.DepositByStockist;
 import com.lumos.lumosspring.stock.StockistModel;
 import com.lumos.lumosspring.stock.controller.dto.DepositDTO;
 import com.lumos.lumosspring.stock.controller.dto.DepositResponse;
@@ -12,15 +13,15 @@ import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.UserRepository;
+import com.lumos.lumosspring.util.JdbcUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,9 @@ public class DepositService {
     private StockistRepository stockistRepository;
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    NamedParameterJdbcTemplate namedJdbc;
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
@@ -202,11 +206,39 @@ public class DepositService {
             stockistsDto.add(new StockistModel(
                     stockist.getUserId().toString(),
                     user.getCompletedName(),
+                    deposit.getIdDeposit(),
                     depositName, depositAddress,
                     depositPhone, region
             ));
         }
 
         return ResponseEntity.ok(stockistsDto);
+    }
+
+    public ResponseEntity<?> getDepositStockist(String userId) {
+        List<DepositByStockist> depositsResponse = new ArrayList<>();
+
+        var deposits = JdbcUtil.INSTANCE.getRawData(
+                namedJdbc,
+                """
+                        select s.depositId, d.depositName, d.depositAddress, d.depositPhone
+                        from stockist s
+                        inner join deposit d on d.id_deposit = s.deposit_id_deposit
+                        where s.user_id_user = :userId
+                        """,
+                Map.of("userId", UUID.fromString(userId))
+        );
+
+        for (var deposit : deposits) {
+            depositsResponse.add(new DepositByStockist(
+                    ((Number) deposit.get("depositId")).longValue(),
+                    (String) deposit.get("depositName"),
+                    (String) deposit.get("depositAddress"),
+                    (String) deposit.get("depositPhone")
+            ));
+        }
+
+
+        return ResponseEntity.ok(depositsResponse);
     }
 }

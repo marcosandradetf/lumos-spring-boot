@@ -1,10 +1,18 @@
 export interface StockistModel {
   userId: string,
   name: string,
+  depositId: number,
   depositName: string,
-  depositAddress: string,
-  depositPhone: string,
-  region: string,
+  depositAddress: string | null,
+  depositPhone: string | null,
+  region: string | null,
+}
+
+export interface DepositByStockist {
+  depositId: number,
+  depositName: string,
+  depositAddress: string | null,
+  depositPhone: string | null,
 }
 
 export interface ReserveDTOResponse {

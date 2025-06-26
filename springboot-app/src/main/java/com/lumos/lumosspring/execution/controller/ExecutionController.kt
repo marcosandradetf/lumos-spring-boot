@@ -50,9 +50,9 @@ class ExecutionController(
 
     @GetMapping("/execution/get-reservations-by-status-and-stockist")
     fun getReservationsByStatusAndStockist(
-        @RequestParam uuid: String,
+        @RequestParam depositId: Long,
         @RequestParam status: String,
-    ) = executionService.getReservationsByStatusAndStockist(uuid, status)
+    ) = executionService.getReservationsByStatusAndStockist(depositId, status)
 
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],

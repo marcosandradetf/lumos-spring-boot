@@ -42,8 +42,15 @@ public class DepositController {
         return depositService.delete(id);
     }
 
-    @GetMapping("get-stockists")
+    @GetMapping("/get-stockists")
     public ResponseEntity<?> getStockists() {
         return depositService.getStockists();
+    }
+
+    @GetMapping("get-stockists")
+    public ResponseEntity<?> getDepositStockists(
+            @RequestParam String userId
+    ) {
+        return depositService.getDepositStockist(userId);
     }
 }

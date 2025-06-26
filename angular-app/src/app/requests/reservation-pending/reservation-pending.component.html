@@ -2,7 +2,7 @@
   <div class="pt-2 w-full pl-2 flex items-center justify-between">
     <p-breadcrumb class="max-w-full" [model]="items" [home]="home"/>
     <h3
-      class="text-medium pr-5 hidden lg:block font-medium">teste</h3>
+      class="text-medium pr-5 hidden lg:block font-medium">{{ depositName }}</h3>
   </div>
 
   @if (loading) {
@@ -11,6 +11,14 @@
     </div>
 
   } @else {
+    <p-select *ngIf="depositName === null"
+      [options]="deposits"
+      (onChange)="getReservations($event.value)"
+      optionLabel="name"
+      optionValue="userId"
+      placeholder="Selecione o deposito desejado"
+      class="p-fluid max-w-sm mx-auto"
+    ></p-select>
     <div>
       <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="reservations.length === 0" [value]="tableSk">
         <ng-template pTemplate="header">
@@ -79,6 +87,7 @@
               <th pSortableColumn="inventoryStatus">Status
                 <p-sortIcon field="inventoryStatus"/>
               </th>
+              <th></th>
             </tr>
           </ng-template>
 
@@ -99,34 +108,18 @@
               <td>
                 <p-tag severity="contrast">PENDENTE</p-tag>
               </td>
-<!--              @if (currentItemId > 0) {-->
-<!--                <td class="space-x-2">-->
-<!--                  <p-button [label]="existsMaterial(item.contractItemId) ? 'Remover' : 'Cancelar'" size="small"-->
-<!--                            variant="text" severity="contrast"-->
-<!--                            *ngIf="currentItemId === item.contractItemId"-->
-<!--                            (click)="Cancel(item, rowElement)"/>-->
-<!--                  <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"-->
-<!--                            *ngIf="currentItemId === item.contractItemId"-->
-<!--                            (click)="Confirm(item, rowElement)"/>-->
-<!--                </td>-->
-<!--              } @else {-->
-<!--                <td>-->
-<!--                  <p-tag [value]="existsMaterial(item.contractItemId) ? 'SELECIONADO' : 'NÃO SELECIONADO'"-->
-<!--                         [severity]="existsMaterial(item.contractItemId) ? 'success' : 'danger'"/>-->
-<!--                </td>-->
-<!--              }-->
+              <td class="space-x-2">
+                <p-button label="Rejeitar" size="small" variant="text" severity="contrast"/>
+                <p-button label="Aprovar" size="small" severity="primary" />
+              </td>
             </tr>
           </ng-template>
         </p-table>
-        <div class="py-4 px-10 flex justify-end">
-          <p-button label="APROVAR" size="small" />
-        </div>
 
       </div>
 
 
     </div>
-
 
 
   }

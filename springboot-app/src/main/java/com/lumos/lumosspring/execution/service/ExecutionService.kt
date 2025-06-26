@@ -663,15 +663,7 @@ class ExecutionService(
 
     }
 
-    fun getReservationsByStatusAndStockist(strUserUUID: String, status: String): ResponseEntity<Any> {
-        val userUUID = try {
-            UUID.fromString(strUserUUID)
-        } catch (e: IllegalArgumentException) {
-            return ResponseEntity.badRequest().build()
-        }
-
-        val stockists = stockistRepository.findAllByUserId(userUUID)
-
+    fun getReservationsByStatusAndStockist(depositId: Long, status: String): ResponseEntity<Any> {
         data class ReservationDto(
             val reserveId: Long,
             val reserveQuantity: Double,
@@ -688,10 +680,9 @@ class ExecutionService(
 
         val response: MutableList<ReservationsByCaseDtoResponse> = mutableListOf()
 
-        for (stockist in stockists) {
-            val rawReservations = getRawData(
-                namedJdbc,
-                """
+        val rawReservations = getRawData(
+            namedJdbc,
+            """
                         select pms.city, c.contractor, mr.material_id_reservation, mr.reserved_quantity, mr.description, 
                         ms.material_id_stock, m.material_name, m.material_power, m.material_length, mr.team_id, t.team_name
                         from material_reservation mr
@@ -703,42 +694,42 @@ class ExecutionService(
                         inner join contract c on de.contract_id = c.contract_id 
                         where ms.deposit_id = :deposit_id and mr.status = :status
                     """.trimIndent(),
-                mapOf("deposit_id" to stockist.depositId, "status" to status)
-            )
+            mapOf("deposit_id" to depositId, "status" to status)
+        )
 
-            val reservationsGroup = rawReservations
-                .groupBy {
-                    (it["city"] as? String) ?: (it["contractor"] as? String) ?: "Desconhecido"
-                }
+        val reservationsGroup = rawReservations
+            .groupBy {
+                (it["city"] as? String) ?: (it["contractor"] as? String) ?: "Desconhecido"
+            }
 
-            for ((preMeasurementName, reservations) in reservationsGroup) {
-                val list = mutableListOf<ReservationDto>()
-                for (reserve in reservations) {
-                    var materialName = (reserve["material_name"] as String)
-                    val power: String? = (reserve["material_power"] as? String)
-                    val length: String? = (reserve["material_length"] as? String)
-                    materialName += if (power != null) " $power" else " $length"
+        for ((preMeasurementName, reservations) in reservationsGroup) {
+            val list = mutableListOf<ReservationDto>()
+            for (reserve in reservations) {
+                var materialName = (reserve["material_name"] as String)
+                val power: String? = (reserve["material_power"] as? String)
+                val length: String? = (reserve["material_length"] as? String)
+                materialName += if (power != null) " $power" else " $length"
 
-                    list.add(
-                        ReservationDto(
-                            reserveId = (reserve["material_id_reservation"] as Number).toLong(),
-                            reserveQuantity = (reserve["reserved_quantity"] as Number).toDouble(),
-                            materialName = materialName,
-                            description = (reserve["description"] as? String),
-                            teamId = (reserve["team_id"] as Number).toLong(),
-                            teamName = (reserve["team_name"] as String?)
-                        )
-                    )
-                }
-
-                response.add(
-                    ReservationsByCaseDtoResponse(
-                        description = preMeasurementName,
-                        reservations = list
+                list.add(
+                    ReservationDto(
+                        reserveId = (reserve["material_id_reservation"] as Number).toLong(),
+                        reserveQuantity = (reserve["reserved_quantity"] as Number).toDouble(),
+                        materialName = materialName,
+                        description = (reserve["description"] as? String),
+                        teamId = (reserve["team_id"] as Number).toLong(),
+                        teamName = (reserve["team_name"] as String?)
                     )
                 )
             }
+
+            response.add(
+                ReservationsByCaseDtoResponse(
+                    description = preMeasurementName,
+                    reservations = list
+                )
+            )
         }
+
 
         return ResponseEntity.ok().body(response)
     }

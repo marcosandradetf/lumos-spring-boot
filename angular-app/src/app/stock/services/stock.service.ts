@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
 
 import {StockMovementDTO} from '../../models/stock-movement.dto';
@@ -11,7 +11,7 @@ import {Group} from '../../models/grupo.model';
 import {Company} from '../../models/empresa.model';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
-import {StockistModel} from '../../executions/executions.model';
+import {DepositByStockist, StockistModel} from '../../executions/executions.model';
 
 
 @Injectable({
@@ -102,5 +102,11 @@ export class StockService {
 
   getStockists() {
     return this.http.get<StockistModel[]>(`${this.endpoint}/deposit/get-stockists`);
+  }
+
+  getDepositsByStockist(userId: string) {
+    const params = new HttpParams()
+      .set('userId', userId);
+    return this.http.get<DepositByStockist[]>(`${this.endpoint}/deposit/get-deposits-by-stockist`, {params: params});
   }
 }

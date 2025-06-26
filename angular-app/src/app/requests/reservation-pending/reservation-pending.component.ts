@@ -19,6 +19,8 @@ import {Tag} from 'primeng/tag';
 import {Textarea} from 'primeng/textarea';
 import {Toast} from 'primeng/toast';
 import {Tooltip} from 'primeng/tooltip';
+import {DepositByStockist, StockistModel} from '../../executions/executions.model';
+import {StockService} from '../../stock/services/stock.service';
 
 @Component({
   selector: 'app-reservation-pending',
@@ -52,31 +54,61 @@ export class ReservationPendingComponent {
   ];
 
   loading = false;
+
+  deposits: DepositByStockist[] = [];
   reservations: ReservationsByCaseDtoResponse[] = [];
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
   showTeamModal: boolean = false;
+  depositName: string | null = null;
 
 
   constructor(
     private requestService: RequestService,
     private router: Router,
     private authService: AuthService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private stockService: StockService
   ) {
     this.loading = true
-    const userId = this.authService.getUser().uuid;
-    this.requestService.getReservation(userId, "PENDING").subscribe({
+    this.stockService.getDepositsByStockist(this.authService.getUser().uuid).subscribe({
+      next: (response) => {
+        this.deposits = response;
+        if(response.length === 1) {
+          this.depositName = response[0].depositName
+          this.requestService.getReservation(response[0].depositId, "PENDING").subscribe({
+            next: (response) => {
+              this.reservations = response;
+            },
+            error: (error) => {
+              this.utils.showMessage(error.error.message, "error", "Erro ao buscar Reservas");
+              this.loading = false;
+            }
+          });
+        }
+      },
+      error: (error: { error: { message: string } }) => {
+        this.utils.showMessage("Erro ao carregar Estoquistas", 'error');
+        this.utils.showMessage(error.error.message, 'error');
+        this.loading = false;
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+
+  }
+
+  getReservations(depositId: number) {
+    this.depositName = this.deposits.find(d => d.depositId = depositId)?.depositName || null;
+    this.requestService.getReservation(depositId, "PENDING").subscribe({
       next: (response) => {
         this.reservations = response;
       },
       error: (error) => {
         this.utils.showMessage(error.error.message, "error", "Erro ao buscar Reservas");
         this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
       }
-    })
+    });
   }
 
 }

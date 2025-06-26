@@ -12,9 +12,9 @@ export class RequestService {
   constructor(private http: HttpClient) {
   }
 
-  getReservation(userId: string, status: string) {
+  getReservation(depositId: number, status: string) {
     const params = new HttpParams()
-      .set('uuid', userId)
+      .set('depositId', depositId)
       .set('status', status);
     return this.http.get<ReservationsByCaseDtoResponse[]>(this.baseUrl + "/execution/get-reservations-by-status-and-stockist", {params});
   }
