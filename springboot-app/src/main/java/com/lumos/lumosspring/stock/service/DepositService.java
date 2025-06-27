@@ -32,19 +32,17 @@ public class DepositService {
     @Autowired
     private DepositRepository depositRepository;
     @Autowired
-    private CompanyRepository comapanyRepository;
+    private CompanyRepository companyRepository;
     @Autowired
     private MaterialStockRepository materialStockRepository;
     @Autowired
     private RegionRepository regionRepository;
-
     @Autowired
     private StockistRepository stockistRepository;
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
-    NamedParameterJdbcTemplate namedJdbc;
+    private NamedParameterJdbcTemplate namedJdbc;
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
@@ -94,7 +92,7 @@ public class DepositService {
 
         var deposit = new Deposit();
         deposit.setDepositName(depositDTO.depositName());
-        deposit.setCompany(comapanyRepository.findById(depositDTO.companyId()).orElse(null));
+        deposit.setCompany(companyRepository.findById(depositDTO.companyId()).orElse(null));
         deposit.setDepositAddress(depositDTO.depositAddress());
         deposit.setDepositDistrict(depositDTO.depositDistrict());
         deposit.setDepositCity(depositDTO.depositCity());
@@ -121,7 +119,7 @@ public class DepositService {
     public ResponseEntity<?> update(Long depositId, DepositDTO depositDTO) {
         var deposit = depositRepository.findById(depositId).orElse(null);
         ;
-        var company = comapanyRepository.findById(depositDTO.companyId()).orElse(null);
+        var company = companyRepository.findById(depositDTO.companyId()).orElse(null);
         ;
         if (deposit == null) {
             return ResponseEntity.notFound().build();
@@ -168,7 +166,6 @@ public class DepositService {
         depositRepository.delete(deposit);
         return ResponseEntity.ok(this.findAll());
     }
-
 
     public ResponseEntity<?> getStockists() {
         List<StockistModel> stockistsDto = new ArrayList<>();
@@ -221,7 +218,7 @@ public class DepositService {
         var deposits = JdbcUtil.INSTANCE.getRawData(
                 namedJdbc,
                 """
-                        select s.depositId, d.depositName, d.depositAddress, d.depositPhone
+                        select s.deposit_id_deposit, d.deposit_name, d.deposit_address, d.deposit_phone
                         from stockist s
                         inner join deposit d on d.id_deposit = s.deposit_id_deposit
                         where s.user_id_user = :userId
@@ -231,10 +228,10 @@ public class DepositService {
 
         for (var deposit : deposits) {
             depositsResponse.add(new DepositByStockist(
-                    ((Number) deposit.get("depositId")).longValue(),
-                    (String) deposit.get("depositName"),
-                    (String) deposit.get("depositAddress"),
-                    (String) deposit.get("depositPhone")
+                    ((Number) deposit.get("deposit_id_deposit")).longValue(),
+                    (String) deposit.get("deposit_name"),
+                    (String) deposit.get("deposit_address"),
+                    (String) deposit.get("deposit_phone")
             ));
         }
 

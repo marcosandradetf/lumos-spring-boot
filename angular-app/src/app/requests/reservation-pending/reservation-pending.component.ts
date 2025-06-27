@@ -11,7 +11,7 @@ import {InputText} from 'primeng/inputtext';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {NgForOf, NgIf} from '@angular/common';
 import {MenuItem, PrimeTemplate} from 'primeng/api';
-import {ReactiveFormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Select} from 'primeng/select';
 import {Skeleton} from 'primeng/skeleton';
 import {TableModule} from 'primeng/table';
@@ -28,9 +28,6 @@ import {StockService} from '../../stock/services/stock.service';
   imports: [
     Breadcrumb,
     Button,
-    FloatLabel,
-    InputText,
-    LoadingComponent,
     NgIf,
     PrimeTemplate,
     ReactiveFormsModule,
@@ -38,10 +35,12 @@ import {StockService} from '../../stock/services/stock.service';
     Skeleton,
     TableModule,
     Tag,
-    Textarea,
     Toast,
     Tooltip,
-    NgForOf
+    NgForOf,
+    LoadingComponent,
+    InputText,
+    FormsModule
   ],
   templateUrl: './reservation-pending.component.html',
   styleUrl: './reservation-pending.component.scss'
@@ -50,7 +49,7 @@ export class ReservationPendingComponent {
   home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
   items: MenuItem[] = [
     {label: 'Requisições'},
-    {label: 'Iniciar sem pré-medição'},
+    {label: 'Materiais Pendentes de Aprovação'},
   ];
 
   loading = false;
@@ -99,6 +98,7 @@ export class ReservationPendingComponent {
   }
 
   getReservations(depositId: number) {
+    this.loading = true;
     this.depositName = this.deposits.find(d => d.depositId = depositId)?.depositName || null;
     this.requestService.getReservation(depositId, "PENDING").subscribe({
       next: (response) => {
@@ -106,6 +106,9 @@ export class ReservationPendingComponent {
       },
       error: (error) => {
         this.utils.showMessage(error.error.message, "error", "Erro ao buscar Reservas");
+        this.loading = false;
+      },
+      complete: () => {
         this.loading = false;
       }
     });

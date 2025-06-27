@@ -47,7 +47,7 @@ public class DepositController {
         return depositService.getStockists();
     }
 
-    @GetMapping("get-stockists")
+    @GetMapping("/get-deposits-by-stockist")
     public ResponseEntity<?> getDepositStockists(
             @RequestParam String userId
     ) {

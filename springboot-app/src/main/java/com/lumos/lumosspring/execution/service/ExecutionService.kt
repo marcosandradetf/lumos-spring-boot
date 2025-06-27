@@ -667,14 +667,15 @@ class ExecutionService(
         data class ReservationDto(
             val reserveId: Long,
             val reserveQuantity: Double,
+            val stockQuantity: Double,
             val materialName: String,
             val description: String?,
-            val teamId: Long?,
-            val teamName: String?
+            val status: String,
         )
 
         data class ReservationsByCaseDtoResponse(
             val description: String,
+            val teamName: String?,
             val reservations: List<ReservationDto>
         )
 
@@ -684,7 +685,8 @@ class ExecutionService(
             namedJdbc,
             """
                         select pms.city, c.contractor, mr.material_id_reservation, mr.reserved_quantity, mr.description, 
-                        ms.material_id_stock, m.material_name, m.material_power, m.material_length, mr.team_id, t.team_name
+                        ms.material_id_stock, m.material_name, m.material_power, m.material_length, 
+                        t.team_name, ms.stock_quantity, mr.status
                         from material_reservation mr
                         inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
                         inner join material m on m.id_material = ms.material_id
@@ -708,16 +710,17 @@ class ExecutionService(
                 var materialName = (reserve["material_name"] as String)
                 val power: String? = (reserve["material_power"] as? String)
                 val length: String? = (reserve["material_length"] as? String)
-                materialName += if (power != null) " $power" else " $length"
+                if (power != null) materialName += " $power"
+                else if (length != null) materialName += " $length"
 
                 list.add(
                     ReservationDto(
                         reserveId = (reserve["material_id_reservation"] as Number).toLong(),
                         reserveQuantity = (reserve["reserved_quantity"] as Number).toDouble(),
+                        stockQuantity = (reserve["stock_quantity"] as Number).toDouble(),
                         materialName = materialName,
                         description = (reserve["description"] as? String),
-                        teamId = (reserve["team_id"] as Number).toLong(),
-                        teamName = (reserve["team_name"] as String?)
+                        status = reserve["status"] as String,
                     )
                 )
             }
@@ -725,6 +728,7 @@ class ExecutionService(
             response.add(
                 ReservationsByCaseDtoResponse(
                     description = preMeasurementName,
+                    teamName = reservations.first()["team_name"] as? String,
                     reservations = list
                 )
             )

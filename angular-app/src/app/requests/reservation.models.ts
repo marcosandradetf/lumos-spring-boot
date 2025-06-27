@@ -1,13 +1,15 @@
 export interface ReservationsByCaseDtoResponse {
- description: string,
- reservations: ReservationDtoResponse[]
+  description: string,
+  teamName: string | null,
+  reservations: ReservationDtoResponse[]
 }
 
 export interface ReservationDtoResponse {
   reserveId: number,
   reserveQuantity: number,
+  stockQuantity: number,
   materialName: string,
   description: string | null,
-  teamId: number | null,
-  teamName: string| null
+  status: string,
+  internStatus: string | null,
 }
