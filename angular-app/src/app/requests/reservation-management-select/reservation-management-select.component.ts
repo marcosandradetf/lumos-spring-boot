@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, ElementRef, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {
   ItemResponseDTO,
@@ -105,6 +105,10 @@ export class ReservationManagementSelectComponent {
   filteredMaterials: MaterialInStockDTO[] = [];
 
   @ViewChild('table_parent') table!: Table;
+
+  @ViewChild('table_collapse') tableCollapse: Table | undefined;
+  @ViewChild('qtyInput') qtyInput!: ElementRef;
+
   selectedMaterial!: MaterialInStockDTO | null;
   currentMaterialId: number = 0;
   private userUUID: string = '';
@@ -212,8 +216,7 @@ export class ReservationManagementSelectComponent {
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
 
   Confirm(
-    material: MaterialInStockDTO
-  ) {
+    material: MaterialInStockDTO, rowElement: HTMLTableRowElement  ) {
     if (this.currentItemId === 0) {
       this.utils.showMessage("1 - Erro ao reservar material , tente novamente", 'error');
       return;
@@ -281,11 +284,7 @@ export class ReservationManagementSelectComponent {
       this.utils.showMessage(`NOVA QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva alterada com sucesso');
     }
 
-    // 2. Colapsa a linha expandida
-    const item = this.street.items.find(i => i.itemId === this.currentItemId);
-    if (item) {
-      this.table.toggleRow(item); // agora sim, passando o objeto certo
-    }
+
 
     // 3. Limpa variáveis de estado
     this.selectedMaterial = null;
@@ -383,13 +382,29 @@ export class ReservationManagementSelectComponent {
     this.currentMaterialId = 0;
   }
 
-  onRowClick(event: MouseEvent, materialId: number) {
+  onRowClick(event: MouseEvent, material: any) {
     // Ignora o clique se foi em um botão (ou dentro de um botão)
     const target = event.target as HTMLElement;
     if (target.closest('button')) return;
 
-    this.currentMaterialId = materialId;
+    // Se já tem uma linha em edição e não é essa, bloqueia abrir outra
+    if (this.currentMaterialId !== 0 && this.currentMaterialId !== material.materialStockId) {
+      // Aqui pode até mostrar mensagem alertando o usuário
+      this.utils.showMessage('Por favor, conclua ou cancele a edição atual antes de editar outra linha.', 'warn', 'Atenção');
+      return; // bloqueia abrir outra linha
+    }
+
+    if (this.tableCollapse) {
+      this.currentMaterialId = material.materialStockId;
+      // this.quantity = this.getQuantity(item.contractItemId);
+      this.tableCollapse.initRowEdit(material);
+      setTimeout(() => {
+        this.qtyInput?.nativeElement?.focus();
+      }, 0);
+    }
+
   }
+
 
   currentTeamId: number = 0;
   showModalTeam: boolean = false;

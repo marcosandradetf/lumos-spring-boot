@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.util
 
+import org.intellij.lang.annotations.Language
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
@@ -22,7 +23,7 @@ object JdbcUtil {
 
     fun getRawData(
         namedJdbc: NamedParameterJdbcTemplate,
-        sql: String,
+        @Language("SQL") sql: String,
         params: Map<String, Any?>
     ): List<Map<String, Any>> {
         return namedJdbc.queryForList(sql, MapSqlParameterSource(params))
@@ -30,7 +31,7 @@ object JdbcUtil {
 
     fun getSingleRow(
         namedJdbc: NamedParameterJdbcTemplate,
-        sql: String,
+        @Language("SQL") sql: String,
         params: Map<String, Any?>
     ): Map<String, Any>? {
         return try {
@@ -43,7 +44,7 @@ object JdbcUtil {
 
     fun existsRaw(
         namedJdbcTemplate: NamedParameterJdbcTemplate,
-        sql: String,
+        @Language("SQL") sql: String,
         params: Map<String, Any?> = emptyMap()
     ): Boolean {
         return namedJdbcTemplate.queryForList(sql, params).isNotEmpty()

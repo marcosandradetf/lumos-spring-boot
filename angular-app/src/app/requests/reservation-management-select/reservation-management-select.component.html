@@ -6,7 +6,8 @@
       previousTitle="Gerenciamento">
     </app-breadcrumb>
 
-    <p class="mr-5 font-medium text-neutral-700 dark:text-neutral-100">{{reserve.streets[0].comment !== 'DIRECT_EXECUTION' ? 'Selecione uma rua' : ''}}</p>
+    <p
+      class="mr-5 font-medium text-neutral-700 dark:text-neutral-100">{{ reserve.streets[0].comment !== 'DIRECT_EXECUTION' ? 'Selecione uma rua' : '' }}</p>
   </div>
 
 
@@ -36,7 +37,8 @@
   </div>
 
   <div *ngIf="streetId !== null || directExecutionId !== null">
-    <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="streetId === null && directExecutionId === null" [value]="tableSk">
+    <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="streetId === null && directExecutionId === null"
+             [value]="tableSk">
       <ng-template pTemplate="header">
         <tr>
           <th></th>
@@ -146,7 +148,7 @@
                      editMode="row"
                      selectionMode="single"
                      [(selection)]="selectedMaterial"
-                     dataKey="materialId">
+                     dataKey="materialStockId">
 
               <ng-template pTemplate="header">
                 <tr>
@@ -159,10 +161,11 @@
                 </tr>
               </ng-template>
 
-              <ng-template pTemplate="body" let-material let-editing="editing">
-                <tr [pSelectableRow]="material" [pEditableColumn]="material.materialStockId"
-                    (click)="onRowClick($event, material.materialStockId)"
-                    pEditableColumnField="materialStockId">
+              <ng-template pTemplate="body" let-material >
+                <tr #rowElement
+                    [pEditableRow]="material"
+                    [pSelectableRow]="material"
+                    (click)="onRowClick($event, material)">
                   <td>
                     {{ material.materialName }}
                   </td>
@@ -171,15 +174,21 @@
                            *ngIf="material.materialPower || material.materialLength" severity="contrast"/>
                   </td>
                   <td class="text-center">
-                    <p-tag [value]="material.availableQuantity <= 0 ? 'Sem Estoque' : material.availableQuantity + ' ' + material.requestUnit"
-                           [severity]="material.availableQuantity ? 'success' : 'danger'"></p-tag>
+                    <p-tag
+                      [value]="material.availableQuantity <= 0 ? 'Sem Estoque' : material.availableQuantity + ' ' + material.requestUnit"
+                      [severity]="material.availableQuantity ? 'success' : 'danger'"></p-tag>
                   </td>
                   <td>{{ material.deposit }}</td>
                   <td>
                     <p-cellEditor>
                       <ng-template pTemplate="output">{{ getQuantity(material.materialStockId, material.deposit) ?? 0 }}</ng-template>
                       <ng-template pTemplate="input">
-                        <input pInputText (input)="utils.formatFloatNumber($event)" placeholder="Informe a quantidade"
+                        <input pInputText
+                               #qtyInput
+                               (keydown.enter)="Confirm(material, rowElement)"
+                               (keydown.escape)="Cancel(material)"
+                               (input)="utils.formatFloatNumber($event)"
+                               placeholder="Informe a quantidade"
                                [(ngModel)]="setQuantity.quantity"/>
                       </ng-template>
                     </p-cellEditor>
@@ -190,7 +199,7 @@
                               (click)="Cancel(material)"/>
                     <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"
                               *ngIf="currentMaterialId === material.materialStockId"
-                              (click)="Confirm(material)"/>
+                              (click)="Confirm(material, rowElement)"/>
                   </td>
                 </tr>
               </ng-template>
@@ -234,7 +243,8 @@
         <div class="flex items-center gap-3">
           <i class="pi pi-phone"></i>
           <div class="flex flex-col">
-            <span class="font-semibold text-gray-800 dark:text-neutral-100">{{ user.name + ' ' + user.last_name }}</span>
+            <span
+              class="font-semibold text-gray-800 dark:text-neutral-100">{{ user.name + ' ' + user.last_name }}</span>
             <a
               *ngIf="user.phone_number"
               [href]="'tel:' + user.phone_number"
@@ -260,7 +270,7 @@
 
   </p-dialog>
 
-  <p-toast />
+  <p-toast/>
 </div>
 
 

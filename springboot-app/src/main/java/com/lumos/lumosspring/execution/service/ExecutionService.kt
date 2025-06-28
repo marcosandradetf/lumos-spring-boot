@@ -12,7 +12,6 @@ import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.DepositRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
 import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
-import com.lumos.lumosspring.team.repository.StockistRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
@@ -38,7 +37,6 @@ class ExecutionService(
     private val materialStockRepository: MaterialStockRepository,
     private val notificationService: NotificationService,
     private val util: Util,
-    private val stockistRepository: StockistRepository,
     private val userRepository: UserRepository,
     private val reservationManagementRepository: ReservationManagementRepository,
     private val minioService: MinioService,
@@ -122,28 +120,6 @@ class ExecutionService(
         management.stockist = stockist
         reservationManagementRepository.save(management)
 
-        val exists = JdbcUtil.getSingleRow(
-            namedJdbc,
-            """
-                select true as result from direct_execution
-                where contract_id = :contractId
-                and direct_execution_status <> :status
-                limit 1
-            """.trimIndent(),
-            mapOf(
-                "contractId" to execution.contractId,
-                "status" to ExecutionStatus.FINISHED
-            )
-        )?.get("result") as? Boolean ?: false
-
-        if (exists) {
-            throw IllegalStateException(
-                """
-                Já existe uma execução criada para essa prefeitura, caso deseje continuar. Verifique o andamento no sistema.
-                """.trimIndent()
-            )
-        }
-
         var directExecution = DirectExecution(
             instructions = execution.instructions,
             contractId = execution.contractId,
@@ -221,10 +197,15 @@ class ExecutionService(
                             FROM direct_execution_item dei
                             INNER JOIN contract_item ci ON ci.contract_item_id = dei.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                            WHERE dei.direct_execution_id = :direct_execution_id
+                            WHERE dei.direct_execution_id = :direct_execution_id AND dei.item_status = :itemStatus
                             ORDER BY cri.name_for_import
                         """.trimIndent(),
-                    MapSqlParameterSource(mapOf("direct_execution_id" to directExecutionId))
+                    MapSqlParameterSource(
+                        mapOf(
+                            "direct_execution_id" to directExecutionId,
+                            "itemStatus" to ReservationStatus.PENDING
+                        )
+                    ),
                 ) { rs, _ ->
                     ItemResponseDTO(
                         itemId = rs.getLong("itemId"),
@@ -275,20 +256,24 @@ class ExecutionService(
                             FROM pre_measurement_street_item pmsi
                             INNER JOIN contract_item ci ON ci.contract_item_id = pmsi.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                            WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id   
+                            WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id and pmsi.item_status = :itemStatus
                             AND cri.type not in ('SERVIÇO', 'PROJETO')
                         """.trimIndent(),
-                    MapSqlParameterSource(mapOf("pre_measurement_street_id" to preMeasurementStreetId)),
-                    RowMapper { rs, _ ->
-                        ItemResponseDTO(
-                            itemId = rs.getLong("itemId"),
-                            description = rs.getString("description"),
-                            quantity = rs.getDouble("quantity"),
-                            type = rs.getString("type"),
-                            linking = rs.getString("linking")
+                    MapSqlParameterSource(
+                        mapOf(
+                            "pre_measurement_street_id" to preMeasurementStreetId,
+                            "itemStatus" to ReservationStatus.PENDING
                         )
-                    }
-                )
+                    )
+                ) { rs, _ ->
+                    ItemResponseDTO(
+                        itemId = rs.getLong("itemId"),
+                        description = rs.getString("description"),
+                        quantity = rs.getDouble("quantity"),
+                        type = rs.getString("type"),
+                        linking = rs.getString("linking")
+                    )
+                }
 
                 ReserveStreetDTOResponse(
                     preMeasurementStreetId = preMeasurementStreetId,
@@ -695,6 +680,7 @@ class ExecutionService(
                         inner join team t on t.id_team = mr.team_id
                         inner join contract c on de.contract_id = c.contract_id 
                         where ms.deposit_id = :deposit_id and mr.status = :status
+                        order by mr.material_id_reservation
                     """.trimIndent(),
             mapOf("deposit_id" to depositId, "status" to status)
         )

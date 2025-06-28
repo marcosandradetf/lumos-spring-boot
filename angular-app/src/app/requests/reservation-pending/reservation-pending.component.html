@@ -47,7 +47,7 @@
               <th pSortableColumn="reserveQuantity">Qtde. Solicitada
                 <p-sortIcon field="reserveQuantity"/>
               </th>
-              <th pSortableColumn="teamName">Equipe Responsável
+              <th pSortableColumn="teamName">Qtde. em Estoque
                 <p-sortIcon field="teamName"/>
               </th>
               <th pSortableColumn="inventoryStatus">Status
@@ -104,11 +104,11 @@
               <th pSortableColumn="reserveQuantity">Qtde. Solicitada
                 <p-sortIcon field="reserveQuantity"/>
               </th>
-              <th pSortableColumn="reserveQuantity">Qtde. em Estoque
-                <p-sortIcon field="reserveQuantity"/>
+              <th pSortableColumn="stockQuantity">Qtde. em Estoque
+                <p-sortIcon field="stockQuantity"/>
               </th>
-              <th pSortableColumn="inventoryStatus">Status
-                <p-sortIcon field="inventoryStatus"/>
+              <th pSortableColumn="internStatus">Status
+                <p-sortIcon field="internStatus"/>
               </th>
               <th></th>
             </tr>
@@ -118,27 +118,14 @@
             <tr #rowElement [pEditableRow]="reserve"
                 [pSelectableRow]="reserve" (click)="table_parent.initRowEdit(reserve)">
               <td>{{ reserve.materialName }}</td>
+              <td>{{ reserve.reserveQuantity }}</td>
+              <td>{{ reserve.stockQuantity }}</td>
               <td>
-                <p-cellEditor>
-                  <ng-template pTemplate="output">{{ reserve.reserveQuantity }}</ng-template>
-                  <ng-template pTemplate="input">
-                    <input pInputText
-                           #qtyInput
-
-                           placeholder="Informe a quantidade"
-                           [(ngModel)]="reserve.reserveQuantity"/>
-                  </ng-template>
-                </p-cellEditor>
-              </td>
-              <td>
-                {{ reserve.stockQuantity }}
-              </td>
-              <td>
-                <p-tag severity="contrast">{{ reserve.internStatus || 'PENDENTE' }}</p-tag>
+                <p-tag [severity]="reserve.internStatus === 'APROVADO' ? 'success' : reserve.internStatus === 'REJEITADO' ?  'danger' : 'contrast'" >{{ reserve.internStatus || 'PENDENTE' }}</p-tag>
               </td>
               <td class="space-x-2">
-                <p-button label="Rejeitar" size="small" variant="text" severity="contrast"/>
-                <p-button label="Aprovar" size="small" severity="info" (onClick)="table_parent.saveRowEdit(reserve, rowElement)"/>
+                <p-button label="Rejeitar" size="small" variant="text" severity="contrast" (click)="reply(reserve.reserveId, 'REJECT'); reserve.internStatus = 'REJEITADO'" />
+                <p-button label="Aprovar" size="small"  severity="info" (click)="reply(reserve.reserveId, 'APPROVE'); reserve.internStatus = 'APROVADO'; "/>
               </td>
             </tr>
           </ng-template>
@@ -146,12 +133,21 @@
       </div>
 
       <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10">
-        <p-button label="Continuar" size="large"/>
+        <p-button label="Finalizar" size="large" (click)="sendData()"  severity="info"/>
       </div>
 
     }
 
   }
+
+  <app-prime-confirm-dialog
+    *ngIf="modalSendData"
+    [message]="'Você tem certeza?'"
+    (action)="handleAction($event)"
+    type="confirm">
+
+  </app-prime-confirm-dialog>
+
 
   <p-toast/>
 </div>

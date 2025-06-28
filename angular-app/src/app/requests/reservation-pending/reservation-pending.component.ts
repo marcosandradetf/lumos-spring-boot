@@ -21,6 +21,7 @@ import {Toast} from 'primeng/toast';
 import {Tooltip} from 'primeng/tooltip';
 import {DepositByStockist, StockistModel} from '../../executions/executions.model';
 import {StockService} from '../../stock/services/stock.service';
+import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
 
 @Component({
   selector: 'app-reservation-pending',
@@ -40,7 +41,8 @@ import {StockService} from '../../stock/services/stock.service';
     NgForOf,
     LoadingComponent,
     InputText,
-    FormsModule
+    FormsModule,
+    PrimeConfirmDialogComponent
   ],
   templateUrl: './reservation-pending.component.html',
   styleUrl: './reservation-pending.component.scss'
@@ -72,7 +74,7 @@ export class ReservationPendingComponent {
     this.stockService.getDepositsByStockist(this.authService.getUser().uuid).subscribe({
       next: (response) => {
         this.deposits = response;
-        if(response.length === 1) {
+        if (response.length === 1) {
           this.depositName = response[0].depositName
           this.requestService.getReservation(response[0].depositId, "PENDING").subscribe({
             next: (response) => {
@@ -112,6 +114,71 @@ export class ReservationPendingComponent {
         this.loading = false;
       }
     });
+  }
+
+
+  replies: {
+    approved: { reserveId: number }[],
+    rejected: { reserveId: number }[],
+  } = {
+    approved: [],
+    rejected: [],
+  };
+
+  reply(reserveId: number, action: 'APPROVE' | 'REJECT') {
+    switch (action) {
+      case 'APPROVE':
+        this.replies.rejected = this.replies.rejected.filter(reply => reply.reserveId !== reserveId);
+        const approvedIndex = this.replies.approved.findIndex(approved => approved.reserveId === reserveId);
+        if (approvedIndex === -1) {
+          this.replies.approved.push({reserveId});
+        }
+        break;
+      case 'REJECT':
+        this.replies.approved = this.replies.approved.filter(reply => reply.reserveId !== reserveId);
+        const rejectedIndex = this.replies.rejected.findIndex(approved => approved.reserveId === reserveId);
+        if (rejectedIndex === -1) {
+          this.replies.rejected.push({reserveId});
+        }
+        break;
+    }
+  }
+
+  modalSendData = false;
+
+  sendData() {
+    const hasAtLeastOneResponse = this.reservations.some(group =>
+      group.reservations.some(r => r.internStatus !== null && r.internStatus !== undefined)
+    );
+
+    if (!hasAtLeastOneResponse) {
+      this.utils.showMessage("Nenhuma reserva foi respondida.", 'warn', 'Atenção');
+      return;
+    }
+
+    for (const group of this.reservations) {
+      const allFilled = group.reservations.every(r => r.internStatus !== null && r.internStatus !== undefined);
+      const noneFilled = group.reservations.every(r => r.internStatus === null || r.internStatus === undefined);
+
+      // Se tiver apenas alguns preenchidos (nem todos, nem nenhum), erro.
+      if (!allFilled && !noneFilled) {
+        this.utils.showMessage(`Responda todas as reservas pendentes da ${group.description}.`, 'warn', 'Atenção');
+        return;
+      }
+    }
+
+    this.modalSendData = true;
+  }
+
+
+  handleAction($event: "accept" | "reject") {
+    switch ($event) {
+      case 'reject':
+        this.utils.showMessage('Operação cancelada com sucesso', 'info', 'Feito')
+        break;
+      case 'accept':
+        break;
+    }
   }
 
 }
