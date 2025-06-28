@@ -495,10 +495,21 @@ class ExecutionService(
 
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
-        if (preMeasurementStreet.reservationManagement.streets
+        if (
+            preMeasurementStreet.reservationManagement.streets
                 .none { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
         ) {
             preMeasurementStreet.reservationManagement.status = ReservationStatus.FINISHED
+            namedJdbc.update(
+                """
+                    update pre_measurement_street_item set item_status = :status
+                    where pre_measurement_street_id = :preMeasurementStreetId
+                """.trimIndent(),
+                mapOf(
+                    "status" to ReservationStatus.FINISHED,
+                    "preMeasurementStreetId" to preMeasurementStreet.preMeasurementStreetId
+                )
+            )
         }
 
         preMeasurementStreetRepository.save(preMeasurementStreet)
@@ -531,8 +542,24 @@ class ExecutionService(
 
         notify(reservation, directExecution.directExecutionId.toString())
 
-        val sql = "UPDATE reservation_management set status = ? where reservation_management_id = ?"
-        jdbcTemplate.update(sql, ReservationStatus.FINISHED, directExecution.reservationManagementId)
+        jdbcTemplate.update(
+            """
+            UPDATE reservation_management set status = ? 
+            where reservation_management_id = ?
+        """.trimIndent(),
+            ReservationStatus.FINISHED, directExecution.reservationManagementId
+        )
+
+        namedJdbc.update(
+            """
+                    update direct_execution_item set item_status = :status
+                    where direct_execution_id = :directExecutionId
+                """.trimIndent(),
+            mapOf(
+                "status" to ReservationStatus.FINISHED,
+                "directExecutionId" to directExecution.directExecutionId
+            )
+        )
 
         directExecutionRepository.save(directExecution)
 

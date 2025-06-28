@@ -147,12 +147,7 @@ export class ReservationManagementSelectComponent {
   }
 
 
-  setQuantity: {
-    quantity: string;
-  } = {
-    quantity: ""
-  }
-
+  quantity: number = 0.0;
   loading: boolean = false;
 
   onRowExpand(item: ItemResponseDTO) {
@@ -216,7 +211,7 @@ export class ReservationManagementSelectComponent {
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
 
   Confirm(
-    material: MaterialInStockDTO, rowElement: HTMLTableRowElement  ) {
+    material: MaterialInStockDTO, rowElement: HTMLTableRowElement) {
     if (this.currentItemId === 0) {
       this.utils.showMessage("1 - Erro ao reservar material , tente novamente", 'error');
       return;
@@ -230,7 +225,7 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    const quantity = Number(this.setQuantity.quantity);
+    const quantity = Number(this.quantity);
     if (quantity == 0) {
       this.utils.showMessage("Informe a quantidade desejada.", 'warn', 'Atenção');
       return;
@@ -251,13 +246,13 @@ export class ReservationManagementSelectComponent {
       ? {
         centralMaterialStockId: null,
         truckMaterialStockId: material.materialStockId,
-        materialQuantity: Number(this.setQuantity.quantity),
+        materialQuantity: Number(this.quantity),
         materialId: material.materialId,
       }
       : {
         centralMaterialStockId: material.materialStockId,
         truckMaterialStockId: null,
-        materialQuantity: Number(this.setQuantity.quantity),
+        materialQuantity: Number(this.quantity),
         materialId: material.materialId,
       };
 
@@ -271,7 +266,7 @@ export class ReservationManagementSelectComponent {
       const materials = this.street.items[currentItemIndex].materials;
       if (!materials) this.street.items[currentItemIndex].materials = [];
       this.street.items[currentItemIndex].materials.push(newMaterial);
-      this.utils.showMessage(`QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
+      this.utils.showMessage(`QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
     } else {
       const propToCompare = material.deposit.includes("CAMINHÃO") ? 'truckMaterialStockId' : 'centralMaterialStockId';
       const matIndex = this.street.items[currentItemIndex].materials
@@ -281,18 +276,14 @@ export class ReservationManagementSelectComponent {
         this.utils.showMessage("Erro ao editar item, tente novamente", 'error');
       }
       this.street.items[currentItemIndex].materials[matIndex].materialQuantity = newMaterial.materialQuantity;
-      this.utils.showMessage(`NOVA QUANTIDADE: ${this.setQuantity.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva alterada com sucesso');
+      this.utils.showMessage(`NOVA QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva alterada com sucesso');
     }
 
-
-
-    // 3. Limpa variáveis de estado
+    this.tableCollapse?.saveRowEdit(material, rowElement);
     this.selectedMaterial = null;
-    this.setQuantity = {
-      quantity: ''
-    };
-    this.currentItemId = 0;
+    this.quantity = 0;
     this.currentMaterialId = 0;
+    this.currentItemId = 0;
   }
 
   sendData() {
@@ -351,7 +342,7 @@ export class ReservationManagementSelectComponent {
     }
   }
 
-  Cancel(material: MaterialInStockDTO) {
+  Cancel(material: MaterialInStockDTO, rowElement: HTMLTableRowElement) {
     const index = this.street.items.findIndex(i => i.itemId === this.currentItemId)
     if (index === -1) {
       this.utils.showMessage("Não foi possível cancelar o material atual", "error", 'Erro');
@@ -374,10 +365,9 @@ export class ReservationManagementSelectComponent {
     }
     this.utils.showMessage("Material " + material.materialName + " removido com sucesso", "success", 'Material Removido');
 
+    this.tableCollapse?.saveRowEdit(material, rowElement);
     this.selectedMaterial = null;
-    this.setQuantity = {
-      quantity: ''
-    };
+    this.quantity = 0.0;
     this.currentItemId = 0;
     this.currentMaterialId = 0;
   }
@@ -396,9 +386,9 @@ export class ReservationManagementSelectComponent {
 
     if (this.tableCollapse) {
       this.currentMaterialId = material.materialStockId;
-      // this.quantity = this.getQuantity(item.contractItemId);
+      this.quantity = this.getQuantity(material.materialId, material.deposit);
       this.tableCollapse.initRowEdit(material);
-      setTimeout(() => {
+      setTimeout(() => {s
         this.qtyInput?.nativeElement?.focus();
       }, 0);
     }

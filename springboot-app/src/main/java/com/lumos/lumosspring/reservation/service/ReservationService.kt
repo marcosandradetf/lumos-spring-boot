@@ -32,8 +32,6 @@ class ReservationService(
             mapOf("reservationIds" to reservationIds)
         )
 
-
-
         for (reservation in reservations) {
             val reservationId = reservation["material_id_reservation"] as Long
             val reservationManagementId = reservation["reservation_management_id"] as? Long
@@ -75,6 +73,17 @@ class ReservationService(
                         mapOf(
                             "centralMaterialId" to centralMaterialId,
                             "reserveQuantity" to reserveQuantity
+                        )
+                    )
+
+                    namedJdbc.update(
+                        """
+                            UPDATE reservation_management set status = :status
+                            WHERE reservation_management_id = :reservationManagementId
+                        """.trimIndent(),
+                        mapOf(
+                            "reservationManagementId" to reservationManagementId,
+                            "status" to ReservationStatus.PENDING
                         )
                     )
 
