@@ -126,9 +126,9 @@ class DirectExecutionViewModel(
 //        }
 //    }
 
-    suspend fun getReservesOnce(contractId: Long): List<DirectReserve> {
+    suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> {
         return withContext(Dispatchers.IO) {
-            repository.getReservesOnce(contractId)
+            repository.getReservesOnce(directExecutionId)
         }
     }
 
@@ -173,11 +173,11 @@ class DirectExecutionViewModel(
         }
     }
 
-    fun markAsFinished(contractId: kotlin.Long) {
+    fun markAsFinished(directExecutionId: Long) {
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    repository.markAsFinished(contractId)
+                    repository.markAsFinished(directExecutionId)
                 }
             } catch (e: IllegalStateException) {
                 null

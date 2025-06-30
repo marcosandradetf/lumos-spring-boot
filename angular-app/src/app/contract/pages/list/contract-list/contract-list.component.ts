@@ -1,17 +1,18 @@
 import {Component, OnInit} from '@angular/core';
 import {CurrencyPipe, NgForOf, NgIf} from "@angular/common";
-import {ScreenMessageComponent} from "../../../../shared/components/screen-message/screen-message.component";
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ContractService} from '../../../services/contract.service';
-import {ContractItemsResponse, ContractResponse} from '../../../contract-models';
+import {
+  ContractItemsResponseWithExecutionsSteps,
+  ContractResponse
+} from '../../../contract-models';
 import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
 import {Dialog} from 'primeng/dialog';
 import {TableModule} from 'primeng/table';
 import {Button, ButtonDirective, ButtonIcon, ButtonLabel} from 'primeng/button';
 import {FormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
-import {Ripple} from 'primeng/ripple';
 import {Toast} from 'primeng/toast';
 import {Breadcrumb} from 'primeng/breadcrumb';
 import {MenuItem} from 'primeng/api';
@@ -40,7 +41,7 @@ import {FileService} from '../../../../core/service/file-service.service';
 })
 export class ContractListComponent implements OnInit {
   contracts: ContractResponse[] = [];
-  contractItems: ContractItemsResponse[] = []
+  contractItems: ContractItemsResponseWithExecutionsSteps[] = []
 
   loading: boolean = false;
   protected status: string = "";
@@ -122,7 +123,7 @@ export class ContractListComponent implements OnInit {
     if (contractId !== 0) {
       this.contractId = contractId;
       this.loading = true;
-      this.contractService.getContractItems(contractId).subscribe({
+      this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
         next: items => {
           this.contractItems = items;
           this.showDialog();
@@ -230,4 +231,17 @@ export class ContractListComponent implements OnInit {
           break;
     }
   }
+
+  getExecutions() {
+    return this.contractItems.find(i => i.contractItemId)
+  }
+
+  get maxExecutedSteps(): number {
+    if (!this.contractItems || this.contractItems.length === 0) return 0;
+    return this.contractItems.reduce((max, item) => {
+      const len = item.executedQuantity?.length || 0;
+      return len > max ? len : max;
+    }, 0);
+  }
+
 }

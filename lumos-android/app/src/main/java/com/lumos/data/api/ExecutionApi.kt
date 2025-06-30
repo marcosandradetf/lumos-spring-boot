@@ -1,6 +1,5 @@
 package com.lumos.data.api
 
-import com.lumos.domain.model.Contract
 import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.ExecutionDTO
 import okhttp3.MultipartBody
@@ -10,8 +9,8 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
-import java.util.UUID
 
 interface ExecutionApi {
     @GET("/api/mobile/execution/get-executions")
@@ -38,10 +37,11 @@ interface ExecutionApi {
         @Part("execution") execution: RequestBody
     ): Response<Void>
 
-    @POST("/api/mobile/execution/finish-direct-execution")
+    @POST("/api/mobile/execution/finish-direct-execution/{directExecutionId}")
     suspend fun finishDirectExecution(
-        @Query("contractId") contractId: Long
+        @Path("directExecutionId") directExecutionId: Long
     ): Response<Void>
+
 
     @GET("/api/mobile/check-update")
     suspend fun checkUpdate(@Query("version") version: Long): Response<Update>

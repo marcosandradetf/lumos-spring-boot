@@ -147,7 +147,7 @@ export class ReservationManagementSelectComponent {
   }
 
 
-  quantity: number = 0.0;
+  quantity: number | null = null;
   loading: boolean = false;
 
   onRowExpand(item: ItemResponseDTO) {
@@ -256,13 +256,13 @@ export class ReservationManagementSelectComponent {
         materialId: material.materialId,
       };
 
-    const materialId = material.deposit.includes("CAMINHÃO") ? newMaterial.truckMaterialStockId : newMaterial.centralMaterialStockId;
-    if (materialId == null) {
+    const materialStockId = material.deposit.includes("CAMINHÃO") ? newMaterial.truckMaterialStockId : newMaterial.centralMaterialStockId;
+    if (materialStockId == null) {
       this.utils.showMessage("Id do material não encontrado", "error", "Erro ao salvar referência")
       return;
     }
 
-    if (!this.existsMaterial(materialId, material.deposit)) {
+    if (!this.existsMaterial(materialStockId, material.deposit)) {
       const materials = this.street.items[currentItemIndex].materials;
       if (!materials) this.street.items[currentItemIndex].materials = [];
       this.street.items[currentItemIndex].materials.push(newMaterial);
@@ -270,7 +270,7 @@ export class ReservationManagementSelectComponent {
     } else {
       const propToCompare = material.deposit.includes("CAMINHÃO") ? 'truckMaterialStockId' : 'centralMaterialStockId';
       const matIndex = this.street.items[currentItemIndex].materials
-        .findIndex(i => i[propToCompare] === materialId);
+        .findIndex(i => i[propToCompare] === materialStockId);
 
       if (matIndex === -1) {
         this.utils.showMessage("Erro ao editar item, tente novamente", 'error');
@@ -283,7 +283,6 @@ export class ReservationManagementSelectComponent {
     this.selectedMaterial = null;
     this.quantity = 0;
     this.currentMaterialId = 0;
-    this.currentItemId = 0;
   }
 
   sendData() {
@@ -322,53 +321,43 @@ export class ReservationManagementSelectComponent {
 
   }
 
-  getQuantity(materialId: number, deposit: string) {
-    if (deposit.includes("CAMINHÃO")) {
+  getQuantity(materialStockId: number, deposit: string) {
+    if (deposit.toUpperCase().includes("CAMINH")) {
       return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.find(m => m.truckMaterialStockId == materialId)?.materialQuantity || 0;
+        ?.materials?.find(m => m.truckMaterialStockId == materialStockId)?.materialQuantity || null;
     } else {
       return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.find(m => m.centralMaterialStockId == materialId)?.materialQuantity || 0;
+        ?.materials?.find(m => m.centralMaterialStockId == materialStockId)?.materialQuantity || null;
     }
   }
 
-  existsMaterial(materialId: number, deposit: any): boolean {
-    if (deposit.includes("CAMINHÃO")) {
+  existsMaterial(materialStockId: number, deposit: any): boolean {
+    if (deposit.toUpperCase().includes("CAMINH")) {
       return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.some(m => m.truckMaterialStockId == materialId) || false;
+        ?.materials?.some(m => m.truckMaterialStockId == materialStockId) || false;
     } else {
       return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.some(m => m.centralMaterialStockId == materialId) || false;
+        ?.materials?.some(m => m.centralMaterialStockId == materialStockId) || false;
     }
   }
 
   Cancel(material: MaterialInStockDTO, rowElement: HTMLTableRowElement) {
     const index = this.street.items.findIndex(i => i.itemId === this.currentItemId)
-    if (index === -1) {
-      this.utils.showMessage("Não foi possível cancelar o material atual", "error", 'Erro');
-      return;
-    }
+    if (index !== -1 && this.existsMaterial(material.materialStockId, material.deposit)) {
+      if (material.deposit.includes("CAMINHÃO")) {
+        this.street.items[index].materials = this.street.items[index].materials
+          .filter(m => m.truckMaterialStockId !== material.materialStockId);
+      } else {
+        this.street.items[index].materials = this.street.items[index].materials
+          .filter(m => m.centralMaterialStockId !== material.materialStockId);
+      }
 
-    if (material.deposit.includes("CAMINHÃO")) {
-      this.street.items[index].materials = this.street.items[index].materials
-        .filter(m => m.truckMaterialStockId !== material.materialStockId);
-    } else {
-      this.street.items[index].materials = this.street.items[index].materials
-        .filter(m => m.centralMaterialStockId !== material.materialStockId);
+      this.utils.showMessage("Material " + material.materialName + " removido com sucesso", "success", 'Material Removido');
     }
-
-
-    // 2. Colapsa a linha expandida
-    const item = this.street.items.find(i => i.itemId === this.currentItemId);
-    if (item) {
-      this.table.toggleRow(item); // agora sim, passando o objeto certo
-    }
-    this.utils.showMessage("Material " + material.materialName + " removido com sucesso", "success", 'Material Removido');
 
     this.tableCollapse?.saveRowEdit(material, rowElement);
     this.selectedMaterial = null;
     this.quantity = 0.0;
-    this.currentItemId = 0;
     this.currentMaterialId = 0;
   }
 
@@ -386,9 +375,9 @@ export class ReservationManagementSelectComponent {
 
     if (this.tableCollapse) {
       this.currentMaterialId = material.materialStockId;
-      this.quantity = this.getQuantity(material.materialId, material.deposit);
+      this.quantity = this.getQuantity(material.materialStockId, material.deposit);
       this.tableCollapse.initRowEdit(material);
-      setTimeout(() => {s
+      setTimeout(() => {
         this.qtyInput?.nativeElement?.focus();
       }, 0);
     }
@@ -473,6 +462,18 @@ export class ReservationManagementSelectComponent {
         this.loading = false;
       }
     });
+  }
+
+  getTotalQuantity(materials: {
+    centralMaterialStockId: number | null,
+    truckMaterialStockId: number | null,
+    materialId: number | null,
+    materialQuantity: number,
+  }[] | undefined): number {
+    if (materials) {
+      return materials.reduce((total, m) => total + m.materialQuantity, 0);
+    } else return 0;
+
   }
 
 }

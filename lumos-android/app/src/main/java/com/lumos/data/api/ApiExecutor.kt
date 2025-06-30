@@ -44,9 +44,9 @@ object ApiExecutor {
 
 sealed class RequestResult<out T> {
     data class Success<out T>(val data: T) : RequestResult<T>()
-    object SuccessEmptyBody : RequestResult<Nothing>()
-    object NoInternet : RequestResult<Nothing>()
-    object Timeout : RequestResult<Nothing>()
+    data object SuccessEmptyBody : RequestResult<Nothing>()
+    data object NoInternet : RequestResult<Nothing>()
+    data object Timeout : RequestResult<Nothing>()
     data class ServerError(val code: Int, val message: String?) : RequestResult<Nothing>()
     data class UnknownError(val error: Throwable) : RequestResult<Nothing>()
 }

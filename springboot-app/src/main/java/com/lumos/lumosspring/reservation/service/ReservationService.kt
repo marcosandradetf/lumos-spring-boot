@@ -22,8 +22,9 @@ class ReservationService(
         val reservations = JdbcUtil.getRawData(
             namedJdbc,
             """
-                    SELECT material_id_reservation, status, reserved_quantity, central_material_stock_id
-                    coalesce(de.reservation_management_id, pms.reservation_management_id) AS reservation_management_id
+                    SELECT mr.material_id_reservation, mr.status, mr.reserved_quantity, mr.central_material_stock_id,
+                    COALESCE(de.reservation_management_id, pms.reservation_management_id) AS reservation_management_id,
+                    mr.direct_execution_id, mr.direct_execution_id, mr.contract_item_id
                     FROM material_reservation mr
                     LEFT JOIN pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
                     LEFT JOIN direct_execution de ON de.direct_execution_id = mr.direct_execution_id
@@ -38,6 +39,9 @@ class ReservationService(
             val status = reservation["status"] as String
             val reserveQuantity = reservation["reserved_quantity"] as Double
             val centralMaterialId = reservation["central_material_stock_id"] as Long
+
+            val directExecutionId = reservation["direct_execution_id"] as? Long
+            val contractItemId = reservation["contract_item_id"] as Long
 
 
             if (replies.approved.contains(ReserveItem(reservationId))) {
@@ -87,16 +91,30 @@ class ReservationService(
                         )
                     )
 
-                    namedJdbc.update(
-                        """
-                            UPDATE reservation_management set status = :status
-                            WHERE reservation_management_id = :reservationManagementId
-                        """.trimIndent(),
-                        mapOf(
-                            "reservationManagementId" to reservationManagementId,
-                            "status" to ReservationStatus.PENDING
+                    if (directExecutionId != null) {
+                        namedJdbc.update(
+                            """
+                                UPDATE direct_execution_item set item_status = :status
+                                WHERE contract_item_id = :contractItemId
+                            """.trimIndent(),
+                            mapOf(
+                                "contractItemId" to contractItemId,
+                                "status" to ReservationStatus.PENDING
+                            )
                         )
-                    )
+                    } else {
+                        namedJdbc.update(
+                            """
+                                UPDATE pre_measurement_street_item set item_status = :status
+                                WHERE contract_item_id = :contractItemId
+                            """.trimIndent(),
+                            mapOf(
+                                "contractItemId" to contractItemId,
+                                "status" to ReservationStatus.PENDING
+                            )
+                        )
+                    }
+
                 }
             }
         }
@@ -104,7 +122,6 @@ class ReservationService(
 
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
-
 
     fun markAsCollected(replies: ReservationController.Replies): ResponseEntity<Void> {
         val reservationIds = replies.approved.map { it.reserveId } + replies.rejected.map { it.reserveId }

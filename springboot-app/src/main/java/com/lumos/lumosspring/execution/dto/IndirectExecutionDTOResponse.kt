@@ -130,9 +130,9 @@ data class IndirectExecutionDTOResponse(
 )
 
 data class DirectExecutionDTOResponse(
-    val contractId: Long,
+    val directExecutionId: Long,
     val currentDirectExecutionId: Long,
-    val contractor: String,
+    val description: String,
     val instructions: String?,
     val creationDate: String,
     val reserves: List<DirectReserve>,
@@ -150,9 +150,10 @@ data class IndirectReserve(
 )
 
 data class DirectReserve(
+    val reserveId: Long, // *_*
+    val directExecutionId: Long,
     val materialStockId: Long, // *_*
     val contractItemId: Long,
-    val contractId: Long,
     val materialName: String,
     val materialQuantity: Double,
     val requestUnit: String,
@@ -171,8 +172,8 @@ data class ReservePartial(
 )
 
 data class SendDirectExecutionDto(
-    val contractId: Long,
-    val contractor: String,
+    val directExecutionId: Long,
+    val description: String,
     val deviceStreetId: Long,
     val deviceId: String,
     val latitude: Double?,

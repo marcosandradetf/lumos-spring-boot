@@ -78,4 +78,8 @@ class ExecutionController(
     @GetMapping("/mobile/execution/get-direct-executions")
     fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)
 
+    @PostMapping("/mobile/execution/finish-direct-execution/{directExecutionId}")
+    fun finishDirectExecution(@PathVariable directExecutionId: Long): ResponseEntity<Any> =
+        executionService.finishDirectExecution(directExecutionId)
+
 }

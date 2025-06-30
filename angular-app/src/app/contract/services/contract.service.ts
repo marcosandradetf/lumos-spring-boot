@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
 import {
-  ContractItemsResponse,
+  ContractItemsResponse, ContractItemsResponseWithExecutionsSteps,
   ContractReferenceItemsDTO,
   ContractResponse,
   CreateContractDTO
@@ -32,5 +32,11 @@ export class ContractService {
   getContractItems(contractId: number) {
     return this.http.get<ContractItemsResponse[]>(this.endpoint + "/get-contract-items/" + contractId);
   }
+
+  getContractItemsWithExecutionsSteps(contractId: number) {
+    return this.http.get<ContractItemsResponseWithExecutionsSteps[]>(this.endpoint + "/get-contract-items-with-executions-steps/" + contractId);
+  }
+
+
 
 }

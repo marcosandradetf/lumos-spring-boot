@@ -18,5 +18,5 @@ data class DirectExecutionStreet (
     var deviceStreetId: Long? = null,
     var deviceId: String? = null,
     var executionPhotoUri: String? = null,
-    var contractId: Long
+    var directExecutionId: Long
 )

@@ -34,23 +34,23 @@ interface DirectExecutionDao {
     @Insert(onConflict = IGNORE)
     suspend fun insertExecution(execution: DirectExecution)
 
-    @Query("DELETE FROM direct_execution WHERE contractId = :contractId")
-    suspend fun deleteDirectExecution(contractId: Long)
+    @Query("DELETE FROM direct_execution WHERE directExecutionId = :directExecutionId")
+    suspend fun deleteDirectExecution(directExecutionId: Long)
 
-    @Query("DELETE FROM direct_reserve WHERE contractId = :contractId")
-    suspend fun deleteDirectReserves(contractId: Long)
+    @Query("DELETE FROM direct_reserve WHERE directExecutionId = :directExecutionId")
+    suspend fun deleteDirectReserves(directExecutionId: Long)
 
     @Query(
-        "SELECT null, contractId, null, null, null, null, null, executionStatus, null, type, itemsQuantity, creationDate, null, null, null, contractor, instructions" +
+        "SELECT null, directExecutionId as contractId, null, null, null, null, null, executionStatus, null, type, itemsQuantity, creationDate, null, null, null, description as contractor, instructions" +
                 " FROM direct_execution WHERE executionStatus <> 'FINISHED'"
     )
     fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>>
 
-    @Query("select * from direct_execution where contractId = :contractId")
-    suspend fun getExecution(contractId: Long): DirectExecution
+    @Query("select * from direct_execution where directExecutionId = :directExecutionId")
+    suspend fun getExecution(directExecutionId: Long): DirectExecution
 
-    @Query("select * from direct_reserve where contractId = :contractId")
-    suspend fun getReservesOnce(contractId: Long): List<DirectReserve>
+    @Query("select * from direct_reserve where directExecutionId = :directExecutionId AND materialQuantity  > 0.0")
+    suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve>
 
     @Insert(onConflict = IGNORE)
     suspend fun createStreet(street: DirectExecutionStreet): Long
@@ -70,7 +70,7 @@ interface DirectExecutionDao {
     suspend fun getPhotoUri(streetId: Long): String?
 
     @Query("""
-        SELECT 0 as reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted 
+        SELECT reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted 
         FROM direct_execution_street_item 
         WHERE directStreetId = :streetId
     """)
@@ -89,6 +89,6 @@ interface DirectExecutionDao {
     @Query("DELETE FROM direct_execution_street_item WHERE directStreetId = :streetId")
     suspend fun deleteItems(streetId: Long)
 
-    @Query("UPDATE direct_execution set executionStatus = 'FINISHED' WHERE contractId = :contractId")
-    suspend fun markAsFinished(contractId: Long)
+    @Query("UPDATE direct_execution set executionStatus = 'FINISHED' WHERE directExecutionId = :directExecutionId")
+    suspend fun markAsFinished(directExecutionId: Long)
 }

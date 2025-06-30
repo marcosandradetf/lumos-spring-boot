@@ -68,3 +68,20 @@ export interface ContractReferenceItemsDTO {
   quantity: number;
   price: string;
 }
+
+export interface ContractItemsResponseWithExecutionsSteps {
+  number: number;
+  contractItemId: number;
+  description: string;
+  unitPrice: string;
+  contractedQuantity: number;
+  executedQuantity: {
+    directExecutionId: number,
+    step: number,
+    quantity: number,
+  }[];
+  totalExecuted: number,
+  linking: string | null;
+  nameForImport: string | null;
+  type: string;
+}

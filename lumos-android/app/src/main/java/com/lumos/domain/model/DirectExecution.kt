@@ -4,11 +4,12 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "direct_reserve", primaryKeys = ["materialStockId", "contractItemId"])
+@Entity(tableName = "direct_reserve")
 data class DirectReserve(
+    @PrimaryKey val reserveId: Long,
+    val directExecutionId: Long,
     val materialStockId: Long, // *_*
     val contractItemId: Long,
-    val contractId: Long,
     val materialName: String,
     val materialQuantity: Double,
     val requestUnit: String,
@@ -16,13 +17,13 @@ data class DirectReserve(
 
 @Entity(tableName = "direct_execution")
 data class DirectExecution( //tabela nova
-    @PrimaryKey val contractId: Long,
+    @PrimaryKey val directExecutionId: Long,
+    var description: String,
+    var instructions: String? = null,
     val executionStatus: String,
     val type: String,
     val itemsQuantity: Int,
     val creationDate: String,
-    var contractor: String,
-    var instructions: String? = null,
 )
 
 @Entity(tableName = "direct_execution_street",
@@ -34,14 +35,15 @@ data class DirectExecutionStreet( //tabela nova
     var longitude: Double? = null,
     var photoUri: String? = null,
     var deviceId: String,
-    val contractId: Long,
-    val contractor: String,
+    val directExecutionId: Long,
+    val description: String,
     val lastPower: String? = null
 )
 
 @Entity(tableName = "direct_execution_street_item")
 data class DirectExecutionStreetItem( //tabela nova
     @PrimaryKey(autoGenerate = true) val directStreetItemId: Long = 0,
+    val reserveId: Long,
     val materialStockId: Long,
     val contractItemId: Long,
     var directStreetId: Long = 0,
@@ -49,16 +51,16 @@ data class DirectExecutionStreetItem( //tabela nova
 )
 
 data class DirectExecutionDTOResponse(
-    val contractId: Long,
-    val contractor: String,
+    val directExecutionId: Long,
+    val description: String,
     val instructions: String?,
     val creationDate: String,
     val reserves: List<DirectReserve>,
 )
 
 data class SendDirectExecutionDto(
-    val contractId: Long,
-    val contractor: String,
+    val directExecutionId: Long,
+    val description: String,
     val deviceStreetId: Long,
     val deviceId: String,
     val latitude: Double?,

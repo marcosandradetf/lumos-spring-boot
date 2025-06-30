@@ -57,6 +57,7 @@ class JdbcGetExecutionRepository(
         val directExecutions = getDirectExecutionsByTeam(teamsId)
         val directExecutionsIds = directExecutions.map { it["direct_execution_id"] as Long }
 
+        if (directExecutionsIds.isEmpty()) return emptyList()
         val reservesGrouped = getReservesGroupedByDirectExecution(directExecutionsIds)
 
         return directExecutions.map { execution ->
@@ -64,9 +65,9 @@ class JdbcGetExecutionRepository(
             val reserves = reservesGrouped[directExecutionId] ?: emptyList()
 
             DirectExecutionDTOResponse(
-                contractId = execution["contract_id"] as Long,
+                directExecutionId = directExecutionId,
                 currentDirectExecutionId = directExecutionId,
-                contractor = execution["contractor"] as String,
+                description = execution["description"] as String,
                 instructions = execution["instructions"] as? String,
                 creationDate = (execution["assigned_at"] as Timestamp).toInstant().toString(),
                 reserves = reserves
@@ -107,9 +108,8 @@ class JdbcGetExecutionRepository(
         return JdbcUtil.getRawData(
             namedJdbc,
             """
-                SELECT de.direct_execution_id, de.contract_id, de.instructions, c.contractor, de.assigned_at
+                SELECT de.direct_execution_id, de.instructions, de.description, de.assigned_at
                 FROM direct_execution de
-                INNER JOIN contract c ON c.contract_id = de.contract_id
                 WHERE de.team_id IN (:teams_ids) AND de.direct_execution_status = :status
             """.trimIndent(),
             mapOf("teams_ids" to teamsId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
@@ -187,9 +187,10 @@ class JdbcGetExecutionRepository(
                     }
 
                     DirectReserve(
+                        reserveId = r["material_id_reservation"] as Long,
+                        directExecutionId = 0,
                         materialStockId = r["truck_material_stock_id"] as Long,
                         contractItemId = r["contract_item_id"] as Long,
-                        contractId = 0,
                         materialName = name,
                         materialQuantity = r["reserved_quantity"] as Double,
                         requestUnit = r["request_unit"] as? String ?: "UN",

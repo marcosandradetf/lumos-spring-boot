@@ -11,6 +11,7 @@ import java.util.UUID
 data class DirectExecution(
     @Id
     var directExecutionId: Long? = null,
+    var description: String?,
     var instructions: String? = null,
     var contractId: Long,
     var directExecutionStatus: String = ExecutionStatus.WAITING_STOCKIST,

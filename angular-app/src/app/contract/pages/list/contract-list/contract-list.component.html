@@ -109,7 +109,10 @@
           <th>Item</th>
           <th>Descrição</th>
           <th>Qtde. Contratada</th>
-          <th>Qtde. Executada</th>
+          <th *ngFor="let _ of [].constructor(maxExecutedSteps); let i = index">
+            {{ i + 1 }}ª Etapa
+          </th>
+          <th>Total Executado</th>
           <th>Saldo</th>
           <th>Preço Unitário</th>
           <th>Preço Total</th>
@@ -143,23 +146,22 @@
             </p-cellEditor>
           </td>
 
+          <td *ngFor="let i of [].constructor(maxExecutedSteps); let idx = index">
+            <ng-container *ngIf="item.executedQuantity[idx]; else zeroTemplate">
+              {{ item.executedQuantity[idx].quantity }}
+            </ng-container>
+            <ng-template #zeroTemplate>
+              0
+            </ng-template>
+          </td>
+
+
           <td>
-            <p-cellEditor>
-              <ng-template pTemplate="input">
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="item.executedQuantity"
-                />
-              </ng-template>
-              <ng-template pTemplate="output">
-                {{ item.executedQuantity }}
-              </ng-template>
-            </p-cellEditor>
+            {{ item.totalExecuted }}
           </td>
 
           <td>
-            {{ item.contractedQuantity - item.executedQuantity }}
+            {{ item.contractedQuantity - item.totalExecuted }}
           </td>
 
           <td>
@@ -182,7 +184,7 @@
           </td>
 
           <td>
-            {{ item.unitPrice * (item.contractedQuantity - item.executedQuantity) | currency: 'BRL' }}
+            {{ item.unitPrice * (item.contractedQuantity - item.totalExecuted) | currency: 'BRL' }}
           </td>
 
           <td>

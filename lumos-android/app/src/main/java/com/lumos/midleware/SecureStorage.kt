@@ -35,18 +35,32 @@ class SecureStorage(private val context: Context) {
             )
         } catch (e: AEADBadTagException) {
             // Erro de autenticação de dados criptografados - limpa os dados
-            Log.e("SecureStorage", "Erro de autenticação de dados criptografados. Redefinindo preferências.", e)
+            Log.e(
+                "SecureStorage",
+                "Erro de autenticação de dados criptografados. Redefinindo preferências.",
+                e
+            )
             // Limpa os dados criptografados
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
             // Relança a exceção para indicar que algo deu errado
-            throw RuntimeException("Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.", e)
+            throw RuntimeException(
+                "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.",
+                e
+            )
         } catch (e: Exception) {
             // Outro erro genérico
-            Log.e("SecureStorage", "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.", e)
+            Log.e(
+                "SecureStorage",
+                "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.",
+                e
+            )
             // Limpa os dados
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
             // Relança a exceção para que o app lide com isso
-            throw RuntimeException("Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.", e)
+            throw RuntimeException(
+                "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.",
+                e
+            )
         }
 
     fun saveTokens(accessToken: String, refreshToken: String, uuid: String) {
@@ -90,6 +104,19 @@ class SecureStorage(private val context: Context) {
 
     fun clearAll() {
         getSharedPreferences().edit { clear() }
+    }
+
+    fun setLastUpdateCheck() {
+        val now = System.currentTimeMillis()
+        val prefs = getSharedPreferences()
+
+        prefs.edit {
+            putLong("last_update_check", now)
+        }
+    }
+
+    fun getLastUpdateCheck(): Long {
+        return getSharedPreferences().getLong("last_update_check", 0L)
     }
 
 }

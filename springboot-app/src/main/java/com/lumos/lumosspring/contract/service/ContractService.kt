@@ -14,10 +14,12 @@ import com.lumos.lumosspring.user.Role
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.DefaultResponse
+import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.ResponseEntity
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.*
@@ -29,7 +31,8 @@ class ContractService(
     private val contractReferenceItemRepository: ContractReferenceItemRepository,
     private val util: Util,
     private val userRepository: UserRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val namedJdbc: NamedParameterJdbcTemplate
 ) {
 
     fun getReferenceItems(): ResponseEntity<Any> {
@@ -266,6 +269,73 @@ class ContractService(
         )
 
         return ResponseEntity.ok(items)
+    }
+
+    fun getContractItemsWithExecutionsSteps(contractId: Long): ResponseEntity<Any> {
+        data class ContractItemsResponseWithExecutions(
+            val number: Int,
+            val contractItemId: Long,
+            val description: String,
+            val unitPrice: String,
+            val contractedQuantity: Double,
+            val executedQuantity: List<ExecutedQuantity>,
+            val totalExecuted: Double,
+            val linking: String?,
+            val nameForImport: String?,
+            val type: String
+        )
+
+        return ResponseEntity.ok().body(
+            contractRepository.findById(contractId).orElseThrow()
+                .contractItem
+                .sortedWith(
+                    compareByDescending<ContractItem> { it.quantityExecuted }
+                        .thenBy { it.referenceItem.description }
+                )
+                .mapIndexed { index, it ->
+                    ContractItemsResponseWithExecutions(
+                        number = index + 1,
+                        contractItemId = it.contractItemId,
+                        description = it.referenceItem.description,
+                        unitPrice = it.unitPrice.toPlainString(),
+                        contractedQuantity = it.contractedQuantity,
+                        executedQuantity = getExecutedQuantityByContract(it.contractItemId),
+                        totalExecuted = it.quantityExecuted,
+                        linking = it.referenceItem.linking,
+                        nameForImport = it.referenceItem.nameForImport,
+                        type = it.referenceItem.type
+                    )
+                })
+
+    }
+
+    data class ExecutedQuantity(
+        val directExecutionId: Long,
+        val step: Int,
+        val quantity: Double,
+    )
+
+    fun getExecutedQuantityByContract(contractItemId: Long): List<ExecutedQuantity> {
+        val directExecutions = JdbcUtil.getRawData(
+            namedJdbc,
+            """
+                SELECT des.direct_execution_id, sum(desi.executed_quantity) as executed_quantity
+                from direct_execution_street des
+                inner join direct_execution_street_item desi on desi.direct_execution_street_id = des.direct_execution_street_id
+                where contract_item_id = :contractItemId
+                group by des.direct_execution_id
+                order by des.direct_execution_id 
+            """.trimIndent(),
+            mapOf("contractItemId" to contractItemId)
+        )
+
+        return  directExecutions.mapIndexed { index, row ->
+            ExecutedQuantity(
+                directExecutionId = row["direct_execution_id"] as Long,
+                step = index + 1,
+                quantity = (row["executed_quantity"] as Number).toDouble(),
+            )
+        }
     }
 
 }

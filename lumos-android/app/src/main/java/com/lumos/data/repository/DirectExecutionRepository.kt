@@ -101,12 +101,12 @@ class DirectExecutionRepository(
         fetchedExecutions.forEach { executionDto ->
 
             val execution = DirectExecution(
-                contractId = executionDto.contractId,
+                directExecutionId = executionDto.directExecutionId,
                 executionStatus = "PENDING",
                 type = "INSTALLATION",
                 itemsQuantity = executionDto.reserves.size,
                 creationDate = executionDto.creationDate,
-                contractor = executionDto.contractor,
+                description = executionDto.description,
                 instructions = executionDto.instructions,
             )
 
@@ -114,9 +114,10 @@ class DirectExecutionRepository(
 
             val reservations = executionDto.reserves.map { r ->
                 DirectReserve(
+                    reserveId = r.reserveId,
+                    directExecutionId = executionDto.directExecutionId,
                     materialStockId = r.materialStockId,
                     contractItemId = r.contractItemId,
-                    contractId = executionDto.contractId,
                     materialName = r.materialName,
                     materialQuantity = r.materialQuantity,
                     requestUnit = r.requestUnit
@@ -134,8 +135,8 @@ class DirectExecutionRepository(
     suspend fun getExecution(contractId: Long): DirectExecution? =
         db.directExecutionDao().getExecution(contractId)
 
-    suspend fun getReservesOnce(contractId: Long): List<DirectReserve> =
-        db.directExecutionDao().getReservesOnce(contractId)
+    suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> =
+        db.directExecutionDao().getReservesOnce(directExecutionId)
 
     suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: Double) {
         db.directExecutionDao().debitMaterial(materialStockId, contractId, quantityExecuted)
@@ -159,14 +160,13 @@ class DirectExecutionRepository(
         val gson = Gson()
 
         val photoUri = db.directExecutionDao().getPhotoUri(streetId)
-        if (photoUri == null) {
-            return ServerError(-1, "Foto da pré-medição não encontrada")
-        }
+            ?: return ServerError(-1, "Foto da pré-medição não encontrada")
+
         val street = db.directExecutionDao().getStreet(streetId)
         val materials = db.directExecutionDao().getStreetItems(streetId)
         val dto = SendDirectExecutionDto(
-            contractId = street.contractId,
-            contractor = street.contractor,
+            directExecutionId = street.directExecutionId,
+            description = street.description,
             deviceStreetId = street.directStreetId,
             deviceId = street.deviceId,
             latitude = street.latitude,
@@ -227,20 +227,20 @@ class DirectExecutionRepository(
         return ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
-    suspend fun finishedDirectExecution(contractId: Long): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.finishDirectExecution(contractId = contractId) }
+    suspend fun finishedDirectExecution(directExecutionId: Long): RequestResult<Unit> {
+        val response = ApiExecutor.execute { api.finishDirectExecution(directExecutionId = directExecutionId) }
 
         return when (response) {
             is RequestResult.Success -> {
-                db.directExecutionDao().deleteDirectExecution(contractId)
-                db.directExecutionDao().deleteDirectReserves(contractId)
+                db.directExecutionDao().deleteDirectExecution(directExecutionId)
+                db.directExecutionDao().deleteDirectReserves(directExecutionId)
 
                 RequestResult.Success(Unit)
             }
 
             is SuccessEmptyBody -> {
-                db.directExecutionDao().deleteDirectExecution(contractId)
-                db.directExecutionDao().deleteDirectReserves(contractId)
+                db.directExecutionDao().deleteDirectExecution(directExecutionId)
+                db.directExecutionDao().deleteDirectReserves(directExecutionId)
 
                 SuccessEmptyBody
             }
@@ -259,12 +259,12 @@ class DirectExecutionRepository(
     }
 
 
-    suspend fun markAsFinished(contractId: Long) {
-        db.directExecutionDao().markAsFinished(contractId)
+    suspend fun markAsFinished(directExecutionId: Long) {
+        db.directExecutionDao().markAsFinished(directExecutionId)
         SyncManager.markAsDirectExecutionAsFinished(
             context = app.applicationContext,
             db = db,
-            contractId = contractId
+            directExecutionId = directExecutionId
         )
     }
 

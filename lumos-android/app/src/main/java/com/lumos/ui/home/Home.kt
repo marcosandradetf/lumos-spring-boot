@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -24,9 +26,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -34,12 +41,15 @@ import androidx.navigation.NavHostController
 import com.lumos.data.repository.ContractStatus
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.ExecutionHolder
+import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.Confirm
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
+import com.lumos.utils.ConnectivityUtils
 
 @Composable
 fun HomeScreen(
@@ -52,7 +62,11 @@ fun HomeScreen(
     directExecutionViewModel: DirectExecutionViewModel,
     contractViewModel: ContractViewModel,
     roles: Set<String>,
+    secureStorage: SecureStorage
 ) {
+    val TWELVE_HOURS = 12 * 60 * 60 * 1000L
+
+
     val context = LocalContext.current
     val executions = directExecutionViewModel.directExecutions.collectAsState()
     val contracts = contractViewModel.contracts.collectAsState()
@@ -63,24 +77,40 @@ fun HomeScreen(
     val currentVersionCode =
         packageInfo.longVersionCode
 
+    var updateModal by remember { mutableStateOf(false) }
+    var encodedUrl by remember { mutableStateOf("") }
+
 
     LaunchedEffect(Unit) {
-        directExecutionViewModel.syncExecutions()
-        contractViewModel.syncContracts()
-
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
 
-        directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
-            Log.e("v", newVersion.toString())
-            newVersion?.let {
-                if(newVersion > currentVersionCode) {
-                    apkUrl?.let {
-                        val encodedUrl = Uri.encode(apkUrl)
-                        navController.navigate(Routes.UPDATE + "/$encodedUrl")
+        val lastCheck = secureStorage.getLastUpdateCheck()
+        val now = System.currentTimeMillis()
+        val isStaleCheck = now >= lastCheck && (now - lastCheck > TWELVE_HOURS)
+
+        if (isStaleCheck) { // 12h
+            secureStorage.setLastUpdateCheck()
+
+            directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
+                Log.e("v", newVersion.toString())
+                newVersion?.let {
+                    if (newVersion > currentVersionCode) {
+                        apkUrl?.let {
+                            encodedUrl = Uri.encode(apkUrl)
+
+                            if (ConnectivityUtils.wifiConnected(context))
+                                navController.navigate(Routes.UPDATE + "/$encodedUrl")
+                            else
+                                updateModal = true
+                        }
                     }
                 }
             }
+
+            directExecutionViewModel.syncExecutions()
+            contractViewModel.syncContracts()
         }
+
     }
 
 
@@ -93,7 +123,7 @@ fun HomeScreen(
         sliderNavigateToProfile = onNavigateToProfile,
         navController = navController,
         context = context
-    ) { modifier, snackBar ->
+    ) { modifier, _ ->
         Column(
             modifier = modifier
                 .padding(2.dp)
@@ -107,6 +137,54 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 PreMeasurementCard(contracts.value, navController)
             }
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
+                        Log.e("v", newVersion.toString())
+                        newVersion?.let {
+                            if (newVersion > currentVersionCode) {
+                                apkUrl?.let {
+                                    encodedUrl = Uri.encode(apkUrl)
+
+                                    if (ConnectivityUtils.wifiConnected(context))
+                                        navController.navigate(Routes.UPDATE + "/$encodedUrl")
+                                    else
+                                        updateModal = true
+                                }
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SystemUpdate,
+                    contentDescription = "Ícone de atualização",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    text = "Verificar Atualização",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+
+
             Spacer(modifier = Modifier.height(16.dp))
             AlertsCard()
 
@@ -117,6 +195,20 @@ fun HomeScreen(
             // Lista de Atividades Recentes
             Spacer(modifier = Modifier.height(24.dp))
             RecentActivitiesList()
+        }
+
+        if (updateModal) {
+            Confirm(
+                "Nova atualização disponível",
+                body = "Deseja atualizar agora?",
+                icon = Icons.Filled.SystemUpdate,
+                confirm = {
+                    navController.navigate(Routes.UPDATE + "/$encodedUrl")
+                },
+                cancel = {
+                    updateModal = false
+                },
+            )
         }
     }
 }
@@ -186,8 +278,9 @@ fun PreMeasurementCard(
     contracts: List<Contract>,
     navController: NavHostController
 ) {
-    val text = if (contracts.size > 1) "${contracts.size} contratos estão disponíveis para pré-medição"
-    else "${contracts.size} contrato está disponível para pré-medição"
+    val text =
+        if (contracts.size > 1) "${contracts.size} contratos estão disponíveis para pré-medição"
+        else "${contracts.size} contrato está disponível para pré-medição"
 
     Card(
         modifier = Modifier
@@ -290,7 +383,6 @@ fun RecentActivitiesList() {
 
     }
 }
-
 
 
 //@Preview

@@ -43,7 +43,7 @@ import java.util.concurrent.Executors
         (DirectExecutionStreet::class),
         (DirectExecutionStreetItem::class),
     ],
-    version = 2,
+    version = 3,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -165,6 +165,60 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS direct_execution")
+                db.execSQL("DROP TABLE IF EXISTS direct_reserve")
+                db.execSQL("delete from direct_execution_street")
+                db.execSQL("delete from direct_execution_street_item")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_execution (
+                            directExecutionId INTEGER NOT NULL PRIMARY KEY,
+                            description TEXT NOT NULL,
+                            instructions TEXT,
+                            executionStatus TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            itemsQuantity INTEGER NOT NULL,
+                            creationDate TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_reserve (
+                            reserveId INTEGER NOT NULL PRIMARY KEY,
+                            directExecutionId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            materialQuantity REAL NOT NULL,
+                            requestUnit TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL("""
+                    alter table direct_execution_street
+                    rename column contractId to directExecutionId;
+                """.trimIndent())
+
+                db.execSQL("""
+                    alter table direct_execution_street
+                    rename column contractor to description;
+                """.trimIndent())
+
+                db.execSQL("""
+                    alter table direct_execution_street_item
+                    add column reserveId INTEGER NOT NULL;
+                """.trimIndent())
+
+
+            }
+        }
+
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -175,6 +229,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         MIGRATION_1_2,
+                        MIGRATION_2_3,
                     )
                     .setQueryCallback({ sqlQuery, bindArgs ->
                         Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")

@@ -258,7 +258,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
       },
       error: err => {
         this.loading = false;
-        this.utils.showMessage(err.error.message, "error", "Problema ao delegar os itens");
+        this.utils.showMessage(err.error.message, "error", "Problema ao criar etapa");
       },
       complete: () => {
         this.loading = false;

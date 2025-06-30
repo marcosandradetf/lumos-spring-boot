@@ -34,6 +34,10 @@ class ContractController(
     fun getContractItems(@PathVariable contractId: Long): ResponseEntity<Any> =
         contractService.getContractItems(contractId)
 
+    @GetMapping("/contracts/get-contract-items-with-executions-steps/{contractId}")
+    fun getContractItemsWithExecutionsSteps(@PathVariable contractId: Long): ResponseEntity<Any> =
+        contractService.getContractItemsWithExecutionsSteps(contractId)
+
 
     @GetMapping("/mobile/contracts/get-contracts")
     fun getContractsForPreMeasurement(): ResponseEntity<Any> {

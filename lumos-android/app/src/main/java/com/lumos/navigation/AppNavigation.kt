@@ -285,6 +285,7 @@ fun AppNavigation(
                         directExecutionViewModel = directExecutionViewModel,
                         indirectExecutionViewModel = indirectExecutionViewModel,
                         contractViewModel = contractViewModel,
+                        secureStorage = secureStorage,
                         roles = secureStorage.getRoles()
                     )
                 }
@@ -607,15 +608,15 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{contractId}/{contractor}") { backStackEntry ->
-                    val contractId =
-                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
-                    val contractor =
-                        backStackEntry.arguments?.getString("contractor") ?: ""
+                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{directExecutionId}/{description}") { backStackEntry ->
+                    val directExecutionId =
+                        backStackEntry.arguments?.getString("directExecutionId")?.toLongOrNull() ?: 0
+                    val description =
+                        backStackEntry.arguments?.getString("description") ?: ""
 
                     StreetMaterialScreen(
-                        contractId = contractId,
-                        contractor = contractor,
+                        directExecutionId = directExecutionId,
+                        description = description,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
                         pSelected = BottomBar.MENU.value,

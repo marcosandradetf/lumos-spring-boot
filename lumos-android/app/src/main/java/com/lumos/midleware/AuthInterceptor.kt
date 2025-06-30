@@ -1,7 +1,9 @@
 package com.lumos.midleware
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import com.lumos.MainActivity
 import com.lumos.data.api.AuthApi
 import com.lumos.notifications.NotificationManager
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +17,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class AuthInterceptor(
     context: Context,
-    private val secureStorage: SecureStorage
+    private val secureStorage: SecureStorage,
 ) : Interceptor {
 
     private val isRefreshing = AtomicBoolean(false)
     private val notificationManager = NotificationManager(context, secureStorage)
+    private val appContext = context.applicationContext
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val accessToken = secureStorage.getAccessToken()
@@ -35,7 +38,7 @@ class AuthInterceptor(
 
         Log.e("intercept", secureStorage.getRefreshToken().toString())
 
-        var response = chain.proceed(request)
+        val response = chain.proceed(request)
 
         // Se o token expirar (status 401), tenta renovar o token
         if (response.code == 401) {
@@ -45,7 +48,7 @@ class AuthInterceptor(
 
                 // Usando Retrofit para renovar o token
                 val retrofit = Retrofit.Builder()
-//                    .baseUrl("https://8cee-2804-d45-360a-ba00-b061-f794-f763-2074.ngrok-free.app") // URL base da sua API
+//                    .baseUrl("https://5ae2-2804-d45-360a-ba00-8cf-ff8a-6b2b-b5a5.ngrok-free.app") // URL base da sua API
                     .baseUrl("https://spring.thryon.com.br") // URL base da sua API
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
@@ -68,6 +71,11 @@ class AuthInterceptor(
                         authApi.logout(refreshToken = refreshToken)
                         notificationManager.unsubscribeFromSavedTopics()
                         secureStorage.clearAll()
+
+                        val intent = Intent(appContext, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        appContext.startActivity(intent)
+
                         null
                     }
                 } catch (e: Exception) {
