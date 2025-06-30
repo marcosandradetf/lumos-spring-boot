@@ -92,19 +92,14 @@ fun HomeScreen(
             secureStorage.setLastUpdateCheck()
 
             directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
-                Log.e("v", newVersion.toString())
-                newVersion?.let {
-                    if (newVersion > currentVersionCode) {
-                        apkUrl?.let {
-                            encodedUrl = Uri.encode(apkUrl)
-
-                            if (ConnectivityUtils.wifiConnected(context))
-                                navController.navigate(Routes.UPDATE + "/$encodedUrl")
-                            else
-                                updateModal = true
-                        }
-                    }
+                if (newVersion != null && apkUrl != null && newVersion > currentVersionCode) {
+                    encodedUrl = Uri.encode(apkUrl)
+                    if (ConnectivityUtils.wifiConnected(context))
+                        navController.navigate(Routes.UPDATE + "/$encodedUrl")
+                    else
+                        updateModal = true
                 }
+
             }
 
             directExecutionViewModel.syncExecutions()
