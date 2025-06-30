@@ -2,6 +2,7 @@ package com.lumos.lumosspring.reservation.service
 
 import com.lumos.lumosspring.reservation.controller.ReservationController
 import com.lumos.lumosspring.reservation.controller.ReservationController.ReserveItem
+import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.http.HttpStatus
@@ -123,73 +124,95 @@ class ReservationService(
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 
-    fun markAsCollected(replies: ReservationController.Replies): ResponseEntity<Void> {
-        val reservationIds = replies.approved.map { it.reserveId } + replies.rejected.map { it.reserveId }
+    @Transactional
+    fun markAsCollected(reservationIds: List<Long>): ResponseEntity<Void> {
+        TODO("check status")
+
+        if (reservationIds.isEmpty()) throw IllegalStateException("Nenhuma reserva foi enviada")
+
+        data class Quadruple<A, B, C, D>(
+            val first: A,
+            val second: B,
+            val third: C,
+            val fourth: D
+        )
+
+        var destination: Quadruple<String, String, String, Long> = Quadruple("", "", "", 0)
 
         val reservations = JdbcUtil.getRawData(
             namedJdbc,
             """
-                    SELECT material_id_reservation, central_material_stock_id, 
-                    truck_material_stock_id, status, direct_execution_id, pre_measurement_street_id
+                    SELECT material_id_reservation, central_material_stock_id, reserved_quantity,
+                    direct_execution_id, pre_measurement_street_id
                     FROM material_reservation
                     WHERE material_id_reservation in (:reservationIds)
                 """.trimIndent(),
             mapOf("reservationIds" to reservationIds)
         )
 
-        val reservationsGroup = reservations.groupBy {
-            when {
-                it["direct_execution_id"] != null -> "direct" to it["direct_execution_id"] as Long
-                it["pre_measurement_street_id"] != null -> "pre" to it["pre_measurement_street_id"] as Long
-                else -> throw IllegalArgumentException("Execuções não encontradas")
-            }
-        }
+        for (r in reservations) {
+            val (tableName, statusName, keyName, id) = destination
 
+            val reservationId = r["material_id_reservation"] as Long
+            val centralMaterialId = r["central_material_stock_id"] as Long
+            val reserveQuantity = r["reserved_quantity"] as Long
+            val directExecutionId = r["direct_execution_id"] as? Long
+            val streetId = r["pre_measurement_street_id"] as? Long
 
-        for ((key, reservation) in reservationsGroup) {
-            val (type, id) = key
-
-            for (reservation in reservations) {
-                val reservationId = reservation["material_id_reservation"] as Long
-                val centralMaterialId = reservation["central_material_stock_id"] as Long
-                val truckMaterialId = reservation["truck_material_stock_id"] as Long
-                val reserveQuantity = reservation["truck_material_stock_id"] as Long
-
-                if (replies.approved.contains(ReserveItem(reservationId))) {
-                    namedJdbc.update(
-                        """
-                            UPDATE material_reservation set status = :status
-                            WHERE material_id_reservation in (:reservationId)
-                        """.trimIndent(),
-                        mapOf(
-                            "reservationId" to reservationId,
-                            "status" to ReservationStatus.APPROVED
-                        )
-                    )
-
-                    namedJdbc.update(
-                        """
-                            UPDATE material_stock set stock_quantity = stock_quantity - :reserveQuantity
-                            WHERE material_id_stock in (:centralMaterialId)
-                        """.trimIndent(),
-                        mapOf(
-                            "centralMaterialId" to centralMaterialId,
-                            "reserveQuantity" to reserveQuantity
-                        )
-                    )
-
-                } else if (replies.rejected.contains(ReserveItem(reservationId))) {
-
+            if (
+                (tableName == "direct_execution" && id != directExecutionId) ||
+                (tableName == "pre_measurement_street" && id != streetId)
+            ) {
+                throw IllegalStateException("Reservation Service - Mais de uma execução encontrada")
+            } else if(tableName.isBlank()) {
+                destination = if (directExecutionId != null) {
+                    Quadruple("direct_execution","direct_execution_status", "direct_execution_id", directExecutionId)
+                } else if (streetId != null) {
+                    Quadruple("pre_measurement_street","street_status", "pre_measurement_street_id", streetId)
+                } else {
+                    throw IllegalStateException("Reservation Service - Nenhuma execução foi encontrada")
                 }
             }
 
-            if (type == "direct") {
+            namedJdbc.update(
+                """
+                        UPDATE material_reservation set status = :status
+                        where material_id_reservation in (:reservationId)
+                    """.trimIndent(),
+                mapOf(
+                    "reservationId" to reservationId,
+                    "status" to ReservationStatus.COLLECTED
+                )
+            )
 
-            } else {
-
-            }
+            namedJdbc.update(
+                """
+                        UPDATE material_stock set stock_quantity = stock_quantity - :reserveQuantity
+                        where material_stock.material_id_stock = :centralMaterialId
+                    """.trimIndent(),
+                mapOf(
+                    "reserveQuantity" to reserveQuantity,
+                    "centralMaterialId" to centralMaterialId,
+                )
+            )
 
         }
+
+        val (tableName, statusName, keyName, id) = destination
+        namedJdbc.update(
+            """
+                update :tableName
+                set :statusName = :status
+                where :keyName = :id
+            """.trimIndent(),
+            mapOf(
+                "tableName" to tableName,
+                "statusName" to statusName,
+                "keyName" to keyName,
+                "id" to id,
+                "status" to ExecutionStatus.AVAILABLE_EXECUTION
+            )
+        )
 
 
         return ResponseEntity(HttpStatus.NO_CONTENT)

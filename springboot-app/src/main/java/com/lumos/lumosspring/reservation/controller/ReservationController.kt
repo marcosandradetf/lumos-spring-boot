@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -21,6 +22,12 @@ class ReservationController(
     @PostMapping("/reservation/reply")
     fun reply(@RequestBody replies: Replies): ResponseEntity<Void> {
         return reservationService.reply(replies)
+    }
+
+
+    @PostMapping("/reservation/mark-as-collected")
+    fun markAsCollected(@RequestParam reservationIds: List<Long>): ResponseEntity<Void> {
+        return reservationService.markAsCollected(reservationIds)
     }
 
 
