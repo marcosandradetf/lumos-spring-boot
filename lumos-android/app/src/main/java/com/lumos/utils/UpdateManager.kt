@@ -52,7 +52,14 @@ object UpdateManager {
                 val contentLength = body.contentLength()
 
                 val inputStream = body.byteStream()
-                val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "update.apk")
+
+                val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                if (dir == null) {
+                    onError(IOException("External files directory not available"))
+                    return
+                }
+                val file = File(dir, "update.apk")
+
                 val outputStream = FileOutputStream(file)
 
                 val buffer = ByteArray(8 * 1024)

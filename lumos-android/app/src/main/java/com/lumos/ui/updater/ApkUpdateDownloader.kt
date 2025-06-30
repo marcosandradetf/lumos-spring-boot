@@ -3,7 +3,9 @@ package com.lumos.ui.updater
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -180,9 +182,10 @@ fun ApkUpdateDownloader(
 
     // Inicia download assim que o Composable entra na composição
     LaunchedEffect(apkUrl) {
+        Log.e("a", apkUrl)
         downloadApk(
             context = context,
-            url = apkUrl,
+            url =  Uri.decode(apkUrl),
             onProgress = { p -> progress = p },
             onComplete = { file ->
                 downloadedFile = file
