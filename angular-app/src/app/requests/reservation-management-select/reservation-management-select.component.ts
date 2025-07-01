@@ -473,7 +473,6 @@ export class ReservationManagementSelectComponent {
     if (materials) {
       return materials.reduce((total, m) => total + m.materialQuantity, 0);
     } else return 0;
-
   }
 
 }

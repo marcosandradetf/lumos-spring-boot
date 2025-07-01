@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.reservation.service
 
+import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.reservation.controller.ReservationController
 import com.lumos.lumosspring.reservation.controller.ReservationController.ReserveItem
 import com.lumos.lumosspring.util.ExecutionStatus
@@ -13,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ReservationService(
-    private val namedJdbc: NamedParameterJdbcTemplate
+    private val namedJdbc: NamedParameterJdbcTemplate,
+    private val notificationService: NotificationService
 ) {
 
     @Transactional
@@ -44,90 +46,87 @@ class ReservationService(
             val directExecutionId = reservation["direct_execution_id"] as? Long
             val contractItemId = reservation["contract_item_id"] as Long
 
+            if (status != ReservationStatus.PENDING) continue
 
             if (replies.approved.contains(ReserveItem(reservationId))) {
-                if (status == ReservationStatus.PENDING)
-                    namedJdbc.update(
-                        """
+                namedJdbc.update(
+                    """
                             UPDATE material_reservation set status = :status
                             WHERE material_id_reservation in (:reservationId)
                         """.trimIndent(),
-                        mapOf(
-                            "reservationId" to reservationId,
-                            "status" to ReservationStatus.APPROVED
-                        )
+                    mapOf(
+                        "reservationId" to reservationId,
+                        "status" to ReservationStatus.APPROVED
                     )
-            } else if (replies.rejected.contains(ReserveItem(reservationId))) {
-                if (status == ReservationStatus.PENDING) {
-                    namedJdbc.update(
-                        """
-                            UPDATE material_reservation set status = :status
-                            WHERE material_id_reservation in (:reservationId)
-                        """.trimIndent(),
-                        mapOf(
-                            "reservationId" to reservationId,
-                            "status" to ReservationStatus.REJECTED
-                        )
-                    )
+                )
 
-                    namedJdbc.update(
-                        """
+                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
+            } else if (replies.rejected.contains(ReserveItem(reservationId))) {
+
+                namedJdbc.update(
+                    """
+                            UPDATE material_reservation set status = :status
+                            WHERE material_id_reservation in (:reservationId)
+                        """.trimIndent(),
+                    mapOf(
+                        "reservationId" to reservationId,
+                        "status" to ReservationStatus.REJECTED
+                    )
+                )
+
+                namedJdbc.update(
+                    """
                             UPDATE material_stock set stock_available = stock_available + :reserveQuantity
                             WHERE material_id_stock = :centralMaterialId
                         """.trimIndent(),
-                        mapOf(
-                            "centralMaterialId" to centralMaterialId,
-                            "reserveQuantity" to reserveQuantity
-                        )
+                    mapOf(
+                        "centralMaterialId" to centralMaterialId,
+                        "reserveQuantity" to reserveQuantity
                     )
+                )
 
-                    namedJdbc.update(
-                        """
+                namedJdbc.update(
+                    """
                             UPDATE reservation_management set status = :status
                             WHERE reservation_management_id = :reservationManagementId
                         """.trimIndent(),
-                        mapOf(
-                            "reservationManagementId" to reservationManagementId,
-                            "status" to ReservationStatus.PENDING
-                        )
+                    mapOf(
+                        "reservationManagementId" to reservationManagementId,
+                        "status" to ReservationStatus.PENDING
                     )
+                )
 
-                    if (directExecutionId != null) {
-                        namedJdbc.update(
-                            """
+                if (directExecutionId != null) {
+                    namedJdbc.update(
+                        """
                                 UPDATE direct_execution_item set item_status = :status
                                 WHERE contract_item_id = :contractItemId
                             """.trimIndent(),
-                            mapOf(
-                                "contractItemId" to contractItemId,
-                                "status" to ReservationStatus.PENDING
-                            )
+                        mapOf(
+                            "contractItemId" to contractItemId,
+                            "status" to ReservationStatus.PENDING
                         )
-                    } else {
-                        namedJdbc.update(
-                            """
+                    )
+                } else {
+                    namedJdbc.update(
+                        """
                                 UPDATE pre_measurement_street_item set item_status = :status
                                 WHERE contract_item_id = :contractItemId
                             """.trimIndent(),
-                            mapOf(
-                                "contractItemId" to contractItemId,
-                                "status" to ReservationStatus.PENDING
-                            )
+                        mapOf(
+                            "contractItemId" to contractItemId,
+                            "status" to ReservationStatus.PENDING
                         )
-                    }
-
+                    )
                 }
             }
         }
-
 
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 
     @Transactional
     fun markAsCollected(reservationIds: List<Long>): ResponseEntity<Void> {
-        TODO("check status")
-
         if (reservationIds.isEmpty()) throw IllegalStateException("Nenhuma reserva foi enviada")
 
         data class Quadruple<A, B, C, D>(
@@ -143,7 +142,7 @@ class ReservationService(
             namedJdbc,
             """
                     SELECT material_id_reservation, central_material_stock_id, reserved_quantity,
-                    direct_execution_id, pre_measurement_street_id
+                    direct_execution_id, pre_measurement_street_id, status
                     FROM material_reservation
                     WHERE material_id_reservation in (:reservationIds)
                 """.trimIndent(),
@@ -151,7 +150,7 @@ class ReservationService(
         )
 
         for (r in reservations) {
-            val (tableName, statusName, keyName, id) = destination
+            val (tableName, statusName, keyName, keyId) = destination
 
             val reservationId = r["material_id_reservation"] as Long
             val centralMaterialId = r["central_material_stock_id"] as Long
@@ -159,16 +158,18 @@ class ReservationService(
             val directExecutionId = r["direct_execution_id"] as? Long
             val streetId = r["pre_measurement_street_id"] as? Long
 
+            if (r["status"] == ReservationStatus.COLLECTED) continue
+
             if (
-                (tableName == "direct_execution" && id != directExecutionId) ||
-                (tableName == "pre_measurement_street" && id != streetId)
+                (tableName == "direct_execution" && keyId != directExecutionId) ||
+                (tableName == "pre_measurement_street" && keyId != streetId)
             ) {
                 throw IllegalStateException("Reservation Service - Mais de uma execução encontrada")
-            } else if(tableName.isBlank()) {
+            } else if (tableName.isBlank()) {
                 destination = if (directExecutionId != null) {
-                    Quadruple("direct_execution","direct_execution_status", "direct_execution_id", directExecutionId)
+                    Quadruple("direct_execution", "direct_execution_status", "direct_execution_id", directExecutionId)
                 } else if (streetId != null) {
-                    Quadruple("pre_measurement_street","street_status", "pre_measurement_street_id", streetId)
+                    Quadruple("pre_measurement_street", "street_status", "pre_measurement_street_id", streetId)
                 } else {
                     throw IllegalStateException("Reservation Service - Nenhuma execução foi encontrada")
                 }
@@ -198,22 +199,37 @@ class ReservationService(
 
         }
 
-        val (tableName, statusName, keyName, id) = destination
-        namedJdbc.update(
+        val (tableName, statusName, keyName, keyId) = destination
+        val statusReservationsData = JdbcUtil.getRawData(
+            namedJdbc,
             """
-                update :tableName
-                set :statusName = :status
-                where :keyName = :id
-            """.trimIndent(),
+                    SELECT 1
+                    FROM material_reservation
+                    WHERE :keyName = :keyId AND status <> :status
+                """.trimIndent(),
             mapOf(
-                "tableName" to tableName,
-                "statusName" to statusName,
                 "keyName" to keyName,
-                "id" to id,
-                "status" to ExecutionStatus.AVAILABLE_EXECUTION
+                "keyId" to keyId,
+                "status" to ReservationStatus.COLLECTED,
             )
         )
 
+        if (statusReservationsData.isEmpty()) {
+            namedJdbc.update(
+                """
+                update :tableName
+                set :statusName = :status
+                where :keyName = :keyId
+            """.trimIndent(),
+                mapOf(
+                    "tableName" to tableName,
+                    "statusName" to statusName,
+                    "keyName" to keyName,
+                    "keyId" to keyId,
+                    "status" to ExecutionStatus.AVAILABLE_EXECUTION
+                )
+            )
+        }
 
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }

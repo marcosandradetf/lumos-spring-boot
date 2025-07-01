@@ -19,4 +19,18 @@ export class RequestService {
     return this.http.get<ReservationsByCaseDtoResponse[]>(this.baseUrl + "/execution/get-reservations-by-status-and-stockist", {params});
   }
 
+  reply(replies: {
+    approved: { reserveId: number }[],
+    rejected: { reserveId: number }[],
+  }) {
+    return this.http.post(this.baseUrl + "/reservation/reply", replies);
+  }
+
+  markAsCollected(reservationIds: number[]) {
+    return this.http.post<void>(
+      this.baseUrl + "/reservation/mark-as-collected",
+      reservationIds
+    );
+  }
+
 }

@@ -37,12 +37,12 @@ export class PrimeConfirmDialogComponent implements OnChanges {
       closable: true,
       closeOnEscape: true,
       rejectButtonProps: {
-        label: 'Cancelar',
+        label: 'Não',
         severity: 'secondary',
         outlined: true,
       },
       acceptButtonProps: {
-        label: 'Salvar',
+        label: 'Sim',
       },
       accept: () => this.action.emit('accept'),
       reject: () => this.action.emit('reject'),
