@@ -18,6 +18,12 @@ import {Breadcrumb} from 'primeng/breadcrumb';
 import {MenuItem} from 'primeng/api';
 import {Title} from '@angular/platform-browser';
 import {FileService} from '../../../../core/service/file-service.service';
+import {ContextMenu} from 'primeng/contextmenu';
+import {
+  PrimeConfirmDialogComponent
+} from '../../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
+import {ViewChild} from '@angular/core';
+
 
 @Component({
   selector: 'app-contract-list',
@@ -34,7 +40,9 @@ import {FileService} from '../../../../core/service/file-service.service';
     FormsModule,
     InputText,
     Toast,
-    Breadcrumb
+    Breadcrumb,
+    ContextMenu,
+    PrimeConfirmDialogComponent
   ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'
@@ -50,6 +58,19 @@ export class ContractListComponent implements OnInit {
   city: string = '';
   reason: string = '';
   items: MenuItem[] | undefined;
+  selectedContract: any = null;
+
+  message = "";
+  contextItems: MenuItem[] = [
+    {label: 'Novo Contrato', icon: 'pi pi-plus', command: () => this.router.navigate(['/contratos/criar']),},
+    {
+      label: 'Excluir Contrato', icon: 'pi pi-trash', command: () => {
+        this.message = "Confirma a exclusão do contrato " + this.selectedContract.contractor + "?"
+        this.openModal = true;
+      }
+    },
+    {label: 'Arquivar', icon: 'pi pi-folder-open'},
+  ];
 
   home: MenuItem | undefined;
 
@@ -208,7 +229,7 @@ export class ContractListComponent implements OnInit {
             window.URL.revokeObjectURL(url);
           });
         } else this.utils.showMessage('Nenhum edital foi encontrado', "warn", 'Arquivo não existente')
-          break
+        break
       case 'additive':
         const additiveFile = contract?.additiveFile;
         if (additiveFile) {
@@ -228,7 +249,7 @@ export class ContractListComponent implements OnInit {
             window.URL.revokeObjectURL(url);
           });
         } else this.utils.showMessage('Nenhum aditivo foi encontrado', "warn", 'Arquivo não existente')
-          break;
+        break;
     }
   }
 
@@ -242,6 +263,45 @@ export class ContractListComponent implements OnInit {
       const len = item.executedQuantity?.length || 0;
       return len > max ? len : max;
     }, 0);
+  }
+
+  handleAction(action: "accept" | "reject") {
+    switch (action) {
+      case 'accept':
+        this.loading = true;
+        this.openModal = false;
+        this.contractService.deleteById(this.selectedContract.contractId)
+          .subscribe({
+            next: () => {
+              this.contracts = this.contracts.filter(c => c.contractId !== this.selectedContract.contractId);
+              this.utils.showMessage("Contrato " + this.selectedContract.contractor + " excluido com sucesso!", "success", "Operação realizada")
+            },
+            error: (err) => {
+              this.utils.showMessage(err.error.message, "error", "Não foi possível excluir o contrato " + this.selectedContract.contractor);
+              this.loading = false;
+            },
+            complete: () => {
+              this.loading = false;
+            }
+          })
+        break;
+      case 'reject':
+        break;
+    }
+  }
+
+  onRightClick(event: MouseEvent, contract: any): void {
+    event.preventDefault(); // impede menu padrão do navegador
+    this.selectedContract = contract;
+  }
+
+  @ViewChild('menu') contextMenu: ContextMenu | undefined = undefined;
+
+  openContextMenu(event: MouseEvent, contract: any): void {
+    event.preventDefault(); // Evita scroll inesperado ou comportamento nativo
+    this.selectedContract = contract; // Salva se precisar no menu
+
+    if (this.contextMenu) this.contextMenu.show(event); // Abre o menu na posição do clique
   }
 
 }

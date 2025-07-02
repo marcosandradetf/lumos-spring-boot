@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {NgForOf, NgIf} from '@angular/common';
+import {CurrencyPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {ContractService} from '../../services/contract.service';
 import {UtilsService} from '../../../core/service/utils.service';
 import {ScreenMessageComponent} from '../../../shared/components/screen-message/screen-message.component';
@@ -14,6 +14,13 @@ import {Router} from '@angular/router';
 import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-models';
 import {Toast} from 'primeng/toast';
 import {Title} from '@angular/platform-browser';
+import {Step, StepList, StepPanel, StepPanels, Stepper} from 'primeng/stepper';
+import {Button} from 'primeng/button';
+import {InputText} from 'primeng/inputtext';
+import {
+  PrimeConfirmDialogComponent
+} from '../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
+import {LoadingComponent} from '../../../shared/components/loading/loading.component';
 
 
 @Component({
@@ -25,21 +32,34 @@ import {Title} from '@angular/platform-browser';
     NgForOf,
     ModalComponent,
     TableComponent,
-    Toast
+    Toast,
+    StepPanel,
+    Button,
+    Stepper,
+    StepList,
+    Step,
+    StepPanels,
+    InputText,
+    NgClass,
+    CurrencyPipe,
+    PrimeConfirmDialogComponent,
+    LoadingComponent
   ],
   templateUrl: './create.component.html',
   styleUrl: './create.component.scss'
 })
 export class CreateComponent {
+  selectedIndex: number | null = null;
+
   contract: CreateContractDTO = {
-    number: '',
-    contractor: '',
-    address: '',
-    phone: '',
-    cnpj: '',
+    number: null,
+    contractor: null,
+    address: null,
+    phone: null,
+    cnpj: null,
     unifyServices: false,
-    noticeFile: '',
-    contractFile: '',
+    noticeFile: null,
+    contractFile: null,
     userUUID: '',
     items: [],
   }
@@ -70,51 +90,46 @@ export class CreateComponent {
   }
 
 
-  submitContract(form: any, contractData: HTMLDivElement, contractItems: HTMLDivElement) {
-    if (form.invalid) return;
-    if(this.loading) return;
+  submitContract() {
+    if (this.loading) return;
 
-    if (this.contract.items.length === 0) {
-      contractData.classList.add('hidden');
-      contractItems.classList.remove('hidden')
-    } else {
-      this.loading = true;
-      const files: File[] = [];
+    this.loading = true;
+    this.openModal = false;
+    const files: File[] = [];
 
-      if (this.contractFile) {
-        files.push(this.contractFile);
-      }
-
-      if (this.noticeFile) {
-        files.push(this.noticeFile);
-      }
-
-      if (files.length > 0) {
-        this.fileService.sendFiles(files).subscribe({
-          next: responses => {
-            let responseIndex = 0;
-
-            if (this.contractFile && responseIndex < responses.length) {
-              this.contract.contractFile = responses[responseIndex];
-              responseIndex++;
-            }
-
-            if (this.noticeFile && responseIndex < responses.length) {
-              this.contract.noticeFile = responses[responseIndex];
-            }
-
-            this.sendContract(); // Envia o formulário após o envio dos arquivos
-          },
-          error: error => {
-            this.loading = false;
-            this.utils.showMessage(error as string, 'error');
-          }
-        });
-      } else {
-        this.loading = true;
-        this.sendContract();
-      }
+    if (this.contractFile) {
+      files.push(this.contractFile);
     }
+
+    if (this.noticeFile) {
+      files.push(this.noticeFile);
+    }
+
+    if (files.length > 0) {
+      this.fileService.sendFiles(files).subscribe({
+        next: responses => {
+          let responseIndex = 0;
+
+          if (this.contractFile && responseIndex < responses.length) {
+            this.contract.contractFile = responses[responseIndex];
+            responseIndex++;
+          }
+
+          if (this.noticeFile && responseIndex < responses.length) {
+            this.contract.noticeFile = responses[responseIndex];
+          }
+
+          this.sendContract(); // Envia o formulário após o envio dos arquivos
+        },
+        error: error => {
+          this.loading = false;
+          this.utils.showMessage(error.error.message, 'error');
+        }
+      });
+    } else {
+      this.sendContract();
+    }
+
   }
 
   sendContract() {
@@ -122,7 +137,7 @@ export class CreateComponent {
       next: response => this.resetForm(),
       error: error => {
         this.openModal = false;
-        this.utils.showMessage(error.message as string, 'error');
+        this.utils.showMessage(error.error.message, 'error');
         this.loading = false;
       },
     });
@@ -184,7 +199,7 @@ export class CreateComponent {
     item: ContractReferenceItemsDTO
     , index: number) {
     if (item.price === '0,00' || item.quantity === 0) {
-      this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", 'warn');
+      this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", 'warn', "Atenção");
       return;
     }
 
@@ -192,7 +207,6 @@ export class CreateComponent {
     // Aguarda a animação antes de remover o item
     setTimeout(() => {
       this.items = this.items.filter(i => i.contractReferenceItemId !== item.contractReferenceItemId);
-      this.totalValue = this.utils.sumValue(this.totalValue, this.utils.multiplyValue(item.price, item.quantity));
       this.totalItems += 1;
       this.removingIndex = null;
     }, 900); // Tempo igual à transição no CSS
@@ -213,9 +227,29 @@ export class CreateComponent {
       this.removingIndexContract = null;
       this.items.push(item);
       this.contract.items = this.contract.items.filter(i => i.contractReferenceItemId !== item.contractReferenceItemId);
-      this.totalValue = this.utils.subValue(this.totalValue, this.utils.multiplyValue(item.price, item.quantity));
       this.totalItems -= 1;
-      }, 900); // Tempo igual à transição no CSS
+    }, 900); // Tempo igual à transição no CSS
+  }
+
+  getTotalValue() {
+    let totalInCents = this.contract.items.reduce((sum, item) => {
+      const price = parseFloat(
+        item.price
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .replace(/[^\d.-]/g, '')
+      );
+
+      const quantity = item.quantity || 0;
+
+      // Convertendo para centavos e somando
+      const itemTotal = Math.round(price * 100) * quantity;
+
+      return sum + itemTotal;
+    }, 0);
+
+    // Depois de tudo, converter de volta para reais
+    this.totalValue = (totalInCents / 100).toFixed(2);
   }
 
 
@@ -247,7 +281,7 @@ export class CreateComponent {
       contractItems.classList.add('hidden');
       steepFinal.classList.remove('hidden');
     } else {
-      this.utils.showMessage("Para revisar os itens do contrato, é necessário adicionar pelo menos um item", 'warn');
+      this.utils.showMessage("Para revisar os itens do contrato, é necessário adicionar pelo menos um item", 'warn', "Atenção");
     }
   }
 
@@ -307,4 +341,90 @@ export class CreateComponent {
       unify.innerText = 'Clique para Ativar Serviço Unificado';
     }
   }
+
+  openConfirmModal() {
+    if (!this.validateContractItems()) return;
+
+    this.openModal = true;
+  }
+
+  handleAction($event: "accept" | "reject") {
+    switch ($event) {
+      case 'reject':
+        this.openModal = false;
+        this.utils.showMessage('Operação cancelada com sucesso', 'info', 'Feito');
+        break;
+      case 'accept':
+        this.submitContract();
+        break;
+    }
+  }
+
+  validateContractFields(): boolean {
+    const {number, contractor, address, phone, cnpj, userUUID} = this.contract;
+
+    if (!number && !contractor && !address && !phone && !cnpj) {
+      this.utils.showMessage(
+        'Nenhum dado do contrato foi preenchido. Volte para o passo 1 e preencha as informações obrigatórias(*) antes de finalizar.',
+        'warn',
+        'Atenção',
+        true
+      );
+      return false;
+    }
+
+
+    if (!number) {
+      this.utils.showMessage('Número do contrato é obrigatório.', 'warn', 'Atenção');
+      return false;
+    }
+
+    if (!contractor) {
+      this.utils.showMessage('Contratante é obrigatório.', 'warn', 'Atenção');
+      return false;
+    }
+
+    if (!address) {
+      this.utils.showMessage('Endereço é obrigatório.', 'warn', 'Atenção');
+      return false;
+    }
+
+    if (!phone) {
+      this.utils.showMessage('Telefone é obrigatório.', 'warn', 'Atenção');
+      return false;
+    }
+
+    if (!cnpj) {
+      this.utils.showMessage('CNPJ é obrigatório.', 'warn', 'Atenção');
+      return false;
+    }
+
+    if (!userUUID) {
+      this.utils.showMessage('Usuário responsável é obrigatório.', 'warn', 'Atenção');
+      return false;
+    }
+
+    return true;
+  }
+
+  validateContractItems(): boolean {
+    const hasInvalidItem = this.contract.items.some(item =>
+      !item.quantity || item.quantity === 0 ||
+      !item.price || item.price.toString().trim() === ''
+    );
+
+    if (hasInvalidItem) {
+      this.utils.showMessage(
+        'Existem itens no contrato com quantidade zero ou valor vazio. Corrija esses dados antes de continuar.',
+        'warn',
+        'Atenção'
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+
+
 }

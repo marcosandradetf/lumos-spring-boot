@@ -18,6 +18,7 @@ import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
@@ -55,6 +56,16 @@ class ContractService(
         }
 
         return ResponseEntity.ok().body(referenceItemsResponse)
+    }
+
+    fun deleteById(contractId: Long): ResponseEntity<Any> {
+        try {
+            contractRepository.deleteById(contractId);
+        } catch (e: Exception) {
+            throw IllegalStateException("Como este contrato já possui registros vinculados (como reservas, medições ou execuções), a exclusão não é permitida.")
+        }
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
     fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {

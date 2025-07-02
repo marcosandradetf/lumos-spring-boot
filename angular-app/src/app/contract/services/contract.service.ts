@@ -21,6 +21,10 @@ export class ContractService {
     return this.http.post(this.endpoint + "/insert-contract", contract);
   }
 
+  deleteById(contractId: number) {
+    return this.http.post(this.endpoint + "/delete-by-id", contractId);
+  }
+
   getContractReferenceItems() {
     return this.http.get<ContractReferenceItemsDTO[]>(this.endpoint + "/get-items");
   }

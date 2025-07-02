@@ -49,12 +49,6 @@ import {Title} from '@angular/platform-browser';
   styleUrl: './reservation-pending.component.scss'
 })
 export class ReservationPendingComponent implements OnInit {
-  home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
-  items: MenuItem[] = [
-    {label: 'Requisições'},
-    {label: 'Materiais Pendentes de Aprovação'},
-  ];
-
   loading = false;
 
   deposits: DepositByStockist[] = [];
@@ -63,6 +57,9 @@ export class ReservationPendingComponent implements OnInit {
   showTeamModal: boolean = false;
   depositName: string | null = null;
   status = "";
+
+  home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
+  items: MenuItem[] | undefined = undefined;
 
 
   constructor(
@@ -85,8 +82,16 @@ export class ReservationPendingComponent implements OnInit {
 
     if (this.status === "PENDING") {
       this.titleService.setTitle("Materiais Pendentes de Aprovação");
+      this.items =  [
+        {label: 'Requisições'},
+        {label: 'Materiais Pendentes de Aprovação'},
+      ];
     } else {
       this.titleService.setTitle("Materiais Disponíveis para Coleta");
+      this.items =  [
+        {label: 'Requisições'},
+        {label: 'Materiais Disponíveis para Coleta'},
+      ];
     }
 
     this.stockService.getDepositsByStockist(this.authService.getUser().uuid).subscribe({
@@ -169,7 +174,6 @@ export class ReservationPendingComponent implements OnInit {
   }
 
   modalSendData = false;
-
   sendData() {
     const hasAtLeastOneResponse = this.reservations.some(group =>
       group.reservations.some(r => r.internStatus !== null && r.internStatus !== undefined)

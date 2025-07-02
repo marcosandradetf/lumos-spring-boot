@@ -11,10 +11,9 @@
       <h3 class="text-medium pr-5 hidden lg:block">Clique em uma requisição para continuar</h3>
     </div>
 
-    <div *ngIf="loading" class="h-full w-full flex items-center justify-center">
-      <app-loading></app-loading>
-    </div>
-    <div class="flex flex-col h-full items-center justify-center text-center text-gray-500 w-full"
+    <app-loading *ngIf="loading"></app-loading>
+
+    <div class="flex flex-col mt-80 items-center justify-center text-center text-gray-500 w-full"
          *ngIf="!loading && reservations.length === 0">
       <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
            xmlns="http://www.w3.org/2000/svg">
@@ -22,7 +21,7 @@
               d="M14 22h20M14 28h20M10 10h28a2 2 0 012 2v24a2 2 0 01-2 2H10a2 2 0 01-2-2V12a2 2 0 012-2z"/>
       </svg>
 
-      <h3 class="text-lg font-semibold mb-2">Nenhuma requisição encontrada</h3>
+      <h3 class="text-lg font-semibold mb-2 dark:text-white">Nenhuma requisição encontrada</h3>
     </div>
 
     <div *ngIf="!loading && reservations.length > 0"

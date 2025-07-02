@@ -46,14 +46,14 @@ export interface ContractItemsResponse {
 }
 
 export interface CreateContractDTO {
-  number: string,
-  contractor: string,
-  address: string,
-  phone: string,
-  cnpj: string,
+  number: string | null,
+  contractor: string | null,
+  address: string | null,
+  phone: string | null,
+  cnpj: string | null,
   unifyServices: boolean;
-  noticeFile: string;
-  contractFile: string;
+  noticeFile: string | null;
+  contractFile: string | null;
   userUUID: string;
   items: ContractReferenceItemsDTO[]
 }

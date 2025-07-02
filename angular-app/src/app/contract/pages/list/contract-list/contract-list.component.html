@@ -11,16 +11,27 @@
     </div>
 
 
-    <app-loading *ngIf="loading"></app-loading>
+    <app-loading *ngIf="loading" text="Carregando"></app-loading>
+
 
     <div class="w-full pl-2 " *ngIf="!loading">
-      <ol class="flex flex-wrap">
-        <li *ngFor="let c of contracts; index as i;"
+      <ol class="flex flex-wrap" aria-haspopup="true" #card>
+        <p-contextmenu [target]="card" [model]="contextItems" #menu/>
+        <li *ngFor="let c of contracts; index as i; "
+            (contextmenu)="onRightClick($event, c)"
             class=" cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
             (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ?
               router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])
                 : router.navigate(['/execucoes/iniciar-sem-pre-medicao/'],{queryParams: { codigo: c.contractId, nome: c.contractor }})">
-          <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full">
+          <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full relative">
+
+            <div class="absolute top-4 right-4 z-10">
+              <button (click)="openContextMenu($event, c)"
+                      class="text-gray-500 hover:text-gray-800 focus:outline-none dark:hover:text-gray-200">
+                <i class="fa fa-ellipsis-v text-xl"></i>
+              </button>
+            </div>
+
             <div class="flex flex-col items-center justify-center mr-10">
               <div class="h-full w-1 bg-neutral dark:bg-neutral-100 dark:text-neutral"></div>
               <div class="rounded-full bg-neutral text-neutral-100 dark:bg-neutral-100 dark:text-neutral p-1">
@@ -229,6 +240,10 @@
       <p-button label="Ok" icon="pi pi-check" (onClick)="dialogVisible = false"/>
     </ng-template>
   </p-dialog>
+
+  <app-prime-confirm-dialog *ngIf="openModal" [message]="message" (action)="handleAction($event)" type="confirm">
+
+  </app-prime-confirm-dialog>
 
   <p-toast/>
 </div>

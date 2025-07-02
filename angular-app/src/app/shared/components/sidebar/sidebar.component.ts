@@ -164,14 +164,14 @@ export class SidebarComponent implements OnInit {
           {
             label: 'Materiais pendentes de Aprovação',
             icon: 'fa-solid fa-hourglass-half text-base text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/requisicoes/pendentes'],
-            disabled: true,
+            routerLink: ['/requisicoes'],
+            queryParams: { status: 'PENDING' },
           },
           {
             label: 'Materiais disponíveis para Coleta',
             icon: 'fa-solid fa-list-check text-base text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/requisicoes/execucoes/reservas/gerenciamento'],
-            disabled: true,
+            routerLink: ['/requisicoes'],
+            queryParams: { status: 'APPROVED' },
           },
         ]
       },

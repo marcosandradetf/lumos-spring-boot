@@ -1,6 +1,6 @@
-<div class="flex mt-[3rem] h-fit" #top xmlns="http://www.w3.org/1999/html">
+<div class="flex" #top xmlns="http://www.w3.org/1999/html">
   <div class="w-full">
-    <div class="pt-2 border-b w-full pl-2 flex items-center justify-between">
+    <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a>Início</a></li>
@@ -11,301 +11,261 @@
       <h3 class="text-medium pr-5 hidden lg:block">Novo Contrato</h3>
     </div>
 
-    <div *ngIf="!finish">
-      <div class="border-b w-full pl-2 flex pb-4" #contractData>
-        <form
-          #myForm="ngForm" (ngSubmit)="submitContract(myForm, contractData, contractItems)"
-          class="p-2 flex flex-col w-full">
-          <div class="flex justify-between">
-            <p class="select-none text-blue-700">Informe os dados do contrato</p>
-          </div>
 
-          <div class="flex space-x-4 flex-wrap mt-5 w-[70%]">
-            <label class="form-control w-full max-w-xs ml-4">
-              <div class="label">
-                <span class="label-text">N.º Contrato</span>
+    <app-loading *ngIf="loading"></app-loading>
+
+
+    <p-stepper [value]="1" class="basis-[50rem]" *ngIf="!finish && !loading">
+      <p-step-list class="px-10">
+        <p-step [value]="1">Inserir dados</p-step>
+        <p-step [value]="2" (click)="selectedIndex = null;">Selecionar Itens</p-step>
+        <p-step [value]="3" (click)="selectedIndex = null; getTotalValue()">Revisão</p-step>
+      </p-step-list>
+      <p-step-panels>
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col gap-2 mx-auto space-y-2" style="min-height: 16rem; max-width: 50rem">
+              <div class="text-center mt-4 mb-4 text-xl font-semibold">Digite os dados do contrato</div>
+              <div class="field">
+                <label for="number">N.º Contrato*</label>
+                <input [(ngModel)]="contract.number"
+                       autocomplete="off"
+                       pInputText id="number" type="text"
+                       (input)="utils.formatContractNumber($event)"
+                       placeholder="Digite o número" fluid/>
               </div>
-              <input type="text"
-                     name="number"
-                     class="input input-sm input-bordered w-full max-w-xs"
-                     placeholder="Insira o Número"
-                     required
-                     [(ngModel)]="contract.number"
-                     (input)="utils.formatContractNumber($event)"
-                     #number="ngModel"/>
-              <div *ngIf="number.invalid && myForm.submitted ">
-                <div *ngIf="number.invalid && myForm.submitted">
-                  <small *ngIf="number.errors?.['required']" class="text-red-600">Preenchimento
-                    obrigatório.</small>
+              <div class="field">
+                <label for="contractor">Contratante*</label>
+                <input [(ngModel)]="contract.contractor"
+                       autocomplete="off"
+                       pInputText id="contractor" type="text"
+                       placeholder="Ex. Prefeitura de Belo Horizonte" fluid/>
+              </div>
+              <div class="field">
+                <label for="address">Endereço do contratante*</label>
+                <input [(ngModel)]="contract.address"
+                       autocomplete="off"
+                       pInputText id="address" type="text"
+                       placeholder="Digite o endereço" fluid/>
+              </div>
+              <div class="field">
+                <label for="number">Telefone do Contratante*</label>
+                <input [(ngModel)]="contract.phone"
+                       autocomplete="off"
+                       pInputText id="input" type="text"
+                       (input)="utils.formatPhone($event)"
+                       minlength="14"
+                       maxlength="15"
+                       placeholder="Ex. (31) 99999-9999" fluid/>
+              </div>
+              <div class="field">
+                <label for="number">CNPJ do Contratante*</label>
+                <input [(ngModel)]="contract.cnpj"
+                       autocomplete="off"
+                       pInputText id="input" type="text"
+                       minlength="18"
+                       maxlength="18"
+                       (input)="utils.formatCNPJ($event)"
+                       placeholder="Ex. 99.997.090/0001-99" fluid/>
+              </div>
+
+              <div class="w-full sm:flex">
+                <input type="file" class="file-input file-input-sm hidden" accept=".pdf" #inputFile
+                       (change)="onFileSelected($event, typeSelect)"/>
+
+                <div class="field mt-5 mr-4">
+                  <label for="number">Edital</label>
+                  <span type="button" [class.btn-outline]="!noticeFile" class="btn btn-accent btn-sm text-xs w-64 h-12"
+                        (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
+                                                                                 *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name || 'Clique para selecionar' }}</span>
                 </div>
-              </div>
-            </label>
 
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Contratante</span>
-              </div>
-              <input type="text"
-                     name="socialReason"
-                     class="input input-sm input-bordered w-full max-w-xs"
-                     placeholder="Ex. Prefeitura de Belo Horizonte"
-                     required
-                     [(ngModel)]="contract.contractor"
-                     #socialReason="ngModel"/>
-              <div *ngIf="socialReason.invalid && myForm.submitted">
-                <div *ngIf="socialReason.invalid && myForm.submitted">
-                  <small *ngIf="socialReason.errors?.['required']" class="text-red-600">Preenchimento
-                    obrigatório.</small>
+
+                <div class="field mt-5 mr-4">
+                  <label for="number">Contrato</label>
+                  <span type="button" [class.btn-outline]="!contractFile"
+                        class="btn btn-accent btn-sm text-xs w-64 h-12"
+                        (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
+                                                                                   *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name || 'Clique para selecionar' }}</span>
                 </div>
-              </div>
-            </label>
 
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Endereço da Contratante</span>
-              </div>
-              <input type="text"
-                     name="address"
-                     class="input input-sm input-bordered w-full max-w-xs"
-                     placeholder="Endereço"
-                     required
-                     [(ngModel)]="contract.address"
-                     #address="ngModel"/>
-              <div *ngIf="address.invalid && myForm.submitted">
-                <div *ngIf="address.invalid && myForm.submitted">
-                  <small *ngIf="address.errors?.['required']" class="text-red-600">Preenchimento
-                    obrigatório.</small>
-                </div>
-              </div>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Telefone da Contratante</span>
-              </div>
-              <input type="text"
-                     name="nomeMaterial"
-                     class="input input-sm input-bordered w-full max-w-xs"
-                     placeholder="(31) 99999-9999"
-                     required
-                     (input)="utils.formatPhone($event)"
-                     minlength="14"
-                     maxlength="15"
-                     [(ngModel)]="contract.phone"
-                     #phone="ngModel"/>
-              <div *ngIf="phone.invalid && myForm.submitted">
-                <small *ngIf="phone.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-                <small *ngIf="phone.errors?.['minlength']" class="text-red-600">Telefone Inválido.</small>
-              </div>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">CNPJ da Contratante</span>
-              </div>
-              <input type="text"
-                     name="cnpj"
-                     class="input input-sm input-bordered w-full max-w-xs"
-                     placeholder="99.997.090/0001-99"
-                     minlength="18"
-                     maxlength="18"
-                     (input)="utils.formatCNPJ($event)"
-                     required
-                     [(ngModel)]="contract.cnpj"
-                     #cnpj="ngModel"/>
-              <div *ngIf="cnpj.invalid && myForm.submitted">
-                <small *ngIf="cnpj.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-                <small *ngIf="cnpj.errors?.['minlength']" class="text-red-600">CNPJ Inválido.</small>
-              </div>
-            </label>
-
-            <input type="file" class="file-input file-input-sm hidden" accept=".pdf" #inputFile
-                   (change)="onFileSelected($event, typeSelect)"/>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Edital</span>
-              </div>
-              <span type="button" [class.btn-outline]="!noticeFile" class="btn btn-accent btn-sm text-xs"
-                    (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
-                                                                             *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name || 'Clique para selecionar' }}</span>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Contrato</span>
-              </div>
-              <span type="button" [class.btn-outline]="!contractFile" class="btn btn-accent btn-sm text-xs"
-                    (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
-                                                                               *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name || 'Clique para selecionar' }}</span>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Serviço Unificado</span>
-              </div>
-              <span type="button" class="btn btn-sm text-xs btn-outline btn-primary" #unify
-                    (click)="styleField(unify)">
+                <div class="field mt-5">
+                  <label for="number">Serviço Unificado</label>
+                  <span type="button" class="btn btn-sm text-xs btn-outline btn-primary h-12 w-64" #unify
+                        (click)="styleField(unify)">
               Clique para ativar serviço unificado</span>
-            </label>
-
-
-          </div>
-          <div class="w-full flex justify-end">
-            <button
-              #submitForm
-              type="submit"
-              class="poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
-              Adicionar Itens<span class="material-icons ml-2">arrow_forward</span>
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="border-b w-full pl-2 flex flex-col pb-4 hidden" #contractItems>
-        <div class="flex items-center justify-between">
-        <span
-          (click)="contractData.classList.remove('hidden'); contractItems.classList.add('hidden')"
-          class="p-2 mb-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
-          <span class="material-icons mr-2">arrow_back</span>Rever dados do contrato
-        </span>
-        </div>
-
-        <div>
-          <table class="table table-auto table-xs w-full">
-            <thead>
-            <tr class="text-left bg-gray-100 border-t-2 border-t-blue-600">
-              <th class="px-4 py-2 text-gray-700">Adicionar</th>
-              <th class="px-4 py-2 text-gray-700">Descrição</th>
-              <th class="px-4 py-2 text-gray-700">Quantidade</th>
-              <th class="w-48 px-4 py-2 text-gray-700">Valor unitário</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let item of items; let i = index" [class.fade-out]="removingIndex === i"
-                [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
-                [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
-                class="transition-all duration-200 hover:bg-gray-50">
-              <td class="px-4 py-2">
-                <span
-                  class="material-icons text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
-                  (click)="addItem(item, i)">
-                  add
-                </span>
-              </td>
-
-              <td class="px-4 py-2">{{ item.description }}</td>
-
-              <td class="px-4 py-2">
-                <input
-                  type="text"
-                  placeholder="Ex.: 2"
-                  #inputField
-                  (input)="removeLeadingZeros(inputField)"
-                  [(ngModel)]="item.quantity"
-                  name="quantity{{i}}"
-                  #ngQtde="ngModel"
-                  class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <div *ngIf="ngQtde.invalid && myForm.submitted">
-                  <small *ngIf="ngQtde.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
                 </div>
-              </td>
 
-              <td class="px-4 py-2">
-                <input
-                  type="text"
-                  (input)="formatValue($event, item.contractReferenceItemId)"
-                  placeholder="R$"
-                  [(ngModel)]="item.price"
-                  name="price{{i}}"
-                  #ngValor="ngModel"
-                  class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <div *ngIf="ngValor.invalid && myForm.submitted">
-                  <small *ngIf="ngValor.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+              </div>
+
+              <div class="flex pt-6 justify-end">
+                <p-button (onClick)="activateCallback(2)" label="Continuar" icon="pi pi-arrow-right" iconPos="right"/>
+              </div>
+
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="2">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div>
+              <table class="table table-auto table-xs w-full rounded">
+                <thead>
+                <tr class="text-left">
+                  <th class="px-4 py-2 text-gray-700 dark:text-neutral-100"></th>
+                  <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Descrição</th>
+                  <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Quantidade</th>
+                  <th class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Valor
+                    unitário
+                  </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let item of items; let i = index" [class.fade-out]="removingIndex === i"
+                    [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
+                    (click)="selectedIndex = i"
+                    [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
+                    [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
+                    class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
+                  <td class="px-4 py-2">
+                    <span
+                      class="material-icons text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
+                      (click)="addItem(item, i)">
+                        add
+                    </span>
+                  </td>
+
+                  <td class="px-4 py-2 text-base">{{ item.description }}</td>
+
+                  <td class="px-4 py-2">
+                    <input type="text" placeholder="Ex.: 2" #inputField
+                           (input)="removeLeadingZeros(inputField)" [(ngModel)]="item.quantity"
+                           name="quantity{{i}}"
+                           class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                           required/>
+                  </td>
+
+                  <td class="px-4 py-2">
+                    <input type="text"
+                           #priceField
+                           (input)="formatValue($event, item.contractReferenceItemId)"
+                           placeholder="R$" [(ngModel)]="item.price" name="price{{i}}"
+                           class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                           required/>
+                  </td>
+
+                </tr>
+                </tbody>
+              </table>
+            </div>
+
+
+            <div class="flex pt-6 justify-between px-10">
+              <p-button label="Voltar" severity="secondary" icon="pi pi-arrow-left"
+                        (onClick)="activateCallback(1)"/>
+              <p-button label="Próximo" icon="pi pi-arrow-right" iconPos="right"
+                        (onClick)="activateCallback(3); selectedIndex = null; getTotalValue()"/>
+            </div>
+
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="3">
+          <ng-template #content let-activateCallback="activateCallback">
+
+            @if (contract.items.length > 0) {
+              <div>
+                  <div class="flex justify-between mx-10">
+                    <div class="text-xl font-semibold">Revise os itens adicionados</div>
+                    <div class="flex flex-col">
+                      <span class="uppercase tracking-wide text-sm font-semibold opacity-80">
+                      Valor Total
+                    </span>
+                      <h2 class="text-3xl sm:text-3xl font-extrabold leading-tight drop-shadow-md">
+                        {{ totalValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                      </h2>
+                    </div>
+                  </div>
+
+                <table class="table table-auto table-xs w-full rounded mt-2">
+                  <thead>
+                  <tr>
+                    <th class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"></th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Descrição</th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Quantidade</th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Valor unitário
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let item of contract.items; let i = index"
+                      [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
+                      (click)="selectedIndex = i"
+                      [class.fade-out]="removingIndexContract === i"
+                      class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
+                    <td class="px-4 py-2">
+                      <span
+                        class="material-icons text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
+                        (click)="removeItem(item, i)">
+                        remove
+                      </span>
+                    </td>
+                    <td class="px-3 py-2">{{ item.description }}</td>
+
+                    <td class="px-4 py-2">
+
+                      <input type="text" placeholder="Ex.: 2" #inputField
+                             (input)="removeLeadingZeros(inputField); getTotalValue();" [(ngModel)]="item.quantity"
+                             name="quantity{{i}}"
+                             class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                             required/>
+                    </td>
+                    <td class="px-4 py-2">
+                      <input type="text" placeholder="Ex.: R$" #inputField
+                             (input)="formatValue($event, item.contractReferenceItemId); getTotalValue();"
+                             [(ngModel)]="item.price"
+                             name="price{{i}}"
+                             class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                             required/>
+                    </td>
+
+                  </tr>
+                  </tbody>
+
+                </table>
+              </div>
+            } @else {
+              <div
+                class="w-full max-w-md mx-auto bg-green-100 border border-green-400 text-orange-800 p-4 rounded-lg
+                shadow-md flex flex-col items-center text-center gap-4">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-xmark"></i>
+                  <div>
+                    <p class="text-sm">Nenhum item adicionado</p>
+                  </div>
                 </div>
-              </td>
+              </div>
+            }
 
-            </tr>
-            </tbody>
-          </table>
+            <div class="flex pt-6 justify-between px-10">
+              <p-button label="Voltar" icon="pi pi-arrow-left" iconPos="right"
+                        (onClick)="activateCallback(2); selectedIndex = null"/>
 
-          <div class="flex w-full justify-end pr-2">
-          <span
-            (click)="reviewItems(contractItems, steepFinal)"
-            class="mt-2 poppins-semibold select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
-              Revisar itens adicionados<span class="material-icons ml-2">arrow_forward</span>
-          </span>
-          </div>
-        </div>
-      </div>
+              <p-button label="Salvar" icon="pi pi-save" iconPos="left" severity="info"
+                        *ngIf="contract.items.length > 0"
+                        (onClick)="openConfirmModal()"/>
+            </div>
+          </ng-template>
+        </p-step-panel>
+      </p-step-panels>
+    </p-stepper>
 
-      <div class="border-b w-full pl-2 flex-col pb-4 hidden" #steepFinal>
-       <span
-         (click)="contractItems.classList.remove('hidden'); steepFinal.classList.add('hidden')"
-         class="p-2 mb-2 poppins-regular select-none text-blue-700 flex items-center w-fit cursor-pointer transform transition-transform duration-300 hover:scale-10 hover:translate-x-2 hover:translate-y-2">
-        <span class="material-icons mr-2">arrow_back</span>Adiconar mais itens
-      </span>
-
-        <app-table>
-          <tr header>
-            <th class="text-left px-3 py-2 bg-gray-100 text-gray-700">Remover</th>
-            <th class="text-left px-3 py-2 bg-gray-100 text-gray-700">Descrição</th>
-            <th class="text-left px-3 py-2 bg-gray-100 text-gray-700">Quantidade</th>
-            <th class="w-48 text-left px-3 py-2 bg-gray-100 text-gray-700">Valor unitário</th>
-          </tr>
-          <tr body *ngFor="let item of contract.items; let i = index" [class.fade-out]="removingIndexContract === i"
-              class="hover:bg-gray-50 transition-all duration-200">
-            <td class="px-4 py-2">
-                <span
-                  class="material-icons text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
-                  (click)="removeItem(item, i)">
-                  remove
-                </span>
-            </td>
-            <td class="px-3 py-2">{{ item.description }}</td>
-            <td class="px-3 py-2">{{ item.quantity }}</td>
-            <td class="px-3 py-2">{{ item.price }}</td>
-          </tr>
-        </app-table>
-
-        <div
-          class="w-full bg-white p-2 rounded-lg shadow-md flex justify-between items-center border-l-4 border-blue-600 mt-2">
-          <div>
-            <p class="text-sm text-gray-500">Total do Contrato</p>
-            <p class="text-lg font-semibold text-gray-700">Valor Total</p>
-          </div>
-          <div>
-            <p class="text-2xl font-semibold text-blue-700">R$ {{ totalValue }}</p>
-          </div>
-        </div>
-
-
-        <div class="flex w-full justify-end mt-5">
-          <button class="btn btn-primary material-icons text-xl mr-10" (click)="openModal = true">save<span
-            class="text-xs">Salvar</span>
-          </button>
-        </div>
-      </div>
-
-      <app-modal [confirmation]="true" [modalOpen]="openModal" (modalClose)="openModal = false">
-        <h2 class="text-center text-xl font-bold">Salvar contrato</h2>
-        <p class="my-5 text-center">Confirma o salvamento do contrato?</p>
-        <div class="flex justify-end space-x-4">
-          <button class="btn btn-neutral material-icons text-xl" (click)="openModal = false">close<span class="text-xs">Cancelar</span>
-          </button>
-          <button class="btn btn-primary text-xs" (click)="submitForm.click()"><span class="material-icons text-xl"
-                                                                                     *ngIf="!loading">save</span><span
-            *ngIf="loading" class="loading loading-spinner"></span>Salvar
-          </button>
-        </div>
-      </app-modal>
-    </div>
+    <app-prime-confirm-dialog
+      *ngIf="openModal"
+      [message]="'Confirma o salvamento do contrato?'"
+      (action)="handleAction($event)"
+      type="confirm">
+    </app-prime-confirm-dialog>
 
     <div *ngIf="finish" class="flex flex-col justify-center items-center h-[calc(100vh-500px)]">
       <div *ngIf="finish"
@@ -335,8 +295,9 @@
     </div>
 
 
-    <p-toast />
+    <p-toast/>
 
 
   </div>
 </div>
+
