@@ -35,50 +35,53 @@ export class UtilsService {
 
   }
 
-  multiplyValue(value: string, multiplier: number): string {
-    // Verifica se o valor está vazio ou se o multiplicador é inválido
-    if (!value || isNaN(multiplier) || multiplier === 0) {
-      return '';
+  blockSpecialChars(event: Event) {
+    (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^a-zA-Z0-9À-ÿ\s,-]/g, '');
+  }
+
+  formatAddressOnBlur(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.trim().toLowerCase();
+
+    // Corrige duplicações de vírgula e hífen apenas se necessário
+    value = value
+      .replace(/,{2,}/g, ',')  // duas ou mais vírgulas → uma só
+      .replace(/-{2,}/g, '-')  // dois ou mais hifens → um só
+
+      // Remove vírgula ou hífen no início ou fim
+      .replace(/^[, -]+/, '')
+      .replace(/[, -]+$/, '');
+
+    // Capitaliza
+    input.value = this.capitalizeWithAcronyms(value);
+  }
+
+  private capitalize(str: string): string {
+    return str.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  
+  private capitalizeWithAcronyms(str: string): string {
+    const words = str.split(' ');
+    const lastIndex = words.length - 1;
+
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      if (i === lastIndex && word.length === 2) {
+        // Última palavra e tem tamanho 2 -> uppercase total
+        words[i] = word.toUpperCase();
+      } else {
+        // Capitaliza normal
+        words[i] = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
     }
 
-    // Converte o valor para número e multiplica
-    const numericValue = parseFloat(value.replace(/\D/g, '')) / 100;
-    const result = numericValue * multiplier;
-
-    // Retorna o resultado formatado
-    return new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(result);
+    return words.join(' ');
   }
 
-  sumValue(value: string, sum: string): string {
 
-    // Converte o valor para número e multiplica
-    const numericValue = parseFloat(value.replace(/\D/g, '')) / 100;
-    const sumValue = parseFloat(sum.replace(/\D/g, '')) / 100;
-    const result = numericValue + sumValue;
 
-    // Retorna o resultado formatado
-    return new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(result);
-  }
 
-  subValue(value: string, sub: string): string {
-
-    // Converte o valor para número e multiplica
-    const numericValue = parseFloat(value.replace(/\D/g, '')) / 100;
-    const subValue = parseFloat(sub.replace(/\D/g, '')) / 100;
-    const result = numericValue - subValue;
-
-    // Retorna o resultado formatado
-    return new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(result);
-  }
 
   formatNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
@@ -191,8 +194,8 @@ export class UtilsService {
   }
 
   getStatus(status
-            :
-            string
+              :
+              string
   ):
     string {
     if (status === 'ACTIVE') {
@@ -209,6 +212,7 @@ export class UtilsService {
   getObject<T>(params: GetObjectRequest): Observable<T> {
     return this.http.post<T>(environment.springboot + '/api/util/generic/get-object', params);
   }
+
 
 }
 

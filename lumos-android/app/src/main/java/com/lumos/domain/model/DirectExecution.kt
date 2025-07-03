@@ -45,6 +45,7 @@ data class DirectExecutionStreetItem( //tabela nova
     @PrimaryKey(autoGenerate = true) val directStreetItemId: Long = 0,
     val reserveId: Long,
     val materialStockId: Long,
+    val materialName: String,
     val contractItemId: Long,
     var directStreetId: Long = 0,
     val quantityExecuted: Double
@@ -74,5 +75,6 @@ data class ReservePartial(
     val reserveId: Long = 0,
     val contractItemId: Long,
     val truckMaterialStockId: Long,
-    var quantityExecuted: Double,
+    val quantityExecuted: Double,
+    val materialName: String
 )

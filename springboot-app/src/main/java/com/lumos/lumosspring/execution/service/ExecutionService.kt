@@ -21,10 +21,8 @@ import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.jdbc.core.namedparam.SqlParameterSource
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
@@ -50,6 +48,7 @@ class ExecutionService(
     private val directExecutionRepositoryStreet: DirectExecutionRepositoryStreet,
     private val directExecutionRepositoryStreetItem: DirectExecutionRepositoryStreetItem,
 ) {
+
     // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
     @Transactional
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
@@ -218,7 +217,8 @@ class ExecutionService(
                         "inner join team t on t.id_team = de.team_id \n" +
                         "inner join deposit d on d.id_deposit = t.deposit_id_deposit \n" +
                         "inner join app_user au on au.user_id = de.assigned_user_id \n" +
-                        "where de.reservation_management_id = :reservation_management_id",
+                        "where de.reservation_management_id = :reservation_management_id \n" +
+                        "and ",
                 mapOf("reservation_management_id" to reservationManagementId)
             )
 
@@ -232,7 +232,8 @@ class ExecutionService(
                             FROM direct_execution_item dei
                             INNER JOIN contract_item ci ON ci.contract_item_id = dei.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                            WHERE dei.direct_execution_id = :direct_execution_id AND dei.item_status = :itemStatus
+                            WHERE dei.direct_execution_id = :direct_execution_id 
+                                AND dei.item_status = :itemStatus AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO')
                             ORDER BY cri.name_for_import
                         """.trimIndent(),
                     MapSqlParameterSource(
@@ -291,7 +292,7 @@ class ExecutionService(
                             INNER JOIN contract_item ci ON ci.contract_item_id = pmsi.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
                             WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id and pmsi.item_status = :itemStatus
-                            AND cri.type not in ('SERVIÇO', 'PROJETO')
+                            AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO')
                         """.trimIndent(),
                     MapSqlParameterSource(
                         mapOf(
@@ -839,8 +840,35 @@ class ExecutionService(
                 throw IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada")
             }
 
+
+            val sql = if (r.materialName.contains("led", ignoreCase = true)) {
+                """
+                    UPDATE contract_item ci
+                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                    FROM pre_measurement_street_item pmsi, contract_reference_item cri
+                    WHERE (cri.item_dependency = 'LED' OR ci.contract_item_id = :contractItemId)
+                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                        AND pmsi.contract_item_id = ci.contract_item_id
+                """.trimIndent()
+            } else if (r.materialName.contains("braço", ignoreCase = true)) {
+                """
+                    UPDATE contract_item ci
+                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                    FROM pre_measurement_street_item pmsi, contract_reference_item cri
+                    WHERE (cri.item_dependency = 'BRAÇO' OR ci.contract_item_id = :contractItemId)
+                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                        AND pmsi.contract_item_id = ci.contract_item_id
+                """.trimIndent()
+            } else {
+                """
+                    UPDATE contract_item
+                    SET quantity_executed = quantity_executed + :quantityExecuted
+                    WHERE contract_item_id = :contractItemId
+                """.trimIndent()
+            }
+
             namedJdbc.update(
-                "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
+                sql,
                 mapOf(
                     "quantityExecuted" to r.quantityExecuted,
                     "contractItemId" to r.contractItemId
@@ -886,7 +914,7 @@ class ExecutionService(
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
-        val exists = JdbcUtil.getSingleRow(
+        var exists = JdbcUtil.getSingleRow(
             namedJdbc,
             "SELECT true as result FROM direct_execution_street WHERE device_street_id = :deviceStreetId AND device_id = :deviceId",
             mapOf("deviceStreetId" to executionDTO.deviceStreetId, "deviceId" to executionDTO.deviceId)
@@ -914,6 +942,7 @@ class ExecutionService(
         executionStreet = directExecutionRepositoryStreet.save(executionStreet)
 
         for (m in executionDTO.materials) {
+
             val item = DirectExecutionStreetItem(
                 executedQuantity = m.quantityExecuted,
                 materialStockId = m.truckMaterialStockId,
@@ -921,17 +950,44 @@ class ExecutionService(
                 directExecutionStreetId = executionStreet.directExecutionStreetId
                     ?: throw IllegalStateException("directExecutionStreetId not setted")
             )
+
             directExecutionRepositoryStreetItem.save(item)
 
+            val sql = if (m.materialName.contains("led", ignoreCase = true)) {
+                """
+                    UPDATE contract_item ci
+                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                    FROM direct_execution_item di, contract_reference_item cri
+                    WHERE (cri.item_dependency = 'LED' OR ci.contract_item_id = :contractItemId)
+                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                        AND di.contract_item_id = ci.contract_item_id
+                """.trimIndent()
+            } else if (m.materialName.contains("braço", ignoreCase = true)) {
+                """
+                    UPDATE contract_item ci
+                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                    FROM direct_execution_item di, contract_reference_item cri
+                    WHERE (cri.item_dependency = 'BRAÇO' OR ci.contract_item_id = :contractItemId)
+                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                        AND di.contract_item_id = ci.contract_item_id
+                """.trimIndent()
+            } else {
+                """
+                    UPDATE contract_item
+                    SET quantity_executed = quantity_executed + :quantityExecuted
+                    WHERE contract_item_id = :contractItemId
+                """.trimIndent()
+            }
+
             namedJdbc.update(
-                "UPDATE contract_item set quantity_executed = quantity_executed + :quantityExecuted where contract_item_id = :contractItemId",
+                sql,
                 mapOf(
                     "quantityExecuted" to m.quantityExecuted,
                     "contractItemId" to m.contractItemId
-                ),
+                )
             )
 
-            val exists = existsRaw(
+            exists = existsRaw(
                 namedJdbc,
                 """
                     SELECT 1 FROM material_reservation
@@ -1008,7 +1064,7 @@ class ExecutionService(
             mapOf("directExecutionId" to directExecutionId)
         )
 
-        for(reserve in reservations) {
+        for (reserve in reservations) {
             val quantityToReturn = (reserve["quantity_to_return"] as Number).toDouble()
             val truckMaterialId = reserve["truck_material_stock_id"] as Long
             val reservationId = reserve["material_id_reservation"] as Long
@@ -1025,7 +1081,7 @@ class ExecutionService(
                 )
             )
 
-            if(quantityToReturn > 0.1) {
+            if (quantityToReturn > 0.1) {
                 namedJdbc.update(
                     """
                         UPDATE material_stock
@@ -1045,60 +1101,5 @@ class ExecutionService(
         return ResponseEntity.ok().build()
 
     }
-
-
-//
-//    fun reservationsReply(
-//        approvals: List<ReplyReserveDTO>,
-//        declinations: List<ReplyReserveDTO>,
-//        streetId: Long,
-//        userUUID: UUID
-//    ): ResponseEntity<Any> {
-//
-//        val reservations = materialReservationRepository
-//            .findAllByStreetPreMeasurementStreetId(streetId)
-//            .orElse(emptyList())
-//
-//        val approvedIds = approvals.map { it.reserveId }.toSet()
-//        val declinedIds = declinations.map { it.reserveId }.toSet()
-//
-//        val team = teamRepository.findByUserUUID(userUUID).orElse(null)
-//        val stockist = stockistRepository.findByUserUUID(userUUID)
-//        val firstDeposit = reservations.firstOrNull()?.firstDepositCity
-//
-//        val isTeam = team != null && reservations.any { it.team == team }
-//
-//        for (reserve in reservations) {
-//            when {
-//                stockist.isPresent -> {
-//                    val isFirst = stockist.get().deposit == firstDeposit
-//                    val location =
-//                        if (isFirst) MaterialReservation.Location.FIRST else MaterialReservation.Location.SECOND
-//
-//                    when (reserve.idMaterialReservation) {
-//                        in approvedIds -> reserve.confirmReservation(location)
-//                        in declinedIds -> reserve.rejectReservation(location)
-//                    }
-//                }
-//
-//                isTeam -> {
-//                    val location = MaterialReservation.Location.TRUCK
-//                    when (reserve.idMaterialReservation) {
-//                        in approvedIds -> reserve.confirmReservation(location)
-//                        in declinedIds -> reserve.rejectReservation(location)
-//                    }
-//                }
-//
-//                else -> {
-//                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-//                        .body(ErrorResponse("Usuário não tem permissão para responder a essa reserva"))
-//                }
-//            }
-//        }
-//
-//        materialReservationRepository.saveAll(reservations)
-//
-//        return ResponseEntity.ok().build()
-//    }
 
 }

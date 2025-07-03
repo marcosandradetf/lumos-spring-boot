@@ -104,7 +104,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
 
     this.contractService.getContractItems(this.contractId).subscribe({
       next: items => {
-        this.referenceItems = items.filter(i => i.type !== 'SERVIÇO' && i.type !== 'PROJETO');
+        this.referenceItems = items;
       },
       error: err => {
         this.loading = false;

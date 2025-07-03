@@ -51,7 +51,7 @@ interface IndirectExecutionDao {
         quantityExecuted: Double,
     )
 
-    @Query("SELECT reserveId, contractItemId, 0 as truckMaterialStockId, quantityExecuted FROM indirect_reserve WHERE streetId = :lng")
+    @Query("SELECT reserveId, contractItemId, 0 as truckMaterialStockId, quantityExecuted, materialName FROM indirect_reserve WHERE streetId = :lng")
     fun getReservesPartial(lng: Long): List<ReservePartial>
 
     @Query("SELECT photoUri FROM indirect_execution WHERE streetId = :lng LIMIT 1")

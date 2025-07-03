@@ -23,7 +23,6 @@ data class IndirectExecution(
     var contractor: String,
 )
 
-
 @Entity(tableName = "indirect_reserve")
 data class IndirectReserve(
     @PrimaryKey val reserveId: Long, // *_*

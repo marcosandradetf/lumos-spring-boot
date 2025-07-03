@@ -205,6 +205,14 @@ export const routes: Routes = [
   },
   //end
 
+  //start maintenance
+  {
+    path: 'manutencoes/nova',
+    loadComponent: () => import('./maintenance/maintenance.create/maintenance.create.component').then(m => m.MaintenanceCreateComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'gerenciamento-reservas'},
+  },
+
   // out
 
   {

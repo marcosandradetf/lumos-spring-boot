@@ -70,7 +70,7 @@ interface DirectExecutionDao {
     suspend fun getPhotoUri(streetId: Long): String?
 
     @Query("""
-        SELECT reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted 
+        SELECT reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted, materialName
         FROM direct_execution_street_item 
         WHERE directStreetId = :streetId
     """)

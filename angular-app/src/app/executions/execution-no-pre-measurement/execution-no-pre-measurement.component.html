@@ -6,9 +6,7 @@
   </div>
 
   @if (loading) {
-    <div class="absolute top-1/2 right-1/2">
-      <app-loading></app-loading>
-    </div>
+    <app-loading></app-loading>
 
   } @else if (nextStep && !loading) {
     @if (finish) {

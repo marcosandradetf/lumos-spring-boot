@@ -168,7 +168,8 @@ data class ReservePartial(
     val reserveId: Long = 0,
     val contractItemId: Long,
     val truckMaterialStockId: Long,
-    var quantityExecuted: Double,
+    val quantityExecuted: Double,
+    val materialName: String
 )
 
 data class SendDirectExecutionDto(

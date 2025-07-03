@@ -43,7 +43,7 @@ import java.util.concurrent.Executors
         (DirectExecutionStreet::class),
         (DirectExecutionStreetItem::class),
     ],
-    version = 3,
+    version = 4,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -57,7 +57,6 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
-
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -110,10 +109,12 @@ abstract class AppDatabase : RoomDatabase() {
                 """.trimIndent()
                 )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE UNIQUE INDEX IF NOT EXISTS index_direct_execution_street_address 
                         ON direct_execution_street(address);
-                """.trimIndent())
+                """.trimIndent()
+                )
 
                 db.execSQL(
                     """
@@ -142,7 +143,8 @@ abstract class AppDatabase : RoomDatabase() {
                 """.trimIndent()
                 )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TABLE IF NOT EXISTS indirect_execution (
                         streetId INTEGER NOT NULL PRIMARY KEY,
                         contractId INTEGER NOT NULL,
@@ -161,7 +163,8 @@ abstract class AppDatabase : RoomDatabase() {
                         photoUri TEXT,
                         contractor TEXT NOT NULL
                     );
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
 
@@ -200,25 +203,45 @@ abstract class AppDatabase : RoomDatabase() {
                 """.trimIndent()
                 )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     alter table direct_execution_street
                     rename column contractId to directExecutionId;
-                """.trimIndent())
+                """.trimIndent()
+                )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     alter table direct_execution_street
                     rename column contractor to description;
-                """.trimIndent())
+                """.trimIndent()
+                )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     alter table direct_execution_street_item
                     add column reserveId INTEGER NOT NULL;
-                """.trimIndent())
+                """.trimIndent()
+                )
 
 
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DELETE FROM direct_execution_street")
+
+                db.execSQL("DELETE FROM direct_execution_street_item")
+
+                db.execSQL(
+                    """
+                        ALTER TABLE direct_execution_street_item
+                        ADD COLUMN materialName TEXT NOT NULL
+                    """.trimIndent()
+                )
+            }
+        }
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -226,15 +249,14 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                )
-                    .addMigrations(
-                        MIGRATION_1_2,
-                        MIGRATION_2_3,
-                    )
-                    .setQueryCallback({ sqlQuery, bindArgs ->
-                        Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
-                    }, Executors.newSingleThreadExecutor())
-                    .build()
+                ).addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                ).setQueryCallback({ sqlQuery, bindArgs ->
+                    Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
+                }, Executors.newSingleThreadExecutor()).build()
+
                 INSTANCE = instance
                 instance
             }
