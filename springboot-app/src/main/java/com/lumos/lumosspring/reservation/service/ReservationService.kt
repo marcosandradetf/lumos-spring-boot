@@ -60,7 +60,7 @@ class ReservationService(
                     )
                 )
 
-                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
+//                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
             } else if (replies.rejected.contains(ReserveItem(reservationId))) {
 
                 namedJdbc.update(

@@ -275,13 +275,14 @@ fun StreetMaterialScreen(
             closeAlertModal = {
                 alertModal = false
             },
-            changeMaterial = { materialStockId, contractItemId, selected, reserveId ->
+            changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
                 if (selected) {
                     val newItem = DirectExecutionStreetItem(
                         reserveId = reserveId,
                         materialStockId = materialStockId,
                         contractItemId = contractItemId,
-                        quantityExecuted = 0.0
+                        quantityExecuted = 0.0,
+                        materialName = materialName
                     )
                     streetItems = streetItems + newItem
                 } else {
@@ -349,7 +350,7 @@ fun StreetMaterialsContent(
     markAsFinish: () -> Unit,
     locationModal: Boolean,
     confirmLocation: (Boolean) -> Unit,
-    changeMaterial: (Long, Long, Boolean, Long) -> Unit,
+    changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
     changeQuantity: (Double, Double, Long) -> Unit,
     hasPosted: Boolean,
     errorMessage: String?,
@@ -524,8 +525,8 @@ fun StreetMaterialsContent(
                                     reserveId
                                 )
                             },
-                            changeMaterial = { materialStockId, contractItemId, selected, reserveId ->
-                                changeMaterial(materialStockId, contractItemId, selected, reserveId)
+                            changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
+                                changeMaterial(materialStockId, contractItemId, selected, reserveId, materialName)
                             },
                             streetItems = streetItems,
                         )
@@ -723,7 +724,7 @@ fun StreetMaterialsContent(
 @Composable
 fun MaterialItem(
     material: DirectReserve,
-    changeMaterial: (Long, Long, Boolean, Long) -> Unit,
+    changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
     changeQuantity: (Double, Double, Long) -> Unit,
     streetItems: List<DirectExecutionStreetItem>
 ) {
@@ -889,7 +890,8 @@ fun MaterialItem(
                                         material.materialStockId,
                                         material.contractItemId,
                                         isChecked,
-                                        material.reserveId
+                                        material.reserveId,
+                                        material.materialName
                                     )
                                 },
                                 colors = IconToggleButtonColors(
@@ -1034,7 +1036,7 @@ fun PrevMStreetScreen() {
         closeAlertModal = { },
         hasPosted = false,
         errorMessage = null,
-        changeMaterial = { _, _, _, _ -> },
+        changeMaterial = { _, _, _, _,_ -> },
         openConfirmModal = false,
         changeQuantity = { _, _, _ -> },
         alertMessage = mutableMapOf(

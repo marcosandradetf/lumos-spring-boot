@@ -18,6 +18,7 @@ import com.lumos.lumosspring.util.*
 import com.lumos.lumosspring.util.JdbcUtil.existsRaw
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import jakarta.transaction.Transactional
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
@@ -217,8 +218,7 @@ class ExecutionService(
                         "inner join team t on t.id_team = de.team_id \n" +
                         "inner join deposit d on d.id_deposit = t.deposit_id_deposit \n" +
                         "inner join app_user au on au.user_id = de.assigned_user_id \n" +
-                        "where de.reservation_management_id = :reservation_management_id \n" +
-                        "and ",
+                        "where de.reservation_management_id = :reservation_management_id \n",
                 mapOf("reservation_management_id" to reservationManagementId)
             )
 
@@ -953,23 +953,26 @@ class ExecutionService(
 
             directExecutionRepositoryStreetItem.save(item)
 
-            val sql = if (m.materialName.contains("led", ignoreCase = true)) {
+            val hasService = when {
+                m.materialName.contains("led", ignoreCase = true) -> "led"
+                m.materialName.contains("braço", ignoreCase = true) -> "braço"
+                else -> null
+            }
+
+            val sql = if (hasService != null) {
                 """
-                    UPDATE contract_item ci
-                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
-                    FROM direct_execution_item di, contract_reference_item cri
-                    WHERE (cri.item_dependency = 'LED' OR ci.contract_item_id = :contractItemId)
-                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
-                        AND di.contract_item_id = ci.contract_item_id
-                """.trimIndent()
-            } else if (m.materialName.contains("braço", ignoreCase = true)) {
-                """
-                    UPDATE contract_item ci
-                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
-                    FROM direct_execution_item di, contract_reference_item cri
-                    WHERE (cri.item_dependency = 'BRAÇO' OR ci.contract_item_id = :contractItemId)
-                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
-                        AND di.contract_item_id = ci.contract_item_id
+                    WITH updated AS (
+                        UPDATE contract_item ci
+                        SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                        FROM direct_execution_item di, contract_reference_item cri
+                        WHERE (lower(cri.item_dependency) = :dependency OR ci.contract_item_id = :contractItemId)
+                            AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                            AND di.contract_item_id = ci.contract_item_id
+                        RETURNING ci.contract_item_id, cri.item_dependency
+                    )
+                    SELECT contract_item_id
+                    FROM updated
+                    WHERE item_dependency = :dependency
                 """.trimIndent()
             } else {
                 """
@@ -979,13 +982,27 @@ class ExecutionService(
                 """.trimIndent()
             }
 
-            namedJdbc.update(
-                sql,
-                mapOf(
-                    "quantityExecuted" to m.quantityExecuted,
-                    "contractItemId" to m.contractItemId
-                )
+            val params = mutableMapOf<String, Any?>(
+                "quantityExecuted" to m.quantityExecuted,
+                "contractItemId" to m.contractItemId
             )
+
+            hasService?.let { params["dependency"] = it }
+
+            val servicesData: List<Map<String, Any>> = getRawData(namedJdbc, sql, params)
+
+            for(s in servicesData) {
+                val serviceItemId = s["contract_item_id"] as Long
+                val item = DirectExecutionStreetItem(
+                    executedQuantity = m.quantityExecuted,
+                    materialStockId = m.truckMaterialStockId,
+                    contractItemId = serviceItemId,
+                    directExecutionStreetId = executionStreet.directExecutionStreetId
+                        ?: throw IllegalStateException("directExecutionStreetId not setted")
+                )
+                directExecutionRepositoryStreetItem.save(item)
+            }
+
 
             exists = existsRaw(
                 namedJdbc,
