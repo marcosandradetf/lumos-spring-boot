@@ -8,7 +8,7 @@ data class DirectExecutionStreetItem (
     @Id
     var directExecutionStreetItemId: Long? = null,
     var executedQuantity: Double = 0.0,
-    var materialStockId: Long,
+    var materialStockId: Long?,
     var contractItemId: Long,
     var directExecutionStreetId: Long
 )

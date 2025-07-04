@@ -176,9 +176,15 @@ class ExecutionService(
                 val directExecutionItem = DirectExecutionItem(
                     measuredItemQuantity = item.quantity,
                     contractItemId = ciq.contractItemId,
+                    itemStatus = if (listOf(
+                            "SERVIÇO",
+                            "PROJETO"
+                        ).contains(ciq.referenceItem.type)
+                    ) ReservationStatus.FINISHED else ReservationStatus.PENDING,
                     directExecutionId = directExecution.directExecutionId
-                        ?: throw IllegalStateException("Id da execução não encontrado")
-                )
+                        ?: throw IllegalStateException("Id da execução não encontrado"),
+
+                    )
                 directExecutionItemRepository.save(directExecutionItem)
             }
         }
@@ -991,11 +997,11 @@ class ExecutionService(
 
             val servicesData: List<Map<String, Any>> = getRawData(namedJdbc, sql, params)
 
-            for(s in servicesData) {
+            for (s in servicesData) {
                 val serviceItemId = s["contract_item_id"] as Long
                 val item = DirectExecutionStreetItem(
                     executedQuantity = m.quantityExecuted,
-                    materialStockId = m.truckMaterialStockId,
+                    materialStockId = null,
                     contractItemId = serviceItemId,
                     directExecutionStreetId = executionStreet.directExecutionStreetId
                         ?: throw IllegalStateException("directExecutionStreetId not setted")
