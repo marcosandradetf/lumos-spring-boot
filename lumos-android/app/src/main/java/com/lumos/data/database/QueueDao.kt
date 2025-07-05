@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.worker.SyncStatus
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface QueueDao {
@@ -49,5 +50,17 @@ interface QueueDao {
         where: String,
         equal: String
     ): Int
+
+    @Query(
+        """
+            SELECT * FROM sync_queue_entity
+           ORDER BY priority ASC, createdAt ASC
+        """
+    )
+    fun getFlowItemsToProcess(
+//        pending: String = SyncStatus.PENDING,
+//        inProgress: String = SyncStatus.IN_PROGRESS,
+//        failed: String = SyncStatus.FAILED,
+    ): Flow<List<SyncQueueEntity>>
 
 }

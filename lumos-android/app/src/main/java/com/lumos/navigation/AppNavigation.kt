@@ -55,6 +55,7 @@ import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
 import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
+import com.lumos.ui.sync.SyncScreen
 import com.lumos.ui.updater.ApkUpdateDownloader
 import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
@@ -62,6 +63,7 @@ import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
+import com.lumos.ui.viewmodel.SyncViewModel
 import com.lumos.worker.SyncManager.enqueueSync
 import com.lumos.worker.SyncManager.schedulePeriodicSync
 import kotlinx.coroutines.Dispatchers
@@ -140,7 +142,6 @@ fun AppNavigation(
 
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
 
-
     val notificationViewModel: NotificationViewModel = viewModel {
         val notificationDao = app.database.notificationDao()
 
@@ -153,6 +154,12 @@ fun AppNavigation(
     }
 
     val notificationManager = NotificationManager(app.applicationContext, secureStorage)
+
+    val syncViewModel: SyncViewModel = viewModel {
+        SyncViewModel(
+            db = app.database
+        )
+    }
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated == true) {
@@ -636,6 +643,15 @@ fun AppNavigation(
                     )
                 }
 
+                composable(Routes.SYNC) {
+                    SyncScreen(
+                        context = LocalContext.current,
+                        navController,
+                        notifications.size.toString(),
+                        syncViewModel,
+                    )
+                }
+
             }
         }
     }
@@ -663,4 +679,5 @@ object Routes {
     const val DIRECT_EXECUTION_SCREEN = "direct-execution-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
     const val UPDATE = "update"
+    const val SYNC = "sync"
 }
