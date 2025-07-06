@@ -965,29 +965,6 @@ class ExecutionService(
                 else -> null
             }
 
-            val sql = if (hasService != null) {
-                """
-                    WITH updated AS (
-                        UPDATE contract_item ci
-                        SET quantity_executed = quantity_executed + :quantityExecuted
-                        FROM direct_execution_item di, contract_reference_item cri
-                        WHERE (lower(cri.item_dependency) = :dependency OR ci.contract_item_id = :contractItemId)
-                            AND cri.contract_reference_item_id = ci.contract_item_reference_id
-                            AND di.contract_item_id = ci.contract_item_id
-                        RETURNING ci.contract_item_id, cri.item_dependency
-                    )
-                    SELECT contract_item_id
-                    FROM updated
-                    WHERE item_dependency = :dependency
-                """.trimIndent()
-            } else {
-                """
-                    UPDATE contract_item
-                    SET quantity_executed = quantity_executed + :quantityExecuted
-                    WHERE contract_item_id = :contractItemId
-                """.trimIndent()
-            }
-
             val params = mutableMapOf<String, Any?>(
                 "quantityExecuted" to m.quantityExecuted,
                 "contractItemId" to m.contractItemId
@@ -995,19 +972,52 @@ class ExecutionService(
 
             hasService?.let { params["dependency"] = it }
 
-            val servicesData: List<Map<String, Any>> = getRawData(namedJdbc, sql, params)
+            if (hasService != null) {
+                val servicesData: List<Map<String, Any>> =
+                    getRawData(
+                        namedJdbc,
+                        """
+                            WITH updated AS (
+                                UPDATE contract_item ci
+                                SET quantity_executed = quantity_executed + :quantityExecuted
+                                FROM direct_execution_item di, contract_reference_item cri
+                                WHERE (lower(cri.item_dependency) = :dependency OR ci.contract_item_id = :contractItemId)
+                                    AND cri.contract_reference_item_id = ci.contract_item_reference_id
+                                    AND di.contract_item_id = ci.contract_item_id
+                                RETURNING ci.contract_item_id, cri.item_dependency
+                            )
+                            SELECT contract_item_id
+                            FROM updated
+                            WHERE item_dependency = :dependency
+                        """.trimIndent(),
+                        params
+                    )
 
-            for (s in servicesData) {
-                val serviceItemId = s["contract_item_id"] as Long
-                val item = DirectExecutionStreetItem(
-                    executedQuantity = m.quantityExecuted,
-                    materialStockId = null,
-                    contractItemId = serviceItemId,
-                    directExecutionStreetId = executionStreet.directExecutionStreetId
-                        ?: throw IllegalStateException("directExecutionStreetId not setted")
+                for (s in servicesData) {
+                    val serviceItemId = s["contract_item_id"] as Long
+                    val item = DirectExecutionStreetItem(
+                        executedQuantity = m.quantityExecuted,
+                        materialStockId = null,
+                        contractItemId = serviceItemId,
+                        directExecutionStreetId = executionStreet.directExecutionStreetId
+                            ?: throw IllegalStateException("directExecutionStreetId not set")
+                    )
+                    directExecutionRepositoryStreetItem.save(item)
+                }
+
+            } else {
+
+                // Use update porque não há retorno
+                namedJdbc.update(
+                    """
+                            UPDATE contract_item
+                            SET quantity_executed = quantity_executed + :quantityExecuted
+                            WHERE contract_item_id = :contractItemId
+                    """.trimIndent(),
+                    params
                 )
-                directExecutionRepositoryStreetItem.save(item)
             }
+
 
 
             exists = existsRaw(
