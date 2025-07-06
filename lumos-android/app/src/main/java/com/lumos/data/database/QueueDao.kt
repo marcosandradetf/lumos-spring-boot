@@ -64,10 +64,11 @@ interface QueueDao {
     @Query(
         """
             SELECT distinct type FROM sync_queue_entity
+            where status = :status
             ORDER BY priority ASC, createdAt ASC
         """
     )
-    fun getFlowItemsToProcess(): Flow<List<String>>
+    fun getFlowItemsToProcess(status: String = SyncStatus.FAILED): Flow<List<String>>
 
     @Query(
         """
@@ -81,5 +82,19 @@ interface QueueDao {
         type: String,
         status: String = SyncStatus.PENDING
     )
+
+    @Query(
+        """
+            SELECT EXISTS(
+                SELECT 1 FROM sync_queue_entity
+                WHERE relatedId = :relatedId AND type = :type
+            )
+        """
+    )
+    suspend fun exists(
+        relatedId: Long,
+        type: String,
+    ): Boolean
+
 
 }

@@ -70,7 +70,7 @@ fun SyncScreenContent(
 ) {
 
     AppLayout(
-        title = "Sincronizações pendentes",
+        title = "Sincronizações com falha",
         notificationsBadge = currentNotifications,
         context = context,
         navController = navController,

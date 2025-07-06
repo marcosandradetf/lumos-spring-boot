@@ -70,13 +70,14 @@ class SyncViewModel(
     fun retry(relatedId: Long, type: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                db.queueDao().retry(relatedId, type)
-                SyncManager.enqueueSync(context, true)
+                if (!db.queueDao().exists(relatedId, type)) {
+                    db.queueDao().retry(relatedId, type)
+                    SyncManager.enqueueSync(context, true)
+                }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Erro ao agendar envio"
             } finally {
                 _message.value = "Tarefa reagendada com sucesso."
-                _message.value = ""
             }
         }
     }

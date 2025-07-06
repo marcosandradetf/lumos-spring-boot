@@ -65,10 +65,10 @@ fun SyncDetailsScreen(
     val message by syncViewModel.message.collectAsState()
 
     LaunchedEffect(Unit) {
-        syncItems = syncViewModel.getItems(type).toMutableList()
+        syncItems = syncViewModel.getItems(type)
         if (type == SyncTypes.POST_DIRECT_EXECUTION) {
             val streetIds = syncItems.map { it.relatedId!! }
-            streets = syncViewModel.getStreets(streetIds).toMutableList()
+            streets = syncViewModel.getStreets(streetIds)
         }
     }
 
@@ -87,6 +87,9 @@ fun SyncDetailsScreen(
                 type = type,
                 context = applicationContext,
             )
+
+            syncItems = syncItems.filter { s -> s.relatedId != it }
+            streets = streets.filter { s -> s.directStreetId != it }
         }
     )
 
@@ -110,6 +113,7 @@ fun SyncDetailsScreenContent(
     }
     var expandedItemId by remember { mutableStateOf<Long?>(null) }
     var syncItem by remember { mutableStateOf<SyncQueueEntity?>(null) }
+    var lastMessageShown by remember { mutableStateOf("") }
 
     AppLayout(
         title = type,
@@ -123,14 +127,12 @@ fun SyncDetailsScreenContent(
         pSelected = BottomBar.PROFILE.value
     ) { modifier, snackBar ->
 
-        if (message.isNotEmpty()) {
+        if (message.isNotBlank() && message != lastMessageShown) {
             snackBar(message, null)
+            lastMessageShown = message
         }
 
-        if (loading)
-            Box {
-                Loading("Carregando")
-            }
+        if (loading) Loading("Carregando")
         else if (streets.isEmpty()) NothingData("Nenhuma rua encontrada")
         else {
             if (syncItem != null) {
