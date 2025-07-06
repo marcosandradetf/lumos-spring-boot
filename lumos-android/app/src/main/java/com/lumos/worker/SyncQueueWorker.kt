@@ -464,14 +464,14 @@ class SyncQueueWorker(
             is RequestResult.NoInternet -> Result.retry()
             is RequestResult.Timeout -> Result.retry()
             is RequestResult.ServerError -> {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED, errorMessage = response.message))
                 Result.retry()
             }
 
             is RequestResult.UnknownError -> {
 
                 // Marca como failed para evitar retries automáticos
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED, errorMessage = response.error.message))
 
                 // Pode enviar para um sistema de logs, Crashlytics etc
 //                Crashlytics.logException(Exception("Erro desconhecido na sync: $inProgressItem"))

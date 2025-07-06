@@ -9,7 +9,7 @@ import {StockService} from '../../stock/services/stock.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {ExecutionService} from '../../executions/execution.service';
 import {ContractService} from '../../contract/services/contract.service';
-import {DirectExecutionDTO, StockistModel} from '../../executions/executions.model';
+import {StockistModel} from '../../executions/executions.model';
 import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {TeamsModel} from '../../models/teams.model';
@@ -21,6 +21,7 @@ import {Skeleton} from 'primeng/skeleton';
 import {TableModule} from 'primeng/table';
 import {FloatLabel} from 'primeng/floatlabel';
 import {InputText} from 'primeng/inputtext';
+import {Carousel} from 'primeng/carousel';
 
 @Component({
   selector: 'app-maintenance.create',
@@ -37,31 +38,37 @@ import {InputText} from 'primeng/inputtext';
     Skeleton,
     TableModule,
     FloatLabel,
-    InputText
+    InputText,
+    Carousel
   ],
   templateUrl: './maintenance.create.component.html',
   styleUrl: './maintenance.create.component.scss'
 })
 export class MaintenanceCreateComponent implements OnInit {
   private contractId: number = 0;
+  private currentUserUUID: string = '';
+
   loading = false;
   contractor: string | null = null;
   teamName: string | null = null;
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
   address: string | null = null;
 
-  execution: DirectExecutionDTO = {
-    contractId: 0,
-    teamId: 1,
-    stockistId: '',
-    currentUserUUID: '',
-    instructions: null,
-    items: [],
-  }
+  execution: {
+    contractId: number,
+    teamId: number,
+    stockistId: string,
+    currentUserUUID: string,
+    instructions: string | null;
+    items: {
+      contractItemId: number,
+      quantity: number,
+    }[],
+  }[] = [];
+
   teams: TeamsModel[] = [];
   stockists: StockistModel[] = [];
   referenceItems: ContractItemsResponse[] = [];
-
 
   constructor(private route: ActivatedRoute,
               protected utils: UtilsService,
@@ -87,8 +94,7 @@ export class MaintenanceCreateComponent implements OnInit {
       return;
     }
     this.contractId = Number(contractId);
-    this.execution.contractId = this.contractId;
-    this.execution.currentUserUUID = this.authService.getUser().uuid;
+    this.currentUserUUID = this.authService.getUser().uuid;
     this.getEssentialsData();
   }
 

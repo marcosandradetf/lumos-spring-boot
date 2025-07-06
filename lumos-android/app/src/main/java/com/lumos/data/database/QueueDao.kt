@@ -29,6 +29,16 @@ interface QueueDao {
         maxAttempts: Int = 5
     ): List<SyncQueueEntity>
 
+    @Query(
+        """
+            SELECT * FROM sync_queue_entity
+            WHERE type = :type
+        """
+    )
+    suspend fun getItem(
+        type: String,
+    ): List<SyncQueueEntity>
+
     @Update
     suspend fun update(item: SyncQueueEntity)
 
@@ -53,14 +63,23 @@ interface QueueDao {
 
     @Query(
         """
-            SELECT * FROM sync_queue_entity
-           ORDER BY priority ASC, createdAt ASC
+            SELECT distinct status FROM sync_queue_entity
+            ORDER BY priority ASC, createdAt ASC
         """
     )
-    fun getFlowItemsToProcess(
-//        pending: String = SyncStatus.PENDING,
-//        inProgress: String = SyncStatus.IN_PROGRESS,
-//        failed: String = SyncStatus.FAILED,
-    ): Flow<List<SyncQueueEntity>>
+    fun getFlowItemsToProcess(): Flow<List<String>>
+
+    @Query(
+        """
+        update sync_queue_entity
+        set status = :status
+        where relatedId = :relatedId and type = :type
+    """
+    )
+    suspend fun retry(
+        relatedId: Long,
+        type: String,
+        status: String = SyncStatus.PENDING
+    )
 
 }

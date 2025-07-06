@@ -13,8 +13,7 @@ import com.lumos.domain.model.SyncQueueEntity
 import java.util.concurrent.TimeUnit
 
 object SyncManager {
-
-    fun enqueueSync(context: Context) {
+    fun enqueueSync(context: Context, force: Boolean = false) {
         val constraints = Constraints.Builder()
             .setRequiresBatteryNotLow(false)
             .build()
@@ -27,12 +26,19 @@ object SyncManager {
             )
             .build()
 
+        val workPolicy = if (force) {
+            ExistingWorkPolicy.REPLACE
+        } else {
+            ExistingWorkPolicy.KEEP
+        }
+
         WorkManager.getInstance(context).enqueueUniqueWork(
             "SyncQueueWorker",
-            ExistingWorkPolicy.REPLACE,
+            workPolicy,
             request
         )
     }
+
 
     fun schedulePeriodicSync(context: Context) {
         val constraints = Constraints.Builder()

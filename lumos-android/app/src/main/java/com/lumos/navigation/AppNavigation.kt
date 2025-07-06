@@ -55,6 +55,7 @@ import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
 import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
+import com.lumos.ui.sync.SyncDetailsScreen
 import com.lumos.ui.sync.SyncScreen
 import com.lumos.ui.updater.ApkUpdateDownloader
 import com.lumos.ui.viewmodel.AuthViewModel
@@ -617,7 +618,8 @@ fun AppNavigation(
 
                 composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{directExecutionId}/{description}") { backStackEntry ->
                     val directExecutionId =
-                        backStackEntry.arguments?.getString("directExecutionId")?.toLongOrNull() ?: 0
+                        backStackEntry.arguments?.getString("directExecutionId")?.toLongOrNull()
+                            ?: 0
                     val description =
                         backStackEntry.arguments?.getString("description") ?: ""
 
@@ -649,6 +651,19 @@ fun AppNavigation(
                         navController,
                         notifications.size.toString(),
                         syncViewModel,
+                    )
+                }
+
+                composable(Routes.SYNC + "/{type}") { backStackEntry ->
+                    val type = backStackEntry.arguments?.getString("type") ?: ""
+
+                    SyncDetailsScreen(
+                        applicationContext = app.applicationContext,
+                        context = LocalContext.current,
+                        navController,
+                        notifications.size.toString(),
+                        syncViewModel,
+                        type,
                     )
                 }
 

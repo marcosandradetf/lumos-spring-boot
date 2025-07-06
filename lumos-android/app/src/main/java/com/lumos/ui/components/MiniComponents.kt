@@ -239,8 +239,108 @@ fun Alert(
         )
 }
 
+
+@Composable
+fun Option(
+    title: String = "Confirmação",
+    body: String = "Você tem certeza?",
+    icon: ImageVector? = null,
+    confirm: () -> Unit,
+    cancel: () -> Unit,
+) {
+    AlertDialog(
+        shape = RoundedCornerShape(12.dp),
+        onDismissRequest = cancel,
+        icon = {
+            icon?.let {
+                Icon(it, contentDescription = "Icon")
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = body,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        },
+
+        confirmButton = {},
+        dismissButton = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 0.dp)
+            ) {
+
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { confirm() }
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Sim",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                    }
+
+
+
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { cancel() }
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Não",
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
+        },
+
+        )
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-    Loading("Tentando carregar as coordenadas...")
+    Option(
+        title = "Selecione a opção desejada",
+        body = "",
+        confirm = {
+
+        },
+        cancel = {
+
+        }
+    ) 
 }
