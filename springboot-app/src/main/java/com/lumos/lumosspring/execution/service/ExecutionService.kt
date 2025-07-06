@@ -850,7 +850,7 @@ class ExecutionService(
             val sql = if (r.materialName.contains("led", ignoreCase = true)) {
                 """
                     UPDATE contract_item ci
-                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                    SET quantity_executed = quantity_executed + :quantityExecuted
                     FROM pre_measurement_street_item pmsi, contract_reference_item cri
                     WHERE (cri.item_dependency = 'LED' OR ci.contract_item_id = :contractItemId)
                         AND cri.contract_reference_item_id = ci.contract_item_reference_id
@@ -859,7 +859,7 @@ class ExecutionService(
             } else if (r.materialName.contains("braço", ignoreCase = true)) {
                 """
                     UPDATE contract_item ci
-                    SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                    SET quantity_executed = quantity_executed + :quantityExecuted
                     FROM pre_measurement_street_item pmsi, contract_reference_item cri
                     WHERE (cri.item_dependency = 'BRAÇO' OR ci.contract_item_id = :contractItemId)
                         AND cri.contract_reference_item_id = ci.contract_item_reference_id
@@ -969,7 +969,7 @@ class ExecutionService(
                 """
                     WITH updated AS (
                         UPDATE contract_item ci
-                        SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
+                        SET quantity_executed = quantity_executed + :quantityExecuted
                         FROM direct_execution_item di, contract_reference_item cri
                         WHERE (lower(cri.item_dependency) = :dependency OR ci.contract_item_id = :contractItemId)
                             AND cri.contract_reference_item_id = ci.contract_item_reference_id
