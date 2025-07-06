@@ -76,6 +76,7 @@ class SyncViewModel(
                 _message.value = e.message ?: "Erro ao agendar envio"
             } finally {
                 _message.value = "Tarefa reagendada com sucesso."
+                _message.value = ""
             }
         }
     }

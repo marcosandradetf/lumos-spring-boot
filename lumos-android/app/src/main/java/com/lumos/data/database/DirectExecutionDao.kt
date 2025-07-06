@@ -92,8 +92,6 @@ interface DirectExecutionDao {
     @Query("UPDATE direct_execution set executionStatus = 'FINISHED' WHERE directExecutionId = :directExecutionId")
     suspend fun markAsFinished(directExecutionId: Long)
 
-
-
     @Query("""
         SELECT *
         FROM direct_execution_street

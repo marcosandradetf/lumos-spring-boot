@@ -58,23 +58,20 @@ fun SyncDetailsScreen(
     syncViewModel: SyncViewModel,
     type: String,
 ) {
-    var syncItems = mutableListOf<SyncQueueEntity>()
-    var streets = mutableListOf<DirectExecutionStreet>()
+    var syncItems by remember { mutableStateOf<List<SyncQueueEntity>>(emptyList()) }
+    var streets by remember { mutableStateOf<List<DirectExecutionStreet>>(emptyList()) }
 
     val loading by syncViewModel.loading.collectAsState()
     val message by syncViewModel.message.collectAsState()
 
     LaunchedEffect(Unit) {
         syncItems = syncViewModel.getItems(type).toMutableList()
-    }
-
-    LaunchedEffect(syncItems) {
         if (type == SyncTypes.POST_DIRECT_EXECUTION) {
             val streetIds = syncItems.map { it.relatedId!! }
             streets = syncViewModel.getStreets(streetIds).toMutableList()
         }
     }
-    
+
     SyncDetailsScreenContent(
         streets,
         syncItems,
@@ -126,7 +123,9 @@ fun SyncDetailsScreenContent(
         pSelected = BottomBar.PROFILE.value
     ) { modifier, snackBar ->
 
-        if (message.isNotEmpty()) snackBar(message, null)
+        if (message.isNotEmpty()) {
+            snackBar(message, null)
+        }
 
         if (loading)
             Box {

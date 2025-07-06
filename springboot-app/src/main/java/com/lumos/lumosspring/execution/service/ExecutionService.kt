@@ -853,7 +853,7 @@ class ExecutionService(
                     SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
                     FROM pre_measurement_street_item pmsi, contract_reference_item cri
                     WHERE (cri.item_dependency = 'LED' OR ci.contract_item_id = :contractItemId)
-                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                        AND cri.contract_reference_item_id = ci.contract_item_reference_id
                         AND pmsi.contract_item_id = ci.contract_item_id
                 """.trimIndent()
             } else if (r.materialName.contains("braço", ignoreCase = true)) {
@@ -862,7 +862,7 @@ class ExecutionService(
                     SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
                     FROM pre_measurement_street_item pmsi, contract_reference_item cri
                     WHERE (cri.item_dependency = 'BRAÇO' OR ci.contract_item_id = :contractItemId)
-                        AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                        AND cri.contract_reference_item_id = ci.contract_item_reference_id
                         AND pmsi.contract_item_id = ci.contract_item_id
                 """.trimIndent()
             } else {
@@ -972,7 +972,7 @@ class ExecutionService(
                         SET ci.quantity_executed = ci.quantity_executed + :quantityExecuted
                         FROM direct_execution_item di, contract_reference_item cri
                         WHERE (lower(cri.item_dependency) = :dependency OR ci.contract_item_id = :contractItemId)
-                            AND cri.contract_reference_item_id = ci.contract_reference_item_id
+                            AND cri.contract_reference_item_id = ci.contract_item_reference_id
                             AND di.contract_item_id = ci.contract_item_id
                         RETURNING ci.contract_item_id, cri.item_dependency
                     )

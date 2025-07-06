@@ -63,7 +63,7 @@ interface QueueDao {
 
     @Query(
         """
-            SELECT distinct status FROM sync_queue_entity
+            SELECT distinct type FROM sync_queue_entity
             ORDER BY priority ASC, createdAt ASC
         """
     )

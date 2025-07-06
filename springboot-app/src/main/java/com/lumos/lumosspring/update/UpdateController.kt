@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class UpdateController {
 
-    private val latestVersionCode = 5L
-    private val latestVersionName = "2.1.2"
+    private val latestVersionCode = 6L
+    private val latestVersionName = "2.1.3"
     private val apkUrl = "https://minio.thryon.com.br/apk/com.thryon.apps.android.release_5_2.1.2.apk"
 
 
