@@ -27,15 +27,12 @@ class SyncViewModel(
 
     fun syncFlowItems() {
         viewModelScope.launch(Dispatchers.IO) {
-            _loading.value = true
             try {
                 db.queueDao().getFlowItemsToProcess().collectLatest {
                     _syncItems.value = it
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Problema ao carregar os itens"
-            } finally {
-                _loading.value = false
             }
         }
     }
@@ -46,6 +43,7 @@ class SyncViewModel(
             try {
                 db.queueDao().getItem(type)
             } catch (e: Exception) {
+                _loading.value = false
                 _message.value = e.message ?: "Problema ao carregar os itens"
                 emptyList()
             } finally {
@@ -60,6 +58,7 @@ class SyncViewModel(
             try {
                 db.directExecutionDao().getStreets(streetIds)
             } catch (e: Exception) {
+                _loading.value = false
                 _message.value = e.message ?: "Problema ao carregar as ruas"
                 emptyList()
             } finally {
