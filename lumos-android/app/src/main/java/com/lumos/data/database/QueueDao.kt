@@ -96,5 +96,8 @@ interface QueueDao {
         type: String,
     ): Boolean
 
+    @Query("DELETE FROM sync_queue_entity WHERE relatedId = :id and type = :type")
+    suspend fun deleteByRelatedId(id: Long, type: String)
+
 
 }

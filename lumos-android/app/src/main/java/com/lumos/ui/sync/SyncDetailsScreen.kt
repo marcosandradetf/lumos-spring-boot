@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Error
@@ -90,6 +91,15 @@ fun SyncDetailsScreen(
 
             syncItems = syncItems.filter { s -> s.relatedId != it }
             streets = streets.filter { s -> s.directStreetId != it }
+        },
+        cancel = {
+            syncViewModel.cancel(
+                relatedId = it,
+                type = type,
+            )
+
+            syncItems = syncItems.filter { s -> s.relatedId != it }
+            streets = streets.filter { s -> s.directStreetId != it }
         }
     )
 
@@ -105,7 +115,8 @@ fun SyncDetailsScreenContent(
     currentNotifications: String,
     context: Context,
     navController: NavHostController,
-    retry: (Long) -> Unit
+    retry: (Long) -> Unit,
+    cancel: (Long) -> Unit
 ) {
     val type = when (syncType) {
         SyncTypes.POST_DIRECT_EXECUTION -> "Sincronizaçoes de execuções"
@@ -208,6 +219,16 @@ fun SyncDetailsScreenContent(
                             DropdownMenuItem(
                                 onClick = {
                                     expandedItemId = null
+                                    cancel(street.directStreetId)
+                                },
+                                text = { Text("Cancelar o envio") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Cancel, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    expandedItemId = null
                                     Toast.makeText(
                                         context,
                                         "Recurso não implementado",
@@ -249,6 +270,7 @@ fun PrevSyncDetails() {
         currentNotifications = "10",
         context = LocalContext.current,
         navController = rememberNavController(),
-        retry = {}
+        retry = {},
+        cancel = {}
     )
 }

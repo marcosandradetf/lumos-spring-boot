@@ -70,7 +70,7 @@ class SyncViewModel(
     fun retry(relatedId: Long, type: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (!db.queueDao().exists(relatedId, type)) {
+                if (db.queueDao().exists(relatedId, type)) {
                     db.queueDao().retry(relatedId, type)
                     SyncManager.enqueueSync(context, true)
                 }
@@ -78,6 +78,21 @@ class SyncViewModel(
                 _message.value = e.message ?: "Erro ao agendar envio"
             } finally {
                 _message.value = "Tarefa reagendada com sucesso."
+            }
+        }
+    }
+
+    fun cancel(relatedId: Long, type: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (db.queueDao().exists(relatedId, type)) {
+                    db.queueDao().deleteByRelatedId(relatedId, type)
+                    db.directExecutionDao().deleteStreet(relatedId)
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Erro ao cancelar envio"
+            } finally {
+                _message.value = "Envio cancelado com sucesso."
             }
         }
     }
