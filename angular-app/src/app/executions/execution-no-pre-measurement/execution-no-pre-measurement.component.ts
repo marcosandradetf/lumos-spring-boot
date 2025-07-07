@@ -106,7 +106,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
       next: items => {
         this.referenceItems = items;
       },
-      error: err => {
+      error: (err) => {
         this.loading = false;
         this.utils.showMessage(err.error.message, 'error');
       },
@@ -256,9 +256,9 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
       next: () => {
         this.finish = true;
       },
-      error: err => {
+      error: (error) => {
         this.loading = false;
-        this.utils.showMessage(err.error.message, "error", "Problema ao criar etapa");
+        this.utils.showMessage(error.error.message, "error", "Etapa não criada");
       },
       complete: () => {
         this.loading = false;

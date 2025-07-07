@@ -12,8 +12,7 @@ class UpdateController {
 
     private val latestVersionCode = 6L
     private val latestVersionName = "2.1.3"
-    private val apkUrl = "https://minio.thryon.com.br/apk/com.thryon.apps.android.release_5_2.1.2.apk"
-
+    private val apkUrl = "https://minio.thryon.com.br/apk/com.thryon.apps.android.release_6_2.1.3.apk"
 
     @GetMapping("/mobile/check-update")
     fun checkUpdate(@RequestParam version: Long): ResponseEntity<Any> {
