@@ -2,6 +2,8 @@ package com.lumos.utils
 
 import android.content.Context
 import android.os.Environment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -21,73 +23,52 @@ object UpdateManager {
     )
 
 
-    fun downloadApk(
+    suspend fun downloadApk(
         context: Context,
         url: String,
-        onProgress: (Int) -> Unit,
-        onComplete: (File) -> Unit,
-        onError: (Throwable) -> Unit
-    ) {
+        onProgress: (Int) -> Unit
+    ): File = withContext(Dispatchers.IO) {
         val client = OkHttpClient()
-
         val request = Request.Builder().url(url).build()
+        val response = client.newCall(request).execute() // síncrono, seguro em IO
 
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                onError(e)
+        if (!response.isSuccessful) {
+            throw IOException("Failed to download file")
+        }
+
+        val body = response.body ?: throw IOException("Empty response body")
+        val contentLength = body.contentLength()
+        val inputStream = body.byteStream()
+
+        val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            ?: throw IOException("External files directory not available")
+
+        val file = File(dir, "update.apk")
+        val outputStream = FileOutputStream(file)
+
+        val buffer = ByteArray(8 * 1024)
+        var bytesRead: Int
+        var totalBytesRead = 0L
+
+        try {
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                outputStream.write(buffer, 0, bytesRead)
+                totalBytesRead += bytesRead
+                val progress = if (contentLength > 0) {
+                    (totalBytesRead * 100 / contentLength).toInt()
+                } else -1
+                onProgress(progress)
             }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (!response.isSuccessful) {
-                    onError(IOException("Failed to download file"))
-                    return
-                }
-
-                val body = response.body
-                if (body == null) {
-                    onError(IOException("Empty response body"))
-                    return
-                }
-
-                val contentLength = body.contentLength()
-
-                val inputStream = body.byteStream()
-
-                val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                if (dir == null) {
-                    onError(IOException("External files directory not available"))
-                    return
-                }
-                val file = File(dir, "update.apk")
-
-                val outputStream = FileOutputStream(file)
-
-                val buffer = ByteArray(8 * 1024)
-                var bytesRead: Int
-                var totalBytesRead = 0L
-
-                try {
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                        totalBytesRead += bytesRead
-                        val progress = if (contentLength > 0) {
-                            (totalBytesRead * 100 / contentLength).toInt()
-                        } else {
-                            -1
-                        }
-                        onProgress(progress)
-                    }
-                    outputStream.flush()
-                    onComplete(file)
-                } catch (e: Exception) {
-                    onError(e)
-                } finally {
-                    inputStream.close()
-                    outputStream.close()
-                }
-            }
-        })
+            outputStream.flush()
+            return@withContext file
+        } catch (e: Exception) {
+            throw e
+        } finally {
+            inputStream.close()
+            outputStream.close()
+        }
     }
+
 
 
 }

@@ -20,9 +20,12 @@ object ApiExecutor {
                 }
 
             } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = errorBody?.ifBlank { null } ?: response.message()
+
                 RequestResult.ServerError(
                     response.code(),
-                    response.message()
+                    errorMessage
                 )
             }
 

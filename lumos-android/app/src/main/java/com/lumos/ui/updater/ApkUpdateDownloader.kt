@@ -43,6 +43,9 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.utils.UpdateManager.downloadApk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -62,24 +65,29 @@ fun ApkUpdateDownloader(
         pSelected = BottomBar.HOME.value,
         sliderNavigateToMenu = {
             if (exit) navController.navigate(Routes.MENU)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
         },
         sliderNavigateToHome = {
             if (exit) navController.navigate(Routes.HOME)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
         },
         sliderNavigateToNotifications = {
             if (exit) navController.navigate(Routes.NOTIFICATIONS)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
         },
         sliderNavigateToProfile = {
             if (exit) navController.navigate(Routes.PROFILE)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
         },
         navController = navController,
         navigateBack = {
             if (exit) navController.navigate(Routes.HOME)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
         },
         context = context,
         notificationsBadge = notificationsBadge,
@@ -182,21 +190,20 @@ fun ApkUpdateDownloader(
 
     // Inicia download assim que o Composable entra na composição
     LaunchedEffect(apkUrl) {
-        Log.e("a", apkUrl)
-        downloadApk(
-            context = context,
-            url =  Uri.decode(apkUrl),
-            onProgress = { p -> progress = p },
-            onComplete = { file ->
-                downloadedFile = file
-                downloadComplete = true
-            },
-            onError = { error ->
-                exit = true
-                Toast.makeText(context, "Erro: ${error.message}", Toast.LENGTH_LONG).show()
-            }
-        )
+        try {
+            val file = downloadApk(
+                context = context,
+                url = Uri.decode(apkUrl),
+                onProgress = { p -> progress = p }
+            )
+            downloadedFile = file
+            downloadComplete = true
+        } catch (e: Exception) {
+            exit = true
+            Toast.makeText(context, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
+
 }
 
 @Preview
