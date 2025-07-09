@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,7 +50,6 @@ import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.home.PreMeasurementCard
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.utils.Utils
 import java.time.Instant
@@ -85,7 +82,7 @@ fun ContractsScreen(
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/Contratos")
+            navController.navigate(Routes.NO_ACCESS + "/${Routes.CONTRACT_SCREEN}")
         }
 
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
@@ -96,9 +93,6 @@ fun ContractsScreen(
         contracts = contracts,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
-        onNavigateToProfile = onNavigateToProfile,
-        onNavigateToNotifications = onNavigateToNotifications,
-        context = context,
         navController = navController,
         notificationsBadge = notificationsBadge,
         start = {
@@ -124,9 +118,6 @@ fun ContractsScreenContent(
     contracts: List<Contract>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    context: Context,
     navController: NavHostController,
     notificationsBadge: String,
     start: (Long) -> Unit,
@@ -136,16 +127,21 @@ fun ContractsScreenContent(
     refresh: () -> Unit,
 ) {
     AppLayout(
-        title = "Contratos",
-        pSelected = BottomBar.MENU.value,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
+        title = "Selecione um contrato",
+        selectedIcon = BottomBar.MORE.value,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
         navigateBack = onNavigateToMenu,
-        context = context,
-        notificationsBadge = notificationsBadge
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        }
     ) { _, snackBar ->
 
         LaunchedEffect(error) {
@@ -350,9 +346,6 @@ fun PrevContract() {
         contracts = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToNotifications = { },
-        context = fakeContext,
         navController = rememberNavController(),
         "12",
         start = {},

@@ -15,6 +15,7 @@ import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.IndirectExecution
 import com.lumos.domain.model.IndirectReserve
 import com.lumos.domain.model.Item
+import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreetPhoto
@@ -42,8 +43,11 @@ import java.util.concurrent.Executors
         (DirectReserve::class),
         (DirectExecutionStreet::class),
         (DirectExecutionStreetItem::class),
+
+        (MaterialStock::class),
+
     ],
-    version = 5,
+    version = 6,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -52,6 +56,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun queueDao(): QueueDao
     abstract fun indirectExecutionDao(): IndirectExecutionDao
     abstract fun directExecutionDao(): DirectExecutionDao
+    abstract fun maintenanceDao(): MaintenanceDao
 
 
     companion object {
@@ -252,6 +257,23 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5,6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS material_stock (
+                            materialIdStock INTEGER NOT NULL PRIMARY KEY,
+                            materialName TEXT NOT NULL,
+                            specs TEXT,
+                            stockQuantity REAL NOT NULL,
+                            stockAvailable REAL NOT NULL,
+                            requestUnit TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -263,6 +285,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_2_3,
                     MIGRATION_3_4,
                     MIGRATION_4_5,
+                    MIGRATION_5_6,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

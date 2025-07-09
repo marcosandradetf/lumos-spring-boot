@@ -32,11 +32,11 @@ interface QueueDao {
     @Query(
         """
             SELECT * FROM sync_queue_entity
-            WHERE type = :type
+            WHERE type in (:types)
         """
     )
     suspend fun getItem(
-        type: String,
+        types: List<String>,
     ): List<SyncQueueEntity>
 
     @Update
@@ -64,7 +64,7 @@ interface QueueDao {
     @Query(
         """
             SELECT distinct type FROM sync_queue_entity
-            where status = :status
+            where status = :status or errorMessage is not null
             ORDER BY priority ASC, createdAt ASC
         """
     )
@@ -88,6 +88,7 @@ interface QueueDao {
             SELECT EXISTS(
                 SELECT 1 FROM sync_queue_entity
                 WHERE relatedId = :relatedId AND type = :type
+                LIMIT 1
             )
         """
     )
@@ -98,6 +99,43 @@ interface QueueDao {
 
     @Query("DELETE FROM sync_queue_entity WHERE relatedId = :id and type = :type")
     suspend fun deleteByRelatedId(id: Long, type: String)
+
+    @Query(
+        """
+            SELECT EXISTS(
+                SELECT 1 FROM sync_queue_entity
+                WHERE type in (:types)
+                LIMIT 1
+            )
+        """
+    )
+    fun getFlowExistsTypeInQueue(types: List<String>): Flow<Boolean>
+
+
+    @Query(
+        """
+        update sync_queue_entity
+        set status = :status
+        where relatedId = :id
+    """
+    )
+    suspend fun retryById(
+        id: Long,
+        status: String = SyncStatus.PENDING
+    )
+
+    @Query(
+        """
+            SELECT EXISTS(
+                SELECT 1 FROM sync_queue_entity
+                WHERE id = :id
+                LIMIT 1
+            )
+        """
+    )
+    suspend fun existsById(
+        id: Long,
+    ): Boolean
 
 
 }

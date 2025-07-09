@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
@@ -60,7 +59,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -105,7 +103,6 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
-import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils.formatDouble
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
@@ -117,7 +114,7 @@ fun StreetMaterialScreen(
     description: String,
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
-    pSelected: Int,
+    lastRoute: String?,
     navController: NavHostController,
     notificationsBadge: String,
 ) {
@@ -206,7 +203,7 @@ fun StreetMaterialScreen(
             description = description,
             reserves = reserves,
             street = street,
-            pSelected = pSelected,
+            lastRoute = lastRoute,
             context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
@@ -336,7 +333,7 @@ fun StreetMaterialsContent(
     description: String,
     reserves: List<DirectReserve>,
     street: DirectExecutionStreet,
-    pSelected: Int,
+    lastRoute: String?,
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
@@ -388,32 +385,38 @@ fun StreetMaterialsContent(
 
     var action by remember { mutableStateOf("") }
 
+    val selectedIcon = if(lastRoute == Routes.DIRECT_EXECUTION_SCREEN) BottomBar.EXECUTIONS.value else BottomBar.HOME.value
+
     AppLayout(
         title = description,
-        pSelected = pSelected,
-        sliderNavigateToMenu = {
-            action = Routes.MENU
-            openModal(Routes.MENU)
+        selectedIcon = selectedIcon,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = {
+            action = Routes.MORE
+            openModal(Routes.MORE)
         },
-        sliderNavigateToHome = {
+        navigateToHome = {
             action = Routes.HOME
             openModal(Routes.HOME)
         },
-        sliderNavigateToNotifications = {
-            action = Routes.NOTIFICATIONS
-            openModal(Routes.NOTIFICATIONS)
-        },
-        sliderNavigateToProfile = {
-            action = Routes.PROFILE
-            openModal(Routes.PROFILE)
-        },
-        navController = navController,
         navigateBack = {
             action = Routes.DIRECT_EXECUTION_SCREEN
             openModal(Routes.DIRECT_EXECUTION_SCREEN)
         },
-        context = context,
-        notificationsBadge = notificationsBadge,
+
+        navigateToStock = {
+            action = Routes.STOCK
+            openModal(Routes.STOCK)
+        },
+        navigateToExecutions = {
+            action = Routes.DIRECT_EXECUTION_SCREEN
+            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            action = Routes.MAINTENANCE
+            openModal(Routes.MAINTENANCE)
+        }
+
     ) { _, _ ->
         Box(
             modifier = Modifier.fillMaxSize()
@@ -526,7 +529,13 @@ fun StreetMaterialsContent(
                                 )
                             },
                             changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
-                                changeMaterial(materialStockId, contractItemId, selected, reserveId, materialName)
+                                changeMaterial(
+                                    materialStockId,
+                                    contractItemId,
+                                    selected,
+                                    reserveId,
+                                    materialName
+                                )
                             },
                             streetItems = streetItems,
                         )
@@ -647,7 +656,7 @@ fun StreetMaterialsContent(
                 }
 
 
-            } else  {
+            } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1029,14 +1038,14 @@ fun PrevMStreetScreen() {
         context = fakeContext,
         navController = rememberNavController(),
         notificationsBadge = "12",
-        pSelected = BottomBar.HOME.value,
+        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
         takePhoto = { },
         confirmModal = { },
         alertModal = false,
         closeAlertModal = { },
         hasPosted = false,
         errorMessage = null,
-        changeMaterial = { _, _, _, _,_ -> },
+        changeMaterial = { _, _, _, _, _ -> },
         openConfirmModal = false,
         changeQuantity = { _, _, _ -> },
         alertMessage = mutableMapOf(

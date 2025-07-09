@@ -14,10 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.BuildCircle
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -36,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,9 +66,7 @@ fun NotificationsScreen(
     NotificationsList(
         onNavigateToMenu = onNavigateToMenu,
         onNavigateToHome = onNavigateToHome,
-        onNavigateToProfile = onNavigateToProfile,
         navController = navController,
-        context = context,
         notifications = notifications,
         clear = {
             notificationViewModel.deleteAll()
@@ -91,9 +86,7 @@ fun NotificationsScreen(
 fun NotificationsList(
     onNavigateToMenu: () -> Unit,
     onNavigateToHome: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     navController: NavHostController,
-    context: Context,
     notifications: List<NotificationItem>,
     clear: () -> Unit,
     onClick: (Long) -> Unit,
@@ -102,13 +95,22 @@ fun NotificationsList(
 ) {
     AppLayout(
         title = "Notificações",
-        pSelected = BottomBar.NOTIFICATIONS.value,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
+        selectedIcon = BottomBar.HOME.value,
         notificationsBadge = notificationsBadge,
-        context = context,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
+        navigateBack = {
+            navController.navigate(Routes.HOME)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        },
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        }
     ) { modifier, snackBar ->
         LazyColumn(
             modifier = Modifier
@@ -260,9 +262,7 @@ fun PrevNotifications() {
     NotificationsList(
         {},
         {},
-        {},
         rememberNavController(),
-        LocalContext.current,
         listOf(
             NotificationItem(
                 title = "Alerta de segurança",

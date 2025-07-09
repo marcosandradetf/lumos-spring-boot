@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.SecurityUpdateGood
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,6 +45,7 @@ import com.lumos.domain.model.ExecutionHolder
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.viewmodel.ContractViewModel
@@ -55,7 +57,6 @@ import com.lumos.utils.ConnectivityUtils
 fun HomeScreen(
     onNavigateToMenu: () -> Unit,
     onNavigateToNotifications: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
     indirectExecutionViewModel: IndirectExecutionViewModel,
@@ -78,6 +79,7 @@ fun HomeScreen(
         packageInfo.longVersionCode
 
     var updateModal by remember { mutableStateOf(false) }
+    var noUpdateModal by remember { mutableStateOf(false) }
     var encodedUrl by remember { mutableStateOf("") }
 
 
@@ -111,13 +113,19 @@ fun HomeScreen(
 
     AppLayout(
         title = "Início",
-        pSelected = BottomBar.HOME.value,
+        selectedIcon = BottomBar.HOME.value,
         notificationsBadge = notificationsBadge,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
-        context = context
+        navigateToMore = onNavigateToMenu,
+        navigateToNotifications = onNavigateToNotifications,
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        },
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        }
     ) { modifier, _ ->
         Column(
             modifier = modifier
@@ -150,6 +158,8 @@ fun HomeScreen(
                                     else
                                         updateModal = true
                                 }
+                            } else {
+                                noUpdateModal = true
                             }
                         }
                     }
@@ -203,6 +213,17 @@ fun HomeScreen(
                 cancel = {
                     updateModal = false
                 },
+            )
+        }
+
+        if(noUpdateModal) {
+            Alert(
+                title = "Atualização",
+                body = "Nenhuma atualização disponível, avisaremos quando surgir uma nova versão.",
+                icon = Icons.Default.SecurityUpdateGood,
+                confirm = {
+                    noUpdateModal = false
+                }
             )
         }
     }

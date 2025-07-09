@@ -141,17 +141,13 @@ fun Content(
 ) {
     AppLayout(
         title = contractor,
-        pSelected = pSelected,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
+        selectedIcon = pSelected,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
         navigateBack = {
             navController.navigate(Routes.EXECUTION_SCREEN)
-        },
-        context = context,
-        notificationsBadge = notificationsBadge
+        }
     ) { _, showSnackBar ->
 
         PullToRefreshBox(

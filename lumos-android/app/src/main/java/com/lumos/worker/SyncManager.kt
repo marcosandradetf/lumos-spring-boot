@@ -182,4 +182,29 @@ object SyncManager {
         }
     }
 
+    suspend fun queuePostMaintenance(context: Context, db: AppDatabase, id: Long) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_MAINTENANCE, id)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                relatedId = id,
+                type = SyncTypes.POST_MAINTENANCE,
+                priority = 15
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
+    suspend fun queueGetStock(context: Context, db: AppDatabase) {
+        val count = db.queueDao().countPendingItemsByType(SyncTypes.SYNC_STOCK)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                type = SyncTypes.SYNC_STOCK,
+                priority = 17
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
 }

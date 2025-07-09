@@ -75,9 +75,6 @@ fun PreMeasurementScreen(
         contracts = contracts,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
-        onNavigateToProfile = onNavigateToProfile,
-        onNavigateToNotifications = onNavigateToNotifications,
-        context = context,
         navController = navController,
         notificationsBadge = notificationsBadge
     )
@@ -88,23 +85,25 @@ fun PMContent(
     contracts: List<Contract>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    context: Context,
     navController: NavHostController,
     notificationsBadge: String
 ) {
     AppLayout(
         title = "Pré-mediçoes em andamento",
-        pSelected = BottomBar.MENU.value,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
+        selectedIcon = BottomBar.MORE.value,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
         navigateBack = onNavigateToMenu,
-        context = context,
-        notificationsBadge = notificationsBadge
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        }
     ) { modifier, snackBar ->
 
         LazyColumn(
@@ -273,9 +272,6 @@ fun PrevPM() {
         contracts = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToNotifications = { },
-        context = fakeContext,
         navController = rememberNavController(),
         "12"
     )

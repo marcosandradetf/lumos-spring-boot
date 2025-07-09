@@ -34,25 +34,48 @@ import com.lumos.ui.components.AppLayout
 @Composable
 fun NoAccessScreen(
     onNavigateToMenu: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    screen: String
+    lastRoute: String,
 ) {
-    val context = LocalContext.current
+
+    val selectedIcon =
+        when(lastRoute) {
+            Routes.STOCK -> BottomBar.STOCK.value
+            Routes.MAINTENANCE -> BottomBar.MAINTENANCE.value
+            Routes.DIRECT_EXECUTION_SCREEN -> BottomBar.EXECUTIONS.value
+            else -> BottomBar.MORE.value
+        }
+
+    val lastScreenName =
+        when(lastRoute) {
+            Routes.STOCK -> "Estoque do Caminhão"
+            Routes.CONTRACT_SCREEN -> "Nova pré-medição"
+            Routes.MAINTENANCE -> "Nova Manutenção"
+            Routes.DIRECT_EXECUTION_SCREEN -> "Execução sem pré-medição"
+            Routes.EXECUTION_SCREEN -> "Execução com pré-medição"
+            else -> ""
+        }
 
     AppLayout(
-        title = screen,
-        pSelected = BottomBar.MENU.value,
+        title = lastScreenName,
+        selectedIcon = selectedIcon,
         notificationsBadge = notificationsBadge,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
-        context = context,
+        navigateToHome = {
+            navController.navigate(Routes.HOME)
+        },
+        navigateToMore = onNavigateToMenu,
         navigateBack = {
             navController.navigate(Routes.HOME)
+        },
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
         }
     ) { modifier, snackBar ->
         Column(
@@ -128,10 +151,8 @@ fun NoAccessScreen(
 fun PrevNoAccess(){
     NoAccessScreen(
         {},
-        {},
-        {},
         rememberNavController(),
         "10",
-        "Contratos"
+        Routes.HOME
     )
 }

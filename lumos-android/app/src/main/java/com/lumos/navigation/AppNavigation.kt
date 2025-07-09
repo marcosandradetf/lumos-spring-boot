@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -26,6 +25,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.lumos.MyApp
 import com.lumos.R
+import com.lumos.data.api.ApiService
 import com.lumos.data.api.ContractApi
 import com.lumos.data.api.ExecutionApi
 import com.lumos.data.api.PreMeasurementApi
@@ -33,6 +33,7 @@ import com.lumos.data.repository.AuthRepository
 import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.DirectExecutionRepository
 import com.lumos.data.repository.IndirectExecutionRepository
+import com.lumos.data.repository.MaintenanceRepository
 import com.lumos.data.repository.NotificationRepository
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.midleware.SecureStorage
@@ -46,6 +47,7 @@ import com.lumos.ui.indirectExecutions.CitiesScreen
 import com.lumos.ui.indirectExecutions.MaterialScreen
 import com.lumos.ui.indirectExecutions.StreetsScreen
 import com.lumos.ui.home.HomeScreen
+import com.lumos.ui.maintenance.NewMaintenanceScreen
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.noAccess.NoAccessScreen
 import com.lumos.ui.notifications.NotificationsScreen
@@ -55,6 +57,7 @@ import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
 import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
+import com.lumos.ui.stock.CheckStockScreen
 import com.lumos.ui.sync.SyncDetailsScreen
 import com.lumos.ui.sync.SyncScreen
 import com.lumos.ui.updater.ApkUpdateDownloader
@@ -62,6 +65,7 @@ import com.lumos.ui.viewmodel.AuthViewModel
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
+import com.lumos.ui.viewmodel.MaintenanceViewModel
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.ui.viewmodel.SyncViewModel
@@ -71,10 +75,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 enum class BottomBar(val value: Int) {
-    MENU(0),
-    HOME(1),
-    NOTIFICATIONS(2),
-    PROFILE(3)
+    HOME(0),
+    STOCK(1),
+    MAINTENANCE(2),
+    EXECUTIONS(3),
+    MORE(4),
 }
 
 @Composable
@@ -159,6 +164,18 @@ fun AppNavigation(
     val syncViewModel: SyncViewModel = viewModel {
         SyncViewModel(
             db = app.database
+        )
+    }
+
+    val maintenanceViewModel: MaintenanceViewModel = viewModel {
+        val maintenanceRepository = MaintenanceRepository(
+            db = app.database,
+            api = ApiService(app.applicationContext, secureStorage),
+            secureStorage = secureStorage,
+            app = app
+        )
+        MaintenanceViewModel(
+            repository = maintenanceRepository
         )
     }
 
@@ -248,21 +265,21 @@ fun AppNavigation(
             }
 
             navigation(startDestination = Routes.HOME, route = Routes.MAIN) {
-                composable(Routes.MENU) {
+                composable(Routes.MORE) {
                     MenuScreen(
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.MENU) { inclusive = true }
+                                popUpTo(Routes.MORE) { inclusive = true }
                             }
                         },
                         onNavigateToNotifications = {
                             navController.navigate(Routes.NOTIFICATIONS) {
-                                popUpTo(Routes.MENU) { inclusive = true }
+                                popUpTo(Routes.MORE) { inclusive = true }
                             }
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE) {
-                                popUpTo(Routes.MENU) { inclusive = true }
+                                popUpTo(Routes.MORE) { inclusive = true }
                             }
                         },
                         navController = navController,
@@ -274,7 +291,7 @@ fun AppNavigation(
                 composable(Routes.HOME) {
                     HomeScreen(
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU) {
+                            navController.navigate(Routes.MORE) {
                                 popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
                             }
                         },
@@ -283,43 +300,29 @@ fun AppNavigation(
                                 popUpTo(Routes.HOME) { inclusive = true }
                             }
                         },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        directExecutionViewModel = directExecutionViewModel,
                         indirectExecutionViewModel = indirectExecutionViewModel,
+                        directExecutionViewModel = directExecutionViewModel,
                         contractViewModel = contractViewModel,
-                        secureStorage = secureStorage,
-                        roles = secureStorage.getRoles()
+                        roles = secureStorage.getRoles(),
+                        secureStorage = secureStorage
                     )
                 }
 
-                composable(Routes.NO_ACCESS + "/{screenOrigin}") { backStackEntry ->
-                    val screenOrigin =
-                        backStackEntry.arguments?.getString("screenOrigin") ?: ""
+                composable(Routes.NO_ACCESS + "/{lastRoute}") { backStackEntry ->
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute") ?: ""
+
                     NoAccessScreen(
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU) {
-                                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
-                            }
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE) {
+                            navController.navigate(Routes.MORE) {
                                 popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
                             }
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        screen = screenOrigin,
+                        lastRoute = lastRoute,
                     )
                 }
 
@@ -327,7 +330,7 @@ fun AppNavigation(
                 composable(Routes.NOTIFICATIONS) {
                     NotificationsScreen(
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU) {
+                            navController.navigate(Routes.MORE) {
                                 popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
                             }
                         },
@@ -352,7 +355,7 @@ fun AppNavigation(
                 composable(Routes.PROFILE) {
                     ProfileScreen(
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU) {
+                            navController.navigate(Routes.MORE) {
                                 popUpTo(Routes.PROFILE) { inclusive = true }
                             }
                         },
@@ -388,7 +391,7 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
+                            navController.navigate(Routes.MORE)
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE)
@@ -415,7 +418,7 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
+                            navController.navigate(Routes.MORE)
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE)
@@ -444,7 +447,7 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
+                            navController.navigate(Routes.MORE)
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE)
@@ -465,8 +468,7 @@ fun AppNavigation(
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
                         },
-                        navController = navController,
-                        context = LocalContext.current
+                        navController = navController
                     )
                 }
 
@@ -485,7 +487,7 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
+                            navController.navigate(Routes.MORE)
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE)
@@ -500,8 +502,12 @@ fun AppNavigation(
 
                 //
 
-                composable(Routes.EXECUTION_SCREEN) {
+                composable(Routes.EXECUTION_SCREEN+ "?lastRoute={lastRoute}") { backStackEntry ->
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
+
                     CitiesScreen(
+                        lastRoute = lastRoute,
                         indirectExecutionViewModel = indirectExecutionViewModel,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
@@ -509,17 +515,10 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
+                            navController.navigate(Routes.MORE)
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        pSelected = BottomBar.MENU.value,
                         onNavigateToStreetScreen = { contractId, contractor ->
                             navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
                         },
@@ -542,7 +541,7 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
+                            navController.navigate(Routes.MORE)
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE)
@@ -552,7 +551,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        pSelected = BottomBar.MENU.value,
+                        pSelected = BottomBar.MORE.value,
                         onNavigateToExecution = {
                             navController.navigate(Routes.EXECUTION_SCREEN_MATERIALS + "/$it")
                         }
@@ -570,7 +569,7 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
+                            navController.navigate(Routes.MORE)
                         },
                         onNavigateToProfile = {
                             navController.navigate(Routes.PROFILE)
@@ -578,7 +577,7 @@ fun AppNavigation(
                         onNavigateToNotifications = {
                             navController.navigate(Routes.NOTIFICATIONS)
                         },
-                        pSelected = BottomBar.MENU.value,
+                        pSelected = BottomBar.MORE.value,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
                         onNavigateToExecutions = {
@@ -588,8 +587,12 @@ fun AppNavigation(
                 }
 
                 // direct executions
-                composable(Routes.DIRECT_EXECUTION_SCREEN) {
+                composable(Routes.DIRECT_EXECUTION_SCREEN+ "?lastRoute={lastRoute}") { backStackEntry ->
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
+
                     CitiesScreen(
+                        lastRoute = lastRoute,
                         indirectExecutionViewModel = indirectExecutionViewModel,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
@@ -597,17 +600,10 @@ fun AppNavigation(
                             navController.navigate(Routes.HOME)
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MENU)
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
+                            navController.navigate(Routes.MORE)
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        pSelected = BottomBar.MENU.value,
                         onNavigateToStreetScreen = { contractId, contractor ->
                             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/$contractId/$contractor")
                         },
@@ -616,21 +612,24 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{directExecutionId}/{description}") { backStackEntry ->
+                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{directExecutionId}/{description}?lastRoute={lastRoute}") { backStackEntry ->
                     val directExecutionId =
                         backStackEntry.arguments?.getString("directExecutionId")?.toLongOrNull()
                             ?: 0
                     val description =
                         backStackEntry.arguments?.getString("description") ?: ""
 
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
+
                     StreetMaterialScreen(
                         directExecutionId = directExecutionId,
                         description = description,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
-                        pSelected = BottomBar.MENU.value,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
+                        lastRoute = lastRoute,
                     )
                 }
 
@@ -654,8 +653,10 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.SYNC + "/{type}") { backStackEntry ->
+                composable(Routes.SYNC + "/{type}?lastRoute={lastRoute}") { backStackEntry ->
                     val type = backStackEntry.arguments?.getString("type") ?: ""
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
 
                     SyncDetailsScreen(
                         applicationContext = app.applicationContext,
@@ -664,10 +665,37 @@ fun AppNavigation(
                         notifications.size.toString(),
                         syncViewModel,
                         type,
+                        lastRoute = lastRoute
+                    )
+                }
+
+                // MAINTENANCE
+
+                composable(Routes.STOCK + "?lastRoute={lastRoute}") { backStackEntry ->
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
+
+                    CheckStockScreen(
+                        context = LocalContext.current,
+                        navController = navController,
+                        lastRoute = lastRoute,
+                        maintenanceViewModel = maintenanceViewModel
+                    )
+                }
+
+                composable(Routes.MAINTENANCE + "?lastRoute={lastRoute}") { backStackEntry ->
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
+
+                    NewMaintenanceScreen(
+                        context = LocalContext.current,
+                        navController,
+                        lastRoute = lastRoute
                     )
                 }
 
             }
+
         }
     }
 }
@@ -678,7 +706,7 @@ object Routes {
     const val MAIN = "main"
     const val HOME = "home"
     const val NO_ACCESS = "no-access"
-    const val MENU = "menu"
+    const val MORE = "more"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
     const val CONTRACT_SCREEN = "contract-screen"
@@ -687,7 +715,11 @@ object Routes {
     const val PRE_MEASUREMENT_STREET_HOME = "pre-measurement-home"
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
     const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
+
     const val EXECUTION_SCREEN = "execution-screen"
+    const val MAINTENANCE = "maintenance"
+    const val STOCK = "stock"
+
     const val EXECUTION_SCREEN_STREETS = "execution-screen-streets"
     const val EXECUTION_SCREEN_MATERIALS = "execution-screen-materials"
 

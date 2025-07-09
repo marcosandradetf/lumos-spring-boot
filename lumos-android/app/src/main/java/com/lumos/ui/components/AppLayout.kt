@@ -1,96 +1,87 @@
 package com.lumos.ui.components
 
 
-import android.content.Context
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.FireTruck
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.outlined.FireTruck
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Navigation
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.rounded.Navigation
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import kotlinx.coroutines.launch
 
 @Composable
 fun AppLayout(
     title: String,
-    pSelected: Int = 1,
-    notificationsBadge: String,
-    sliderNavigateToMenu: (() -> Unit?)? = null,
-    sliderNavigateToHome: (() -> Unit?)? = null,
-    sliderNavigateToNotifications: (() -> Unit?)? = null,
-    sliderNavigateToProfile: (() -> Unit?)? = null,
-    navController: NavHostController,
+    selectedIcon: Int = 0,
+    notificationsBadge: String = "0",
     navigateBack: (() -> Unit)? = null,
-    context: Context, // Adicione o contexto como parâmetro para passar para o NetworkStatusBar
-    pContent: @Composable (Modifier, showSnackBar: (String, String?) -> Unit) -> Unit,
+    navigateToHome: (() -> Unit?)? = null,
+    navigateToMore: (() -> Unit?)? = null,
+    navigateToStock: (() -> Unit?)? = null,
+    navigateToMaintenance: (() -> Unit?)? = null,
+    navigateToExecutions: (() -> Unit?)? = null,
+    navigateToNotifications: (() -> Unit)? = null,
+    content: @Composable (Modifier, showSnackBar: (String, String?) -> Unit) -> Unit,
 ) {
-    var selectedItem by remember { mutableIntStateOf(1) }
-    val items = listOf("Menu", "Início", "Notificações", "Perfil")
+    val selectedItem by remember { mutableIntStateOf(selectedIcon) }
+    val items = listOf("Início", "Estoque", "Manutenção", "Execução", "Mais")
     val selectedIcons =
         listOf(
-            Icons.Filled.Menu,
             Icons.Filled.Home,
-            Icons.Filled.Notifications,
-            Icons.Filled.Person
+            Icons.Filled.FireTruck,
+            Icons.Filled.Build,
+            Icons.Filled.Lightbulb,
+            Icons.Filled.MoreHoriz,
         )
     val unselectedIcons =
         listOf(
-            Icons.Outlined.Menu,
             Icons.Outlined.Home,
-            Icons.Outlined.Notifications,
-            Icons.Outlined.Person
+            Icons.Outlined.FireTruck,
+            Icons.Outlined.Build,
+            Icons.Outlined.Lightbulb,
+            Icons.Outlined.MoreHoriz,
         )
 
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    // Função simples que você vai expor pro conteúdo
     val showSnackBar: (String, String?) -> Unit = { message, label ->
         scope.launch {
             snackBarHostState.showSnackbar(
@@ -118,7 +109,9 @@ fun AppLayout(
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
                 TopBar(
                     navigateBack = navigateBack,
-                    title = title
+                    title = title,
+                    notificationsBadge = notificationsBadge,
+                    navigateToNotifications = navigateToNotifications,
                 )
             }
         },
@@ -130,38 +123,24 @@ fun AppLayout(
                 items.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = {
-                            if (item == "Notificações")
-                                BadgedBox(
-                                    badge = {
-                                        Badge(
-                                            containerColor = Color(0xFFF55159),
-                                            contentColor = Color.White
-                                        ) { Text(notificationsBadge) }
-                                    } // Verifique se o Badge é suportado
-                                ) {
-                                    if (index in selectedIcons.indices && index in unselectedIcons.indices) {
-                                        Icon(
-                                            imageVector = if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
-                                            contentDescription = item
-                                        )
-                                    }
-                                } else
-                                if (index in selectedIcons.indices && index in unselectedIcons.indices) {
-                                    Icon(
-                                        imageVector = if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
-                                        contentDescription = item
-                                    )
-                                }
+                            if (index in selectedIcons.indices && index in unselectedIcons.indices) {
+                                Icon(
+                                    imageVector = if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
+                                    contentDescription = item,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         },
-                        label = { Text(item) },
-                        selected = pSelected == index,
+                        label = { Text(text = item, fontSize = 10.sp) },
+                        selected = selectedIcon == index,
                         onClick = {
                             handleNavigation(
                                 index,
-                                sliderNavigateToMenu,
-                                sliderNavigateToHome,
-                                sliderNavigateToNotifications,
-                                sliderNavigateToProfile
+                                navigateToHome,
+                                navigateToStock,
+                                navigateToMaintenance,
+                                navigateToExecutions,
+                                navigateToMore,
                             )
                         },
                     )
@@ -170,7 +149,7 @@ fun AppLayout(
         },
         content = { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
-                pContent(
+                content(
                     Modifier
                         .padding(10.dp)
                         .fillMaxSize(),
@@ -185,26 +164,33 @@ fun AppLayout(
 // Função para lidar com navegação ou ações específicas
 fun handleNavigation(
     index: Int,
-    sliderNavigateToMenu: (() -> Unit?)?,
-    sliderNavigateToHome: (() -> Unit?)?,
-    sliderNavigateToNotifications: (() -> Unit?)?,
-    sliderNavigateToProfile: (() -> Unit?)?,
+    navigateToHome: (() -> Unit?)?,
+    navigateToStock: (() -> Unit?)?,
+    navigateToMaintenance: (() -> Unit?)?,
+    navigateToExecutions: (() -> Unit?)?,
+    navigateToMore: (() -> Unit?)?,
 ) {
     when (index) {
-        BottomBar.MENU.value -> if (sliderNavigateToMenu != null) {
-            sliderNavigateToMenu()
+
+        BottomBar.HOME.value -> if (navigateToHome != null) {
+            navigateToHome()
         }
 
-        BottomBar.HOME.value -> if (sliderNavigateToHome != null) {
-            sliderNavigateToHome()
+        BottomBar.STOCK.value -> if (navigateToStock != null) {
+            navigateToStock()
         }
 
-        BottomBar.NOTIFICATIONS.value -> if (sliderNavigateToNotifications != null) {
-            sliderNavigateToNotifications()
+        BottomBar.MAINTENANCE.value -> if (navigateToMaintenance != null) {
+            navigateToMaintenance()
         }
 
-        BottomBar.PROFILE.value -> if (sliderNavigateToProfile != null) {
-            sliderNavigateToProfile()
+        BottomBar.EXECUTIONS.value -> if (navigateToExecutions != null) {
+            navigateToExecutions()
+        }
+
+
+        BottomBar.MORE.value -> if (navigateToMore != null) {
+            navigateToMore()
         }
 
         else -> println("Ação desconhecida")

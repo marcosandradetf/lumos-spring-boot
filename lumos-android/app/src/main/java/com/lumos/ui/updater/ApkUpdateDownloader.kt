@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,9 +42,6 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.utils.UpdateManager.downloadApk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -62,35 +58,39 @@ fun ApkUpdateDownloader(
 
     AppLayout(
         title = "Atualização",
-        pSelected = BottomBar.HOME.value,
-        sliderNavigateToMenu = {
-            if (exit) navController.navigate(Routes.MENU)
+        selectedIcon = BottomBar.HOME.value,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = {
+            if (exit) navController.navigate(Routes.MORE)
             else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
                 .show()
         },
-        sliderNavigateToHome = {
+        navigateToHome = {
             if (exit) navController.navigate(Routes.HOME)
             else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
                 .show()
         },
-        sliderNavigateToNotifications = {
-            if (exit) navController.navigate(Routes.NOTIFICATIONS)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
-                .show()
-        },
-        sliderNavigateToProfile = {
-            if (exit) navController.navigate(Routes.PROFILE)
-            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
-                .show()
-        },
-        navController = navController,
+
         navigateBack = {
             if (exit) navController.navigate(Routes.HOME)
             else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
                 .show()
         },
-        context = context,
-        notificationsBadge = notificationsBadge,
+        navigateToStock = {
+            if (exit) navController.navigate(Routes.STOCK)
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
+        },
+        navigateToMaintenance = {
+            if (exit) navController.navigate(Routes.MAINTENANCE)
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
+        },
+        navigateToExecutions = {
+            if (exit) navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
+                .show()
+        }
     ) { _, snackBar ->
         Column(
             modifier = Modifier

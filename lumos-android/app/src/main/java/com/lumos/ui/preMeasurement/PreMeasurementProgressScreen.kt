@@ -85,13 +85,10 @@ fun PreMeasurementProgressScreen(
             contract = contract!!,
             onNavigateToHome = onNavigateToHome,
             onNavigateToMenu = onNavigateToMenu,
-            onNavigateToProfile = onNavigateToProfile,
-            onNavigateToNotifications = onNavigateToNotifications,
             onNavigateToPreMeasurements = onNavigateToPreMeasurements,
             onNavigateToStreet = {
                 onNavigateToStreet(it)
             },
-            context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
             streets = streets,
@@ -135,9 +132,7 @@ fun Loading(
 ) {
     AppLayout(
         title = "Pré-medição",
-        pSelected = BottomBar.MENU.value,
-        navController = navController,
-        context = context,
+        selectedIcon = BottomBar.MORE.value,
         notificationsBadge = notificationsBadge
     ) { modifier, snackBar ->
         Box(
@@ -166,11 +161,8 @@ fun PMPContent(
     contract: Contract,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     onNavigateToPreMeasurements: () -> Unit,
     onNavigateToStreet: (Long) -> Unit,
-    context: Context,
     navController: NavHostController,
     notificationsBadge: String,
     streets: List<PreMeasurementStreet>,
@@ -178,15 +170,20 @@ fun PMPContent(
 ) {
     AppLayout(
         title = "Pré-medição",
-        pSelected = BottomBar.MENU.value,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
+        selectedIcon = BottomBar.MORE.value,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
         navigateBack = onNavigateToPreMeasurements,
-        context = context,
-        notificationsBadge = notificationsBadge
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        }
     ) { modifier, snackBar ->
         var expanded by remember { mutableStateOf(false) }
 
@@ -654,11 +651,8 @@ fun PrevPMP() {
         contract = value,
         onNavigateToHome = { },
         onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToNotifications = { },
         onNavigateToPreMeasurements = { },
         onNavigateToStreet = { },
-        context = fakeContext,
         navController = rememberNavController(),
         "12",
         streets,

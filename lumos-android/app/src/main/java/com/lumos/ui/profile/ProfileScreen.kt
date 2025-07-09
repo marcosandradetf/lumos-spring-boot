@@ -14,17 +14,14 @@ import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.viewmodel.AuthViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
@@ -48,13 +45,22 @@ fun ProfileScreen(
 
     AppLayout(
         title = "Perfil",
-        pSelected = BottomBar.PROFILE.value,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        navController = navController,
-        context = context,
-        notificationsBadge = notificationsBadge
+        selectedIcon = BottomBar.MORE.value,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
+        navigateBack = {
+            navController.navigate(Routes.MORE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        },
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        }
+
     ) { modifier, snackBar ->
         Column(
             modifier = modifier

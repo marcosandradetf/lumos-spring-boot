@@ -970,31 +970,50 @@ class ExecutionService(
                 "contractItemId" to m.contractItemId
             )
 
-            hasService?.let { params["dependency"] = it }
+            hasService?.let {
+                params["dependency"] = it
+                params["directExecutionId"] = executionDTO.directExecutionId
+            }
 
             if (hasService != null) {
                 val servicesData: List<Map<String, Any>> =
                     getRawData(
                         namedJdbc,
                         """
-                            WITH updated AS (
-                                UPDATE contract_item ci
-                                SET quantity_executed = quantity_executed + :quantityExecuted
-                                FROM direct_execution_item di, contract_reference_item cri
-                                WHERE (lower(cri.item_dependency) = :dependency OR ci.contract_item_id = :contractItemId)
-                                    AND cri.contract_reference_item_id = ci.contract_item_reference_id
-                                    AND di.contract_item_id = ci.contract_item_id
-                                RETURNING ci.contract_item_id, cri.item_dependency
+                            WITH to_update AS (
+                                SELECT ci.contract_item_id, false as isService
+                                FROM contract_item ci
+                                WHERE ci.contract_item_id = :contractItemId
+                    
+                                UNION ALL
+                            
+                                SELECT ci.contract_item_id, true as isService
+                                FROM contract_item ci
+                                JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
+                                JOIN direct_execution_item di ON di.contract_item_id = ci.contract_item_id
+                                WHERE lower(cri.item_dependency) = :dependency
+                                  AND lower(cri.type) IN ('projeto', 'serviço')
+                                  AND di.direct_execution_id = :directExecutionId
                             )
-                            SELECT contract_item_id
-                            FROM updated
-                            WHERE item_dependency = :dependency
+                            UPDATE contract_item ci
+                            SET quantity_executed = quantity_executed + :quantityExecuted
+                            FROM to_update tu
+                            WHERE ci.contract_item_id = tu.contract_item_id
+                            RETURNING ci.contract_item_id, tu.isService
                         """.trimIndent(),
                         params
                     )
 
+                println("Executando update com params:")
+                params.forEach { (k, v) -> println(" - $k = $v (${v?.javaClass?.name})") }
+
+
                 for (s in servicesData) {
-                    val serviceItemId = s["contract_item_id"] as Long
+                    val serviceItemId = (s["contract_item_id"] as Number).toLong()
+                    val isService = s["isService"] as Boolean
+
+                    if(!isService) continue
+
                     val item = DirectExecutionStreetItem(
                         executedQuantity = m.quantityExecuted,
                         materialStockId = null,

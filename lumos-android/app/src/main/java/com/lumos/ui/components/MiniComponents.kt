@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,11 +36,13 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -329,18 +332,71 @@ fun Option(
         )
 }
 
+@Composable
+fun NoInternet() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Text(
+            text = "Você está offline",
+            modifier = Modifier
+                .fillMaxWidth(fraction = 0.9f)
+                .padding(8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Left,
+            color = MaterialTheme.colorScheme.error
+        )
+        Box(
+            modifier = Modifier
+                .clip(shape = RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Text(
+                text = "Estamos com problemas para conectar aos servidores. Por favor, reconecte.",
+                modifier = Modifier
+                    .fillMaxWidth(fraction = 0.9f)
+                    .padding(8.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Left,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun Tag(text: String, color: Color, icon: ImageVector? = null) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(color, RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        icon?.let {
+            Icon(
+                imageVector = it,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .size(14.dp)
+                    .padding(end = 4.dp)
+            )
+        }
+        Text(
+            text = text,
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+        )
+    }
+}
+
+
 
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-    Option(
-        title = "Selecione a opção desejada",
-        body = "",
-        confirm = {
-
-        },
-        cancel = {
-
-        }
-    ) 
+    NoInternet()
 }

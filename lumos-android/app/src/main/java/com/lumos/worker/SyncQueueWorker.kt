@@ -14,6 +14,7 @@ import com.lumos.R
 import com.lumos.data.api.ApiService
 import com.lumos.data.api.ContractApi
 import com.lumos.data.api.ExecutionApi
+import com.lumos.data.api.NotificationType
 import com.lumos.data.api.PreMeasurementApi
 import com.lumos.data.api.RequestResult
 import com.lumos.data.api.UpdateEntity
@@ -24,10 +25,13 @@ import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.DirectExecutionRepository
 import com.lumos.data.repository.IndirectExecutionRepository
 import com.lumos.data.repository.GenericRepository
+import com.lumos.data.repository.MaintenanceRepository
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.midleware.SecureStorage
+import com.lumos.navigation.Routes
 import com.lumos.utils.ConnectivityUtils
+import com.lumos.utils.Utils
 import com.lumos.utils.Utils.parseToAny
 
 
@@ -42,13 +46,15 @@ object SyncTypes {
     const val SYNC_CONTRACT_ITEMS = "SYNC_CONTRACT_ITEMS"
     const val SYNC_CONTRACTS = "SYNC_CONTRACTS"
     const val SYNC_STOCK = "SYNC_STOCK"
-    const val POST_PRE_MEASUREMENT = "POST_PRE_MEASUREMENT"
     const val SYNC_EXECUTIONS = "SYNC_EXECUTIONS"
+
+    const val POST_GENERIC = "POST_GENERIC"
+    const val POST_PRE_MEASUREMENT = "POST_PRE_MEASUREMENT"
     const val POST_INDIRECT_EXECUTION = "POST_INDIRECT_EXECUTION"
     const val POST_DIRECT_EXECUTION = "POST_DIRECT_EXECUTION"
+    const val POST_MAINTENANCE = "POST_MAINTENANCE"
+
     const val FINISHED_DIRECT_EXECUTION = "FINISHED_DIRECT_EXECUTION"
-    const val POST_GENERIC = "POST_GENERIC"
-    const val GET_GENERIC = "GET_GENERIC"
 
 }
 
@@ -68,6 +74,7 @@ class SyncQueueWorker(
     private val indirectExecutionRepository: IndirectExecutionRepository
     private val directExecutionRepository: DirectExecutionRepository
     private val genericRepository: GenericRepository
+    private val maintenanceRepository: MaintenanceRepository
 
 
     init {
@@ -109,6 +116,13 @@ class SyncQueueWorker(
         genericRepository = GenericRepository(
             api = api
         )
+
+        maintenanceRepository = MaintenanceRepository(
+            db = db,
+            api = api,
+            secureStorage = secureStorage,
+            app = app
+        )
     }
 
     override suspend fun doWork(): Result {
@@ -124,13 +138,16 @@ class SyncQueueWorker(
             queueDao.update(item.copy(status = SyncStatus.IN_PROGRESS))
 
             val result = when (item.type) {
-                SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item, uuid)
                 SyncTypes.SYNC_CONTRACT_ITEMS -> syncContractItems(item)
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
+                SyncTypes.SYNC_STOCK -> syncStock(item)
+
+                SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item, uuid)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
                 SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
+
                 SyncTypes.FINISHED_DIRECT_EXECUTION -> finishedDirectExecution(item)
 //                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
@@ -255,11 +272,16 @@ class SyncQueueWorker(
 
         } catch (e: Exception) {
             // Marcar falha ou retry conforme necessidade
-            queueDao.update(item.copy(status = SyncStatus.FAILED))
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
             UserExperience.sendNotification(
                 context = applicationContext,
                 title = "Erro ao enviar pré-mediçao",
-                body = "Tente novamente e caso se repita, contate o Suporte e informe o seguinte erro: 'Código 1 - Exception na classe SyncPreMeasurement'",
+                body = "Verifique o erro em Perfil - Sincronizações",
             )
             Result.failure()
         }
@@ -287,7 +309,17 @@ class SyncQueueWorker(
                 Result.retry()
             }
         } catch (e: Exception) {
-            Log.e("SyncStock", "Erro ao sincronizar: ${e.message}")
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar pré-mediçao",
+                body = "Verifique o erro em Perfil - Sincronizações",
+            )
             Result.failure()
         }
     }
@@ -314,8 +346,17 @@ class SyncQueueWorker(
                 Result.retry()
             }
         } catch (e: Exception) {
-            Log.e("syncContract", "Erro ao sincronizar: ${e.message}")
-            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar pré-mediçao",
+                body = "Verifique o erro em Perfil - Sincronizações",
+            )
             Result.failure()
         }
     }
@@ -341,8 +382,56 @@ class SyncQueueWorker(
             checkResponse(response, item)
 
         } catch (e: Exception) {
-            Log.e("syncExecutions", "Erro ao sincronizar: ${e.message}")
-            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar pré-mediçao",
+                body = "Verifique o erro em Perfil - Sincronizações",
+            )
+            Result.failure()
+        }
+    }
+
+    private suspend fun syncStock(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = maintenanceRepository.callGetStock()
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Problema ao sincronizar estoque",
+                body = "Clique para saber mais",
+                action = Routes.SYNC,
+                time = Utils.dateTime.toString(),
+                type = NotificationType.WARNING
+            )
             Result.failure()
         }
     }
@@ -373,8 +462,17 @@ class SyncQueueWorker(
             checkResponse(response, item)
 
         } catch (e: Exception) {
-            Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
-            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar pré-mediçao",
+                body = "Verifique o erro em Perfil - Sincronizações",
+            )
             Result.failure()
         }
     }
@@ -405,13 +503,24 @@ class SyncQueueWorker(
             checkResponse(response, item)
 
         } catch (e: Exception) {
-            Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
-            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar pré-mediçao",
+                body = "Verifique o erro em Perfil - Sincronizações",
+            )
             Result.failure()
         }
     }
 
-    private suspend fun finishedDirectExecution(item: SyncQueueEntity): Result {
+    private suspend fun finishedDirectExecution(
+        item: SyncQueueEntity,
+    ): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -437,13 +546,35 @@ class SyncQueueWorker(
             checkResponse(response, item)
 
         } catch (e: Exception) {
-            Log.e("postExecution", "Erro ao sincronizar: ${e.message}")
-            queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar execução",
+                body = "Verifique o erro no caminho Mais -> Perfil -> Tarefas em Sincronizações",
+            )
             Result.failure()
         }
     }
 
-    private suspend fun checkResponse(response: RequestResult<*>, inProgressItem: SyncQueueEntity): Result {
+    private suspend fun checkResponse(
+        response: RequestResult<*>,
+        inProgressItem: SyncQueueEntity,
+    ): Result {
+        val message =
+            when (inProgressItem.type) {
+                SyncTypes.POST_PRE_MEASUREMENT -> "Falha ao enviar pré-medição"
+                SyncTypes.POST_DIRECT_EXECUTION -> "Falha ao enviar execução"
+                SyncTypes.POST_MAINTENANCE -> "Falha ao enviar manutenção"
+                SyncTypes.POST_INDIRECT_EXECUTION -> "Falha ao enviar execução"
+                else -> "Problema ao comunicar com servidor"
+            }
+
+
         return when (response) {
             is RequestResult.Success -> {
                 if (inProgressItem.type == SyncTypes.POST_PRE_MEASUREMENT) {
@@ -461,10 +592,31 @@ class SyncQueueWorker(
                 Result.success()
             }
 
-            is RequestResult.NoInternet -> Result.retry()
-            is RequestResult.Timeout -> Result.retry()
+            is RequestResult.NoInternet -> {
+                queueDao.update(inProgressItem.copy(errorMessage = "Durante uma tentativa de comunicação com o servidor, este dispositivo estava sem internet. Tente novamente."))
+                Result.retry()
+            }
+
+            is RequestResult.Timeout -> {
+                queueDao.update(inProgressItem.copy(errorMessage = "Timeout - Solicitação excedeu o tempo de espera. Tente novamente agora."))
+                Result.retry()
+            }
+
             is RequestResult.ServerError -> {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED, errorMessage = response.message))
+                queueDao.update(
+                    inProgressItem.copy(
+                        status = SyncStatus.FAILED,
+                        errorMessage = response.message,
+                    )
+                )
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = message,
+                    body = "Clique para saber mais",
+                    action = Routes.SYNC,
+                    time = Utils.dateTime.toString(),
+                    type = NotificationType.WARNING
+                )
                 Result.retry()
             }
 
@@ -476,6 +628,14 @@ class SyncQueueWorker(
                         status = SyncStatus.FAILED,
                         errorMessage = response.error.message ?: response.error.toString()
                     )
+                )
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = message,
+                    body = "Clique para saber mais",
+                    action = Routes.SYNC,
+                    time = Utils.dateTime.toString(),
+                    type = NotificationType.WARNING
                 )
 
                 // Pode enviar para um sistema de logs, Crashlytics etc

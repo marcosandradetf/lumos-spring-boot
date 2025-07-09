@@ -65,16 +65,14 @@ import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 
 @Composable
 fun CitiesScreen(
+    lastRoute: String? = null,
     indirectExecutionViewModel: IndirectExecutionViewModel,
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    pSelected: Int,
     onNavigateToStreetScreen: (Long, String) -> Unit,
     roles: Set<String>,
     directExecution: Boolean
@@ -105,7 +103,7 @@ fun CitiesScreen(
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/Execuções")
+            navController.navigate(Routes.NO_ACCESS + "/${if (directExecution) Routes.DIRECT_EXECUTION_SCREEN else Routes.EXECUTION_SCREEN}")
         }
 
         if (directExecution)
@@ -121,17 +119,15 @@ fun CitiesScreen(
     }
 
     ContentCitiesScreen(
+        lastRoute = lastRoute,
         title = title,
         executions = executions,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
-        onNavigateToProfile = onNavigateToProfile,
-        onNavigateToNotifications = onNavigateToNotifications,
         context = context,
         navController = navController,
         notificationsBadge = notificationsBadge,
         isSyncing = isSyncing,
-        pSelected = pSelected,
         select = { contractId, contractor ->
             if (directExecution) onNavigateToStreetScreen(contractId, contractor)
             else onNavigateToStreetScreen(contractId, contractor)
@@ -154,17 +150,15 @@ fun CitiesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentCitiesScreen(
+    lastRoute: String? = null,
     title: String,
     executions: List<ExecutionHolder>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     context: Context,
     navController: NavHostController,
     notificationsBadge: String,
     isSyncing: Boolean,
-    pSelected: Int,
     select: (Long, String) -> Unit,
     error: String?,
     refresh: () -> Unit,
@@ -175,17 +169,22 @@ fun ContentCitiesScreen(
     var openModal by remember { mutableStateOf(false) }
     var contractId by remember { mutableLongStateOf(0) }
 
+    val navigateBack: (() -> Unit)? =
+        if (lastRoute == Routes.MORE) {
+            { navController.navigate(Routes.MORE) }
+        } else if (lastRoute == Routes.HOME) {
+            { navController.navigate(Routes.HOME) }
+        } else {
+            null
+        }
+
     AppLayout(
         title = title,
-        pSelected = pSelected,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
-        navigateBack = onNavigateToMenu,
-        context = context,
-        notificationsBadge = notificationsBadge
+        selectedIcon = BottomBar.EXECUTIONS.value,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
+        navigateBack = navigateBack
     ) { _, _ ->
 
         PullToRefreshBox(
@@ -430,13 +429,10 @@ fun PrevContentCitiesScreen() {
         executions = values,
         onNavigateToHome = { },
         onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToNotifications = { },
         context = fakeContext,
         navController = rememberNavController(),
         notificationsBadge = "12",
         isSyncing = false,
-        pSelected = BottomBar.HOME.value,
         select = { _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {}

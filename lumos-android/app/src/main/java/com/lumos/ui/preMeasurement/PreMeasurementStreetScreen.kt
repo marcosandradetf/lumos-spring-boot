@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.PhotoCamera
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -72,7 +71,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -392,17 +390,14 @@ fun PMSContent(
 
     AppLayout(
         title = "Pré-medição ${city ?: ""} ",
-        pSelected = BottomBar.MENU.value,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
+        selectedIcon = BottomBar.MORE.value,
+        notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
+
         navigateBack = {
             exitMeasurement = true
-        },
-        context = context,
-        notificationsBadge = notificationsBadge
+        }
     ) { _, showSnackBar ->
         Box(
             modifier = Modifier

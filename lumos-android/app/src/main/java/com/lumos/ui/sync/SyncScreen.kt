@@ -71,14 +71,14 @@ fun SyncScreenContent(
 
     AppLayout(
         title = "Sincronizações com falha",
+        selectedIcon = BottomBar.MORE.value,
         notificationsBadge = currentNotifications,
-        context = context,
-        navController = navController,
+        navigateToMore = { navController.navigate(Routes.MORE) },
+        navigateToHome = { navController.navigate(Routes.HOME) },
         navigateBack = { navController.navigate(Routes.PROFILE) },
-        sliderNavigateToHome = { navController.navigate(Routes.HOME) },
-        sliderNavigateToNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
-        sliderNavigateToMenu = { navController.navigate(Routes.MENU) },
-        pSelected = BottomBar.PROFILE.value
+        navigateToStock = { navController.navigate(Routes.STOCK) },
+        navigateToMaintenance = { navController.navigate(Routes.MAINTENANCE) },
+        navigateToExecutions = { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) }
     ) { modifier, snackBar ->
 
         if (error.isNotEmpty()) snackBar(error, null)
@@ -93,8 +93,10 @@ fun SyncScreenContent(
                 modifier = modifier
             ) {
                 items(syncItems) { syncType ->
-                    val type = when(syncType) {
+                    val type = when (syncType) {
                         SyncTypes.POST_DIRECT_EXECUTION -> "Execuções sem pré-medição"
+                        SyncTypes.POST_MAINTENANCE -> "Sincronizações de Manutenções"
+                        SyncTypes.SYNC_STOCK -> "Sincronizações de Estoque"
                         else -> syncType
                     }
 
@@ -126,6 +128,9 @@ fun SyncScreenContent(
                                     SyncTypes.POST_DIRECT_EXECUTION ->
                                         navController
                                             .navigate("${Routes.SYNC}/${SyncTypes.POST_DIRECT_EXECUTION}")
+                                    SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK ->
+                                        navController
+                                            .navigate("${Routes.SYNC}/${SyncTypes.POST_MAINTENANCE}")
                                 }
                             }
                     )

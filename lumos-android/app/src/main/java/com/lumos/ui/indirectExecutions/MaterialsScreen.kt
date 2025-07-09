@@ -211,15 +211,11 @@ fun MaterialsContent(
             streetName = execution.streetName,
             number = execution.streetNumber
         ),
-        pSelected = pSelected,
-        sliderNavigateToMenu = onNavigateToMenu,
-        sliderNavigateToHome = onNavigateToHome,
-        sliderNavigateToNotifications = onNavigateToNotifications,
-        sliderNavigateToProfile = onNavigateToProfile,
-        navController = navController,
-        navigateBack = onNavigateToExecutions,
-        context = context,
+        selectedIcon = pSelected,
         notificationsBadge = notificationsBadge,
+        navigateToMore = onNavigateToMenu,
+        navigateToHome = onNavigateToHome,
+        navigateBack = onNavigateToExecutions,
     ) { _, snackBar ->
         Box(
             modifier = Modifier.fillMaxSize()

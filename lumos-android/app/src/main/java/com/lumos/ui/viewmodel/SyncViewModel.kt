@@ -37,11 +37,11 @@ class SyncViewModel(
         }
     }
 
-    suspend fun getItems(type: String): List<SyncQueueEntity> {
+    suspend fun getItems(types: List<String>): List<SyncQueueEntity> {
         return withContext(Dispatchers.IO) {
             _loading.value = true
             try {
-                db.queueDao().getItem(type)
+                db.queueDao().getItem(types)
             } catch (e: Exception) {
                 _loading.value = false
                 _message.value = e.message ?: "Problema ao carregar os itens"
@@ -82,12 +82,13 @@ class SyncViewModel(
         }
     }
 
-    fun cancel(relatedId: Long, type: String) {
+    fun cancel(relatedId: Long, type: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (db.queueDao().exists(relatedId, type)) {
                     db.queueDao().deleteByRelatedId(relatedId, type)
                     db.directExecutionDao().deleteStreet(relatedId)
+                    SyncManager.enqueueSync(context, true)
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Erro ao cancelar envio"
@@ -96,6 +97,39 @@ class SyncViewModel(
             }
         }
     }
+
+    fun retryById(id: Long, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (db.queueDao().existsById(id)) {
+                    db.queueDao().retryById(id)
+                    SyncManager.enqueueSync(context, true)
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Erro ao agendar envio"
+            } finally {
+                _message.value = "Tarefa reagendada com sucesso."
+            }
+        }
+    }
+
+    fun cancelById(id: Long,context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (db.queueDao().existsById(id)) {
+                    db.queueDao().deleteById(id)
+                    SyncManager.enqueueSync(context, true)
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Erro ao cancelar envio"
+            } finally {
+                _message.value = "Envio cancelado com sucesso."
+            }
+        }
+    }
+
+
+
 
 
 }

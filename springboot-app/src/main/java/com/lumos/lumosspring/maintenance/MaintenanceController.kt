@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 @Controller
 @RequestMapping("/api")
@@ -13,8 +14,10 @@ class MaintenanceController(
     private val maintenanceService: MaintenanceService
 ) {
 
-    @GetMapping("/maintenance/get-materials")
-    fun getMaterialsForMaintenance(): ResponseEntity<List<MaintenanceQueryRepository.TypesMaterialDto>> {
+    @GetMapping("/mobile/maintenance/get-stock")
+    fun getStock(
+        @RequestParam(value = "uuid", required = true) uuid: String,
+    ): ResponseEntity<List<MaintenanceQueryRepository.TypesMaterialDto>> {
         return maintenanceService.getMaterialsForMaintenance()
     }
 

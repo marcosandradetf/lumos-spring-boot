@@ -8,13 +8,19 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.lumos.R
+import com.lumos.notifications.FCMService.FCMBus
+import com.lumos.notifications.NotificationItem
 
 object UserExperience {
     fun sendNotification(
         context: Context,
         title: String,
         body: String,
-        intent: PendingIntent? = null
+        intent: PendingIntent? = null,
+
+        action: String = "",
+        time: String = "",
+        type: String = "",
     ) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -33,13 +39,24 @@ object UserExperience {
             builder.setAutoCancel(true)
         }
 
+        val notification = NotificationItem(
+            title = title,
+            body = body,
+            action = action,
+            time = time,
+            type = type,
+        )
+
+        FCMBus.emit(notification)
+
         // Exibe a notificação
         notificationManager.notify(0, builder.build()) // 0 é o ID da notificação
     }
 
     fun vibrate(context: Context, duration: Long) {
         val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val manager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             manager.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
@@ -52,11 +69,11 @@ object UserExperience {
 }
 
 object NotificationType {
-    const val CONTRACT ="CONTRACT"
-    const val UPDATE ="UPDATE"
-    const val EVENT ="EVENT"
-    const val WARNING ="WARNING"
-    const val CASH ="CASH"
-    const val ALERT ="ALERT"
-    const val EXECUTION ="EXECUTION"
+    const val CONTRACT = "CONTRACT"
+    const val UPDATE = "UPDATE"
+    const val EVENT = "EVENT"
+    const val WARNING = "WARNING"
+    const val CASH = "CASH"
+    const val ALERT = "ALERT"
+    const val EXECUTION = "EXECUTION"
 }
