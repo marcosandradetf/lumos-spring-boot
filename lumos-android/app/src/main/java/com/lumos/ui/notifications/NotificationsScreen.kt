@@ -207,7 +207,7 @@ fun NotificationCard(
             .padding(4.dp),
         elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onSecondary
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -220,7 +220,7 @@ fun NotificationCard(
             Icon(
                 imageVector = icon,
                 contentDescription = "Ícone de Notificação",
-                tint = MaterialTheme.colorScheme.outline,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .size(40.dp)
                     .padding(end = 12.dp)

@@ -104,7 +104,6 @@ class PreMeasurementRepository(
     private suspend fun finishPreMeasurement(contractId: Long) {
         db.preMeasurementDao().deleteStreets(contractId)
         db.preMeasurementDao().deleteItems(contractId)
-        db.contractDao().deleteContract(contractId)
     }
 
     suspend fun saveItem(preMeasurementStreetItem: PreMeasurementStreetItem) {

@@ -71,17 +71,18 @@ fun SyncDetailsScreen(
             syncItems = syncViewModel.getItems(listOf(type))
             val streetIds = syncItems.map { it.relatedId!! }
             streets = syncViewModel.getStreets(streetIds)
-        } else if (type == SyncTypes.POST_MAINTENANCE) {
+        } else {
             syncItems = syncViewModel.getItems(
                 listOf(
                     SyncTypes.POST_MAINTENANCE,
-                    SyncTypes.SYNC_STOCK
+                    SyncTypes.SYNC_STOCK,
+                    SyncTypes.POST_ORDER
                 )
             )
         }
     }
 
-    if (type == SyncTypes.POST_DIRECT_EXECUTION)
+    if (type == SyncTypes.POST_DIRECT_EXECUTION) {
         SyncDetailsStreetsContent(
             streets,
             syncItems,
@@ -112,7 +113,7 @@ fun SyncDetailsScreen(
                 streets = streets.filter { s -> s.directStreetId != it }
             }
         )
-    else if (type == SyncTypes.POST_MAINTENANCE)
+    } else {
         SyncDetailsMaintenanceContent(
             syncItems,
             type,
@@ -138,6 +139,7 @@ fun SyncDetailsScreen(
                 syncItems = syncItems.filter { s -> s.id != it }
             }
         )
+    }
 
 }
 
@@ -194,7 +196,7 @@ fun SyncDetailsMaintenanceContent(
         }
 
         if (loading) Loading("Carregando")
-        else if (syncItems.isEmpty()) NothingData("Nenhuma rua encontrada")
+        else if (syncItems.isEmpty()) NothingData("Nenhum dado encontrado")
         else {
             if (syncItem != null) {
                 Alert(

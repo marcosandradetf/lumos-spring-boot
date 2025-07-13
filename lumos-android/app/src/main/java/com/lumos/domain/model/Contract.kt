@@ -2,7 +2,6 @@ package com.lumos.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.Instant
 
 @Entity(tableName = "contracts")
 data class Contract(
@@ -15,4 +14,5 @@ data class Contract(
     val startAt: String? = null,
     val deviceId: String? = null,
     val itemsIds: String? = null,
+    val hasMaintenance: Boolean = false
 )

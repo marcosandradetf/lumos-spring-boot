@@ -23,6 +23,8 @@ import {DepositByStockist, StockistModel} from '../../executions/executions.mode
 import {StockService} from '../../stock/services/stock.service';
 import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
 import {Title} from '@angular/platform-browser';
+import {IconField} from 'primeng/iconfield';
+import {InputIcon} from 'primeng/inputicon';
 
 @Component({
   selector: 'app-reservation-pending',
@@ -41,9 +43,11 @@ import {Title} from '@angular/platform-browser';
     Tooltip,
     NgForOf,
     LoadingComponent,
-    InputText,
     FormsModule,
-    PrimeConfirmDialogComponent
+    PrimeConfirmDialogComponent,
+    IconField,
+    InputIcon,
+    InputText
   ],
   templateUrl: './reservation-pending.component.html',
   styleUrl: './reservation-pending.component.scss'
@@ -53,6 +57,7 @@ export class ReservationPendingComponent implements OnInit {
 
   deposits: DepositByStockist[] = [];
   reservations: ReservationsByCaseDtoResponse[] = [];
+  reservationsBackup: ReservationsByCaseDtoResponse[] = [];
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
   showTeamModal: boolean = false;
   depositName: string | null = null;
@@ -74,50 +79,58 @@ export class ReservationPendingComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loading = true;
-
     this.route.queryParams.subscribe(params => {
+      this.loading = true;
       this.status = params['status'];
-    });
 
-    if (this.status === "PENDING") {
-      this.titleService.setTitle("Materiais Pendentes de Aprovação");
-      this.items =  [
-        {label: 'Requisições'},
-        {label: 'Materiais Pendentes de Aprovação'},
-      ];
-    } else {
-      this.titleService.setTitle("Materiais Disponíveis para Coleta");
-      this.items =  [
-        {label: 'Requisições'},
-        {label: 'Materiais Disponíveis para Coleta'},
-      ];
-    }
-
-    this.stockService.getDepositsByStockist(this.authService.getUser().uuid).subscribe({
-      next: (response) => {
-        this.deposits = response;
-        if (response.length === 1) {
-          this.depositName = response[0].depositName
-          this.requestService.getReservation(response[0].depositId, this.status).subscribe({
-            next: (response) => {
-              this.reservations = response;
-            },
-            error: (error) => {
-              this.utils.showMessage(error.error.message, "error", "Erro ao buscar Reservas");
-              this.loading = false;
-            }
-          });
-        }
-      },
-      error: (error: { error: { message: string } }) => {
-        this.utils.showMessage("Erro ao carregar Estoquistas", 'error');
-        this.utils.showMessage(error.error.message, 'error');
-        this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
+      if (this.status === "PENDING") {
+        this.titleService.setTitle("Materiais Pendentes de Aprovação");
+        this.items = [
+          {label: 'Requisições'},
+          {label: 'Materiais Pendentes de Aprovação'},
+        ];
+      } else {
+        this.titleService.setTitle("Materiais Disponíveis para Coleta");
+        this.items = [
+          {label: 'Requisições'},
+          {label: 'Materiais Disponíveis para Coleta'},
+        ];
       }
+
+      this.stockService.getDepositsByStockist(this.authService.getUser().uuid).subscribe({
+        next: (response) => {
+          this.deposits = response;
+          if (response.length === 1) {
+            this.depositName = response[0].depositName
+            this.requestService.getReservation(response[0].depositId, this.status).subscribe({
+              next: (response) => {
+                this.reservations = response.map(group => ({
+                  ...group,
+                  reservations: group.reservations.map(item => ({
+                    ...item,
+                    uniqueId: item.reserveId ?? item.materialId
+                  }))
+                }));
+
+                this.reservationsBackup = this.reservations;
+
+              },
+              error: (error) => {
+                this.utils.showMessage(error.error.message, "error", "Erro ao buscar Reservas");
+                this.loading = false;
+              }
+            });
+          }
+        },
+        error: (error: { error: { message: string } }) => {
+          this.utils.showMessage("Erro ao carregar Estoquistas", 'error');
+          this.utils.showMessage(error.error.message, 'error');
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -126,7 +139,16 @@ export class ReservationPendingComponent implements OnInit {
     this.depositName = this.deposits.find(d => d.depositId = depositId)?.depositName || null;
     this.requestService.getReservation(depositId, "PENDING").subscribe({
       next: (response) => {
-        this.reservations = response;
+        this.reservations = response.map(group => ({
+          ...group,
+          reservations: group.reservations.map(item => ({
+            ...item,
+            uniqueId: item.reserveId ?? item.materialId
+          }))
+        }));
+
+        this.reservationsBackup = this.reservations;
+
       },
       error: (error) => {
         this.utils.showMessage(error.error.message, "error", "Erro ao buscar Reservas");
@@ -174,6 +196,7 @@ export class ReservationPendingComponent implements OnInit {
   }
 
   modalSendData = false;
+
   sendData() {
     const hasAtLeastOneResponse = this.reservations.some(group =>
       group.reservations.some(r => r.internStatus !== null && r.internStatus !== undefined)
@@ -188,9 +211,15 @@ export class ReservationPendingComponent implements OnInit {
       const allFilled = group.reservations.every(r => r.internStatus !== null && r.internStatus !== undefined);
       const noneFilled = group.reservations.every(r => r.internStatus === null || r.internStatus === undefined);
 
+      const allWithout = group.reservations.every(r => r.reserveQuantity !== null && r.internStatus !== 'APROVADO');
+      const noneWithout = group.reservations.every(r => r.reserveQuantity === null && r.internStatus !== 'APROVADO');
+
       // Se tiver apenas alguns preenchidos (nem todos, nem nenhum), erro.
-      if (!allFilled && !noneFilled) {
+      if (!allFilled && !noneFilled ) {
         this.utils.showMessage(`Responda todas as reservas pendentes da ${group.description}.`, 'warn', 'Atenção');
+        return;
+      } else if (!allWithout && !noneWithout) {
+        this.utils.showMessage(`Informe a quantidade a ser aprovada dos materiais para ${group.description}.`, 'warn', 'Atenção');
         return;
       }
     }
@@ -259,5 +288,16 @@ export class ReservationPendingComponent implements OnInit {
     }
 
   }
+
+  filterOrders(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+
+    if(value === null || value === undefined || value === '') {
+      this.reservations = this.reservationsBackup;
+    }
+
+    this.reservations = this.reservations.filter(r => r.description.toLowerCase().includes(value.toLowerCase()));
+  }
+
 
 }

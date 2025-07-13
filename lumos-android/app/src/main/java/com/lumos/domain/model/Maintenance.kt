@@ -1,14 +1,56 @@
 package com.lumos.domain.model
 
+import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room.Index
+import androidx.room.Relation
 
-@Entity(tableName = "material_stock")
-data class MaterialStock(
-    @PrimaryKey val materialIdStock: Long,
-    val materialName: String,
-    val specs: String?,
-    val stockQuantity: Double,
-    val stockAvailable: Double,
-    val requestUnit: String
+data class MaintenanceStreetWithItems(
+    @Embedded val street: MaintenanceStreet,
+    @Relation(
+        parentColumn = "maintenanceStreetId",
+        entityColumn = "maintenanceStreetId"
+    )
+    val items: List<MaintenanceStreetItem>
+)
+
+@Entity(primaryKeys = ["maintenanceId", "contractId"])
+data class Maintenance(
+    val maintenanceId: String,
+    val contractId: Long,
+    val pendingPoints: Boolean,
+    val quantityPendingPoints: Int?,
+    val dateOfVisit: String,
+    val type: String, //rural ou urbana
+
+    val status: String
+)
+
+@Entity(
+    primaryKeys = ["maintenanceStreetId", "maintenanceId"],
+    indices = [Index(value = ["address", "maintenanceId"], unique = true)]
+)
+data class MaintenanceStreet(
+    val maintenanceStreetId: String,
+    val maintenanceId: String,
+
+    var address: String,
+    var latitude: Double? = null,
+    var longitude: Double? = null,
+    val comment: String?,
+    val lastPower: String?,
+
+    val lastSupply: String?, // n obrigatorio
+    val currentSupply: String?, // obrigatorio
+
+    val reason: String?// se led - perguntar qual o problema/motivo daa troca
+
+)
+
+@Entity(primaryKeys = ["maintenanceId", "maintenanceStreetId", "materialStockId"])
+data class MaintenanceStreetItem(
+    val maintenanceId: String,
+    val maintenanceStreetId: String,
+    val materialStockId: Long,
+    val quantityExecuted: Double = 1.0,
 )

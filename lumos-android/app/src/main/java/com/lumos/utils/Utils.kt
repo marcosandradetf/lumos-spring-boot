@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.compose.ui.text.toLowerCase
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -12,6 +13,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Locale
+import java.util.UUID
 
 object Utils {
     val dateTime: Instant
@@ -145,8 +147,50 @@ object Utils {
         return replaced.trimStart('0').ifEmpty { "0" }
     }
 
+    fun uuidToShortCodeWithPrefix(prefix: String, strUUID: String, length: Int = 10): String {
+        val uuid = try {
+            UUID.fromString(strUUID)
+        } catch (e: Exception) {
+            throw IllegalStateException(e.message)
+        }
 
+        val mostSigBits = uuid.mostSignificantBits
+        val base36 = java.lang.Long.toUnsignedString(mostSigBits, 36).uppercase()
 
+        // Ajusta tamanho fixo e adiciona prefixo REQ-
+        val code = base36.padStart(length, '0').takeLast(length)
+        return "$prefix-$code"
+    }
+
+    fun abbreviate(name: String): String {
+        val tokens = name.split(" ")
+        val result = mutableListOf<String>()
+
+        var replace = false
+
+        for (token in tokens) {
+            val word = token.uppercase()
+
+            when {
+                word.lowercase() == "prefeitura" -> {
+                    result.add("PREF.")
+                    replace = true
+                }
+                word.lowercase() == "municipal" && replace -> {
+                    result.add("MUN.")
+                }
+                word.lowercase() == "de" && replace -> {
+                    // ignora "DE" após PREFEITURA ou MUNICIPAL
+                }
+                else -> {
+                    result.add(token)
+                    replace = false
+                }
+            }
+        }
+
+        return result.joinToString(" ").uppercase()
+    }
 
 
 

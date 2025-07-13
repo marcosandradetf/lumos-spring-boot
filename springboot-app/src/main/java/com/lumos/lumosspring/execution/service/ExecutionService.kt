@@ -718,8 +718,11 @@ class ExecutionService(
 
     fun getReservationsByStatusAndStockist(depositId: Long, status: String): ResponseEntity<Any> {
         data class ReservationDto(
-            val reserveId: Long,
-            val reserveQuantity: Double,
+            val reserveId: Long?,
+            val materialId: Long?,
+            val orderId: String?,
+
+            val reserveQuantity: Double?,
             val stockQuantity: Double,
             val materialName: String,
             val description: String?,
@@ -737,25 +740,42 @@ class ExecutionService(
         val rawReservations = getRawData(
             namedJdbc,
             """
-                        select pms.city, c.contractor, mr.material_id_reservation, mr.reserved_quantity, mr.description, 
-                        ms.material_id_stock, m.material_name, m.material_power, m.material_length, 
-                        t.team_name, ms.stock_quantity, mr.status
-                        from material_reservation mr
-                        inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
-                        inner join material m on m.id_material = ms.material_id
-                        left join direct_execution de ON mr.direct_execution_id = de.direct_execution_id 
-                        left join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
-                        inner join team t on t.id_team = mr.team_id
-                        inner join contract c on de.contract_id = c.contract_id 
-                        where ms.deposit_id = :deposit_id and mr.status = :status
-                        order by mr.material_id_reservation
+                    -- Reservas para execucoes
+                    select pms.city, c.contractor, mr.material_id_reservation, cast(null as uuid) as order_id, 
+                    mr.reserved_quantity as request_quantity, mr.description, m.id_material, 
+                    m.material_name, m.material_power, m.material_length, t.team_name, 
+                    ms.stock_quantity, mr.status, cast(null as timestamp) as created_at
+                    from material_reservation mr
+                    inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
+                    inner join material m on m.id_material = ms.material_id
+                    left join direct_execution de on mr.direct_execution_id = de.direct_execution_id 
+                    left join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
+                    inner join team t on t.id_team = mr.team_id
+                    left join contract c on de.contract_id = c.contract_id 
+                    where ms.deposit_id = :deposit_id and mr.status = :status
+                        
+                    UNION ALL
+                        
+                    -- Pedidos da equipe
+                    select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id, 
+                    cast(null as bigint) as request_quantity, om.order_code as description, m.id_material, 
+                    m.material_name, m.material_power, m.material_length, t.team_name, 
+                    ms.stock_quantity, om.status, om.created_at
+                    from order_material om
+                    inner join order_material_item omi on omi.order_id = om.order_id
+                    inner join material_stock ms on ms.material_id = omi.material_id
+                    inner join material m on m.id_material = ms.material_id
+                    inner join team t on t.id_team = om.team_id
+                    where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
+                        
+                    order by created_at nulls last, material_id_reservation nulls last;
                     """.trimIndent(),
             mapOf("deposit_id" to depositId, "status" to status)
         )
 
         val reservationsGroup = rawReservations
             .groupBy {
-                (it["city"] as? String) ?: (it["contractor"] as? String) ?: "Desconhecido"
+                (it["city"] as? String) ?: (it["contractor"] as? String) ?: (it["description"] as? String)  ?: "Desconhecido"
             }
 
         for ((preMeasurementName, reservations) in reservationsGroup) {
@@ -769,9 +789,12 @@ class ExecutionService(
 
                 list.add(
                     ReservationDto(
-                        reserveId = (reserve["material_id_reservation"] as Number).toLong(),
-                        reserveQuantity = (reserve["reserved_quantity"] as Number).toDouble(),
+                        reserveId = (reserve["material_id_reservation"] as Number?)?.toLong(),
+                        orderId = (reserve["order_id"] as? UUID)?.toString(),
+
+                        reserveQuantity = (reserve["request_quantity"] as? Number)?.toDouble(),
                         stockQuantity = (reserve["stock_quantity"] as Number).toDouble(),
+                        materialId = reserve["id_material"] as Long,
                         materialName = materialName,
                         description = (reserve["description"] as? String),
                         status = reserve["status"] as String,
@@ -1004,10 +1027,6 @@ class ExecutionService(
                         params
                     )
 
-                println("Executando update com params:")
-                params.forEach { (k, v) -> println(" - $k = $v (${v?.javaClass?.name})") }
-
-
                 for (s in servicesData) {
                     val serviceItemId = (s["contract_item_id"] as Number).toLong()
                     val isService = s["isService"] as Boolean
@@ -1036,8 +1055,6 @@ class ExecutionService(
                     params
                 )
             }
-
-
 
             exists = existsRaw(
                 namedJdbc,

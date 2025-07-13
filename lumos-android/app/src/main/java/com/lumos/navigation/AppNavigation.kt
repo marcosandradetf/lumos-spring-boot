@@ -34,6 +34,7 @@ import com.lumos.data.repository.ContractRepository
 import com.lumos.data.repository.DirectExecutionRepository
 import com.lumos.data.repository.IndirectExecutionRepository
 import com.lumos.data.repository.MaintenanceRepository
+import com.lumos.data.repository.StockRepository
 import com.lumos.data.repository.NotificationRepository
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.midleware.SecureStorage
@@ -47,7 +48,7 @@ import com.lumos.ui.indirectExecutions.CitiesScreen
 import com.lumos.ui.indirectExecutions.MaterialScreen
 import com.lumos.ui.indirectExecutions.StreetsScreen
 import com.lumos.ui.home.HomeScreen
-import com.lumos.ui.maintenance.NewMaintenanceScreen
+import com.lumos.ui.maintenance.MaintenanceScreen
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.noAccess.NoAccessScreen
 import com.lumos.ui.notifications.NotificationsScreen
@@ -66,6 +67,7 @@ import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 import com.lumos.ui.viewmodel.MaintenanceViewModel
+import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.ui.viewmodel.NotificationViewModel
 import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.ui.viewmodel.SyncViewModel
@@ -167,13 +169,25 @@ fun AppNavigation(
         )
     }
 
-    val maintenanceViewModel: MaintenanceViewModel = viewModel {
-        val maintenanceRepository = MaintenanceRepository(
+    val stockViewModel: StockViewModel = viewModel {
+        val stockRepository = StockRepository(
             db = app.database,
             api = ApiService(app.applicationContext, secureStorage),
             secureStorage = secureStorage,
             app = app
         )
+        StockViewModel(
+            repository = stockRepository
+        )
+    }
+
+    val maintenanceViewModel: MaintenanceViewModel = viewModel {
+        val maintenanceRepository = MaintenanceRepository(
+            db = app.database,
+            api = ApiService(app.applicationContext, secureStorage),
+            app = app
+        )
+
         MaintenanceViewModel(
             repository = maintenanceRepository
         )
@@ -676,21 +690,24 @@ fun AppNavigation(
                         backStackEntry.arguments?.getString("lastRoute")
 
                     CheckStockScreen(
-                        context = LocalContext.current,
                         navController = navController,
                         lastRoute = lastRoute,
-                        maintenanceViewModel = maintenanceViewModel
+                        stockViewModel = stockViewModel
                     )
                 }
 
-                composable(Routes.MAINTENANCE + "?lastRoute={lastRoute}") { backStackEntry ->
+                composable(Routes.MAINTENANCE + "?lastRoute={lastRoute}?maintenanceId={maintenanceId}") { backStackEntry ->
                     val lastRoute =
                         backStackEntry.arguments?.getString("lastRoute")
 
-                    NewMaintenanceScreen(
-                        context = LocalContext.current,
-                        navController,
-                        lastRoute = lastRoute
+                    val maintenanceId =
+                        backStackEntry.arguments?.getString("maintenanceId")
+
+                    MaintenanceScreen(
+                        maintenanceViewModel = maintenanceViewModel,
+                        contractViewModel = contractViewModel,
+                        navController = navController,
+                        lastRoute = lastRoute,
                     )
                 }
 
@@ -719,6 +736,7 @@ object Routes {
     const val EXECUTION_SCREEN = "execution-screen"
     const val MAINTENANCE = "maintenance"
     const val STOCK = "stock"
+    const val ORDER = "order"
 
     const val EXECUTION_SCREEN_STREETS = "execution-screen-streets"
     const val EXECUTION_SCREEN_MATERIALS = "execution-screen-materials"

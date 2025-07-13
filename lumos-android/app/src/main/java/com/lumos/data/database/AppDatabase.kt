@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
@@ -15,10 +16,16 @@ import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.IndirectExecution
 import com.lumos.domain.model.IndirectReserve
 import com.lumos.domain.model.Item
+import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceStreet
+import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaterialStock
+import com.lumos.domain.model.OrderMaterial
+import com.lumos.domain.model.OrderMaterialItem
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.PreMeasurementStreetPhoto
+import com.lumos.domain.model.Stockist
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.notifications.NotificationItem
 import java.util.concurrent.Executors
@@ -45,9 +52,18 @@ import java.util.concurrent.Executors
         (DirectExecutionStreetItem::class),
 
         (MaterialStock::class),
+        (OrderMaterial::class),
+        (OrderMaterialItem::class),
+
+        (Stockist::class),
+        (Deposit::class),
+
+        (Maintenance::class),
+        (MaintenanceStreet::class),
+        (MaintenanceStreetItem::class),
 
     ],
-    version = 6,
+    version = 9,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -57,7 +73,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun indirectExecutionDao(): IndirectExecutionDao
     abstract fun directExecutionDao(): DirectExecutionDao
     abstract fun maintenanceDao(): MaintenanceDao
-
+    abstract fun stockDao(): StockDao
 
     companion object {
         @Volatile
@@ -274,6 +290,115 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6,7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS stockist (
+                            stockistId INTEGER NOT NULL PRIMARY KEY,
+                            stockistName TEXT NOT NULL,
+                            stockistPhone TEXT,
+                            depositId INTEGER NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS deposit (
+                            depositId INTEGER NOT NULL PRIMARY KEY,
+                            depositName TEXT NOT NULL,
+                            depositAddress TEXT,
+                            depositPhone TEXT
+                        );
+                """.trimIndent()
+                )
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7,8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS order_material (
+                            orderId TEXT NOT NULL PRIMARY KEY,
+                            orderCode TEXT NOT NULL,
+                            createdAt TEXT NOT NULL,
+                            depositId INTEGER NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS order_material_item (
+                            orderId TEXT NOT NULL,
+                            materialId INTEGER NOT NULL,
+                            PRIMARY KEY (orderId, materialId)
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL("alter table sync_queue_entity add column relatedUuid TEXT")
+
+                db.execSQL("alter table material_stock RENAME COLUMN materialIdStock TO materialId")
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8,9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS Maintenance (
+                            maintenanceId TEXT NOT NULL,
+                            contractId INTEGER NOT NULL,
+                            pendingPoints INTEGER NOT NULL,
+                            quantityPendingPoints INTEGER,
+                            dateOfVisit TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            status TEXT NOT NULL,
+                            PRIMARY KEY (maintenanceId, contractId)
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS MaintenanceStreet (
+                            maintenanceStreetId TEXT NOT NULL,
+                            maintenanceId TEXT NOT NULL,
+                            address TEXT NOT NULL,
+                            latitude REAL,
+                            longitude REAL,
+                            comment TEXT,
+                            lastPower TEXT,
+                            lastSupply TEXT,
+                            currentSupply TEXT,
+                            reason TEXT,
+                            PRIMARY KEY (maintenanceStreetId, maintenanceId)
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS MaintenanceStreetItem (
+                            maintenanceId TEXT NOT NULL,
+                            maintenanceStreetId TEXT NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            quantityExecuted REAL NOT NULL,
+                            PRIMARY KEY (maintenanceId,maintenanceStreetId, materialId)
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL("delete from material_stock")
+                db.execSQL("alter table material_stock add column materialStockId integer not null")
+                db.execSQL("delete from contracts")
+                db.execSQL("alter table contracts add column hasMaintenance integer not null")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -286,6 +411,9 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_3_4,
                     MIGRATION_4_5,
                     MIGRATION_5_6,
+                    MIGRATION_6_7,
+                    MIGRATION_7_8,
+                    MIGRATION_8_9,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

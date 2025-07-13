@@ -41,6 +41,9 @@ interface PreMeasurementDao {
     suspend fun finishAll(lng: Long)
 
     @Query("DELETE FROM pre_measurement_street_photos WHERE preMeasurementStreetId in (:longs)")
-    fun deletePhotos(longs: MutableList<Long>)
+    suspend fun deletePhotos(longs: MutableList<Long>)
+
+    @Query("select contractId from pre_measurement_streets")
+    suspend fun getContractInUse(): List<Long>
 
 }

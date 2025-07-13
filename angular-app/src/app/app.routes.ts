@@ -189,19 +189,19 @@ export const routes: Routes = [
     path: 'requisicoes/execucoes/reservas/gerenciamento',
     loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+    data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
   },
   {
     path: 'requisicoes/gerenciamento/execucao',
     loadComponent: () => import('./requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+    data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
   },
   {
     path: 'requisicoes',
     loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
     canActivate: [AuthGuard],
-    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+    data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
   },
   //end
 

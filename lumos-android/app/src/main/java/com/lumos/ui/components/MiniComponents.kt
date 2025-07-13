@@ -333,7 +333,7 @@ fun Option(
 }
 
 @Composable
-fun NoInternet() {
+fun NoInternet(message: String? = null) {
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -355,7 +355,7 @@ fun NoInternet() {
                 .background(MaterialTheme.colorScheme.errorContainer)
         ) {
             Text(
-                text = "Estamos com problemas para conectar aos servidores. Por favor, reconecte.",
+                text = message ?: "Estamos com problemas para conectar aos servidores. Por favor, reconecte.",
                 modifier = Modifier
                     .fillMaxWidth(fraction = 0.9f)
                     .padding(8.dp),
@@ -379,7 +379,7 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null) {
             Icon(
                 imageVector = it,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.background,
                 modifier = Modifier
                     .size(14.dp)
                     .padding(end = 4.dp)
@@ -387,7 +387,7 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null) {
         }
         Text(
             text = text,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.background,
             style = MaterialTheme.typography.labelSmall,
         )
     }

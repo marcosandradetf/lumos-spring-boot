@@ -8,6 +8,7 @@ import com.lumos.worker.SyncStatus
 data class SyncQueueEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val relatedId: Long? = null,
+    val relatedUuid: String? = null,
     val type: String, // "CONTRACT", "STOCK", "PRE_MEASUREMENT"
     val status: String = SyncStatus.PENDING,
     val priority: Int = 100, // Quanto menor, mais prioritário

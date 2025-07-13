@@ -26,6 +26,7 @@ import com.lumos.data.repository.DirectExecutionRepository
 import com.lumos.data.repository.IndirectExecutionRepository
 import com.lumos.data.repository.GenericRepository
 import com.lumos.data.repository.MaintenanceRepository
+import com.lumos.data.repository.StockRepository
 import com.lumos.data.repository.PreMeasurementRepository
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.midleware.SecureStorage
@@ -53,6 +54,8 @@ object SyncTypes {
     const val POST_INDIRECT_EXECUTION = "POST_INDIRECT_EXECUTION"
     const val POST_DIRECT_EXECUTION = "POST_DIRECT_EXECUTION"
     const val POST_MAINTENANCE = "POST_MAINTENANCE"
+    const val POST_ORDER = "POST_ORDER"
+    const val POST_MAINTENANCE_STREET = "POST_MAINTENANCE_STREET"
 
     const val FINISHED_DIRECT_EXECUTION = "FINISHED_DIRECT_EXECUTION"
 
@@ -74,6 +77,7 @@ class SyncQueueWorker(
     private val indirectExecutionRepository: IndirectExecutionRepository
     private val directExecutionRepository: DirectExecutionRepository
     private val genericRepository: GenericRepository
+    private val stockRepository: StockRepository
     private val maintenanceRepository: MaintenanceRepository
 
 
@@ -117,10 +121,16 @@ class SyncQueueWorker(
             api = api
         )
 
-        maintenanceRepository = MaintenanceRepository(
+        stockRepository = StockRepository(
             db = db,
             api = api,
             secureStorage = secureStorage,
+            app = app
+        )
+
+        maintenanceRepository = MaintenanceRepository(
+            db = db,
+            api = api,
             app = app
         )
     }
@@ -147,6 +157,10 @@ class SyncQueueWorker(
                 SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
                 SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
+                SyncTypes.POST_ORDER -> postOrder(item)
+                SyncTypes.POST_MAINTENANCE_STREET -> postMaintenanceStreet(item)
+                SyncTypes.POST_MAINTENANCE -> postMaintenance(item)
+
 
                 SyncTypes.FINISHED_DIRECT_EXECUTION -> finishedDirectExecution(item)
 //                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
@@ -414,7 +428,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = maintenanceRepository.callGetStock()
+            val response = stockRepository.callGetStock()
             checkResponse(response, item)
 
         } catch (e: Exception) {
@@ -518,6 +532,147 @@ class SyncQueueWorker(
         }
     }
 
+    private suspend fun postOrder(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedUuid == null) {
+                queueDao.update(
+                    inProgressItem.copy(
+                        status = SyncStatus.FAILED,
+                        errorMessage = "Worker - Código não encontrado."
+                    )
+                )
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = stockRepository.callPostOrder(item.relatedUuid)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Falha ao enviar requisição de materiais",
+                body = "Clique para saber mais",
+            )
+            Result.failure()
+        }
+
+    }
+
+    private suspend fun postMaintenanceStreet(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedUuid == null) {
+                queueDao.update(
+                    inProgressItem.copy(
+                        status = SyncStatus.FAILED,
+                        errorMessage = "Worker - Código não encontrado."
+                    )
+                )
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = maintenanceRepository.callPostMaintenanceStreet(item.relatedUuid)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Falha ao rua finalizada da manutenção",
+                body = "Clique para saber mais",
+            )
+            Result.failure()
+        }
+
+    }
+
+    private suspend fun postMaintenance(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedUuid == null) {
+                queueDao.update(
+                    inProgressItem.copy(
+                        status = SyncStatus.FAILED,
+                        errorMessage = "Worker - Código não encontrado."
+                    )
+                )
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = maintenanceRepository.callPostMaintenance(item.relatedUuid)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Falha ao enviar manutenção",
+                body = "Clique para saber mais",
+            )
+            Result.failure()
+        }
+
+    }
+
     private suspend fun finishedDirectExecution(
         item: SyncQueueEntity,
     ): Result {
@@ -571,6 +726,8 @@ class SyncQueueWorker(
                 SyncTypes.POST_DIRECT_EXECUTION -> "Falha ao enviar execução"
                 SyncTypes.POST_MAINTENANCE -> "Falha ao enviar manutenção"
                 SyncTypes.POST_INDIRECT_EXECUTION -> "Falha ao enviar execução"
+                SyncTypes.POST_ORDER -> "Falha ao enviar requisição de materiais"
+                SyncTypes.POST_MAINTENANCE_STREET -> "Falha ao enviar rua finalizada da manutenção"
                 else -> "Problema ao comunicar com servidor"
             }
 

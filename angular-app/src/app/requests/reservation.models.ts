@@ -6,8 +6,10 @@ export interface ReservationsByCaseDtoResponse {
 
 export interface ReservationDtoResponse {
   reserveId: number,
+  materialId: number,
+  orderId: string,
   reserveQuantity: number,
-  stockQuantity: number,
+  stockQuantity: number | null,
   materialName: string,
   description: string | null,
   status: string,

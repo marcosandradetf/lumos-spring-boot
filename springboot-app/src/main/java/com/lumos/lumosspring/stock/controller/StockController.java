@@ -2,8 +2,10 @@ package com.lumos.lumosspring.stock.controller;
 
 import com.lumos.lumosspring.stock.controller.dto.*;
 import com.lumos.lumosspring.stock.entities.Supplier;
+import com.lumos.lumosspring.stock.repository.StockQueryRepository;
 import com.lumos.lumosspring.stock.repository.SupplierRepository;
 import com.lumos.lumosspring.stock.service.StockMovementService;
+import com.lumos.lumosspring.stock.service.StockService;
 import com.lumos.lumosspring.util.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,20 +15,37 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/stock")
+@RequestMapping("/api")
 public class StockController {
     private final StockMovementService stockMovementService;
+    private final StockService stockService;
     private final SupplierRepository supplierRepository;
     private final Util util;
 
-    public StockController(StockMovementService stockMovementService, SupplierRepository supplierRepository, Util util) {
+    public StockController(StockMovementService stockMovementService, StockService stockService, SupplierRepository supplierRepository, Util util) {
         this.stockMovementService = stockMovementService;
+        this.stockService = stockService;
         this.supplierRepository = supplierRepository;
         this.util = util;
     }
 
+    @GetMapping("/mobile/stock/get-truck-stock")
+    public ResponseEntity<StockQueryRepository.StockResponse> getStock(
+            @RequestParam(value = "uuid") String uuid
+    ) {
+        return stockService.getMaterialsForMaintenance(uuid);
+    }
 
-    @GetMapping("/get-suppliers")
+    @PostMapping("/mobile/stock/send-order")
+    public ResponseEntity<StockQueryRepository.StockResponse> sendOrder(
+            @RequestParam(value = "uuid") String uuid,
+            @RequestBody StockQueryRepository.OrderWithItems order
+    ) {
+        return stockService.saveOrder(uuid, order);
+    }
+
+
+    @GetMapping("/stock/get-suppliers")
     public ResponseEntity<List<SupplierResponse>> getAllSuppliers() {
         List<Supplier> suppliers = supplierRepository.findAll();
         List<SupplierResponse> supplierDTOS = suppliers.stream().map(SupplierResponse::new).toList(); // Converte diretamente para Page<MaterialResponse>
@@ -39,30 +58,30 @@ public class StockController {
         return stockMovementService.createMovement(movement, refreshToken);
     }
 
-    @GetMapping("/stock-movement/get")
+    @GetMapping("/stock/stock-movement/get")
     public ResponseEntity<?> stockMovementGet() {
         return stockMovementService.stockMovementGet();
     }
 
-    @GetMapping("/stock-movement/get-approved")
+    @GetMapping("/stock/stock-movement/get-approved")
     public ResponseEntity<?> stockMovementGetApproved() {
         return stockMovementService.stockMovementGetApproved();
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('ESTOQUISTA_CHEFE')")
-    @PostMapping("/stock-movement/approve/{movementId}")
+    @PostMapping("/stock/stock-movement/approve/{movementId}")
     public ResponseEntity<?> stockMovementApprove(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.approveStockMovement(movementId, refreshToken);
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('ESTOQUISTA_CHEFE')")
-    @PostMapping("/stock-movement/reject/{movementId}")
+    @PostMapping("/stock/stock-movement/reject/{movementId}")
     public ResponseEntity<?> stockMovementReject(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.rejectStockMovement(movementId, refreshToken);
     }
 
     @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'ESTOQUISTA_CHEFE', 'ESTOQUISTA')")
-    @PostMapping("/create-supplier")
+    @PostMapping("/stock/create-supplier")
     public ResponseEntity<?> createSupplier(@RequestBody List<SupplierDTO> supplierDTO) {
 
         for (SupplierDTO supplier : supplierDTO) {

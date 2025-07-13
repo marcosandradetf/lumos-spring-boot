@@ -31,6 +31,9 @@ class ContractViewModel(
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing
 
+    private val _hasInternet = MutableStateFlow(true)
+    val hasInternet: StateFlow<Boolean> = _hasInternet
+
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
@@ -39,12 +42,14 @@ class ContractViewModel(
             _isSyncing.value = true
             _syncError.value = null
             try {
-                val response = repository.syncContracts()
-                when (response) {
+                when (val response = repository.syncContracts()) {
                     is RequestResult.Timeout -> _syncError.value =
-                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
-                    is RequestResult.NoInternet -> _syncError.value =
-                        "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
+                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
+                    is RequestResult.NoInternet -> {
+                        _syncError.value =
+                            "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
+                        _hasInternet.value = false
+                    }
                     is ServerError -> _syncError.value = response.message
                     is RequestResult.SuccessEmptyBody -> {
                         ServerError(204, "Resposta 204 inesperada")
@@ -65,8 +70,7 @@ class ContractViewModel(
             _isSyncing.value = true
             _syncError.value = null
             try {
-                val response = repository.syncContractItems()
-                when (response) {
+                when (val response = repository.syncContractItems()) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
                     is RequestResult.NoInternet -> _syncError.value =
@@ -154,6 +158,20 @@ class ContractViewModel(
             }
         }
 
+    }
+
+    fun loadFlowContractsForMaintenance() {
+        viewModelScope.launch {
+            try {
+                repository.getFlowContractsForMaintenance()
+                    .flowOn(Dispatchers.IO)
+                    .collectLatest { fetched ->
+                        _contracts.value = fetched
+                    }
+            } catch (e: Exception) {
+                Log.e("Error loadMaterials", e.message.toString())
+            }
+        }
     }
 
 

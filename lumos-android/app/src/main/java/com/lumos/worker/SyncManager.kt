@@ -182,12 +182,25 @@ object SyncManager {
         }
     }
 
-    suspend fun queuePostMaintenance(context: Context, db: AppDatabase, id: Long) {
-        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_MAINTENANCE, id)
+    suspend fun queuePostMaintenance(context: Context, db: AppDatabase, maintenanceId: String) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_MAINTENANCE, uuid = maintenanceId)
         if (count == 0) {
             val syncItem = SyncQueueEntity(
-                relatedId = id,
+                relatedUuid = maintenanceId,
                 type = SyncTypes.POST_MAINTENANCE,
+                priority = 16
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
+    suspend fun queuePostMaintenanceStreet(context: Context, db: AppDatabase, id: String) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_MAINTENANCE_STREET, uuid = id)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                relatedUuid = id,
+                type = SyncTypes.POST_MAINTENANCE_STREET,
                 priority = 15
             )
             db.queueDao().insert(syncItem)
@@ -201,6 +214,19 @@ object SyncManager {
             val syncItem = SyncQueueEntity(
                 type = SyncTypes.SYNC_STOCK,
                 priority = 17
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
+    suspend fun queuePostOrder(context: Context, db: AppDatabase, id: String) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_ORDER, uuid = id)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                relatedUuid = id,
+                type = SyncTypes.POST_ORDER,
+                priority = 25
             )
             db.queueDao().insert(syncItem)
             enqueueSync(context)

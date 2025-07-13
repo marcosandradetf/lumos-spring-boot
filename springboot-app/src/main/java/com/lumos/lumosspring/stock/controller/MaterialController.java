@@ -51,15 +51,6 @@ public class MaterialController {
         return materialService.findAll(page, size, depositId);
     }
 
-
-//    @GetMapping("{pIdMaterial}")
-//    public ResponseEntity<MaterialResponse> getMaterial(@PathVariable Long pIdMaterial) {
-//        Material material = materialService.findById(pIdMaterial);
-//        MaterialResponse materialsDTO = material.map(MaterialResponse::new); // Converte diretamente para Page<MaterialResponse>
-//        return ResponseEntity.ok(materialsDTO);
-//    }
-
-
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
     public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
@@ -114,4 +105,6 @@ public class MaterialController {
     public ResponseEntity<?> findAllForImportPreMeasurement() {
         return materialService.findAllForImportPreMeasurement();
     }
+
+
 }

@@ -49,8 +49,15 @@ interface QueueDao {
     suspend fun countPendingItemsByType(type: String): Int
 
 
-    @Query("SELECT COUNT(relatedId) FROM sync_queue_entity WHERE type = :type and relatedId = :id")
-    suspend fun countPendingItemsByTypeAndId(type: String, id: Long): Int
+    @Query("""
+    SELECT COUNT(*) FROM sync_queue_entity 
+    WHERE type = :type AND (relatedId = :id OR relatedUuid = :uuid)
+""")
+    suspend fun countPendingItemsByTypeAndId(
+        type: String,
+        id: Long? = null,
+        uuid: String? = null
+    ): Int
 
     @Query("SELECT COUNT(relatedId) FROM sync_queue_entity WHERE `table` = :table and field = :field and `set` = :set and `where` = :where and equal = :equal")
     suspend fun countPendingGeneric(

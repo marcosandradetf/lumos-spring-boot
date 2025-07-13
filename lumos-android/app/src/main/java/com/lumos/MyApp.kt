@@ -46,7 +46,7 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
 
         retrofit = Retrofit.Builder()
 //            .baseUrl("https://spring.thryon.com.br")
-            .baseUrl("https://4f032b639161.ngrok-free.app")
+            .baseUrl("https://c1b07aa1dbca.ngrok-free.app")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

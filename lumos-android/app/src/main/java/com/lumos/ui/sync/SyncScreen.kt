@@ -97,6 +97,7 @@ fun SyncScreenContent(
                         SyncTypes.POST_DIRECT_EXECUTION -> "Execuções sem pré-medição"
                         SyncTypes.POST_MAINTENANCE -> "Sincronizações de Manutenções"
                         SyncTypes.SYNC_STOCK -> "Sincronizações de Estoque"
+                        SyncTypes.POST_ORDER -> "Requisições de Materiais"
                         else -> syncType
                     }
 
@@ -128,7 +129,7 @@ fun SyncScreenContent(
                                     SyncTypes.POST_DIRECT_EXECUTION ->
                                         navController
                                             .navigate("${Routes.SYNC}/${SyncTypes.POST_DIRECT_EXECUTION}")
-                                    SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK ->
+                                    SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER, SyncTypes.POST_PRE_MEASUREMENT, SyncTypes.POST_GENERIC ->
                                         navController
                                             .navigate("${Routes.SYNC}/${SyncTypes.POST_MAINTENANCE}")
                                 }

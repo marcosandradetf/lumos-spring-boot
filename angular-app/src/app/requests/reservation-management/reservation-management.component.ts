@@ -43,7 +43,6 @@ export class ReservationManagementComponent {
       }
     });
 
-
   }
 
   getItemsQuantity(reserve: ReserveDTOResponse) {
@@ -52,4 +51,5 @@ export class ReservationManagementComponent {
 
     return quantity;
   }
+
 }

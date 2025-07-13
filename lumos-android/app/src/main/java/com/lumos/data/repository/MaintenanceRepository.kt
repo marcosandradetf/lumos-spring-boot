@@ -1,74 +1,128 @@
 package com.lumos.data.repository
 
 import android.app.Application
-import android.util.Log
 import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ApiService
 import com.lumos.data.api.MaintenanceApi
 import com.lumos.data.api.RequestResult
-import com.lumos.data.api.RequestResult.ServerError
-import com.lumos.data.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.MaterialStock
-import com.lumos.midleware.SecureStorage
+import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceStreet
+import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
 
 class MaintenanceRepository(
     private val db: AppDatabase,
-    private val api: ApiService,
-    private val secureStorage: SecureStorage,
+    api: ApiService,
     private val app: Application
 ) {
     private val maintenanceApi = api.createApi(MaintenanceApi::class.java)
 
-    fun getFlowExistsTypeInQueue(types: List<String>): Flow<Boolean> {
-        return db.queueDao().getFlowExistsTypeInQueue(types)
+    suspend fun insertMaintenance(maintenance: Maintenance) {
+        db.maintenanceDao().insertMaintenance(maintenance)
     }
 
-    suspend fun queueGetStock() {
-        SyncManager.queueGetStock(
+    suspend fun insertMaintenanceStreet(maintenanceStreet: MaintenanceStreet) {
+        db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
+    }
+
+    suspend fun insertMaintenanceStreetItems(items: List<MaintenanceStreetItem>) {
+        db.maintenanceDao().insertMaintenanceStreetItems(items)
+    }
+
+    suspend fun getItemsByStreetId(maintenanceStreetId: String): List<MaintenanceStreetItem> {
+        return db.maintenanceDao().getItemsByStreetId(maintenanceStreetId)
+    }
+
+    fun getFlowMaintenance(status: String): Flow<List<Maintenance>> {
+        return db.maintenanceDao().getFlowMaintenance(status)
+    }
+
+    fun getFlowStreets(maintenanceId: String): Flow<List<MaintenanceStreet>> {
+        return db.maintenanceDao().getFlowStreets(maintenanceId)
+    }
+
+    suspend fun queuePostMaintenanceStreet(maintenanceStreetId: String) {
+        SyncManager.queuePostMaintenanceStreet(
             context = app.applicationContext,
             db = db,
+            id = maintenanceStreetId
         )
     }
 
-    suspend fun queuePostMaintenance(id: Long) {
+    suspend fun queuePostMaintenance(maintenanceId: String) {
         SyncManager.queuePostMaintenance(
             context = app.applicationContext,
             db = db,
-            id = id
+            maintenanceId = maintenanceId
         )
     }
 
-    fun getMaterialsFlow(): Flow<List<MaterialStock>> {
-        return db.maintenanceDao().getMaterialsFlow()
-    }
+    suspend fun callPostMaintenance(maintenanceId: String): RequestResult<Unit> {
+        val maintenance = db.maintenanceDao().getMaintenance(maintenanceId)
 
-    suspend fun callGetStock(): RequestResult<Unit> {
-        val uuid = secureStorage.getUserUuid()
-
-        val response = ApiExecutor.execute { maintenanceApi.getStock(uuid ?: throw IllegalStateException("UUID do usuário atual não encontrado")) }
+        val response = ApiExecutor.execute { maintenanceApi.finishMaintenance(maintenance) }
 
         return when (response) {
             is RequestResult.Success -> {
-                db.maintenanceDao().insertMaterials(response.data)
+                db.maintenanceDao().deleteMaintenance(maintenanceId)
                 RequestResult.Success(Unit)
             }
-            is SuccessEmptyBody -> {
-                ServerError(204, "Resposta 204 inesperada")
+
+            is RequestResult.SuccessEmptyBody -> {
+                db.maintenanceDao().deleteMaintenance(maintenanceId)
+                RequestResult.Success(Unit)
             }
+
+            is RequestResult.Timeout -> {
+                RequestResult.Timeout
+            }
+
             is RequestResult.NoInternet -> {
                 RequestResult.NoInternet
             }
-            is RequestResult.Timeout -> RequestResult.Timeout
-            is ServerError -> ServerError(response.code, response.message)
+
+            is RequestResult.ServerError -> {
+                RequestResult.ServerError(response.code, response.message)
+            }
+
             is RequestResult.UnknownError -> {
-                Log.e("Sync", "Erro desconhecido", response.error)
                 RequestResult.UnknownError(response.error)
             }
         }
+    }
 
+    suspend fun callPostMaintenanceStreet(maintenanceStreetId: String): RequestResult<Unit> {
+        val street = db.maintenanceDao().getMaintenanceStreetWithItems(maintenanceStreetId)
+
+        val response = ApiExecutor.execute { maintenanceApi.sendStreet(street) }
+
+        return when (response) {
+            is RequestResult.Success -> {
+                RequestResult.Success(Unit)
+            }
+
+            is RequestResult.SuccessEmptyBody -> {
+                RequestResult.Success(Unit)
+            }
+
+            is RequestResult.Timeout -> {
+                RequestResult.Timeout
+            }
+
+            is RequestResult.NoInternet -> {
+                RequestResult.NoInternet
+            }
+
+            is RequestResult.ServerError -> {
+                RequestResult.ServerError(response.code, response.message)
+            }
+
+            is RequestResult.UnknownError -> {
+                RequestResult.UnknownError(response.error)
+            }
+        }
     }
 
 }

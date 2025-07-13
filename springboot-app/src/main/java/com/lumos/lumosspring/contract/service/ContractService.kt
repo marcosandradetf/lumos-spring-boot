@@ -245,15 +245,18 @@ class ContractService(
             val createdAt: String,
             val status: String,
             val itemsIds: String? = null,
+            val hasMaintenance: Boolean
         )
 
-        val notAllowedTypes = listOf("SERVIÇO", "PROJETO", "CABO", "RELÉ")
+//        val notAllowedTypes = listOf("SERVIÇO", "PROJETO", "CABO", "RELÉ")
         val contractList = contractRepository.findAllByStatus(ContractStatus.ACTIVE).map { contract ->
 
             val filteredIds = contract.contractItem
-                .filter { it.referenceItem.type.trim().uppercase() !in notAllowedTypes }
+//                .filter { it.referenceItem.type.trim().uppercase() !in notAllowedTypes }
                 .map { it.referenceItem.contractReferenceItemId }
                 .joinToString("#")
+
+            val hasMaintenance = contract.contractItem.any { it.referenceItem.type.trim().lowercase() == "manutenção" }
 
             ContractForPreMeasurementDTO(
                 contractId = contract.contractId,
@@ -262,7 +265,8 @@ class ContractService(
                 createdBy = contract.createdBy.name,
                 createdAt = contract.creationDate.toString(),
                 status = contract.status,
-                itemsIds = filteredIds.ifBlank { null }
+                itemsIds = filteredIds.ifBlank { null },
+                hasMaintenance = hasMaintenance
             )
         }
 

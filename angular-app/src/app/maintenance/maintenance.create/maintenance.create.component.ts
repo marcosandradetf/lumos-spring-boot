@@ -38,7 +38,6 @@ import {Carousel} from 'primeng/carousel';
     Skeleton,
     TableModule,
     FloatLabel,
-    InputText,
     Carousel
   ],
   templateUrl: './maintenance.create.component.html',

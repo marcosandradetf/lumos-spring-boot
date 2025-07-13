@@ -10,9 +10,8 @@
       <app-loading></app-loading>
     </div>
 
-  } @else {
-    <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full"
-         *ngIf="!loading && reservations.length === 0 && depositName !== null">
+  } @else if (reservationsBackup.length === 0 && depositName !== null) {
+    <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
       <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
            xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -20,136 +19,174 @@
       </svg>
 
       <h3 class="text-lg font-semibold mb-8 dark:text-white">Nenhuma pendência encontrada</h3>
+
       <p-button
+        *ngIf="deposits.length > 1"
         rounded
         severity="info"
         label="Selecionar outro Almoxarifado"
         (click)="depositName = null"/>
     </div>
+  } @else if (depositName === null && deposits.length > 1) {
+    <div class="mx-6">
+      <p-select
+        [options]="deposits"
+        (onChange)="getReservations($event.value)"
+        optionLabel="depositName"
+        optionValue="depositId"
+        placeholder="Você possui mais de um almoxarifado no sistema, selecione o desejado"
+        class="p-fluid w-full mx-auto mb-4"
+      ></p-select>
 
-    @if (depositName === null) {
-      <div class="mx-6">
-        <p-select
-          [options]="deposits"
-          (onChange)="getReservations($event.value)"
-          optionLabel="depositName"
-          optionValue="depositId"
-          placeholder="Você possui mais de um almoxarifado no sistema, selecione o desejado"
-          class="p-fluid w-full mx-auto mb-4"
-        ></p-select>
+      <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="reservations.length === 0" [value]="tableSk">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="materialName">Material
+              <p-sortIcon field="materialName"/>
+            </th>
+            <th pSortableColumn="reserveQuantity">Qtde. Solicitada
+              <p-sortIcon field="reserveQuantity"/>
+            </th>
+            <th pSortableColumn="teamName">Qtde. em Estoque
+              <p-sortIcon field="teamName"/>
+            </th>
+            <th pSortableColumn="inventoryStatus">Status
+              <p-sortIcon field="inventoryStatus"/>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-tbSk>
+          <tr>
+            <td class="p-4">
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+            <td>
+              <p-skeleton/>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  } @else if (depositName === null && deposits.length == 0) {
+    <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
+      <i class="fa-solid fa-triangle-exclamation text-warning text-6xl mb-2"></i>
 
-        <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="reservations.length === 0" [value]="tableSk">
-          <ng-template pTemplate="header">
-            <tr>
-              <th pSortableColumn="materialName">Material
-                <p-sortIcon field="materialName"/>
-              </th>
-              <th pSortableColumn="reserveQuantity">Qtde. Solicitada
-                <p-sortIcon field="reserveQuantity"/>
-              </th>
-              <th pSortableColumn="teamName">Qtde. em Estoque
-                <p-sortIcon field="teamName"/>
-              </th>
-              <th pSortableColumn="inventoryStatus">Status
-                <p-sortIcon field="inventoryStatus"/>
-              </th>
-              <th></th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-tbSk>
-            <tr>
-              <td class="p-4">
-                <p-skeleton/>
-              </td>
+      <h3 class="text-xl font-semibold mb-2 dark:text-white ">Você não é estoquista em nenhum almoxarifado do
+        sistema</h3>
+      <p class="text-lg">Fale com o <strong>Administrador</strong> para te cadastrar caso precise de acesso.</p>
+    </div>
+
+  } @else {
+
+    <div class="px-10">
+      <p-iconfield iconPosition="left">
+        <p-inputicon class="pi pi-search"/>
+        <input (input)="filterOrders($event)" type="text" pInputText placeholder="Pesquisar Ex. REQ-0F1A3B2C"
+               class="w-full"/>
+      </p-iconfield>
+    </div>
+
+
+    <div *ngFor="let group of reservations" class="px-10">
+      <h3 class="text-xl flex items-center mt-8 justify-between mb-2">{{ group.description }}
+        <p-tag severity="info" styleClass="cursor-pointer"
+               (click)="showTeamModal = true"
+               tooltipPosition="left"
+               pTooltip="Clique para detalhes">{{ group.teamName }}
+        </p-tag>
+      </h3>
+      <p-table
+        #table_parent
+        [value]="group.reservations" [tableStyle]="{ 'min-width': '60rem' }"
+        editMode="row"
+        selectionMode="single"
+        dataKey="uniqueId">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <!--          <th pSortableColumn="itemId">Id-->
+            <!--            <p-sortIcon field="itemId"/>-->
+            <!--          </th>-->
+            <th pSortableColumn="materialName">Material
+              <p-sortIcon field="materialName"/>
+            </th>
+            <th pSortableColumn="reserveQuantity">Qtde. Solicitada
+              <p-sortIcon field="reserveQuantity"/>
+            </th>
+            <th pSortableColumn="stockQuantity">Qtde. em Estoque
+              <p-sortIcon field="stockQuantity"/>
+            </th>
+            <th pSortableColumn="internStatus">Status
+              <p-sortIcon field="internStatus"/>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-reserve>
+          <tr #rowElement [pEditableRow]="reserve"
+              [pSelectableRow]="reserve" (click)="table_parent.initRowEdit(reserve)">
+            <td>{{ reserve.materialName }}</td>
+
+            @if (reserve.orderId !== null) {
               <td>
-                <p-skeleton/>
+                <p-cellEditor>
+                  <ng-template
+                    pTemplate="output">{{ reserve.reserveQuantity ?? 'A definir' }}
+                  </ng-template>
+                  <ng-template pTemplate="input">
+                    <input pInputText
+                           #qtyInput
+                           placeholder="Informe a quantidade"
+                           [(ngModel)]="reserve.reserveQuantity"/>
+                  </ng-template>
+                </p-cellEditor>
               </td>
+            } @else {
+              <td>{{ reserve.reserveQuantity ?? 'A definir' }}</td>
+            }
+            <td>{{ reserve.stockQuantity }}</td>
+            <td>
+              <p-tag
+                [severity]="['APROVADO', 'COLETADO'].includes(reserve.internStatus) ? 'success' : reserve.internStatus === 'REJEITADO' ?  'danger' : 'contrast'">{{ reserve.internStatus || 'PENDENTE' }}
+              </p-tag>
+            </td>
+            @if (status === 'PENDING') {
+              <td class="space-x-2">
+                <p-button label="Rejeitar" size="small" variant="text" severity="contrast"
+                          (click)="reply(reserve.reserveId, 'REJECT'); reserve.internStatus = 'REJEITADO'"/>
+                <p-button label="Aprovar" size="small" severity="info"
+                          (click)="reply(reserve.reserveId, 'APPROVE'); reserve.internStatus = 'APROVADO'; "/>
+              </td>
+            } @else {
               <td>
-                <p-skeleton/>
+                <p-button label="Confirmar Coleta" size="small" severity="success"
+                          (click)="reply(reserve.reserveId, 'COLLECT'); reserve.internStatus = 'COLETADO'; "/>
               </td>
-              <td>
-                <p-skeleton/>
-              </td>
-              <td>
-                <p-skeleton/>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    } @else {
+            }
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
 
-      <div *ngFor="let group of reservations" class="px-10">
-        <h3 class="text-xl flex items-center mt-8 justify-between mb-2">{{ group.description }}
-          <p-tag severity="info" styleClass="cursor-pointer"
-                 tooltipPosition="left"
-                 pTooltip="Clique para detalhes">{{ group.teamName }}
-          </p-tag>
-        </h3>
-        <p-table
-          #table_parent
-          [value]="group.reservations" [tableStyle]="{ 'min-width': '60rem' }"
-          editMode="row"
-          selectionMode="single"
-          dataKey="reserveId">
-
-          <ng-template pTemplate="header">
-            <tr>
-              <!--          <th pSortableColumn="itemId">Id-->
-              <!--            <p-sortIcon field="itemId"/>-->
-              <!--          </th>-->
-              <th pSortableColumn="materialName">Material
-                <p-sortIcon field="materialName"/>
-              </th>
-              <th pSortableColumn="reserveQuantity">Qtde. Solicitada
-                <p-sortIcon field="reserveQuantity"/>
-              </th>
-              <th pSortableColumn="stockQuantity">Qtde. em Estoque
-                <p-sortIcon field="stockQuantity"/>
-              </th>
-              <th pSortableColumn="internStatus">Status
-                <p-sortIcon field="internStatus"/>
-              </th>
-              <th></th>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="body" let-reserve>
-            <tr #rowElement [pEditableRow]="reserve"
-                [pSelectableRow]="reserve" (click)="table_parent.initRowEdit(reserve)">
-              <td>{{ reserve.materialName }}</td>
-              <td>{{ reserve.reserveQuantity }}</td>
-              <td>{{ reserve.stockQuantity }}</td>
-              <td>
-                <p-tag
-                  [severity]="['APROVADO', 'COLETADO'].includes(reserve.internStatus) ? 'success' : reserve.internStatus === 'REJEITADO' ?  'danger' : 'contrast'">{{ reserve.internStatus || 'PENDENTE' }}
-                </p-tag>
-              </td>
-              @if (status === 'PENDING') {
-                <td class="space-x-2">
-                  <p-button label="Rejeitar" size="small" variant="text" severity="contrast"
-                            (click)="reply(reserve.reserveId, 'REJECT'); reserve.internStatus = 'REJEITADO'"/>
-                  <p-button label="Aprovar" size="small" severity="info"
-                            (click)="reply(reserve.reserveId, 'APPROVE'); reserve.internStatus = 'APROVADO'; "/>
-                </td>
-              } @else {
-                <td>
-                  <p-button label="Coletado" size="small" severity="success"
-                            (click)="reply(reserve.reserveId, 'COLLECT'); reserve.internStatus = 'COLETADO'; "/>
-                </td>
-              }
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-
-      <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10" *ngIf="reservations.length > 0">
-        <p-button label="Finalizar" size="large" (click)="sendData()" severity="info"/>
-      </div>
-
-    }
+    <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
+         *ngIf="reservations.length > 0">
+      <p-button label="Finalizar" size="large" (click)="sendData()" severity="info"/>
+    </div>
 
   }
+
+
 
   <app-prime-confirm-dialog
     *ngIf="modalSendData"

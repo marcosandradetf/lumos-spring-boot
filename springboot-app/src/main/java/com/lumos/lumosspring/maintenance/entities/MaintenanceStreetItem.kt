@@ -2,25 +2,21 @@ package com.lumos.lumosspring.maintenance.entities
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
-import java.time.Instant
 import java.util.UUID
 import org.springframework.data.annotation.Transient
 import org.springframework.data.domain.Persistable
 
 @Table
-data class Maintenance(
+data class MaintenanceStreetItem(
     @Id
     val maintenanceId: UUID,
-    val contractId: Long?,
-    val pendingPoints: Boolean,
-    val quantityPendingPoints: Int?,
-    val dateOfVisit: Instant,
-    val type: String, //rural ou urbana
-    val status: String,
+    val maintenanceStreetId: UUID,
+    val materialStockId: Long,
+    val quantityExecuted: Double,
 
     @Transient
     private var isNewEntry: Boolean = true
-) : Persistable<UUID> {
+): Persistable<UUID> {
     override fun getId(): UUID = maintenanceId
     override fun isNew(): Boolean = isNewEntry
 }
