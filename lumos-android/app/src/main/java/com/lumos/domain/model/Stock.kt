@@ -17,7 +17,8 @@ data class MaterialStock(
     val specs: String?,
     val stockQuantity: Double,
     val stockAvailable: Double,
-    val requestUnit: String
+    val requestUnit: String,
+    val type: String,
 )
 
 @Entity(tableName = "stockist")

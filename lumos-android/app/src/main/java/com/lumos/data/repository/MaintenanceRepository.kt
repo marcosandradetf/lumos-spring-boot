@@ -1,6 +1,7 @@
 package com.lumos.data.repository
 
 import android.app.Application
+import androidx.room.withTransaction
 import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ApiService
 import com.lumos.data.api.MaintenanceApi
@@ -23,12 +24,19 @@ class MaintenanceRepository(
         db.maintenanceDao().insertMaintenance(maintenance)
     }
 
-    suspend fun insertMaintenanceStreet(maintenanceStreet: MaintenanceStreet) {
-        db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
-    }
-
-    suspend fun insertMaintenanceStreetItems(items: List<MaintenanceStreetItem>) {
-        db.maintenanceDao().insertMaintenanceStreetItems(items)
+    suspend fun insertMaintenanceStreet(maintenanceStreet: MaintenanceStreet, items: List<MaintenanceStreetItem>) {
+        db.withTransaction {
+            db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
+            db.maintenanceDao().insertMaintenanceStreetItems(items)
+            for (item in items) {
+                db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
+            }
+            SyncManager.queuePostMaintenanceStreet(
+                context = app.applicationContext,
+                db = db,
+                id = maintenanceStreet.maintenanceStreetId
+            )
+        }
     }
 
     suspend fun getItemsByStreetId(maintenanceStreetId: String): List<MaintenanceStreetItem> {
@@ -41,14 +49,6 @@ class MaintenanceRepository(
 
     fun getFlowStreets(maintenanceId: String): Flow<List<MaintenanceStreet>> {
         return db.maintenanceDao().getFlowStreets(maintenanceId)
-    }
-
-    suspend fun queuePostMaintenanceStreet(maintenanceStreetId: String) {
-        SyncManager.queuePostMaintenanceStreet(
-            context = app.applicationContext,
-            db = db,
-            id = maintenanceStreetId
-        )
     }
 
     suspend fun queuePostMaintenance(maintenanceId: String) {

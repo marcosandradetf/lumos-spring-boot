@@ -918,7 +918,8 @@ fun PrevStockContent() {
                 specs = "120W",
                 stockQuantity = 12.0,
                 stockAvailable = 0.0,
-                requestUnit = "UN"
+                requestUnit = "UN",
+                type = "LED"
             ),
             MaterialStock(
                 materialId = 2,
@@ -927,7 +928,8 @@ fun PrevStockContent() {
                 specs = "400W",
                 stockQuantity = 15.0,
                 stockAvailable = 10.0,
-                requestUnit = "UN"
+                requestUnit = "UN",
+                type = "LÂMPADA"
             ),
             MaterialStock(
                 materialId = 3,
@@ -936,7 +938,8 @@ fun PrevStockContent() {
                 specs = "250W",
                 stockQuantity = 62.0,
                 stockAvailable = 48.0,
-                requestUnit = "UN"
+                requestUnit = "UN",
+                type = "LÂMPADA"
             ),
         ),
         selectedMaterials = listOf(1, 2, 3),

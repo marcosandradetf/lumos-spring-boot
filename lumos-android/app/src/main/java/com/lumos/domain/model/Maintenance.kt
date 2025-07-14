@@ -26,26 +26,26 @@ data class Maintenance(
     val status: String
 )
 
-@Entity(
-    primaryKeys = ["maintenanceStreetId", "maintenanceId"],
-    indices = [Index(value = ["address", "maintenanceId"], unique = true)]
-)
-data class MaintenanceStreet(
-    val maintenanceStreetId: String,
-    val maintenanceId: String,
+    @Entity(
+        primaryKeys = ["maintenanceStreetId", "maintenanceId"],
+        indices = [Index(value = ["address", "maintenanceId"], unique = true)]
+    )
+    data class MaintenanceStreet(
+        val maintenanceStreetId: String,
+        val maintenanceId: String,
 
-    var address: String,
-    var latitude: Double? = null,
-    var longitude: Double? = null,
-    val comment: String?,
-    val lastPower: String?,
+        var address: String,
+        var latitude: Double? = null,
+        var longitude: Double? = null,
+        val comment: String?,
+        val lastPower: String?,
 
-    val lastSupply: String?, // n obrigatorio
-    val currentSupply: String?, // obrigatorio
+        val lastSupply: String?, // n obrigatorio
+        val currentSupply: String?, // obrigatorio
 
-    val reason: String?// se led - perguntar qual o problema/motivo daa troca
+        val reason: String?// se led - perguntar qual o problema/motivo daa troca
 
-)
+    )
 
 @Entity(primaryKeys = ["maintenanceId", "maintenanceStreetId", "materialStockId"])
 data class MaintenanceStreetItem(

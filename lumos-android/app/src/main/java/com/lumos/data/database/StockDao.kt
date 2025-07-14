@@ -61,4 +61,7 @@ interface StockDao {
     @Query("SELECT * FROM order_material WHERE orderId = :orderId")
     suspend fun getOrderWithItems(orderId: String): OrderWithItems
 
+    @Query("UPDATE material_stock set stockQuantity = stockQuantity - :quantityExecuted, stockAvailable = stockAvailable - :quantityExecuted where materialStockId = :materialStockId")
+    suspend fun debitStock(materialStockId: Long, quantityExecuted: Double)
+
 }

@@ -379,6 +379,12 @@ abstract class AppDatabase : RoomDatabase() {
                         );
                 """.trimIndent()
                 )
+                db.execSQL(
+                    """
+                        CREATE UNIQUE INDEX index_MaintenanceStreet_address_maintenanceId
+                        ON MaintenanceStreet(address, maintenanceId);
+                    """.trimIndent()
+                )
 
                 db.execSQL(
                     """
@@ -387,15 +393,51 @@ abstract class AppDatabase : RoomDatabase() {
                             maintenanceStreetId TEXT NOT NULL,
                             materialStockId INTEGER NOT NULL,
                             quantityExecuted REAL NOT NULL,
-                            PRIMARY KEY (maintenanceId,maintenanceStreetId, materialId)
+                            PRIMARY KEY (maintenanceId,maintenanceStreetId, materialStockId)
                         );
                 """.trimIndent()
                 )
 
-                db.execSQL("delete from material_stock")
-                db.execSQL("alter table material_stock add column materialStockId integer not null")
+                db.execSQL("drop table material_stock")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS material_stock (
+                            materialId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            specs TEXT,
+                            stockQuantity REAL NOT NULL,
+                            stockAvailable REAL NOT NULL,
+                            requestUnit TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            PRIMARY KEY (materialId, materialStockId)
+                        );
+                """.trimIndent()
+                )
+
                 db.execSQL("delete from contracts")
                 db.execSQL("alter table contracts add column hasMaintenance integer not null")
+            }
+        }
+
+        private val MIGRATION_9_10 = object : Migration(9,10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("drop table material_stock")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS material_stock (
+                            materialId INTEGER NOT NULL,
+                            materialIdStock INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            specs TEXT,
+                            stockQuantity REAL NOT NULL,
+                            stockAvailable REAL NOT NULL,
+                            requestUnit TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            PRIMARY KEY (materialId, materialIdStock)
+                        );
+                """.trimIndent()
+                )
             }
         }
 
@@ -414,6 +456,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_6_7,
                     MIGRATION_7_8,
                     MIGRATION_8_9,
+//                    MIGRATION_9_10,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

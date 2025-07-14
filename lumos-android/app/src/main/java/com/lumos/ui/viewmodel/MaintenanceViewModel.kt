@@ -76,14 +76,14 @@ class MaintenanceViewModel(
     fun insertMaintenance(maintenance: Maintenance) {
         viewModelScope.launch {
             try {
+                _maintenanceId.value = UUID.fromString(maintenance.maintenanceId)
                 _loading.value = true
                 repository.insertMaintenance(maintenance)
+                _contractSelected.value = true
             } catch (e: Exception) {
                 _message.value = e.message ?: ""
             } finally {
-                _maintenanceId.value = UUID.fromString(maintenance.maintenanceId)
                 _loading.value = false
-                _contractSelected.value = true
             }
         }
     }
@@ -92,24 +92,11 @@ class MaintenanceViewModel(
         viewModelScope.launch {
             try {
                 _loading.value = true
-                repository.insertMaintenanceStreet(street)
-            } catch (e: Exception) {
-                _message.value = e.message ?: ""
-            } finally {
-                insertMaintenanceStreetItems(items)
-            }
-        }
-    }
-
-    fun insertMaintenanceStreetItems(items: List<MaintenanceStreetItem>) {
-        viewModelScope.launch {
-            try {
-                _loading.value = true
-                repository.insertMaintenanceStreetItems(items)
-            } catch (e: Exception) {
-                _message.value = e.message ?: ""
-            } finally {
+                repository.insertMaintenanceStreet(street, items)
                 _streetCreated.value = true
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Erro inesperado"
+            } finally {
                 _loading.value = false
             }
         }
@@ -120,25 +107,11 @@ class MaintenanceViewModel(
             try {
                 _loading.value = true
                 repository.queuePostMaintenance(maintenanceId)
+                _finish.value = true
             } catch (e: Exception) {
                 _message.value = e.message ?: ""
             } finally {
                 _loading.value = false
-                _finish.value = true
-            }
-        }
-    }
-
-    fun queuePostMaintenanceStreet(maintenanceStreetId: String) {
-        viewModelScope.launch {
-            try {
-                _loading.value = true
-                repository.queuePostMaintenanceStreet(maintenanceStreetId)
-            } catch (e: Exception) {
-                _message.value = e.message ?: ""
-            } finally {
-                _loading.value = false
-                _finish.value = true
             }
         }
     }

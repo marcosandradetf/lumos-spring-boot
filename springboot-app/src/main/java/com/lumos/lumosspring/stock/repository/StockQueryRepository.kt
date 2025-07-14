@@ -17,7 +17,8 @@ class StockQueryRepository(
         val specs: String?,
         val stockQuantity: Double,
         val stockAvailable: Double,
-        val requestUnit: String
+        val requestUnit: String,
+        val type: String,
     )
 
     data class StockistResponse(
@@ -44,7 +45,7 @@ class StockQueryRepository(
         val materialStock = jdbcTemplate.query(
             """
                 select m.id_material, ms.material_id_stock, m.material_name, coalesce(m.material_power, m.material_length) as specs,
-                ms.stock_quantity, ms.stock_available, ms.request_unit
+                ms.stock_quantity, ms.stock_available, ms.request_unit, mt.type_name
                 from material_stock ms
                 inner join material m on m.id_material = ms.material_id
                 inner join material_type mt on mt.id_type = m.id_material_type
@@ -59,7 +60,8 @@ class StockQueryRepository(
                 specs = rs.getString("specs"),
                 stockQuantity = rs.getDouble("stock_quantity"),
                 stockAvailable = rs.getDouble("stock_available"),
-                requestUnit = rs.getString("request_unit")
+                requestUnit = rs.getString("request_unit"),
+                type = rs.getString("type_name"),
             )
         }
 

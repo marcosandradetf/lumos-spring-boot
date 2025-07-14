@@ -1,49 +1,99 @@
 package com.lumos.ui.maintenance
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.IconToggleButtonColors
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
+import com.lumos.domain.model.MaterialStock
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.Tag
+import com.lumos.utils.Utils
 import java.util.UUID
 
 @Composable
 fun StreetMaintenanceContent(
-    maintenanceId: UUID?,
+    maintenanceId: UUID,
     navController: NavHostController,
     loading: Boolean,
     lastRoute: String?,
     back: () -> Unit,
     saveStreet: (MaintenanceStreet, List<MaintenanceStreetItem>) -> Unit,
     streetCreated: Boolean,
-    newStreet: () -> Unit
+    newStreet: () -> Unit,
+    stockData: List<MaterialStock>,
+    contractor: String?,
 ) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val navigateBack: (() -> Unit) =
         if (lastRoute == Routes.HOME) {
             { navController.navigate(Routes.HOME) }
@@ -51,8 +101,69 @@ fun StreetMaintenanceContent(
             back
         }
 
+    val types = stockData.distinctBy { it.type }.map { it.type }
+    val (selectedOption, onOptionSelected) = remember {
+        mutableStateOf(types.firstOrNull() ?: "")
+    }
+
+    var searchQuery by remember { mutableStateOf("") }
+    val normalizedQuery = searchQuery.replace("\\s".toRegex(), "").lowercase()
+
+    val filteredStock = stockData.filter { item ->
+        val name = item.materialName.replace("\\s".toRegex(), "").lowercase()
+        val specs = item.specs?.replace("\\s".toRegex(), "")?.lowercase()
+        val combined = name + (specs ?: "")
+
+        (selectedOption.isBlank() || item.type == selectedOption) &&
+                (normalizedQuery.isBlank() || name.contains(normalizedQuery) || combined.contains(
+                    normalizedQuery
+                ))
+    }.distinctBy { it.materialStockId }
+
+    var maintenanceStreetId by remember { mutableStateOf(UUID.randomUUID()) }
+    var alertModal by remember { mutableStateOf(false) }
+    var confirmModal by remember { mutableStateOf(false) }
+    val alertMessage = remember {
+        mutableStateMapOf(
+            "title" to "Título da mensagem", "body" to "Você está na rua da execução neste momento?"
+        )
+    }
+
+    var street by remember {
+        mutableStateOf(
+            MaintenanceStreet(
+                maintenanceStreetId = maintenanceStreetId.toString(),
+                maintenanceId = maintenanceId.toString(),
+                address = "",
+                latitude = null,
+                longitude = null,
+                comment = null,
+                lastPower = null,
+                lastSupply = null,
+                currentSupply = null,
+                reason = null
+            )
+        )
+    }
+
+    var items by remember {
+        mutableStateOf<List<MaintenanceStreetItem>>(emptyList())
+    }
+
+    val selectedIds = remember(items) { items.map { it.materialStockId }.toSet() }
+
+    val hasLed by remember(selectedIds, stockData) {
+        derivedStateOf {
+            stockData.any {
+                it.materialStockId in selectedIds &&
+                        it.materialName.contains("led", ignoreCase = true)
+            }
+        }
+    }
+
+
     AppLayout(
-        title = "Manutenção em andamento",
+        title = "MANUTENÇÃO - ${Utils.abbreviate(contractor.toString())}",
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateBack = navigateBack,
         navigateToHome = {
@@ -67,7 +178,24 @@ fun StreetMaintenanceContent(
         navigateToExecutions = {
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         }
-    ) { modifier, showSnackBar ->
+    ) { _, _ ->
+
+        if (alertModal) {
+            Alert(
+                title = alertMessage["title"] ?: "", body = alertMessage["body"] ?: "",
+                confirm = {
+                    alertModal = false
+                })
+        }
+
+        if (confirmModal) {
+            Confirm(body = "Deseja finalizar essa manutenção?", confirm = {
+                confirmModal = false
+                saveStreet(street, items)
+            }, cancel = {
+                confirmModal = false
+            })
+        }
 
         if (streetCreated) {
             Column(
@@ -113,7 +241,21 @@ fun StreetMaintenanceContent(
                     modifier = Modifier
                         .fillMaxWidth(fraction = 0.5f),
                     onClick = {
-
+                        maintenanceStreetId = UUID.randomUUID()
+                        items = emptyList()
+                        street = MaintenanceStreet(
+                            maintenanceStreetId = maintenanceStreetId.toString(),
+                            maintenanceId = maintenanceId.toString(),
+                            address = "",
+                            latitude = null,
+                            longitude = null,
+                            comment = null,
+                            lastPower = null,
+                            lastSupply = null,
+                            currentSupply = null,
+                            reason = null
+                        )
+                        newStreet()
                     }
                 ) {
                     Text("Inserir outro ponto")
@@ -129,6 +271,446 @@ fun StreetMaintenanceContent(
                     Text("Voltar")
                 }
             }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = {
+                            focusManager.clearFocus() // ⌨️ Fecha o teclado
+                        })
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                TextField(
+                    value = street.address,
+                    onValueChange = {
+                        street = street.copy(address = it)
+                    },
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        focusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        disabledContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    placeholder = {
+                        Text(
+                            text = "Qual o endereço atual?",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 19.sp,
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Localização",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    },
+                    singleLine = true,
+                    shape = CircleShape,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            keyboardController?.hide()
+                        }
+                    )
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Selecione os materiais trocados",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                LazyRow {
+                    items(
+                        types
+                    ) { type ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .selectable(
+                                    selected = (type == selectedOption),
+                                    onClick = { onOptionSelected(type) },
+                                    role = Role.RadioButton
+                                )
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (type == selectedOption),
+                                onClick = null // null recommended for accessibility with screen readers
+                            )
+                            Text(
+                                text = type,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                LazyRow {
+                    items(
+                        filteredStock,
+                        key = { it.materialStockId }
+                    ) { material ->
+
+                        val checked = items.any { it.materialStockId == material.materialStockId }
+
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    text = material.materialName,
+                                    modifier = Modifier.padding(vertical = 7.dp)
+                                )
+                            },
+                            overlineContent = {
+                                Column {
+                                    // Tag de disponibilidade
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        when {
+                                            material.stockAvailable == 0.0 -> {
+                                                Tag(
+                                                    "Sem estoque disponível",
+                                                    Color.Red,
+                                                    Icons.Default.Close
+                                                )
+                                            }
+
+                                            material.stockAvailable <= 10.0 -> {
+                                                Tag(
+                                                    "Disponível: ${Utils.formatDouble(material.stockAvailable)} ${material.requestUnit}",
+                                                    Color(0xFFFF9800),
+                                                    Icons.Default.Warning
+                                                )
+                                            }
+
+                                            else -> {
+                                                Tag(
+                                                    "Disponível: ${Utils.formatDouble(material.stockAvailable)} ${material.requestUnit}",
+                                                    MaterialTheme.colorScheme.primary,
+                                                    Icons.Default.Check
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(4.dp))
+
+                                    // Quantidade total, mais discreto
+                                    Text(
+                                        text = "Total em estoque: ${Utils.formatDouble(material.stockQuantity)} ${material.requestUnit}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            supportingContent = {
+                                material.specs?.let {
+                                    Tag(
+                                        text = it, color = MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            },
+                            trailingContent = {
+                                IconToggleButton(
+                                    checked = checked,
+                                    onCheckedChange = { isChecked ->
+                                        if (material.stockAvailable == 0.0) {
+                                            alertMessage["title"] = "Material sem estoque"
+                                            alertMessage["body"] = "Para selecionar esse material é necessário haver estoque disponível."
+                                            alertModal = true
+                                            return@IconToggleButton
+                                        }
+
+                                        val type = material.type
+
+                                        items = if (isChecked) {
+                                            // Remove qualquer outro material desse tipo
+                                            items
+                                                .filterNot {
+                                                    stockData.find { stock -> stock.materialStockId == it.materialStockId }?.type == type &&
+                                                            it.maintenanceStreetId == maintenanceStreetId.toString() &&
+                                                            it.maintenanceId == maintenanceId.toString()
+                                                } + MaintenanceStreetItem(
+                                                maintenanceId = maintenanceId.toString(),
+                                                maintenanceStreetId = maintenanceStreetId.toString(),
+                                                materialStockId = material.materialStockId,
+                                                quantityExecuted = 1.0
+                                            )
+                                        } else {
+                                            // Apenas remove esse item
+                                            items.filterNot {
+                                                it.materialStockId == material.materialStockId &&
+                                                        it.maintenanceStreetId == maintenanceStreetId.toString() &&
+                                                        it.maintenanceId == maintenanceId.toString()
+                                            }
+                                        }
+                                    },
+                                    colors = IconToggleButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.background,
+                                        contentColor = MaterialTheme.colorScheme.onBackground,
+                                        disabledContentColor = MaterialTheme.colorScheme.background,
+                                        disabledContainerColor = MaterialTheme.colorScheme.background,
+                                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkedContainerColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier
+                                        .border(
+                                            border = BorderStroke(
+                                                if (checked) 2.dp else 0.dp,
+                                                MaterialTheme.colorScheme.onBackground.copy(
+                                                    alpha = 0.6f
+                                                )
+                                            ), shape = CircleShape
+                                        )
+                                        .size(30.dp)
+                                ) {
+                                    if (checked) Icon( // true = selected
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Check",
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .height(140.dp)
+                                .padding(bottom = 10.dp)
+                                .padding(end = 10.dp)
+                                .clip(RoundedCornerShape(10.dp)),
+                            shadowElevation = 10.dp,
+                            colors = ListItemDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = {
+                        Text(
+                            "Pesquisar ${selectedOption.lowercase()}...",
+                            style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 13.sp
+                            )
+                        )
+                    },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f) // ajusta a largura
+                        .height(48.dp),     // ajusta a altura
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary
+                    ),
+                    textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                        fontSize = 13.sp
+                    ),
+                )
+
+                if (hasLed) {
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = "Informações referentes a LED",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Column {
+                        OutlinedTextField(
+                            value = street.lastSupply ?: "",
+                            onValueChange = {
+                                street = street.copy(lastSupply = it)
+                            },
+                            placeholder = {
+                                Text(
+                                    "Fabricante anterior",
+                                    style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                        fontSize = 14.sp
+                                    )
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f) // ajusta a largura
+                                .height(48.dp),     // ajusta a altura
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 14.sp
+                            ),
+                        )
+
+                        OutlinedTextField(
+                            value = street.lastPower ?: "",
+                            onValueChange = {
+                                street = street.copy(lastPower = it)
+                            },
+                            placeholder = {
+                                Text(
+                                    "Potência anterior",
+                                    style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                        fontSize = 14.sp
+                                    )
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f) // ajusta a largura
+                                .padding(top = 10.dp)
+                                .height(48.dp),     // ajusta a altura
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 14.sp
+                            ),
+                        )
+
+                        OutlinedTextField(
+                            value = street.currentSupply ?: "",
+                            onValueChange = {
+                                street = street.copy(currentSupply = it)
+                            },
+                            placeholder = {
+                                Text(
+                                    "Fabricante atual (Novo)",
+                                    style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                        fontSize = 14.sp
+                                    )
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f) // ajusta a largura
+                                .padding(top = 10.dp)
+                                .height(48.dp),     // ajusta a altura
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 14.sp
+                            ),
+                        )
+
+                        OutlinedTextField(
+                            value = street.reason ?: "",
+                            onValueChange = {
+                                street = street.copy(reason = it)
+                            },
+                            placeholder = {
+                                Text(
+                                    "Motivo da troca",
+                                    style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                        fontSize = 14.sp
+                                    )
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f) // ajusta a largura
+                                .padding(top = 10.dp)
+                                .height(48.dp),     // ajusta a altura
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 14.sp
+                            ),
+                        )
+
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = "Comentários adiconais",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                OutlinedTextField(
+                    value = street.comment ?: "",
+                    onValueChange = {
+                        street = street.copy(comment = it)
+                    },
+                    placeholder = {
+                        Text(
+                            "Campo para observações",
+                            style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 14.sp
+                            )
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f) // ajusta a largura
+                        .height(48.dp),     // ajusta a altura
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary
+                    ),
+                    textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                        fontSize = 14.sp
+                    ),
+                )
+                Spacer(Modifier.height(20.dp))
+                Button(
+                    onClick = {
+                        if (street.address.isBlank()) {
+                            alertMessage["title"] = "Você esqueceu de preencher o endereço"
+                            alertMessage["body"] = "Por favor, informe a Rua, Nº - Bairro atual"
+                            alertModal = true
+                        } else if (items.isEmpty()) {
+                            alertMessage["title"] = "Nenhum material selecionado"
+                            alertMessage["body"] = "Por favor, selecione os materiais."
+                            alertModal = true
+                        } else if (hasLed) { // verificar se selecionou led e validar campos
+                            if (street.lastPower.isNullOrBlank()) {
+                                alertMessage["title"] = "Campo obrigatório não preenchido"
+                                alertMessage["body"] = "Por favor, informe a potência anterior."
+                                alertModal = true
+                            } else if (street.currentSupply.isNullOrBlank()) {
+                                alertMessage["title"] = "Campo obrigatório não preenchido"
+                                alertMessage["body"] = "Por favor, informe o fabricante atual."
+                                alertModal = true
+                            } else if (street.reason.isNullOrBlank()) {
+                                alertMessage["title"] = "Campo obrigatório não preenchido"
+                                alertMessage["body"] = "Por favor, informe o motivo da troca."
+                                alertModal = true
+                            } else {
+                                confirmModal = true
+                            }
+                        } else {
+                            confirmModal = true
+                        }
+                    }
+                ) {
+                    Text("Salvar manutenção")
+                }
+            }
         }
 
     }
@@ -140,15 +722,48 @@ fun StreetMaintenanceContent(
 @Composable
 fun PrevStreetMaintenance() {
     StreetMaintenanceContent(
-        navController = rememberNavController(),
-        lastRoute = null,
-        loading = false,
         maintenanceId = UUID.randomUUID(),
+        navController = rememberNavController(),
+        loading = false,
+        lastRoute = null,
         back = {
 
         },
         saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem> -> },
         streetCreated = false,
         newStreet = {},
+        stockData = listOf(
+            MaterialStock(
+                materialId = 1,
+                materialStockId = 11,
+                materialName = "LUMINÁRIA LED",
+                specs = "120W",
+                stockQuantity = 12.0,
+                stockAvailable = 0.0,
+                requestUnit = "UN",
+                type = "LED"
+            ),
+            MaterialStock(
+                materialId = 2,
+                materialStockId = 22,
+                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+                specs = "400W",
+                stockQuantity = 15.0,
+                stockAvailable = 10.0,
+                requestUnit = "UN",
+                type = "LÂMPADA"
+            ),
+            MaterialStock(
+                materialId = 3,
+                materialStockId = 33,
+                materialName = "LÂMPADA DE MERCÚRIO",
+                specs = "250W",
+                stockQuantity = 62.0,
+                stockAvailable = 48.0,
+                requestUnit = "UN",
+                type = "LÂMPADA"
+            ),
+        ),
+        contractor = ""
     )
 }

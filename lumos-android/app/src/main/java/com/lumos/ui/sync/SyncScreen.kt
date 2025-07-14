@@ -129,7 +129,7 @@ fun SyncScreenContent(
                                     SyncTypes.POST_DIRECT_EXECUTION ->
                                         navController
                                             .navigate("${Routes.SYNC}/${SyncTypes.POST_DIRECT_EXECUTION}")
-                                    SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER, SyncTypes.POST_PRE_MEASUREMENT, SyncTypes.POST_GENERIC ->
+                                    SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER, SyncTypes.POST_PRE_MEASUREMENT, SyncTypes.POST_GENERIC, SyncTypes.POST_MAINTENANCE_STREET ->
                                         navController
                                             .navigate("${Routes.SYNC}/${SyncTypes.POST_MAINTENANCE}")
                                 }

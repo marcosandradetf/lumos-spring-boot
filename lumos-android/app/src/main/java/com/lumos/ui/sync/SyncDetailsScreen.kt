@@ -76,7 +76,8 @@ fun SyncDetailsScreen(
                 listOf(
                     SyncTypes.POST_MAINTENANCE,
                     SyncTypes.SYNC_STOCK,
-                    SyncTypes.POST_ORDER
+                    SyncTypes.POST_ORDER,
+                    SyncTypes.POST_MAINTENANCE_STREET,
                 )
             )
         }

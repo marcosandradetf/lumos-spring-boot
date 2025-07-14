@@ -1,10 +1,11 @@
+drop table if exists maintenance_street_item;
+drop table if exists maintenance_street;
 drop table if exists maintenance;
 
 CREATE TABLE IF NOT EXISTS maintenance
 (
     maintenance_id          uuid primary key,
     contract_id             bigint,
-    created_at              timestamp not null,
     pending_points          boolean   not null,
     quantity_pending_points int,
     date_of_visit           timestamp not null,
@@ -13,7 +14,7 @@ CREATE TABLE IF NOT EXISTS maintenance
     FOREIGN KEY (contract_id) references contract (contract_id)
 );
 
-CREATE TABLE maintenance_street
+CREATE TABLE IF NOT EXISTS maintenance_street
 (
     maintenance_street_id uuid primary key,
     maintenance_id        uuid not null,
@@ -23,15 +24,15 @@ CREATE TABLE maintenance_street
     longitude             double precision,
 
     comment               text,
-    lastPower             text,
-    lastSupply            text,
-    currentSupply         text,
+    last_power             text,
+    last_supply            text,
+    current_supply         text,
     reason                text,
 
     FOREIGN KEY (maintenance_id) REFERENCES maintenance (maintenance_id)
 );
 
-CREATE TABLE maintenance_street_item
+CREATE TABLE IF NOT EXISTS maintenance_street_item
 (
     maintenance_id        uuid             not null,
     maintenance_street_id uuid             not null,

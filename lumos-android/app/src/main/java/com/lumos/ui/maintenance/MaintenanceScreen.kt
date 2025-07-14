@@ -46,6 +46,7 @@ import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.MaintenanceViewModel
+import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.abbreviate
 import java.util.UUID
@@ -61,9 +62,11 @@ enum class MaintenanceUIState {
 fun MaintenanceScreen(
     maintenanceViewModel: MaintenanceViewModel,
     contractViewModel: ContractViewModel,
+    stockViewModel: StockViewModel,
     navController: NavHostController,
     lastRoute: String?,
 ) {
+    val stock by stockViewModel.stock.collectAsState()
     val contractSelected by maintenanceViewModel.contractSelected.collectAsState()
     val streetCreated by maintenanceViewModel.streetCreated.collectAsState()
 
@@ -92,11 +95,19 @@ fun MaintenanceScreen(
     }
     var alertModal by remember { mutableStateOf(false) }
 
+    val maintenanceMap = remember { maintenances.associateBy { it.maintenanceId } }
+    val contractMap = remember { contracts.associateBy { it.contractId } }
+
+    val maintenanceContractId = maintenanceMap[maintenanceId.toString()]?.contractId
+    val contractor = contractMap[maintenanceContractId]
+
+
     LaunchedEffect(Unit) {
         maintenanceViewModel.loadMaintenances("IN_PROGRESS")
 
         contractViewModel.syncContracts()
         contractViewModel.loadFlowContractsForMaintenance()
+        stockViewModel.loadStockFlow()
     }
 
     LaunchedEffect(resync) {
@@ -155,23 +166,28 @@ fun MaintenanceScreen(
         }
 
         MaintenanceUIState.STREET -> {
-            StreetMaintenanceContent(
-                maintenanceId = maintenanceId,
-                navController = navController,
-                loading = loading,
-                back = {
-                    forceLoading = true
-                    screenState = MaintenanceUIState.HOME
-                },
-                saveStreet = { street, items ->
-                    maintenanceViewModel.insertMaintenanceStreet(street, items)
-                },
-                lastRoute = lastRoute,
-                streetCreated = streetCreated,
-                newStreet = {
-                    maintenanceViewModel.clearViewModel()
-                }
-            )
+            maintenanceId?.let {
+
+                StreetMaintenanceContent(
+                    maintenanceId = it,
+                    contractor = contractor?.contractor,
+                    navController = navController,
+                    loading = loading,
+                    back = {
+                        forceLoading = true
+                        screenState = MaintenanceUIState.HOME
+                    },
+                    saveStreet = { street, items ->
+                        maintenanceViewModel.insertMaintenanceStreet(street, items)
+                    },
+                    lastRoute = lastRoute,
+                    streetCreated = streetCreated,
+                    newStreet = {
+                        maintenanceViewModel.clearViewModel()
+                    },
+                    stockData = stock
+                )
+            }
         }
 
         MaintenanceUIState.LIST -> {
@@ -193,21 +209,30 @@ fun MaintenanceScreen(
         }
 
         MaintenanceUIState.HOME -> {
-            MaintenanceHomeContent(
-                maintenances = maintenances,
-                maintenanceId = maintenanceId.toString(),
-                navController = navController,
-                loading = loading,
-                newStreet = {
-                    forceLoading = true
-                    screenState = MaintenanceUIState.STREET
-                },
-                newMaintenance = {
-                    forceLoading = true
-                    screenState = MaintenanceUIState.NEW
-                },
-                lastRoute = lastRoute,
-            )
+            maintenanceId?.let {
+                MaintenanceHomeContent(
+                    streets = streets,
+                    maintenanceId = it,
+                    navController = navController,
+                    loading = loading,
+                    newStreet = {
+                        forceLoading = true
+                        screenState = MaintenanceUIState.STREET
+                    },
+                    newMaintenance = {
+                        forceLoading = true
+                        screenState = MaintenanceUIState.NEW
+                    },
+                    finishMaintenance = {
+
+                    },
+                    lastRoute = lastRoute,
+                    back = {
+                        navController.popBackStack()
+                    },
+                    contractor = contractor?.contractor
+                )
+            }
         }
     }
 
@@ -249,7 +274,7 @@ fun NewMaintenanceContent(
         navigateToExecutions = {
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         }
-    ) { modifier, showSnackBar ->
+    ) { _, _ ->
 
         if (loading) {
             Loading("Carregando")

@@ -706,6 +706,7 @@ fun AppNavigation(
                     MaintenanceScreen(
                         maintenanceViewModel = maintenanceViewModel,
                         contractViewModel = contractViewModel,
+                        stockViewModel = stockViewModel,
                         navController = navController,
                         lastRoute = lastRoute,
                     )
