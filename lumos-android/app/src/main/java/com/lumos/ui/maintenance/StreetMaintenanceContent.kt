@@ -161,6 +161,10 @@ fun StreetMaintenanceContent(
         }
     }
 
+    var lastPowerError by remember { mutableStateOf<String?>(null) }
+    var currentSupplyError by remember { mutableStateOf<String?>(null) }
+    var reasonError by remember { mutableStateOf<String?>(null) }
+
 
     AppLayout(
         title = "MANUTENÇÃO - ${Utils.abbreviate(contractor.toString())}",
@@ -525,7 +529,7 @@ fun StreetMaintenanceContent(
                     ),
                 )
 
-                if (hasLed) {
+                if (!hasLed) {
                     Spacer(Modifier.height(20.dp))
                     Text(
                         text = "Informações referentes a LED",
@@ -537,7 +541,7 @@ fun StreetMaintenanceContent(
                             onValueChange = {
                                 street = street.copy(lastSupply = it)
                             },
-                            placeholder = {
+                            label = {
                                 Text(
                                     "Fabricante anterior",
                                     style = MaterialTheme.typography.bodySmall.copy( // Texto menor
@@ -560,11 +564,13 @@ fun StreetMaintenanceContent(
                         )
 
                         OutlinedTextField(
+                            isError = lastPowerError != null,
                             value = street.lastPower ?: "",
                             onValueChange = {
                                 street = street.copy(lastPower = it)
+                                lastPowerError = null
                             },
-                            placeholder = {
+                            label = {
                                 Text(
                                     "Potência anterior",
                                     style = MaterialTheme.typography.bodySmall.copy( // Texto menor
@@ -575,7 +581,7 @@ fun StreetMaintenanceContent(
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = 10.dp)
+                                .padding(top = 15.dp)
                                 .height(48.dp),     // ajusta a altura
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -586,13 +592,17 @@ fun StreetMaintenanceContent(
                                 fontSize = 14.sp
                             ),
                         )
+                        if (lastPowerError != null) {
+                            Text(
+                                text = lastPowerError ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                            )
+                        }
 
                         OutlinedTextField(
-                            value = street.currentSupply ?: "",
-                            onValueChange = {
-                                street = street.copy(currentSupply = it)
-                            },
-                            placeholder = {
+                            label = {
                                 Text(
                                     "Fabricante atual (Novo)",
                                     style = MaterialTheme.typography.bodySmall.copy( // Texto menor
@@ -600,10 +610,16 @@ fun StreetMaintenanceContent(
                                     )
                                 )
                             },
+                            isError = currentSupplyError != null,
+                            value = street.currentSupply ?: "",
+                            onValueChange = {
+                                street = street.copy(currentSupply = it)
+                                currentSupplyError = null
+                            },
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = 10.dp)
+                                .padding(top = if(currentSupplyError == null) 15.dp else 5.dp)
                                 .height(48.dp),     // ajusta a altura
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -614,13 +630,23 @@ fun StreetMaintenanceContent(
                                 fontSize = 14.sp
                             ),
                         )
+                        if (currentSupplyError != null) {
+                            Text(
+                                text = currentSupplyError ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                            )
+                        }
 
                         OutlinedTextField(
+                            isError = reasonError!=null,
                             value = street.reason ?: "",
                             onValueChange = {
                                 street = street.copy(reason = it)
+                                reasonError = null
                             },
-                            placeholder = {
+                            label = {
                                 Text(
                                     "Motivo da troca",
                                     style = MaterialTheme.typography.bodySmall.copy( // Texto menor
@@ -631,7 +657,7 @@ fun StreetMaintenanceContent(
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = 10.dp)
+                                .padding(top = if(reasonError == null) 15.dp else 5.dp)
                                 .height(48.dp),     // ajusta a altura
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -642,6 +668,14 @@ fun StreetMaintenanceContent(
                                 fontSize = 14.sp
                             ),
                         )
+                        if (reasonError != null) {
+                            Text(
+                                text = reasonError ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                            )
+                        }
 
                     }
                 }
@@ -655,7 +689,7 @@ fun StreetMaintenanceContent(
                     onValueChange = {
                         street = street.copy(comment = it)
                     },
-                    placeholder = {
+                    label = {
                         Text(
                             "Campo para observações",
                             style = MaterialTheme.typography.bodySmall.copy( // Texto menor
@@ -689,16 +723,13 @@ fun StreetMaintenanceContent(
                             alertModal = true
                         } else if (hasLed) { // verificar se selecionou led e validar campos
                             if (street.lastPower.isNullOrBlank()) {
-                                alertMessage["title"] = "Campo obrigatório não preenchido"
-                                alertMessage["body"] = "Por favor, informe a potência anterior."
+                                lastPowerError = "Informe a potência anterior."
                                 alertModal = true
                             } else if (street.currentSupply.isNullOrBlank()) {
-                                alertMessage["title"] = "Campo obrigatório não preenchido"
-                                alertMessage["body"] = "Por favor, informe o fabricante atual."
+                                currentSupplyError= "Informe o fabricante atual."
                                 alertModal = true
                             } else if (street.reason.isNullOrBlank()) {
-                                alertMessage["title"] = "Campo obrigatório não preenchido"
-                                alertMessage["body"] = "Por favor, informe o motivo da troca."
+                                reasonError = "Informe o motivo da troca."
                                 alertModal = true
                             } else {
                                 confirmModal = true

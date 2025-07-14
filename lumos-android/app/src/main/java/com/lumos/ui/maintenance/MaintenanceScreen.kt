@@ -167,7 +167,6 @@ fun MaintenanceScreen(
 
         MaintenanceUIState.STREET -> {
             maintenanceId?.let {
-
                 StreetMaintenanceContent(
                     maintenanceId = it,
                     contractor = contractor?.contractor,
@@ -193,6 +192,7 @@ fun MaintenanceScreen(
         MaintenanceUIState.LIST -> {
             MaintenanceListContent(
                 maintenances = maintenances,
+                contracts = contracts,
                 navController = navController,
                 loading = loading,
                 selectMaintenance = { id ->
@@ -204,7 +204,6 @@ fun MaintenanceScreen(
                     forceLoading = true
                     screenState = MaintenanceUIState.NEW
                 },
-                lastRoute = lastRoute,
             )
         }
 
@@ -227,9 +226,6 @@ fun MaintenanceScreen(
 
                     },
                     lastRoute = lastRoute,
-                    back = {
-                        navController.popBackStack()
-                    },
                     contractor = contractor?.contractor
                 )
             }

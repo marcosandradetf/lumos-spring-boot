@@ -76,8 +76,14 @@ class MaintenanceViewModel(
     fun insertMaintenance(maintenance: Maintenance) {
         viewModelScope.launch {
             try {
-                _maintenanceId.value = UUID.fromString(maintenance.maintenanceId)
                 _loading.value = true
+                val uuid = repository.getMaintenanceIdByContractId(maintenance.contractId)
+                if(uuid != null) {
+                    _maintenanceId.value = UUID.fromString(uuid)
+                    _contractSelected.value = true
+                    return@launch
+                }
+                _maintenanceId.value = UUID.fromString(maintenance.maintenanceId)
                 repository.insertMaintenance(maintenance)
                 _contractSelected.value = true
             } catch (e: Exception) {

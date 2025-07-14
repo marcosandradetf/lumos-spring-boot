@@ -52,5 +52,8 @@ interface MaintenanceDao {
     @Query("delete from maintenancestreetitem where maintenanceId = :maintenanceId")
     suspend fun deleteStreetItemByMaintenanceId(maintenanceId: String)
 
+    @Query("select maintenanceId from maintenance where contractId = :contractId limit 1")
+    suspend fun getMaintenanceIdByContractId(contractId: Long): String?
+
 
 }

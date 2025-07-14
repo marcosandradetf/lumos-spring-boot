@@ -125,4 +125,8 @@ class MaintenanceRepository(
         }
     }
 
+    suspend fun getMaintenanceIdByContractId(contractId: Long): String? {
+        return db.maintenanceDao().getMaintenanceIdByContractId(contractId)
+    }
+
 }
