@@ -529,7 +529,7 @@ fun StreetMaintenanceContent(
                     ),
                 )
 
-                if (!hasLed) {
+                if (hasLed) {
                     Spacer(Modifier.height(20.dp))
                     Text(
                         text = "Informações referentes a LED",

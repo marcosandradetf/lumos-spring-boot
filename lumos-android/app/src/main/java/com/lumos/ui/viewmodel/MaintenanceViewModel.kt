@@ -57,7 +57,7 @@ class MaintenanceViewModel(
         }
     }
 
-    fun loadMaintenanceStreets(maintenanceId: String) {
+    fun loadMaintenanceStreets(maintenanceId: List<String>) {
         viewModelScope.launch {
             _loading.value = true
             repository.getFlowStreets(maintenanceId)
@@ -108,20 +108,6 @@ class MaintenanceViewModel(
         }
     }
 
-    fun queuePostMaintenance(maintenanceId: String) {
-        viewModelScope.launch {
-            try {
-                _loading.value = true
-                repository.queuePostMaintenance(maintenanceId)
-                _finish.value = true
-            } catch (e: Exception) {
-                _message.value = e.message ?: ""
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-
     fun clearViewModel() {
         _message.value = ""
         _finish.value = false
@@ -130,6 +116,20 @@ class MaintenanceViewModel(
 
     fun setMaintenanceId(uuid: UUID) {
         _maintenanceId.value = uuid
+    }
+
+    fun finishMaintenance(maintenance: Maintenance) {
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                repository.finishMaintenance(maintenance)
+                _finish.value = true
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Erro inesperado"
+            } finally {
+                _loading.value = false
+            }
+        }
     }
 
 

@@ -47,11 +47,11 @@ class MaintenanceRepository(
         return db.maintenanceDao().getFlowMaintenance(status)
     }
 
-    fun getFlowStreets(maintenanceId: String): Flow<List<MaintenanceStreet>> {
+    fun getFlowStreets(maintenanceId: List<String>): Flow<List<MaintenanceStreet>> {
         return db.maintenanceDao().getFlowStreets(maintenanceId)
     }
 
-    suspend fun queuePostMaintenance(maintenanceId: String) {
+    private suspend fun queuePostMaintenance(maintenanceId: String) {
         SyncManager.queuePostMaintenance(
             context = app.applicationContext,
             db = db,
@@ -127,6 +127,13 @@ class MaintenanceRepository(
 
     suspend fun getMaintenanceIdByContractId(contractId: Long): String? {
         return db.maintenanceDao().getMaintenanceIdByContractId(contractId)
+    }
+
+    suspend fun finishMaintenance(maintenance: Maintenance) {
+        db.withTransaction {
+            db.maintenanceDao().updateMaintenance(maintenance)
+            queuePostMaintenance(maintenance.maintenanceId)
+        }
     }
 
 }

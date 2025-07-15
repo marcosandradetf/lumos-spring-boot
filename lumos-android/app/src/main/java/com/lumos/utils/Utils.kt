@@ -189,7 +189,13 @@ object Utils {
             }
         }
 
-        return result.joinToString(" ").uppercase()
+        return result.joinToString(" ") { word ->
+            if (word.lowercase() == "de") {
+                "de"
+            } else {
+                word.lowercase().replaceFirstChar { it.uppercase() }
+            }
+        }
     }
 
 

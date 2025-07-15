@@ -47,6 +47,7 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Loading
+import com.lumos.ui.components.NothingData
 import com.lumos.utils.Utils
 import java.time.Instant
 
@@ -81,6 +82,10 @@ fun MaintenanceListContent(
         ) {
             if (loading) {
                 Loading()
+            }
+
+            if(maintenances.isEmpty()) {
+                NothingData("Nenhuma manutenção em andamento")
             }
 
             LazyColumn(

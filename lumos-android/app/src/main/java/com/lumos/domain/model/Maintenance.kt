@@ -19,7 +19,7 @@ data class Maintenance(
     val maintenanceId: String,
     val contractId: Long,
     val pendingPoints: Boolean,
-    val quantityPendingPoints: Int?,
+    var quantityPendingPoints: Int?,
     val dateOfVisit: String,
     val type: String, //rural ou urbana
 

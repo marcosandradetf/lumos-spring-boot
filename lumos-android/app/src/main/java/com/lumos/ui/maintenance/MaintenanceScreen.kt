@@ -69,6 +69,7 @@ fun MaintenanceScreen(
     val stock by stockViewModel.stock.collectAsState()
     val contractSelected by maintenanceViewModel.contractSelected.collectAsState()
     val streetCreated by maintenanceViewModel.streetCreated.collectAsState()
+    val finish by maintenanceViewModel.finish.collectAsState()
 
     val maintenanceLoading by maintenanceViewModel.loading.collectAsState()
     val maintenanceMessage by maintenanceViewModel.message.collectAsState()
@@ -104,6 +105,7 @@ fun MaintenanceScreen(
 
     LaunchedEffect(Unit) {
         maintenanceViewModel.loadMaintenances("IN_PROGRESS")
+        maintenanceViewModel.loadMaintenanceStreets(maintenances.map { it.maintenanceId })
 
         contractViewModel.syncContracts()
         contractViewModel.loadFlowContractsForMaintenance()
@@ -141,7 +143,7 @@ fun MaintenanceScreen(
         MaintenanceUIState.NEW -> {
             NewMaintenanceContent(
                 navController = navController,
-                lastRoute = lastRoute,
+                maintenancesSize = maintenances.size,
                 contracts = contracts,
                 loading = loading,
                 resync = {
@@ -161,6 +163,14 @@ fun MaintenanceScreen(
                             status = "IN_PROGRESS"
                         )
                     )
+                },
+                back = {
+                    maintenanceViewModel.clearViewModel()
+                    screenState = if(maintenances.size > 1) {
+                        MaintenanceUIState.LIST
+                    } else {
+                        MaintenanceUIState.HOME
+                    }
                 }
             )
         }
@@ -174,6 +184,7 @@ fun MaintenanceScreen(
                     loading = loading,
                     back = {
                         forceLoading = true
+                        maintenanceViewModel.clearViewModel()
                         screenState = MaintenanceUIState.HOME
                     },
                     saveStreet = { street, items ->
@@ -196,38 +207,50 @@ fun MaintenanceScreen(
                 navController = navController,
                 loading = loading,
                 selectMaintenance = { id ->
-                    maintenanceViewModel.setMaintenanceId(UUID.fromString(id))
                     forceLoading = true
+                    maintenanceViewModel.clearViewModel()
+                    maintenanceViewModel.setMaintenanceId(UUID.fromString(id))
                     screenState = MaintenanceUIState.HOME
                 },
                 newMaintenance = {
                     forceLoading = true
+                    maintenanceViewModel.clearViewModel()
                     screenState = MaintenanceUIState.NEW
                 },
             )
         }
 
         MaintenanceUIState.HOME -> {
-            maintenanceId?.let {
-                MaintenanceHomeContent(
-                    streets = streets,
-                    maintenanceId = it,
-                    navController = navController,
-                    loading = loading,
-                    newStreet = {
-                        forceLoading = true
-                        screenState = MaintenanceUIState.STREET
-                    },
-                    newMaintenance = {
-                        forceLoading = true
-                        screenState = MaintenanceUIState.NEW
-                    },
-                    finishMaintenance = {
-
-                    },
-                    lastRoute = lastRoute,
-                    contractor = contractor?.contractor
-                )
+            maintenanceId?.let { id ->
+                maintenances.find { m -> m.maintenanceId == id.toString() }?.let { maintenance ->
+                    MaintenanceHomeContent(
+                        maintenance = maintenance,
+                        contractor = contractor?.contractor,
+                        streets = streets.filter { s -> s.maintenanceId == id.toString() },
+                        maintenanceSize = maintenances.size,
+                        navController = navController,
+                        loading = loading,
+                        finish = finish,
+                        newStreet = {
+                            forceLoading = true
+                            maintenanceViewModel.clearViewModel()
+                            screenState = MaintenanceUIState.STREET
+                        },
+                        newMaintenance = {
+                            forceLoading = true
+                            maintenanceViewModel.clearViewModel()
+                            screenState = MaintenanceUIState.NEW
+                        },
+                        finishMaintenance = {
+                            maintenanceViewModel.finishMaintenance(it)
+                        },
+                        back = {
+                            forceLoading = true
+                            maintenanceViewModel.clearViewModel()
+                            screenState = MaintenanceUIState.LIST
+                        }
+                    )
+                }
             }
         }
     }
@@ -237,16 +260,17 @@ fun MaintenanceScreen(
 @Composable
 fun NewMaintenanceContent(
     navController: NavHostController,
-    lastRoute: String?,
     contracts: List<Contract>,
     loading: Boolean,
     resync: () -> Unit,
     hasInternet: Boolean,
-    createMaintenance: (Long) -> Unit
+    createMaintenance: (Long) -> Unit,
+    back: () -> Unit,
+    maintenancesSize: Int
 ) {
     val navigateBack: (() -> Unit)? =
-        if (lastRoute == Routes.HOME) {
-            { navController.navigate(Routes.HOME) }
+        if (maintenancesSize > 0) {
+            back
         } else {
             null
         }
@@ -357,7 +381,6 @@ fun NewMaintenanceContent(
 fun PrevMaintenance() {
     NewMaintenanceContent(
         navController = rememberNavController(),
-        lastRoute = null,
         contracts = listOf(
             Contract(
                 contractId = 1,
@@ -388,6 +411,10 @@ fun PrevMaintenance() {
         loading = false,
         resync = { },
         hasInternet = false,
-        createMaintenance = {}
+        createMaintenance = {},
+        back = {
+
+        },
+        maintenancesSize = 1
     )
 }
