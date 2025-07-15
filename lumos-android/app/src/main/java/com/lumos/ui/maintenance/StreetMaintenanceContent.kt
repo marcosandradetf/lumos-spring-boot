@@ -36,6 +36,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -58,8 +59,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -77,6 +81,7 @@ import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
+import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.util.UUID
 
 @Composable
@@ -161,9 +166,25 @@ fun StreetMaintenanceContent(
         }
     }
 
+    val cableItem by remember(selectedIds, stockData) {
+        derivedStateOf {
+            stockData
+                .find {
+                    it.materialStockId in selectedIds && it.materialName.contains(
+                        "cabo",
+                        ignoreCase = true
+                    )
+                }
+                ?.materialStockId
+                ?.let { id -> items.find { it.materialStockId == id } }
+        }
+    }
+
+
     var lastPowerError by remember { mutableStateOf<String?>(null) }
     var currentSupplyError by remember { mutableStateOf<String?>(null) }
     var reasonError by remember { mutableStateOf<String?>(null) }
+    var cableError by remember { mutableStateOf<String?>(null) }
 
 
     AppLayout(
@@ -430,7 +451,8 @@ fun StreetMaintenanceContent(
                                     onCheckedChange = { isChecked ->
                                         if (material.stockAvailable == 0.0) {
                                             alertMessage["title"] = "Material sem estoque"
-                                            alertMessage["body"] = "Para selecionar esse material é necessário haver estoque disponível."
+                                            alertMessage["body"] =
+                                                "Para selecionar esse material é necessário haver estoque disponível."
                                             alertModal = true
                                             return@IconToggleButton
                                         }
@@ -448,7 +470,7 @@ fun StreetMaintenanceContent(
                                                 maintenanceId = maintenanceId.toString(),
                                                 maintenanceStreetId = maintenanceStreetId.toString(),
                                                 materialStockId = material.materialStockId,
-                                                quantityExecuted = 1.0
+                                                quantityExecuted = if(material.type.equals("cabo", ignoreCase = true)) 0.0 else 1.0
                                             )
                                         } else {
                                             // Apenas remove esse item
@@ -528,9 +550,8 @@ fun StreetMaintenanceContent(
                         fontSize = 13.sp
                     ),
                 )
-
+                Spacer(Modifier.height(20.dp))
                 if (hasLed) {
-                    Spacer(Modifier.height(20.dp))
                     Text(
                         text = "Informações referentes a LED",
                         style = MaterialTheme.typography.titleMedium
@@ -619,7 +640,7 @@ fun StreetMaintenanceContent(
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = if(currentSupplyError == null) 15.dp else 5.dp)
+                                .padding(top = if (currentSupplyError == null) 15.dp else 5.dp)
                                 .height(48.dp),     // ajusta a altura
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -640,7 +661,7 @@ fun StreetMaintenanceContent(
                         }
 
                         OutlinedTextField(
-                            isError = reasonError!=null,
+                            isError = reasonError != null,
                             value = street.reason ?: "",
                             onValueChange = {
                                 street = street.copy(reason = it)
@@ -657,7 +678,7 @@ fun StreetMaintenanceContent(
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = if(reasonError == null) 15.dp else 5.dp)
+                                .padding(top = if (reasonError == null) 15.dp else 5.dp)
                                 .height(48.dp),     // ajusta a altura
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -679,7 +700,57 @@ fun StreetMaintenanceContent(
 
                     }
                 }
-                Spacer(Modifier.height(20.dp))
+                if (cableItem != null) {
+                    var text by remember {
+                        mutableStateOf(TextFieldValue("0"))
+                    }
+                    Text(
+                        text = "Informações referente a cabo",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    OutlinedTextField(
+                        isError = cableError != null,
+                        supportingText = {
+                            if (cableError != null) {
+                                Text(
+                                    text = cableError ?: "",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        trailingIcon = { Text("cm") },
+                        value = text,
+                        onValueChange = { newValue ->
+                            val sanitized = sanitizeDecimalInput(newValue.text)
+                            val quantityInMeters = sanitized.toDoubleOrNull()?.div(100) ?: 0.0
+                            text = TextFieldValue(sanitized, TextRange(sanitized.length))
+
+                            items = items.map {
+                                if (it.materialStockId == cableItem?.materialStockId)
+                                    it.copy(quantityExecuted = quantityInMeters)
+                                else it
+                            }
+                        },
+                        label = { Text("Quantidade de cabo (cm)", fontSize = 14.sp) },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f) // ajusta a largura
+                            .padding(top = 5.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary
+                        ),
+                        textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                            fontSize = 14.sp
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                    )
+                }
                 Text(
                     text = "Comentários adiconais",
                     style = MaterialTheme.typography.titleMedium
@@ -717,26 +788,33 @@ fun StreetMaintenanceContent(
                             alertMessage["title"] = "Você esqueceu de preencher o endereço"
                             alertMessage["body"] = "Por favor, informe a Rua, Nº - Bairro atual"
                             alertModal = true
+                            return@Button
                         } else if (items.isEmpty()) {
                             alertMessage["title"] = "Nenhum material selecionado"
                             alertMessage["body"] = "Por favor, selecione os materiais."
                             alertModal = true
-                        } else if (hasLed) { // verificar se selecionou led e validar campos
+                            return@Button
+                        }
+
+                        if (hasLed) { // verificar se selecionou led e validar campos
                             if (street.lastPower.isNullOrBlank()) {
                                 lastPowerError = "Informe a potência anterior."
-                                alertModal = true
-                            } else if (street.currentSupply.isNullOrBlank()) {
-                                currentSupplyError= "Informe o fabricante atual."
-                                alertModal = true
-                            } else if (street.reason.isNullOrBlank()) {
-                                reasonError = "Informe o motivo da troca."
-                                alertModal = true
-                            } else {
-                                confirmModal = true
                             }
-                        } else {
-                            confirmModal = true
+                            if (street.currentSupply.isNullOrBlank()) {
+                                currentSupplyError = "Informe o fabricante atual."
+                            }
+                            if (street.reason.isNullOrBlank()) {
+                                reasonError = "Informe o motivo da troca."
+                            }
+                            return@Button
                         }
+
+                        if(cableItem != null && cableItem?.quantityExecuted == 0.0) {
+                            cableError = "Informe a quantidade"
+                            return@Button
+                        }
+
+                        confirmModal = true
                     }
                 ) {
                     Text("Salvar manutenção")

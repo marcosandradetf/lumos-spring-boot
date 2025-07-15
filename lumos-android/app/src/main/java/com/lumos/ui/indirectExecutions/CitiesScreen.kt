@@ -170,10 +170,8 @@ fun ContentCitiesScreen(
     var contractId by remember { mutableLongStateOf(0) }
 
     val navigateBack: (() -> Unit)? =
-        if (lastRoute == Routes.MORE) {
-            { navController.navigate(Routes.MORE) }
-        } else if (lastRoute == Routes.HOME) {
-            { navController.navigate(Routes.HOME) }
+        if (lastRoute == Routes.MORE || lastRoute == Routes.HOME) {
+            { navController.popBackStack() }
         } else {
             null
         }
@@ -184,7 +182,10 @@ fun ContentCitiesScreen(
         notificationsBadge = notificationsBadge,
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
-        navigateBack = navigateBack
+        navigateBack = navigateBack,
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        }
     ) { _, _ ->
 
         PullToRefreshBox(

@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -82,7 +83,6 @@ fun MaintenanceScreen(
     val maintenances by maintenanceViewModel.maintenances.collectAsState()
     val streets by maintenanceViewModel.maintenanceStreets.collectAsState()
     val contracts by contractViewModel.contracts.collectAsState()
-    val loading = maintenanceLoading || contractLoading || forceLoading
     val message = maintenanceMessage ?: contractMessage
 
     var resync by remember { mutableIntStateOf(0) }
@@ -96,11 +96,36 @@ fun MaintenanceScreen(
     }
     var alertModal by remember { mutableStateOf(false) }
 
-    val maintenanceMap = remember { maintenances.associateBy { it.maintenanceId } }
-    val contractMap = remember { contracts.associateBy { it.contractId } }
+    val maintenanceMap by remember(maintenances) {
+        mutableStateOf(maintenances.associateBy { it.maintenanceId })
+    }
 
-    val maintenanceContractId = maintenanceMap[maintenanceId.toString()]?.contractId
-    val contractor = contractMap[maintenanceContractId]
+    val contractMap by remember(contracts) {
+        mutableStateOf(contracts.associateBy { it.contractId })
+    }
+
+    val maintenance by remember(maintenanceId, maintenanceMap) {
+        derivedStateOf {
+            maintenanceMap[maintenanceId.toString()]
+        }
+    }
+
+    val contractor by remember(maintenance?.contractId, contractMap) {
+        derivedStateOf {
+            maintenance?.contractId?.let { contractMap[it] }?.contractor
+        }
+    }
+
+    val filteredStreets by remember(maintenanceId, streets) {
+        derivedStateOf {
+            streets.filter { it.maintenanceId == maintenanceId.toString() }
+        }
+    }
+
+
+    val loading = maintenanceLoading || contractLoading ||
+            forceLoading || contractor == null || maintenance == null
+
 
 
     LaunchedEffect(Unit) {
@@ -166,7 +191,7 @@ fun MaintenanceScreen(
                 },
                 back = {
                     maintenanceViewModel.clearViewModel()
-                    screenState = if(maintenances.size > 1) {
+                    screenState = if (maintenances.size > 1) {
                         MaintenanceUIState.LIST
                     } else {
                         MaintenanceUIState.HOME
@@ -179,7 +204,7 @@ fun MaintenanceScreen(
             maintenanceId?.let {
                 StreetMaintenanceContent(
                     maintenanceId = it,
-                    contractor = contractor?.contractor,
+                    contractor = contractor,
                     navController = navController,
                     loading = loading,
                     back = {
@@ -221,36 +246,34 @@ fun MaintenanceScreen(
         }
 
         MaintenanceUIState.HOME -> {
-            maintenanceId?.let { id ->
-                maintenances.find { m -> m.maintenanceId == id.toString() }?.let { maintenance ->
-                    MaintenanceHomeContent(
-                        maintenance = maintenance,
-                        contractor = contractor?.contractor,
-                        streets = streets.filter { s -> s.maintenanceId == id.toString() },
-                        maintenanceSize = maintenances.size,
-                        navController = navController,
-                        loading = loading,
-                        finish = finish,
-                        newStreet = {
-                            forceLoading = true
-                            maintenanceViewModel.clearViewModel()
-                            screenState = MaintenanceUIState.STREET
-                        },
-                        newMaintenance = {
-                            forceLoading = true
-                            maintenanceViewModel.clearViewModel()
-                            screenState = MaintenanceUIState.NEW
-                        },
-                        finishMaintenance = {
-                            maintenanceViewModel.finishMaintenance(it)
-                        },
-                        back = {
-                            forceLoading = true
-                            maintenanceViewModel.clearViewModel()
-                            screenState = MaintenanceUIState.LIST
-                        }
-                    )
-                }
+            maintenance?.let { maintenanceNonNull ->
+                MaintenanceHomeContent(
+                    maintenance = maintenanceNonNull,
+                    contractor = contractor,
+                    streets = filteredStreets,
+                    maintenanceSize = maintenances.size,
+                    navController = navController,
+                    loading = loading,
+                    finish = finish,
+                    newStreet = {
+                        forceLoading = true
+                        maintenanceViewModel.clearViewModel()
+                        screenState = MaintenanceUIState.STREET
+                    },
+                    newMaintenance = {
+                        forceLoading = true
+                        maintenanceViewModel.clearViewModel()
+                        screenState = MaintenanceUIState.NEW
+                    },
+                    finishMaintenance = {
+                        maintenanceViewModel.finishMaintenance(it)
+                    },
+                    back = {
+                        forceLoading = true
+                        maintenanceViewModel.clearViewModel()
+                        screenState = MaintenanceUIState.LIST
+                    }
+                )
             }
         }
     }
