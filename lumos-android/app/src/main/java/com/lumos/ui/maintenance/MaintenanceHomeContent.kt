@@ -5,12 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
@@ -147,9 +150,7 @@ fun MaintenanceHomeContent(
 
             if (loading) {
                 Loading()
-            }
-
-            if (finish) {
+            }else if (finish) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -378,7 +379,7 @@ fun MaintenanceHomeContent(
 
                     if (typeError != null) {
                         Text(
-                            "Selecione a região da manutenção",
+                            typeError ?: "",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -386,11 +387,19 @@ fun MaintenanceHomeContent(
 
                     Button(
                         onClick = {
-                            if (maintenance.pendingPoints && maintenance.quantityPendingPoints == null) {
+                            var hasError = false
+
+                            if (maintenanceSend.pendingPoints && maintenanceSend.quantityPendingPoints == null) {
                                 pendingPointsError = "Qual a quantidade pendente?"
-                            } else if (maintenance.type.isBlank()) {
-                                typeError = "Selecione o tipo da manutenção"
-                            } else {
+                                hasError = true
+                            }
+
+                            if (maintenanceSend.type.isBlank()) {
+                                typeError = "Selecione a região da manutenção"
+                                hasError = true
+                            }
+
+                            if (!hasError) {
                                 confirmModal = true
                             }
                         },
@@ -411,43 +420,102 @@ fun MaintenanceHomeContent(
                 ) {
                     item {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                            horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(MaterialTheme.colorScheme.surface)
-                                .fillMaxWidth(0.7f)
-                                .padding(15.dp)
+                                .fillMaxWidth(0.9f)
+                                .padding(5.dp)
 
                         ) {
-                            Text(
-                                text = Utils.abbreviate(contractor.toString()),
-                                style = MaterialTheme.typography.titleLarge,
-                            )
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(5.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min) // Isso é o truque!
                             ) {
-                                Icon(
-                                    contentDescription = null,
-                                    imageVector = Icons.Default.AccessTime,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(Modifier.width(3.dp))
-                                Text(
-                                    "Iniciada há ${
-                                        Utils.timeSinceCreation(
-                                            Instant.parse(
-                                                maintenance.dateOfVisit
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxHeight()
+                                ) {
+                                    // Linha vertical com bolinha no meio
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight(0.5f)
+                                            .padding(start = 20.dp)
+                                            .width(4.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                    )
+
+                                    // Bolinha com ícone (no meio da linha)
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 10.dp) // posiciona sobre a linha
+                                            .size(24.dp) // tamanho do círculo
+                                            .clip(CircleShape)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primary
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Build,
+                                            contentDescription = "Build",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(
+                                                16.dp
                                             )
                                         )
-                                    }",
-                                    style = MaterialTheme.typography.labelMedium
-                                )
+                                    }
+                                }
+
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+
+                                            ) {
+                                            Row {
+                                                Text(
+                                                    text = Utils.abbreviate(contractor.toString()),
+                                                    style = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                )
+                                            }
+                                        }
+                                        Tag(
+                                            "${streets.size} ruas finalizadas",
+                                            color = MaterialTheme.colorScheme.inverseSurface,
+                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(vertical = 3.dp)
+                                        ) {
+                                            Icon(
+                                                contentDescription = null,
+                                                imageVector = Icons.Default.AccessTime,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(Modifier.width(3.dp))
+                                            Text("Iniciada há ${Utils.timeSinceCreation(Instant.parse(maintenance.dateOfVisit))}")
+
+                                        }
+                                    }
+                                }
                             }
-                            Tag(
-                                "${streets.size} ruas finalizadas",
-                                color = MaterialTheme.colorScheme.inverseSurface,
-                            )
                         }
                     }
 
@@ -497,16 +565,18 @@ fun MaintenanceHomeContent(
                         .align(Alignment.BottomCenter) // <-- Aqui dentro de um Box
                 ) {
 
-                    Button(
-                        onClick = {
-                            showFinishForm = true
-                        },
-                        modifier = Modifier.fillMaxWidth(0.6f)
-                    ) {
-                        Text(
-                            "Enviar manutenção",
-                            fontSize = 12.sp
-                        )
+                    if(streets.isNotEmpty()) {
+                        Button(
+                            onClick = {
+                                showFinishForm = true
+                            },
+                            modifier = Modifier.fillMaxWidth(0.6f)
+                        ) {
+                            Text(
+                                "Enviar manutenção",
+                                fontSize = 12.sp
+                            )
+                        }
                     }
 
                     Button(

@@ -33,6 +33,10 @@ class StockViewModel(
     private val _orderCode = MutableStateFlow("")
     val orderCode = _orderCode
 
+    init {
+        loadStockFlow()
+    }
+
     fun callSyncStock() {
         viewModelScope.launch(Dispatchers.IO) {
             try {

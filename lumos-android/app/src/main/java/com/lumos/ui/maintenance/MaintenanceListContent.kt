@@ -30,6 +30,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,117 +83,127 @@ fun MaintenanceListContent(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
+
             if (loading) {
                 Loading()
-            }
-
-            if(maintenances.isEmpty()) {
+            } else if (maintenances.isEmpty()) {
                 NothingData("Nenhuma manutenção em andamento")
-            }
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(
-                    maintenances,
-                    key = { it.maintenanceId }
-                ) { maintenance ->
-                    Card(
-                        shape = RoundedCornerShape(5.dp),
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .padding(3.dp)
-                            .clickable {
-                                selectMaintenance(maintenance.maintenanceId)
-                            },
-                        elevation = CardDefaults.cardElevation(1.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Row(
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    items(
+                        maintenances,
+                        key = { it.maintenanceId }
+                    ) { maintenance ->
+                        Card(
+                            shape = RoundedCornerShape(5.dp),
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min) // Isso é o truque!
+                                .fillMaxWidth(0.9f)
+                                .padding(3.dp)
+                                .clickable {
+                                    selectMaintenance(maintenance.maintenanceId)
+                                },
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
-                            Column(
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxHeight()
-                            ) {
-                                // Linha vertical com bolinha no meio
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight(0.5f)
-                                        .padding(start = 20.dp)
-                                        .width(4.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                )
-
-                                // Bolinha com ícone (no meio da linha)
-                                Box(
-                                    modifier = Modifier
-                                        .offset(x = 10.dp) // posiciona sobre a linha
-                                        .size(24.dp) // tamanho do círculo
-                                        .clip(CircleShape)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Build,
-                                        contentDescription = "Build",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(
-                                            16.dp
-                                        )
-                                    )
-                                }
-                            }
-
-
-                            Column(
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
+                                    .height(IntrinsicSize.Min) // Isso é o truque!
                             ) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxHeight()
+                                ) {
+                                    // Linha vertical com bolinha no meio
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight(0.5f)
+                                            .padding(start = 20.dp)
+                                            .width(4.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                    )
+
+                                    // Bolinha com ícone (no meio da linha)
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 10.dp) // posiciona sobre a linha
+                                            .size(24.dp) // tamanho do círculo
+                                            .clip(CircleShape)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primary
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Build,
+                                            contentDescription = "Build",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(
+                                                16.dp
+                                            )
+                                        )
+                                    }
+                                }
+
+
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .padding(16.dp)
                                 ) {
-                                    Row(
+                                    Column(
                                         modifier = Modifier
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
+                                            .fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
 
-                                        ) {
-                                        Row {
-                                            Text(
-                                                text = Utils.abbreviate(
-                                                    contracts
-                                                        .find { it.contractId == maintenance.contractId }
-                                                        ?.contractor.toString()
-                                                ),
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                            )
+                                            ) {
+                                            Row {
+                                                val contract by remember(contracts, maintenance) {
+                                                    derivedStateOf {
+                                                        contracts.find { it.contractId == maintenance.contractId }
+                                                    }
+                                                }
+                                                Text(
+                                                    text = Utils.abbreviate(
+                                                        contract?.contractor ?: "Carregando..."
+                                                    ),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                )
+                                            }
                                         }
-                                    }
 
-                                    Text("Iniciado há ${Utils.timeSinceCreation(Instant.parse(maintenance.dateOfVisit))}")
+                                        Text(
+                                            "Iniciado há ${
+                                                Utils.timeSinceCreation(
+                                                    Instant.parse(
+                                                        maintenance.dateOfVisit
+                                                    )
+                                                )
+                                            }"
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
+                    }
                 }
             }
 
@@ -217,7 +230,6 @@ fun MaintenanceListContent(
                 }
             }
         }
-
 
 
     }
@@ -255,7 +267,7 @@ fun PrevMaintenanceListContent() {
         ),
         navController = rememberNavController(),
         loading = false,
-        selectMaintenance = {  },
-        newMaintenance = {  }
+        selectMaintenance = { },
+        newMaintenance = { }
     )
 }

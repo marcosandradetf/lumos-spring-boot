@@ -37,6 +37,10 @@ class ContractViewModel(
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
+    init {
+        loadFlowContractsForMaintenance()
+    }
+
     fun syncContracts() {
         viewModelScope.launch(Dispatchers.IO) {
             _isSyncing.value = true

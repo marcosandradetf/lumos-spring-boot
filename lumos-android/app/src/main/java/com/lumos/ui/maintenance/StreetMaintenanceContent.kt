@@ -36,7 +36,6 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -70,7 +69,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.domain.model.Contract
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaterialStock
@@ -79,6 +77,7 @@ import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.sanitizeDecimalInput
@@ -188,7 +187,7 @@ fun StreetMaintenanceContent(
 
 
     AppLayout(
-        title = "MANUTENÇÃO - ${Utils.abbreviate(contractor.toString())}",
+        title = "Manutenção em ${Utils.abbreviate(contractor.toString())}",
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateBack = navigateBack,
         navigateToHome = {
@@ -204,6 +203,7 @@ fun StreetMaintenanceContent(
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         }
     ) { _, _ ->
+
 
         if (alertModal) {
             Alert(
@@ -222,7 +222,9 @@ fun StreetMaintenanceContent(
             })
         }
 
-        if (streetCreated) {
+        if(loading) {
+            Loading()
+        } else if (streetCreated) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -572,8 +574,7 @@ fun StreetMaintenanceContent(
                             },
                             singleLine = true,
                             modifier = Modifier
-                                .fillMaxWidth(0.7f) // ajusta a largura
-                                .height(48.dp),     // ajusta a altura
+                                .fillMaxWidth(0.7f) ,
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -582,6 +583,7 @@ fun StreetMaintenanceContent(
                             textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
                                 fontSize = 14.sp
                             ),
+                            supportingText = {}
                         )
 
                         OutlinedTextField(
@@ -601,9 +603,7 @@ fun StreetMaintenanceContent(
                             },
                             singleLine = true,
                             modifier = Modifier
-                                .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = 15.dp)
-                                .height(48.dp),     // ajusta a altura
+                                .fillMaxWidth(0.7f),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -612,15 +612,17 @@ fun StreetMaintenanceContent(
                             textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
                                 fontSize = 14.sp
                             ),
+                            supportingText = {
+                                if (lastPowerError != null) {
+                                    Text(
+                                        text = lastPowerError ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                                    )
+                                }
+                            }
                         )
-                        if (lastPowerError != null) {
-                            Text(
-                                text = lastPowerError ?: "",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(start = 16.dp, top = 7.dp)
-                            )
-                        }
 
                         OutlinedTextField(
                             label = {
@@ -639,9 +641,7 @@ fun StreetMaintenanceContent(
                             },
                             singleLine = true,
                             modifier = Modifier
-                                .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = if (currentSupplyError == null) 15.dp else 5.dp)
-                                .height(48.dp),     // ajusta a altura
+                                .fillMaxWidth(0.7f),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -650,15 +650,17 @@ fun StreetMaintenanceContent(
                             textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
                                 fontSize = 14.sp
                             ),
+                            supportingText = {
+                                if (currentSupplyError != null) {
+                                    Text(
+                                        text = currentSupplyError ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                                    )
+                                }
+                            }
                         )
-                        if (currentSupplyError != null) {
-                            Text(
-                                text = currentSupplyError ?: "",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(start = 16.dp, top = 7.dp)
-                            )
-                        }
 
                         OutlinedTextField(
                             isError = reasonError != null,
@@ -677,9 +679,7 @@ fun StreetMaintenanceContent(
                             },
                             singleLine = true,
                             modifier = Modifier
-                                .fillMaxWidth(0.7f) // ajusta a largura
-                                .padding(top = if (reasonError == null) 15.dp else 5.dp)
-                                .height(48.dp),     // ajusta a altura
+                                .fillMaxWidth(0.7f) ,
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -688,16 +688,17 @@ fun StreetMaintenanceContent(
                             textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
                                 fontSize = 14.sp
                             ),
+                            supportingText = {
+                                if (reasonError != null) {
+                                    Text(
+                                        text = reasonError ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                                    )
+                                }
+                            }
                         )
-                        if (reasonError != null) {
-                            Text(
-                                text = reasonError ?: "",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(start = 16.dp, top = 7.dp)
-                            )
-                        }
-
                     }
                 }
                 if (cableItem != null) {
@@ -708,6 +709,7 @@ fun StreetMaintenanceContent(
                         text = "Informações referente a cabo",
                         style = MaterialTheme.typography.titleMedium
                     )
+                    Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
                         isError = cableError != null,
                         supportingText = {
@@ -735,8 +737,7 @@ fun StreetMaintenanceContent(
                         label = { Text("Quantidade de cabo (cm)", fontSize = 14.sp) },
                         singleLine = true,
                         modifier = Modifier
-                            .fillMaxWidth(0.7f) // ajusta a largura
-                            .padding(top = 5.dp),
+                            .fillMaxWidth(0.7f),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -770,8 +771,7 @@ fun StreetMaintenanceContent(
                     },
                     singleLine = true,
                     modifier = Modifier
-                        .fillMaxWidth(0.7f) // ajusta a largura
-                        .height(48.dp),     // ajusta a altura
+                        .fillMaxWidth(0.7f),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -784,6 +784,7 @@ fun StreetMaintenanceContent(
                 Spacer(Modifier.height(20.dp))
                 Button(
                     onClick = {
+                        var error = false
                         if (street.address.isBlank()) {
                             alertMessage["title"] = "Você esqueceu de preencher o endereço"
                             alertMessage["body"] = "Por favor, informe a Rua, Nº - Bairro atual"
@@ -799,20 +800,24 @@ fun StreetMaintenanceContent(
                         if (hasLed) { // verificar se selecionou led e validar campos
                             if (street.lastPower.isNullOrBlank()) {
                                 lastPowerError = "Informe a potência anterior."
+                                error = true
                             }
                             if (street.currentSupply.isNullOrBlank()) {
                                 currentSupplyError = "Informe o fabricante atual."
+                                error = true
                             }
                             if (street.reason.isNullOrBlank()) {
                                 reasonError = "Informe o motivo da troca."
+                                error = true
                             }
-                            return@Button
                         }
 
                         if(cableItem != null && cableItem?.quantityExecuted == 0.0) {
                             cableError = "Informe a quantidade"
-                            return@Button
+                            error = true
                         }
+
+                        if(error) return@Button
 
                         confirmModal = true
                     }

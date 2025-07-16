@@ -41,7 +41,11 @@ class MaintenanceViewModel(
     private val _maintenanceStreets = MutableStateFlow<List<MaintenanceStreet>>(emptyList())
     val maintenanceStreets: StateFlow<List<MaintenanceStreet>> = _maintenanceStreets
 
-    fun loadMaintenances(status: String) {
+    init {
+        loadMaintenances("IN_PROGRESS")
+    }
+
+    private fun loadMaintenances(status: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.value = true
             repository.getFlowMaintenance(status)
@@ -109,9 +113,18 @@ class MaintenanceViewModel(
     }
 
     fun clearViewModel() {
+        _maintenanceId.value = null
         _message.value = ""
         _finish.value = false
         _streetCreated.value = false
+        _contractSelected.value = false
+    }
+
+    fun clearViewModelPartial() {
+        _message.value = ""
+        _finish.value = false
+        _streetCreated.value = false
+        _contractSelected.value = false
     }
 
     fun setMaintenanceId(uuid: UUID) {
