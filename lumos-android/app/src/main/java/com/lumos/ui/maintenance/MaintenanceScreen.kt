@@ -135,20 +135,17 @@ fun MaintenanceScreen(
         }
     }
 
-    val computedScreenState by remember(maintenances, contractSelected) {
+    val computedScreenState by remember(maintenances) {
         derivedStateOf {
             when {
-                contractSelected -> {
-                    forceLoading = true
-                    MaintenanceUIState.STREET
-                }
                 maintenances.isEmpty() && screenState == null -> MaintenanceUIState.NEW
                 maintenances.size == 1 && screenState == null -> {
                     forceLoading = true
                     maintenanceViewModel.setMaintenanceId(UUID.fromString(maintenances.first().maintenanceId))
                     MaintenanceUIState.HOME
                 }
-                else -> MaintenanceUIState.LIST
+                screenState == null -> MaintenanceUIState.LIST
+                else  -> screenState ?: MaintenanceUIState.LIST
             }
         }
     }
@@ -168,6 +165,12 @@ fun MaintenanceScreen(
         }
     }
 
+    LaunchedEffect(contractSelected) {
+        if (contractSelected) {
+            screenState = MaintenanceUIState.STREET
+            forceLoading = false
+        }
+    }
 
     when (effectiveScreenState) {
         MaintenanceUIState.NEW -> {

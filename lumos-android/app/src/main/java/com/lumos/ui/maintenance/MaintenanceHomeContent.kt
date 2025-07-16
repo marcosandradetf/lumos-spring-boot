@@ -113,7 +113,7 @@ fun MaintenanceHomeContent(
                 quantityPendingPoints = maintenance.quantityPendingPoints,
                 dateOfVisit = maintenance.dateOfVisit,
                 type = maintenance.type,
-                status = maintenance.status
+                status = "FINISHED"
             )
         )
     }
@@ -525,7 +525,6 @@ fun MaintenanceHomeContent(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(top = 10.dp)
                         )
-
                     }
                     items(
                         streets,

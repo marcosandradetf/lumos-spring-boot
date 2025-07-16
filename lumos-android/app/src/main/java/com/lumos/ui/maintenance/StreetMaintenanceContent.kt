@@ -1,5 +1,6 @@
 package com.lumos.ui.maintenance
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -55,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
@@ -69,9 +72,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaterialStock
+import com.lumos.domain.service.AddressService
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
@@ -96,6 +102,10 @@ fun StreetMaintenanceContent(
     stockData: List<MaterialStock>,
     contractor: String?,
 ) {
+    val context = LocalContext.current
+    val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
+    val coordinates = CoordinatesService(context, fusedLocationProvider)
+
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val navigateBack: (() -> Unit) =
@@ -179,12 +189,50 @@ fun StreetMaintenanceContent(
         }
     }
 
+    val screws by remember(selectedIds, stockData) {
+        derivedStateOf {
+            val screwIds = stockData
+                .filter {
+                    it.materialStockId in selectedIds &&
+                            it.materialName.contains("parafuso", ignoreCase = true)
+                }
+                .map { it.materialStockId }
+
+            items.filter { it.materialStockId in screwIds }
+        }
+    }
 
     var lastPowerError by remember { mutableStateOf<String?>(null) }
     var currentSupplyError by remember { mutableStateOf<String?>(null) }
     var reasonError by remember { mutableStateOf<String?>(null) }
     var cableError by remember { mutableStateOf<String?>(null) }
+    val screwErrors = remember { mutableStateMapOf<Long, String?>() }
+    var loadingCoordinates by remember { mutableStateOf(false) }
+    var address by remember { mutableStateOf("") }
 
+    LaunchedEffect(Unit) {
+        loadingCoordinates = true
+        coordinates.execute { latitude, longitude ->
+            if (latitude != null && longitude != null) {
+                val addr = AddressService(context).execute(latitude, longitude)
+
+                if (addr != null && addr.size >= 4) {
+                    val streetName = addr[0]
+                    val neighborhood = addr[1]
+                    val city = addr[2]
+                    val state = addr[3]
+
+                    street.address =
+                        "$streetName, [nº não informado] - $neighborhood, $city - $state"
+                    address = street.address
+                }
+                loadingCoordinates = false
+            } else {
+                Log.e("GET Address", "Latitude ou Longitude são nulos.")
+                loadingCoordinates = false
+            }
+        }
+    }
 
     AppLayout(
         title = "Manutenção em ${Utils.abbreviate(contractor.toString())}",
@@ -204,7 +252,6 @@ fun StreetMaintenanceContent(
         }
     ) { _, _ ->
 
-
         if (alertModal) {
             Alert(
                 title = alertMessage["title"] ?: "", body = alertMessage["body"] ?: "",
@@ -222,8 +269,11 @@ fun StreetMaintenanceContent(
             })
         }
 
-        if(loading) {
-            Loading()
+        if (loading || loadingCoordinates) {
+            if (loadingCoordinates)
+                Loading("Tentando carregar coordenadas")
+            else
+                Loading()
         } else if (streetCreated) {
             Column(
                 modifier = Modifier
@@ -273,7 +323,7 @@ fun StreetMaintenanceContent(
                         street = MaintenanceStreet(
                             maintenanceStreetId = maintenanceStreetId.toString(),
                             maintenanceId = maintenanceId.toString(),
-                            address = "",
+                            address = address,
                             latitude = null,
                             longitude = null,
                             comment = null,
@@ -462,17 +512,31 @@ fun StreetMaintenanceContent(
                                         val type = material.type
 
                                         items = if (isChecked) {
-                                            // Remove qualquer outro material desse tipo
-                                            items
-                                                .filterNot {
+                                            val isScrew =
+                                                material.type.equals("parafuso", ignoreCase = true)
+
+                                            val filteredItems = if (!isScrew) {
+                                                // Remove qualquer outro material desse tipo (exceto parafuso)
+                                                items.filterNot {
                                                     stockData.find { stock -> stock.materialStockId == it.materialStockId }?.type == type &&
                                                             it.maintenanceStreetId == maintenanceStreetId.toString() &&
                                                             it.maintenanceId == maintenanceId.toString()
-                                                } + MaintenanceStreetItem(
+                                                }
+                                            } else {
+                                                // Mantém todos os outros materiais
+                                                items
+                                            }
+
+                                            filteredItems + MaintenanceStreetItem(
                                                 maintenanceId = maintenanceId.toString(),
                                                 maintenanceStreetId = maintenanceStreetId.toString(),
                                                 materialStockId = material.materialStockId,
-                                                quantityExecuted = if(material.type.equals("cabo", ignoreCase = true)) 0.0 else 1.0
+                                                quantityExecuted = if (
+                                                    material.type.equals(
+                                                        "cabo",
+                                                        ignoreCase = true
+                                                    ) || isScrew
+                                                ) 0.0 else 1.0
                                             )
                                         } else {
                                             // Apenas remove esse item
@@ -574,7 +638,7 @@ fun StreetMaintenanceContent(
                             },
                             singleLine = true,
                             modifier = Modifier
-                                .fillMaxWidth(0.7f) ,
+                                .fillMaxWidth(0.7f),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -679,7 +743,7 @@ fun StreetMaintenanceContent(
                             },
                             singleLine = true,
                             modifier = Modifier
-                                .fillMaxWidth(0.7f) ,
+                                .fillMaxWidth(0.7f),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -724,6 +788,7 @@ fun StreetMaintenanceContent(
                         trailingIcon = { Text("cm") },
                         value = text,
                         onValueChange = { newValue ->
+                            cableError = null
                             val sanitized = sanitizeDecimalInput(newValue.text)
                             val quantityInMeters = sanitized.toDoubleOrNull()?.div(100) ?: 0.0
                             text = TextFieldValue(sanitized, TextRange(sanitized.length))
@@ -751,6 +816,78 @@ fun StreetMaintenanceContent(
                             imeAction = ImeAction.Done
                         ),
                     )
+                }
+                if (screws.isNotEmpty()) {
+                    Text(
+                        text = "Informações referente a parafuso",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    screws.forEach { screw ->
+                        var text by remember(screw.materialStockId) {
+                            mutableStateOf(TextFieldValue("0"))
+                        }
+
+                        val reference =
+                            stockData.find { it.materialStockId == screw.materialStockId }
+
+                        OutlinedTextField(
+                            isError = screwErrors[screw.materialStockId] != null,
+                            supportingText = {
+                                screwErrors[screw.materialStockId]?.let { errorMsg ->
+                                    Text(
+                                        text = errorMsg,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            trailingIcon = { Text(reference?.requestUnit?.lowercase() ?: "un") },
+                            value = text,
+                            onValueChange = { newValue ->
+                                val sanitized = sanitizeDecimalInput(newValue.text)
+                                text = TextFieldValue(sanitized, TextRange(sanitized.length))
+
+                                if (sanitized.toDoubleOrNull() == null || (sanitized.toDoubleOrNull()
+                                        ?: 0.0) <= 0.0
+                                ) {
+                                    screwErrors[screw.materialStockId] =
+                                        "Informe uma quantidade válida"
+                                } else {
+                                    screwErrors[screw.materialStockId] = null
+                                }
+
+                                items = items.map {
+                                    if (it.materialStockId == screw.materialStockId)
+                                        it.copy(
+                                            quantityExecuted = sanitized.toDoubleOrNull() ?: 0.0
+                                        )
+                                    else it
+                                }
+                            },
+                            label = {
+                                Text(
+                                    "Quantidade de parafuso de ${reference?.specs}",
+                                    fontSize = 14.sp
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 14.sp
+                            ),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                        )
+                    }
                 }
                 Text(
                     text = "Comentários adiconais",
@@ -790,6 +927,12 @@ fun StreetMaintenanceContent(
                             alertMessage["body"] = "Por favor, informe a Rua, Nº - Bairro atual"
                             alertModal = true
                             return@Button
+                        } else if (street.address.contains("[nº não informado]")) {
+                            alertMessage["title"] = "Número do endereço não preenchido"
+                            alertMessage["body"] =
+                                "Por favor, informe o número do endereço antes de finalizar."
+                            alertModal = true
+                            return@Button
                         } else if (items.isEmpty()) {
                             alertMessage["title"] = "Nenhum material selecionado"
                             alertMessage["body"] = "Por favor, selecione os materiais."
@@ -812,12 +955,22 @@ fun StreetMaintenanceContent(
                             }
                         }
 
-                        if(cableItem != null && cableItem?.quantityExecuted == 0.0) {
+                        if (cableItem != null && cableItem?.quantityExecuted == 0.0) {
                             cableError = "Informe a quantidade"
                             error = true
                         }
 
-                        if(error) return@Button
+                        screws.forEach { screw ->
+                            val item = items.find { it.materialStockId == screw.materialStockId }
+                            if (item?.quantityExecuted == null || item.quantityExecuted == 0.0) {
+                                screwErrors[screw.materialStockId] = "Informe a quantidade"
+                                error = true
+                            } else {
+                                screwErrors[screw.materialStockId] = null
+                            }
+                        }
+
+                        if (error) return@Button
 
                         confirmModal = true
                     }
