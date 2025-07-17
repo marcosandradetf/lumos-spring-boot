@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Power
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -43,9 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import androidx.work.impl.utils.forAll
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -56,8 +55,7 @@ import java.time.Instant
 
 @Composable
 fun MaintenanceListContent(
-    maintenances: List<Maintenance>,
-    contracts: List<Contract>,
+    maintenances: List<MaintenanceJoin>,
     navController: NavHostController,
     loading: Boolean,
     selectMaintenance: (String) -> Unit,
@@ -87,7 +85,7 @@ fun MaintenanceListContent(
             if (loading) {
                 Loading()
             } else if (maintenances.isEmpty()) {
-                NothingData("Nenhuma manutenção em andamento")
+                    NothingData("Nenhuma manutenção em andamento\nToque abaixo para iniciar uma nova")
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -173,14 +171,9 @@ fun MaintenanceListContent(
 
                                             ) {
                                             Row {
-                                                val contract by remember(contracts, maintenance) {
-                                                    derivedStateOf {
-                                                        contracts.find { it.contractId == maintenance.contractId }
-                                                    }
-                                                }
                                                 Text(
                                                     text = Utils.abbreviate(
-                                                        contract?.contractor ?: "Carregando..."
+                                                        maintenance.contractor
                                                     ),
                                                     style = MaterialTheme.typography.titleMedium,
                                                     fontWeight = FontWeight.SemiBold,
@@ -241,28 +234,15 @@ fun MaintenanceListContent(
 fun PrevMaintenanceListContent() {
     MaintenanceListContent(
         maintenances = listOf(
-            Maintenance(
+            MaintenanceJoin(
                 maintenanceId = "jfaoijfao",
                 contractId = 1,
                 pendingPoints = false,
                 quantityPendingPoints = null,
                 dateOfVisit = "2025-07-14T15:42:30Z",
                 type = "",
-                status = "IN_PROGRESS"
-            )
-        ),
-        contracts = listOf(
-            Contract(
-                contractId = 1,
-                contractor = "PREFEITURA DE BELO HORIZONTE",
-                contractFile = "",
-                createdBy = "",
-                createdAt = "",
-                status = "",
-                startAt = "",
-                deviceId = "",
-                itemsIds = "",
-                hasMaintenance = true
+                status = "IN_PROGRESS",
+                contractor = ""
             )
         ),
         navController = rememberNavController(),

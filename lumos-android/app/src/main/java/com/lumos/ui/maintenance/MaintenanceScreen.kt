@@ -1,18 +1,25 @@
 package com.lumos.ui.maintenance
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.rounded.TaskAlt
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -28,6 +35,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -43,6 +51,7 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
@@ -51,6 +60,8 @@ import com.lumos.ui.viewmodel.MaintenanceViewModel
 import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.abbreviate
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 
 enum class MaintenanceUIState {
@@ -94,29 +105,16 @@ fun MaintenanceScreen(
             "title" to "Título da mensagem", "body" to "Você está na rua da execução neste momento?"
         )
     }
-    var alertModal by remember { mutableStateOf(false) }
 
+    var alertModal by remember { mutableStateOf(false) }
 
     val maintenanceMap by remember(maintenances) {
         derivedStateOf { maintenances.associateBy { it.maintenanceId } }
     }
 
-    val contractMap by remember(contracts) {
-        mutableStateOf(contracts.associateBy { it.contractId })
-    }
-
-    val maintenance by remember(maintenanceId, maintenanceMap) {
+    val maintenance by remember(maintenanceId) {
         derivedStateOf {
-            maintenanceMap[maintenanceId.toString()]
-        }
-    }
-
-    val contractor by remember(Unit, maintenance, contractMap) {
-        derivedStateOf {
-            val id = maintenance?.contractId
-            if (id != null && contractMap.containsKey(id)) {
-                contractMap[id]?.contractor
-            } else null
+            maintenanceId?.toString()?.let { maintenanceMap[it] }
         }
     }
 
@@ -128,41 +126,30 @@ fun MaintenanceScreen(
     }
 
     val loading by remember(
-        maintenanceLoading, contractLoading, forceLoading
+        maintenanceLoading, forceLoading
     ) {
         derivedStateOf {
-            maintenanceLoading || contractLoading || forceLoading
+            maintenanceLoading || forceLoading
         }
     }
 
-    val computedScreenState by remember(maintenances) {
-        derivedStateOf {
-            when {
-                maintenances.isEmpty() && screenState == null -> MaintenanceUIState.NEW
-                maintenances.size == 1 && screenState == null -> {
-                    forceLoading = true
-                    maintenanceViewModel.setMaintenanceId(UUID.fromString(maintenances.first().maintenanceId))
-                    MaintenanceUIState.HOME
-                }
-                screenState == null -> MaintenanceUIState.LIST
-                else  -> screenState ?: MaintenanceUIState.LIST
+    LaunchedEffect(Unit) {
+        val loadedMaintenances = maintenanceViewModel.maintenances
+            .first()
+
+        screenState = when {
+            loadedMaintenances.size == 1 -> {
+                forceLoading = true
+                maintenanceViewModel.setMaintenanceId(UUID.fromString(loadedMaintenances.first().maintenanceId))
+                MaintenanceUIState.HOME
             }
+
+            else -> MaintenanceUIState.LIST
         }
     }
-    val effectiveScreenState = screenState ?: computedScreenState
 
     LaunchedEffect(resync) {
         if (resync < 10) contractViewModel.syncContracts()
-    }
-
-    LaunchedEffect(maintenances) {
-        maintenanceViewModel.loadMaintenanceStreets(maintenances.map { it.maintenanceId })
-    }
-
-    LaunchedEffect(maintenanceId) {
-        if (maintenanceId != null) {
-            forceLoading = false
-        }
     }
 
     LaunchedEffect(contractSelected) {
@@ -172,13 +159,12 @@ fun MaintenanceScreen(
         }
     }
 
-    when (effectiveScreenState) {
+    when (screenState) {
         MaintenanceUIState.NEW -> {
             NewMaintenanceContent(
                 navController = navController,
-                maintenancesSize = maintenances.size,
                 contracts = contracts,
-                loading = loading,
+                loading = contractLoading,
                 resync = {
                     resync += 1
                 },
@@ -199,7 +185,7 @@ fun MaintenanceScreen(
                 },
                 back = {
                     maintenanceViewModel.clearViewModel()
-                    screenState = if(maintenances.size == 1) {
+                    screenState = if (maintenances.size == 1) {
                         forceLoading = true
                         maintenanceViewModel.setMaintenanceId(UUID.fromString(maintenances.first().maintenanceId))
                         MaintenanceUIState.HOME
@@ -214,10 +200,11 @@ fun MaintenanceScreen(
             maintenanceId?.let {
                 StreetMaintenanceContent(
                     maintenanceId = it,
-                    contractor = contractor,
+                    contractor = maintenance?.contractor,
                     navController = navController,
                     loading = loading,
                     back = {
+                        maintenanceViewModel.clearViewModelPartial()
                         screenState = MaintenanceUIState.HOME
                     },
                     saveStreet = { street, items ->
@@ -236,7 +223,6 @@ fun MaintenanceScreen(
         MaintenanceUIState.LIST -> {
             MaintenanceListContent(
                 maintenances = maintenances,
-                contracts = contracts,
                 navController = navController,
                 loading = loading,
                 selectMaintenance = { id ->
@@ -253,30 +239,141 @@ fun MaintenanceScreen(
         }
 
         MaintenanceUIState.HOME -> {
-            maintenance?.let { maintenanceNonNull ->
-                MaintenanceHomeContent(
-                    maintenance = maintenanceNonNull,
-                    contractor = contractor,
-                    streets = filteredStreets,
-                    maintenanceSize = maintenances.size,
-                    navController = navController,
-                    loading = loading,
-                    finish = finish,
-                    newStreet = {
-                        screenState = MaintenanceUIState.STREET
-                    },
-                    newMaintenance = {
-                        maintenanceViewModel.clearViewModel()
-                        screenState = MaintenanceUIState.NEW
-                    },
-                    finishMaintenance = {
-                        maintenanceViewModel.finishMaintenance(it)
-                    },
-                    back = {
+            LaunchedEffect(Unit) {
+                if (maintenanceId != null) {
+                    delay(300L) // um pequeno tempo para garantir que carregou
+                    forceLoading = false
+                }
+            }
+
+            if (finish) {
+                AppLayout(
+                    title = "Gerenciar manutenção",
+                    selectedIcon = BottomBar.MAINTENANCE.value,
+                    navigateBack = {
+                        forceLoading = false
                         maintenanceViewModel.clearViewModel()
                         screenState = MaintenanceUIState.LIST
+                    },
+                    navigateToHome = {
+                        navController.navigate(Routes.HOME)
+                    },
+                    navigateToMore = {
+                        navController.navigate(Routes.MORE)
+                    },
+                    navigateToStock = {
+                        navController.navigate(Routes.STOCK)
+                    },
+                    navigateToExecutions = {
+                        navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
                     }
-                )
+                ) { _, _ ->
+
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.8f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.TaskAlt,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface,
+                                        shape = CircleShape
+                                    )
+                                    .padding(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Missão cumprida!",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Os dados serão enviados para o sistema.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Button(
+                                modifier = Modifier
+                                    .fillMaxWidth(fraction = 0.5f),
+                                onClick = {
+                                    forceLoading = false
+                                    maintenanceViewModel.clearViewModel()
+                                    screenState = MaintenanceUIState.LIST
+                                }
+                            ) {
+                                Text("Voltar")
+                            }
+                        }
+                    }
+                }
+            } else {
+                maintenance?.let { maintenanceNonNull ->
+                    MaintenanceHomeContent(
+                        maintenance = maintenanceNonNull,
+                        streets = filteredStreets,
+                        maintenanceSize = maintenances.size,
+                        navController = navController,
+                        loading = loading,
+                        newStreet = {
+                            screenState = MaintenanceUIState.STREET
+                        },
+                        newMaintenance = {
+                            maintenanceViewModel.clearViewModel()
+                            screenState = MaintenanceUIState.NEW
+                        },
+                        finishMaintenance = {
+                            maintenanceViewModel.finishMaintenance(it)
+                        },
+                        back = {
+                            forceLoading = false
+                            maintenanceViewModel.clearViewModel()
+                            screenState = MaintenanceUIState.LIST
+                        }
+                    )
+                }
+            }
+        }
+
+        else -> {
+            AppLayout(
+                title = "Manutenções",
+                selectedIcon = BottomBar.MAINTENANCE.value,
+                navigateToHome = {
+                    navController.navigate(Routes.HOME)
+                },
+                navigateToMore = {
+                    navController.navigate(Routes.MORE)
+                },
+                navigateToStock = {
+                    navController.navigate(Routes.STOCK)
+                },
+                navigateToMaintenance = {
+                    navController.navigate(Routes.MAINTENANCE)
+                },
+                navigateToExecutions = {
+                    navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                }
+            ) { _, _ ->
+                Loading()
             }
         }
     }
@@ -291,15 +388,8 @@ fun NewMaintenanceContent(
     resync: () -> Unit,
     hasInternet: Boolean,
     createMaintenance: (Long) -> Unit,
-    back: () -> Unit,
-    maintenancesSize: Int
+    back: () -> Unit
 ) {
-    val navigateBack: (() -> Unit)? =
-        if (maintenancesSize > 0) {
-            back
-        } else {
-            null
-        }
 
     LaunchedEffect(Unit) {
         resync()
@@ -308,7 +398,7 @@ fun NewMaintenanceContent(
     AppLayout(
         title = "Nova Manutenção",
         selectedIcon = BottomBar.MAINTENANCE.value,
-        navigateBack = navigateBack,
+        navigateBack = back,
         navigateToHome = {
             navController.navigate(Routes.HOME)
         },
@@ -374,11 +464,16 @@ fun NewMaintenanceContent(
                                     createMaintenance(contract.contractId)
                                 }
                                 .background(MaterialTheme.colorScheme.surface)
-                                .shadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp)),
+                                .shadow(
+                                    elevation = 4.dp,
+                                    shape = RoundedCornerShape(12.dp)
+                                ),
                             headlineContent = {
                                 Text(
                                     text = abbreviate(contract.contractor),
-                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.padding(vertical = 8.dp)
@@ -407,6 +502,7 @@ fun NewMaintenanceContent(
 }
 
 @Preview
+
 @Composable
 fun PrevMaintenance() {
     NewMaintenanceContent(
@@ -444,7 +540,6 @@ fun PrevMaintenance() {
         createMaintenance = {},
         back = {
 
-        },
-        maintenancesSize = 1
+        }
     )
 }

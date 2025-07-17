@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.repository.MaintenanceRepository
 import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +36,7 @@ class MaintenanceViewModel(
     private val _message = MutableStateFlow<String?>(null)
     val message = _message
 
-    private val _maintenances = MutableStateFlow<List<Maintenance>>(emptyList())
+    private val _maintenances = MutableStateFlow<List<MaintenanceJoin>>(emptyList())
     val maintenances = _maintenances
 
     private val _maintenanceStreets = MutableStateFlow<List<MaintenanceStreet>>(emptyList())
@@ -43,6 +44,7 @@ class MaintenanceViewModel(
 
     init {
         loadMaintenances("IN_PROGRESS")
+        loadMaintenanceStreets()
     }
 
     private fun loadMaintenances(status: String) {
@@ -61,10 +63,10 @@ class MaintenanceViewModel(
         }
     }
 
-    fun loadMaintenanceStreets(maintenanceId: List<String>) {
+    private fun loadMaintenanceStreets() {
         viewModelScope.launch {
             _loading.value = true
-            repository.getFlowStreets(maintenanceId)
+            repository.getFlowStreets()
                 .catch { e ->
                     _loading.value = false
                     _message.value = e.message ?: "Erro ao carregar ruas"

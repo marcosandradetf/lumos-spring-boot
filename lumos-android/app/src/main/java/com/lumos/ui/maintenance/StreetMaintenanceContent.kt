@@ -115,7 +115,7 @@ fun StreetMaintenanceContent(
             back
         }
 
-    val types = stockData.distinctBy { it.type }.map { it.type }
+    val types = stockData.distinctBy { it.type }.map { it.type }.sortedBy { it }
     val (selectedOption, onOptionSelected) = remember {
         mutableStateOf(types.firstOrNull() ?: "")
     }
@@ -269,11 +269,10 @@ fun StreetMaintenanceContent(
             })
         }
 
-        if (loading || loadingCoordinates) {
-            if (loadingCoordinates)
-                Loading("Tentando carregar coordenadas")
-            else
-                Loading()
+        if (loading) {
+            Loading()
+        } else if (loadingCoordinates) {
+            Loading("Tentando carregar coordenadas")
         } else if (streetCreated) {
             Column(
                 modifier = Modifier

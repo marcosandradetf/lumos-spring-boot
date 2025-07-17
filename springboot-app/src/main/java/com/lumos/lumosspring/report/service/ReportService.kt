@@ -103,4 +103,25 @@ class ReportService {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null)
         }
     }
+
+    fun generatePdfWithPuppeteer(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
+        val client = WebClient.create("http://puppeteer-service:3000")
+
+        val response = client.post()
+        .uri("/generate-pdf")
+        .setContentType(MediaType.APPLICATION_JSON)
+        .bodyValue(mapOf(
+            "url" to "http://localhost:8080/report?id=123"
+        ))
+        .accept(MediaType.APPLICATION_PDF)
+        .retrieve()
+        .bodyToMono(ByteArray::class.java)
+        .block()
+
+        if (response == null) {
+            throw RuntimeException("Erro ao gerar PDF com Puppeteer")
+        }
+
+        ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(response)
+    }
 }

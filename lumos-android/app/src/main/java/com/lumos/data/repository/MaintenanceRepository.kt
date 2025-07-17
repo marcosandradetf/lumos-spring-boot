@@ -8,6 +8,7 @@ import com.lumos.data.api.MaintenanceApi
 import com.lumos.data.api.RequestResult
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.worker.SyncManager
@@ -43,12 +44,12 @@ class MaintenanceRepository(
         return db.maintenanceDao().getItemsByStreetId(maintenanceStreetId)
     }
 
-    fun getFlowMaintenance(status: String): Flow<List<Maintenance>> {
+    fun getFlowMaintenance(status: String): Flow<List<MaintenanceJoin>> {
         return db.maintenanceDao().getFlowMaintenance(status)
     }
 
-    fun getFlowStreets(maintenanceId: List<String>): Flow<List<MaintenanceStreet>> {
-        return db.maintenanceDao().getFlowStreets(maintenanceId)
+    fun getFlowStreets(): Flow<List<MaintenanceStreet>> {
+        return db.maintenanceDao().getFlowStreets()
     }
 
     private suspend fun queuePostMaintenance(maintenanceId: String) {

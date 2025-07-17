@@ -1,9 +1,9 @@
 package com.lumos.data.api
 
 import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import com.lumos.midleware.AuthInterceptor
 import com.lumos.midleware.SecureStorage
+import com.lumos.utils.ConnectivityUtils.BASE_URL
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -13,10 +13,6 @@ class ApiService(
     private val context: Context,
     private val secureStorage: SecureStorage,
 ) {
-    private val baseUrl = "https://eccce2014d0c.ngrok-free.app"
-//    private val baseUrl = "https://spring.thryon.com.br"
-//    val apiKey = BuildConfig.API_URL
-
 
     private fun getOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
@@ -29,7 +25,7 @@ class ApiService(
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(getOkHttpClient())
             .build()

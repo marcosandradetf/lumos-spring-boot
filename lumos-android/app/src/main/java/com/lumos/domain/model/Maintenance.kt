@@ -54,3 +54,14 @@ data class MaintenanceStreetItem(
     val materialStockId: Long,
     val quantityExecuted: Double = 1.0,
 )
+
+data class MaintenanceJoin(
+    val maintenanceId: String,
+    val contractId: Long,
+    val pendingPoints: Boolean,
+    var quantityPendingPoints: Int?,
+    val dateOfVisit: String,
+    val type: String, //rural ou urbana
+    val status: String,
+    val contractor: String,
+)

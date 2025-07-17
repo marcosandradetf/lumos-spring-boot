@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
@@ -74,29 +75,21 @@ import java.util.UUID
 
 @Composable
 fun MaintenanceHomeContent(
-    maintenance: Maintenance,
+    maintenance: MaintenanceJoin,
     streets: List<MaintenanceStreet>,
     navController: NavHostController,
     loading: Boolean,
     newStreet: () -> Unit,
     newMaintenance: () -> Unit,
     finishMaintenance: (Maintenance) -> Unit,
-    contractor: String?,
     back: () -> Unit,
     maintenanceSize: Int,
-    finish: Boolean,
 ) {
     var confirmModal by remember { mutableStateOf(false) }
     val alertMessage = remember {
         mutableStateMapOf(
             "title" to "Título da mensagem", "body" to "Você está na rua da execução neste momento?"
         )
-    }
-
-    val navigateBack = if (maintenanceSize > 1) {
-        back
-    } else {
-        null
     }
 
     var showFinishForm by remember { mutableStateOf(false) }
@@ -121,7 +114,7 @@ fun MaintenanceHomeContent(
     AppLayout(
         title = "Gerenciar manutenção",
         selectedIcon = BottomBar.MAINTENANCE.value,
-        navigateBack = navigateBack,
+        navigateBack = back,
         navigateToHome = {
             navController.navigate(Routes.HOME)
         },
@@ -150,56 +143,6 @@ fun MaintenanceHomeContent(
 
             if (loading) {
                 Loading()
-            }else if (finish) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.8f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.TaskAlt,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface,
-                                shape = CircleShape
-                            )
-                            .padding(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Missão cumprida!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Os dados serão enviados para o sistema.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction = 0.5f),
-                        onClick = {
-                            back()
-                        }
-                    ) {
-                        Text("Voltar")
-                    }
-                }
             } else if (showFinishForm) {
                 Column(
                     modifier = Modifier
@@ -385,6 +328,16 @@ fun MaintenanceHomeContent(
                         )
                     }
 
+                    Text(
+                        text = "Ao finalizar o envio, presume-se que o responsável pela manutenção está ciente de que os dados fornecidos, incluindo a imagem da assinatura, poderão ser utilizados como comprovação da execução do serviço.",
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
                     Button(
                         onClick = {
                             var hasError = false
@@ -489,7 +442,7 @@ fun MaintenanceHomeContent(
                                             ) {
                                             Row {
                                                 Text(
-                                                    text = Utils.abbreviate(contractor.toString()),
+                                                    text = Utils.abbreviate(maintenance.contractor),
                                                     style = MaterialTheme.typography.titleLarge,
                                                     fontWeight = FontWeight.SemiBold,
                                                     color = MaterialTheme.colorScheme.onSurface,
@@ -590,27 +543,6 @@ fun MaintenanceHomeContent(
                         )
                     }
 
-                    if (maintenanceSize == 1) {
-                        TextButton(
-                            onClick = {
-                                newMaintenance()
-                            },
-                            modifier = Modifier.fillMaxWidth(0.6f)
-                        ) {
-                            Icon(
-                                contentDescription = null,
-                                imageVector = Icons.Default.Add,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                "Criar nova execução",
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-
-
                 }
             }
 
@@ -624,14 +556,15 @@ fun MaintenanceHomeContent(
 @Preview
 fun PrevMaintenanceHomeContent() {
     MaintenanceHomeContent(
-        maintenance = Maintenance(
+        maintenance = MaintenanceJoin(
             maintenanceId = UUID.randomUUID().toString(),
             contractId = 1,
             pendingPoints = false,
             quantityPendingPoints = null,
             dateOfVisit = "2025-07-14T15:42:30Z",
             type = "",
-            status = ""
+            status = "",
+            contractor =  ""
         ),
         streets = listOf(
             MaintenanceStreet(
@@ -766,11 +699,9 @@ fun PrevMaintenanceHomeContent() {
         finishMaintenance = {
 
         },
-        contractor = "PREFEITURA DE BELO HORIZONTE",
         back = {
 
         },
         maintenanceSize = 1,
-        finish = false
     )
 }

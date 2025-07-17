@@ -6,13 +6,13 @@ import android.util.Log
 import com.lumos.MainActivity
 import com.lumos.data.api.AuthApi
 import com.lumos.notifications.NotificationManager
+import com.lumos.utils.ConnectivityUtils.BASE_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AuthInterceptor(
@@ -48,8 +48,7 @@ class AuthInterceptor(
 
                 // Usando Retrofit para renovar o token
                 val retrofit = Retrofit.Builder()
-                    .baseUrl("https://eccce2014d0c.ngrok-free.app") // URL base da sua API
-//                    .baseUrl("https://spring.thryon.com.br") // URL base da sua API
+                    .baseUrl(BASE_URL) // URL base da sua API
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
 

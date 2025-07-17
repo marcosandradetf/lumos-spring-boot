@@ -17,6 +17,7 @@ data class Maintenance(
     val dateOfVisit: Instant,
     val type: String, //rural ou urbana
     val status: String,
+    val teamId: Long?,
 
     @Transient
     private var isNewEntry: Boolean = true

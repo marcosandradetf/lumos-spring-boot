@@ -10,6 +10,7 @@ import com.google.firebase.FirebaseApp
 import com.lumos.data.database.AppDatabase
 import com.lumos.midleware.AuthInterceptor
 import com.lumos.midleware.SecureStorage
+import com.lumos.utils.ConnectivityUtils.BASE_URL
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -45,8 +46,7 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
             .build()
 
         retrofit = Retrofit.Builder()
-//            .baseUrl("https://spring.thryon.com.br")
-            .baseUrl("https://eccce2014d0c.ngrok-free.app")
+            .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

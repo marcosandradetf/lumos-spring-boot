@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.lumos.domain.model.Maintenance
+import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaintenanceStreetWithItems
@@ -22,11 +23,15 @@ interface MaintenanceDao {
     @Insert
     suspend fun insertMaintenanceStreetItems(items: List<MaintenanceStreetItem>)
 
-    @Query("select * from maintenance where status = :status")
-    fun getFlowMaintenance(status: String): Flow<List<Maintenance>>
+    @Query("""
+        select m.*, c.contractor from maintenance m
+        join contracts c on c.contractId = m.contractId
+        where m.status = :status
+    """)
+    fun getFlowMaintenance(status: String): Flow<List<MaintenanceJoin>>
 
-    @Query("select * from maintenancestreet where maintenanceId in (:maintenanceId)")
-    fun getFlowStreets(maintenanceId: List<String>): Flow<List<MaintenanceStreet>>
+    @Query("select * from maintenancestreet")
+    fun getFlowStreets(): Flow<List<MaintenanceStreet>>
 
     @Query("select * from maintenance where maintenanceId = :maintenanceId")
     suspend fun getMaintenance(maintenanceId: String): Maintenance

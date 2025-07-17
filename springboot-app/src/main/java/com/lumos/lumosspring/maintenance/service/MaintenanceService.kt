@@ -8,6 +8,8 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetItemRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
 import com.lumos.lumosspring.stock.repository.StockQueryRepository
+import com.lumos.lumosspring.stock.repository.TeamQueryRepository
+import com.lumos.lumosspring.util.Utils.getCurrentUserId
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,20 +21,25 @@ class MaintenanceService(
     private val maintenanceRepository: MaintenanceRepository,
     private val maintenanceStreetRepository: MaintenanceStreetRepository,
     private val maintenanceStreetItemRepository: MaintenanceStreetItemRepository,
-    private val maintenanceQueryRepository: MaintenanceQueryRepository
+    private val maintenanceQueryRepository: MaintenanceQueryRepository,
+    private val teamQueryRepository: TeamQueryRepository
 ) {
     fun finishMaintenance(
-        maintenance: MaintenanceQueryRepository.MaintenanceDTO
+        maintenance: MaintenanceQueryRepository.MaintenanceDTO,
     ): ResponseEntity<Any> {
         var maintenanceUuid: UUID
         var dateOfVisit: Instant
+        var userId: UUID
 
         try {
             maintenanceUuid = UUID.fromString(maintenance.maintenanceId)
             dateOfVisit = Instant.parse(maintenance.dateOfVisit)
+            userId = getCurrentUserId()
         } catch (ex: IllegalArgumentException) {
             throw IllegalStateException(ex.message)
         }
+
+        val teamId = teamQueryRepository.getTeamIdByUserId(userId) ?: throw IllegalStateException("Maintenance Service - Equipe não cadastrada para o usuário atual")
 
         val newMaintenance = Maintenance(
             maintenanceId = maintenanceUuid,
@@ -42,6 +49,7 @@ class MaintenanceService(
             dateOfVisit = dateOfVisit,
             type = maintenance.type,
             status = "FINISHED",
+            teamId = teamId,
             isNewEntry = false,
         )
 
@@ -52,7 +60,7 @@ class MaintenanceService(
 
     @Transactional
     fun saveStreet(
-        street: MaintenanceQueryRepository.MaintenanceStreetWithItems
+        street: MaintenanceQueryRepository.MaintenanceStreetWithItems,
     ): ResponseEntity<Any> {
         var maintenanceUuid: UUID
         var maintenanceStreetUuid: UUID
@@ -73,6 +81,7 @@ class MaintenanceService(
                 quantityPendingPoints = null,
                 dateOfVisit = Instant.now(),
                 type = "",
+                teamId = null,
                 status = "DRAFT",
             )
 
