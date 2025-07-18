@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestPart
+import org.springframework.web.multipart.MultipartFile
 
 @Controller
 @RequestMapping("/api")
@@ -23,9 +25,10 @@ class MaintenanceController(
 
     @PostMapping("/maintenance/finish-maintenance")
     fun finishMaintenance(
-        @RequestBody maintenance: MaintenanceQueryRepository.MaintenanceDTO
+        @RequestPart("signature") signature: MultipartFile?,
+        @RequestPart("maintenance") maintenance: MaintenanceQueryRepository.MaintenanceDTO?
     ): ResponseEntity<Any> {
-        return maintenanceService.finishMaintenance(maintenance)
+        return maintenanceService.finishMaintenance(maintenance, signature)
     }
 
 }

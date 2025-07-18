@@ -341,7 +341,8 @@ fun MaintenanceScreen(
                             screenState = MaintenanceUIState.NEW
                         },
                         finishMaintenance = {
-                            maintenanceViewModel.finishMaintenance(it)
+                            if (it != null)
+                                maintenanceViewModel.finishMaintenance(it)
                         },
                         back = {
                             forceLoading = false

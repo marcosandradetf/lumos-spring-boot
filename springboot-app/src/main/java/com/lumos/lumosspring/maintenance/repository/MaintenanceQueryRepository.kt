@@ -11,10 +11,14 @@ class MaintenanceQueryRepository(
         val maintenanceId: String,
         val contractId: Long,
         val pendingPoints: Boolean,
-        val quantityPendingPoints: Int?,
+        var quantityPendingPoints: Int?,
         val dateOfVisit: String,
         val type: String, //rural ou urbana
-        val status: String
+
+        val status: String,
+        val responsible: String? = null,
+        val signPath: String? = null,
+        val signDate: String? = null
     )
 
     data class MaintenanceStreetWithItems(

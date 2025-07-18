@@ -23,7 +23,10 @@ data class Maintenance(
     val dateOfVisit: String,
     val type: String, //rural ou urbana
 
-    val status: String
+    val status: String,
+    val responsible: String? = null,
+    val signPath: String? = null,
+    val signDate: String? = null
 )
 
     @Entity(
@@ -65,3 +68,4 @@ data class MaintenanceJoin(
     val status: String,
     val contractor: String,
 )
+

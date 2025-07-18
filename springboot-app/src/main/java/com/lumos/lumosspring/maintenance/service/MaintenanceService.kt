@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.maintenance.service
 
+import com.lumos.lumosspring.fileserver.service.MinioService
 import com.lumos.lumosspring.maintenance.entities.Maintenance
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
@@ -13,6 +14,7 @@ import com.lumos.lumosspring.util.Utils.getCurrentUserId
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
 import java.util.*
 
@@ -22,24 +24,38 @@ class MaintenanceService(
     private val maintenanceStreetRepository: MaintenanceStreetRepository,
     private val maintenanceStreetItemRepository: MaintenanceStreetItemRepository,
     private val maintenanceQueryRepository: MaintenanceQueryRepository,
-    private val teamQueryRepository: TeamQueryRepository
+    private val teamQueryRepository: TeamQueryRepository,
+    private val minioService: MinioService,
 ) {
+    @Transactional
     fun finishMaintenance(
-        maintenance: MaintenanceQueryRepository.MaintenanceDTO,
+        maintenance: MaintenanceQueryRepository.MaintenanceDTO?,
+        signature: MultipartFile?
     ): ResponseEntity<Any> {
         var maintenanceUuid: UUID
         var dateOfVisit: Instant
+        var signDate: Instant?
         var userId: UUID
+
+        if (maintenance == null) {
+            return ResponseEntity.badRequest().body("Execution DTO está vazio.")
+        }
 
         try {
             maintenanceUuid = UUID.fromString(maintenance.maintenanceId)
             dateOfVisit = Instant.parse(maintenance.dateOfVisit)
+            signDate = maintenance.signDate?.let {Instant.parse(it)}
             userId = getCurrentUserId()
         } catch (ex: IllegalArgumentException) {
             throw IllegalStateException(ex.message)
         }
 
         val teamId = teamQueryRepository.getTeamIdByUserId(userId) ?: throw IllegalStateException("Maintenance Service - Equipe não cadastrada para o usuário atual")
+
+        val fileUri = signature?.let {
+            val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
+            minioService.uploadFile(it, "scl-construtora", folder, "execution")
+        }
 
         val newMaintenance = Maintenance(
             maintenanceId = maintenanceUuid,
@@ -50,6 +66,11 @@ class MaintenanceService(
             type = maintenance.type,
             status = "FINISHED",
             teamId = teamId,
+
+            signatureUri = fileUri,
+            responsible = maintenance.responsible,
+            signDate = signDate,
+
             isNewEntry = false,
         )
 

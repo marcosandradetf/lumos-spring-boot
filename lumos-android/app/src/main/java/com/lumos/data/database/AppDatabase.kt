@@ -63,7 +63,7 @@ import java.util.concurrent.Executors
         (MaintenanceStreetItem::class),
 
     ],
-    version = 9,
+    version = 11,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -422,22 +422,14 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_9_10 = object : Migration(9,10) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("drop table material_stock")
-                db.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS material_stock (
-                            materialId INTEGER NOT NULL,
-                            materialIdStock INTEGER NOT NULL,
-                            materialName TEXT NOT NULL,
-                            specs TEXT,
-                            stockQuantity REAL NOT NULL,
-                            stockAvailable REAL NOT NULL,
-                            requestUnit TEXT NOT NULL,
-                            type TEXT NOT NULL,
-                            PRIMARY KEY (materialId, materialIdStock)
-                        );
-                """.trimIndent()
-                )
+                db.execSQL("alter table maintenance add column responsible text")
+                db.execSQL("alter table maintenance add column signPath text")
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10,11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("alter table maintenance add column signDate text")
             }
         }
 
@@ -456,7 +448,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_6_7,
                     MIGRATION_7_8,
                     MIGRATION_8_9,
-//                    MIGRATION_9_10,
+                    MIGRATION_9_10,
+                    MIGRATION_10_11,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

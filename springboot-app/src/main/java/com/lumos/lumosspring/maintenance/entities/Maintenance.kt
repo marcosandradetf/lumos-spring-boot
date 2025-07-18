@@ -19,6 +19,10 @@ data class Maintenance(
     val status: String,
     val teamId: Long?,
 
+    val signDate: Instant? = null,
+    val responsible: String? = null,
+    val signatureUri: String? = null,
+
     @Transient
     private var isNewEntry: Boolean = true
 ) : Persistable<UUID> {

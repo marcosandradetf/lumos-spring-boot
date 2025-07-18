@@ -2,9 +2,12 @@ package com.lumos.data.api
 
 import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceStreetWithItems
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Part
 
 interface MaintenanceApi {
 
@@ -15,7 +18,8 @@ interface MaintenanceApi {
 
     @POST("/api/maintenance/finish-maintenance")
     suspend fun finishMaintenance(
-        @Body maintenance: Maintenance
+        @Part("maintenance") maintenance: RequestBody,
+        @Part signature: MultipartBody.Part?,
     ): Response<Void>
 
 

@@ -92,9 +92,8 @@ object Utils {
         }
     }
 
-    fun getFileFromUri(context: Context, uri: Uri): File {
+    fun getFileFromUri(context: Context, uri: Uri, fileName: String): File {
         val inputStream = context.contentResolver.openInputStream(uri)!!
-        val fileName = "upload_${System.currentTimeMillis()}.jpg"
         val file = File(context.cacheDir, fileName)
         file.outputStream().use { inputStream.copyTo(it) }
         return file
@@ -198,8 +197,9 @@ object Utils {
         }
     }
 
-
-
-
+    fun hasFullName(input: String): Boolean {
+        val parts = input.trim().split("\\s+".toRegex())
+        return parts.size >= 2 && parts.all { it.length >= 2 }
+    }
 
 }

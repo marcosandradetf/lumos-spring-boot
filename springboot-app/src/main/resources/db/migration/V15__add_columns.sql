@@ -1,6 +1,9 @@
 -- Step 1: Add the column if it doesn't exist (nullable for now)
 ALTER TABLE maintenance
-    ADD COLUMN IF NOT EXISTS team_id BIGINT;
+    ADD COLUMN IF NOT EXISTS team_id BIGINT,
+    ADD COLUMN IF NOT EXISTS signature_uri TEXT,
+    ADD COLUMN IF NOT EXISTS responsible TEXT,
+    ADD COLUMN IF NOT EXISTS sign_date timestamp;
 
 -- Step 2: Add the foreign key constraint if it doesn't exist
 DO

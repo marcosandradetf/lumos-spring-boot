@@ -1,18 +1,29 @@
 package com.lumos.data.repository
 
 import android.app.Application
+import androidx.core.net.toUri
 import androidx.room.withTransaction
+import com.google.gson.Gson
 import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ApiService
 import com.lumos.data.api.MaintenanceApi
 import com.lumos.data.api.RequestResult
+import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
+import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
 class MaintenanceRepository(
     private val db: AppDatabase,
@@ -25,7 +36,10 @@ class MaintenanceRepository(
         db.maintenanceDao().insertMaintenance(maintenance)
     }
 
-    suspend fun insertMaintenanceStreet(maintenanceStreet: MaintenanceStreet, items: List<MaintenanceStreetItem>) {
+    suspend fun insertMaintenanceStreet(
+        maintenanceStreet: MaintenanceStreet,
+        items: List<MaintenanceStreetItem>
+    ) {
         db.withTransaction {
             db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
             db.maintenanceDao().insertMaintenanceStreetItems(items)
@@ -61,9 +75,25 @@ class MaintenanceRepository(
     }
 
     suspend fun callPostMaintenance(maintenanceId: String): RequestResult<Unit> {
+        val gson = Gson()
         val maintenance = db.maintenanceDao().getMaintenance(maintenanceId)
+        val signUri = maintenance.signPath
 
-        val response = ApiExecutor.execute { maintenanceApi.finishMaintenance(maintenance) }
+        val json = gson.toJson(maintenance)
+        val jsonBody = json.toRequestBody("application/json".toMediaType())
+
+        val imagePart = signUri?.let {
+            val file = getFileFromUri(app.applicationContext, it.toUri(), "signature_${System.currentTimeMillis()}.png")
+            val requestFile = file.asRequestBody("image/png".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("signature", file.name, requestFile)
+        }
+
+        val response = ApiExecutor.execute {
+            maintenanceApi.finishMaintenance(
+                maintenance = jsonBody,
+                signature = imagePart
+            )
+        }
 
         return when (response) {
             is RequestResult.Success -> {
