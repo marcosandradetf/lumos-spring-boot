@@ -253,6 +253,7 @@ fun MaintenanceScreen(
                     navigateBack = {
                         forceLoading = false
                         maintenanceViewModel.clearViewModel()
+                        MaintenanceHomeViewModel().clear()
                         screenState = MaintenanceUIState.LIST
                     },
                     navigateToHome = {
@@ -317,6 +318,7 @@ fun MaintenanceScreen(
                                 onClick = {
                                     forceLoading = false
                                     maintenanceViewModel.clearViewModel()
+                                    MaintenanceHomeViewModel().clear()
                                     screenState = MaintenanceUIState.LIST
                                 }
                             ) {

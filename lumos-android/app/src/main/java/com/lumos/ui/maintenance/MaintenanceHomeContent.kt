@@ -106,6 +106,16 @@ class MaintenanceHomeViewModel : ViewModel() {
             )
         }
     }
+
+    fun clear(){
+        showSignScreen = false
+        showFinishForm = false
+        maintenanceSend = null
+        hasResponsible = null
+        pendingPointsError = null
+        typeError = null
+        responsibleError = null
+    }
 }
 
 
@@ -164,7 +174,10 @@ fun MaintenanceHomeContent(
         AppLayout(
             title = "Gerenciar manutenção",
             selectedIcon = BottomBar.MAINTENANCE.value,
-            navigateBack = back,
+            navigateBack = {
+                viewModel.clear()
+                back()
+            },
             navigateToHome = {
                 navController.navigate(Routes.HOME)
             },
