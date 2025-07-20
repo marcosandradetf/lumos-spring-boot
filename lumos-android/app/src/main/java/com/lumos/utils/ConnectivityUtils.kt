@@ -15,8 +15,8 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 object ConnectivityUtils {
-    const val BASE_URL = "https://3cbf15fe6e53.ngrok-free.app"
-//    const val BASE_URL = "https://spring.thryon.com.br"
+//    const val BASE_URL = "https://3cbf15fe6e53.ngrok-free.app"
+    const val BASE_URL = "https://spring.thryon.com.br"
 
     suspend fun hasRealInternetConnection(): Boolean = withContext(Dispatchers.IO) {
         return@withContext try {

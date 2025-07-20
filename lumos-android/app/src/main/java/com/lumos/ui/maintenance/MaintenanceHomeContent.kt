@@ -130,6 +130,7 @@ fun MaintenanceHomeContent(
     finishMaintenance: (Maintenance?) -> Unit,
     back: () -> Unit,
     maintenanceSize: Int,
+    viewModel: MaintenanceHomeViewModel,
 ) {
     var confirmModal by remember { mutableStateOf(false) }
     val alertMessage = remember {
@@ -137,7 +138,7 @@ fun MaintenanceHomeContent(
             "title" to "Título da mensagem", "body" to "Você está na rua da execução neste momento?"
         )
     }
-    val viewModel: MaintenanceHomeViewModel = viewModel()
+
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -729,148 +730,149 @@ fun MaintenanceHomeContent(
     }
 
 }
-
-@Composable
-@Preview
-fun PrevMaintenanceHomeContent() {
-    MaintenanceHomeContent(
-        maintenance = MaintenanceJoin(
-            maintenanceId = UUID.randomUUID().toString(),
-            contractId = 1,
-            pendingPoints = false,
-            quantityPendingPoints = null,
-            dateOfVisit = "2025-07-14T15:42:30Z",
-            type = "",
-            status = "",
-            contractor = ""
-        ),
-        streets = listOf(
-            MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            ), MaintenanceStreet(
-                maintenanceStreetId = UUID.randomUUID().toString(),
-                maintenanceId = UUID.randomUUID().toString(),
-                address = "Rua Wanderlan, 12 - Itamarati",
-                latitude = null,
-                longitude = null,
-                comment = null,
-                lastPower = null,
-                lastSupply = null,
-                currentSupply = null,
-                reason = null
-            )
-        ),
-        navController = rememberNavController(),
-        loading = false,
-        newStreet = {
-
-        },
-        newMaintenance = {
-
-        },
-        finishMaintenance = {
-
-        },
-        back = {
-
-        },
-        maintenanceSize = 1,
-    )
-}
+//
+//@Composable
+//@Preview
+//fun PrevMaintenanceHomeContent() {
+//    MaintenanceHomeContent(
+//        maintenance = MaintenanceJoin(
+//            maintenanceId = UUID.randomUUID().toString(),
+//            contractId = 1,
+//            pendingPoints = false,
+//            quantityPendingPoints = null,
+//            dateOfVisit = "2025-07-14T15:42:30Z",
+//            type = "",
+//            status = "",
+//            contractor = ""
+//        ),
+//        streets = listOf(
+//            MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            ), MaintenanceStreet(
+//                maintenanceStreetId = UUID.randomUUID().toString(),
+//                maintenanceId = UUID.randomUUID().toString(),
+//                address = "Rua Wanderlan, 12 - Itamarati",
+//                latitude = null,
+//                longitude = null,
+//                comment = null,
+//                lastPower = null,
+//                lastSupply = null,
+//                currentSupply = null,
+//                reason = null
+//            )
+//        ),
+//        navController = rememberNavController(),
+//        loading = false,
+//        newStreet = {
+//
+//        },
+//        newMaintenance = {
+//
+//        },
+//        finishMaintenance = {
+//
+//        },
+//        back = {
+//
+//        },
+//        maintenanceSize = 1,
+//        viewModelAux = MaintenanceHomeViewModel(),
+//    )
+//}

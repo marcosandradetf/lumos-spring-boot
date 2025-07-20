@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
@@ -79,6 +80,8 @@ fun MaintenanceScreen(
     navController: NavHostController,
     lastRoute: String?,
 ) {
+    val viewModelAux: MaintenanceHomeViewModel = viewModel()
+
     val stock by stockViewModel.stock.collectAsState()
     val contractSelected by maintenanceViewModel.contractSelected.collectAsState()
     val streetCreated by maintenanceViewModel.streetCreated.collectAsState()
@@ -253,7 +256,7 @@ fun MaintenanceScreen(
                     navigateBack = {
                         forceLoading = false
                         maintenanceViewModel.clearViewModel()
-                        MaintenanceHomeViewModel().clear()
+                        viewModelAux.clear()
                         screenState = MaintenanceUIState.LIST
                     },
                     navigateToHome = {
@@ -318,7 +321,7 @@ fun MaintenanceScreen(
                                 onClick = {
                                     forceLoading = false
                                     maintenanceViewModel.clearViewModel()
-                                    MaintenanceHomeViewModel().clear()
+                                    viewModelAux.clear()
                                     screenState = MaintenanceUIState.LIST
                                 }
                             ) {
@@ -330,6 +333,7 @@ fun MaintenanceScreen(
             } else {
                 maintenance?.let { maintenanceNonNull ->
                     MaintenanceHomeContent(
+                        viewModel = viewModelAux,
                         maintenance = maintenanceNonNull,
                         streets = filteredStreets,
                         maintenanceSize = maintenances.size,
