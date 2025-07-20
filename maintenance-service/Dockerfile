@@ -26,6 +26,8 @@ FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
 WORKDIR /work/
 COPY application /work/application
 
+RUN chmod +x /work/application
+
 EXPOSE 8081
 
 USER 1001
