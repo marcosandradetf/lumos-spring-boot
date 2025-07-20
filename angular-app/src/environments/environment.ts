@@ -8,6 +8,8 @@ export const environment = {
   goFileserver: "http://localhost:8081",
   goStock: "http://localhost:8082",
   minio: "http://localhost:9000",
+  puppeteer: "http://localhost:3000",
+  maintenance: "http://localhost:8081",
 };
 
 /*

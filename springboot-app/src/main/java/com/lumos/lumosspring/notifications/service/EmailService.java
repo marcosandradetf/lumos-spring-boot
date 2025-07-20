@@ -2,7 +2,7 @@ package com.lumos.lumosspring.notifications.service;
 
 import com.lumos.lumosspring.notifications.entities.EmailConfig;
 import com.lumos.lumosspring.notifications.repository.EmailConfigRepository;
-import com.lumos.lumosspring.notifications.config.SystemMailConfig;
+import com.lumos.lumosspring.config.SystemMailConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;

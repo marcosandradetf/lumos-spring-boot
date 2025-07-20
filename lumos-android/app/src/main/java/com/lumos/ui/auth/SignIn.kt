@@ -12,11 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -38,7 +36,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 import com.lumos.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -67,7 +64,7 @@ fun Login(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color(0xFFFFFFFF))
+            .background(color = MaterialTheme.colorScheme.background)
             .padding(15.dp)
             .pointerInput(Unit) {
                 detectTapGestures {
@@ -84,116 +81,110 @@ fun Login(
                 .padding(20.dp)
         ) {
             Text(
-                text = "Thryon™",
+                text = "Lumos OP™",
                 fontSize = 25.sp,
+                color= MaterialTheme.colorScheme.onBackground
             )
         }
-        ElevatedCard(
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 6.dp
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFFFFFFF),
-            ),
+
+        Column(
+            modifier = Modifier
+                .padding(25.dp)
+                .background(color = MaterialTheme.colorScheme.background)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(25.dp)
-                    .background(color = Color(0xFFFFFFFF))
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Insira suas credenciais para acessar o sistema",
-                        modifier = Modifier.padding(bottom = 30.dp),
-                        fontFamily = FontFamily.SansSerif,
-                        fontSize = 16.sp,
-                        color = Color.Black
-                    )
-                }
-                OutlinedTextField(
-                    textStyle = TextStyle(Color(0xFF613F23)),
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text(text = "Usuário ou email:", color = Color(0xFF9EA4B6)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    maxLines = 1,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    textStyle = TextStyle(Color(0xFF613F23)),
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(text = "Senha:", color = Color(0xFF9EA4B6)) },
-                    visualTransformation = if (checked) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    maxLines = 1,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Text("Mostrar senha", style = TextStyle(fontSize = 12.sp))
-                    Checkbox(
-                        checked = checked,
-                        onCheckedChange = { checked = it },
-
-                        colors = CheckboxColors(
-                            checkedCheckmarkColor = Color(0xFF486FF0),
-                            uncheckedCheckmarkColor = Color.Blue,
-                            checkedBoxColor = Color.White,
-                            uncheckedBoxColor = Color.White,
-                            disabledCheckedBoxColor = Color.Blue,
-                            disabledUncheckedBoxColor = Color.Blue,
-                            disabledIndeterminateBoxColor = Color.Blue,
-                            checkedBorderColor = Color(0xFF486FF0),
-                            uncheckedBorderColor = Color(0xFF2F2F2F),
-                            disabledBorderColor = Color.Blue,
-                            disabledUncheckedBorderColor = Color.Blue,
-                            disabledIndeterminateBorderColor = Color.Blue,
-                        )
-                    )
-                }
-                ElevatedButton(
-                    onClick = {
-                        if (username.isNotEmpty() && password.isNotEmpty())
-                            coroutineScope.launch {
-                                login()
-                            }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    shape = RoundedCornerShape(5.dp),
-                    colors = ButtonDefaults.buttonColors(Color(0xFF3F00E7))
-                ) {
-                    Text(
-                        text = "Entrar",
-                        color = Color.White,
-                    )
-                }
-
-            }
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Esqueceu a senha?",
-                    modifier = Modifier
-                        .clickable { }
-                        .padding(20.dp),
-                    style = TextStyle(fontSize = 13.sp)
+                    text = "Insira suas credenciais para acessar o sistema",
+                    modifier = Modifier.padding(bottom = 30.dp),
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            OutlinedTextField(
+                textStyle = TextStyle(Color(0xFF613F23)),
+                value = username,
+                onValueChange = { username = it },
+                label = { Text(text = "Usuário ou email:", color = Color(0xFF9EA4B6)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                textStyle = TextStyle(Color(0xFF613F23)),
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(text = "Senha:", color = Color(0xFF9EA4B6)) },
+                visualTransformation = if (checked) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text("Mostrar senha", style = TextStyle(fontSize = 12.sp), color = MaterialTheme.colorScheme.onBackground)
+                Checkbox(
+                    checked = checked,
+                    onCheckedChange = { checked = it },
+
+                    colors = CheckboxColors(
+                        checkedCheckmarkColor = Color(0xFF486FF0),
+                        uncheckedCheckmarkColor = Color.Blue,
+                        checkedBoxColor = MaterialTheme.colorScheme.onBackground,
+                        uncheckedBoxColor = MaterialTheme.colorScheme.onBackground,
+                        disabledCheckedBoxColor = Color.Blue,
+                        disabledUncheckedBoxColor = Color.Blue,
+                        disabledIndeterminateBoxColor = Color.Blue,
+                        checkedBorderColor = Color(0xFF486FF0),
+                        uncheckedBorderColor = Color(0xFF2F2F2F),
+                        disabledBorderColor = Color.Blue,
+                        disabledUncheckedBorderColor = Color.Blue,
+                        disabledIndeterminateBorderColor = Color.Blue,
+                    )
+                )
+            }
+            ElevatedButton(
+                onClick = {
+                    if (username.isNotEmpty() && password.isNotEmpty())
+                        coroutineScope.launch {
+                            login()
+                        }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                shape = RoundedCornerShape(5.dp),
+                colors = ButtonDefaults.buttonColors(Color(0xFF3F00E7))
+            ) {
+                Text(
+                    text = "Entrar",
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
             }
 
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Esqueceu a senha?",
+                modifier = Modifier
+                    .clickable { }
+                    .padding(20.dp),
+                style = TextStyle(fontSize = 13.sp)
+            )
         }
 
     }
+
+
 }
 
 

@@ -35,6 +35,7 @@ export class SidebarComponent implements OnInit {
   bToggleRequest = false;
   bToggleSettings: boolean = true;
   bToggleContracts: boolean = true;
+  bToggleReports: boolean = true;
   items: MenuItem[] | undefined;
   itemsOnlyIcons: MenuItem[] | undefined;
 
@@ -75,6 +76,9 @@ export class SidebarComponent implements OnInit {
 
     savedMenuState = localStorage.getItem('toggleContracts');
     if (savedMenuState !== null) this.bToggleContracts = JSON.parse(savedMenuState);
+
+    savedMenuState = localStorage.getItem('toggleport');
+    if (savedMenuState !== null) this.bToggleReports = JSON.parse(savedMenuState);
 
 
     this.items = [
@@ -172,6 +176,35 @@ export class SidebarComponent implements OnInit {
             icon: 'fa-solid fa-list-check text-base text-neutral-800 dark:text-neutral-200',
             routerLink: ['/requisicoes'],
             queryParams: { status: 'APPROVED' },
+          },
+        ]
+      },
+      {
+        style: {
+          border: 'none'
+        },
+        label: 'Relatórios',
+        expanded: this.bToggleReports,
+        command: () => {
+          this.toggleReports(!this.bToggleReports);
+        },
+        items: [
+          {
+            disabled: true,
+            label: 'Pré-medição',
+            icon: 'pi pi-chart-bar text-black text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/relatorios/manutencoes'],
+          },
+          {
+            label: 'Manutenções',
+            icon: 'fa-solid fa-wrench text-base text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/relatorios/manutencoes'],
+          },
+          {
+            disabled: true,
+            label: 'Instalações',
+            icon: 'pi pi-lightbulb text-black text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/relatorios/manutencoes'],
           },
         ]
       },
@@ -286,6 +319,10 @@ export class SidebarComponent implements OnInit {
 
   toggleContracts(open: boolean) {
     localStorage.setItem('toggleContracts', JSON.stringify(open));
+  }
+
+  toggleReports(open: boolean) {
+    localStorage.setItem('toggleport', JSON.stringify(open));
   }
 
 

@@ -1,0 +1,71 @@
+<div class="h-full w-full relative">
+  <div class="flex items-center justify-between">
+    <app-prime-breadcrumb
+      title=""
+      [path]="['Relatórios', 'Manutenções']"/>
+    <span (click)="pdfUrl = null" class="pr-5 cursor-pointer">{{pdfUrl ? 'Voltar' : ''}}</span>
+  </div>
+
+
+  @if (loading) {
+    <app-loading></app-loading>
+  } @else if (data.length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
+      <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
+           xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M14 22h20M14 28h20M10 10h28a2 2 0 012 2v24a2 2 0 01-2 2H10a2 2 0 01-2-2V12a2 2 0 012-2z"/>
+      </svg>
+
+      <h3 class="text-lg font-semibold mb-8 dark:text-white">Nenhuma manutenção finalizada</h3>
+    </div>
+  } @else if (pdfUrl) {
+    <iframe [src]="pdfUrl | safeUrl" width="100%" height="100%"></iframe>
+  } @else {
+    <div class="flex flex-col items-center w-full px-4">
+      <ol class="flex flex-wrap justify-center gap-4 max-w-7xl">
+        <li *ngFor="let m of data; index as i"
+            class="w-full max-w-sm cursor-pointer transition-transform duration-300 hover:scale-105 hover:-translate-y-1"
+            (click)="loadPdf(m.maintenance.maintenance_id, m.maintenance.streets, m.maintenance.type)">
+
+          <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md hover:shadow-lg bg-white dark:bg-gray-900 p-6">
+
+        <span class="self-start px-3 py-1 text-xs font-semibold text-white bg-blue-600 dark:bg-blue-400 rounded-full mb-4">
+          MANUTENÇÃO
+        </span>
+
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">{{ m.maintenance.type }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{{ m.maintenance.contractor }}</p>
+
+            <!-- Data -->
+            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+              <span class="material-icons text-base mr-1">calendar_today</span>
+              {{ m.maintenance.date_of_visit | date:'dd/MM/yyyy' }}
+            </div>
+
+            <!-- Equipe -->
+            <div class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+              <div class="flex items-center">
+                <span class="material-icons text-blue-500 text-base mr-1">verified</span>
+                Eletricista: {{ m.team.electrician.name }} {{ m.team.electrician.last_name }}
+              </div>
+              <div class="flex items-center">
+                <span class="material-icons text-blue-500 text-base mr-1">verified</span>
+                Motorista: {{ m.team.driver.name }} {{ m.team.driver.last_name }}
+              </div>
+            </div>
+
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
+              Pontos atendidos: <strong>{{ m.maintenance.streets.length }}</strong>
+            </p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+
+  }
+
+  <p-toast></p-toast>
+
+</div>

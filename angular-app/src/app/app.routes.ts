@@ -213,6 +213,14 @@ export const routes: Routes = [
     data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'gerenciamento-reservas'},
   },
 
+  //reports
+  {
+    path: 'relatorios/manutencoes',
+    loadComponent: () => import('./reports/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'},
+  },
+
   // out
 
   {

@@ -165,7 +165,6 @@ fun ContentCitiesScreen(
     directExecution: Boolean = false,
     markAsFinished: (Long) -> Unit = {}
 ) {
-    var expanded by remember { mutableStateOf(false) }
     var openModal by remember { mutableStateOf(false) }
     var contractId by remember { mutableLongStateOf(0) }
 
@@ -315,8 +314,29 @@ fun ContentCitiesScreen(
                                                 color = MaterialTheme.colorScheme.onSurface,
                                             )
                                         }
+                                    }
 
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(5.dp))
+                                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                                .padding(5.dp)
+                                        ) {
+                                            Text(
+                                                text = "ATIVO",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                fontSize = 12.sp
+                                            )
+                                        }
                                         if (directExecution) {
+                                            var expanded by remember(execution.contractId) { mutableStateOf(false) }
                                             IconButton(onClick = { expanded = true }) {
                                                 Icon(
                                                     Icons.Default.MoreVert,
@@ -343,27 +363,6 @@ fun ContentCitiesScreen(
 
                                                 }
                                             }
-                                        }
-                                    }
-
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.End,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(5.dp))
-                                                .background(MaterialTheme.colorScheme.secondaryContainer)
-                                                .padding(5.dp)
-                                        ) {
-                                            Text(
-                                                text = "PENDENTE",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.Medium,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                fontSize = 12.sp
-                                            )
                                         }
                                     }
 

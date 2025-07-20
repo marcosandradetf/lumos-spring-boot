@@ -1,23 +1,19 @@
-# Etapa 1: Build
+# Etapa 1: Build com Maven e JDK (necessário para compilar)
 FROM maven:3.9.8-eclipse-temurin-21 AS builder
 WORKDIR /app
 
-COPY pom.xml /app/
-COPY ./src /app/src/
+COPY pom.xml .
+COPY ./src ./src
 
 RUN mvn clean package -DskipTests --no-transfer-progress
 
-# Etapa 2: Runtime
-FROM eclipse-temurin:21-jdk-alpine
+# Etapa 2: Runtime com JRE (mais leve)
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 COPY --from=builder /app/target/*.jar /app/lumos-spring.jar
 
-# Copiar o arquivo de credenciais do Firebase para o classpath
-COPY src/main/resources/lumos-firebase-sdk.json /app/resources/lumos-firebase-sdk.json
-# Copiar o arquivo db
-COPY src/main/resources/db/migration/ /app/resources/db/migration/
-
 EXPOSE 8080
-CMD ["java", "-jar", "lumos-spring.jar"]
+
+CMD ["java", "-Xmx512m", "-Xms256m", "-jar", "lumos-spring.jar"]
 

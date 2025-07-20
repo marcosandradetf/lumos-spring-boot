@@ -57,6 +57,8 @@ import com.lumos.utils.Utils
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.max
+import kotlin.math.min
 
 @Composable
 fun LandscapeModeWrapper(content: @Composable () -> Unit) {
@@ -282,39 +284,56 @@ fun SignatureScreenLandscape(
         }
     }
 }
+
 fun captureSignatureAsBitmap(
     strokes: List<List<Offset>>,
     width: Int,
     height: Int
 ): Bitmap {
-    val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val canvas = android.graphics.Canvas(bitmap)
+    val tempBitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(tempBitmap)
     canvas.drawColor(android.graphics.Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
     val paint = Paint().apply {
         color = android.graphics.Color.BLACK
         strokeWidth = 6f
-        style = android.graphics.Paint.Style.STROKE
+        style = Paint.Style.STROKE
         isAntiAlias = true
-        strokeCap = android.graphics.Paint.Cap.ROUND
-        strokeJoin = android.graphics.Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
     }
 
-    strokes.forEach { strokePoints ->
-        if (strokePoints.size < 2) return@forEach
+    var minX = Float.MAX_VALUE
+    var minY = Float.MAX_VALUE
+    var maxX = Float.MIN_VALUE
+    var maxY = Float.MIN_VALUE
 
+    strokes.forEach { stroke ->
+        if (stroke.size < 2) return@forEach
         val path = android.graphics.Path()
-        path.moveTo(strokePoints[0].x, strokePoints[0].y)
+        path.moveTo(stroke[0].x, stroke[0].y)
 
-        for (i in 1 until strokePoints.size) {
-            path.lineTo(strokePoints[i].x, strokePoints[i].y)
+        for (point in stroke.drop(1)) {
+            path.lineTo(point.x, point.y)
+            minX = min(minX, point.x)
+            minY = min(minY, point.y)
+            maxX = max(maxX, point.x)
+            maxY = max(maxY, point.y)
         }
+
         canvas.drawPath(path, paint)
     }
 
-    return bitmap
-}
+    // Adiciona margem de segurança
+    val padding = 20
+    val left = max(minX.toInt() - padding, 0)
+    val top = max(minY.toInt() - padding, 0)
+    val right = min(maxX.toInt() + padding, width)
+    val bottom = min(maxY.toInt() + padding, height)
 
+    // Corta a imagem final
+    return createBitmap(tempBitmap, left, top, right - left, bottom - top)
+}
 
 
 @Preview(
