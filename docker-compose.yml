@@ -40,6 +40,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - MINIO_PASSWORD=${MINIO_PASSWORD}
       - JAVA_TOOL_OPTIONS=-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:+ExitOnOutOfMemoryError -XX:+AlwaysPreTouch --enable-preview
+      - MINIO_URL=http://minio:9000
     mem_limit: 512m
     restart: always
     depends_on:
