@@ -27,8 +27,8 @@ class StockService(
             throw IllegalStateException(ex.message)
         }
 
-        val depositId = stockQueryRepository.getTruckDepositId(uuid)
-            ?: throw IllegalArgumentException("Deposito do caminhão não encontrado no sistema.")
+        val depositId = stockQueryRepository.getTruckDepositId(uuid) ?: -1
+        // caso nao ache o deposito retornara uma lista vazia de materiais ao passar -1
 
         return ResponseEntity.ok(stockQueryRepository.getMaterialsForMaintenance(depositId))
     }
