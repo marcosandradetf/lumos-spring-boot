@@ -336,13 +336,14 @@ class ContractService(
             """
                 SELECT 
                     des.direct_execution_id,
-                    des.step, -- 🔥 Inclua isso
+                    de.step, -- 🔥 Inclua isso
                     SUM(desi.executed_quantity) AS executed_quantity
-                FROM direct_execution_street des
-                INNER JOIN direct_execution_street_item desi ON desi.direct_execution_street_id = des.direct_execution_street_id
-                WHERE contract_item_id = :contractItemId
-                GROUP BY des.direct_execution_id, des.step -- 🔥 Adicione `des.step` aqui
-                ORDER BY des.step
+                FROM direct_execution de 
+                JOIN direct_execution_street des ON de.direct_execution_id = des.direct_execution_id
+                JOIN direct_execution_street_item desi ON desi.direct_execution_street_id = des.direct_execution_street_id
+                WHERE desi.contract_item_id = :contractItemId
+                GROUP BY des.direct_execution_id, de.step -- 🔥 Adicione `des.step` aqui
+                ORDER BY de.step
             """.trimIndent(),
             mapOf("contractItemId" to contractItemId)
         )
