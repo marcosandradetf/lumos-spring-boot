@@ -35,7 +35,7 @@ const conventionalReport = async (
       total_by_item
     } = data;
 
-    const templatePath = path.join(__dirname, '..', 'templates', 'maintenance_conventional.html');
+    const templatePath = path.join(__dirname, '..', 'templates/maintenance', 'maintenance_conventional.html');
     const htmlTemplate = fs.readFileSync(templatePath, 'utf-8');
 
     let observations = '';
@@ -169,7 +169,7 @@ const ledReport = async (
       total_by_item
     } = data;
 
-    const templatePath = path.join(__dirname, '..', 'templates', 'maintenance_led.html');
+    const templatePath = path.join(__dirname, '..', 'templates/maintenance', 'maintenance_led.html');
     const htmlTemplate = fs.readFileSync(templatePath, 'utf-8');
 
     let observations = '';

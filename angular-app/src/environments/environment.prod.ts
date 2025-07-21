@@ -1,9 +1,10 @@
 export const environment = {
   production: true,
-  springboot: "https://spring.thryon.com.br",
+  springboot: "https://api.thryon.com.br/spring",
+  minio: "https://api.thryon.com.br/minio",
+  puppeteer: "https://api.thryon.com.br/puppeteer",
+  maintenance: "https://api.thryon.com.br/maintenance",
+
   goFileserver: "https://fileserver.thryon.com.br",
   goStock: "https://gostock.thryon.com.br",
-  minio: "https://minio.thryon.com.br",
-  puppeteer: "https://puppeteer.thryon.com.br",
-  maintenance: "https://maintenance.thryon.com.br",
 };
