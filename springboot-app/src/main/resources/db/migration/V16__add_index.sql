@@ -40,3 +40,5 @@ WHERE material_name_unaccent IS NULL OR material_name_unaccent = '';
 
 alter table maintenance
     alter column sign_date type timestamptz;
+
+ALTER TABLE direct_execution ADD COLUMN if not exists step INT NOT NULL;

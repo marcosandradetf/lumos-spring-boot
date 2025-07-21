@@ -20,4 +20,5 @@ data class DirectExecution(
     var assignedBy: UUID,
     var assignedAt: Instant,
     var reservationManagementId: Long,
+    var step: Int
 )

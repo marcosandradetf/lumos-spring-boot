@@ -162,6 +162,7 @@ class ExecutionService(
             assignedBy = currentUserUUID,
             reservationManagementId = management.reservationManagementId,
             assignedAt = util.dateTime,
+            step = step
         )
         directExecution = directExecutionRepository.save(directExecution)
 

@@ -140,25 +140,27 @@ export class ContractListComponent implements OnInit {
   // }
 
 
-  showItems(contractId: number) {
-    if (contractId !== 0) {
-      this.contractId = contractId;
-      this.loading = true;
-      this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
-        next: items => {
-          this.contractItems = items;
-          this.showDialog();
-        },
-        error: err => {
-          console.error(err);
-          // talvez mostrar uma notificação
-        },
-        complete: () => {
-          this.loading = false;
-        }
-      });
-    }
+  showItems(contractId: number): void {
+    if (contractId === 0) return;
+
+    this.contractId = contractId;
+    this.loading = true;
+
+    this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
+      next: items => {
+        this.contractItems = items || [];
+        this.normalizeExecutedQuantities(); // 🔧 Preenche etapas faltantes com 0
+        this.showDialog();                  // 💬 Abre o modal
+      },
+      error: err => {
+        console.error('Erro ao carregar itens do contrato:', err);
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
   }
+
 
   protected readonly parseFloat = parseFloat;
 
@@ -259,11 +261,35 @@ export class ContractListComponent implements OnInit {
 
   get maxExecutedSteps(): number {
     if (!this.contractItems || this.contractItems.length === 0) return 0;
+
     return this.contractItems.reduce((max, item) => {
-      const len = item.executedQuantity?.length || 0;
-      return len > max ? len : max;
+      const steps = item.executedQuantity?.map(q => q.step) || [];
+      const maxStep = Math.max(0, ...steps);
+      return maxStep > max ? maxStep : max;
     }, 0);
   }
+
+  normalizeExecutedQuantities(): void {
+    const maxSteps = this.maxExecutedSteps;
+
+    this.contractItems.forEach(item => {
+      const quantities = item.executedQuantity || [];
+
+      // Garante que todos os steps estejam presentes com zero se ausentes
+      item.executedQuantity = Array.from({ length: maxSteps }, (_, i) => {
+        const step = i + 1;
+        const found = quantities.find(q => q.step === step);
+        return found ?? {
+          directExecutionId: 0, // ou null, se preferir
+          step,
+          quantity: 0
+        };
+      });
+    });
+  }
+
+
+
 
   handleAction(action: "accept" | "reject") {
     switch (action) {

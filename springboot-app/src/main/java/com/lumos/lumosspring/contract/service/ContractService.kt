@@ -334,12 +334,15 @@ class ContractService(
         val directExecutions = JdbcUtil.getRawData(
             namedJdbc,
             """
-                SELECT des.direct_execution_id, sum(desi.executed_quantity) as executed_quantity
-                from direct_execution_street des
-                inner join direct_execution_street_item desi on desi.direct_execution_street_id = des.direct_execution_street_id
-                where contract_item_id = :contractItemId
-                group by des.direct_execution_id
-                order by des.direct_execution_id 
+                SELECT 
+                    des.direct_execution_id,
+                    des.step, -- 🔥 Inclua isso
+                    SUM(desi.executed_quantity) AS executed_quantity
+                FROM direct_execution_street des
+                INNER JOIN direct_execution_street_item desi ON desi.direct_execution_street_id = des.direct_execution_street_id
+                WHERE contract_item_id = :contractItemId
+                GROUP BY des.direct_execution_id, des.step -- 🔥 Adicione `des.step` aqui
+                ORDER BY des.step
             """.trimIndent(),
             mapOf("contractItemId" to contractItemId)
         )
@@ -347,7 +350,7 @@ class ContractService(
         return  directExecutions.mapIndexed { index, row ->
             ExecutedQuantity(
                 directExecutionId = row["direct_execution_id"] as Long,
-                step = index + 1,
+                step = (row["step"] as Number).toInt(), // ✅ usa a etapa real
                 quantity = (row["executed_quantity"] as Number).toDouble(),
             )
         }

@@ -11,6 +11,9 @@ services:
     #      - ./certbot/conf:/etc/letsencrypt
     #     - ./certbot/www:/var/www/certbot
     restart: always
+    mem_limit: 64m
+
+
     #  certbot:
     #   image: certbot/certbot
     #   container_name: certbot
@@ -66,6 +69,7 @@ services:
     restart: always
     depends_on:
       - minio
+    mem_limit: 128m
 
   puppeteer-service:
     build:

@@ -157,15 +157,9 @@
             </p-cellEditor>
           </td>
 
-          <td *ngFor="let i of [].constructor(maxExecutedSteps); let idx = index">
-            <ng-container *ngIf="item.executedQuantity[idx]; else zeroTemplate">
-              {{ item.executedQuantity[idx].quantity }}
-            </ng-container>
-            <ng-template #zeroTemplate>
-              0
-            </ng-template>
+          <td *ngFor="let _ of [].constructor(maxExecutedSteps); let idx = index">
+            {{ item.executedQuantity[idx].quantity }}
           </td>
-
 
           <td>
             {{ item.totalExecuted }}
