@@ -7,10 +7,12 @@ import com.lumos.lumosspring.execution.dto.IndirectReserve
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.stereotype.Indexed
 import org.springframework.stereotype.Repository
 import java.sql.Timestamp
 import java.util.*
 
+@Indexed
 @Repository
 class JdbcGetExecutionRepository(
     private val namedJdbc: NamedParameterJdbcTemplate

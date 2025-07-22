@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.maintenance.service
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.lumos.lumosspring.fileserver.service.MinioService
 import com.lumos.lumosspring.maintenance.entities.Maintenance
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
@@ -11,12 +12,14 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
 import com.lumos.lumosspring.stock.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils.getCurrentUserId
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Indexed
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
 import java.util.*
 
+@Indexed
 @Service
 class MaintenanceService(
     private val maintenanceRepository: MaintenanceRepository,
@@ -142,6 +145,10 @@ class MaintenanceService(
         maintenanceQueryRepository.debitStock(street.items)
 
         return ResponseEntity.noContent().build()
+    }
+
+    fun getGroupedMaintenances(): List<Map<String, JsonNode>> {
+        return maintenanceQueryRepository.getGroupedMaintenances()
     }
 
 }

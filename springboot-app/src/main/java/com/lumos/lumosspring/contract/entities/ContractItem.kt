@@ -1,32 +1,29 @@
 package com.lumos.lumosspring.contract.entities
 
-import jakarta.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
-
-@Entity
+@Table("contract_item")
 class ContractItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var contractItemId : Long = 0
 
-    @ManyToOne
-    @JoinColumn(name = "contract_item_reference_id", nullable = false)
-    var referenceItem : ContractReferenceItem = ContractReferenceItem()
+    @Column("contract_item_reference_id")
+    var referenceItemId: Long? = null
 
-    @ManyToOne
-    var contract: Contract = Contract()
+    @Column("contract_contract_id")
+    var contractId: Long? = null
 
     var contractedQuantity : Double = 0.0
     var quantityExecuted: Double = 0.0
 
-    var unitPrice : BigDecimal = BigDecimal.ZERO;
-    private var totalPrice : BigDecimal = BigDecimal.ZERO;
+    var unitPrice : BigDecimal = BigDecimal.ZERO
+    var totalPrice : BigDecimal = BigDecimal.ZERO
 
     fun setPrices(itemValue: BigDecimal) {
         unitPrice = itemValue
         totalPrice = itemValue.multiply(BigDecimal.valueOf(contractedQuantity))
-        contract.sumTotalPrice(totalPrice)
+        // Não chame métodos em outras entidades aqui
     }
-
-
 }

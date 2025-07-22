@@ -1,23 +1,21 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
-import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.entities.Team;
-import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Entity
+@Table
 public class AppUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID userId;
 
-    @Column(unique = true)
     private String username;
 
     private String name;
@@ -31,7 +29,6 @@ public class AppUser {
 
     private String codeResetPassword;
 
-    @Column(unique = true)
     private String cpf;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
@@ -44,13 +41,10 @@ public class AppUser {
 
     private LocalDate dateOfBirth;
 
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean status;
 
-    @OneToMany(mappedBy = "driver", fetch = FetchType.LAZY)
     private List<Team> drivers;
 
-    @OneToMany(mappedBy = "electrician", fetch = FetchType.LAZY)
     private List<Team> electricians;
 
 

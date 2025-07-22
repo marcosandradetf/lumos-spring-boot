@@ -14,43 +14,38 @@ import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.user.UserService;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.stereotype.Indexed;
 import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
-
+@Indexed
 @Service
 public class TokenService {
     private final UserService userService;
     private final JwtEncoder jwtEncoder;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtDecoder jwtDecoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final Util util;
     private final StockistRepository stockistRepository;
 
-    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepository, Util util, StockistRepository stockistRepository) {
+    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, Util util, StockistRepository stockistRepository) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtDecoder = jwtDecoder;
         this.refreshTokenRepository = refreshTokenRepository;
         this.util = util;
         this.stockistRepository = stockistRepository;
@@ -153,7 +148,7 @@ public class TokenService {
         var refreshToken = new RefreshToken();
         refreshToken.setToken(refreshTokenValue);
         refreshToken.setExpiryDate(now.plusSeconds(refreshExpiresIn));
-        refreshToken.setUser(user.get());
+        refreshToken.setUser(user.get().getUserId());
         refreshToken.setRevoked(false);
         refreshTokenRepository.save(refreshToken);
 

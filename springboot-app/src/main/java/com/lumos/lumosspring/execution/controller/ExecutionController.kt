@@ -10,10 +10,11 @@ import com.lumos.lumosspring.execution.dto.SendExecutionDto
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Indexed
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
-
+@Indexed
 @RestController
 @RequestMapping("/api")
 class ExecutionController(

@@ -1,28 +1,22 @@
 package com.lumos.lumosspring.contract.entities
 
-import com.lumos.lumosspring.stock.entities.Material
-import jakarta.persistence.*
-import org.jetbrains.annotations.NotNull
-import java.util.HashSet
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 
-@Entity
+@Table("contract_reference_item")
 class ContractReferenceItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var contractReferenceItemId: Long = 0
-    @NotNull
-    var description : String = ""
-    @Column(columnDefinition = "TEXT", name = "name_for_import")
-    var nameForImport : String? = null
-    @NotNull
-    var type : String = ""
-    var linking : String? = null
-    var itemDependency : String? = null
+    var contractReferenceItemId: Long? = null
 
-    @OneToMany(mappedBy = "referenceItem", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    var contractsItems: MutableSet<ContractItem> = HashSet()
+    var description: String = ""
 
-    @OneToMany(mappedBy = "contractReferenceItem", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    var materials: MutableSet<Material> = HashSet()
+    @Column("name_for_import")
+    var nameForImport: String? = null
 
+    var type: String = ""
+
+    var linking: String? = null
+
+    var itemDependency: String? = null
 }

@@ -1,10 +1,7 @@
 package com.lumos.lumosspring.contract.repository;
 
 import com.lumos.lumosspring.contract.entities.ContractItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 
-import java.util.List;
-
-public interface ContractItemsQuantitativeRepository extends JpaRepository<ContractItem, Long> {
-     List<ContractItem> findByContract_ContractId(long contractContractId);
+public interface ContractItemsQuantitativeRepository extends CrudRepository<ContractItem, Long> {
 }

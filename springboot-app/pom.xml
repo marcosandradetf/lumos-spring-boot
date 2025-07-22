@@ -31,12 +31,43 @@
         <kotlin.version>2.1.10</kotlin.version>
     </properties>
     <dependencies>
+        <!-- Spring Boot Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- JDBC -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
 
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
+        <!-- Spring Cache com Caffeine -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
+        <!-- Spring OAuth2 para JWT com chave RSA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- Flyway -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -46,139 +77,50 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
-
-
-        <!-- Spring Cache -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
-        </dependency>
-
-        <!-- Caffeine Cache -->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-            <version>3.1.8</version>
-        </dependency>
-
-
+        <!-- Firebase Admin -->
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
             <version>9.4.3</version>
         </dependency>
-        <!-- Coroutines Core -->
-<!--        <dependency>-->
-<!--            <groupId>org.jetbrains.kotlinx</groupId>-->
-<!--            <artifactId>kotlinx-coroutines-core</artifactId>-->
-<!--            <version>1.8.0</version>-->
-<!--        </dependency>-->
 
-<!--        &lt;!&ndash; Coroutines para Spring (opcional, mas recomendado) &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.jetbrains.kotlinx</groupId>-->
-<!--            <artifactId>kotlinx-coroutines-reactor</artifactId>-->
-<!--            <version>1.8.0</version>-->
-<!--        </dependency>-->
-
-        <!--        Web Socket-->
-        <!-- https://mvnrepository.com/artifact/org.springframework/spring-messaging -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-messaging</artifactId>
-            <version>6.2.5</version>
-        </dependency>
-
-
-        <!-- MinIO SDK -->
+        <!-- MinIO -->
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>8.5.7</version>
         </dependency>
-        <!-- Jackson para suporte a JSON no Kotlin -->
+
+        <!-- Jackson para Kotlin -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
 
-        <!-- Dependências do Kotlin -->
+        <!-- Kotlin e Reflect -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${kotlin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-reflect</artifactId>
-            <version>${kotlin.version}</version>
-        </dependency>
-        <!--        -->
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-        </dependency>
+        <!-- Testes -->
 <!--        <dependency>-->
 <!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-security</artifactId>-->
+<!--            <artifactId>spring-boot-starter-test</artifactId>-->
+<!--            <scope>test</scope>-->
 <!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
-            <version>3.3.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-            <version>3.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- Gera um índice de beans em tempo de build, reduzindo drasticamente o tempo de inicialização -->
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
+            <artifactId>spring-context-indexer</artifactId>
+            <version>6.1.4</version> <!-- Compatível com Spring Boot 3.3.x -->
+            <optional>true</optional>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -219,8 +161,6 @@
                 </dependencies>
             </plugin>
 
-
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -233,7 +173,6 @@
                     </execution>
                 </executions>
             </plugin>
-
 
 
             <plugin>

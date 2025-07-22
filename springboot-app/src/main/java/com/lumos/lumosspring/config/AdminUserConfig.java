@@ -4,10 +4,10 @@ import com.lumos.lumosspring.user.AppUser;
 import com.lumos.lumosspring.user.Role;
 import com.lumos.lumosspring.user.RoleRepository;
 import com.lumos.lumosspring.user.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Set;

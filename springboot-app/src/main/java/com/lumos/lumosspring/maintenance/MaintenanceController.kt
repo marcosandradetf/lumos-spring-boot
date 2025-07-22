@@ -1,15 +1,15 @@
 package com.lumos.lumosspring.maintenance
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
 import com.lumos.lumosspring.maintenance.service.MaintenanceService
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestPart
+import org.springframework.stereotype.Indexed
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
+@Indexed
 @Controller
 @RequestMapping("/api")
 class MaintenanceController(
@@ -30,5 +30,10 @@ class MaintenanceController(
     ): ResponseEntity<Any> {
         return maintenanceService.finishMaintenance(maintenance, signature)
     }
+
+    @GetMapping("/maintenance/get-finished")
+    fun getGroupedMaintenances(): ResponseEntity<List<Map<String, JsonNode>>> =
+        ResponseEntity.ok(maintenanceService.getGroupedMaintenances())
+
 
 }

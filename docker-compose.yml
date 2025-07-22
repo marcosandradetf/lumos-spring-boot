@@ -48,29 +48,6 @@ services:
     volumes:
       - ./keys/app.key:/etc/keys/app.key:ro
       - ./keys/app.pub:/etc/keys/app.pub:ro
-      - ./springboot-app/src/main/resources:/app/resources:ro
-  maintenance-service:
-    build:
-      context: .
-      dockerfile: maintenance-service/Dockerfile
-    container_name: maintenance-service
-    expose:
-      - "8081"
-    environment:
-      - KEY_PATH=etc/keys
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - DB_HOST=172.17.0.1
-      - DB_PORT=5432
-      - DB_USER=${DB_USER}
-      - DB_NAME=${DB_NAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - MINIO_PASSWORD=${MINIO_PASSWORD}
-    volumes:
-      - ./keys/app.pub:/etc/keys/app.pub:ro
-    restart: always
-    depends_on:
-      - minio
-    mem_limit: 128m
 
   puppeteer-service:
     build:
@@ -87,7 +64,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=${MINIO_PASSWORD}
-    mem_limit: 300m
+    mem_limit: 250m
     restart: always
     depends_on:
       - minio

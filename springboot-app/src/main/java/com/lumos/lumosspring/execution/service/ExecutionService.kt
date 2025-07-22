@@ -17,17 +17,18 @@ import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
 import com.lumos.lumosspring.util.JdbcUtil.existsRaw
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
-import jakarta.transaction.Transactional
-import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.stereotype.Indexed
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
+@Indexed
 @Service
 class ExecutionService(
     private val preMeasurementStreetRepository: PreMeasurementStreetRepository,
