@@ -8,7 +8,6 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetItemRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
-import com.lumos.lumosspring.stock.repository.StockQueryRepository
 import com.lumos.lumosspring.stock.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils.getCurrentUserId
 import org.springframework.http.ResponseEntity

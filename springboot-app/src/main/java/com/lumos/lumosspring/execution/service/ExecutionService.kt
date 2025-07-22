@@ -954,6 +954,16 @@ class ExecutionService(
             return ResponseEntity.ok().build()
         }
 
+        exists = JdbcUtil.getSingleRow(
+            namedJdbc,
+            "SELECT true as result FROM direct_execution WHERE direct_execution_status = 'FINISHED' AND direct_execution_id = :id",
+            mapOf("id" to executionDTO.directExecutionId)
+        )?.get("result") as? Boolean ?: false
+
+        if (exists) {
+            return ResponseEntity.status(409).build()
+        }
+
         var executionStreet = DirectExecutionStreet(
             lastPower = executionDTO.lastPower,
             address = executionDTO.address,
@@ -1113,6 +1123,19 @@ class ExecutionService(
 
     @Transactional
     fun finishDirectExecution(directExecutionId: Long): ResponseEntity<Any> {
+        val hasFinished = JdbcUtil.getSingleRow(
+            namedJdbc,
+            "SELECT true as result FROM direct_execution WHERE direct_execution_status = :status AND direct_execution_id = :directExecutionId",
+            mapOf(
+                "directExecutionId" to directExecutionId,
+                "status" to ExecutionStatus.FINISHED
+            ),
+        )?.get("result") as? Boolean ?: false
+
+        if (hasFinished) {
+            return ResponseEntity.status(409).build()
+        }
+
         namedJdbc.update(
             """
             UPDATE direct_execution set direct_execution_status = :status
@@ -1165,7 +1188,6 @@ class ExecutionService(
                     )
                 )
             }
-
         }
 
         return ResponseEntity.ok().build()
