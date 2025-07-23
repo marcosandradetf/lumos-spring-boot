@@ -1,10 +1,8 @@
 package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
-import com.lumos.lumosspring.team.entities.Team;
+
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;

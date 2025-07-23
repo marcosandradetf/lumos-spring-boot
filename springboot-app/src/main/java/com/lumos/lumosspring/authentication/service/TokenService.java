@@ -7,29 +7,22 @@ import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.stock.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.entities.Stockist;
-import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.*;
 import com.lumos.lumosspring.util.ErrorResponse;
-import com.lumos.lumosspring.util.Util;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
-import org.springframework.stereotype.Indexed;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.transaction.annotation.Transactional;
 
-@Indexed
 @Service
 public class TokenService {
     private final UserService userService;
@@ -37,19 +30,17 @@ public class TokenService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final Util util;
     private final StockistRepository stockistRepository;
     private final RoleRepository roleRepository;
     private final TeamRepository teamRepository;
     private final TeamQueryRepository teamQueryRepository;
 
-    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, Util util, StockistRepository stockistRepository, RoleRepository roleRepository, TeamRepository teamRepository, TeamQueryRepository teamQueryRepository) {
+    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, StockistRepository stockistRepository, RoleRepository roleRepository, TeamRepository teamRepository, TeamQueryRepository teamQueryRepository) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.util = util;
         this.stockistRepository = stockistRepository;
         this.roleRepository = roleRepository;
         this.teamRepository = teamRepository;
@@ -73,7 +64,7 @@ public class TokenService {
     }
 
     public ResponseEntity<LoginResponse> refreshToken(String refreshToken, boolean isMobile) {
-        var now = util.getDateTime();
+        var now = Instant.now();
         var expiresIn = 1800L; // 30 minutos para access token expirar
 
         if (isMobile) {
@@ -132,7 +123,7 @@ public class TokenService {
         }
 
 
-        var now = util.getDateTime();
+        var now = Instant.now();
         var expiresIn = 1800L; // 30 Minutos
         var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
 

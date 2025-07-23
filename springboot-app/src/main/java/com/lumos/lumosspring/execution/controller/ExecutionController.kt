@@ -1,20 +1,12 @@
 package com.lumos.lumosspring.execution.controller
 
-import com.lumos.lumosspring.execution.dto.DelegateDTO
-import com.lumos.lumosspring.execution.dto.DirectExecutionDTO
-import com.lumos.lumosspring.execution.dto.DirectExecutionDTOResponse
-import com.lumos.lumosspring.execution.dto.IndirectExecutionDTOResponse
-import com.lumos.lumosspring.execution.dto.ReserveDTOCreate
-import com.lumos.lumosspring.execution.dto.SendDirectExecutionDto
-import com.lumos.lumosspring.execution.dto.SendExecutionDto
+import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Indexed
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
-@Indexed
 @RestController
 @RequestMapping("/api")
 class ExecutionController(

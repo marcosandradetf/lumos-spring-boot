@@ -28,15 +28,13 @@ public class UserService {
     private final EmailService emailService;
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserRoleRepository userRoleRepository;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository, UserRoleRepository userRoleRepository) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.userRoleRepository = userRoleRepository;
     }
 
     @Cacheable("getAllUsers")
@@ -270,12 +268,12 @@ public class UserService {
             user.get().setDateOfBirth(date);
             user.get().setStatus(u.status());
 
-            for (Role role : userRoles) {
-                var newRole = new UserRole(
-                        user.get().getUserId(), role.getRoleId()
-                );
-                userRoleRepository.save(newRole);
-            }
+//            for (Role role : userRoles) {
+//                var newRole = new UserRole(
+//                        user.get().getUserId(), role.getRoleId(), false
+//                );
+//                userRoleRepository.save(newRole);
+//            }
 
             userRepository.save(user.get());
 
@@ -352,12 +350,12 @@ public class UserService {
             user.setStatus(u.status());
             user = userRepository.save(user);
 
-            for (Role role : userRoles) {
-                var newRole = new UserRole(
-                        user.getUserId(), role.getRoleId()
-                );
-                userRoleRepository.save(newRole);
-            }
+//            for (Role role : userRoles) {
+//                var newRole = new UserRole(
+//                        user.getUserId(), role.getRoleId(), true
+//                );
+//                userRoleRepository.save(newRole);
+//            }
 
             emailService.sendPasswordForEmail(u.name(), u.email(), password);
         }

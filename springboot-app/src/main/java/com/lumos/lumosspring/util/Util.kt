@@ -1,8 +1,6 @@
 package com.lumos.lumosspring.util
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository
-import com.lumos.lumosspring.user.AppUser
-import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.stereotype.Component

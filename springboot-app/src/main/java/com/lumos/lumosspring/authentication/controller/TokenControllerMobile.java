@@ -3,10 +3,8 @@ package com.lumos.lumosspring.authentication.controller;
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import com.lumos.lumosspring.authentication.service.TokenService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Indexed;
 import org.springframework.web.bind.annotation.*;
 
-@Indexed
 @RestController
 @RequestMapping("/api/mobile/auth")
 public class TokenControllerMobile {

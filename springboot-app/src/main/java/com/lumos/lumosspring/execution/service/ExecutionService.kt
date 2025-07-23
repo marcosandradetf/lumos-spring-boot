@@ -10,11 +10,7 @@ import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.ReservationManagement
-import com.lumos.lumosspring.stock.repository.DepositRepository
-import com.lumos.lumosspring.stock.repository.MaterialRepository
-import com.lumos.lumosspring.stock.repository.MaterialStockJdbcRepository
-import com.lumos.lumosspring.stock.repository.MaterialStockRepository
-import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
+import com.lumos.lumosspring.stock.repository.*
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
@@ -25,13 +21,11 @@ import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.stereotype.Indexed
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
-@Indexed
 @Service
 class ExecutionService(
     private val preMeasurementStreetRepository: PreMeasurementStreetRepository,
