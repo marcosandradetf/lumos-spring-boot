@@ -5,7 +5,7 @@ import com.lumos.lumosspring.contract.service.ContractService
 import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.entities.*
 import com.lumos.lumosspring.execution.repository.*
-import com.lumos.lumosspring.fileserver.service.MinioService
+import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository

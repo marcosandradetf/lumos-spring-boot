@@ -1,0 +1,155 @@
+package com.lumos.lumosspring.execution.repository
+
+import com.fasterxml.jackson.databind.JsonNode
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.stereotype.Repository
+import java.util.UUID
+
+@Repository
+class JdbcInstallationRepository(
+    private val jdbcTemplate: JdbcTemplate
+) {
+    fun getGroupedMaintenances(): List<Map<String, JsonNode>> {
+        val sql = """
+            -- SUA QUERY COMPLETA AQUI
+            SELECT 
+                json_build_object(
+                    'maintenance_id', m.maintenance_id,
+                    'step', de.description,
+                    'streets', json_agg(DISTINCT ms.maintenance_street_id),
+                    'contractor', c.contractor,
+                    'date_of_visit', m.date_of_visit
+                ) AS maintenance,
+                json_build_object(
+                    'electrician', json_build_object(
+                        'name', e.name,
+                        'last_name', e.last_name
+                    ),
+                    'driver', json_build_object(
+                        'name', d.name,
+                        'last_name', d.last_name
+                    )
+                ) AS team
+            FROM direct_execution de
+            JOIN contract c ON c.contract_id = de.contract_id 
+            JOIN team t ON t.id_team = de.team_id 
+            JOIN app_user e ON t.electrician_id = e.user_id
+            JOIN app_user d ON t.driver_id = d.user_id
+            JOIN direct_execution_street des ON des.direct_execution_id = de.direct_execution_id 
+            WHERE de.direct_execution_id = :directExecutionId
+            GROUP BY de.direct_execution_id , c.contractor, e.name, e.last_name, d.name, d.last_name, de.description
+        """.trimIndent()
+
+        return jdbcTemplate.query(sql) { rs, _ ->
+            val maintenanceJson = rs.getString("maintenance")
+            val teamJson = rs.getString("team")
+
+            val maintenanceNode = objectMapper.readTree(maintenanceJson)
+            val teamNode = objectMapper.readTree(teamJson)
+
+            mapOf(
+                "maintenance" to maintenanceNode,
+                "team" to teamNode
+            )
+        }
+    }
+
+    fun getDataForReport(executionId: UUID, contractId: Long): List<Map<String, JsonNode>> {
+        val sql = """
+            WITH items_by_street AS (
+              SELECT 
+                des.maintenance_street_id,
+                cri.contract_reference_item_id,
+                desi.executed_quantity
+              FROM direct_execution_street_item desi
+              JOIN direct_execution_street des on des.direct_execution_street_id = desi.direct_execution_street_id
+              JOIN contract_item ci ON ci.contract_item_id = desi.contract_item_id
+              JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
+              WHERE des.direct_execution_id = :directExecutionId
+            ), contract_items as (
+                SELECT ci.unit_price, ci.executed_quantity, cri.contract_reference_item_id, cri.description, cri.name_for_import 
+                FROM contract_item ci
+                JOIN contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id 
+                WHERE contract = :contractId
+            )
+            
+            SELECT
+              json_build_object(
+                'social_reason', com.social_reason,
+                'company_cnpj', com.company_cnpj,
+                'company_address', com.company_address,
+                'company_phone', com.company_phone,
+                'company_logo', com.company_logo,
+                'bucket', com.bucket_file_name
+              ) AS company,
+    
+              json_build_object(
+                'contract_number', c.contract_number,
+                'contractor', c.contractor,
+                'cnpj', c.cnpj,
+                'address', c.address,
+                'phone', c.phone
+              ) AS contract,
+              
+              'columns', (
+                  SELECT json_agg(
+                    json_build_object(
+                      'reference_item_id', cci.contract_reference_item_id,
+                      'name', cci.name_for_import
+                    )
+                  )
+                  FROM contract_items cci
+               ),
+    
+              (
+                SELECT json_agg(
+                  json_build_object(
+                    'address', ms.address,
+                    'last_power', 'TODO',
+                    'items_quantity', (
+                        SELECT json_agg(
+                          json_build_object(
+                            'reference_item_id', ci.contract_reference_item_id,
+                            'executed_quantity', COALESCE((
+                              SELECT ibs.executed_quantity
+                              FROM items_by_street ibs
+                              WHERE ibs.maintenance_street_id = des.direct_execution_street_id
+                                AND ibs.contract_reference_item_id = ci.contract_reference_item_id
+                              LIMIT 1
+                            ), 0)
+                          )
+                        )
+                        FROM contract_items ci
+                    ),
+                    'street_date', 'TODO',
+                    'current_supplier', 'TODO'
+                )
+                FROM direct_execution_street des
+                WHERE des.direct_execution = :directExecutionId
+              ) AS streets
+    
+            FROM direct_execution de
+            JOIN contract c ON c.contract_id = de.contract_id
+            JOIN company com ON com.id_company = 1
+            JOIN team t ON t.id_team = de.team_id
+            JOIN app_user e ON t.electrician_id = e.user_id
+            JOIN app_user d ON t.driver_id = d.user_id
+            WHERE de.direct_execution_id = :directExecutionId
+        """.trimIndent()
+
+        return jdbcTemplate.query(sql) { rs, _ ->
+            val maintenanceJson = rs.getString("maintenance")
+            val teamJson = rs.getString("team")
+
+            val maintenanceNode = objectMapper.readTree(maintenanceJson)
+            val teamNode = objectMapper.readTree(teamJson)
+
+            mapOf(
+                "maintenance" to maintenanceNode,
+                "team" to teamNode
+            )
+        }
+    }
+
+
+}

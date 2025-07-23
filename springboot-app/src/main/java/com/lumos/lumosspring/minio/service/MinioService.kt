@@ -1,10 +1,12 @@
-package com.lumos.lumosspring.fileserver.service
+package com.lumos.lumosspring.minio.service
 
 import io.minio.*
 import io.minio.errors.MinioException
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
+import io.minio.http.Method
+
 
 @Service
 class MinioService(private val minioClient: MinioClient) {
@@ -44,4 +46,17 @@ class MinioService(private val minioClient: MinioClient) {
                 .build()
         )
     }
+
+    fun getPresignedObjectUrl(bucketName: String, objectName: String): String {
+        val url = minioClient.getPresignedObjectUrl(
+            GetPresignedObjectUrlArgs.builder()
+                .method(Method.PUT)
+                .bucket(bucketName)
+                .`object`(objectName)
+                .expiry(5 * 60) // em segundos (5 minutos)
+                .build()
+        )
+        return url
+    }
+
 }

@@ -1,7 +1,6 @@
-package com.lumos.lumosspring.fileserver.controller
+package com.lumos.lumosspring.minio.controller
 
-import com.lumos.lumosspring.fileserver.service.MinioService
-import com.lumos.lumosspring.util.DefaultResponse
+import com.lumos.lumosspring.minio.service.MinioService
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType

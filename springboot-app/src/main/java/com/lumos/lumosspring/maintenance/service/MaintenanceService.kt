@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.maintenance.service
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.lumos.lumosspring.fileserver.service.MinioService
+import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.maintenance.entities.Maintenance
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
