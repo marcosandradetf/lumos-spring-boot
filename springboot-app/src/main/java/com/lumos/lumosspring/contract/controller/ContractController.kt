@@ -49,7 +49,7 @@ class ContractController(
     }
 
     @GetMapping("/mobile/contracts/get-reference-items")
-    fun getItemsForMob(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
+    fun getItemsForMob(): ResponseEntity<List<PContractReferenceItemDTO>> {
         return contractService.getItemsForMob()
     }
 

@@ -15,7 +15,7 @@ public class CompanyController {
     private CompanyService companyService;
 
     @GetMapping
-    public List<Company> getAll() {
+    public Iterable<Company> getAll() {
         return companyService.findAll();
     }
 

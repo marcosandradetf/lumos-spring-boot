@@ -1,45 +1,56 @@
 package com.lumos.lumosspring.stock.repository;
 
 import com.lumos.lumosspring.stock.entities.Material;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface MaterialRepository extends JpaRepository<Material, Long> {
+public interface MaterialRepository extends CrudRepository<Material, Long> {
     boolean existsByMaterialName(String materialName); // verificar duplicatas
 
-    @Query("SELECT m FROM Material m " +
-            "INNER JOIN m.materialType mt " +
-            "WHERE UPPER(mt.typeName) IN ('LED', 'CINTA', 'PARAFUSO', 'CONECTOR', 'POSTE', 'REFLETOR') " +
-            "OR UPPER(mt.typeName) LIKE('BRA%')" +
-            "ORDER BY mt.typeName, " +
-            "CAST(FUNCTION('REGEXP_REPLACE', m.materialPower, '[^0-9]+', '', 'g') AS integer), " +
-            "CAST(FUNCTION('REGEXP_REPLACE', m.materialLength, '[^0-9]+', '', 'g') AS integer)")
+    @Query("""
+        SELECT m.*
+        FROM material m
+        JOIN material_type mt ON m.id_material_type = mt.id_type
+        WHERE UPPER(mt.type_name) IN ('LED', 'CINTA', 'PARAFUSO', 'CONECTOR', 'POSTE', 'REFLETOR')
+           OR UPPER(mt.type_name) LIKE 'BRA%'
+        ORDER BY mt.type_name,
+                 CAST(REGEXP_REPLACE(m.material_power, '[^0-9]+', '', 'g') AS INTEGER),
+                 CAST(REGEXP_REPLACE(m.material_length, '[^0-9]+', '', 'g') AS INTEGER)
+        """)
     List<Material> getMaterialsForInstallation();
 
-    Optional<Material> findFirstByMaterialType_TypeNameOrMaterialType_TypeName(
-            String typeName, String typeName2);
-
-    @Query("SELECT m FROM Material m WHERE UPPER(m.materialType.typeName) IN ('LED', 'POSTE', 'RELÉ', 'CABO') OR UPPER(m.materialType.typeName) LIKE('BRA%')")
+    @Query("""
+        SELECT *
+        FROM material m
+        JOIN material_type mt ON m.id_material_type = mt.id_type
+        WHERE UPPER(mt.type_name) IN ('LED', 'POSTE', 'RELÉ', 'CABO')
+           OR UPPER(mt.type_name) LIKE 'BRA%'
+        """)
     List<Material> findAllMaterialsExcludingScrewStrapAndConnector();
 
-    @Query("SELECT m FROM Material m  WHERE UPPER(m.materialType.typeName)  IN ('PARAFUSO', 'CONECTOR', 'CINTA') AND m.idMaterial = " +
-            "(SELECT MIN(m2.idMaterial) FROM Material m2  WHERE UPPER(m2.materialType.typeName) = UPPER(m.materialType.typeName))")
+    @Query("""
+        SELECT *
+        FROM material m
+        JOIN material_type mt ON m.id_material_type = mt.id_type
+        WHERE UPPER(mt.type_name) IN ('PARAFUSO', 'CONECTOR', 'CINTA')
+          AND m.id_material = (
+              SELECT MIN(m2.id_material)
+              FROM material m2
+              JOIN material_type mt2 ON m2.id_material_type = mt2.id_type
+              WHERE UPPER(mt2.type_name) = UPPER(mt.type_name)
+          )
+        """)
     List<Material> findOneScrewStrapAndConnector();
 
-    @EntityGraph(attributePaths = {"materialType", "relatedMaterials", "relatedMaterials.materialType"})
-    @Query("SELECT m FROM Material m WHERE m.idMaterial = :id")
-    Optional<Material> findByIdWithGraphType(@Param("id") Long id);
-
-    @EntityGraph(attributePaths = {"materialStocks"})
-    @Query("SELECT m FROM Material m WHERE m.idMaterial = :id")
-    Optional<Material> findByIdWithGraphStock(@Param("id") Long id);
-
-    @Query("SELECT m FROM Material m WHERE (m.inactive is null or m.inactive = false) AND m.nameForImport is not null")
+    @Query("""
+        SELECT *
+        FROM material
+        WHERE (inactive IS NULL OR inactive = false)
+          AND name_for_import IS NOT NULL
+        """)
     List<Material> findAllForImportPreMeasurement();
+
 }
 

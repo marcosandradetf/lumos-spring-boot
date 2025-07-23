@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -24,50 +25,51 @@ public class StockMovementService {
     private final SupplierRepository supplierRepository;
     private final UserRepository userRepository;
     private final Util util;
+    private final MaterialRepository materialRepository;
+    private final CompanyRepository companyRepository;
+    private final DepositRepository depositRepository;
 
-    public StockMovementService(MaterialStockRepository materialStockRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util) {
+    public StockMovementService(MaterialStockRepository materialStockRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util, MaterialRepository materialRepository, CompanyRepository companyRepository, DepositRepository depositRepository) {
         this.materialStockRepository = materialStockRepository1;
         this.stockMovementRepository = stockMovementRepository;
         this.supplierRepository = supplierRepository;
         this.userRepository = userRepository;
         this.util = util;
+        this.materialRepository = materialRepository;
+        this.companyRepository = companyRepository;
+        this.depositRepository = depositRepository;
     }
 
     public ResponseEntity<?> stockMovementGet() {
         // Busca todos os movimentos de estoque
-        List<StockMovement> stockMovements = this.stockMovementRepository.findAll();
-
-        // Filtra os movimentos de estoque com status PENDING
-        List<StockMovement> pendingMovements = stockMovements.stream()
-                .filter(m -> m.getStatus().equals(StockMovement.Status.PENDING))
-                .toList();
-
-        // Verifica se não existem movimentos pendentes
-        if (pendingMovements.isEmpty()) {
-            return new ResponseEntity<>("Nenhum movimento pendente foi encontrado!", HttpStatus.NO_CONTENT);
-        }
+        var stockMovements = this.stockMovementRepository.findAllByStatus("PENDING");
 
         // Criação da lista de resposta
         List<StockMovementResponse> response = new ArrayList<>();
-        for (StockMovement movement : pendingMovements) {
+        for (StockMovement movement : stockMovements) {
+            var userCreated = userRepository.findByUserId(movement.getAppUserCreatedId()).orElseThrow();
+            var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
+            var material = materialRepository.findById(materialStock.getMaterialId()).orElseThrow();
+            var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
+            var company = companyRepository.findById(materialStock.getCompanyId()).orElseThrow();
+            var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
+
             // Formatação de preço para substituir ponto por vírgula
-            String employee = movement.getUserCreated().getName().concat(" ")
-                    .concat(movement.getUserCreated().getLastName());
+            String employee = userCreated.getUsername();
 
 
             // Marca do material (evitando NullPointerException)
-            String brand = movement.getMaterialStock().getMaterial().getMaterialBrand();
-            brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
+            String brand = "";
 
             // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
-            String description = movement.getMaterialStock().getMaterial().getMaterialPower();
+            String description = material.getMaterialPower();
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterialStock().getMaterial().getMaterialLength();
+                description = material.getMaterialLength();
             }
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterialStock().getMaterial().getMaterialAmps();
+                description = material.getMaterialAmps();
             }
 
             // Se ainda for null, define como string vazia
@@ -78,14 +80,14 @@ public class StockMovementService {
             response.add(new StockMovementResponse(
                     movement.getStockMovementId(),
                     movement.getStockMovementDescription(),
-                    movement.getMaterialStock().getMaterial().getMaterialName().concat(description).concat(brand),
+                    material.getMaterialName().concat(description).concat(brand),
                     movement.getTotalQuantity(),
                     movement.getBuyUnit(),
                     movement.getRequestUnit(),
                     movement.getPricePerItem().toString(),
-                    movement.getSupplier().getSupplierName(),
-                    movement.getMaterialStock().getCompany().getSocialReason(),
-                    movement.getMaterialStock().getDeposit().getDepositName(),
+                    supplier.getSupplierName(),
+                    company.getSocialReason(),
+                    deposit.getDepositName(),
                     employee
             ));
         }
@@ -99,7 +101,7 @@ public class StockMovementService {
         if (validationError != null) {
             return validationError;
         }
-        return convertToStockMovementAndSave(stockMovementRequest, util.getUserFromRToken(refreshToken).getUserId());
+        return convertToStockMovementAndSave(stockMovementRequest, util.getUserFromRToken(refreshToken));
 
     }
 
@@ -121,7 +123,7 @@ public class StockMovementService {
             }
 
             // Verificar se já existe um movimento de estoque para o material
-            var existingMovement = stockMovementRepository.findFirstByMaterial(material.get(), StockMovement.Status.APPROVED);
+            var existingMovement = stockMovementRepository.findFirstByMaterial(material.get().getMaterialIdStock(), "APPROVED");
             if (existingMovement.isPresent()) {
                 // Se o movimento existente tem um tipo de compra diferente, retorna erro
                 if (!existingMovement.get().getRequestUnit().equals(movement.requestUnit())) {
@@ -130,20 +132,21 @@ public class StockMovementService {
                 }
             }
 
-            var newMovement = new StockMovement(util.getDateTime());
+            var newMovement = new StockMovement();
 
+            newMovement.setStockMovementRefresh(Instant.now());
             newMovement.setStockMovementDescription(movement.description());
             newMovement.setInputQuantity(movement.inputQuantity());
             newMovement.setBuyUnit(movement.buyUnit());
-            newMovement.setBuyRequest(movement.requestUnit());
+            newMovement.setRequestUnit(movement.requestUnit());
             newMovement.setQuantityPackage(movement.quantityPackage());
             newMovement.setTotalQuantity(movement.totalQuantity());
-            newMovement.setPricePerItem(util.convertToBigDecimal(movement.priceTotal()), movement.totalQuantity());
+            newMovement.setPricePerItem(util.convertToBigDecimal(movement.priceTotal()));
             newMovement.setPriceTotal(util.convertToBigDecimal(movement.priceTotal()));
-            newMovement.setUserCreated(userRepository.findByUserId(userUUID).orElse(null));
-            newMovement.setMaterialStock(material.get());
-            newMovement.setSupplier(supplierRepository.findById(Long.parseLong(movement.supplierId())).orElse(null));
-            newMovement.setStatus(StockMovement.Status.PENDING);
+            newMovement.setAppUserCreatedId(userUUID);
+            newMovement.setMaterialStockId(material.get().getMaterialIdStock());
+            newMovement.setSupplierId(Long.valueOf(movement.supplierId()));
+            newMovement.setStatus("PENDING");
             stockMovementRepository.save(newMovement);
         }
 
@@ -151,20 +154,33 @@ public class StockMovementService {
 
     }
 
+    @Transactional
     public ResponseEntity<String> approveStockMovement(long movementId, String refreshToken) {
         var movement = stockMovementRepository.findById(movementId).orElse(null);
         if (movement == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Movimento não encontrado.");
-        } else if (Objects.equals(movement.getStatus(), StockMovement.Status.REJECTED)) {
+        } else if (Objects.equals(movement.getStatus(), "REJECTED")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível aprovar pois Movimento já foi rejeitado.");
-        } else if (Objects.equals(movement.getStatus(), StockMovement.Status.APPROVED)) {
+        } else if (Objects.equals(movement.getStatus(), "APPROVED")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível aprovar pois Movimento já foi aprovado.");
         }
-        movement.setStatus(StockMovement.Status.APPROVED);
-        movement.setUserFinished(util.getUserFromRToken(refreshToken));
-        movement.materialUpdate();
+        movement.setStatus("APPROVED");
+        movement.setAppUserFinishedId(Objects.requireNonNull(util.getUserFromRToken(refreshToken)));
+
+        var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
+
+        materialStock.addStockQuantity(movement.getTotalQuantity());
+        materialStock.addStockAvailable(movement.getTotalQuantity());
+        materialStock.setCostPerItem(movement.getPricePerItem());
+        materialStock.setCostPrice(movement.getPriceTotal());
+        materialStock.setBuyUnit(movement.getBuyUnit());
+        materialStock.setRequestUnit(movement.getRequestUnit());
+
+
         stockMovementRepository.save(movement);
+        materialStockRepository.save(materialStock);
+
         return ResponseEntity.status(HttpStatus.OK).body("Movimento aprovado com sucesso.");
     }
 
@@ -173,12 +189,15 @@ public class StockMovementService {
         if (movement == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Movimento não encontrado.");
-        } else if (Objects.equals(movement.getStatus(), StockMovement.Status.APPROVED)) {
+        } else if (Objects.equals(movement.getStatus(), "APPROVED")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível reprovar pois Movimento já foi aprovado.");
         }
-        movement.setStatus(StockMovement.Status.REJECTED);
-        movement.setUserFinished(util.getUserFromRToken(refreshToken));
+
+        movement.setStatus("REJECTED");
+        movement.setAppUserFinishedId(Objects.requireNonNull(util.getUserFromRToken(refreshToken)));
         stockMovementRepository.save(movement);
+
+
         return ResponseEntity.status(HttpStatus.OK).body("Movimento rejeitado com sucesso.");
     }
 
@@ -200,7 +219,7 @@ public class StockMovementService {
 
         // Filtra os movimentos de estoque com status PENDING
         List<StockMovement> approvedMovements = stockMovements.stream()
-                .filter(m -> m.getStatus().equals(StockMovement.Status.APPROVED))
+                .filter(m -> m.getStatus().equals("APPROVED"))
                 .toList();
 
         // Verifica se não existem movimentos aprovado
@@ -211,23 +230,29 @@ public class StockMovementService {
         // Criação da lista de resposta
         List<StockMovementResponse> response = new ArrayList<>();
         for (StockMovement movement : approvedMovements) {
+            var userFinished = userRepository.findByUserId(movement.getAppUserFinishedId()).orElseThrow();
+            var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
+            var material = materialRepository.findById(materialStock.getMaterialId()).orElseThrow();
+            var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
+            var company = companyRepository.findById(materialStock.getCompanyId()).orElseThrow();
+            var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
+
             // Formatação de preço para substituir ponto por vírgula
-            String employee = movement.getUserFinished().getName().concat(" ")
-                    .concat(movement.getUserCreated().getLastName());
+            String employee = userFinished.getCompletedName();
             // Marca do material (evitando NullPointerException)
 
-            String brand = movement.getMaterialStock().getMaterial().getMaterialBrand();
-            brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
+            String brand = "";
+            //brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
 
             // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
-            String description = movement.getMaterialStock().getMaterial().getMaterialPower();
+            String description = material.getMaterialPower();
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterialStock().getMaterial().getMaterialLength();
+                description = material.getMaterialLength();
             }
 
             if (description == null || description.isEmpty()) {
-                description = movement.getMaterialStock().getMaterial().getMaterialAmps();
+                description = material.getMaterialAmps();
             }
 
             // Se ainda for null, define como string vazia
@@ -237,14 +262,14 @@ public class StockMovementService {
             response.add(new StockMovementResponse(
                     movement.getStockMovementId(),
                     movement.getStockMovementDescription(),
-                    movement.getMaterialStock().getMaterial().getMaterialName().concat(description).concat(brand),
+                    material.getMaterialName().concat(description).concat(brand),
                     movement.getTotalQuantity(),
                     movement.getBuyUnit(),
                     movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
                     movement.getPricePerItem().toString(),
-                    movement.getSupplier().getSupplierName(),
-                    movement.getMaterialStock().getCompany().getSocialReason(),
-                    movement.getMaterialStock().getDeposit().getDepositName(),
+                    supplier.getSupplierName(),
+                    company.getSocialReason(),
+                    deposit.getDepositName(),
                     employee
             ));
         }

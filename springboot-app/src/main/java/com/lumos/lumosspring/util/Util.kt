@@ -39,7 +39,7 @@ class Util(
         }
     }
 
-    fun getUserFromRToken(rToken: String?): AppUser? {
+    fun getUserFromRToken(rToken: String?): UUID? {
         val tokenFromDb = refreshTokenRepository.findByToken(rToken)
         if (tokenFromDb.isEmpty) {
             return null

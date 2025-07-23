@@ -69,37 +69,37 @@ public class MaterialController {
         return ResponseEntity.ok(Objects.requireNonNullElse(name, ""));
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
-    @PostMapping
-    //public ResponseEntity<String>  create(@RequestBody Material material, @CookieValue("refreshToken") String refreshToken) {
-    public ResponseEntity<?> create(@RequestBody MaterialRequest material) {
-        //return materialService.save(material, UUID.fromString(refreshToken));
-        return materialService.save(material);
-    }
+//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
+//    @PostMapping
+//    //public ResponseEntity<String>  create(@RequestBody Material material, @CookieValue("refreshToken") String refreshToken) {
+//    public ResponseEntity<?> create(@RequestBody MaterialRequest material) {
+//        //return materialService.save(material, UUID.fromString(refreshToken));
+//        return materialService.save(material);
+//    }
 
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
-    @PutMapping("{materialId}")
-    public ResponseEntity<?> update(@RequestBody MaterialRequest material, @PathVariable Long materialId, @CookieValue("refreshToken") String refreshToken) {
-        var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
-        if (tokenFromDb.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        var userUUID = tokenFromDb.get().getUser().getUserId();
-
-        return materialService.update(material, materialId, userUUID);
-    }
-
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id, @CookieValue("refreshToken") String refreshToken) {
-        var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
-        if (tokenFromDb.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        var userUUID = tokenFromDb.get().getUser().getUserId();
-
-        return materialService.deleteById(id, userUUID);
-    }
+//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
+//    @PutMapping("{materialId}")
+//    public ResponseEntity<?> update(@RequestBody MaterialRequest material, @PathVariable Long materialId, @CookieValue("refreshToken") String refreshToken) {
+//        var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
+//        if (tokenFromDb.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+//        }
+//        var userUUID = tokenFromDb.get().getUser().getUserId();
+//
+//        return materialService.update(material, materialId, userUUID);
+//    }
+//
+//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<?> delete(@PathVariable Long id, @CookieValue("refreshToken") String refreshToken) {
+//        var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
+//        if (tokenFromDb.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+//        }
+//        var userUUID = tokenFromDb.get().getUser().getUserId();
+//
+//        return materialService.deleteById(id, userUUID);
+//    }
 
     @GetMapping("/get-all")
     public ResponseEntity<?> findAllForImportPreMeasurement() {

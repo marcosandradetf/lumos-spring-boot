@@ -1,25 +1,16 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 
-import java.util.HashSet;
-import java.util.Set;
-
-@Entity
 public class Material {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_material")
     private Long idMaterial;
 
-    @Column(columnDefinition = "TEXT", nullable = false, unique = true)
     private String materialName;
 
-    @Column(unique = true)
     private String nameForImport;
 
-    @Column(columnDefinition = "TEXT")
     private String materialBrand;
 
     private String materialPower;
@@ -28,54 +19,58 @@ public class Material {
 
     private String materialLength;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_material_type", nullable = false)
-    private MaterialType materialType;
+    private Long idMaterialType;
 
     private Boolean inactive;
 
-    @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<MaterialStock> materialStocks;
+    @Column("contract_reference_item_contract_reference_item_id")
+    private Long contractReferenceItemId;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "related_material",
-            joinColumns = @JoinColumn(name = "material_id"),
-            inverseJoinColumns = @JoinColumn(name = "related_id")
-    )
-    private Set<Material> relatedMaterials = new HashSet<>();
-
-    @ManyToOne
-    private ContractReferenceItem contractReferenceItem;
-
-    public MaterialType getMaterialType() {
-        return materialType;
+    public Material(Long idMaterial, String materialName, String nameForImport, String materialBrand, String materialPower, String materialAmps, String materialLength, Long idMaterialType, Boolean inactive, Long contractReferenceItemId) {
+        this.idMaterial = idMaterial;
+        this.materialName = materialName;
+        this.nameForImport = nameForImport;
+        this.materialBrand = materialBrand;
+        this.materialPower = materialPower;
+        this.materialAmps = materialAmps;
+        this.materialLength = materialLength;
+        this.idMaterialType = idMaterialType;
+        this.inactive = inactive;
+        this.contractReferenceItemId = contractReferenceItemId;
     }
 
-    public void setMaterialType(MaterialType materialTypeMaterial) {
-        this.materialType = materialTypeMaterial;
-    }
-
-    public Material() { }
+    public Material() {}
 
     public Long getIdMaterial() {
         return idMaterial;
+    }
+
+    public void setIdMaterial(Long idMaterial) {
+        this.idMaterial = idMaterial;
     }
 
     public String getMaterialName() {
         return materialName;
     }
 
-    public void setMaterialName(String nomeMaterial) {
-        this.materialName = nomeMaterial;
+    public void setMaterialName(String materialName) {
+        this.materialName = materialName;
+    }
+
+    public String getNameForImport() {
+        return nameForImport;
+    }
+
+    public void setNameForImport(String nameForImport) {
+        this.nameForImport = nameForImport;
     }
 
     public String getMaterialBrand() {
         return materialBrand;
     }
 
-    public void setMaterialBrand(String marcaMaterial) {
-        this.materialBrand = marcaMaterial;
+    public void setMaterialBrand(String materialBrand) {
+        this.materialBrand = materialBrand;
     }
 
     public String getMaterialPower() {
@@ -102,20 +97,12 @@ public class Material {
         this.materialLength = materialLength;
     }
 
-    public Set<MaterialStock> getMaterialStocks() {
-        return materialStocks;
+    public Long getIdMaterialType() {
+        return idMaterialType;
     }
 
-    public void setMaterialStocks(Set<MaterialStock> productStocks) {
-        this.materialStocks = productStocks;
-    }
-
-    public Set<Material> getRelatedMaterials() {
-        return relatedMaterials;
-    }
-
-    public void setRelatedMaterials(Set<Material> relatedMaterials) {
-        this.relatedMaterials = relatedMaterials;
+    public void setIdMaterialType(Long idMaterialType) {
+        this.idMaterialType = idMaterialType;
     }
 
     public Boolean getInactive() {
@@ -126,20 +113,12 @@ public class Material {
         this.inactive = inactive;
     }
 
-    public String getNameForImport() {
-        return nameForImport;
+    public Long getContractReferenceItemId() {
+        return contractReferenceItemId;
     }
 
-    public void setNameForImport(String nameForImport) {
-        this.nameForImport = nameForImport;
-    }
-
-    public ContractReferenceItem getContractReferenceItem() {
-        return contractReferenceItem;
-    }
-
-    public void setContractReferenceItem(ContractReferenceItem contractReferenceItem) {
-        this.contractReferenceItem = contractReferenceItem;
+    public void setContractReferenceItemId(Long contractReferenceItemId) {
+        this.contractReferenceItemId = contractReferenceItemId;
     }
 }
 

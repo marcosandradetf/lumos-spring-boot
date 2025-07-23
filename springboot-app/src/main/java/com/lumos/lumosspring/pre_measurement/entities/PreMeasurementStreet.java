@@ -1,22 +1,18 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
-import com.lumos.lumosspring.stock.entities.ReservationManagement;
-import com.lumos.lumosspring.team.entities.Team;
-import com.lumos.lumosspring.user.AppUser;
+
 import com.lumos.lumosspring.util.ExecutionStatus;
-import com.lumos.lumosspring.util.ItemStatus;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.UUID;
 
-@Entity
+@Table
 public class PreMeasurementStreet {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pre_measurement_street_id")
-    private long preMeasurementStreetId;
+    private Long preMeasurementStreetId;
 
     private Long deviceStreetId;
 
@@ -37,46 +33,26 @@ public class PreMeasurementStreet {
 
     private String streetStatus = ExecutionStatus.PENDING;
 
-    @Column(nullable = false)
     private Integer step;
 
-    @OneToMany(mappedBy = "preMeasurementStreet", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PreMeasurementStreetItem> items = new HashSet<>();
+    private Long teamId;
 
-    @ManyToOne
-    @JoinColumn(name = "team_id")
-    private Team team;
+    private Long preMeasurementId;
 
-    // Métodos auxiliares para garantir consistência no relacionamento
-    public void addItem(PreMeasurementStreetItem item) {
-        items.add(item);
-        item.setPreMeasurementStreet(this);
-        item.setPreMeasurement(this.preMeasurement);
-    }
+    @Column("created_by_user_id")
+    private UUID createdById;
 
-    @ManyToOne
-    @JoinColumn(name = "pre_measurement_id") // FK para a entidade PreMeasurement
-    private PreMeasurement preMeasurement;
+    @Column("assigned_by_user_id")
+    private UUID assignedById;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by_user_id")
-    private AppUser createdBy;
-
-    @ManyToOne
-    @JoinColumn(name = "assigned_by_user_id")
-    private AppUser assignedBy;
-
-    @ManyToOne
-    @JoinColumn(name = "finished_by_user_id")
-    private AppUser finishedBy;
+    @Column("finished_by_user_id")
+    private UUID finishedById;
 
     private Instant createdAt;
     private Instant assignedAt;
     private Instant finishedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "reservation_management_id")
-    private ReservationManagement reservationManagement;
+    private Long reservationManagementId;
 
     private Boolean prioritized;
 
@@ -84,12 +60,29 @@ public class PreMeasurementStreet {
     private String preMeasurementPhotoUri;
     private String executionPhotoUri;
 
+
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
     }
 
-    public void setPreMeasurementStreetId(long preMeasurementId) {
-        this.preMeasurementStreetId = preMeasurementId;
+    public void setPreMeasurementStreetId(long preMeasurementStreetId) {
+        this.preMeasurementStreetId = preMeasurementStreetId;
+    }
+
+    public Long getDeviceStreetId() {
+        return deviceStreetId;
+    }
+
+    public void setDeviceStreetId(Long deviceStreetId) {
+        this.deviceStreetId = deviceStreetId;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
     }
 
     public String getDescription() {
@@ -98,6 +91,22 @@ public class PreMeasurementStreet {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getLastPower() {
+        return lastPower;
+    }
+
+    public void setLastPower(String lastPower) {
+        this.lastPower = lastPower;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
     }
 
     public String getNumber() {
@@ -152,56 +161,8 @@ public class PreMeasurementStreet {
         return streetStatus;
     }
 
-    public void setStreetStatus(String status) {
-        this.streetStatus = status;
-    }
-
-    public PreMeasurement getPreMeasurement() {
-        return preMeasurement;
-    }
-
-    public void setPreMeasurement(PreMeasurement preMeasurement) {
-        this.preMeasurement = preMeasurement;
-    }
-
-    public String getLastPower() {
-        return lastPower;
-    }
-
-    public void setLastPower(String lastPower) {
-        this.lastPower = lastPower;
-    }
-
-    public Set<PreMeasurementStreetItem> getItems() {
-        return items;
-    }
-
-    public void setItems(Set<PreMeasurementStreetItem> items) {
-        this.items = items;
-    }
-
-    public String getStreet() {
-        return street;
-    }
-
-    public void setStreet(String street) {
-        this.street = street;
-    }
-
-    public void cancelAllItems() {
-        if (!this.items.isEmpty()) {
-            this.items.forEach(item -> {
-                item.setItemStatus(ItemStatus.CANCELLED);
-            });
-        }
-    }
-
-    public Team getTeam() {
-        return team;
-    }
-
-    public void setTeam(Team team) {
-        this.team = team;
+    public void setStreetStatus(String streetStatus) {
+        this.streetStatus = streetStatus;
     }
 
     public Integer getStep() {
@@ -210,6 +171,46 @@ public class PreMeasurementStreet {
 
     public void setStep(Integer step) {
         this.step = step;
+    }
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
+
+    public Long getPreMeasurementId() {
+        return preMeasurementId;
+    }
+
+    public void setPreMeasurementId(Long preMeasurementId) {
+        this.preMeasurementId = preMeasurementId;
+    }
+
+    public UUID getCreatedById() {
+        return createdById;
+    }
+
+    public void setCreatedById(UUID createdById) {
+        this.createdById = createdById;
+    }
+
+    public UUID getAssignedById() {
+        return assignedById;
+    }
+
+    public void setAssignedById(UUID assignedById) {
+        this.assignedById = assignedById;
+    }
+
+    public UUID getFinishedById() {
+        return finishedById;
+    }
+
+    public void setFinishedById(UUID finishedById) {
+        this.finishedById = finishedById;
     }
 
     public Instant getCreatedAt() {
@@ -236,36 +237,12 @@ public class PreMeasurementStreet {
         this.finishedAt = finishedAt;
     }
 
-    public AppUser getCreatedBy() {
-        return createdBy;
+    public Long getReservationManagementId() {
+        return reservationManagementId;
     }
 
-    public void setCreatedBy(AppUser createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public AppUser getAssignedBy() {
-        return assignedBy;
-    }
-
-    public void setAssignedBy(AppUser assignedBy) {
-        this.assignedBy = assignedBy;
-    }
-
-    public AppUser getFinishedBy() {
-        return finishedBy;
-    }
-
-    public ReservationManagement getReservationManagement() {
-        return reservationManagement;
-    }
-
-    public void setReservationManagement(ReservationManagement reservationManagement) {
-        this.reservationManagement = reservationManagement;
-    }
-
-    public void setFinishedBy(AppUser finishedBy) {
-        this.finishedBy = finishedBy;
+    public void setReservationManagementId(Long reservationManagementId) {
+        this.reservationManagementId = reservationManagementId;
     }
 
     public Boolean getPrioritized() {
@@ -284,16 +261,6 @@ public class PreMeasurementStreet {
         this.comment = comment;
     }
 
-    public void assignToStockistAndTeam(Team team, AppUser assignedBy, Instant assignedAt, boolean prioritized, String comment, ReservationManagement reservationManagement) {
-        this.team = team;
-        this.assignedBy = assignedBy;
-        this.assignedAt = assignedAt;
-        this.prioritized = prioritized;
-        this.comment = comment;
-        this.reservationManagement = reservationManagement;
-        this.streetStatus = ExecutionStatus.WAITING_STOCKIST;
-    }
-
     public String getPreMeasurementPhotoUri() {
         return preMeasurementPhotoUri;
     }
@@ -308,21 +275,5 @@ public class PreMeasurementStreet {
 
     public void setExecutionPhotoUri(String executionPhotoUri) {
         this.executionPhotoUri = executionPhotoUri;
-    }
-
-    public Long getDeviceStreetId() {
-        return deviceStreetId;
-    }
-
-    public void setDeviceStreetId(Long deviceStreetId) {
-        this.deviceStreetId = deviceStreetId;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
     }
 }

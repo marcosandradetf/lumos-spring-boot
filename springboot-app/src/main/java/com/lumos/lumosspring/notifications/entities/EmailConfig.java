@@ -1,13 +1,12 @@
 package com.lumos.lumosspring.notifications.entities;
 
-import com.lumos.lumosspring.stock.entities.Company;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
+@Table
 public class EmailConfig {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long emailId;
 
     private String host;
@@ -16,10 +15,23 @@ public class EmailConfig {
     private String password;
     private boolean auth;
     private boolean starttls;
-    @OneToOne
-    private Company company;
 
-    // Getters e setters
+    @Column("company_id_company")
+    private Long companyId;
+
+    public EmailConfig() {}
+
+    public EmailConfig(Long emailId, String host, int port, String username, String password, boolean auth, boolean starttls, Long companyId) {
+        this.emailId = emailId;
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.auth = auth;
+        this.starttls = starttls;
+        this.companyId = companyId;
+    }
+
     public Long getEmailId() {
         return emailId;
     }
@@ -76,11 +88,11 @@ public class EmailConfig {
         this.starttls = starttls;
     }
 
-    public Company getCompany() {
-        return company;
+    public Long getCompanyId() {
+        return companyId;
     }
 
-    public void setCompany(Company company) {
-        this.company = company;
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 }

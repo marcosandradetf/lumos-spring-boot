@@ -14,7 +14,7 @@ public class CompanyService {
     private CompanyRepository companyRepository;
 
     @Cacheable("getAllCompanies")
-    public List<Company> findAll() {
+    public Iterable<Company> findAll() {
         return companyRepository.findAll();
     }
 

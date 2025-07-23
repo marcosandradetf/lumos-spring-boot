@@ -1,20 +1,26 @@
 package com.lumos.lumosspring.team.entities;
 
-import jakarta.persistence.*;
 
-@Entity
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table
 public class Region {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long regionId;
+    private Long regionId;
 
     private String regionName;
 
-    public long getRegionId() {
+    public Region(Long regionId, String regionName) {
+        this.regionId = regionId;
+        this.regionName = regionName;
+    }
+
+    public Long getRegionId() {
         return regionId;
     }
 
-    public void setRegionId(long regionId) {
+    public void setRegionId(Long regionId) {
         this.regionId = regionId;
     }
 

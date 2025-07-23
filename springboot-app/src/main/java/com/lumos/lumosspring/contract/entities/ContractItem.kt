@@ -7,7 +7,7 @@ import java.math.BigDecimal
 @Table("contract_item")
 class ContractItem {
     @Id
-    var contractItemId : Long = 0
+    var contractItemId : Long? = null
 
     @Column("contract_item_reference_id")
     var referenceItemId: Long? = null

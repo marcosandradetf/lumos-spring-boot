@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/api")
@@ -47,8 +48,12 @@ public class StockController {
 
     @GetMapping("/stock/get-suppliers")
     public ResponseEntity<List<SupplierResponse>> getAllSuppliers() {
-        List<Supplier> suppliers = supplierRepository.findAll();
-        List<SupplierResponse> supplierDTOS = suppliers.stream().map(SupplierResponse::new).toList(); // Converte diretamente para Page<MaterialResponse>
+        var suppliers = supplierRepository.findAll();
+        List<SupplierResponse> supplierDTOS = StreamSupport
+                .stream(suppliers.spliterator(), false)
+                .map(SupplierResponse::new)
+                .toList();
+
         return ResponseEntity.ok(supplierDTOS);
     }
 
@@ -105,8 +110,11 @@ public class StockController {
         }
 
         // Retorna todos os fornecedores após o cadastro
-        List<Supplier> suppliers = supplierRepository.findAll();
-        List<SupplierResponse> supplierDTOS = suppliers.stream().map(SupplierResponse::new).toList();
+        var suppliers = supplierRepository.findAll();
+        List<SupplierResponse> supplierDTOS = StreamSupport
+                .stream(suppliers.spliterator(), false)
+                .map(SupplierResponse::new)
+                .toList();
         return ResponseEntity.ok(supplierDTOS);
     }
 }

@@ -11,7 +11,7 @@ import java.util.*
 @Table("contract")
 class Contract {
     @Id
-    var contractId: Long = 0
+    var contractId: Long? = null
     var contractNumber: String? = null
     var contractor : String? = null
     var cnpj : String? = null

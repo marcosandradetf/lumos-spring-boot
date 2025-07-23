@@ -1,25 +1,21 @@
 package com.lumos.lumosspring.stock.entities;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
 
-@Entity
 public class Supplier {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "supplier_id")
     private Long supplierId;
 
-    @Column(columnDefinition = "TEXT")
     private String supplierName;
-    @Column(columnDefinition = "TEXT")
+
     private String supplierCnpj;
-    @Column(columnDefinition = "TEXT")
+
     private String supplierContact;
-    @Column(columnDefinition = "TEXT")
+
     private String supplierAddress;
-    @Column(columnDefinition = "TEXT")
+
     private String supplierPhone;
-    @Column(columnDefinition = "TEXT")
+
     private String supplierEmail;
 
     public Supplier() { }

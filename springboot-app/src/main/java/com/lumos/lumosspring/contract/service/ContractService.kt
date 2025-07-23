@@ -130,41 +130,49 @@ class ContractService(
             val items: List<ItemsForReport>,
         )
 
-        val items = mutableListOf<ItemsForReport>()
-
         val contract = contractRepository.findContractByContractId(contractId).orElseThrow()
-        var number = 1
 
-        val contractItems = contractItemsQuantitativeRepository.findAllByContractId(contractId)
-
-        contract.contractItem.sortedBy { it.referenceItem.description }
-            .forEach { item ->
-                items.add(
-                    ItemsForReport(
-                        number = number,
-                        contractItemId = item.contractItemId,
-                        description = item.referenceItem.description,
-                        unitPrice = item.unitPrice,
-                        contractedQuantity = item.contractedQuantity,
-                        linking = item.referenceItem.linking,
-                    )
+        val items = queryContractItems(contractId).sortedBy { it["description"] as String }
+            .mapIndexed { index, item ->
+                ItemsForReport(
+                    number = index + 1,
+                    contractItemId = item["contract_item_id"] as Long,
+                    description = item["description"] as String,
+                    unitPrice = item["unit_price"] as BigDecimal,
+                    contractedQuantity = (item["contracted_quantity"] as Number).toDouble(),
+                    linking = item["linking"] as String,
                 )
-                number += 1
             }
+
+        val user = userRepository.findByUserId(contract.createdBy).orElseThrow()
 
         return ResponseEntity.ok(
             ContractForReport(
-                contractId = contract.contractId,
+                contractId = contract.contractId!!,
                 number = contract.contractNumber ?: "",
                 contractor = contract.contractor ?: "",
                 cnpj = contract.cnpj ?: "",
                 phone = contract.phone ?: "",
                 address = contract.address ?: "",
                 contractFile = contract.contractFile,
-                createdBy = contract.createdBy.completedName,
+                createdBy = user.completedName,
                 createdAt = contract.creationDate.toString(),
                 items = items
             )
+        )
+    }
+
+     fun queryContractItems(contractId: Long): List<Map<String, Any>> {
+        return JdbcUtil.getRawData(
+            namedJdbc = namedJdbc,
+            """
+                select ci.contract_item_id, cri.description, ci.unit_price, ci.contracted_quantity,
+                ci.quantity_executed, cri.linking, cri.name_for_import, cri.type, cri.contract_reference_item_id
+                from contract_item ci
+                join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+                where ci.contract_contract_id = :contractId
+            """.trimIndent(),
+            mapOf("contractId" to contractId)
         )
     }
 
@@ -199,7 +207,7 @@ class ContractService(
             )
 
             ContractResponseDTO(
-                contractId = it.contractId,
+                contractId = it.contractId!!,
                 number = it.contractNumber ?: "",
                 contractor = it.contractor ?: "",
                 address = it.address ?: "",
@@ -272,24 +280,45 @@ class ContractService(
             val hasMaintenance: Boolean
         )
 
-//        val notAllowedTypes = listOf("SERVIÇO", "PROJETO", "CABO", "RELÉ")
-        val contractList = contractRepository.findAllByStatus(ContractStatus.ACTIVE).map { contract ->
+        val contractList = namedJdbc.query(
+            """
+                SELECT 
+                    c.contract_id, 
+                    c.contractor, 
+                    c.contract_file, 
+                    u.name || ' ' || u.last_name AS created_by,
+                    c.creation_date,
+                    c.status
+                FROM contract c
+                JOIN app_user u ON u.user_id = c.created_by_id_user
+            """.trimIndent(),
+            emptyMap<String, Any>() // Nenhum parâmetro necessário aqui
+        ) { rs, _ ->
+            var hasMaintenance = false
 
-            val filteredIds = contract.contractItem
-//                .filter { it.referenceItem.type.trim().uppercase() !in notAllowedTypes }
-                .map { it.referenceItem.contractReferenceItemId }
-                .joinToString("#")
-
-            val hasMaintenance = contract.contractItem.any { it.referenceItem.type.trim().lowercase() == "manutenção" }
+            val itemsIds: String = namedJdbc.query(
+                """
+                        SELECT ci.contract_item_id, cri.description
+                        FROM contract_item ci
+                        JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
+                        WHERE contract_contract_id = :contractId
+                    """.trimIndent(),
+                mapOf("contractId" to rs.getLong("contract_id"))
+            ) { rs, _ ->
+                if(rs.getString("description").contains("manuten", true)) {
+                    hasMaintenance = true
+                }
+                rs.getLong("contract_item_id")
+            }.joinToString("#")
 
             ContractForPreMeasurementDTO(
-                contractId = contract.contractId,
-                contractor = contract.contractor!!,
-                contractFile = contract.contractFile,
-                createdBy = contract.createdBy.name,
-                createdAt = contract.creationDate.toString(),
-                status = contract.status,
-                itemsIds = filteredIds.ifBlank { null },
+                contractId = rs.getLong("contract_id"),
+                contractor = rs.getString("contractor"),
+                contractFile = rs.getString("contract_file"),
+                createdBy = rs.getString("created_by"),
+                createdAt = rs.getString("creation_date"),
+                status = rs.getString("status"),
+                itemsIds = itemsIds,
                 hasMaintenance = hasMaintenance
             )
         }
@@ -299,15 +328,24 @@ class ContractService(
 
 
     @Cacheable("GetItemsForMobPreMeasurement")
-    fun getItemsForMob(): ResponseEntity<MutableList<PContractReferenceItemDTO>> {
-        val items = contractReferenceItemRepository.findAllByPreMeasurement()
+    fun getItemsForMob(): ResponseEntity<List<PContractReferenceItemDTO>> {
+        val items = contractReferenceItemRepository.findAll()
+            .map {
+                PContractReferenceItemDTO(
+                    contractReferenceItemId = it.contractReferenceItemId!!,
+                    description = it.description,
+                    nameForImport = it.nameForImport ?: it.description,
+                    type = it.type,
+                    linking = it.linking,
+                    itemDependency = it.itemDependency,
+                )
+            }
 
-        items.sortWith(
+        val sortedItems = items.sortedWith(
             compareBy<PContractReferenceItemDTO> { it.description }
-                .thenBy { util.extractNumber(it.linking) }
+                .thenBy { util.extractNumber(it.linking ?: "") }
         )
-
-        return ResponseEntity.ok(items)
+        return ResponseEntity.ok(sortedItems)
     }
 
     fun getContractItemsWithExecutionsSteps(contractId: Long): ResponseEntity<Any> {
@@ -325,27 +363,29 @@ class ContractService(
         )
 
         return ResponseEntity.ok().body(
-            contractRepository.findById(contractId).orElseThrow()
-                .contractItem
+            queryContractItems(contractId)
                 .sortedWith(
-                    compareByDescending<ContractItem> { it.quantityExecuted }
-                        .thenBy { it.referenceItem.description }
+                    compareByDescending<Map<String, Any>> {
+                        (it["quantity_executed"] as Number).toDouble()
+                    }.thenBy {
+                        it["description"] as? String ?: ""
+                    }
                 )
                 .mapIndexed { index, it ->
                     ContractItemsResponseWithExecutions(
                         number = index + 1,
-                        contractItemId = it.contractItemId,
-                        description = it.referenceItem.description,
-                        unitPrice = it.unitPrice.toPlainString(),
-                        contractedQuantity = it.contractedQuantity,
-                        executedQuantity = getExecutedQuantityByContract(it.contractItemId),
-                        totalExecuted = it.quantityExecuted,
-                        linking = it.referenceItem.linking,
-                        nameForImport = it.referenceItem.nameForImport,
-                        type = it.referenceItem.type
+                        contractItemId = it["contract_item_id"] as Long,
+                        description = it["description"] as String,
+                        unitPrice = (it["unit_price"] as BigDecimal).toPlainString(),
+                        contractedQuantity =  (it["contracted_quantity"] as Number).toDouble(),
+                        executedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long),
+                        totalExecuted =  (it["quantity_executed"] as Number).toDouble(),
+                        linking = it["linking"] as String,
+                        nameForImport = it["name_for_import"] as String,
+                        type = it["type"] as String
                     )
-                })
-
+                }
+        )
     }
 
     data class ExecutedQuantity(
@@ -372,7 +412,7 @@ class ContractService(
             mapOf("contractItemId" to contractItemId)
         )
 
-        return  directExecutions.mapIndexed { index, row ->
+        return directExecutions.mapIndexed { index, row ->
             ExecutedQuantity(
                 directExecutionId = row["direct_execution_id"] as Long,
                 step = (row["step"] as Number).toInt(), // ✅ usa a etapa real

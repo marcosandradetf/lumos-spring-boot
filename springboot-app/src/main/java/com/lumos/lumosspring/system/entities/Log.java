@@ -1,35 +1,43 @@
 package com.lumos.lumosspring.system.entities;
 
-import com.lumos.lumosspring.user.AppUser;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
+import java.util.UUID;
 
-@Entity
+@Table
 public class Log {
     @Id
-    @Column(name = "id_log")
-    private long idLog;
+    private Long idLog;
 
     private String message;
 
-    @ManyToOne
-    @JoinColumn(name = "id_user")
-    private AppUser appUser;
+    private UUID idUser;
 
-    @CreationTimestamp
     private Instant creationTimestamp;
 
     private String type;
 
     private String category;
 
-    public long getIdLog() {
+    public Log(Long idLog, String message, UUID idUser, Instant creationTimestamp, String type, String category) {
+        this.idLog = idLog;
+        this.message = message;
+        this.idUser = idUser;
+        this.creationTimestamp = creationTimestamp;
+        this.type = type;
+        this.category = category;
+    }
+
+    public Log() {
+    }
+
+    public Long getIdLog() {
         return idLog;
     }
 
-    public void setIdLog(long idLog) {
+    public void setIdLog(Long idLog) {
         this.idLog = idLog;
     }
 
@@ -41,12 +49,12 @@ public class Log {
         this.message = message;
     }
 
-    public AppUser getUser() {
-        return appUser;
+    public UUID getIdUser() {
+        return idUser;
     }
 
-    public void setUser(AppUser appUser) {
-        this.appUser = appUser;
+    public void setIdUser(UUID idUser) {
+        this.idUser = idUser;
     }
 
     public Instant getCreationTimestamp() {

@@ -25,7 +25,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 
 @Service
 public class DepositService {
@@ -53,14 +52,14 @@ public class DepositService {
 
         for (var deposit : deposits) {
             // Verifica se o campo 'company' é nulo
-            if (deposit.getCompany() != null) {
-                companyName = deposit.getCompany().getSocialReason();
+            if (deposit.getCompanyId() != null) {
+                companyName = companyRepository.findById(deposit.getCompanyId()).orElseThrow().getSocialReason();
             } else {
                 companyName = "Não definido";  // Valor padrão
             }
 
             if (deposit.getRegion() != null) {
-                depositRegion = deposit.getRegion().getRegionName();
+                depositRegion =  regionRepository.findById(deposit.getRegion()).orElseThrow().getRegionName();
             } else {
                 depositRegion = "Não definido";  // Valor padrão
             }
@@ -92,7 +91,7 @@ public class DepositService {
 
         var deposit = new Deposit();
         deposit.setDepositName(depositDTO.depositName());
-        deposit.setCompany(companyRepository.findById(depositDTO.companyId()).orElse(null));
+        deposit.setCompanyId(depositDTO.companyId());
         deposit.setDepositAddress(depositDTO.depositAddress());
         deposit.setDepositDistrict(depositDTO.depositDistrict());
         deposit.setDepositCity(depositDTO.depositCity());
@@ -102,12 +101,15 @@ public class DepositService {
         if (depositDTO.depositRegion() != null && !depositDTO.depositRegion().isEmpty()) {
             var region = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
             if (region.isPresent()) {
-                deposit.setRegion(region.get());
+                deposit.setRegion(region.get().getRegionId());
             } else {
-                var newRegion = new Region();
+                var newRegion = new Region(
+                        null,
+                        depositDTO.depositRegion()
+                );
                 newRegion.setRegionName(depositDTO.depositRegion());
                 regionRepository.save(newRegion);
-                deposit.setRegion(newRegion);
+                deposit.setRegion(newRegion.getRegionId());
             }
         }
 
@@ -118,18 +120,13 @@ public class DepositService {
 
     public ResponseEntity<?> update(Long depositId, DepositDTO depositDTO) {
         var deposit = depositRepository.findById(depositId).orElse(null);
-        ;
-        var company = companyRepository.findById(depositDTO.companyId()).orElse(null);
-        ;
+
         if (deposit == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (company == null) {
             return ResponseEntity.notFound().build();
         }
 
         deposit.setDepositName(depositDTO.depositName());
-        deposit.setCompany(company);
+        deposit.setCompanyId(depositDTO.companyId());
         deposit.setDepositAddress(depositDTO.depositAddress());
         deposit.setDepositDistrict(depositDTO.depositDistrict());
         deposit.setDepositCity(depositDTO.depositCity());
@@ -139,12 +136,15 @@ public class DepositService {
         if (depositDTO.depositRegion() != null && !depositDTO.depositRegion().isEmpty()) {
             var region = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
             if (region.isPresent()) {
-                deposit.setRegion(region.get());
+                deposit.setRegion(region.get().getRegionId());
             } else {
-                var newRegion = new Region();
+                var newRegion = new Region(
+                        null,
+                        depositDTO.depositRegion()
+                );
                 newRegion.setRegionName(depositDTO.depositRegion());
                 regionRepository.save(newRegion);
-                deposit.setRegion(newRegion);
+                deposit.setRegion(newRegion.getRegionId());
             }
         }
 
@@ -198,7 +198,7 @@ public class DepositService {
             depositName = deposit.getDepositName();
             depositAddress = deposit.getDepositAddress();
             depositPhone = deposit.getDepositPhone();
-            region = deposit.getRegion().getRegionName();
+            region = regionRepository.findById(deposit.getRegion()).orElseThrow().getRegionName();
 
             stockistsDto.add(new StockistModel(
                     stockist.getUserId().toString(),

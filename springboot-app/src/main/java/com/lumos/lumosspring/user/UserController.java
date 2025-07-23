@@ -4,16 +4,13 @@ import com.lumos.lumosspring.user.dto.CreateUserDto;
 import com.lumos.lumosspring.user.dto.PasswordDTO;
 import com.lumos.lumosspring.user.dto.UpdateUserDto;
 import com.lumos.lumosspring.user.dto.UserResponse;
-import jakarta.transaction.Transactional;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/user")
@@ -40,7 +37,7 @@ public class UserController {
 
     @GetMapping("/get-roles")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public List<Role> findAllRoles() {
+    public Iterable<Role> findAllRoles() {
         return roleRepository.findAll();
     }
 

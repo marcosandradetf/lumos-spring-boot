@@ -1,19 +1,14 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.team.entities.Region;
-import com.lumos.lumosspring.team.entities.Stockist;
-import com.lumos.lumosspring.team.entities.Team;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.List;
-import java.util.Set;
-
-@Entity
+@Table
 public class Deposit {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long idDeposit;
-    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
+    private Long idDeposit;
+
     private String depositName;
 
     private String depositAddress;
@@ -26,25 +21,31 @@ public class Deposit {
 
     private String depositPhone;
 
-    @ManyToOne
-    @JoinColumn(name = "company_id", nullable = false)
-    private Company company;
+    @Column("company_id")
+    private Long companyId;
 
-    @OneToMany(mappedBy = "deposit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<MaterialStock> materialStocks;
+    @Column("region_id")
+    private Long region;
 
-    @ManyToOne
-    @JoinColumn(name = "region_id")
-    private Region region;
+    public Deposit(Long idDeposit, String depositName, String depositAddress, String depositDistrict, String depositCity, String depositState, String depositPhone, Long companyId, Long region) {
+        this.idDeposit = idDeposit;
+        this.depositName = depositName;
+        this.depositAddress = depositAddress;
+        this.depositDistrict = depositDistrict;
+        this.depositCity = depositCity;
+        this.depositState = depositState;
+        this.depositPhone = depositPhone;
+        this.companyId = companyId;
+        this.region = region;
+    }
 
-    @OneToMany(mappedBy = "deposit")
-    private List<Team> teams;
+    public Deposit() {}
 
-    public long getIdDeposit() {
+    public Long getIdDeposit() {
         return idDeposit;
     }
 
-    public void setIdDeposit(long idDeposit) {
+    public void setIdDeposit(Long idDeposit) {
         this.idDeposit = idDeposit;
     }
 
@@ -54,13 +55,6 @@ public class Deposit {
 
     public void setDepositName(String depositName) {
         this.depositName = depositName;
-    }
-
-    public void setCompany(Company company) {
-        this.company = company;
-    }
-    public Company getCompany() {
-        return company;
     }
 
     public String getDepositAddress() {
@@ -103,27 +97,19 @@ public class Deposit {
         this.depositPhone = depositPhone;
     }
 
-    public Region getRegion() {
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
+    }
+
+    public Long getRegion() {
         return region;
     }
 
-    public void setRegion(Region region) {
+    public void setRegion(Long region) {
         this.region = region;
-    }
-
-    public Set<MaterialStock> getMaterialStocks() {
-        return materialStocks;
-    }
-
-    public void setMaterialStocks(Set<MaterialStock> productStocks) {
-        this.materialStocks = productStocks;
-    }
-
-    public List<Team> getTeams() {
-        return teams;
-    }
-
-    public void setTeams(List<Team> teams) {
-        this.teams = teams;
     }
 }

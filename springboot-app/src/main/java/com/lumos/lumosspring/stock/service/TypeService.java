@@ -44,7 +44,7 @@ public class TypeService {
 
         MaterialType materialType = new MaterialType();
         materialType.setTypeName(typeDTO.typeName());
-        materialType.setGroup(groupRepository.findById(typeDTO.groupId()).orElse(null));
+        materialType.setIdGroup(typeDTO.groupId());
         tipoRepository.save(materialType);
 
         return ResponseEntity.ok(this.findAll());
@@ -52,16 +52,12 @@ public class TypeService {
 
     public ResponseEntity<?> update(Long typeId ,TypeDTO typeDTO) {
         var type = typeRepository.findById(typeId).orElse(null);
-        var group = groupRepository.findById(typeDTO.groupId()).orElse(null);
         if (type == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (group == null) {
             return ResponseEntity.notFound().build();
         }
 
         type.setTypeName(typeDTO.typeName());
-        type.setGroup(group);
+        type.setIdGroup(typeDTO.groupId());
         tipoRepository.save(type);
 
         return ResponseEntity.ok(this.findAll());

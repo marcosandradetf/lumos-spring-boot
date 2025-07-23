@@ -1,129 +1,106 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.execution.entities.MaterialReservation;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
-@Entity
+@Table
 public class MaterialStock {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long materialIdStock;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "material_id", nullable = false)
-    private Material material;
+    private Long materialId;
 
-    @ManyToOne
-    @JoinColumn(name = "deposit_id", nullable = false)
-    private Deposit deposit;
+    private Long depositId;
 
-    @ManyToOne
-    @JoinColumn(name = "company_id", nullable = false)
-    private Company company;
+    private Long companyId;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
     private String buyUnit;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
     private String requestUnit;
 
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double stockQuantity;
 
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double stockAvailable;
 
     private BigDecimal costPerItem;
 
     private BigDecimal costPrice;
 
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean inactive;
 
+    public  MaterialStock() {}
+
+    public MaterialStock(Long materialIdStock, Long materialId, Long depositId, Long companyId, String buyUnit, String requestUnit, double stockQuantity, double stockAvailable, BigDecimal costPerItem, BigDecimal costPrice, boolean inactive) {
+        this.materialIdStock = materialIdStock;
+        this.materialId = materialId;
+        this.depositId = depositId;
+        this.companyId = companyId;
+        this.buyUnit = buyUnit;
+        this.requestUnit = requestUnit;
+        this.stockQuantity = stockQuantity;
+        this.stockAvailable = stockAvailable;
+        this.costPerItem = costPerItem;
+        this.costPrice = costPrice;
+        this.inactive = inactive;
+    }
 
     public Long getMaterialIdStock() {
         return materialIdStock;
     }
 
-    public void setMaterialIdStock(Long productIdStock) {
-        this.materialIdStock = productIdStock;
+    public void setMaterialIdStock(Long materialIdStock) {
+        this.materialIdStock = materialIdStock;
     }
 
-    public Material getMaterial() {
-        return material;
+    public Long getMaterialId() {
+        return materialId;
     }
 
-    public void setMaterial(Material material) {
-        this.material = material;
+    public void setMaterialId(Long materialId) {
+        this.materialId = materialId;
     }
 
-    public Deposit getDeposit() {
-        return deposit;
+    public Long getDepositId() {
+        return depositId;
     }
 
-    public void setDeposit(Deposit deposit) {
-        this.deposit = deposit;
+    public void setDepositId(Long depositId) {
+        this.depositId = depositId;
     }
 
-    public Company getCompany() {
-        return company;
+    public Long getCompanyId() {
+        return companyId;
     }
 
-    public void setCompany(Company company) {
-        this.company = company;
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 
     public String getBuyUnit() {
         return buyUnit;
     }
 
-    public void setBuyUnit(String unidadeCompra) {
-        this.buyUnit = unidadeCompra;
+    public void setBuyUnit(String buyUnit) {
+        this.buyUnit = buyUnit;
     }
 
     public String getRequestUnit() {
         return requestUnit;
     }
 
-    public void setRequestUnit(String unidadeRequisicao) {
-        this.requestUnit = unidadeRequisicao;
+    public void setRequestUnit(String requestUnit) {
+        this.requestUnit = requestUnit;
     }
 
     public double getStockQuantity() {
         return stockQuantity;
     }
 
-    public void setStockQuantity(double qtdeEstoque) {
-        this.stockQuantity = qtdeEstoque;
-    }
-
-    public boolean isInactive() {
-        return inactive;
-    }
-
-    public void setInactive(boolean inativo) {
-        this.inactive = inativo;
-    }
-
-    public void addStockQuantity(double quantityCompleted) {
-        this.stockQuantity += quantityCompleted;
-    }
-
-    public void addStockAvailable(double quantityAvailable) {
-        this.stockAvailable += quantityAvailable;
-    }
-
-    public void removeStockQuantity(Double quantityCompleted) {
-        this.stockQuantity -= quantityCompleted;
-    }
-
-    public void removeStockAvailable(double quantityAvailable) {
-        if (this.stockAvailable > 0) this.stockAvailable -= quantityAvailable;
+    public void setStockQuantity(double stockQuantity) {
+        this.stockQuantity = stockQuantity;
     }
 
     public double getStockAvailable() {
@@ -134,6 +111,14 @@ public class MaterialStock {
         this.stockAvailable = stockAvailable;
     }
 
+    public BigDecimal getCostPerItem() {
+        return costPerItem;
+    }
+
+    public void setCostPerItem(BigDecimal costPerItem) {
+        this.costPerItem = costPerItem;
+    }
+
     public BigDecimal getCostPrice() {
         return costPrice;
     }
@@ -142,12 +127,20 @@ public class MaterialStock {
         this.costPrice = costPrice;
     }
 
-    public BigDecimal getCostPerItem() {
-        return costPerItem;
+    public boolean isInactive() {
+        return inactive;
     }
 
-    public void setCostPerItem(BigDecimal costPerItem) {
-        this.costPerItem = costPerItem;
+    public void setInactive(boolean inactive) {
+        this.inactive = inactive;
+    }
+
+    public void addStockQuantity(double quantityCompleted) {
+        this.stockQuantity += quantityCompleted;
+    }
+
+    public void addStockAvailable(double quantityAvailable) {
+        this.stockAvailable += quantityAvailable;
     }
 
 }

@@ -5,13 +5,12 @@ import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
 import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
+import com.lumos.lumosspring.stock.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.team.repository.StockistRepository;
-import com.lumos.lumosspring.user.Role;
-import com.lumos.lumosspring.user.AppUser;
-import com.lumos.lumosspring.user.UserRepository;
-import com.lumos.lumosspring.user.UserService;
+import com.lumos.lumosspring.team.repository.TeamRepository;
+import com.lumos.lumosspring.user.*;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Util;
 import jakarta.servlet.http.Cookie;
@@ -40,8 +39,11 @@ public class TokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final Util util;
     private final StockistRepository stockistRepository;
+    private final RoleRepository roleRepository;
+    private final TeamRepository teamRepository;
+    private final TeamQueryRepository teamQueryRepository;
 
-    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, Util util, StockistRepository stockistRepository) {
+    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, Util util, StockistRepository stockistRepository, RoleRepository roleRepository, TeamRepository teamRepository, TeamQueryRepository teamQueryRepository) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
@@ -49,13 +51,16 @@ public class TokenService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.util = util;
         this.stockistRepository = stockistRepository;
+        this.roleRepository = roleRepository;
+        this.teamRepository = teamRepository;
+        this.teamQueryRepository = teamQueryRepository;
     }
 
-    @Scheduled(cron = "0 0 3 * * *") // Roda todo dia às 3 da manhã
-    @Transactional
-    public void cleanUpExpiredTokens() {
-        refreshTokenRepository.deleteExpiredOrRevokedTokens(util.getDateTime());
-    }
+//    @Scheduled(cron = "0 0 3 * * *") // Roda todo dia às 3 da manhã
+//    @Transactional
+//    public void cleanUpExpiredTokens() {
+//        refreshTokenRepository.deleteExpiredOrRevokedTokens(util.getDateTime());
+//    }
 
     public ResponseEntity<?> forgotPassword(LoginRequest loginRequest) {
         var user = userService.findUserByUsernameOrCpf(loginRequest.username());
@@ -80,7 +85,7 @@ public class TokenService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        var user = tokenFromDb.get().getUser();
+        var user = userRepository.findByUserId(tokenFromDb.get().getUser()).orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
         var scope = getScope(user);
 
         // Cria novo token de acesso com as mesmas informações do refresh token
@@ -107,14 +112,25 @@ public class TokenService {
         }
 
         if (isMobile) {
-            var allowedRoles = new HashSet<>(Set.of(Role.Values.MOTORISTA.name(), Role.Values.ELETRICISTA.name(), Role.Values.ANALISTA.name(), Role.Values.ADMIN.name(), Role.Values.RESPONSAVEL_TECNICO.name()));
-            var roles = user.get().getRoles();
-            boolean hasAccess = roles.stream().anyMatch(roleName -> allowedRoles.contains(roleName.getRoleName()));
+            var allowedRoles = new HashSet<>(Set.of(
+                    Role.Values.MOTORISTA.name(),
+                    Role.Values.ELETRICISTA.name(),
+                    Role.Values.ANALISTA.name(),
+                    Role.Values.ADMIN.name(),
+                    Role.Values.RESPONSAVEL_TECNICO.name()
+            ));
+
+            // Busca direto as roles do usuário sem precisar buscar UserRole e Role separadamente
+            var rolesNames = roleRepository.findRolesByUserId(user.get().getUserId());
+
+            // Verificar se o usuário tem acesso
+            boolean hasAccess = rolesNames.stream().anyMatch(allowedRoles::contains);
 
             if (!hasAccess) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário sem acesso ao aplicativo"));
             }
         }
+
 
         var now = util.getDateTime();
         var expiresIn = 1800L; // 30 Minutos
@@ -202,37 +218,23 @@ public class TokenService {
     }
 
     private String getRoles(AppUser appUser) {
-        return appUser.getRoles()
-                .stream()
-                .map(Role::getRoleName)
-                .collect(Collectors.joining(" "));
+        var rolesNames = roleRepository.findRolesByUserId(appUser.getUserId());
+        return String.join(" ", rolesNames);
     }
-
     private String getTeams(AppUser appUser) {
-        var eTeams = Optional.ofNullable(appUser.getElectricians())
-                .orElse(Collections.emptyList())
-                .stream()
-                .map(Team::getTeamCode)
-                .collect(Collectors.joining(" "));
+        var teamId = teamQueryRepository.getTeamIdByUserId(appUser.getUserId()).toString();
 
-        var dTeams = Optional.ofNullable(appUser.getDrivers())
-                .orElse(Collections.emptyList())
-                .stream()
-                .map(Team::getTeamCode)
-                .collect(Collectors.joining(" "));
-
-        var stockists = stockistRepository.findAllByUserId(appUser.getUserId());
-        var sTeams = Optional.ofNullable(stockists)
-                .orElse(Collections.emptyList())
-                .stream()
+        // Obter códigos dos stockists diretamente e juntar com espaço
+        var sTeams = stockistRepository.findAllByUserId(appUser.getUserId()).stream()
                 .map(Stockist::getStockistCode)
                 .collect(Collectors.joining(" "));
 
-        // Junta todos com espaços, ignorando vazios
-        return Stream.of(eTeams, dTeams, sTeams)
+        // Junta teamId e sTeams, ignorando valores nulos ou vazios
+        return Stream.of(teamId, sTeams)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.joining(" "));
     }
+
 
     private JwtClaimsSet getAccessClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
         return JwtClaimsSet.builder()

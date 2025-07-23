@@ -1,14 +1,13 @@
 package com.lumos.lumosspring.user;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
+@Table
 public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long roleId;
+    private Long roleId;
 
-    @Column(unique = true)
     private String roleName;
 
     public long getRoleId() {

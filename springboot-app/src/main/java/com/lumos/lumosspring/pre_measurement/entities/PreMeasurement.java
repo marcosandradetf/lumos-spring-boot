@@ -1,44 +1,25 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
-import com.lumos.lumosspring.contract.entities.Contract;
-import com.lumos.lumosspring.team.entities.Region;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
 
-@Entity
+@Table
 public class PreMeasurement {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pre_measurement_id")
     private Long preMeasurementId;
-
-    @OneToMany(mappedBy = "preMeasurement", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PreMeasurementStreet> streets = new HashSet<>();
 
     private String city;
 
-    @Column(columnDefinition = "TEXT")
     private String htmlReport;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Contract contract;
+    @Column("contract_contract_id")
+    private Long contractId;
 
-    // Métodos auxiliares para garantir consistência no relacionamento
-    public void addStreet(PreMeasurementStreet street) {
-        streets.add(street);
-        street.setPreMeasurement(this);
-    }
-
-    public void removeStreet(PreMeasurementStreet street) {
-        streets.remove(street);
-        street.setPreMeasurement(null);
-    }
-
-    @ManyToOne
-    private Region region;
+    @Column("region_region_id")
+    private Long regionId;
 
     private String status;
 
@@ -46,32 +27,14 @@ public class PreMeasurement {
 
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    @Column(nullable = false)
     private Integer steps = 0;
 
     public Long getPreMeasurementId() {
         return preMeasurementId;
     }
 
-    public void setPreMeasurementId(long preMeasurementId) {
+    public void setPreMeasurementId(Long preMeasurementId) {
         this.preMeasurementId = preMeasurementId;
-    }
-
-    public Region getRegion() {
-        return region;
-    }
-
-    public void setRegion(Region region) {
-        this.region = region;
-    }
-
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public String getCity() {
@@ -82,28 +45,44 @@ public class PreMeasurement {
         this.city = city;
     }
 
+    public String getHtmlReport() {
+        return htmlReport;
+    }
+
+    public void setHtmlReport(String htmlReport) {
+        this.htmlReport = htmlReport;
+    }
+
+    public Long getContractId() {
+        return contractId;
+    }
+
+    public void setContractId(Long contractId) {
+        this.contractId = contractId;
+    }
+
+    public Long getRegionId() {
+        return regionId;
+    }
+
+    public void setRegionId(Long regionId) {
+        this.regionId = regionId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getTypePreMeasurement() {
         return typePreMeasurement;
     }
 
     public void setTypePreMeasurement(String typePreMeasurement) {
         this.typePreMeasurement = typePreMeasurement;
-    }
-
-    public Set<PreMeasurementStreet> getStreets() {
-        return streets;
-    }
-
-    public void setStreets(Set<PreMeasurementStreet> streets) {
-        this.streets = streets;
-    }
-
-    public void sumTotalPrice(BigDecimal value) {
-        this.totalPrice = this.totalPrice.add(value);
-    }
-
-    public void subtractTotalPrice(BigDecimal value) {
-        this.totalPrice = this.totalPrice.subtract(value);
     }
 
     public BigDecimal getTotalPrice() {
@@ -114,30 +93,13 @@ public class PreMeasurement {
         this.totalPrice = totalPrice;
     }
 
-    public String getHtmlReport() {
-        return htmlReport;
-    }
-
-    public void setHtmlReport(String htmlReport) {
-        this.htmlReport = htmlReport;
-    }
-
-    public Contract getContract() {
-        return contract;
-    }
-
-    public void setContract(Contract contract) {
-        this.contract = contract;
-    }
-
     public Integer getSteps() {
         return steps;
     }
 
-    public void newStep() {
-        steps++;
+    public void setSteps(Integer steps) {
+        this.steps = steps;
     }
-
 }
 
 

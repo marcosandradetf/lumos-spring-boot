@@ -1,9 +1,6 @@
 package com.lumos.lumosspring.config;
 
-import com.lumos.lumosspring.user.AppUser;
-import com.lumos.lumosspring.user.Role;
-import com.lumos.lumosspring.user.RoleRepository;
-import com.lumos.lumosspring.user.UserRepository;
+import com.lumos.lumosspring.user.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,11 +15,13 @@ public class AdminUserConfig implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserRoleRepository userRoleRepository;
 
-    public AdminUserConfig(RoleRepository roleRepository, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    public AdminUserConfig(RoleRepository roleRepository, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, UserRoleRepository userRoleRepository) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userRoleRepository = userRoleRepository;
     }
 
     @Override
@@ -42,7 +41,12 @@ public class AdminUserConfig implements CommandLineRunner {
                     user.setEmail("admin@admin.com");
                     user.setDateOfBirth(date);
                     user.setPassword(passwordEncoder.encode("admin@scl"));
-                    user.setRoles(Set.of(roleAdmin, roleManager));
+                    for (Role role : Set.of(roleAdmin, roleManager)) {
+                        var newRole = new UserRole(
+                                user.getUserId(), role.getRoleId()
+                        );
+                        userRoleRepository.save(newRole);
+                    }
                     user.setStatus(true);
                     userRepository.save(user);
                 }
@@ -59,7 +63,12 @@ public class AdminUserConfig implements CommandLineRunner {
                     user.setEmail("support@support.com");
                     user.setDateOfBirth(date);
                     user.setPassword(passwordEncoder.encode("4dejulho_"));
-                    user.setRoles(Set.of(roleAdmin));
+                    for (Role role : Set.of(roleAdmin, roleManager)) {
+                        var newRole = new UserRole(
+                                user.getUserId(), role.getRoleId()
+                        );
+                        userRoleRepository.save(newRole);
+                    }
                     user.setStatus(true);
                     userRepository.save(user);
                 }

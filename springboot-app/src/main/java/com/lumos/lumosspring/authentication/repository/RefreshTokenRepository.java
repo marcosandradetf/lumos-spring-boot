@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.lumos.lumosspring.user.AppUser;
+import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
@@ -15,8 +16,7 @@ public interface RefreshTokenRepository extends CrudRepository<RefreshToken, Lon
     Optional<RefreshToken> findByToken(String token);
     Optional<List<RefreshToken>> findByAppUser(UUID appUser);
 
-    @Modifying
-    @Query("DELETE FROM RefreshToken t WHERE t.expiryDate < :now OR t.revoked = true")
-    void deleteExpiredOrRevokedTokens(@Param("now") Instant now);
+//    @Query("DELETE FROM refresh_token WHERE expiry_date < :now OR revoked = true")
+//    void deleteExpiredOrRevokedTokens(@Param("now") Instant now);
 
 }

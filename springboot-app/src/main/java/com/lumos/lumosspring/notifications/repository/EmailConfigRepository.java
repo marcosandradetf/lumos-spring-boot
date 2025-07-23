@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.notifications.repository;
 
 import com.lumos.lumosspring.notifications.entities.EmailConfig;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 
-public interface EmailConfigRepository extends JpaRepository<EmailConfig, Long> {
+public interface EmailConfigRepository extends CrudRepository<EmailConfig, Long> {
 }

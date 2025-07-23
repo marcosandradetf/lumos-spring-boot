@@ -28,13 +28,15 @@ public class UserService {
     private final EmailService emailService;
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRoleRepository userRoleRepository;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository, UserRoleRepository userRoleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.userRoleRepository = userRoleRepository;
     }
 
     @Cacheable("getAllUsers")
@@ -44,6 +46,8 @@ public class UserService {
         for (AppUser appUser : appUsers) {
             if (appUser.getStatus()) {
                 LocalDate dateOfBirth = appUser.getDateOfBirth();
+                var roles = roleRepository.findRolesByUserId(appUser.getUserId());
+
                 userResponses.add(new UserResponse(
                         appUser.getUserId().toString(),
                         appUser.getUsername(),
@@ -51,9 +55,7 @@ public class UserService {
                         appUser.getLastName(),
                         appUser.getEmail(),
                         appUser.getCpf(),
-                        appUser.getRoles().stream()
-                                .map(Role::getRoleName) // Pega apenas o nome de cada Role
-                                .collect(Collectors.toList()), // Coleta como uma lista
+                        roles,
                         dateOfBirth != null ? dateOfBirth.getYear() : null,
                         dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
                         dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
@@ -72,6 +74,7 @@ public class UserService {
             return ResponseEntity.notFound().build();
         }
         LocalDate dateOfBirth = user.get().getDateOfBirth();
+        var roles = roleRepository.findRolesByUserId(user.get().getUserId());
         UserResponse userResponse = new UserResponse(
                 user.get().getUserId().toString(),
                 user.get().getUsername(),
@@ -79,9 +82,7 @@ public class UserService {
                 user.get().getLastName(),
                 user.get().getEmail(),
                 user.get().getCpf(),
-                user.get().getRoles().stream()
-                        .map(Role::getRoleName) // Pega apenas o nome de cada Role
-                        .collect(Collectors.toList()), // Coleta como uma lista
+                roles,
                 dateOfBirth != null ? dateOfBirth.getYear() : null,
                 dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
                 dateOfBirth != null ? dateOfBirth.getDayOfMonth() : null,
@@ -249,14 +250,12 @@ public class UserService {
                 userRoles.add(role);
             }
 
-            Set<String> oldRoleNames = user.get().getRoles().stream()
-                    .map(Role::getRoleName)
-                    .collect(Collectors.toSet());
+            var oldRoleNames = roleRepository.findRolesByUserId(user.get().getUserId());
 
-            Set<String> newRoleNames = new HashSet<>(u.role());
+            List<String> newRoleNames = new ArrayList<>(u.role());
 
             if (!u.status() || !oldRoleNames.equals(newRoleNames)) {
-                refreshTokenRepository.findByAppUser(user.get())
+                refreshTokenRepository.findByAppUser(user.get().getUserId())
                         .ifPresent(tokens -> tokens.forEach(token -> {
                             token.setRevoked(true);
                             refreshTokenRepository.save(token);
@@ -269,8 +268,15 @@ public class UserService {
             user.get().setEmail(u.email());
             user.get().setCpf(u.cpf());
             user.get().setDateOfBirth(date);
-            user.get().setRoles(userRoles);
             user.get().setStatus(u.status());
+
+            for (Role role : userRoles) {
+                var newRole = new UserRole(
+                        user.get().getUserId(), role.getRoleId()
+                );
+                userRoleRepository.save(newRole);
+            }
+
             userRepository.save(user.get());
 
         }
@@ -343,9 +349,15 @@ public class UserService {
             user.setEmail(u.email());
             user.setCpf(u.cpf());
             user.setDateOfBirth(date);
-            user.setRoles(userRoles);
             user.setStatus(u.status());
-            userRepository.save(user);
+            user = userRepository.save(user);
+
+            for (Role role : userRoles) {
+                var newRole = new UserRole(
+                        user.getUserId(), role.getRoleId()
+                );
+                userRoleRepository.save(newRole);
+            }
 
             emailService.sendPasswordForEmail(u.name(), u.email(), password);
         }

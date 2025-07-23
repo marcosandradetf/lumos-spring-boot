@@ -33,8 +33,10 @@ public class GroupService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este grupo já existe."));
         }
 
-        var group = new MaterialGroup();
-        group.setGroupName(groupName);
+        var group = new MaterialGroup(
+                null,
+                groupName
+        );
         groupRepository.save(group);
 
         return ResponseEntity.ok(this.findAll());
@@ -45,8 +47,12 @@ public class GroupService {
         if (group == null) {
             return ResponseEntity.notFound().build();
         }
-        group.setGroupName(groupName);
+        group = new MaterialGroup(
+                group.getIdGroup(),
+                groupName
+        );
         groupRepository.save(group);
+
 
         return ResponseEntity.ok(this.findAll());
     }

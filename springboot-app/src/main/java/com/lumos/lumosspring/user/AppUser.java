@@ -31,22 +31,9 @@ public class AppUser {
 
     private String cpf;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_role",
-            joinColumns = @JoinColumn(name = "id_user"),
-            inverseJoinColumns = @JoinColumn(name = "id_role")
-    )
-    private Set<Role> roles;
-
     private LocalDate dateOfBirth;
 
     private Boolean status;
-
-    private List<Team> drivers;
-
-    private List<Team> electricians;
-
 
     public UUID getUserId() {
         return userId;
@@ -80,13 +67,6 @@ public class AppUser {
         this.password = password;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
 
     public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder) {
         return passwordEncoder.matches(loginRequest.password(), this.password);
@@ -143,22 +123,7 @@ public class AppUser {
     public void setCpf(String cpf) {
         this.cpf = cpf;
     }
-
-    public List<Team> getDrivers() {
-        return drivers;
-    }
-
-    public void setDrivers(List<Team> drivers) {
-        this.drivers = drivers;
-    }
-
-    public List<Team> getElectricians() {
-        return electricians;
-    }
-
-    public void setElectricians(List<Team> electricians) {
-        this.electricians = electricians;
-    }
+    
 
     public String getPhoneNumber() {
         return phoneNumber;

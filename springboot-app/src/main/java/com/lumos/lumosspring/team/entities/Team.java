@@ -1,59 +1,41 @@
 package com.lumos.lumosspring.team.entities;
 
-import com.lumos.lumosspring.stock.entities.Deposit;
-import com.lumos.lumosspring.user.AppUser;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+import java.util.UUID;
 
-import java.util.List;
 
-
-@Entity
+@Table
 public class Team {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_team")
-    private long idTeam;
+    private Long idTeam;
 
-    @Column(columnDefinition = "TEXT")
     private String teamName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
-    private AppUser driver;
+    private UUID driverId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "electrician_id", nullable = false)
-    private AppUser electrician;
-
-    @ManyToMany
-    @JoinTable(
-            name = "team_complementary_member",
-            joinColumns = @JoinColumn(name = "team_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<AppUser> complementaryMembers;
+    private UUID electricianId;
 
     private String plateVehicle;
 
-    @Column(columnDefinition = "TEXT")
     private String UFName;
 
-    @Column(columnDefinition = "TEXT")
     private String cityName;
 
     private String teamPhone;
 
-    @ManyToOne
+    @Column("region_region_id")
     private Region region;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Deposit deposit;
+    @Column("deposit_id_deposit")
+    private Long depositId;
 
     public long getIdTeam() {
         return idTeam;
     }
 
-    public void setIdTeam(long idTeam) {
+    public void setIdTeam(Long idTeam) {
         this.idTeam = idTeam;
     }
 
@@ -65,43 +47,44 @@ public class Team {
         this.teamName = teamName;
     }
 
-    public AppUser getDriver() {
-        return driver;
+
+    public Team(Long idTeam, String teamName, UUID driverId, UUID electricianId, String plateVehicle, String UFName, String cityName, String teamPhone, Region region, Long depositId) {
+        this.idTeam = idTeam;
+        this.teamName = teamName;
+        this.driverId = driverId;
+        this.electricianId = electricianId;
+        this.plateVehicle = plateVehicle;
+        this.UFName = UFName;
+        this.cityName = cityName;
+        this.teamPhone = teamPhone;
+        this.region = region;
+        this.depositId = depositId;
     }
 
-    public void setDriver(AppUser driver) {
-        this.driver = driver;
+    public Team() {}
+
+    public UUID getDriverId() {
+        return driverId;
     }
 
-    public AppUser getElectrician() {
-        return electrician;
+    public void setDriverId(UUID driverId) {
+        this.driverId = driverId;
     }
 
-    public void setElectrician(AppUser electrician) {
-        this.electrician = electrician;
+    public UUID getElectricianId() {
+        return electricianId;
     }
 
-    public List<AppUser> getComplementaryMembers() {
-        return complementaryMembers;
+    public void setElectricianId(UUID electricianId) {
+        this.electricianId = electricianId;
     }
 
-    public void setComplementaryMembers(List<AppUser> complementaryMembers) {
-        this.complementaryMembers = complementaryMembers;
-    }
     public String getPlateVehicle() {
         return plateVehicle;
     }
 
     public void setPlateVehicle(String plateVehicle) {
         this.plateVehicle = plateVehicle;
-    }
-
-    public Region getRegion() {
-        return region;
-    }
-
-    public void setRegion(Region region) {
-        this.region = region;
     }
 
     public String getUFName() {
@@ -120,18 +103,6 @@ public class Team {
         this.cityName = cityName;
     }
 
-    public Deposit getDeposit() {
-        return deposit;
-    }
-
-    public void setDeposit(Deposit deposit) {
-        this.deposit = deposit;
-    }
-
-    public String getTeamCode() {
-        return driver.getUserId().toString().concat("_").concat(String.valueOf(idTeam));
-    }
-
     public String getTeamPhone() {
         return teamPhone;
     }
@@ -139,5 +110,27 @@ public class Team {
     public void setTeamPhone(String teamPhone) {
         this.teamPhone = teamPhone;
     }
+
+    public Region getRegion() {
+        return region;
+    }
+
+    public void setRegion(Region region) {
+        this.region = region;
+    }
+
+    public Long getDepositId() {
+        return depositId;
+    }
+
+    public void setDepositId(Long depositId) {
+        this.depositId = depositId;
+    }
+
+
+    public String getTeamCode() {
+        return getDriverId().toString().concat("_").concat(String.valueOf(idTeam));
+    }
+
 
 }

@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.execution.service
 
 import com.lumos.lumosspring.contract.repository.ContractRepository
+import com.lumos.lumosspring.contract.service.ContractService
 import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.entities.*
 import com.lumos.lumosspring.execution.repository.*
@@ -10,6 +11,8 @@ import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.DepositRepository
+import com.lumos.lumosspring.stock.repository.MaterialRepository
+import com.lumos.lumosspring.stock.repository.MaterialStockJdbcRepository
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository
 import com.lumos.lumosspring.stock.repository.ReservationManagementRepository
 import com.lumos.lumosspring.team.repository.TeamRepository
@@ -49,60 +52,63 @@ class ExecutionService(
     private val jdbcGetExecutionRepository: JdbcGetExecutionRepository,
     private val directExecutionRepositoryStreet: DirectExecutionRepositoryStreet,
     private val directExecutionRepositoryStreetItem: DirectExecutionRepositoryStreetItem,
+    private val materialStockJdbcRepository: MaterialStockJdbcRepository,
+    private val contractService: ContractService,
+    private val materialRepository: MaterialRepository,
 ) {
 
-    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
-    @Transactional
-    fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
-        val stockist =
-            userRepository.findByUserId(UUID.fromString(delegateDTO.stockistId))
-                .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(DefaultResponse("Estoquista não encontrado"))
-
-        val streets = preMeasurementStreetRepository.getAllByPreMeasurement_PreMeasurementIdAndStep(
-            delegateDTO.preMeasurementId,
-            delegateDTO.preMeasurementStep
-        )
-
-        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(DefaultResponse("Nenhuma rua foi Encontrada"))
-
-        val existingManagement = reservationManagementRepository
-            .existsByStreetsPreMeasurementPreMeasurementIdAndStreetsStep(
-                delegateDTO.preMeasurementId,
-                delegateDTO.preMeasurementStep
-            )
-
-        if (existingManagement) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(DefaultResponse("Já existe uma gestão de reserva para esse estoquista e essas ruas."))
-        }
-
-        val management = ReservationManagement()
-        management.description = delegateDTO.description
-        management.stockist = stockist
-
-        reservationManagementRepository.save(management)
-
-        val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
-        for (delegateStreet in delegateDTO.street) {
-            val team = teamRepository.findById(delegateStreet.teamId)
-                .orElse(null) ?: throw IllegalStateException()
-            val assignBy = userRepository.findByUserId(currentUserUUID)
-                .orElse(null) ?: throw IllegalStateException()
-            val prioritized = delegateStreet.prioritized
-            val comment = delegateStreet.comment
-
-            streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
-                ?.assignToStockistAndTeam(team, assignBy, util.dateTime, prioritized, comment, management)
-                ?: throw IllegalStateException("A rua ${delegateStreet.preMeasurementStreetId} enviada não foi encontrada")
-
-        }
-
-        preMeasurementStreetRepository.saveAll(streets)
-
-        return ResponseEntity.ok().build()
-    }
+//    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
+//    @Transactional
+//    fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
+//        val stockist =
+//            userRepository.findByUserId(UUID.fromString(delegateDTO.stockistId))
+//                .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                .body(DefaultResponse("Estoquista não encontrado"))
+//
+//        val streets = preMeasurementStreetRepository.getAllByPreMeasurement_PreMeasurementIdAndStep(
+//            delegateDTO.preMeasurementId,
+//            delegateDTO.preMeasurementStep
+//        )
+//
+//        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//            .body(DefaultResponse("Nenhuma rua foi Encontrada"))
+//
+//        val existingManagement = reservationManagementRepository
+//            .existsByStreetsPreMeasurementPreMeasurementIdAndStreetsStep(
+//                delegateDTO.preMeasurementId,
+//                delegateDTO.preMeasurementStep
+//            )
+//
+//        if (existingManagement) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT)
+//                .body(DefaultResponse("Já existe uma gestão de reserva para esse estoquista e essas ruas."))
+//        }
+//
+//        val management = ReservationManagement()
+//        management.description = delegateDTO.description
+//        management.stockist = stockist
+//
+//        reservationManagementRepository.save(management)
+//
+//        val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
+//        for (delegateStreet in delegateDTO.street) {
+//            val team = teamRepository.findById(delegateStreet.teamId)
+//                .orElse(null) ?: throw IllegalStateException()
+//            val assignBy = userRepository.findByUserId(currentUserUUID)
+//                .orElse(null) ?: throw IllegalStateException()
+//            val prioritized = delegateStreet.prioritized
+//            val comment = delegateStreet.comment
+//
+//            streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
+//                ?.assignToStockistAndTeam(team, assignBy, util.dateTime, prioritized, comment, management)
+//                ?: throw IllegalStateException("A rua ${delegateStreet.preMeasurementStreetId} enviada não foi encontrada")
+//
+//        }
+//
+//        preMeasurementStreetRepository.saveAll(streets)
+//
+//        return ResponseEntity.ok().build()
+//    }
 
     @Transactional
     fun delegateDirectExecution(execution: DirectExecutionDTO): ResponseEntity<Any> {
@@ -149,11 +155,14 @@ class ExecutionService(
             Int::class.java
         )!!
 
-        val management = ReservationManagement()
-        management.description = "Etapa $step - ${contract.contractor}"
-        management.stockist = stockist
-        reservationManagementRepository.save(management)
+        var management = ReservationManagement(
+            description ="Etapa $step - ${contract.contractor}",
+            stockistId = stockist.userId,
+        )
+        management = reservationManagementRepository.save(management)
 
+        val reservationManagementId = management.reservationManagementId
+        requireNotNull(reservationManagementId) { "reservationManagementId não foi gerado!" }
 
         var directExecution = DirectExecution(
             description = "Etapa $step - ${contract.contractor}",
@@ -165,23 +174,36 @@ class ExecutionService(
             assignedAt = util.dateTime,
             step = step
         )
+
         directExecution = directExecutionRepository.save(directExecution)
 
         for (item in execution.items) {
-            val ciq = contract.contractItem
-                .find { it.contractItemId == item.contractItemId }
+            val ciq = contractService.queryContractItems(contract.contractId!!).find { map ->
+                val contractItemId = (map["contract_Item_Id"] as? Number)?.toLong()
+                contractItemId == item.contractItemId
+            }
+
+            val description = JdbcUtil.getSingleRow(
+                namedJdbc,
+                """
+                    select name_for_import from contract_reference_item
+                    where contract_reference_item_id = :referenceId
+                """.trimIndent(),
+                mapOf("referenceId" to (ciq?.get("contract_reference_item_id") ?: -1) as Long)
+            )
+
 
             if (ciq != null) {
-                if ((ciq.contractedQuantity - ciq.quantityExecuted) < item.quantity) {
-                    throw IllegalStateException("Não há saldo disponível para o item ${ciq.referenceItem.nameForImport}")
+                if ((ciq["contracted_quantity"] as Double - ciq["quantity_executed"] as Double ) < item.quantity) {
+                    throw IllegalStateException("Não há saldo disponível para o item $description")
                 }
                 val directExecutionItem = DirectExecutionItem(
                     measuredItemQuantity = item.quantity,
-                    contractItemId = ciq.contractItemId,
+                    contractItemId = item.contractItemId,
                     itemStatus = if (listOf(
                             "SERVIÇO",
                             "PROJETO"
-                        ).contains(ciq.referenceItem.type)
+                        ).contains(ciq["type"] as String)
                     ) ReservationStatus.FINISHED else ReservationStatus.PENDING,
                     directExecutionId = directExecution.directExecutionId
                         ?: throw IllegalStateException("Id da execução não encontrado"),
@@ -343,13 +365,13 @@ class ExecutionService(
 
     fun getStockMaterialForLinking(linking: String, type: String, truckDepositName: String): ResponseEntity<Any> {
         val materials: List<MaterialInStockDTO> = if (type != "NULL" && linking != "NULL") {
-            materialStockRepository.findAllByLinkingAndType(
+            materialStockJdbcRepository.findAllByLinkingAndType(
                 linking.lowercase(),
                 type.lowercase(),
                 truckDepositName.lowercase()
             )
         } else {
-            materialStockRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
+            materialStockJdbcRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
         }
 
         return ResponseEntity.ok(materials)
@@ -420,8 +442,10 @@ class ExecutionService(
                         materialStockRepository.findById(materialReserve.centralMaterialStockId) // conferir
                             .orElse(null) ?: throw IllegalStateException("Material não encontrado")
 
+                    val material = materialRepository.findById(materialStock.materialId).orElseThrow()
+
                     if (materialStock.stockAvailable < materialReserve.materialQuantity)
-                        throw IllegalArgumentException("O material ${materialStock.material.materialName} não possuí estoque suficiente")
+                        throw IllegalArgumentException("O material ${material.materialName} não possuí estoque suficiente")
 
                     val stockistMatch = existsRaw(
                         namedJdbc,
@@ -538,22 +562,23 @@ class ExecutionService(
 
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
-        if (
-            preMeasurementStreet.reservationManagement.streets
-                .none { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
-        ) {
-            preMeasurementStreet.reservationManagement.status = ReservationStatus.FINISHED
-            namedJdbc.update(
-                """
-                    update pre_measurement_street_item set item_status = :status
-                    where pre_measurement_street_id = :preMeasurementStreetId
-                """.trimIndent(),
-                mapOf(
-                    "status" to ReservationStatus.FINISHED,
-                    "preMeasurementStreetId" to preMeasurementStreet.preMeasurementStreetId
-                )
-            )
-        }
+        TODO("CORRIGIR")
+//        if (
+//            preMeasurementStreet.reservationManagement.streets
+//                .none { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
+//        ) {
+//            preMeasurementStreet.reservationManagement.status = ReservationStatus.FINISHED
+//            namedJdbc.update(
+//                """
+//                    update pre_measurement_street_item set item_status = :status
+//                    where pre_measurement_street_id = :preMeasurementStreetId
+//                """.trimIndent(),
+//                mapOf(
+//                    "status" to ReservationStatus.FINISHED,
+//                    "preMeasurementStreetId" to preMeasurementStreet.preMeasurementStreetId
+//                )
+//            )
+//        }
 
         preMeasurementStreetRepository.save(preMeasurementStreet)
 
@@ -644,6 +669,7 @@ class ExecutionService(
             val deposit = depositRepository.findById(depositId ?: 0).orElse(null)
             val teamId = (reserve.first()["id_team"] as? Number)?.toLong()
             val team = teamRepository.findById(teamId ?: 0).orElse(null)
+
             val teamCode = team?.teamCode
 
             bodyMessage = """

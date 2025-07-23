@@ -1,29 +1,23 @@
 package com.lumos.lumosspring.pre_measurement.entities;
 
-import com.lumos.lumosspring.contract.entities.ContractItem;
+
 import com.lumos.lumosspring.util.ItemStatus;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 
-@Entity
+@Table
 public class PreMeasurementStreetItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pre_measurement_street_item_id")
-    private long preMeasurementStreetItemId;
 
-    @ManyToOne
-    @JoinColumn(name = "contract_item_id")
-    private ContractItem contractItem;
+    private Long preMeasurementStreetItemId;
 
-    @ManyToOne
-    @JoinColumn(name = "pre_measurement_street_id")
-    private PreMeasurementStreet preMeasurementStreet;
+    private Long contractItemId;
 
-    @ManyToOne
-    @JoinColumn(name = "pre_measurement_id")
-    private PreMeasurement preMeasurement;
+    private Long preMeasurementStreetId;
+
+    private Long preMeasurementId;
 
     private double measuredItemQuantity;
 
@@ -35,48 +29,46 @@ public class PreMeasurementStreetItem {
     private String contractServiceIdMask;
     private BigDecimal contractServiceDividerPrices = BigDecimal.ZERO;
 
-    public long getPreMeasurementStreetItemId() {
+
+    public Long getPreMeasurementStreetItemId() {
         return preMeasurementStreetItemId;
     }
 
-    public void setPreMeasurementStreetItemId(long itemId) {
-        this.preMeasurementStreetItemId = itemId;
+    public void setPreMeasurementStreetItemId(Long preMeasurementStreetItemId) {
+        this.preMeasurementStreetItemId = preMeasurementStreetItemId;
     }
 
-    public Double getMeasuredItemQuantity() {
+    public Long getContractItemId() {
+        return contractItemId;
+    }
+
+    public void setContractItemId(Long contractItemId) {
+        this.contractItemId = contractItemId;
+    }
+
+    public Long getPreMeasurementStreetId() {
+        return preMeasurementStreetId;
+    }
+
+    public void setPreMeasurementStreetId(Long preMeasurementStreetId) {
+        this.preMeasurementStreetId = preMeasurementStreetId;
+    }
+
+    public Long getPreMeasurementId() {
+        return preMeasurementId;
+    }
+
+    public void setPreMeasurementId(Long preMeasurementId) {
+        this.preMeasurementId = preMeasurementId;
+    }
+
+    public double getMeasuredItemQuantity() {
         return measuredItemQuantity;
     }
 
-    public void setMeasuredItemQuantity(double itemQuantity) {
-        this.measuredItemQuantity = itemQuantity;
+    public void setMeasuredItemQuantity(double measuredItemQuantity) {
+        this.measuredItemQuantity = measuredItemQuantity;
     }
-
-    public BigDecimal getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(BigDecimal itemValue) {
-        this.unitPrice = itemValue;
-        if (itemValue != null) {
-            setTotalPrice(itemValue.multiply(BigDecimal.valueOf(measuredItemQuantity)));
-        }
-    }
-
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
-
-    public void setTotalPrice(BigDecimal itemTotalValue) {
-        this.totalPrice = itemTotalValue;
-    }
-
-//    public Material getMaterial() {
-//        return material;
-//    }
-//
-//    public void setMaterial(Material material) {
-//        this.material = material;
-//    }
 
     public String getItemStatus() {
         return itemStatus;
@@ -86,57 +78,24 @@ public class PreMeasurementStreetItem {
         this.itemStatus = itemStatus;
     }
 
-    public void addItemQuantity(double v) {
-        this.measuredItemQuantity += v;
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
     }
 
-    public void addItemQuantity(double v, boolean updateValue) {
-        this.measuredItemQuantity += v;
-        if (updateValue) {
-            setTotalPrice(unitPrice.multiply(BigDecimal.valueOf(measuredItemQuantity)));
-        }
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
     }
 
-    public PreMeasurementStreet getPreMeasurementStreet() {
-        return preMeasurementStreet;
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
     }
 
-    public void setPreMeasurementStreet(PreMeasurementStreet preMeasurementStreet) {
-        this.preMeasurementStreet = preMeasurementStreet;
-    }
-
-    public ContractItem getContractItem() {
-        return contractItem;
-    }
-
-    public void setContractItem(ContractItem contractItem) {
-        this.contractItem = contractItem;
-        this.setUnitPrice(contractItem.getUnitPrice());
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
     }
 
     public String getContractServiceIdMask() {
         return contractServiceIdMask;
-    }
-
-    public void setContractServiceIdMask(Long contractServiceId) {
-        if (this.contractServiceIdMask == null || this.contractServiceIdMask.isEmpty()) {
-            this.contractServiceIdMask = contractServiceId.toString();
-        } else {
-            this.contractServiceIdMask = this.contractServiceIdMask.concat("#").concat(contractServiceId.toString());
-        }
-    }
-
-    public void clearContractServices() {
-        this.contractServiceIdMask = null;
-        this.contractServiceDividerPrices = BigDecimal.ZERO;
-    }
-
-    public PreMeasurement getPreMeasurement() {
-        return preMeasurement;
-    }
-
-    public void setPreMeasurement(PreMeasurement preMeasurement) {
-        this.preMeasurement = preMeasurement;
     }
 
     public void setContractServiceIdMask(String contractServiceIdMask) {
@@ -148,10 +107,6 @@ public class PreMeasurementStreetItem {
     }
 
     public void setContractServiceDividerPrices(BigDecimal contractServiceDividerPrices) {
-        this.contractServiceDividerPrices = this.contractServiceDividerPrices.add(contractServiceDividerPrices);
-    }
-
-    public void setContractServiceDividerPrices(BigDecimal contractServiceDividerPrices, Boolean set) {
         this.contractServiceDividerPrices = contractServiceDividerPrices;
     }
 }

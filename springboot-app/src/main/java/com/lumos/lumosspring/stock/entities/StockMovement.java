@@ -1,90 +1,68 @@
 package com.lumos.lumosspring.stock.entities;
 
 import com.lumos.lumosspring.user.AppUser;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.UUID;
 
-@Entity
+@Table
 public class StockMovement {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "stock_movement_id")
     private Long stockMovementId;
 
-    @Column(columnDefinition = "TEXT")
     private String stockMovementDescription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "material_stock_id", nullable = false)
-    private MaterialStock materialStock;
+    private Long materialStockId;
 
-    @Column(nullable = false)
     private Instant stockMovementRefresh;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_created_id_user")
-    private AppUser appUserCreated;
+    @Column( "user_created_id_user")
+    private UUID appUserCreatedId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_finished_id_user")
-    private AppUser appUserFinished;
+    @Column("user_finished_id_user")
+    private UUID appUserFinishedId;
 
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double inputQuantity;
 
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double totalQuantity;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
     private String buyUnit;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
     private String requestUnit;
 
-    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private double quantityPackage;
 
-    @Column(nullable = false)
     private BigDecimal pricePerItem;
 
-    @Column(nullable = false)
     private BigDecimal priceTotal;
 
-    @ManyToOne
-    @JoinColumn(name = "supplier_id")
-    private Supplier supplier;
+    private Long supplierId;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private String status;
 
-    public StockMovement(Instant stockMovementRefresh) {
+    public StockMovement() {}
+
+    public StockMovement(Long stockMovementId, String stockMovementDescription, Long materialStockId, Instant stockMovementRefresh, UUID appUserCreatedId, UUID appUserFinishedId, double inputQuantity, double totalQuantity, String buyUnit, String requestUnit, double quantityPackage, BigDecimal pricePerItem, BigDecimal priceTotal, Long supplierId, String status) {
+        this.stockMovementId = stockMovementId;
+        this.stockMovementDescription = stockMovementDescription;
+        this.materialStockId = materialStockId;
         this.stockMovementRefresh = stockMovementRefresh;
-    }
-
-    public StockMovement() {
-    }
-
-    public enum Status {
-        PENDING,
-        APPROVED,
-        REJECTED
-    }
-
-    // método para atualizar estoque do material
-    public void materialUpdate() {
-        if (this.inputQuantity <= 0 || this.quantityPackage <= 0) {
-            throw new IllegalArgumentException("Quantidade e embalagem devem ser maiores que zero.");
-        }
-
-        this.materialStock.addStockQuantity(this.totalQuantity);
-        this.materialStock.addStockAvailable(this.totalQuantity);
-        this.materialStock.setCostPerItem(this.pricePerItem);
-        this.materialStock.setCostPrice(this.priceTotal);
-        this.materialStock.setBuyUnit(this.buyUnit);
-        this.materialStock.setRequestUnit(this.requestUnit);
+        this.appUserCreatedId = appUserCreatedId;
+        this.appUserFinishedId = appUserFinishedId;
+        this.inputQuantity = inputQuantity;
+        this.totalQuantity = totalQuantity;
+        this.buyUnit = buyUnit;
+        this.requestUnit = requestUnit;
+        this.quantityPackage = quantityPackage;
+        this.pricePerItem = pricePerItem;
+        this.priceTotal = priceTotal;
+        this.supplierId = supplierId;
+        this.status = status;
     }
 
     public Long getStockMovementId() {
@@ -103,12 +81,12 @@ public class StockMovement {
         this.stockMovementDescription = stockMovementDescription;
     }
 
-    public MaterialStock getMaterialStock() {
-        return materialStock;
+    public Long getMaterialStockId() {
+        return materialStockId;
     }
 
-    public void setMaterialStock(MaterialStock material) {
-        this.materialStock = material;
+    public void setMaterialStockId(Long materialStockId) {
+        this.materialStockId = materialStockId;
     }
 
     public Instant getStockMovementRefresh() {
@@ -119,12 +97,52 @@ public class StockMovement {
         this.stockMovementRefresh = stockMovementRefresh;
     }
 
+    public UUID getAppUserCreatedId() {
+        return appUserCreatedId;
+    }
+
+    public void setAppUserCreatedId(UUID appUserCreatedId) {
+        this.appUserCreatedId = appUserCreatedId;
+    }
+
+    public UUID getAppUserFinishedId() {
+        return appUserFinishedId;
+    }
+
+    public void setAppUserFinishedId(UUID appUserFinishedId) {
+        this.appUserFinishedId = appUserFinishedId;
+    }
+
+    public double getInputQuantity() {
+        return inputQuantity;
+    }
+
+    public void setInputQuantity(double inputQuantity) {
+        this.inputQuantity = inputQuantity;
+    }
+
+    public double getTotalQuantity() {
+        return totalQuantity;
+    }
+
+    public void setTotalQuantity(double totalQuantity) {
+        this.totalQuantity = totalQuantity;
+    }
+
     public String getBuyUnit() {
         return buyUnit;
     }
 
     public void setBuyUnit(String buyUnit) {
         this.buyUnit = buyUnit;
+    }
+
+    public String getRequestUnit() {
+        return requestUnit;
+    }
+
+    public void setRequestUnit(String requestUnit) {
+        this.requestUnit = requestUnit;
     }
 
     public double getQuantityPackage() {
@@ -135,27 +153,12 @@ public class StockMovement {
         this.quantityPackage = quantityPackage;
     }
 
-    public Supplier getSupplier() {
-        return supplier;
-    }
-
-    public void setSupplier(Supplier supplier) {
-        this.supplier = supplier;
-    }
-
     public BigDecimal getPricePerItem() {
         return pricePerItem;
     }
 
-
-
-    public void setPricePerItem(BigDecimal priceTotal, double quantity) {
-        if (quantity != 0) {  // Verifica se a quantidade é diferente de 0
-            // Converte quantity para BigDecimal e faz a divisão com precisão
-            this.pricePerItem = priceTotal.divide(BigDecimal.valueOf(quantity), RoundingMode.HALF_UP);
-        } else {
-            this.pricePerItem = priceTotal;  // Se a quantidade for 0, mantém o preço total
-        }
+    public void setPricePerItem(BigDecimal pricePerItem) {
+        this.pricePerItem = pricePerItem;
     }
 
     public BigDecimal getPriceTotal() {
@@ -166,59 +169,19 @@ public class StockMovement {
         this.priceTotal = priceTotal;
     }
 
-    public Status getStatus() {
+    public Long getSupplierId() {
+        return supplierId;
+    }
+
+    public void setSupplierId(Long supplierId) {
+        this.supplierId = supplierId;
+    }
+
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(String status) {
         this.status = status;
-    }
-
-    public AppUser getUserCreated() {
-        return appUserCreated;
-    }
-
-    public void setUserCreated(AppUser appUserCreated) {
-        this.appUserCreated = appUserCreated;
-    }
-
-    public AppUser getUserFinished() {
-        return appUserFinished;
-    }
-
-    public void setUserFinished(AppUser appUserFinished) {
-        this.appUserFinished = appUserFinished;
-    }
-
-    public void setInputQuantity(double inputQuantity) {
-        this.inputQuantity = inputQuantity;
-    }
-
-    public Double getInputQuantity() {
-        return inputQuantity;
-    }
-
-    public void setInputQuantity(Double inputQuantity) {
-        this.inputQuantity = inputQuantity;
-    }
-
-    public Double getTotalQuantity() {
-        return totalQuantity;
-    }
-
-    public void setTotalQuantity(Double totalQuantity) {
-        this.totalQuantity = totalQuantity;
-    }
-
-    public String getRequestUnit() {
-        return requestUnit;
-    }
-
-    public void setBuyRequest(String requestUnit) {
-        this.requestUnit = requestUnit;
-    }
-
-    public void setPricePerItem(BigDecimal pricePerItem) {
-        this.pricePerItem = pricePerItem;
     }
 }

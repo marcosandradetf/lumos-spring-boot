@@ -1,24 +1,31 @@
 package com.lumos.lumosspring.stock.entities;
 
-import jakarta.persistence.*;
 
-@Entity
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table
 public class MaterialType {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_type")
-    private long idType;
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String typeName;
-    @ManyToOne
-    @JoinColumn(name = "id_group", nullable = false)
-    private MaterialGroup materialGroup;
+    private Long idType;
 
-    public long getIdType() {
+    private String typeName;
+
+    private Long idGroup;
+
+    public MaterialType(Long idType, String typeName, Long idGroup) {
+        this.idType = idType;
+        this.typeName = typeName;
+        this.idGroup = idGroup;
+    }
+
+    public MaterialType() {}
+
+    public Long getIdType() {
         return idType;
     }
 
-    public void setIdType(long idType) {
+    public void setIdType(Long idType) {
         this.idType = idType;
     }
 
@@ -30,11 +37,11 @@ public class MaterialType {
         this.typeName = typeName;
     }
 
-    public MaterialGroup getGroup() {
-        return materialGroup;
+    public Long getIdGroup() {
+        return idGroup;
     }
 
-    public void setGroup(MaterialGroup materialGroup) {
-        this.materialGroup = materialGroup;
+    public void setIdGroup(Long idGroup) {
+        this.idGroup = idGroup;
     }
 }
