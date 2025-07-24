@@ -57,7 +57,7 @@ class JdbcInstallationRepository(
 //        }
 //    }
 //
-    fun getDataForReport(executionId: UUID, contractId: Long): List<Map<String, JsonNode>> {
+    fun getDataForReport(executionId: UUID): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
               SELECT
@@ -73,7 +73,6 @@ class JdbcInstallationRepository(
                 ON cri.contract_reference_item_id = ci.contract_item_reference_id
               --WHERE des.direct_execution_id = :directExecutionId
             ),
-
             contract_items AS (
               SELECT 
                 ci.unit_price, 
@@ -84,7 +83,9 @@ class JdbcInstallationRepository(
               FROM contract_item ci
               JOIN contract_reference_item cri 
                 ON cri.contract_reference_item_id = ci.contract_item_reference_id
-              WHERE ci.contract_contract_id = :contractId
+              JOIN direct_execution_street_item desi ON desi.contract_item_id = ci.contract_item_id
+              JOIN direct_execution_street des on desi.direct_execution_street_id = des.direct_execution_street_id
+              WHERE des.direct_execution_id = :directExecutionId
               order by cri.description
             )
 
@@ -107,32 +108,23 @@ class JdbcInstallationRepository(
               ) AS contract,
               
                 (
-                SELECT json_agg(
-                  json_build_array(
-                    des.address,
-                    'TODO', -- last_power
-                    (
-                      SELECT json_agg(
-                        json_build_array(
-                          ci.contract_reference_item_id,
-                          COALESCE((
-                            SELECT ibs.executed_quantity
-                            FROM items_by_street ibs
-                            WHERE ibs.direct_execution_street_id = des.direct_execution_street_id
-                              AND ibs.contract_reference_item_id = ci.contract_reference_item_id
-                            LIMIT 1
-                          ), 0)
-                        )
-                      )
-                      FROM contract_items ci
-                    ),
-                    'TODO', -- street_date
-                    'TODO'  -- current_supplier
+                  SELECT json_agg(
+                    json_build_object(
+                      'description', agg.description,
+                      'unit_price', agg.unit_price,
+                      'total_price', agg.unit_price * agg.total_quantity,
+                      'quantity_executed', agg.total_quantity
+                    )
                   )
-                )
-                FROM direct_execution_street des
-                --WHERE des.direct_execution_id = :directExecutionId
-              ) AS values,
+                  FROM (
+                    SELECT 
+                      description,
+                      unit_price,
+                      SUM(quantity_executed) AS total_quantity
+                    FROM contract_items
+                    GROUP BY description, unit_price
+                  ) AS agg
+                ) AS values,
 
               (
             	  SELECT to_json(

@@ -220,22 +220,12 @@
 <table>
     <thead>
     <tr>
-        <th colspan="11" class="cell-title">
+        <th colspan="{{COLUMN_LENGTH}}" class="cell-title">
             VALORES PARA EMISSAO DE NOTA FISCAL
         </th>
     </tr>
     <tr>
-        <th>Nº</th>
-        <th>Endereço completo</th>
-        <th>Relé</th>
-        <th>Conexão</th>
-        <th>Lâmpada</th>
-        <th>Sódio</th>
-        <th>Mercur.</th>
-        <th>Potência</th>
-        <th>Reator<br>Externo</th>
-        <th>Reator<br>Interno</th>
-        <th>Base<br>Relé</th>
+        {{STREET_COLUMNS}}
     </tr>
     </thead>
     <tbody>
@@ -243,31 +233,33 @@
     </tbody>
     <tfoot>
     <tr>
-        <td colspan="2" style="text-align: left; font-weight: bold;">Total por item:</td>
-        <td style="text-align: right; font-weight: bold;">{{RELAY_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{CONNECTION_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{BULB_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{SODIUM_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{MERCURY_TOTAL}}</td>
+        <td style="text-align: left; font-weight: bold;">Soma Total:</td>
         <td style="text-align: left; font-weight: bold;">N/A</td>
-        <td style="text-align: right; font-weight: bold;">{{EXTERNAL_REACTOR_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{INTERNAL_REACTOR_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{BASE_TOTAL}}</td>
+        {{STREET_FOOTER}}
+        <td style="text-align: left; font-weight: bold;">N/A</td>
+        <td style="text-align: left; font-weight: bold;">N/A</td>
     </tr>
     </tfoot>
 </table>
 
 <table>
     <thead>
-    {{HEADER_COLUMNS}}
+    <tr>
+        {{STREET_COLUMNS}}
+    </tr>
     </thead>
     <tbody>
-    {{BODY_LINES}}
+    {{STREET_LINES}}
     </tbody>
     <tfoot>
-    {{FOOTER_LINE}}
+    <tr>
+        <td style="text-align: left; font-weight: bold;">Soma Total:</td>
+        <td style="text-align: left; font-weight: bold;">N/A</td>
+        {{STREET_FOOTER}}
+        <td style="text-align: left; font-weight: bold;">N/A</td>
+        <td style="text-align: left; font-weight: bold;">N/A</td>
+    </tr>
     </tfoot>
-
 </table>
 
 <table style="page-break-inside: avoid;">
