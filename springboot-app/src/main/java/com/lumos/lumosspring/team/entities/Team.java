@@ -19,6 +19,7 @@ public class Team {
 
     private String plateVehicle;
 
+    @Column("ufname")
     private String UFName;
 
     private String cityName;
@@ -26,7 +27,7 @@ public class Team {
     private String teamPhone;
 
     @Column("region_region_id")
-    private Region region;
+    private Long region;
 
     @Column("deposit_id_deposit")
     private Long depositId;
@@ -48,7 +49,7 @@ public class Team {
     }
 
 
-    public Team(Long idTeam, String teamName, UUID driverId, UUID electricianId, String plateVehicle, String UFName, String cityName, String teamPhone, Region region, Long depositId) {
+    public Team(Long idTeam, String teamName, UUID driverId, UUID electricianId, String plateVehicle, String UFName, String cityName, String teamPhone, Long region, Long depositId) {
         this.idTeam = idTeam;
         this.teamName = teamName;
         this.driverId = driverId;
@@ -111,11 +112,11 @@ public class Team {
         this.teamPhone = teamPhone;
     }
 
-    public Region getRegion() {
+    public Long getRegion() {
         return region;
     }
 
-    public void setRegion(Region region) {
+    public void setRegion(Long region) {
         this.region = region;
     }
 

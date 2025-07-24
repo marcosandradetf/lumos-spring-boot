@@ -42,19 +42,8 @@ public class SecurityConfig {
                     CorsConfiguration configuration = new CorsConfiguration();
                     // Definindo comportamento de CORS baseado no caminho
                     String path = request.getRequestURI();
-                    if (path.startsWith("/api/mobile")) {
-                        // Para caminhos que começam com "/api/mobile", permite qualquer origem
-                        configuration.setAllowedOrigins(List.of("*"));
-                        configuration.setAllowCredentials(false);
-                    } else if(path.startsWith("/ws")){
-                        configuration.setAllowedOrigins(List.of("*"));
-                        configuration.setAllowCredentials(false);
-                    }
-                    else {
-                        // Para outros caminhos, define origens específicas (se necessário)
-                        configuration.setAllowedOrigins(List.of("https://lumos.thryon.com.br", "http://localhost:4200"));
-                        configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
-                    }
+                    configuration.setAllowedOrigins(List.of("https://lumos.thryon.com.br", "http://localhost:4200"));
+                    configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
                     return configuration;

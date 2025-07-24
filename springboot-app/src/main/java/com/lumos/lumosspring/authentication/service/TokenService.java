@@ -32,10 +32,17 @@ public class TokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final StockistRepository stockistRepository;
     private final RoleRepository roleRepository;
-    private final TeamRepository teamRepository;
     private final TeamQueryRepository teamQueryRepository;
 
-    public TokenService(UserService userService, JwtEncoder jwtEncoder, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, StockistRepository stockistRepository, RoleRepository roleRepository, TeamRepository teamRepository, TeamQueryRepository teamQueryRepository) {
+    public TokenService(UserService userService,
+                        JwtEncoder jwtEncoder,
+                        UserRepository userRepository,
+                        BCryptPasswordEncoder passwordEncoder,
+                        RefreshTokenRepository refreshTokenRepository,
+                        StockistRepository stockistRepository,
+                        RoleRepository roleRepository,
+                        TeamQueryRepository teamQueryRepository
+    ) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
@@ -43,7 +50,6 @@ public class TokenService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.stockistRepository = stockistRepository;
         this.roleRepository = roleRepository;
-        this.teamRepository = teamRepository;
         this.teamQueryRepository = teamQueryRepository;
     }
 

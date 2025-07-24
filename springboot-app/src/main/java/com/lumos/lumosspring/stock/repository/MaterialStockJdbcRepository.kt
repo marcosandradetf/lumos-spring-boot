@@ -2,12 +2,21 @@ package com.lumos.lumosspring.stock.repository
 
 import com.lumos.lumosspring.execution.dto.MaterialInStockDTO
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+
+data class PagedResponse<T>(
+    val content: List<T>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Long,
+    val totalPages: Int,
+    val last: Boolean
+)
+
 
 @Repository
 class MaterialStockJdbcRepository(
@@ -24,7 +33,7 @@ class MaterialStockJdbcRepository(
             materialLength = rs.getString("materialLength"),
             buyUnit = rs.getString("buyUnit"),
             requestUnit = rs.getString("requestUnit"),
-            stockQt = rs.getDouble("stockQuantity"),
+            stockQt = rs.getDouble("stockQt"),
             inactive = rs.getBoolean("inactive"),
             materialType = rs.getString("materialType"),
             materialGroup = rs.getString("materialGroup"),
@@ -33,7 +42,7 @@ class MaterialStockJdbcRepository(
         )
     }
 
-    fun searchMaterial(name: String, page: Int, size: Int): Page<MaterialResponse> {
+    fun searchMaterial(name: String, page: Int, size: Int): PagedResponse<MaterialResponse> {
         val sql = """
         SELECT
             ms.material_id_stock AS idMaterial,
@@ -64,30 +73,37 @@ class MaterialStockJdbcRepository(
         LIMIT :limit OFFSET :offset
     """.trimIndent()
 
-        val countSql = """
-        SELECT COUNT(*) 
-        FROM material_stock ms
-        JOIN material m ON ms.material_id = m.id_material
-        JOIN material_type mt ON m.id_material_type = mt.id_type
-        WHERE m.material_name_unaccent LIKE :likeName
-           OR LOWER(mt.type_name) LIKE :likeName
-           OR LOWER(m.material_power) LIKE :likeName
-           OR LOWER(m.material_length) LIKE :likeName
-    """.trimIndent()
 
         val offset = page * size
         val likeName = "%${name.lowercase()}%"
-        val params = mapOf("likeName" to likeName, "limit" to size, "offset" to offset)
+        val params = mapOf(
+            "likeName" to likeName,
+            "limit" to size + 1, // Busca um a mais para saber se tem próxima página
+            "offset" to offset
+        )
 
-        val content = jdbc.query(sql, params, materialResponseRowMapper)
-        val total = jdbc.queryForObject(countSql, mapOf("likeName" to likeName), Long::class.java) ?: 0L
+        val content = jdbc.query(sql, params, rowMapper)
 
-        val pageable = PageRequest.of(page, size)
-        return PageImpl(content, pageable, total)
+        val hasNext = content.size > size
+        val pagedContent = if (hasNext) content.take(size) else content
+
+        val last = !hasNext
+        val totalPages = if (hasNext) page + 2 else page + 1
+        val totalElements = if (hasNext) ((page + 1) * size + 1).toLong() else (page * size + content.size).toLong()
+
+        return PagedResponse(
+            content = pagedContent,
+            page = page,
+            size = size,
+            totalElements = totalElements,
+            totalPages = totalPages,
+            last = last
+        )
+
     }
 
 
-    fun searchMaterialWithDeposit(name: String, depositId: Long, page: Int, size: Int): Page<MaterialResponse> {
+    fun searchMaterialWithDeposit(name: String, depositId: Long, page: Int, size: Int): PagedResponse<MaterialResponse> {
         val sql = """
         SELECT
             ms.material_id_stock AS idMaterial,
@@ -145,10 +161,19 @@ class MaterialStockJdbcRepository(
         )
 
         val content = jdbc.query(sql, params, materialResponseRowMapper)
-        val total = jdbc.queryForObject(countSql, mapOf("depositId" to depositId, "likeName" to likeName), Long::class.java) ?: 0L
+        val total = jdbc.queryForObject(countSql, params, Long::class.java) ?: 0L
 
-        val pageable = PageRequest.of(page, size)
-        return PageImpl(content, pageable, total)
+        val totalPages = if (total == 0L) 1 else ((total + size - 1) / size).toInt()  // teto da divisão
+        val last = page >= totalPages - 1
+
+        return PagedResponse(
+            content = content,
+            page = page,
+            size = size,
+            totalElements = total,
+            totalPages = totalPages,
+            last = last
+        )
     }
 
 
@@ -259,7 +284,7 @@ class MaterialStockJdbcRepository(
         )
     }
 
-    fun findAllMaterialsStock(page: Int, size: Int): Page<MaterialResponse> {
+    fun findAllMaterialsStock(page: Int, size: Int): PagedResponse<MaterialResponse> {
         val sql = """
             SELECT
                 ms.material_id_stock AS idMaterial,
@@ -291,14 +316,23 @@ class MaterialStockJdbcRepository(
         val offset = page * size
         val params = mapOf("limit" to size, "offset" to offset)
 
-        val content = jdbc.query(sql, params, rowMapper)
+        val content = jdbc.query(sql, params, materialResponseRowMapper)
         val total = jdbc.queryForObject(countSql, emptyMap<String, Any>(), Long::class.java) ?: 0L
 
-        val pageable = PageRequest.of(page, size)
-        return PageImpl(content, pageable, total)
+        val totalPages = if (total == 0L) 1 else ((total + size - 1) / size).toInt()  // teto da divisão
+        val last = page >= totalPages - 1
+
+        return PagedResponse(
+            content = content,
+            page = page,
+            size = size,
+            totalElements = total,
+            totalPages = totalPages,
+            last = last
+        )
     }
 
-    fun findAllMaterialsStockByDeposit(page: Int, size: Int, depositId: Long): Page<MaterialResponse> {
+    fun findAllMaterialsStockByDeposit(page: Int, size: Int, depositIdParam: Long): PagedResponse<MaterialResponse> {
         val sql = """
         SELECT
             ms.material_id_stock AS idMaterial,
@@ -326,16 +360,20 @@ class MaterialStockJdbcRepository(
         LIMIT :limit OFFSET :offset
     """.trimIndent()
 
-        val countSql = "SELECT COUNT(*) FROM material_stock WHERE deposit_id = :depositId"
+        val countSql = """
+        SELECT COUNT(*) 
+        FROM material_stock ms
+        WHERE ms.deposit_id = :depositId
+    """.trimIndent()
 
         val offset = page * size
         val params = mapOf(
             "limit" to size,
             "offset" to offset,
-            "depositId" to depositId
+            "depositId" to depositIdParam
         )
 
-        val rowMapper = RowMapper<MaterialResponse> { rs, _ ->
+        val rowMapper = RowMapper { rs, _ ->
             MaterialResponse(
                 idMaterial = rs.getLong("idMaterial"),
                 materialName = rs.getString("materialName"),
@@ -355,11 +393,21 @@ class MaterialStockJdbcRepository(
         }
 
         val content = jdbc.query(sql, params, rowMapper)
-        val total = jdbc.queryForObject(countSql, params, Long::class.java) ?: 0L
+        val total = jdbc.queryForObject(countSql, mapOf("depositId" to depositIdParam), Long::class.java) ?: 0L
 
-        val pageable = PageRequest.of(page, size)
-        return PageImpl(content, pageable, total)
+        val totalPages = if (total == 0L) 1 else ((total + size - 1) / size).toInt()
+        val last = page >= totalPages - 1
+
+        return PagedResponse(
+            content = content,
+            page = page,
+            size = size,
+            totalElements = total,
+            totalPages = totalPages,
+            last = last
+        )
     }
+
 
 
 

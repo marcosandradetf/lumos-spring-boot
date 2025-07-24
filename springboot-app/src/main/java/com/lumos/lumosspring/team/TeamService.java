@@ -5,12 +5,8 @@ import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.team.dto.*;
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.entities.Team;
-import com.lumos.lumosspring.team.entities.TeamComplementaryMember;
-import com.lumos.lumosspring.team.entities.TeamComplementaryMemberId;
 import com.lumos.lumosspring.team.repository.RegionRepository;
-import com.lumos.lumosspring.team.repository.TeamComplementaryMemberRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
-import com.lumos.lumosspring.user.AppUser;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,15 +22,14 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
-    private final TeamComplementaryMemberRepository teamComplementaryMemberRepository;
     private final DepositRepository depositRepository;
 
 
-    public TeamService(TeamRepository teamRepository, RegionRepository regionRepository, UserRepository userRepository, TeamComplementaryMemberRepository teamComplementaryMemberRepository, DepositRepository depositRepository) {
+    public TeamService(TeamRepository teamRepository, RegionRepository regionRepository, UserRepository userRepository,
+                       DepositRepository depositRepository) {
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.userRepository = userRepository;
-        this.teamComplementaryMemberRepository = teamComplementaryMemberRepository;
         this.depositRepository = depositRepository;
     }
 
@@ -72,16 +67,16 @@ public class TeamService {
                     String depositName = depositOpt
                             .map(Deposit::getDepositName)
                             .orElseThrow(() -> new IllegalStateException("Equipe sem depósito associado, faça a correção na tela de gerenciamento de equipes!"));
+                    var region = regionRepository.findById(team.getRegion()).orElse(null);
 
                     return new TeamResponse(
                             team.getIdTeam(),
                             team.getTeamName(),
                             driver,
                             electrician,
-                            Collections.emptyList(),
                             team.getUFName(),
                             team.getCityName(),
-                            team.getRegion().getRegionName(),
+                            region.getRegionName(),
                             team.getPlateVehicle(),
                             depositName // Aqui a string do nome do depósito
                     );
@@ -132,17 +127,6 @@ public class TeamService {
                 return ResponseEntity.badRequest().body(new ErrorResponse(STR."Eletricista informado para equipe \{t.teamName()}  está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"));
             }
 
-            boolean isDriverInOthers = t.othersMembers().stream()
-                    .anyMatch(member -> member.memberId().equals(t.driver().driverId()));
-
-            boolean isElectricianInOthers = t.othersMembers().stream()
-                    .anyMatch(member -> member.memberId().equals(t.electrician().electricianId()));
-
-            if (isDriverInOthers || isElectricianInOthers) {
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."O motorista ou o eletricista foram repetidos na seção integrantes complementares da equipe \{t.teamName()}"));
-            }
-
-
             var region = regionRepository.findRegionByRegionName(t.regionName());
             if (region.isEmpty()) {
                 var newRegion = new Region(
@@ -161,20 +145,8 @@ public class TeamService {
             newTeam.setPlateVehicle(t.plate());
             newTeam.setUFName(t.UFName());
             newTeam.setCityName(t.cityName());
-            newTeam.setRegion(region.orElse(null));
+            newTeam.setRegion(region.orElse(null).getRegionId());
             newTeam =  teamRepository.save(newTeam);
-
-            for(Member m : t.othersMembers()){
-                var member = userRepository.findByUserId(UUID.fromString(m.memberId()));
-                if (member.isEmpty()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("Algum Colaborador adicional informado não foi encontrado"));
-                }
-
-                var memberId = new TeamComplementaryMemberId(newTeam.getIdTeam(), member.get().getUserId());
-                var complementaryMember = new TeamComplementaryMember(memberId);
-
-                teamComplementaryMemberRepository.save(complementaryMember);
-            }
         }
 
         return this.getAll();
@@ -225,15 +197,6 @@ public class TeamService {
                 return ResponseEntity.badRequest().body(new ErrorResponse(STR."Equipe \{t.teamName()} já existe no sistema."));
             }
 
-            boolean isDriverInOthers = t.othersMembers().stream()
-                    .anyMatch(member -> member.memberId().equals(t.driver().driverId()));
-
-            boolean isElectricianInOthers = t.othersMembers().stream()
-                    .anyMatch(member -> member.memberId().equals(t.electrician().electricianId()));
-
-            if (isDriverInOthers || isElectricianInOthers) {
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."O motorista ou o eletricista foram repetidos na seção integrantes complementares da equipe \{t.teamName()}"));
-            }
 
             var region = regionRepository.findRegionByRegionName(t.regionName());
             if (region.isEmpty()) {
@@ -250,19 +213,6 @@ public class TeamService {
                 return ResponseEntity.badRequest().body(new ErrorResponse(STR."O time \{t.teamName()} não foi encontrado no sistema."));
             }
 
-            for(Member m : t.othersMembers()){
-                var member = userRepository.findByUserId(UUID.fromString(m.memberId()));
-                if (member.isEmpty()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("Algum Colaborador adicional informado não foi encontrado"));
-                }
-
-                var memberId = new TeamComplementaryMemberId(team.get().getIdTeam(), member.get().getUserId());
-                var complementaryMember = new TeamComplementaryMember(memberId);
-
-                teamComplementaryMemberRepository.save(complementaryMember);
-            }
-
-
             team.get().setTeamName(t.teamName());
             team.get().setDriverId(driver.orElse(null).getUserId());
             team.get().setElectricianId(electrician.orElse(null).getUserId());
@@ -270,7 +220,7 @@ public class TeamService {
             team.get().setPlateVehicle(t.plate());
             team.get().setUFName(t.UFName());
             team.get().setCityName(t.cityName());
-            team.get().setRegion(region.orElse(null));
+            team.get().setRegion(region.orElse(null).getRegionId());
             teamRepository.save(team.get());
         }
 

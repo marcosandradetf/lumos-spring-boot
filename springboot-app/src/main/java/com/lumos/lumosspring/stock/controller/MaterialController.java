@@ -3,24 +3,17 @@ package com.lumos.lumosspring.stock.controller;
 import java.util.Objects;
 
 import com.lumos.lumosspring.stock.repository.MaterialStockRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import com.lumos.lumosspring.stock.repository.PagedResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.stock.controller.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.service.MaterialService;
@@ -43,9 +36,9 @@ public class MaterialController {
     // Endpoint para retornar todos os materiais
     @GetMapping
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
-    public ResponseEntity<Page<MaterialResponse>> getAllMaterials(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
+    public ResponseEntity<PagedResponse<MaterialResponse>> getAllMaterials(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "depositId", required = false, defaultValue = "-1") Long depositId) {
 
         return materialService.findAll(page, size, depositId);
@@ -53,10 +46,10 @@ public class MaterialController {
 
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
-    public ResponseEntity<Page<MaterialResponse>> getMaterialByNameStartingWith(
+    public ResponseEntity<PagedResponse<MaterialResponse>> getMaterialByNameStartingWith(
             @RequestParam(value = "name") String name,  // 'name' vindo da URL
-            @RequestParam(value = "page", defaultValue = "0") int page,  // 'page' com valor padrão
-            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,  // 'page' com valor padrão
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "depositId", required = false, defaultValue = "-1") Long depositId) {  // 'size' com valor padrão
 
         return materialService.searchMaterialStock(name, page, size, depositId);  // Retorna os materiais no formato de resposta

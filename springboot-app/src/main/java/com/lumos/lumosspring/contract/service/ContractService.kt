@@ -260,8 +260,8 @@ class ContractService(
                         unitPrice = (it["unit_Price"] as BigDecimal).toPlainString(),
                         contractedQuantity = (it["contracted_Quantity"] as Number).toDouble(),
                         executedQuantity = (it["quantity_Executed"] as Number).toDouble(),
-                        linking = it["linking"] as String,
-                        nameForImport = it["name_For_Import"] as String,
+                        linking = it["linking"] as? String,
+                        nameForImport = it["name_For_Import"] as? String,
                         type = it["type"] as String,
                     )
                 })
@@ -380,8 +380,8 @@ class ContractService(
                         contractedQuantity =  (it["contracted_quantity"] as Number).toDouble(),
                         executedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long),
                         totalExecuted =  (it["quantity_executed"] as Number).toDouble(),
-                        linking = it["linking"] as String,
-                        nameForImport = it["name_for_import"] as String,
+                        linking = it["linking"] as? String,
+                        nameForImport = it["name_for_import"] as? String,
                         type = it["type"] as String
                     )
                 }

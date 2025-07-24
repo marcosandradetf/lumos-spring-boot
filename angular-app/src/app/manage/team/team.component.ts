@@ -44,8 +44,6 @@ export class TeamComponent {
       teamName: '',
       driver: {driverId: '', driverName: ''},
       electrician: {electricianId: '', electricianName: ''},
-      othersMembers: [
-      ],
       UFName: '',
       cityName: '',
       regionName: '',
@@ -60,7 +58,6 @@ export class TeamComponent {
     teamName: string;
     driver: { driverId: string; driverName: string };
     electrician: { electricianId: string; electricianName: string };
-    othersMembers: { memberId: string; memberName: string }[];
     UFName: string;
     cityName: string;
     regionName: string;
@@ -72,8 +69,6 @@ export class TeamComponent {
       teamName: '',
       driver: {driverId: '', driverName: ''},
       electrician: {electricianId: '', electricianName: ''},
-      othersMembers: [
-      ],
       UFName: '',
       cityName: '',
       regionName: '',
@@ -201,8 +196,6 @@ export class TeamComponent {
         teamName: '',
         driver: {driverId: '', driverName: ''},
       electrician: {electricianId: '', electricianName: ''},
-      othersMembers: [
-      ],
         UFName: '',
         cityName: '',
         regionName: '',
@@ -281,47 +274,6 @@ export class TeamComponent {
   }
 
 
-  changeMember(index
-               :
-               number, memberId
-               :
-               string
-  ) {
-    if (index === -1) {
-      console.log('Equipe não encontrada');
-      return;
-    }
-
-    let teams = this.teams[index];
-
-    let members = teams.othersMembers;
-    let memberExist = members.some(member => member.memberId === memberId)
-
-
-    if (memberExist) {
-      members = members.filter(m => m.memberId !== memberId);
-    } else {
-      members.push({memberId: memberId, memberName: ''});
-    }
-
-    teams.othersMembers = members;
-    this.teams[index] = teams;
-    console.log(this.teams);
-  }
-
-  verifyMember(index
-               :
-               number, memberId
-               :
-               string
-  ) {
-    let teams = this.teams[index];
-    let members = teams.othersMembers;
-
-    // Verifica se alguma role no array corresponde ao nomeRole fornecido
-    return members.some(m => m.memberId === memberId);
-
-  }
 
   debug(team: any, teams: any) {
     console.log(team)

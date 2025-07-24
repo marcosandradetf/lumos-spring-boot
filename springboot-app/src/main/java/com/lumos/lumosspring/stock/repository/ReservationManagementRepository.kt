@@ -2,8 +2,9 @@ package com.lumos.lumosspring.stock.repository
 
 import com.lumos.lumosspring.stock.entities.ReservationManagement
 import org.springframework.data.repository.CrudRepository
-import java.util.UUID
+import org.springframework.stereotype.Repository
 
+@Repository
 interface ReservationManagementRepository : CrudRepository<ReservationManagement, Long> {
 //    fun existsByStreetsPreMeasurementPreMeasurementIdAndStreetsStep(
 //        preMeasurementId: Long,

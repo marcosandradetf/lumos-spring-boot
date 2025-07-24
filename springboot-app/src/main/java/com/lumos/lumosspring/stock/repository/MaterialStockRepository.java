@@ -1,17 +1,14 @@
 package com.lumos.lumosspring.stock.repository;
 
-import com.lumos.lumosspring.execution.dto.MaterialInStockDTO;
-import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
 import com.lumos.lumosspring.stock.entities.MaterialStock;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface MaterialStockRepository extends CrudRepository<MaterialStock, Long> {
     @Query("""
         SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END

@@ -59,7 +59,6 @@
           <th>Descrição</th>
           <th class="max-w-52">Motorista</th>
           <th class="max-w-52">Eletricista</th>
-          <th class="max-w-52">Integrantes Complementares</th>
           <th>Placa do Veículo</th>
           <th class="max-w-52">Estado</th>
           <th class="max-w-52">Cidade</th>
@@ -140,37 +139,6 @@
                 <div *ngIf="electricianId.invalid && (electricianId.touched || teamForm.submitted)">
                   <small *ngIf="electricianId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
                 </div>
-              </div>
-            </td>
-
-            <td>
-              <div class="dropdown dropdown-end flex-2 relative w-52" *ngIf="team.sel">
-                <div tabindex="0" role="button"
-                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
-                  <span
-                    class="text-xs poppins-regular pl-1 pr-10">  {{ (team.othersMembers.length || 0) === 0 ? 'Selecionar membros' : team.othersMembers.length + ' selecionado(os)' }}</span>
-                </div>
-                <div
-                  tabindex="0"
-                  class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
-                  <div class="max-h-40 overflow-y-auto p-2">
-                    <label *ngFor="let user of users"
-                           class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md">
-                      <input type="checkbox" [value]="user.userId" class="checkbox checkbox-xs"
-                             (change)="changeMember(i, user.userId)"
-                             [checked]="verifyMember(i, user.userId)">
-                      <span>{{ user.name + ' ' + user.lastname }}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="dropdown dropdown-hover select select-disabled select-xs" *ngIf="!team.sel">
-                <div tabindex="0" role="button" class="flex items-center">{{team.othersMembers.length + ' colaboradores'}}</div>
-                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 m-2 shadow">
-                  @for (member of team.othersMembers; track member.memberName) {
-                    <li>{{ member.memberName }}</li>
-                  }
-                </ul>
               </div>
             </td>
 
@@ -315,38 +283,6 @@
             </td>
 
             <td>
-              <div class="dropdown dropdown-end flex-2 relative w-52" *ngIf="team.idTeam === ''">
-                <div tabindex="0" role="button"
-                     class="p-1 m-1 material-icons flex items-center select select-xs select-bordered">
-                  <span
-                    class="text-xs poppins-regular pl-1 pr-10">
-                      {{ (team.othersMembers.length || 0) === 0 ? 'Selecionar membros' : team.othersMembers.length + ' selecionado(os)' }}
-                  </span>
-                </div>
-                <div
-                  tabindex="0"
-                  class="table table-xs dropdown-content menu bg-base-100 rounded-box z-[50] w-52 shadow overflow-auto">
-                  <div class="max-h-40 overflow-y-auto p-2">
-                    <label *ngFor="let user of users"
-                           class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md">
-                      <input type="checkbox" [value]="user.userId" class="checkbox checkbox-xs"
-                             (change)="changeMember(i, user.userId)"
-                             [checked]="verifyMember(i, user.userId)">
-                      <span>{{ user.name + ' ' + user.lastname }}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="dropdown dropdown-hover select select-disabled select-xs" *ngIf="team.idTeam !== ''">
-                <div tabindex="0" role="button" class="flex items-center">{{team.othersMembers.length + ' colaboradores'}}</div>
-                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 m-2 shadow">
-                  @for (member of team.othersMembers; track member.memberName) {
-                    <li>{{ member.memberName }}</li>
-                  }
-                </ul>
-              </div>
-            </td>
-            <td>
               <input required
                      [disabled]="team.idTeam !== ''"
                      [(ngModel)]="team.plate"
@@ -419,17 +355,6 @@
             <td>{{ team.teamName }}</td>
             <td>{{ team.driver.driverName }}</td>
             <td>{{ team.electrician.electricianName }}</td>
-            <td>
-              <div class="dropdown dropdown-hover">
-                <div tabindex="0" role="button" class="flex items-center" (click)="debug(team, teams)">{{team.othersMembers.length + ' colaboradores'}}<span
-                  class="material-icons">arrow_drop_down_icon </span></div>
-                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 m-2 shadow">
-                  @for (member of team.othersMembers; track member.memberName) {
-                    <li>{{ member.memberName }}</li>
-                  }
-                </ul>
-              </div>
-            </td>
             <td>{{ team.plate }}</td>
             <td>{{ team.UFName }}</td>
             <td>{{ team.cityName }}</td>

@@ -3,9 +3,11 @@ package com.lumos.lumosspring.stock.repository;
 import com.lumos.lumosspring.stock.entities.Material;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface MaterialRepository extends CrudRepository<Material, Long> {
     boolean existsByMaterialName(String materialName); // verificar duplicatas
 

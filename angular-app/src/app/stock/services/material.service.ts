@@ -18,12 +18,14 @@ export class MaterialService {
   private goEndpoint = environment.goStock + '/api/stock';
   private materialsSubject: BehaviorSubject<MaterialResponse[]> = new BehaviorSubject<MaterialResponse[]>([]);
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
-  public totalPages: number = 0;
-  public totalElements: number = 0;
-  public currentPage: number = 0;
-  public rows: number = 15;
 
-  public pages: number[] = [];
+  public currentPage: number = 0;     // ← corresponde a "page"
+  public pageSize: number = 15;       // ← mais claro que "rows"
+  public totalElements: number = 0;   // ← corresponde a "totalElements"
+  public totalPages: number = 0;      // ← corresponde a "totalPages"
+  public isLastPage: boolean = false; // ← corresponde a "last"
+
+
   materialSubject: BehaviorSubject<CreateMaterialRequest> = new BehaviorSubject<CreateMaterialRequest>({
     buyUnit: '',
     company: '',
@@ -48,53 +50,58 @@ export class MaterialService {
   constructor(private http: HttpClient) {
   }
 
-  getFetch(page: number, depositId: number | undefined): void {
-    let params =
-      new HttpParams()
-        .set('page', page)
-        .set('size', this.rows);
+  getFetch(page: number, depositId?: number): void {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', this.pageSize.toString());
 
-    if (depositId) params = params.append('depositId', depositId);
+    if (depositId !== undefined) {
+      params = params.set('depositId', depositId.toString());
+    }
 
     this.http.get<{
       content: MaterialResponse[],
       totalPages: number,
-      totalElements: number
-      number: number,
+      totalElements: number,
+      page: number,
       size: number,
-    }>(`${this.apiUrl}`, {params})
+      last: boolean
+    }>(`${this.apiUrl}`, { params })
       .subscribe(response => {
-        this.materialsSubject.next(response.content); // Atualiza o conteúdo
+        this.materialsSubject.next(response.content);
         this.totalPages = response.totalPages;
         this.totalElements = response.totalElements;
-        this.currentPage = response.number;
-        this.rows = response.size;
-        this.pages = Array.from({length: this.totalPages}, (_, i) => i);
+        this.currentPage = response.page;
+        this.pageSize = response.size;
+        this.isLastPage = response.last;
       });
   }
 
   getBySearch(page: number, search: string, depositId: number | null = null) {
     let params = new HttpParams()
       .set('name', search)
-      .set('page', page)
-      .set('size', this.rows);
+      .set('page', page.toString())
+      .set('size', this.pageSize.toString());
 
-    if (depositId !== null) params = params.append('depositId', depositId);
+    if (depositId !== null) {
+      params = params.set('depositId', depositId.toString());
+    }
 
     this.http.get<{
       content: MaterialResponse[],
       totalPages: number,
-      totalElements: number
-      number: number,
+      totalElements: number,
+      page: number,
       size: number,
-    }>(`${this.apiUrl}/search`, {params})
+      last: boolean
+    }>(`${this.apiUrl}/search`, { params })
       .subscribe(response => {
-        this.materialsSubject.next(response.content); // Atualiza o conteúdo
+        this.materialsSubject.next(response.content);
         this.totalPages = response.totalPages;
         this.totalElements = response.totalElements;
-        this.currentPage = response.number;
-        this.rows = response.size;
-        this.pages = Array.from({length: this.totalPages}, (_, i) => i);
+        this.currentPage = response.page;
+        this.pageSize = response.size;
+        this.isLastPage = response.last;
       });
   }
 

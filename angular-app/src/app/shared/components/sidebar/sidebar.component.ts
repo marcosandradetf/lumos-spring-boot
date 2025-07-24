@@ -93,19 +93,9 @@ export class SidebarComponent implements OnInit {
         },
         items: [
           {
-            label: 'Pendente',
-            icon: 'pi pi-clock text-neutral-800 dark:text-neutral-200',
-            routerLink: 'pre-medicao/pendente',
-          },
-          {
-            label: 'Aguardando Retorno',
+            label: 'Aguardando Confirmação',
             icon: 'pi pi-inbox text-neutral-800 dark:text-neutral-200',
             routerLink: 'pre-medicao/aguardando-retorno',
-          },
-          {
-            label: 'Validando',
-            icon: 'pi pi-sync text-neutral-800 dark:text-neutral-200',
-            routerLink: 'pre-medicao/validando',
           },
           {
             label: 'Disponível para execução',

@@ -61,6 +61,12 @@
             <version>3.1.8</version>
         </dependency>
 
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+
         <!-- Spring OAuth2 para JWT com chave RSA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -115,12 +121,12 @@
 <!--        </dependency>-->
 
         <!-- Gera um índice de beans em tempo de build, reduzindo drasticamente o tempo de inicialização -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context-indexer</artifactId>
-            <version>6.1.4</version> <!-- Compatível com Spring Boot 3.3.x -->
-            <optional>true</optional>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework</groupId>-->
+<!--            <artifactId>spring-context-indexer</artifactId>-->
+<!--            <version>6.1.4</version> &lt;!&ndash; Compatível com Spring Boot 3.3.x &ndash;&gt;-->
+<!--            <optional>true</optional>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

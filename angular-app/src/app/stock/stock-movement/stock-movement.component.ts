@@ -450,15 +450,17 @@ export class StockMovementComponent implements OnInit {
   value: string = '';
   first: number = 0;
 
-  onPageChange(event: PaginatorState) {
+  onPageChange(page: number | undefined) {
     this.loading = true;
-    this.first = event.first!!;
-    if (!this.search)
-      this.materialService.getFetch(event.page!!, this.currentDeposit?.idDeposit);
-    else if (this.search)
-      this.materialService.getBySearch(event.page!!, this.value, this.currentDeposit?.idDeposit);
-
+    if (page) {
+      if (!this.search) {
+        this.materialService.getFetch(page, this.currentDeposit?.idDeposit);
+      } else {
+        this.materialService.getBySearch(page, this.value, this.currentDeposit?.idDeposit);
+      }
+    }
   }
+
 
   handleSearch(value: string): void {
     this.loading = true;

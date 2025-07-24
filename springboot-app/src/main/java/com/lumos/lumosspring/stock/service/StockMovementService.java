@@ -55,7 +55,7 @@ public class StockMovementService {
             var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
 
             // Formatação de preço para substituir ponto por vírgula
-            String employee = userCreated.getUsername();
+            String employee = userCreated.getCompletedName();
 
 
             // Marca do material (evitando NullPointerException)

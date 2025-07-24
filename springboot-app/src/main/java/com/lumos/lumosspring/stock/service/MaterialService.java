@@ -49,8 +49,8 @@ public class MaterialService {
         this.materialStockJdbcRepository = materialStockJdbcRepository;
     }
 
-    public ResponseEntity<Page<MaterialResponse>> findAll(int page, int size, long depositId) {
-        Page<MaterialResponse> materials;
+    public ResponseEntity<PagedResponse<MaterialResponse>> findAll(Integer page, Integer size, Long depositId) {
+        PagedResponse<MaterialResponse> materials;
         if (depositId <= 0)
             materials = materialStockJdbcRepository.findAllMaterialsStock(page, size);
         else
@@ -59,8 +59,8 @@ public class MaterialService {
         return ResponseEntity.ok(materials);
     }
 
-    public ResponseEntity<Page<MaterialResponse>> searchMaterialStock(String name, int page, int size, long depositId) {
-        Page<MaterialResponse> materials;
+    public ResponseEntity<PagedResponse<MaterialResponse>> searchMaterialStock(String name, Integer page, Integer size, Long depositId) {
+        PagedResponse<MaterialResponse> materials;
 
         if (depositId <= 0)
             materials = materialStockJdbcRepository.searchMaterial(name.toLowerCase(), page, size);

@@ -134,8 +134,9 @@
     <div class="flex justify-between mt-auto absolute bottom-5 w-[90%]" *ngIf="!loading">
       <app-button [action]="handleClick" title="Continuar"></app-button>
 
-      <p-paginator (onPageChange)="onPageChange($event)" [first]="materialService.currentPage"
-                   [rows]="materialService.rows"
+      <p-paginator (onPageChange)="onPageChange($event.page)"
+                   [first]="materialService.currentPage * materialService.pageSize"
+                   [rows]="materialService.pageSize"
                    [totalRecords]="materialService.totalElements"/>
 
     </div>

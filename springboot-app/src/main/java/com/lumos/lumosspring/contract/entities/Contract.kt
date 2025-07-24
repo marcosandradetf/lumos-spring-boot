@@ -28,8 +28,6 @@ class Contract {
     var contractFile : String? = null
     var status : String = ContractStatus.ACTIVE
 
-    var contractItems: Set<ContractItem> = hashSetOf()
-
     fun sumTotalPrice(totalPrice: BigDecimal?) {
         if (totalPrice != null) {
             this.contractValue = this.contractValue.add(totalPrice)

@@ -13,13 +13,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -28,13 +29,20 @@ public class UserService {
     private final EmailService emailService;
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository) {
+    public UserService(UserRepository userRepository,
+                       BCryptPasswordEncoder passwordEncoder,
+                       EmailService emailService,
+                       RoleRepository roleRepository,
+                       RefreshTokenRepository refreshTokenRepository,
+                       NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     @Cacheable("getAllUsers")
@@ -233,6 +241,7 @@ public class UserService {
             }
 
 
+            var currentRoles = roleRepository.findRolesByUserId(UUID.fromString(u.userId()));
             Set<Role> userRoles = new HashSet<>();
             var date = LocalDate.of(u.year(), u.month(), u.day());
 
@@ -242,7 +251,7 @@ public class UserService {
                 }
 
                 var role = roleRepository.findByRoleName(r);
-                if (role == null) {
+                if (role == null || currentRoles.contains(role.getRoleName())) {
                     continue;
                 }
                 userRoles.add(role);
@@ -268,12 +277,16 @@ public class UserService {
             user.get().setDateOfBirth(date);
             user.get().setStatus(u.status());
 
-//            for (Role role : userRoles) {
-//                var newRole = new UserRole(
-//                        user.get().getUserId(), role.getRoleId(), false
-//                );
-//                userRoleRepository.save(newRole);
-//            }
+            for (Role role : userRoles) {
+                var params = new MapSqlParameterSource()
+                        .addValue("userId", UUID.fromString(u.userId()))
+                        .addValue("roleId", role.getRoleId());
+                namedParameterJdbcTemplate.update("""
+                    INSERT INTO user_role (id_user, id_role)
+                    VALUES (:userId, :roleId)
+                """, params);
+            }
+
 
             userRepository.save(user.get());
 
@@ -350,12 +363,15 @@ public class UserService {
             user.setStatus(u.status());
             user = userRepository.save(user);
 
-//            for (Role role : userRoles) {
-//                var newRole = new UserRole(
-//                        user.getUserId(), role.getRoleId(), true
-//                );
-//                userRoleRepository.save(newRole);
-//            }
+            for (Role role : userRoles) {
+                var params = new MapSqlParameterSource()
+                        .addValue("userId", UUID.fromString(u.userId()))
+                        .addValue("roleId", role.getRoleId());
+                namedParameterJdbcTemplate.update("""
+                    INSERT INTO user_role (id_user, id_role)
+                    VALUES (:userId, :roleId)
+                """, params);
+            }
 
             emailService.sendPasswordForEmail(u.name(), u.email(), password);
         }

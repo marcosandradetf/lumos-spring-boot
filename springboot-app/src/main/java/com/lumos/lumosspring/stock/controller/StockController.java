@@ -58,7 +58,7 @@ public class StockController {
     }
 
     @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'ESTOQUISTA_CHEFE', 'ESTOQUISTA')")
-    @PostMapping("/stock-movement/create")
+    @PostMapping("/stock/stock-movement/create")
     public ResponseEntity<?> stockMovement(@RequestBody List<StockMovementDTO> movement, @CookieValue("refreshToken") String refreshToken) {
         return stockMovementService.createMovement(movement, refreshToken);
     }
