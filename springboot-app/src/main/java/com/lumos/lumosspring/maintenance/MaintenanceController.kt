@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.stereotype.Indexed
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.util.UUID
 
 @Indexed
 @Controller
@@ -34,6 +35,19 @@ class MaintenanceController(
     @GetMapping("/maintenance/get-finished")
     fun getGroupedMaintenances(): ResponseEntity<List<Map<String, JsonNode>>> =
         ResponseEntity.ok(maintenanceService.getGroupedMaintenances())
+
+    @PostMapping("/maintenance/generate-report/{type}/{maintenanceId}")
+    fun generateReport(
+        @PathVariable type: String,
+        @PathVariable maintenanceId: UUID,
+        @RequestParam streets: List<UUID>
+    ): ResponseEntity<ByteArray> {
+        return when (type.lowercase()) {
+            "conventional" -> maintenanceService.conventionalReport(maintenanceId, streets)
+            "led" -> maintenanceService.conventionalReport(maintenanceId, streets) // Supondo que exista outro método
+            else -> ResponseEntity.badRequest().body(ByteArray(0))
+        }
+    }
 
 
 }

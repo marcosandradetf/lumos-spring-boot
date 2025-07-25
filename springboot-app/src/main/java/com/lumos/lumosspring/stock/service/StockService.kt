@@ -5,7 +5,7 @@ import com.lumos.lumosspring.stock.entities.OrderMaterialItem
 import com.lumos.lumosspring.stock.repository.OrderMaterialItemRepository
 import com.lumos.lumosspring.stock.repository.OrderMaterialRepository
 import com.lumos.lumosspring.stock.repository.StockQueryRepository
-import com.lumos.lumosspring.stock.repository.TeamQueryRepository
+import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service

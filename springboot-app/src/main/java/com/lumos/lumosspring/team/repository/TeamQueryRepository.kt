@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.repository
+package com.lumos.lumosspring.team.repository
 
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate

@@ -15,7 +15,6 @@ export enum State {
 })
 export class MaterialService {
   private apiUrl = environment.springboot + '/api/material';
-  private goEndpoint = environment.goStock + '/api/stock';
   private materialsSubject: BehaviorSubject<MaterialResponse[]> = new BehaviorSubject<MaterialResponse[]>([]);
   public materials$: Observable<MaterialResponse[]> = this.materialsSubject.asObservable();
 
@@ -219,6 +218,6 @@ export class MaterialService {
       depositName: '',
     }[]
   ) {
-    return this.http.post(this.goEndpoint + "/import", materials);
+    return this.http.post(this.apiUrl + "/import", materials);
   }
 }

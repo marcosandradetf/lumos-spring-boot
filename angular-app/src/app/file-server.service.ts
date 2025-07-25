@@ -7,7 +7,7 @@ import {environment} from '../environments/environment';
   providedIn: 'root'
 })
 export class FileServerService {
-  private apiUrl = environment.goFileserver +  '/download/';  // URL do seu servidor (ajuste conforme necessário)
+  private apiUrl = environment.springboot +  '/download/';  // URL do seu servidor (ajuste conforme necessário)
 
   constructor(private http: HttpClient) { }
 

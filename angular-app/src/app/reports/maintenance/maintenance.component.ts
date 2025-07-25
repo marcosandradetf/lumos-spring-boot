@@ -89,6 +89,7 @@ export class MaintenanceComponent implements OnInit {
       },
       error: (err) => {
         this.utilService.showMessage(err.error.message || err.error, 'error', 'Erro ao gerar gerar PDF');
+        this.loading = false
       },
       complete: () => {
         this.loading = false

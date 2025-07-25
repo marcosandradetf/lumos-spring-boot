@@ -5,10 +5,9 @@ import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
 import com.lumos.lumosspring.authentication.entities.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.stock.repository.TeamQueryRepository;
+import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.entities.Stockist;
 import com.lumos.lumosspring.team.repository.StockistRepository;
-import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.*;
 import com.lumos.lumosspring.util.ErrorResponse;
 import jakarta.servlet.http.Cookie;
@@ -219,7 +218,11 @@ public class TokenService {
         return String.join(" ", rolesNames);
     }
     private String getTeams(AppUser appUser) {
-        var teamId = teamQueryRepository.getTeamIdByUserId(appUser.getUserId()).toString();
+        Long numberTeamId = teamQueryRepository.getTeamIdByUserId(appUser.getUserId());
+        String teamId = "";
+        if (numberTeamId != null) {
+            teamId =  numberTeamId.toString();
+        }
 
         // Obter códigos dos stockists diretamente e juntar com espaço
         var sTeams = stockistRepository.findAllByUserId(appUser.getUserId()).stream()
@@ -230,6 +233,7 @@ public class TokenService {
         return Stream.of(teamId, sTeams)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.joining(" "));
+
     }
 
 

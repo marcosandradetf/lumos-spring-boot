@@ -6,8 +6,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
   providedIn: 'root'
 })
 export class ReportService {
-  private puppeteer = environment.puppeteer;
-  private maintenance = environment.maintenance;
+  private endpoint = environment.springboot;
 
   constructor(private http: HttpClient) {
   }
@@ -18,14 +17,14 @@ export class ReportService {
       params = params.append('streets', id.toString());
     });
 
-    return this.http.post(`${this.puppeteer}/generate-maintenance-pdf/${maintenanceId}/${type}`, null, {
+    return this.http.post(`${this.endpoint}/api/maintenance/generate-report/${type}/${maintenanceId}`, null, {
       params,
       responseType: 'blob'  // importante para receber arquivo binário
     });
   }
 
   public getFinishedMaintenances() {
-    return this.http.get<any[]>(`${this.maintenance}/api/maintenance/get-finished`);
+    return this.http.get<any[]>(`${this.endpoint}/api/maintenance/get-finished`);
   }
 
 

@@ -3,13 +3,12 @@ package com.lumos.lumosspring.execution.repository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
-import java.util.UUID
 
 @Repository
 class JdbcInstallationRepository(
-    private val jdbcTemplate: JdbcTemplate,
+    private val namedJdbc: NamedParameterJdbcTemplate,
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
 //    fun getGroupedMaintenances(): List<Map<String, JsonNode>> {
@@ -57,7 +56,7 @@ class JdbcInstallationRepository(
 //        }
 //    }
 //
-    fun getDataForReport(executionId: UUID): List<Map<String, JsonNode>> {
+    fun getDataForReport(executionId: Long): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
               SELECT
@@ -71,7 +70,7 @@ class JdbcInstallationRepository(
                 ON ci.contract_item_id = desi.contract_item_id
               JOIN contract_reference_item cri 
                 ON cri.contract_reference_item_id = ci.contract_item_reference_id
-              --WHERE des.direct_execution_id = :directExecutionId
+              WHERE des.direct_execution_id = :directExecutionId
             ),
             contract_items AS (
               SELECT 
@@ -165,7 +164,7 @@ class JdbcInstallationRepository(
                   )
                 )
                 FROM direct_execution_street des
-                --WHERE des.direct_execution_id = :directExecutionId
+                WHERE des.direct_execution_id = :directExecutionId
               ) AS streets
 
             FROM direct_execution de
@@ -174,19 +173,22 @@ class JdbcInstallationRepository(
             JOIN team t ON t.id_team = de.team_id
             JOIN app_user e ON t.electrician_id = e.user_id
             JOIN app_user d ON t.driver_id = d.user_id
-            --WHERE de.direct_execution_id = :directExecutionId;
+            WHERE de.direct_execution_id = :directExecutionId;
         """.trimIndent()
 
-        return jdbcTemplate.query(sql) { rs, _ ->
-            val maintenanceJson = rs.getString("maintenance")
-            val teamJson = rs.getString("team")
-
-            val maintenanceNode = objectMapper.readTree(maintenanceJson)
-            val teamNode = objectMapper.readTree(teamJson)
+        return namedJdbc.query(sql, mapOf("executionId" to executionId)) { rs, _ ->
+            val company = objectMapper.readTree(rs.getString("company"))
+            val contract = objectMapper.readTree(rs.getString("contract"))
+            val values = objectMapper.readTree(rs.getString("values"))
+            val columns = objectMapper.readTree(rs.getString("columns"))
+            val streets = objectMapper.readTree(rs.getString("streets"))
 
             mapOf(
-                "maintenance" to maintenanceNode,
-                "team" to teamNode
+                "company" to company,
+                "contract" to contract,
+                "values" to values,
+                "columns" to columns,
+                "streets" to streets
             )
         }
     }

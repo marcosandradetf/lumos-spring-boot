@@ -1,26 +1,14 @@
 import express from 'express';
-import { authenticateToken } from './middlewares/auth.middleware';
 import { closeBrowser } from './config/puppeter.client'
-import { maintenanceReport } from './services/maintenance.service';
-import cors from 'cors';
 import { enqueuePdfTask } from './config/puppeteerQueue';
 
 
 const app = express();
-app.use(cors({
-    origin: ['https://lumos.thryon.com.br', 'http://localhost:4200'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true // <-- ESSENCIAL
-}));
-app.post('/generate-maintenance-pdf/:maintenanceId/:reportFile', authenticateToken, async (req, res) => {
-    const { maintenanceId } = req.params;
-    const { reportFile } = req.params;
-    const streetIds = req.query.streets?.toString().split(',') ?? [];
+app.use(express.json());
+app.post('/generate-pdf',  async (req, res) => {
+    const { html } = req.body;
 
     try {
-        const html = await maintenanceReport(reportFile, maintenanceId, streetIds);
-
         if (!html) {
             console.log(html);
             return res.status(500).send('Falha ao gerar HTML do relatório');

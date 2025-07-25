@@ -9,19 +9,21 @@ import {ButtonComponent} from '../../../shared/components/button/button.componen
 import {MaterialResponse} from '../../../models/material-response.dto';
 import {MaterialService, State} from '../../services/material.service';
 import {ReactiveFormsModule} from "@angular/forms";
+import {Paginator} from 'primeng/paginator';
 
 @Component({
   selector: 'app-tabela',
   standalone: true,
-    imports: [
-        NgForOf,
-        NgClass,
-        AlertMessageComponent,
-        ModalComponent,
-        ButtonComponent,
-        MaterialFormComponent,
-        ReactiveFormsModule
-    ],
+  imports: [
+    NgForOf,
+    NgClass,
+    AlertMessageComponent,
+    ModalComponent,
+    ButtonComponent,
+    MaterialFormComponent,
+    ReactiveFormsModule,
+    Paginator
+  ],
   templateUrl: './tabela.component.html',
   styleUrl: './tabela.component.scss'
 })
@@ -79,13 +81,6 @@ export class TabelaComponent implements OnInit {
   }
 
 
-  changePage(page: number): void {
-    if (page !== this.currentPage) {
-      this.currentPage = page;
-      this.materialService.getFetch(this.currentPage, 20);
-    }
-  }
-
   submitDeleteMaterial() {
     this.deleteMaterial();
   }
@@ -97,4 +92,12 @@ export class TabelaComponent implements OnInit {
     this.materialService.setState(State.create);
     this.materialService.resetObject();
   }
+
+  onPageChange(page: number | undefined) {
+    if (page) {
+      this.materialService.getFetch(this.currentPage, 20);
+    }
+  }
+
+
 }

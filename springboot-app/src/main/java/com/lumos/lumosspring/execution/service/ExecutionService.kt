@@ -16,7 +16,12 @@ import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
 import com.lumos.lumosspring.util.JdbcUtil.existsRaw
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
+import com.lumos.lumosspring.util.Utils.replacePlaceholders
+import com.lumos.lumosspring.util.Utils.sendHtmlToPuppeteer
+import org.springframework.http.ContentDisposition
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
@@ -24,6 +29,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.util.HtmlUtils
 import java.util.*
 
 @Service
@@ -49,6 +55,7 @@ class ExecutionService(
     private val materialStockJdbcRepository: MaterialStockJdbcRepository,
     private val contractService: ContractService,
     private val materialRepository: MaterialRepository,
+    private val jdbcInstallationRepository: JdbcInstallationRepository,
 ) {
 
 //    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
@@ -1212,7 +1219,78 @@ class ExecutionService(
         }
 
         return ResponseEntity.ok().build()
+    }
 
+    fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
+        var templateHtml = this::class.java.getResource("/templates/installation/data.html")!!.readText()
+
+        val data = jdbcInstallationRepository.getDataForReport(executionId)
+        val jsonData = data.first() // Pega o único resultado
+
+        val company = jsonData["company"]!!
+        val contract = jsonData["contract"]!!
+        val values = jsonData["values"]!!
+        val columns = jsonData["columns"]!!
+        val streets = jsonData["streets"]!!
+
+        val replacements = mapOf(
+            "CONTRACT_NUMBER" to contract["contract_number"].asText(),
+            "COMPANY_SOCIAL_REASON" to company["social_reason"].asText(),
+            "COMPANY_CNPJ" to company["company_cnpj"].asText(),
+            "COMPANY_ADDRESS" to company["company_address"].asText(),
+            "COMPANY_PHONE" to company["company_phone"].asText(),
+            "CONTRACTOR_SOCIAL_REASON" to contract["contractor"].asText(),
+            "CONTRACTOR_CNPJ" to contract["cnpj"].asText(),
+            "CONTRACTOR_ADDRESS" to contract["address"].asText(),
+            "CONTRACTOR_PHONE" to contract["phone"].asText(),
+            "BASE64_LOGO_IMAGE" to company["company_logo"].asText()
+        )
+
+        templateHtml = templateHtml.replacePlaceholders(replacements)
+
+        val columnsList = columns.map { it.asText() }
+
+        val streetColumnsHtml = columnsList.joinToString("") {
+            "<th style=\"text-align: left;\">$it</th>"
+        }
+
+        val streetLinesHtml = streets.joinToString("\n") { line ->
+            val address = line[0].asText()
+            val lastPower = line[1].asText() // TODO
+            val items = line[2]
+            val date = line[3].asText()
+            val supplier = line[4].asText()
+
+            val itemValues = items.map { it[1].asText() } // executado por item
+
+            val rowHtml = listOf(address, lastPower) + itemValues + listOf(date, supplier)
+            "<tr>" + rowHtml.joinToString("") { "<td>$it</td>" } + "</tr>"
+        }
+
+        val streetFooterHtml = "" // ou calcule somas por coluna se necessário
+
+        templateHtml = templateHtml
+            .replace("{{STREET_COLUMNS}}", streetColumnsHtml)
+            .replace("{{STREET_LINES}}", streetLinesHtml)
+            .replace("{{STREET_FOOTER}}", streetFooterHtml)
+            .replace("{{COLUMN_LENGTH}}", columnsList.size.toString())
+
+
+        try {
+            val response = sendHtmlToPuppeteer(templateHtml)
+            val responseHeaders = HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_PDF
+                contentDisposition = ContentDisposition.inline()
+                    .filename("relatorio.pdf")
+                    .build()
+            }
+
+            return ResponseEntity.ok()
+                .headers(responseHeaders)
+                .body(response)
+        } catch (e: Exception) {
+            throw RuntimeException(e.message, e.cause)
+        }
     }
 
 }

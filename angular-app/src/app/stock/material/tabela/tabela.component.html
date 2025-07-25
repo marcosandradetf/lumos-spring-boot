@@ -58,10 +58,10 @@
   </table>
 
   <div class="join flex justify-center p-3">
-    <button class="join-item btn btn-sm hover:text-neutral-900" *ngFor="let p of materialService.pages; let i = index"
-            (click)="changePage(i)"
-            [ngClass]="i === currentPage ? 'bg-indigo-700 text-white' : '' ">{{ i + 1 }}
-    </button>
+    <p-paginator (onPageChange)="onPageChange($event.page)"
+                 [first]="materialService.currentPage * materialService.pageSize"
+                 [rows]="materialService.pageSize"
+                 [totalRecords]="materialService.totalElements"/>
   </div>
 
   <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
