@@ -5,12 +5,10 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
 import com.lumos.lumosspring.maintenance.service.MaintenanceService
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.stereotype.Indexed
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import java.util.UUID
+import java.util.*
 
-@Indexed
 @Controller
 @RequestMapping("/api")
 class MaintenanceController(

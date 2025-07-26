@@ -49,7 +49,7 @@ class ContractService(
                     item.type,
                     item.linking,
                     item.itemDependency,
-                    0.0,
+                    BigDecimal.ZERO,
                     "0,00"
                 )
             )

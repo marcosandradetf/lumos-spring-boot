@@ -1,12 +1,10 @@
 package com.lumos.lumosspring.stock.entities;
 
-import com.lumos.lumosspring.user.AppUser;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -27,15 +25,15 @@ public class StockMovement {
     @Column("user_finished_id_user")
     private UUID appUserFinishedId;
 
-    private double inputQuantity;
+    private BigDecimal inputQuantity;
 
-    private double totalQuantity;
+    private BigDecimal totalQuantity;
 
     private String buyUnit;
 
     private String requestUnit;
 
-    private double quantityPackage;
+    private BigDecimal quantityPackage;
 
     private BigDecimal pricePerItem;
 
@@ -47,7 +45,7 @@ public class StockMovement {
 
     public StockMovement() {}
 
-    public StockMovement(Long stockMovementId, String stockMovementDescription, Long materialStockId, Instant stockMovementRefresh, UUID appUserCreatedId, UUID appUserFinishedId, double inputQuantity, double totalQuantity, String buyUnit, String requestUnit, double quantityPackage, BigDecimal pricePerItem, BigDecimal priceTotal, Long supplierId, String status) {
+    public StockMovement(Long stockMovementId, String stockMovementDescription, Long materialStockId, Instant stockMovementRefresh, UUID appUserCreatedId, UUID appUserFinishedId, BigDecimal inputQuantity, BigDecimal totalQuantity, String buyUnit, String requestUnit, BigDecimal quantityPackage, BigDecimal pricePerItem, BigDecimal priceTotal, Long supplierId, String status) {
         this.stockMovementId = stockMovementId;
         this.stockMovementDescription = stockMovementDescription;
         this.materialStockId = materialStockId;
@@ -113,19 +111,19 @@ public class StockMovement {
         this.appUserFinishedId = appUserFinishedId;
     }
 
-    public double getInputQuantity() {
+    public BigDecimal getInputQuantity() {
         return inputQuantity;
     }
 
-    public void setInputQuantity(double inputQuantity) {
+    public void setInputQuantity(BigDecimal inputQuantity) {
         this.inputQuantity = inputQuantity;
     }
 
-    public double getTotalQuantity() {
+    public BigDecimal getTotalQuantity() {
         return totalQuantity;
     }
 
-    public void setTotalQuantity(double totalQuantity) {
+    public void setTotalQuantity(BigDecimal totalQuantity) {
         this.totalQuantity = totalQuantity;
     }
 
@@ -145,11 +143,11 @@ public class StockMovement {
         this.requestUnit = requestUnit;
     }
 
-    public double getQuantityPackage() {
+    public BigDecimal getQuantityPackage() {
         return quantityPackage;
     }
 
-    public void setQuantityPackage(double quantityPackage) {
+    public void setQuantityPackage(BigDecimal quantityPackage) {
         this.quantityPackage = quantityPackage;
     }
 

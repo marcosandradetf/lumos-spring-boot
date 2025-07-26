@@ -16,6 +16,7 @@ import com.lumos.lumosspring.user.UserRepository
 import com.lumos.lumosspring.util.*
 import com.lumos.lumosspring.util.JdbcUtil.existsRaw
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
+import com.lumos.lumosspring.util.Utils.formatMoney
 import com.lumos.lumosspring.util.Utils.replacePlaceholders
 import com.lumos.lumosspring.util.Utils.sendHtmlToPuppeteer
 import org.springframework.http.ContentDisposition
@@ -1232,8 +1233,15 @@ class ExecutionService(
         val values = jsonData["values"]!!
         val columns = jsonData["columns"]!!
         val streets = jsonData["streets"]!!
+        val streetSums = jsonData["street_sums"]!!
+        val total = jsonData["total"]!!
+
+        val companyBucket = company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
+        val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
+        val companyLogoUrl = minioService.getPresignedObjectUrl(companyBucket, logoUri)
 
         val replacements = mapOf(
+            "TITLE" to "RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText(),
             "CONTRACT_NUMBER" to contract["contract_number"].asText(),
             "COMPANY_SOCIAL_REASON" to company["social_reason"].asText(),
             "COMPANY_CNPJ" to company["company_cnpj"].asText(),
@@ -1243,7 +1251,9 @@ class ExecutionService(
             "CONTRACTOR_CNPJ" to contract["cnpj"].asText(),
             "CONTRACTOR_ADDRESS" to contract["address"].asText(),
             "CONTRACTOR_PHONE" to contract["phone"].asText(),
-            "BASE64_LOGO_IMAGE" to company["company_logo"].asText()
+            "LOGO_IMAGE" to companyLogoUrl,
+            "TOTAL_VALUE" to formatMoney(total["total_price"].asDouble()),
+            "EXECUTION_DATE" to "TODO"
         )
 
         templateHtml = templateHtml.replacePlaceholders(replacements)
@@ -1255,19 +1265,12 @@ class ExecutionService(
         }
 
         val streetLinesHtml = streets.joinToString("\n") { line ->
-            val address = line[0].asText()
-            val lastPower = line[1].asText() // TODO
-            val items = line[2]
-            val date = line[3].asText()
-            val supplier = line[4].asText()
-
-            val itemValues = items.map { it[1].asText() } // executado por item
-
-            val rowHtml = listOf(address, lastPower) + itemValues + listOf(date, supplier)
-            "<tr>" + rowHtml.joinToString("") { "<td>$it</td>" } + "</tr>"
+            "<tr>" + line.joinToString("") { "<td>$it</td>" } + "</tr>"
         }
 
-        val streetFooterHtml = "" // ou calcule somas por coluna se necessário
+        val streetFooterHtml = streetSums.joinToString("\n") { line ->
+            line.joinToString("") { "<td style=\"text-align: right; font-weight: bold;>$it</td>" }
+        }
 
         templateHtml = templateHtml
             .replace("{{STREET_COLUMNS}}", streetColumnsHtml)

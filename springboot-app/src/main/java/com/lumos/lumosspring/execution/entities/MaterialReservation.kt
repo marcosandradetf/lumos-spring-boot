@@ -3,6 +3,7 @@ package com.lumos.lumosspring.execution.entities
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
+import java.math.BigDecimal
 
 @Table("material_reservation")
 data class MaterialReservation(
@@ -14,8 +15,8 @@ data class MaterialReservation(
     var preMeasurementStreetId: Long? = null,
     var directExecutionId: Long? = null,
     var contractItemId: Long,
-    var reservedQuantity: Double,
-    var quantityCompleted: Double = 0.0,
+    var reservedQuantity: BigDecimal,
+    var quantityCompleted: BigDecimal = BigDecimal.ZERO,
     var status: String = ReservationStatus.PENDING,
     var teamId: Long,
     )

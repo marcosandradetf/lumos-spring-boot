@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.execution.dto
 
+import java.math.BigDecimal
 import java.time.Instant
 
 data class DelegateDTO(
@@ -89,7 +90,7 @@ data class ReserveMaterialDTO(
     val centralMaterialStockId: Long? = null,
     val truckMaterialStockId: Long? = null,
     val materialId: Long,
-    val materialQuantity: Double
+    val materialQuantity: BigDecimal
 )
 
 ////

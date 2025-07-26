@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
-
 @Repository
 class MaintenanceQueryRepository(
     private val jdbcTemplate: NamedParameterJdbcTemplate,

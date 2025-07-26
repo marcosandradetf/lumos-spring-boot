@@ -21,9 +21,9 @@ public class MaterialStock {
 
     private String requestUnit;
 
-    private double stockQuantity;
+    private BigDecimal stockQuantity;
 
-    private double stockAvailable;
+    private BigDecimal stockAvailable;
 
     private BigDecimal costPerItem;
 
@@ -33,7 +33,7 @@ public class MaterialStock {
 
     public  MaterialStock() {}
 
-    public MaterialStock(Long materialIdStock, Long materialId, Long depositId, Long companyId, String buyUnit, String requestUnit, double stockQuantity, double stockAvailable, BigDecimal costPerItem, BigDecimal costPrice, boolean inactive) {
+    public MaterialStock(Long materialIdStock, Long materialId, Long depositId, Long companyId, String buyUnit, String requestUnit, BigDecimal stockQuantity, BigDecimal stockAvailable, BigDecimal costPerItem, BigDecimal costPrice, boolean inactive) {
         this.materialIdStock = materialIdStock;
         this.materialId = materialId;
         this.depositId = depositId;
@@ -95,19 +95,19 @@ public class MaterialStock {
         this.requestUnit = requestUnit;
     }
 
-    public double getStockQuantity() {
+    public BigDecimal getStockQuantity() {
         return stockQuantity;
     }
 
-    public void setStockQuantity(double stockQuantity) {
+    public void setStockQuantity(BigDecimal stockQuantity) {
         this.stockQuantity = stockQuantity;
     }
 
-    public double getStockAvailable() {
+    public BigDecimal getStockAvailable() {
         return stockAvailable;
     }
 
-    public void setStockAvailable(double stockAvailable) {
+    public void setStockAvailable(BigDecimal stockAvailable) {
         this.stockAvailable = stockAvailable;
     }
 
@@ -135,12 +135,11 @@ public class MaterialStock {
         this.inactive = inactive;
     }
 
-    public void addStockQuantity(double quantityCompleted) {
-        this.stockQuantity += quantityCompleted;
+    public void addStockQuantity(BigDecimal quantityCompleted) {
+        this.stockQuantity = this.stockQuantity.add(quantityCompleted);
     }
 
-    public void addStockAvailable(double quantityAvailable) {
-        this.stockAvailable += quantityAvailable;
+    public void addStockAvailable(BigDecimal quantityCompleted) {
+        this.stockQuantity = this.stockAvailable.add(quantityCompleted);
     }
-
 }

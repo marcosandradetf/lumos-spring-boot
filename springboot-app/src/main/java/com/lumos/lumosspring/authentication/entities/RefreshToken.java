@@ -10,7 +10,7 @@ import java.util.UUID;
 @Table(name = "refresh_token")
 public class RefreshToken {
     @Id
-    private long idToken;
+    private Long idToken;
 
     private String token;
 
@@ -21,11 +21,11 @@ public class RefreshToken {
     @Column("id_user")
     private UUID appUser;
 
-    public long getIdToken() {
+    public Long getIdToken() {
         return idToken;
     }
 
-    public void setIdToken(long idToken) {
+    public void setIdToken(Long idToken) {
         this.idToken = idToken;
     }
 

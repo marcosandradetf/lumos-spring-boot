@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.maintenance.service
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.maintenance.entities.Maintenance
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
@@ -9,6 +8,7 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetItemRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
+import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils
 import com.lumos.lumosspring.util.Utils.getCurrentUserId
@@ -16,7 +16,6 @@ import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Indexed
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -24,7 +23,6 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-@Indexed
 @Service
 class MaintenanceService(
     private val maintenanceRepository: MaintenanceRepository,

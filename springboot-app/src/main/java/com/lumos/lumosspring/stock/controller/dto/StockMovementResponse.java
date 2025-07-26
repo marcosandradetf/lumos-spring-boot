@@ -1,10 +1,12 @@
 package com.lumos.lumosspring.stock.controller.dto;
 
+import java.math.BigDecimal;
+
 public record StockMovementResponse(
         Long id,
         String description,
         String materialName,
-        double inputQuantity,
+        BigDecimal inputQuantity,
         String buyUnit,
         String requestUnit,
         String pricePerItem,

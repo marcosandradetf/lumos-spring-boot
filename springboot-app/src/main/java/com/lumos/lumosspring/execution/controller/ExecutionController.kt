@@ -76,7 +76,7 @@ class ExecutionController(
         executionService.finishDirectExecution(directExecutionId)
 
     @GetMapping("/execution/generate-report/{type}/{executionId}")
-    fun generateReport(@PathVariable type: String, executionId: Long): ResponseEntity<ByteArray> {
+    fun generateReport(@PathVariable type: String, @PathVariable executionId: Long): ResponseEntity<ByteArray> {
         if(type == "data") {
             return executionService.generateDataReport(executionId)
         } else if(type == "photos") {

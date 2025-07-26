@@ -1,12 +1,12 @@
 package com.lumos.lumosspring.pre_measurement.repository;
 
-import com.lumos.lumosspring.execution.dto.ExecutionPartial;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
-import com.lumos.lumosspring.team.entities.Team;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface PreMeasurementStreetRepository extends CrudRepository<PreMeasurementStreet, Long> {
     List<PreMeasurementStreet> findAllByStreetStatus(String status);
 

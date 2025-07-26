@@ -2,9 +2,9 @@ package com.lumos.lumosspring.execution.repository
 
 import com.lumos.lumosspring.execution.entities.MaterialReservation
 import org.springframework.data.repository.CrudRepository
-import org.springframework.stereotype.Indexed
+import org.springframework.stereotype.Repository
 
-@Indexed
+@Repository
 interface MaterialReservationRepository : CrudRepository<MaterialReservation, Long> {
 
 }

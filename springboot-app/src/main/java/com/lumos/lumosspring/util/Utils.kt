@@ -8,10 +8,12 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
+import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.Locale
 import java.util.UUID
 
 object Utils {
@@ -64,6 +66,11 @@ object Utils {
 
     fun convertToSaoPauloLocal(instant: Instant): LocalDateTime {
         return instant.atZone(ZoneId.of("America/Sao_Paulo")).toLocalDateTime()
+    }
+
+    fun formatMoney(amount: Double): String {
+        val format = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) // Forma moderna
+        return format.format(amount)
     }
 
 }

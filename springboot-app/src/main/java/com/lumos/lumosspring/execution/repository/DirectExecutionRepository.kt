@@ -5,22 +5,22 @@ import com.lumos.lumosspring.execution.entities.DirectExecutionItem
 import com.lumos.lumosspring.execution.entities.DirectExecutionStreet
 import com.lumos.lumosspring.execution.entities.DirectExecutionStreetItem
 import org.springframework.data.repository.CrudRepository
-import org.springframework.stereotype.Indexed
+import org.springframework.stereotype.Repository
 
-@Indexed
+@Repository
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     fun findAllByDirectExecutionStatus(status: String): List<DirectExecution>
 
     fun findByContractId(contractId: Long): DirectExecution?
 }
-@Indexed
+@Repository
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
 }
 
-@Indexed
+@Repository
 interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet, Long> {
 }
 
-@Indexed
+@Repository
 interface DirectExecutionRepositoryStreetItem : CrudRepository<DirectExecutionStreetItem, Long> {
 }

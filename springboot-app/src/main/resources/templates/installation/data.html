@@ -153,7 +153,7 @@
 <body>
 <div style="display: flex; justify-content: space-between; align-items: center;">
     <!-- {{logo}} -->
-    <img src="data:image/png;base64,{{BASE64_LOGO_IMAGE}}" alt="Logo" style="width: 100px; height: auto;">
+    <img src="{{LOGO_IMAGE}}" alt="Logo" style="width: 100px; height: auto;">
     <h1>EXECUÇÃO INSTALAÇÃO DE LEDS SOB CONTRATO Nº: {{CONTRACT_NUMBER}}</h1>
 </div>
 
@@ -242,31 +242,11 @@
     </tfoot>
 </table>
 
-<table>
-    <thead>
-    <tr>
-        {{STREET_COLUMNS}}
-    </tr>
-    </thead>
-    <tbody>
-    {{STREET_LINES}}
-    </tbody>
-    <tfoot>
-    <tr>
-        <td style="text-align: left; font-weight: bold;">Soma Total:</td>
-        <td style="text-align: left; font-weight: bold;">N/A</td>
-        {{STREET_FOOTER}}
-        <td style="text-align: left; font-weight: bold;">N/A</td>
-        <td style="text-align: left; font-weight: bold;">N/A</td>
-    </tr>
-    </tfoot>
-</table>
-
 <table style="page-break-inside: avoid;">
     <thead>
     <tr>
         <th colspan="2" class="cell-title" style="text-align: center;">
-            EQUIPE RESPONSÁVEL PELA EXECUÇÃO DO SERVIÇO
+            VALOR TOTAL
         </th>
     </tr>
     </thead>

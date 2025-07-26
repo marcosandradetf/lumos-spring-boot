@@ -1,5 +1,7 @@
 package com.lumos.lumosspring.contract.dto
 
+import java.math.BigDecimal
+
 
 data class ContractReferenceItemDTO(
     var contractReferenceItemId: Long,
@@ -8,7 +10,7 @@ data class ContractReferenceItemDTO(
     var type : String?,
     var linking : String?,
     var itemDependency : String?,
-    var quantity : Double?,
+    var quantity : BigDecimal?,
     var price : String?,
 )
 
