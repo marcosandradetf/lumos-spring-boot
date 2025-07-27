@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.execution.service
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.service.ContractService
 import com.lumos.lumosspring.execution.dto.*
@@ -19,19 +20,17 @@ import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import com.lumos.lumosspring.util.Utils.formatMoney
 import com.lumos.lumosspring.util.Utils.replacePlaceholders
 import com.lumos.lumosspring.util.Utils.sendHtmlToPuppeteer
-import org.springframework.http.ContentDisposition
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import org.springframework.web.util.HtmlUtils
 import java.util.*
+import java.math.BigDecimal
+import java.text.ParseException
+import java.time.Instant
 
 @Service
 class ExecutionService(
@@ -158,7 +157,7 @@ class ExecutionService(
         )!!
 
         var management = ReservationManagement(
-            description ="Etapa $step - ${contract.contractor}",
+            description = "Etapa $step - ${contract.contractor}",
             stockistId = stockist.userId,
         )
         management = reservationManagementRepository.save(management)
@@ -196,9 +195,15 @@ class ExecutionService(
 
 
             if (ciq != null) {
-                if ((ciq["contracted_quantity"] as Double - ciq["quantity_executed"] as Double ) < item.quantity) {
+                val contractedQuantity = BigDecimal((ciq["contracted_quantity"] as Number).toString())
+                val executedQuantity = BigDecimal((ciq["quantity_executed"] as Number).toString())
+
+                val available = contractedQuantity - executedQuantity
+
+                if (available < item.quantity) {
                     throw IllegalStateException("Não há saldo disponível para o item $description")
                 }
+
                 val directExecutionItem = DirectExecutionItem(
                     measuredItemQuantity = item.quantity,
                     contractItemId = item.contractItemId,
@@ -805,7 +810,8 @@ class ExecutionService(
 
         val reservationsGroup = rawReservations
             .groupBy {
-                (it["city"] as? String) ?: (it["contractor"] as? String) ?: (it["description"] as? String)  ?: "Desconhecido"
+                (it["city"] as? String) ?: (it["contractor"] as? String) ?: (it["description"] as? String)
+                ?: "Desconhecido"
             }
 
         for ((preMeasurementName, reservations) in reservationsGroup) {
@@ -939,7 +945,7 @@ class ExecutionService(
                     UPDATE material_reservation
                     SET status = :status, quantity_completed = :quantityCompleted
                     WHERE material_id_reservation = :reserveId
-                    RETURNING  TRUNC((reserved_quantity - quantity_completed)::numeric, 1)  AS remaining_quantity
+                    RETURNING  reserved_quantity - quantity_completed  AS remaining_quantity
                 """.trimIndent(),
                 mapOf(
                     "status" to ReservationStatus.FINISHED,
@@ -968,9 +974,16 @@ class ExecutionService(
 
     @Transactional
     fun uploadDirectExecution(photo: MultipartFile, executionDTO: SendDirectExecutionDto?): ResponseEntity<Any> {
+        var finishAt: Instant
 
         if (executionDTO == null) {
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
+        }
+
+        try {
+            finishAt = Instant.parse(executionDTO.finishAt)
+        } catch (e: ParseException) {
+            throw IllegalStateException(e.message, e.cause)
         }
 
         var exists = JdbcUtil.getSingleRow(
@@ -1000,8 +1013,9 @@ class ExecutionService(
             longitude = executionDTO.longitude,
             deviceStreetId = executionDTO.deviceStreetId,
             deviceId = executionDTO.deviceId,
-            finishedAt = util.dateTime,
-            directExecutionId = executionDTO.directExecutionId
+            finishedAt = finishAt,
+            directExecutionId = executionDTO.directExecutionId,
+            currentSupply = executionDTO.currentSupply
         )
 
         val folder = "photos/${executionDTO.description.replace("\\s+".toRegex(), "_")}"
@@ -1071,7 +1085,7 @@ class ExecutionService(
                     val serviceItemId = (s["contract_item_id"] as Number).toLong()
                     val isService = s["isService"] as Boolean
 
-                    if(!isService) continue
+                    if (!isService) continue
 
                     val item = DirectExecutionStreetItem(
                         executedQuantity = m.quantityExecuted,
@@ -1179,7 +1193,7 @@ class ExecutionService(
         val reservations = getRawData(
             namedJdbc,
             """
-                select material_id_reservation, TRUNC((reserved_quantity - quantity_completed)::numeric, 1) as quantity_to_return, truck_material_stock_id
+                select material_id_reservation, reserved_quantity - quantity_completed as quantity_to_return, truck_material_stock_id
                 from material_reservation
                 where direct_execution_id = :directExecutionId
             """.trimIndent(),
@@ -1222,6 +1236,10 @@ class ExecutionService(
         return ResponseEntity.ok().build()
     }
 
+    fun getGroupedInstallations(): List<Map<String, JsonNode>> {
+        return jdbcInstallationRepository.getGroupedInstallations()
+    }
+
     fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
         var templateHtml = this::class.java.getResource("/templates/installation/data.html")!!.readText()
 
@@ -1236,7 +1254,8 @@ class ExecutionService(
         val streetSums = jsonData["street_sums"]!!
         val total = jsonData["total"]!!
 
-        val companyBucket = company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
+        val companyBucket =
+            company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
         val companyLogoUrl = minioService.getPresignedObjectUrl(companyBucket, logoUri)
 
@@ -1253,38 +1272,194 @@ class ExecutionService(
             "CONTRACTOR_PHONE" to contract["phone"].asText(),
             "LOGO_IMAGE" to companyLogoUrl,
             "TOTAL_VALUE" to formatMoney(total["total_price"].asDouble()),
-            "EXECUTION_DATE" to "TODO"
         )
 
         templateHtml = templateHtml.replacePlaceholders(replacements)
 
+        val valuesLines = values.mapIndexed { index, line ->
+            """
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td style="text-align: left;">${line["description"].asText()}</td>
+                    <td style="text-align: right;">${formatMoney(line["unit_price"].asDouble())}</td>
+                    <td style="text-align: right;">${line["quantity_executed"].asText()}</td>
+                    <td style="text-align: right;">${formatMoney(line["total_price"].asDouble())}</td>
+                </tr>
+            """.trimIndent()
+        }.joinToString("\n")
+
         val columnsList = columns.map { it.asText() }
 
-        val streetColumnsHtml = columnsList.joinToString("") {
-            "<th style=\"text-align: left;\">$it</th>"
-        }
+        val streetColumnsHtml = columnsList.mapIndexed { index, columnName ->
+            if (index == 0)
+                "<th colspan=\"2\" style=\"text-align: left; font-weight: bold; min-width: 240px; max-width: 480px;\">$columnName</th>"
+            else
+                "<th style=\"text-align: center; font-weight: bold;width:40px;\">$columnName</th>"
+        }.joinToString("")
 
-        val streetLinesHtml = streets.joinToString("\n") { line ->
-            "<tr>" + line.joinToString("") { "<td>$it</td>" } + "</tr>"
-        }
 
-        val streetFooterHtml = streetSums.joinToString("\n") { line ->
-            line.joinToString("") { "<td style=\"text-align: right; font-weight: bold;>$it</td>" }
+        var dates: String? = null
+
+        val streetLinesHtml = streets.mapIndexed { index, line ->
+            val address = line[0].asText()
+            val lastPower = line[1].asText()
+            val items = line[2]  // ArrayNode
+            val date = line[3].asText()
+            val supplier = line[4].asText()
+
+            if (index == 0) {
+                dates = "Execuções realizadas de $date"
+            } else if (index == streets.size() - 1) {
+                dates = "$dates à $date"
+            }
+
+            val quantityCells = items.joinToString("") { "<td style=\"text-align: right;\">${it.asText()}</td>" }
+
+            """
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td style="text-align: left; min-width: 240px; max-width: 480px; word-break: break-word;">$address</td>
+                    <td style="text-align: left;">$lastPower</td>
+                    $quantityCells
+                    <td style="text-align: right;">$date</td>
+                    <td style="text-align: left;">$supplier</td>
+                </tr>
+            """.trimIndent()
+        }.joinToString("\n")
+
+
+        val streetFooterHtml = streetSums.joinToString("") {
+            "<td style=\"text-align: right; font-weight: bold;\">${it.asText()}</td>"
         }
 
         templateHtml = templateHtml
+            .replace("{{VALUE_LINES}}", valuesLines)
             .replace("{{STREET_COLUMNS}}", streetColumnsHtml)
             .replace("{{STREET_LINES}}", streetLinesHtml)
             .replace("{{STREET_FOOTER}}", streetFooterHtml)
-            .replace("{{COLUMN_LENGTH}}", columnsList.size.toString())
-
+            .replace("{{COLUMN_LENGTH}}", (columnsList.size + 1).toString())
+            .replace("{{EXECUTION_DATE}}", if (dates != null && !dates.contains("null")) dates else "")
 
         try {
             val response = sendHtmlToPuppeteer(templateHtml)
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
                 contentDisposition = ContentDisposition.inline()
-                    .filename("relatorio.pdf")
+                    .filename("RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText() + ".pdf")
+                    .build()
+            }
+
+            return ResponseEntity.ok()
+                .headers(responseHeaders)
+                .body(response)
+        } catch (e: Exception) {
+            throw RuntimeException(e.message, e.cause)
+        }
+    }
+
+    fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
+        var templateHtml = this::class.java.getResource("/templates/installation/photos.html")!!.readText()
+
+        val data = jdbcInstallationRepository.getDataPhotoReport(executionId)
+        val jsonData = data.first() // Pega o único resultado
+
+        val company = jsonData["company"]!!
+        val contract = jsonData["contract"]!!
+        val streets = jsonData["streets"]!!
+
+        val companyBucket =
+            company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
+        val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
+        val companyLogoUrl = minioService.getPresignedObjectUrl(companyBucket, logoUri)
+
+        val streetLinesHtml = streets.joinToString("\n") { line ->
+            val photoUrl = minioService.getPresignedObjectUrl(companyBucket, line["execution_photo_uri"].asText())
+            """
+                <div style="
+                      page-break-inside: avoid;
+                      margin: 20px 0;
+                      border-top: 2px solid #054686;
+                      border-bottom: 2px solid #054686;
+                      font-family: Arial, Helvetica, sans-serif;
+                    ">
+                    
+                    <!-- Endereço -->
+                    <p style="
+                    margin: 0;
+                    padding: 8px 12px;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 12px;
+                    color: #054686;
+                    border-bottom: 1px solid #054686;
+                  ">
+                        ${line["address"].asText()}
+                    </p>
+                
+                    <!-- Coordenadas -->
+                    <p style="
+                    margin: 0;
+                    padding: 6px 12px;
+                    text-align: center;
+                    font-size: 11px;
+                    color: #333;
+                    border-bottom: 1px solid #ccc;
+                  ">
+                        Coordenadas: Latitude ${line["latitude"].asText()}, Longitude ${line["longitude"].asText()}
+                    </p>
+                
+                    <!-- Foto -->
+                    <img
+                            src="$photoUrl"
+                            alt="Foto"
+                            style="
+                              width: 100%;
+                              height: auto;
+                              max-height: 85vh;
+                              display: block;
+                            "
+                    >
+                
+                    <!-- Data -->
+                    <p style="
+                    margin: 0;
+                    padding: 8px 12px;
+                    text-align: center;
+                    font-size: 11px;
+                    color: #054686;
+                    border-top: 1px solid #ccc;
+                  ">
+                        ${line["finished_at"].asText()}
+                    </p>
+                
+                </div>
+            """.trimIndent()
+        }
+
+
+        val replacements = mapOf(
+            "CONTRACT_NUMBER" to contract["contract_number"].asText(),
+            "COMPANY_SOCIAL_REASON" to company["social_reason"].asText(),
+            "COMPANY_CNPJ" to company["company_cnpj"].asText(),
+            "COMPANY_ADDRESS" to company["company_address"].asText(),
+            "COMPANY_PHONE" to company["company_phone"].asText(),
+            "CONTRACTOR_SOCIAL_REASON" to contract["contractor"].asText(),
+            "CONTRACTOR_CNPJ" to contract["cnpj"].asText(),
+            "CONTRACTOR_ADDRESS" to contract["address"].asText(),
+            "CONTRACTOR_PHONE" to contract["phone"].asText(),
+            "LOGO_IMAGE" to companyLogoUrl,
+            "PHOTOS" to streetLinesHtml,
+        )
+
+        templateHtml = templateHtml.replacePlaceholders(replacements)
+
+
+        try {
+            val response = sendHtmlToPuppeteer(templateHtml, "portrait")
+            val responseHeaders = HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_PDF
+                contentDisposition = ContentDisposition.inline()
+                    .filename("RELATÓRIO FOTOGRÁFICO - CONTRATO Nº: " + contract["contract_number"].asText() + ".pdf")
                     .build()
             }
 

@@ -30,14 +30,17 @@ object Utils {
         return result
     }
 
-    fun sendHtmlToPuppeteer(templateHtml: String): ByteArray? {
+    fun sendHtmlToPuppeteer(templateHtml: String, orientation: String = "landscape"): ByteArray? {
         val restTemplate = RestTemplate()
 
         val headers = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_JSON
         }
 
-        val body = mapOf("html" to templateHtml)
+        val body = mapOf(
+            "html" to templateHtml,
+            "orientation" to orientation // <-- aqui está a mágica
+        )
 
         val request = HttpEntity(body, headers)
 
@@ -59,6 +62,7 @@ object Utils {
             null
         }
     }
+
 
     fun convertToSaoPauloZoned(instant: Instant): ZonedDateTime {
         return instant.atZone(ZoneId.of("America/Sao_Paulo"))

@@ -321,7 +321,7 @@ export class ContractListComponent implements OnInit {
     this.selectedContract = contract;
   }
 
-  @ViewChild('menu') contextMenu: ContextMenu | undefined = undefined;
+    @ViewChild('menu') contextMenu: ContextMenu | undefined = undefined;
 
   openContextMenu(event: MouseEvent, contract: any): void {
     event.preventDefault(); // Evita scroll inesperado ou comportamento nativo

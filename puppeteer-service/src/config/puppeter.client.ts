@@ -2,7 +2,7 @@ import puppeteer, { Browser } from 'puppeteer-core';
 
 let browser: Browser | null = null;
 let inactivityTimer: NodeJS.Timeout | null = null;
-const INACTIVITY_TIMEOUT = 60 * 1000; // 1 minuto
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutos
 
 export const getBrowser = async (): Promise<Browser> => {
   if (!browser) {

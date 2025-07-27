@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{TITLE}}</title>
+    <title>RELATÓRIO FOTOGRÁFICO - CONTRATO Nº: {{CONTRACT_NUMBER}}</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -153,8 +153,8 @@
 <body>
 <div style="display: flex; justify-content: space-between; align-items: center;">
     <!-- {{logo}} -->
-    <img src="data:image/png;base64,{{BASE64_LOGO_IMAGE}}" alt="Logo" style="width: 100px; height: auto;">
-    <h1>EXECUÇÃO INSTALAÇÃO DE LEDS SOB CONTRATO Nº: {{CONTRACT_NUMBER}}</h1>
+    <img src="{{LOGO_IMAGE}}" alt="Logo" style="width: 100px; height: auto;">
+    <h1>RELATÓRIO FOTOGRÁFICO - CONTRATO Nº: {{CONTRACT_NUMBER}}</h1>
 </div>
 
 <table style="margin-top: 10px;">
@@ -217,80 +217,9 @@
     </tbody>
 </table>
 
-<table>
-    <thead>
-    <tr>
-        <th colspan="11" class="cell-title">
-            VALORES PARA EMISSAO DE NOTA FISCAL
-        </th>
-    </tr>
-    <tr>
-        <th>Nº</th>
-        <th>Endereço completo</th>
-        <th>Relé</th>
-        <th>Conexão</th>
-        <th>Lâmpada</th>
-        <th>Sódio</th>
-        <th>Mercur.</th>
-        <th>Potência</th>
-        <th>Reator<br>Externo</th>
-        <th>Reator<br>Interno</th>
-        <th>Base<br>Relé</th>
-    </tr>
-    </thead>
-    <tbody>
-    {{STREET_LINES}}
-    </tbody>
-    <tfoot>
-    <tr>
-        <td colspan="2" style="text-align: left; font-weight: bold;">Total por item:</td>
-        <td style="text-align: right; font-weight: bold;">{{RELAY_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{CONNECTION_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{BULB_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{SODIUM_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{MERCURY_TOTAL}}</td>
-        <td style="text-align: left; font-weight: bold;">N/A</td>
-        <td style="text-align: right; font-weight: bold;">{{EXTERNAL_REACTOR_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{INTERNAL_REACTOR_TOTAL}}</td>
-        <td style="text-align: right; font-weight: bold;">{{BASE_TOTAL}}</td>
-    </tr>
-    </tfoot>
-</table>
 
-<table>
-    <thead>
-    {{HEADER_COLUMNS}}
-    </thead>
-    <tbody>
-    {{BODY_LINES}}
-    </tbody>
-    <tfoot>
-    {{FOOTER_LINE}}
-    </tfoot>
+{{PHOTOS}}
 
-</table>
-
-<table style="page-break-inside: avoid;">
-    <thead>
-    <tr>
-        <th colspan="2" class="cell-title" style="text-align: center;">
-            EQUIPE RESPONSÁVEL PELA EXECUÇÃO DO SERVIÇO
-        </th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-        <td>
-            <p class="label">Valor total:</p>
-            <p class="cell-text">{{TOTAL_VALUE}}</p>
-        </td>
-        <td>
-            <p class="label">Data:</p>
-            <p class="cell-text">{{EXECUTION_DATE}}</p>
-        </td>
-    </tr>
-    </tbody>
-</table>
 
 <div class="footer-marketing">
     <p style="text-align: center; font-size: 12px; color: #666;">
@@ -298,6 +227,8 @@
         <a href="https://lumos.thryon.com.br" target="_blank">https://lumos.thryon.com.br</a>
     </p>
 </div>
+
+
 </body>
 
 </html>

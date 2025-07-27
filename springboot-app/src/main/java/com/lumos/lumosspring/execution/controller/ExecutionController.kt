@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.execution.controller
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.lumos.lumosspring.execution.dto.*
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.MediaType
@@ -75,16 +76,20 @@ class ExecutionController(
     fun finishDirectExecution(@PathVariable directExecutionId: Long): ResponseEntity<Any> =
         executionService.finishDirectExecution(directExecutionId)
 
-    @GetMapping("/execution/generate-report/{type}/{executionId}")
+    @PostMapping("/execution/generate-report/{type}/{executionId}")
     fun generateReport(@PathVariable type: String, @PathVariable executionId: Long): ResponseEntity<ByteArray> {
         if(type == "data") {
             return executionService.generateDataReport(executionId)
         } else if(type == "photos") {
-            return executionService.generateDataReport(executionId)
+            return executionService.generatePhotoReport(executionId)
         } else {
             return ResponseEntity.badRequest().body(ByteArray(0))
         }
 
     }
+
+    @GetMapping("/execution/get-finished")
+    fun getGroupedMaintenances(): ResponseEntity<List<Map<String, JsonNode>>> =
+        ResponseEntity.ok(executionService.getGroupedInstallations())
 
 }

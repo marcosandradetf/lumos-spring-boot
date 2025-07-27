@@ -18,7 +18,7 @@ data class MaintenanceStreet(
     val lastPower: String?,
     val lastSupply: String?,
     val currentSupply: String?,
-    val reason: String?,    // se led - perguntar qual o problema/motivo daa troca
+    val reason: String?,
 
     @Transient
     private var isNewEntry: Boolean = true

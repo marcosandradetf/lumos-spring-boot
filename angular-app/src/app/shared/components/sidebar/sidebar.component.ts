@@ -191,10 +191,9 @@ export class SidebarComponent implements OnInit {
             routerLink: ['/relatorios/manutencoes'],
           },
           {
-            disabled: true,
             label: 'Instalações',
             icon: 'pi pi-lightbulb text-black text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/relatorios/manutencoes'],
+            routerLink: ['/relatorios/instalacoes'],
           },
         ]
       },

@@ -2,29 +2,33 @@ import express from 'express';
 import { closeBrowser } from './config/puppeter.client'
 import { enqueuePdfTask } from './config/puppeteerQueue';
 
-
 const app = express();
 app.use(express.json());
-app.post('/generate-pdf',  async (req, res) => {
-    const { html } = req.body;
+
+app.post('/generate-pdf', async (req, res) => {
+    const { html, orientation = 'landscape' } = req.body;
 
     try {
         if (!html) {
             console.log(html);
-            return res.status(500).send('Falha ao gerar HTML do relatório');
+            return res.status(400).send('HTML do relatório não foi fornecido');
+        }
+
+        if (!['landscape', 'portrait'].includes(orientation)) {
+            return res.status(400).send('Orientação inválida. Use "landscape" ou "portrait".');
         }
 
         const pdfBuffer = await enqueuePdfTask(async (browser) => {
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'networkidle0' });
-        
+
             const buffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,
-                landscape: true,
+                landscape: orientation === 'landscape',
                 margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' },
             });
-        
+
             await page.close();
             return buffer;
         });
@@ -37,9 +41,11 @@ app.post('/generate-pdf',  async (req, res) => {
         res.end(pdfBuffer);
 
     } catch (err: any) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
+
 
 
 const PORT = process.env.PORT || 3000;

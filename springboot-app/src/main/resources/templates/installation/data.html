@@ -225,6 +225,25 @@
         </th>
     </tr>
     <tr>
+        <th colspan="2" style="text-align: center; font-weight: bold">ITEM CONTRATUAL</th>
+        <th style="text-align: center; font-weight: bold">PREÇO<br>UNITÁRIO</th>
+        <th style="text-align: center; font-weight: bold">QUANTIDADE<br>EXECUTADA</th>
+        <th style="text-align: center; font-weight: bold">VALOR<br>TOTAL</th>
+    </tr>
+    </thead>
+    <tbody>
+        {{VALUE_LINES}}
+    </tbody>
+</table>
+
+<table>
+    <thead>
+    <tr>
+        <th colspan="{{COLUMN_LENGTH}}" class="cell-title">
+            EXECUÇÕES POR ENDEREÇO
+        </th>
+    </tr>
+    <tr>
         {{STREET_COLUMNS}}
     </tr>
     </thead>
@@ -233,7 +252,7 @@
     </tbody>
     <tfoot>
     <tr>
-        <td style="text-align: left; font-weight: bold;">Soma Total:</td>
+        <td style="text-align: left; font-weight: bold;" colspan="2">Soma Total:</td>
         <td style="text-align: left; font-weight: bold;">N/A</td>
         {{STREET_FOOTER}}
         <td style="text-align: left; font-weight: bold;">N/A</td>

@@ -21,7 +21,7 @@ data class DelegateStreetDTO(
 
 data class ExecutionWithoutPreMeasurementItems(
     val contractItemId: Long,
-    val quantity: Double,
+    val quantity: BigDecimal,
 )
 
 data class DirectExecutionDTO(
@@ -169,7 +169,7 @@ data class ReservePartial(
     val reserveId: Long = 0,
     val contractItemId: Long,
     val truckMaterialStockId: Long,
-    val quantityExecuted: Double,
+    val quantityExecuted: BigDecimal,
     val materialName: String
 )
 
@@ -182,5 +182,7 @@ data class SendDirectExecutionDto(
     val longitude: Double?,
     val address: String,
     val lastPower: String?,
-    val materials: List<ReservePartial>
+    val materials: List<ReservePartial>,
+    val currentSupply: String,
+    val finishAt: String
 )

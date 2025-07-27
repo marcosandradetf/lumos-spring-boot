@@ -7,26 +7,26 @@ import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {DatePipe, NgForOf, NgIf} from '@angular/common';
 import {Toast} from 'primeng/toast';
-import {Menu} from 'primeng/menu';
+import {ContextMenu} from 'primeng/contextmenu';
 import {MenuItem} from 'primeng/api';
+import {Button} from 'primeng/button';
+import {Menu} from 'primeng/menu';
 
 @Component({
-  selector: 'app-maintenance',
+  selector: 'app-installation',
   standalone: true,
   imports: [
     PrimeBreadcrumbComponent,
     LoadingComponent,
     NgForOf,
     SafeUrlPipe,
-    DatePipe,
     Toast,
     Menu
   ],
-  providers: [SafeUrlPipe],
-  templateUrl: './maintenance.component.html',
-  styleUrl: './maintenance.component.scss'
+  templateUrl: './installation.component.html',
+  styleUrl: './installation.component.scss'
 })
-export class MaintenanceComponent implements OnInit {
+export class InstallationComponent implements OnInit {
   pdfUrl: string | null = null;
   loading = false;
 
@@ -35,34 +35,30 @@ export class MaintenanceComponent implements OnInit {
       contract_id: number;
       contractor: string;
     },
-    maintenances: {
-      maintenance_id: string;
-      streets: [];
-      date_of_visit: string;
+    steps: {
+      direct_execution_id: number;
+      step: string;
+      description: string;
+      type: string;
       team: {
-        electrician: {
-          name: string,
-          last_name: string
-        },
-        driver: {
-          name: string,
-          last_name: string
-        }
-      }
+        electrician: { name: string; last_name: string };
+        driver: { name: string; last_name: string };
+      };
     }[];
   }[] = [];
 
   @ViewChild('menu') menu: Menu | undefined;
+
   contextItems: MenuItem[] = [
     {
-      label: 'Gerar Relatório Convencional',
-      icon: 'pi pi-replay',
-      command: () => this.conventionalDataReport(),
+      label: 'Gerar Relatório Comum',
+      icon: 'pi pi-file',
+      command: () => this.actionDataReport(),
     },
     {
-      label: 'Gerar Relatório Leds',
-      icon: 'pi pi-lightbulb',
-      command: () => this.ledDataReport(),
+      label: 'Gerar Relatório Fotográfico',
+      icon: 'pi pi-camera',
+      command: () => this.actionPhotoReport(),
     },
     {
       separator: true
@@ -85,17 +81,18 @@ export class MaintenanceComponent implements OnInit {
   }
 
   // Métodos para as ações do menu
-  conventionalDataReport() {
-    this.loadPdf(this.selectedStep.maintenance_id, 'conventional');
+  actionDataReport() {
+    this.loadPdf(this.selectedStep.direct_execution_id, 'data');
   }
 
-  ledDataReport() {
-    this.loadPdf(this.selectedStep.maintenance_id, 'led');
+  actionPhotoReport() {
+    this.loadPdf(this.selectedStep.direct_execution_id, 'photos');
   }
 
   actionArchive() {
     this.utilService.showMessage("Recurso não implementado", "contrast", "Lumos - Relatórios")
   }
+
 
   constructor(private reportService: ReportService, private utilService: UtilsService, private title: Title) {
   }
@@ -103,11 +100,11 @@ export class MaintenanceComponent implements OnInit {
   ngOnInit() {
     this.title.setTitle('Relatórios de manutenção');
     this.loading = true;
-    this.loadMaintenances();
+    this.loadInstallations();
   }
 
-  public loadMaintenances() {
-    this.reportService.getFinishedMaintenances().subscribe({
+  public loadInstallations() {
+    this.reportService.getFinishedInstallations().subscribe({
       next: (data) => {
         this.data = data
       },
@@ -120,13 +117,9 @@ export class MaintenanceComponent implements OnInit {
     });
   }
 
-  public loadPdf(maintenanceId: string, type: string) {
-    let desc = '';
-    if(type === 'led') desc = 'Led';
-    else desc = 'Convencional';
-
+  public loadPdf(executionId: number, type: string) {
     this.loading = true;
-    this.reportService.getMaintenancePdf(maintenanceId, type).subscribe({
+    this.reportService.getInstallationPdf(executionId, type).subscribe({
       next: (res) => {
         if (this.pdfUrl) {
           URL.revokeObjectURL(this.pdfUrl);  // limpa URL anterior
@@ -134,12 +127,7 @@ export class MaintenanceComponent implements OnInit {
         this.pdfUrl = URL.createObjectURL(res);
       },
       error: (err) => {
-        this.utilService.showMessage(
-          `O tipo ${desc} não possui registros. Os dados estão no outro tipo de relatório.`,
-          'info',
-          'Lumos - Relatórios'
-        );
-        console.log(err);
+        this.utilService.showMessage(err.error.message || err.error, 'error', 'Erro ao gerar gerar PDF');
         this.loading = false
       },
       complete: () => {
@@ -155,6 +143,8 @@ export class MaintenanceComponent implements OnInit {
     a.download = `maintenance.pdf`;
     a.click();
   }
+
+
 
 
 }

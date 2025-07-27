@@ -220,6 +220,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'},
   },
+  {
+    path: 'relatorios/instalacoes',
+    loadComponent: () => import('./reports/installation/installation.component').then(r => r.InstallationComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'},
+  },
 
   // out
 

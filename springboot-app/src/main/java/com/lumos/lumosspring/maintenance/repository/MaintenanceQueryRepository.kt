@@ -69,77 +69,76 @@ class MaintenanceQueryRepository(
                 )
             )
         }
-
     }
 
     fun  getGroupedMaintenances(): List<Map<String, JsonNode>> {
         val sql = """
-            -- SUA QUERY COMPLETA AQUI
-            SELECT 
+            SELECT
+              json_build_object(
+                'contract_id', c.contract_id,
+                'contractor', c.contractor
+              ) AS contract,
+
+              json_agg(
                 json_build_object(
-                    'maintenance_id', m.maintenance_id,
-                    'type', CASE 
-                        WHEN m2.material_name_unaccent ILIKE '%led%' THEN 'Manutenções em Leds'
-                        WHEN m2.material_name_unaccent ILIKE '%lampada%' THEN 'Manutenção Convencional'
-                        ELSE 'OUTRO'
-                    END,
-                    'streets', json_agg(DISTINCT ms.maintenance_street_id),
-                    'contractor', c.contractor,
-                    'date_of_visit', m.date_of_visit
-                ) AS maintenance,
-                json_build_object(
+                  'maintenance_id', m.maintenance_id,
+                  'streets', (
+                    SELECT json_agg(DISTINCT ms.maintenance_street_id)
+                    FROM maintenance_street ms
+                    WHERE ms.maintenance_id = m.maintenance_id
+                  ),
+                  'date_of_visit', m.date_of_visit,
+                  'team', json_build_object(
                     'electrician', json_build_object(
-                        'name', e.name,
-                        'last_name', e.last_name
+                      'name', e.name,
+                      'last_name', e.last_name
                     ),
                     'driver', json_build_object(
-                        'name', d.name,
-                        'last_name', d.last_name
+                      'name', d.name,
+                      'last_name', d.last_name
                     )
-                ) AS team
+                  )
+                )
+                ORDER BY m.maintenance_id
+              ) AS maintenances
+
             FROM maintenance m
             JOIN contract c ON c.contract_id = m.contract_id 
             JOIN team t ON t.id_team = m.team_id 
             JOIN app_user e ON t.electrician_id = e.user_id
             JOIN app_user d ON t.driver_id = d.user_id
-            JOIN maintenance_street ms ON ms.maintenance_id = m.maintenance_id 
-            JOIN maintenance_street_item msi ON msi.maintenance_street_id = ms.maintenance_street_id
-            JOIN material_stock ms2 ON ms2.material_id_stock = msi.material_stock_id 
-            JOIN material m2 ON m2.id_material = ms2.material_id
-            WHERE m2.material_name_unaccent ILIKE '%led%' OR m2.material_name_unaccent ILIKE '%lampada%'
-            GROUP BY m.maintenance_id, c.contractor, e.name, e.last_name, d.name, d.last_name,
-                CASE 
-                    WHEN m2.material_name_unaccent ILIKE '%led%' THEN 'Manutenções em Leds'
-                    WHEN m2.material_name_unaccent ILIKE '%lampada%' THEN 'Manutenção Convencional'
-                    ELSE 'OUTRO'
-                END
+            WHERE m.status = 'FINISHED'
+            GROUP BY c.contract_id, c.contractor
+            ORDER BY c.contract_id;
         """.trimIndent()
 
         return jdbcTemplate.query(sql) { rs, _ ->
-            val maintenanceJson = rs.getString("maintenance")
-            val teamJson = rs.getString("team")
+            val contractorJson = rs.getString("contract")
+            val maintenanceJson = rs.getString("maintenances")
 
+            val contractNode = objectMapper.readTree(contractorJson)
             val maintenanceNode = objectMapper.readTree(maintenanceJson)
-            val teamNode = objectMapper.readTree(teamJson)
 
             mapOf(
-                "maintenance" to maintenanceNode,
-                "team" to teamNode
+                "contract" to contractNode,
+                "maintenances" to maintenanceNode,
             )
         }
     }
 
-    fun getConventionalMaintenances(maintenanceId: UUID, streetIds: List<UUID>): List<Map<String, JsonNode>> {
+    fun getConventionalMaintenances(maintenanceId: UUID): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
-              SELECT 
-                msi.maintenance_street_id,
-                material_name_unaccent,
-                m.material_power
-              FROM maintenance_street_item msi
-              JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
-              JOIN material m ON m.id_material = mstk.material_id
-              WHERE msi.maintenance_street_id IN (:streetIds)
+		SELECT 
+            msi.maintenance_street_id,
+            material_name_unaccent,
+            m.material_power
+	          FROM maintenance_street_item msi
+	          join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id 
+	          JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
+	          JOIN material m ON m.id_material = mstk.material_id
+	          WHERE msi.maintenance_id  = :maintenanceId
+	          		and ms.last_power is null and ms.reason is null
             )
     
             SELECT
@@ -254,7 +253,7 @@ class MaintenanceQueryRepository(
                 )
                 FROM maintenance_street ms
                 WHERE ms.maintenance_id = m.maintenance_id
-                  AND ms.maintenance_street_id IN (:streetIds)
+                  and ms.last_power is null and ms.reason is null
               ) AS streets,
     
               (
@@ -294,7 +293,7 @@ class MaintenanceQueryRepository(
             WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, mapOf("maintenanceId" to maintenanceId, "streetIds" to streetIds)) { rs, _ ->
+        return jdbcTemplate.query(sql, mapOf("maintenanceId" to maintenanceId)) { rs, _ ->
             val company = objectMapper.readTree(rs.getString("company"))
             val contract = objectMapper.readTree(rs.getString("contract"))
             val maintenance = objectMapper.readTree(rs.getString("maintenance"))
@@ -313,7 +312,7 @@ class MaintenanceQueryRepository(
         }
     }
 
-    fun getLedMaintenances(maintenanceId: String, streetIds: List<String>): List<Map<String, JsonNode>> {
+    fun getLedMaintenances(maintenanceId: UUID): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
           SELECT 
@@ -321,9 +320,11 @@ class MaintenanceQueryRepository(
             material_name_unaccent,
             m.material_power
           FROM maintenance_street_item msi
+          join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id 
           JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
           JOIN material m ON m.id_material = mstk.material_id
-          WHERE msi.maintenance_street_id IN (:streetIds)
+          WHERE msi.maintenance_id  = :maintenanceId
+          	and (ms.last_power is not null or ms.reason is not null)
         )
 
         SELECT
@@ -399,7 +400,7 @@ class MaintenanceQueryRepository(
             )
             FROM maintenance_street ms
             WHERE ms.maintenance_id = m.maintenance_id
-              AND ms.maintenance_street_id IN (:streetIds)
+              and (ms.last_power is not null or ms.reason is not null)
           ) AS streets,
 
           (
@@ -419,7 +420,7 @@ class MaintenanceQueryRepository(
         WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, mapOf("maintenanceId" to maintenanceId, "streetIds" to streetIds)) { rs, _ ->
+        return jdbcTemplate.query(sql, mapOf("maintenanceId" to maintenanceId)) { rs, _ ->
             val company = objectMapper.readTree(rs.getString("company"))
             val contract = objectMapper.readTree(rs.getString("contract"))
             val maintenance = objectMapper.readTree(rs.getString("maintenance"))

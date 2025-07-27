@@ -38,11 +38,10 @@ class MaintenanceController(
     fun generateReport(
         @PathVariable type: String,
         @PathVariable maintenanceId: UUID,
-        @RequestParam streets: List<UUID>
     ): ResponseEntity<ByteArray> {
         return when (type.lowercase()) {
-            "conventional" -> maintenanceService.conventionalReport(maintenanceId, streets)
-            "led" -> maintenanceService.conventionalReport(maintenanceId, streets) // Supondo que exista outro método
+            "conventional" -> maintenanceService.conventionalReport(maintenanceId)
+            "led" -> maintenanceService.ledReport(maintenanceId) // Supondo que exista outro método
             else -> ResponseEntity.badRequest().body(ByteArray(0))
         }
     }

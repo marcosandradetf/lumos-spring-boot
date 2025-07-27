@@ -18,5 +18,6 @@ data class DirectExecutionStreet (
     var deviceStreetId: Long? = null,
     var deviceId: String? = null,
     var executionPhotoUri: String? = null,
-    var directExecutionId: Long
+    var directExecutionId: Long,
+    val currentSupply: String?,
 )

@@ -11,14 +11,15 @@ export class ReportService {
   constructor(private http: HttpClient) {
   }
 
-  public getPDF(maintenanceId: string, streetIds: number[], type: string) {
-    let params = new HttpParams();
-    streetIds.forEach(id => {
-      params = params.append('streets', id.toString());
-    });
+  public getMaintenancePdf(maintenanceId: string, type: string) {
 
     return this.http.post(`${this.endpoint}/api/maintenance/generate-report/${type}/${maintenanceId}`, null, {
-      params,
+      responseType: 'blob'  // importante para receber arquivo binário
+    });
+  }
+
+  public getInstallationPdf(executionId: number, type: string) {
+    return this.http.post(`${this.endpoint}/api/execution/generate-report/${type}/${executionId}`, null, {
       responseType: 'blob'  // importante para receber arquivo binário
     });
   }
@@ -26,6 +27,11 @@ export class ReportService {
   public getFinishedMaintenances() {
     return this.http.get<any[]>(`${this.endpoint}/api/maintenance/get-finished`);
   }
+
+  public getFinishedInstallations() {
+    return this.http.get<any[]>(`${this.endpoint}/api/execution/get-finished`);
+  }
+
 
 
 }
