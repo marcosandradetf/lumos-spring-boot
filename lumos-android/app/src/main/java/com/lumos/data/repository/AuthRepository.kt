@@ -1,20 +1,19 @@
 package com.lumos.data.repository
 
 import android.app.Application
-import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.google.gson.JsonParser
 import com.lumos.data.api.ApiExecutor
-import com.lumos.midleware.SecureStorage
 import com.lumos.data.api.AuthApi
 import com.lumos.data.api.RequestResult
-import com.lumos.data.api.RequestResult.*
+import com.lumos.data.api.RequestResult.NoInternet
+import com.lumos.data.api.RequestResult.ServerError
+import com.lumos.data.api.RequestResult.Success
+import com.lumos.data.api.RequestResult.SuccessEmptyBody
+import com.lumos.data.api.RequestResult.Timeout
+import com.lumos.data.api.RequestResult.UnknownError
 import com.lumos.domain.model.LoginRequest
-import com.lumos.domain.model.LoginResponse
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.lumos.midleware.SecureStorage
 import retrofit2.Retrofit
 
 

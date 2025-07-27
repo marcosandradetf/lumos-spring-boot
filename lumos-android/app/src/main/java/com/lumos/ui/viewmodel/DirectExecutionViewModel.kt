@@ -1,13 +1,14 @@
 package com.lumos.ui.viewmodel
 
-import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
 import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.repository.DirectExecutionRepository
-import com.lumos.data.repository.ReservationStatus
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.util.UUID
 
 class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository,
@@ -39,6 +42,56 @@ class DirectExecutionViewModel(
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
+    var street by mutableStateOf<DirectExecutionStreet?>(null)
+    var streetItems by mutableStateOf(listOf<DirectExecutionStreetItem>())
+
+    var hasPosted by mutableStateOf(false)
+    var alertModal by mutableStateOf(false)
+    var confirmModal by mutableStateOf(false)
+
+    var locationModal by mutableStateOf(true)
+    var confirmLocation by mutableStateOf(false)
+    var loadingCoordinates by mutableStateOf(false)
+    var nextStep by mutableStateOf(false)
+
+    var isLoading by mutableStateOf(false)
+
+    var errorMessage by mutableStateOf<String?>(null)
+
+    var reserves by mutableStateOf<List<DirectReserve>>(emptyList())
+
+    fun initializeExecution(directExecutionId: Long, description: String) {
+        if (street == null) {
+            street = DirectExecutionStreet(
+                address = "",
+                latitude = null,
+                longitude = null,
+                photoUri = null,
+                deviceId = UUID.randomUUID().toString(),
+                directExecutionId = directExecutionId,
+                description = description,
+                lastPower = null,
+                finishAt = null,
+                currentSupply = null,
+            )
+        }
+    }
+
+    fun clearViewModel() {
+        street = null
+        streetItems = emptyList()
+        reserves = emptyList()
+        hasPosted = false
+        errorMessage = null
+        isLoading = false
+        alertModal = false
+        confirmModal = false
+        locationModal = true
+        confirmLocation = false
+        loadingCoordinates = false
+        nextStep = false
+    }
+
     fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             _isSyncing.value = true
@@ -46,10 +99,10 @@ class DirectExecutionViewModel(
             try {
                 val response = repository.checkUpdate(currentVersion)
                 val result = when (response) {
-                    is RequestResult.Timeout  -> null to null
-                    is RequestResult.NoInternet  -> null to null
-                    is ServerError  -> null to null
-                    is RequestResult.UnknownError  -> null to null
+                    is RequestResult.Timeout -> null to null
+                    is RequestResult.NoInternet -> null to null
+                    is ServerError -> null to null
+                    is RequestResult.UnknownError -> null to null
                     is RequestResult.SuccessEmptyBody -> null to null
                     is RequestResult.Success -> response.data.latestVersionCode to response.data.apkUrl
                 }
@@ -142,25 +195,7 @@ class DirectExecutionViewModel(
             _isLoadingReserves.value = true
             try {
                 withContext(Dispatchers.IO) {
-                    val streetId = repository.createStreet(street)
-                    if(streetId <= 0) {
-                        throw IllegalStateException("Endereço informado já enviado.")
-                    }
-
-                    for (item in items) {
-                        repository.debitMaterial(
-                            item.materialStockId,
-                            item.contractItemId,
-                            item.quantityExecuted
-                        )
-                        repository.createStreetItem(
-                            item.copy(
-                                directStreetId = streetId
-                            )
-                        )
-                    }
-
-                    repository.queuePostDirectExecution(streetId)
+                    repository.createStreet(street.copy(finishAt = Instant.now().toString()), items)
                 }
                 onPostExecuted()
             } catch (e: IllegalStateException) {

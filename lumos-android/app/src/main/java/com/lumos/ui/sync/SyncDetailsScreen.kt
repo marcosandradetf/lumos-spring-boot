@@ -435,28 +435,28 @@ fun SyncDetailsStreetsContent(
     }
 
 }
-
-@Preview
-@Composable
-fun PrevSyncDetails() {
-    SyncDetailsStreetsContent(
-        streets = listOf(
-            DirectExecutionStreet(
-                directStreetId = 1,
-                address = "Rua 41",
-                deviceId = "",
-                directExecutionId = 1,
-                description = "",
-            )
-        ),
-        syncItems = emptyList(),
-        syncType = SyncTypes.POST_DIRECT_EXECUTION,
-        loading = false,
-        message = "",
-        currentNotifications = "10",
-        context = LocalContext.current,
-        navController = rememberNavController(),
-        retry = {},
-        cancel = {}
-    )
-}
+//
+//@Preview
+//@Composable
+//fun PrevSyncDetails() {
+//    SyncDetailsStreetsContent(
+//        streets = listOf(
+//            DirectExecutionStreet(
+//                directStreetId = 1,
+//                address = "Rua 41",
+//                deviceId = "",
+//                directExecutionId = 1,
+//                description = "",
+//            )
+//        ),
+//        syncItems = emptyList(),
+//        syncType = SyncTypes.POST_DIRECT_EXECUTION,
+//        loading = false,
+//        message = "",
+//        currentNotifications = "10",
+//        context = LocalContext.current,
+//        navController = rememberNavController(),
+//        retry = {},
+//        cancel = {}
+//    )
+//}

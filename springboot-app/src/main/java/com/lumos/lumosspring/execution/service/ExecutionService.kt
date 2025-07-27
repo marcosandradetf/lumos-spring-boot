@@ -171,7 +171,7 @@ class ExecutionService(
             contractId = execution.contractId,
             teamId = execution.teamId,
             assignedBy = currentUserUUID,
-            reservationManagementId = management.reservationManagementId,
+            reservationManagementId = management.reservationManagementId!!,
             assignedAt = util.dateTime,
             step = step
         )
@@ -974,17 +974,10 @@ class ExecutionService(
 
     @Transactional
     fun uploadDirectExecution(photo: MultipartFile, executionDTO: SendDirectExecutionDto?): ResponseEntity<Any> {
-        var finishAt: Instant
-
         if (executionDTO == null) {
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
-        try {
-            finishAt = Instant.parse(executionDTO.finishAt)
-        } catch (e: ParseException) {
-            throw IllegalStateException(e.message, e.cause)
-        }
 
         var exists = JdbcUtil.getSingleRow(
             namedJdbc,
@@ -1013,7 +1006,7 @@ class ExecutionService(
             longitude = executionDTO.longitude,
             deviceStreetId = executionDTO.deviceStreetId,
             deviceId = executionDTO.deviceId,
-            finishedAt = finishAt,
+            finishedAt = executionDTO.finishAt,
             directExecutionId = executionDTO.directExecutionId,
             currentSupply = executionDTO.currentSupply
         )

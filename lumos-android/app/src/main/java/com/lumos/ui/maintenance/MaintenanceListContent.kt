@@ -29,9 +29,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,25 +43,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.domain.model.Contract
-import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.utils.Utils
 import java.time.Instant
+import kotlin.reflect.jvm.internal.impl.types.checker.TypeRefinementSupport.Enabled
 
 @Composable
 fun MaintenanceListContent(
+    stockSize: Int,
     maintenances: List<MaintenanceJoin>,
     navController: NavHostController,
     loading: Boolean,
     selectMaintenance: (String) -> Unit,
     newMaintenance: () -> Unit,
 ) {
+    var showModal by remember { mutableStateOf(false) }
+
     AppLayout(
         title = "Manutenções em andamento",
         selectedIcon = BottomBar.MAINTENANCE.value,
@@ -81,11 +86,22 @@ fun MaintenanceListContent(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
+            if (showModal) {
+                Confirm(
+                    title = "Carregar estoque",
+                    body = "Você precisa carregar os dados do estoque para criar uma nova manutenção. Deseja fazer isso agora?",
+                    confirm = {
+                        showModal = false
+                        navController.navigate(Routes.STOCK)
+                    },
+                    cancel = { showModal = false }
+                )
+            }
 
             if (loading) {
                 Loading()
             } else if (maintenances.isEmpty()) {
-                    NothingData("Nenhuma manutenção em andamento\nToque abaixo para iniciar uma nova")
+                NothingData("Nenhuma manutenção em andamento\nToque abaixo para iniciar uma nova")
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -202,7 +218,10 @@ fun MaintenanceListContent(
 
             FloatingActionButton(
                 onClick = {
-                    newMaintenance()
+                    if (stockSize > 0)
+                        newMaintenance()
+                    else
+                        showModal = true
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
@@ -233,6 +252,7 @@ fun MaintenanceListContent(
 @Composable
 fun PrevMaintenanceListContent() {
     MaintenanceListContent(
+        stockSize = 0,
         maintenances = listOf(
             MaintenanceJoin(
                 maintenanceId = "jfaoijfao",

@@ -3,6 +3,7 @@ package com.lumos.data.repository
 import android.app.Application
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ExecutionApi
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.time.Instant
 import kotlin.collections.forEach
 
 class DirectExecutionRepository(
@@ -138,17 +140,38 @@ class DirectExecutionRepository(
     suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> =
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
-    suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: Double) {
+    private suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: Double) {
         db.directExecutionDao().debitMaterial(materialStockId, contractId, quantityExecuted)
     }
 
-    suspend fun createStreet(street: DirectExecutionStreet): Long =
-        db.directExecutionDao().createStreet(street)
+    suspend fun createStreet(street: DirectExecutionStreet, items: List<DirectExecutionStreetItem>) {
+        db.withTransaction {
+            val streetId = db.directExecutionDao().createStreet(street)
+            if (streetId <= 0) {
+                throw IllegalStateException("Endereço informado já enviado.")
+            }
 
-    suspend fun createStreetItem(item: DirectExecutionStreetItem) =
+            for (item in items) {
+                debitMaterial(
+                    item.materialStockId,
+                    item.contractItemId,
+                    item.quantityExecuted
+                )
+                createStreetItem(
+                    item.copy(
+                        directStreetId = streetId
+                    )
+                )
+            }
+
+            queuePostDirectExecution(streetId)
+        }
+    }
+
+    private suspend fun createStreetItem(item: DirectExecutionStreetItem) =
         db.directExecutionDao().insertDirectExecutionStreetItem(item)
 
-    suspend fun queuePostDirectExecution(streetId: Long) {
+    private suspend fun queuePostDirectExecution(streetId: Long) {
         SyncManager.queuePostDirectExecution(
             context = app.applicationContext,
             db = db,
@@ -164,6 +187,11 @@ class DirectExecutionRepository(
 
         val street = db.directExecutionDao().getStreet(streetId)
         val materials = db.directExecutionDao().getStreetItems(streetId)
+
+        val finishAt: Instant? = runCatching {
+            Instant.parse(street.finishAt)
+        }.getOrNull()
+
         val dto = SendDirectExecutionDto(
             directExecutionId = street.directExecutionId,
             description = street.description,
@@ -174,6 +202,8 @@ class DirectExecutionRepository(
             address = street.address,
             lastPower = street.lastPower,
             materials = materials,
+            currentSupply = street.currentSupply,
+            finishAt = finishAt,
         )
 
         val json = gson.toJson(dto)
@@ -228,7 +258,8 @@ class DirectExecutionRepository(
     }
 
     suspend fun finishedDirectExecution(directExecutionId: Long): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.finishDirectExecution(directExecutionId = directExecutionId) }
+        val response =
+            ApiExecutor.execute { api.finishDirectExecution(directExecutionId = directExecutionId) }
 
         return when (response) {
             is RequestResult.Success -> {

@@ -73,7 +73,9 @@ import com.lumos.ui.viewmodel.PreMeasurementViewModel
 import com.lumos.ui.viewmodel.SyncViewModel
 import com.lumos.worker.SyncManager.enqueueSync
 import com.lumos.worker.SyncManager.schedulePeriodicSync
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class BottomBar(val value: Int) {
@@ -389,8 +391,11 @@ fun AppNavigation(
                             notificationManager.unsubscribeFromSavedTopics()
                             secureStorage.clearAll()
 
-                            navController.navigate(Routes.LOGIN) {
-                                popUpTo(Routes.PROFILE) { inclusive = true }
+                            CoroutineScope(Dispatchers.IO).launch {
+                                app.database.clearAllTables()
+                                withContext(Dispatchers.Main) {
+                                    navController.navigate(Routes.LOGIN)
+                                }
                             }
                         },
                         authViewModel = authViewModel,

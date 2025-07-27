@@ -183,6 +183,6 @@ data class SendDirectExecutionDto(
     val address: String,
     val lastPower: String?,
     val materials: List<ReservePartial>,
-    val currentSupply: String,
-    val finishAt: String
+    val currentSupply: String?,
+    val finishAt: Instant?
 )

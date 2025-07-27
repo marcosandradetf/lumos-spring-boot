@@ -1,9 +1,7 @@
 package com.lumos.ui.directExecutions
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
-import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -53,6 +51,7 @@ import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -107,7 +106,6 @@ import com.lumos.utils.Utils.formatDouble
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
 
-@SuppressLint("HardwareIds")
 @Composable
 fun StreetMaterialScreen(
     directExecutionId: Long,
@@ -121,37 +119,6 @@ fun StreetMaterialScreen(
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
 
-    var street by remember {
-        mutableStateOf(
-            DirectExecutionStreet(
-                address = "",
-                latitude = null,
-                longitude = null,
-                photoUri = null,
-                deviceId = Settings.Secure.getString(
-                    context.contentResolver,
-                    Settings.Secure.ANDROID_ID
-                ),
-                directExecutionId = directExecutionId,
-                description = description,
-            )
-        )
-    }
-
-    var streetItems by remember { mutableStateOf(listOf<DirectExecutionStreetItem>()) }
-    var hasPosted by remember { mutableStateOf(false) }
-    var alertModal by remember { mutableStateOf(false) }
-    var confirmModal by remember { mutableStateOf(false) }
-
-    var locationModal by remember { mutableStateOf(true) }
-    var confirmLocation by remember { mutableStateOf(false) }
-    var loadingCoordinates by remember { mutableStateOf(false) }
-
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    var reserves by remember { mutableStateOf<List<DirectReserve>>(emptyList()) }
-
     val message = remember {
         mutableStateMapOf(
             "title" to "Título da mensagem",
@@ -159,20 +126,20 @@ fun StreetMaterialScreen(
         )
     }
 
-
     LaunchedEffect(Unit) {
-        isLoading = true
+        directExecutionViewModel.isLoading = true
         try {
-            reserves = directExecutionViewModel.getReservesOnce(directExecutionId)
+            directExecutionViewModel.initializeExecution(directExecutionId, description)
+            directExecutionViewModel.reserves =
+                directExecutionViewModel.getReservesOnce(directExecutionId)
         } finally {
-            isLoading = false
+            directExecutionViewModel.isLoading = false
         }
     }
 
-
-    LaunchedEffect(confirmLocation) {
-        if (confirmLocation) {
-            loadingCoordinates = true
+    LaunchedEffect(directExecutionViewModel.confirmLocation) {
+        if (directExecutionViewModel.confirmLocation) {
+            directExecutionViewModel.loadingCoordinates = true
             coordinates.execute { latitude, longitude ->
                 if (latitude != null && longitude != null) {
                     val addr = AddressService(context).execute(latitude, longitude)
@@ -183,36 +150,297 @@ fun StreetMaterialScreen(
                         val city = addr[2]
                         val state = addr[3]
 
-                        street.address =
-                            "$streetName, [nº não informado] - $neighborhood, $city - $state"
+                        directExecutionViewModel.street =
+                            directExecutionViewModel.street?.copy(
+                                address = "$streetName, - $neighborhood, $city - $state"
+                            )
                     }
-                    loadingCoordinates = false
+                    directExecutionViewModel.loadingCoordinates = false
                 } else {
                     Log.e("GET Address", "Latitude ou Longitude são nulos.")
-                    loadingCoordinates = false
+                    directExecutionViewModel.loadingCoordinates = false
                 }
             }
         }
     }
 
-    if (loadingCoordinates) {
+    if (directExecutionViewModel.loadingCoordinates) {
         Loading("Tentando carregar as coordenadas...")
+    } else if (directExecutionViewModel.nextStep) {
+        AppLayout(
+            title = description,
+            selectedIcon = BottomBar.EXECUTIONS.value,
+            navigateBack = {
+                if (directExecutionViewModel.hasPosted) {
+                    directExecutionViewModel.clearViewModel()
+                    navController.popBackStack()
+                } else {
+                    directExecutionViewModel.nextStep = false
+                }
+            },
+            navigateToHome = {
+                navController.navigate(Routes.HOME)
+            },
+            navigateToMore = {
+                navController.navigate(Routes.MORE)
+            },
+            navigateToStock = {
+                navController.navigate(Routes.STOCK)
+            },
+            navigateToExecutions = {
+                directExecutionViewModel.clearViewModel()
+                navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            }
+        ) { _, _ ->
+            var triedToSubmit by remember { mutableStateOf(false) }
+
+            if (directExecutionViewModel.hasPosted) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp, vertical = 150.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Rounded.TaskAlt,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(72.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface,
+                                    shape = CircleShape
+                                )
+                                .padding(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Missão cumprida!",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Os dados serão enviados para o sistema.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            directExecutionViewModel.clearViewModel()
+                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(
+                            "Ok, voltar a tela anterior"
+                        )
+                    }
+                }
+            } else
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Text(
+                        text = "Dados da instalação",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                    )
+
+                    Text(
+                        text = "Preencha os dados abaixo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = directExecutionViewModel.street?.currentSupply ?: "",
+                        onValueChange = {
+                            triedToSubmit = false
+                            directExecutionViewModel.street =
+                                directExecutionViewModel.street?.copy(currentSupply = it)
+                        },
+                        isError = triedToSubmit && directExecutionViewModel.street?.currentSupply.isNullOrBlank(),
+                        singleLine = true,
+                        label = { Text("Fornecedor atual") },
+                        supportingText = {
+                            if (triedToSubmit && directExecutionViewModel.street?.currentSupply.isNullOrBlank()) {
+                                Text("Informe o fornecedor atual", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            errorBorderColor = MaterialTheme.colorScheme.error
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = directExecutionViewModel.street?.lastPower ?: "",
+                        onValueChange = {
+                            triedToSubmit = false
+                            directExecutionViewModel.street =
+                                directExecutionViewModel.street?.copy(lastPower = it)
+                        },
+                        isError = triedToSubmit && directExecutionViewModel.street?.lastPower.isNullOrBlank(),
+                        singleLine = true,
+                        label = { Text("Potência anterior") },
+                        supportingText = {
+                            if (triedToSubmit && directExecutionViewModel.street?.lastPower.isNullOrBlank()) {
+                                Text("Informe a potência anterior", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 32.dp),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            errorBorderColor = MaterialTheme.colorScheme.error
+                        )
+                    )
+
+                    Button(
+                        onClick = {
+                            triedToSubmit = true
+
+                            val isCurrentSupplyValid =
+                                !directExecutionViewModel.street?.currentSupply.isNullOrBlank()
+                            val isLastPowerValid =
+                                !directExecutionViewModel.street?.lastPower.isNullOrBlank()
+
+                            if (isCurrentSupplyValid && isLastPowerValid) {
+                                directExecutionViewModel.street?.let { street ->
+                                    directExecutionViewModel.saveAndPost(
+                                        street = street,
+                                        items = directExecutionViewModel.streetItems,
+                                        onPostExecuted = { directExecutionViewModel.hasPosted = true },
+                                        onError = {
+                                            directExecutionViewModel.errorMessage = it
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .padding(horizontal = 8.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            "Enviar",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+        }
     } else
         StreetMaterialsContent(
-            isLoading = isLoading,
+            isLoading = directExecutionViewModel.isLoading,
             description = description,
-            reserves = reserves,
-            street = street,
+            reserves = directExecutionViewModel.reserves,
+            street = directExecutionViewModel.street,
             lastRoute = lastRoute,
             context = context,
             navController = navController,
             notificationsBadge = notificationsBadge,
             takePhoto = { uri ->
-                street = street.copy(photoUri = uri.toString())
+                directExecutionViewModel.street =
+                    directExecutionViewModel.street?.copy(photoUri = uri.toString())
             },
             changeStreet = {
-                street = street.copy(address = it)
+                directExecutionViewModel.street =
+                    directExecutionViewModel.street?.copy(address = it)
             },
+            confirmModal = { action ->
+                if (action == "SEND") {
+                    directExecutionViewModel.confirmModal = false
+                    val address = directExecutionViewModel.street?.address.orEmpty()
+                    val hasNumber = Regex("""\d+""").containsMatchIn(address)
+                    val hasSN =
+                        Regex("""(?i)\bS[\/\\]?N\b""").containsMatchIn(address)  // aceita S/N, s/n, S\N, etc.
+                    if (!hasNumber && !hasSN) {
+                        message["title"] = "Número do endereço ausente"
+                        message["body"] =
+                            "Por favor, informe o número do endereço ou indique que é 'S/N'."
+                        directExecutionViewModel.alertModal = true
+                    } else if (directExecutionViewModel.street?.photoUri == null) {
+                        message["title"] = "Você esqueceu da foto"
+                        message["body"] = "Antes de finalizar, tire uma foto."
+                        directExecutionViewModel.alertModal = true
+                    } else if (directExecutionViewModel.street?.address == "") {
+                        message["title"] = "Aviso Importante"
+                        message["body"] =
+                            "Você esqueceu de preencher o endereço, o envio é obrigatório."
+                        directExecutionViewModel.alertModal = true
+                    } else if (directExecutionViewModel.streetItems.isEmpty()) {
+                        message["title"] = "Aviso Importante"
+                        message["body"] = "Selecione os itens executados para continuar."
+                        directExecutionViewModel.alertModal = true
+                    } else {
+                        val quantities =
+                            directExecutionViewModel.streetItems.map { it.quantityExecuted }
+                        if (quantities.any { it == 0.0 }) {
+                            message["title"] = "Quantidade inválida"
+                            message["body"] =
+                                "Não é permitido salvar itens com quantidade igual a 0."
+                            directExecutionViewModel.alertModal = true
+                        } else {
+                            directExecutionViewModel.nextStep = true
+                        }
+                    }
+                } else if (action == "CLOSE") {
+                    directExecutionViewModel.confirmModal = false
+                } else {
+                    directExecutionViewModel.clearViewModel()
+                    navController.navigate(action)
+                }
+            },
+            openConfirmModal = directExecutionViewModel.confirmModal,
             openModal = { action ->
                 if (action == "SEND") {
                     message["body"] =
@@ -221,56 +449,23 @@ fun StreetMaterialScreen(
                     message["body"] =
                         "Deseja sair?"
                 }
-                confirmModal = true
+                directExecutionViewModel.confirmModal = true
             },
-            confirmModal = { action ->
-                if (action == "SEND") {
-                    confirmModal = false
-                    if (street.address.contains("[nº não informado]")) {
-                        message["title"] = "Número do endereço não preenchido"
-                        message["body"] =
-                            "Por favor, informe o número do endereço antes de finalizar."
-                        alertModal = true
-                    } else if (street.photoUri == null) {
-                        message["title"] = "Você esqueceu da foto"
-                        message["body"] = "Antes de finalizar, tire uma foto."
-                        alertModal = true
-                    } else if (street.address.isEmpty()) {
-                        message["title"] = "Aviso Importante"
-                        message["body"] =
-                            "Você esqueceu de preencher o endereço, o envio é obrigatório."
-                        alertModal = true
-                    } else if (streetItems.isEmpty()) {
-                        message["title"] = "Aviso Importante"
-                        message["body"] = "Selecione os itens executados para continuar."
-                        alertModal = true
-                    } else {
-                        val quantities = streetItems.map { it.quantityExecuted }
-                        if (quantities.any { it == 0.0 }) {
-                            message["title"] = "Quantidade inválida"
-                            message["body"] =
-                                "Não é permitido salvar itens com quantidade igual a 0."
-                            alertModal = true
-                        } else {
-                            directExecutionViewModel.saveAndPost(
-                                street = street,
-                                items = streetItems,
-                                onPostExecuted = { hasPosted = true },
-                                onError = {
-                                    errorMessage = it
-                                }
-                            )
-                        }
-                    }
-                } else if (action == "CLOSE") {
-                    confirmModal = false
-                } else {
-                    navController.navigate(action)
-                }
-            },
-            alertModal = alertModal,
+            alertModal = directExecutionViewModel.alertModal,
             closeAlertModal = {
-                alertModal = false
+                directExecutionViewModel.alertModal = false
+            },
+            markAsFinish = {
+                directExecutionViewModel.markAsFinished(directExecutionId)
+            },
+            locationModal = directExecutionViewModel.locationModal,
+            confirmLocation = {
+                if (it) {
+                    directExecutionViewModel.confirmLocation = true
+                    directExecutionViewModel.locationModal = false
+                } else {
+                    directExecutionViewModel.locationModal = false
+                }
             },
             changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
                 if (selected) {
@@ -281,11 +476,12 @@ fun StreetMaterialScreen(
                         quantityExecuted = 0.0,
                         materialName = materialName
                     )
-                    streetItems = streetItems + newItem
+                    directExecutionViewModel.streetItems += newItem
                 } else {
-                    streetItems = streetItems.filterNot {
-                        it.reserveId == reserveId
-                    }
+                    directExecutionViewModel.streetItems =
+                        directExecutionViewModel.streetItems.filterNot {
+                            it.reserveId == reserveId
+                        }
                 }
             },
             changeQuantity = { quantityExecuted, materialQuantity, reserveId ->
@@ -293,36 +489,23 @@ fun StreetMaterialScreen(
                     message["title"] = "Quantidade inválida"
                     message["body"] =
                         "A quantidade disponível desse material é $materialQuantity."
-                    alertModal = true
+                    directExecutionViewModel.alertModal = true
                 } else if (quantityExecuted < 0) {
                     message["title"] = "Quantidade inválida"
                     message["body"] = "Não é possível registrar uma quantidade negativa."
-                    alertModal = true
+                    directExecutionViewModel.alertModal = true
                 } else {
-                    streetItems = streetItems.map {
-                        if (it.reserveId == reserveId) {
-                            it.copy(quantityExecuted = quantityExecuted)
-                        } else it
-                    }
+                    directExecutionViewModel.streetItems =
+                        directExecutionViewModel.streetItems.map {
+                            if (it.reserveId == reserveId) {
+                                it.copy(quantityExecuted = quantityExecuted)
+                            } else it
+                        }
                 }
             },
-            hasPosted = hasPosted,
-            errorMessage = errorMessage,
+            errorMessage = directExecutionViewModel.errorMessage,
             alertMessage = message,
-            locationModal = locationModal,
-            confirmLocation = {
-                if (it) {
-                    confirmLocation = true
-                    locationModal = false
-                } else {
-                    locationModal = false
-                }
-            },
-            streetItems = streetItems,
-            openConfirmModal = confirmModal,
-            markAsFinish = {
-                directExecutionViewModel.markAsFinished(directExecutionId)
-            }
+            streetItems = directExecutionViewModel.streetItems
         )
 
 }
@@ -332,7 +515,7 @@ fun StreetMaterialsContent(
     isLoading: Boolean,
     description: String,
     reserves: List<DirectReserve>,
-    street: DirectExecutionStreet,
+    street: DirectExecutionStreet?,
     lastRoute: String?,
     context: Context,
     navController: NavHostController,
@@ -349,7 +532,6 @@ fun StreetMaterialsContent(
     confirmLocation: (Boolean) -> Unit,
     changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
     changeQuantity: (Double, Double, Long) -> Unit,
-    hasPosted: Boolean,
     errorMessage: String?,
     alertMessage: MutableMap<String, String>,
     streetItems: List<DirectExecutionStreetItem>
@@ -359,11 +541,11 @@ fun StreetMaterialsContent(
 
     val fileUri: MutableState<Uri?> = remember {
         mutableStateOf(
-            street.photoUri?.toUri()
+            street?.photoUri?.toUri()
         )
     }
 
-    val imageSaved = remember { mutableStateOf(street.photoUri != null) }
+    val imageSaved = remember { mutableStateOf(street?.photoUri != null) }
     val createFile: () -> Uri = {
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
         file.createNewFile() // Garante que o arquivo seja criado
@@ -385,7 +567,8 @@ fun StreetMaterialsContent(
 
     var action by remember { mutableStateOf("") }
 
-    val selectedIcon = if(lastRoute == Routes.DIRECT_EXECUTION_SCREEN) BottomBar.EXECUTIONS.value else BottomBar.HOME.value
+    val selectedIcon =
+        if (lastRoute == Routes.DIRECT_EXECUTION_SCREEN) BottomBar.EXECUTIONS.value else BottomBar.HOME.value
 
     AppLayout(
         title = description,
@@ -455,7 +638,7 @@ fun StreetMaterialsContent(
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 }
-            } else if (!hasPosted) {
+            } else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -471,7 +654,7 @@ fun StreetMaterialsContent(
                 ) {
                     item {
                         TextField(
-                            value = street.address,
+                            value = street?.address ?: "",
                             onValueChange = { changeStreet(it) },
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
@@ -656,74 +839,6 @@ fun StreetMaterialsContent(
                 }
 
 
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 150.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Rounded.TaskAlt,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(72.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surface,
-                                    shape = CircleShape
-                                )
-                                .padding(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Missão cumprida!",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "Os dados serão enviados para o sistema.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary,
-                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            "Ok, voltar a tela anterior"
-                        )
-                    }
-                }
             }
         }
 
@@ -875,7 +990,10 @@ fun MaterialItem(
                                     onValueChange = { newValue ->
                                         val sanitized = sanitizeDecimalInput(newValue.text)
                                         text =
-                                            TextFieldValue(sanitized, TextRange(sanitized.length))
+                                            TextFieldValue(
+                                                sanitized,
+                                                TextRange(sanitized.length)
+                                            )
                                     },
                                     label = { Text("Qtde Exec") },
                                     textStyle = LocalTextStyle.current.copy(
@@ -1034,29 +1152,31 @@ fun PrevMStreetScreen() {
             deviceId = "",
             directExecutionId = 1,
             description = "",
+            lastPower = "100W",
+            finishAt = "",
+            currentSupply = "",
         ),
+        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
         context = fakeContext,
         navController = rememberNavController(),
         notificationsBadge = "12",
-        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
         takePhoto = { },
+        changeStreet = {},
         confirmModal = { },
+        openConfirmModal = false,
+        openModal = {},
         alertModal = false,
         closeAlertModal = { },
-        hasPosted = false,
-        errorMessage = null,
+        markAsFinish = {},
+        locationModal = true,
+        confirmLocation = { },
         changeMaterial = { _, _, _, _, _ -> },
-        openConfirmModal = false,
         changeQuantity = { _, _, _ -> },
+        errorMessage = null,
         alertMessage = mutableMapOf(
             "title" to "Título da mensagem",
             "body" to "Conteúdo da mensagem"
         ),
-        locationModal = true,
-        confirmLocation = { },
-        streetItems = emptyList(),
-        changeStreet = {},
-        openModal = {},
-        markAsFinish = {}
+        streetItems = emptyList()
     )
 }

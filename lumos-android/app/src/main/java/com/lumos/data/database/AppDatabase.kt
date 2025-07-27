@@ -63,7 +63,7 @@ import java.util.concurrent.Executors
         (MaintenanceStreetItem::class),
 
     ],
-    version = 11,
+    version = 12,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -433,6 +433,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_11_12 = object : Migration(11,12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("alter table direct_execution_street add column finishAt text")
+                db.execSQL("alter table direct_execution_street add column currentSupply text")
+                db.execSQL("delete from material_stock")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -450,6 +458,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_8_9,
                     MIGRATION_9_10,
                     MIGRATION_10_11,
+                    MIGRATION_11_12,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

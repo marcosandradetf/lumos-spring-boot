@@ -52,7 +52,6 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
@@ -225,6 +224,7 @@ fun MaintenanceScreen(
 
         MaintenanceUIState.LIST -> {
             MaintenanceListContent(
+                stockSize = stock.size,
                 maintenances = maintenances,
                 navController = navController,
                 loading = loading,

@@ -47,7 +47,7 @@ interface DirectExecutionDao {
     fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>>
 
     @Query("select * from direct_execution where directExecutionId = :directExecutionId")
-    suspend fun getExecution(directExecutionId: Long): DirectExecution
+    suspend fun getExecution(directExecutionId: Long): DirectExecution?
 
     @Query("select * from direct_reserve where directExecutionId = :directExecutionId AND materialQuantity  > 0.0")
     suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve>

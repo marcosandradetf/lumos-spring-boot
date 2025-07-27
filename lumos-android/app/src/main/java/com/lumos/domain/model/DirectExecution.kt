@@ -3,6 +3,7 @@ package com.lumos.domain.model
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.time.Instant
 
 @Entity(tableName = "direct_reserve")
 data class DirectReserve(
@@ -37,7 +38,11 @@ data class DirectExecutionStreet( //tabela nova
     var deviceId: String,
     val directExecutionId: Long,
     val description: String,
-    val lastPower: String? = null
+
+    val lastPower: String? = null,
+
+    val finishAt: String?,
+    val currentSupply: String?,
 )
 
 @Entity(tableName = "direct_execution_street_item")
@@ -68,7 +73,9 @@ data class SendDirectExecutionDto(
     val longitude: Double?,
     val address: String,
     val lastPower: String?,
-    val materials: List<ReservePartial>
+    val materials: List<ReservePartial>,
+    val currentSupply: String?,
+    val finishAt: Instant?
 )
 
 data class ReservePartial(
