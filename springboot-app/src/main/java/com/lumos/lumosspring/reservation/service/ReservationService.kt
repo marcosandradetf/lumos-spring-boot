@@ -18,8 +18,16 @@ class ReservationService(
     private val notificationService: NotificationService
 ) {
 
+
     @Transactional
     fun reply(replies: ReservationController.Replies): ResponseEntity<Void> {
+        replyReservations(ReservationController.RepliesReserves(replies.approvedReserves, replies.rejectedReserves))
+        replyOrders(ReservationController.RepliesOrders(replies.approvedOrders, replies.rejectedOrders))
+
+        return ResponseEntity(HttpStatus.NO_CONTENT)
+    }
+
+    @Transactional fun replyReservations(replies:  ReservationController.RepliesReserves) {
         val reservationIds = replies.approved.map { it.reserveId } + replies.rejected.map { it.reserveId }
 
         val reservations = JdbcUtil.getRawData(
@@ -121,8 +129,121 @@ class ReservationService(
                 }
             }
         }
+    }
 
-        return ResponseEntity(HttpStatus.NO_CONTENT)
+    @Transactional fun replyOrders(replies:  ReservationController.RepliesOrders) {
+        val orderIds = replies.approved.map { it.orderItemId } + replies.rejected.map { it.orderItemId }
+
+        val reservations = JdbcUtil.getRawData(
+            namedJdbc,
+            """
+                    SELECT mr.material_id_reservation, mr.status, mr.reserved_quantity, mr.central_material_stock_id,
+                    COALESCE(de.reservation_management_id, pms.reservation_management_id) AS reservation_management_id,
+                    mr.direct_execution_id, mr.direct_execution_id, mr.contract_item_id
+                    FROM material_reservation mr
+                    LEFT JOIN pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
+                    LEFT JOIN direct_execution de ON de.direct_execution_id = mr.direct_execution_id
+                    WHERE material_id_reservation in (:reservationIds)
+                """.trimIndent(),
+            mapOf("orderIds" to orderIds)
+        )
+//
+//        select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id,
+//        cast(null as bigint) as request_quantity, om.order_code as description, m.id_material,
+//        m.material_name, m.material_power, m.material_length, t.team_name,
+//        ms.stock_quantity, om.status, om.created_at
+//        from order_material om
+//        inner join order_material_item omi on omi.order_id = om.order_id
+//                inner join material_stock ms on ms.material_id = omi.material_id
+//                inner join material m on m.id_material = ms.material_id
+//                inner join team t on t.id_team = om.team_id
+//                where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
+
+        for (reservation in reservations) {
+            val reservationId = reservation["material_id_reservation"] as Long
+            val reservationManagementId = reservation["reservation_management_id"] as? Long
+            val status = reservation["status"] as String
+            val reserveQuantity = reservation["reserved_quantity"] as Double
+            val centralMaterialId = reservation["central_material_stock_id"] as Long
+
+            val directExecutionId = reservation["direct_execution_id"] as? Long
+            val contractItemId = reservation["contract_item_id"] as Long
+
+            if (status != ReservationStatus.PENDING) continue
+
+            if (replies.approved.contains(ReserveItem(reservationId))) {
+                namedJdbc.update(
+                    """
+                            UPDATE material_reservation set status = :status
+                            WHERE material_id_reservation in (:reservationId)
+                        """.trimIndent(),
+                    mapOf(
+                        "reservationId" to reservationId,
+                        "status" to ReservationStatus.APPROVED
+                    )
+                )
+
+//                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
+            } else if (replies.rejected.contains(ReserveItem(reservationId))) {
+
+                namedJdbc.update(
+                    """
+                            UPDATE material_reservation set status = :status
+                            WHERE material_id_reservation in (:reservationId)
+                        """.trimIndent(),
+                    mapOf(
+                        "reservationId" to reservationId,
+                        "status" to ReservationStatus.REJECTED
+                    )
+                )
+
+                namedJdbc.update(
+                    """
+                            UPDATE material_stock set stock_available = stock_available + :reserveQuantity
+                            WHERE material_id_stock = :centralMaterialId
+                        """.trimIndent(),
+                    mapOf(
+                        "centralMaterialId" to centralMaterialId,
+                        "reserveQuantity" to reserveQuantity
+                    )
+                )
+
+                namedJdbc.update(
+                    """
+                            UPDATE reservation_management set status = :status
+                            WHERE reservation_management_id = :reservationManagementId
+                        """.trimIndent(),
+                    mapOf(
+                        "reservationManagementId" to reservationManagementId,
+                        "status" to ReservationStatus.PENDING
+                    )
+                )
+
+                if (directExecutionId != null) {
+                    namedJdbc.update(
+                        """
+                                UPDATE direct_execution_item set item_status = :status
+                                WHERE contract_item_id = :contractItemId
+                            """.trimIndent(),
+                        mapOf(
+                            "contractItemId" to contractItemId,
+                            "status" to ReservationStatus.PENDING
+                        )
+                    )
+                } else {
+                    namedJdbc.update(
+                        """
+                                UPDATE pre_measurement_street_item set item_status = :status
+                                WHERE contract_item_id = :contractItemId
+                            """.trimIndent(),
+                        mapOf(
+                            "contractItemId" to contractItemId,
+                            "status" to ReservationStatus.PENDING
+                        )
+                    )
+                }
+            }
+        }
     }
 
     @Transactional
