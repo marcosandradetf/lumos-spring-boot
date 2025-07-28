@@ -5,7 +5,6 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Bundle
-import androidx.room.Room
 import com.google.firebase.FirebaseApp
 import com.lumos.data.database.AppDatabase
 import com.lumos.midleware.AuthInterceptor

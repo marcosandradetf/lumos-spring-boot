@@ -13,37 +13,37 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ExecutionApi {
-    @GET("/api/mobile/execution/get-executions")
+    @GET("api/mobile/execution/get-executions")
     suspend fun getExecutions(
         @Query("uuid") uuid: String
     ): Response<List<ExecutionDTO>>
 
-    @GET("/api/mobile/execution/get-direct-executions")
+    @GET("api/mobile/execution/get-direct-executions")
     suspend fun getDirectExecutions(
         @Query("uuid") uuid: String
     ): Response<List<DirectExecutionDTOResponse>>
 
     @Multipart
-    @POST("/api/mobile/execution/upload")
+    @POST("api/mobile/execution/upload")
     suspend fun uploadData(
         @Part photo: MultipartBody.Part,
         @Part("execution") execution: RequestBody
     ): Response<Void>
 
     @Multipart
-    @POST("/api/mobile/execution/upload-direct-execution")
+    @POST("api/mobile/execution/upload-direct-execution")
     suspend fun uploadDirectExecutionData(
         @Part photo: MultipartBody.Part,
         @Part("execution") execution: RequestBody
     ): Response<Void>
 
-    @POST("/api/mobile/execution/finish-direct-execution/{directExecutionId}")
+    @POST("api/mobile/execution/finish-direct-execution/{directExecutionId}")
     suspend fun finishDirectExecution(
         @Path("directExecutionId") directExecutionId: Long
     ): Response<Void>
 
 
-    @GET("/api/mobile/check-update")
+    @GET("api/mobile/check-update")
     suspend fun checkUpdate(@Query("version") version: Long): Response<Update>
 
 }

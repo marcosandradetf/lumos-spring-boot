@@ -15,8 +15,9 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 object ConnectivityUtils {
-//    const val BASE_URL = "https://9c7b5e76d229.ngrok-free.app"
-    const val BASE_URL = "https://api.thryon.com.br/spring"
+//    const val BASE_URL = "https://9c7b5e76d229.ngrok-free.app/"
+    const val BASE_URL = "https://api.thryon.com.br/spring/"
+    private const val PING_URL = "https://api.thryon.com.br/spring/ping"
 
     suspend fun hasRealInternetConnection(): Boolean = withContext(Dispatchers.IO) {
         return@withContext try {
@@ -25,7 +26,7 @@ object ConnectivityUtils {
                 .build()
 
             val request = Request.Builder()
-                .url("$BASE_URL/ping") // Não redireciona, resposta rápida
+                .url(PING_URL) // Não redireciona, resposta rápida
                 .build()
 
             val response = client.newCall(request).execute()

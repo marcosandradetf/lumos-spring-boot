@@ -69,8 +69,8 @@ android {
 
     signingConfigs {
         create("release") {
-//            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
-            storeFile = file("/home/marcosandrade/Downloads/lumos-keystore-20250727T224135Z-1-001/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
+//            storeFile = file("/home/marcosandrade/Downloads/lumos-keystore-20250727T224135Z-1-001/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"

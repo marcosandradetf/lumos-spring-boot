@@ -11,11 +11,11 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 
 interface PreMeasurementApi {
-    @POST("/api/mobile/execution/insert-pre-measurement")
+    @POST("api/mobile/execution/insert-pre-measurement")
     suspend fun sendPreMeasurement(@Body preMeasurementDto: PreMeasurementDto, @Header("UUID") uuid: String):  Response<Void>
 
     @Multipart
-    @POST("/api/mobile/pre-measurement-street/upload-photos")
+    @POST("api/mobile/pre-measurement-street/upload-photos")
     suspend fun uploadStreetPhotos(
         @Part photos: List<MultipartBody.Part>,
     ): Response<Void>

@@ -5,7 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface UtilApi {
-    @POST("/api/mobile/util/generic/set-entity")
+    @POST("api/mobile/util/generic/set-entity")
     suspend fun updateEntity(@Body preMeasurementDto: UpdateEntity):  Response<Void>
 
 }
