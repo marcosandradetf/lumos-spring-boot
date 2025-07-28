@@ -63,7 +63,7 @@ import java.util.concurrent.Executors
         (MaintenanceStreetItem::class),
 
     ],
-    version = 12,
+    version = 13,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
@@ -399,6 +399,9 @@ abstract class AppDatabase : RoomDatabase() {
                 )
 
                 db.execSQL("drop table material_stock")
+                db.execSQL("drop table material_stock")
+                db.execSQL("drop table material_stock")
+
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS material_stock (
@@ -412,6 +415,35 @@ abstract class AppDatabase : RoomDatabase() {
                             type TEXT NOT NULL,
                             PRIMARY KEY (materialId, materialStockId)
                         );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_reserve (
+                            reserveId INTEGER NOT NULL PRIMARY KEY,
+                            directExecutionId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            materialQuantity TEXT NOT NULL,
+                            requestUnit TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS indirect_reserve (
+                        reserveId INTEGER NOT NULL PRIMARY KEY,
+                        contractId INTEGER NOT NULL,
+                        contractItemId INTEGER NOT NULL,
+                        materialName TEXT NOT NULL,
+                        materialQuantity TEXT NOT NULL,
+                        streetId INTEGER NOT NULL,
+                        requestUnit TEXT NOT NULL,
+                        quantityExecuted TEXT
+                    );
                 """.trimIndent()
                 )
 
@@ -437,9 +469,91 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("alter table direct_execution_street add column finishAt text")
                 db.execSQL("alter table direct_execution_street add column currentSupply text")
-                db.execSQL("delete from material_stock")
             }
         }
+
+        private val MIGRATION_12_13 = object : Migration(12,13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("drop table material_stock")
+                db.execSQL("drop table MaintenanceStreetItem")
+                db.execSQL("drop table direct_reserve")
+                db.execSQL("drop table indirect_reserve")
+                db.execSQL("drop table direct_execution_street_item")
+
+                db.execSQL("""
+                        CREATE TABLE IF NOT EXISTS material_stock (
+                            materialId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            specs TEXT,
+                            stockQuantity TEXT NOT NULL,
+                            stockAvailable TEXT NOT NULL,
+                            requestUnit TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            PRIMARY KEY (materialId, materialStockId)
+                        );
+                """.trimIndent())
+
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS MaintenanceStreetItem (
+                            maintenanceId TEXT NOT NULL,
+                            maintenanceStreetId TEXT NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            quantityExecuted TEXT NOT NULL,
+                            PRIMARY KEY (maintenanceId,maintenanceStreetId, materialStockId)
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_reserve (
+                            reserveId INTEGER NOT NULL PRIMARY KEY,
+                            directExecutionId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            materialQuantity TEXT NOT NULL,
+                            requestUnit TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS indirect_reserve (
+                        reserveId INTEGER NOT NULL PRIMARY KEY,
+                        contractId INTEGER NOT NULL,
+                        contractItemId INTEGER NOT NULL,
+                        materialName TEXT NOT NULL,
+                        materialQuantity TEXT NOT NULL,
+                        streetId INTEGER NOT NULL,
+                        requestUnit TEXT NOT NULL,
+                        quantityExecuted TEXT
+                    );
+                """.trimIndent()
+                )
+
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS direct_execution_street_item (
+                            directStreetItemId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            reserveId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            directStreetId INTEGER NOT NULL,
+                            quantityExecuted TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+            }
+        }
+
+
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -459,6 +573,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_9_10,
                     MIGRATION_10_11,
                     MIGRATION_11_12,
+                    MIGRATION_12_13,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

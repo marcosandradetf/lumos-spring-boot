@@ -211,7 +211,7 @@ class MaterialStockJdbcRepository(
                 materialLength = rs.getString("materialLength"),
                 materialType = rs.getString("typeName"),
                 deposit = rs.getString("depositName"),
-                availableQuantity = rs.getDouble("stockAvailable"),
+                availableQuantity = rs.getBigDecimal("stockAvailable"),
                 requestUnit = rs.getString("requestUnit")
             )
         }
@@ -259,7 +259,7 @@ class MaterialStockJdbcRepository(
                 materialLength = rs.getString("materialLength"),
                 materialType = rs.getString("typeName"),
                 deposit = rs.getString("depositName"),
-                availableQuantity = rs.getDouble("stockAvailable"),
+                availableQuantity = rs.getBigDecimal("stockAvailable"),
                 requestUnit = rs.getString("requestUnit")
             )
         }

@@ -246,7 +246,7 @@ fun NotificationCard(
 
             // Horário da notificação
             Text(
-                text = "Há ${Utils.timeSinceCreation(Instant.parse(notification.time))}",
+                text = "Há ${Utils.timeSinceCreation(notification.time)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(start = 8.dp)

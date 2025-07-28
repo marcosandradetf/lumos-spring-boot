@@ -201,9 +201,8 @@ fun MaintenanceListContent(
                                         Text(
                                             "Iniciado há ${
                                                 Utils.timeSinceCreation(
-                                                    Instant.parse(
                                                         maintenance.dateOfVisit
-                                                    )
+                                                    
                                                 )
                                             }"
                                         )

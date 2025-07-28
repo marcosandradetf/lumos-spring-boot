@@ -59,12 +59,17 @@ interface DirectExecutionDao {
     suspend fun insertDirectExecutionStreetItem(item: DirectExecutionStreetItem)
 
     @Query("""
-        update direct_reserve
-        set materialQuantity = materialQuantity - :quantityExecuted
-        where materialStockId = :materialStockId 
-        and contractItemId = :contractItemId
+        UPDATE direct_reserve
+        SET materialQuantity = CAST(materialQuantity AS NUMERIC) - CAST(:quantityExecuted AS NUMERIC)
+        WHERE materialStockId = :materialStockId
+          AND contractItemId = :contractItemId
     """)
-    suspend fun debitMaterial(materialStockId: Long, contractItemId: Long, quantityExecuted: Double)
+    suspend fun debitMaterial(
+        materialStockId: Long,
+        contractItemId: Long,
+        quantityExecuted: String
+    )
+
 
     @Query("select photoUri from direct_execution_street where directStreetId = :streetId")
     suspend fun getPhotoUri(streetId: Long): String?

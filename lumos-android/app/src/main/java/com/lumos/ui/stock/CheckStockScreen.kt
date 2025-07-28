@@ -92,6 +92,7 @@ import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils
 import com.lumos.worker.SyncTypes
+import java.math.BigDecimal
 
 @Composable
 fun CheckStockScreen(
@@ -348,7 +349,7 @@ fun CheckStockContent(
                                     // Tag de disponibilidade
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         when {
-                                            material.stockAvailable == 0.0 -> {
+                                            material.stockAvailable == "0" -> {
                                                 Tag(
                                                     "Sem estoque disponível",
                                                     Color.Red,
@@ -356,9 +357,10 @@ fun CheckStockContent(
                                                 )
                                             }
 
-                                            material.stockAvailable <= 10.0 -> {
+                                            BigDecimal(material.stockAvailable) <= BigDecimal(10)
+                                                -> {
                                                 Tag(
-                                                    "Disponível: ${Utils.formatDouble(material.stockAvailable)} ${material.requestUnit}",
+                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
                                                     Color(0xFFFF9800),
                                                     Icons.Default.Warning
                                                 )
@@ -366,7 +368,7 @@ fun CheckStockContent(
 
                                             else -> {
                                                 Tag(
-                                                    "Disponível: ${Utils.formatDouble(material.stockAvailable)} ${material.requestUnit}",
+                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
                                                     MaterialTheme.colorScheme.primary,
                                                     Icons.Default.Check
                                                 )
@@ -378,7 +380,7 @@ fun CheckStockContent(
 
                                     // Quantidade total, mais discreto
                                     Text(
-                                        text = "Total em estoque: ${Utils.formatDouble(material.stockQuantity)} ${material.requestUnit}",
+                                        text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -901,113 +903,113 @@ fun SelectDeposit(
 
 
 }
-
-@Composable
-@Preview
-fun PrevStockContent() {
-//    SelectDeposit(
+//
+//@Composable
+//@Preview
+//fun PrevStockContent() {
+////    SelectDeposit(
+////        message = "",
+////        loading = false,
+////        orderCode = "",
+////        navController = rememberNavController(),
+////        stockData = listOf(
+////            MaterialStock(
+////                materialId = 1,
+////                materialStockId = 11,
+////                materialName = "LUMINÁRIA LED",
+////                specs = "120W",
+////                stockQuantity = 12.0,
+////                stockAvailable = 0.0,
+////                requestUnit = "UN",
+////                type = "LED"
+////            ),
+////            MaterialStock(
+////                materialId = 2,
+////                materialStockId = 22,
+////                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+////                specs = "400W",
+////                stockQuantity = 15.0,
+////                stockAvailable = 10.0,
+////                requestUnit = "UN",
+////                type = "LÂMPADA"
+////            ),
+////            MaterialStock(
+////                materialId = 3,
+////                materialStockId = 33,
+////                materialName = "LÂMPADA DE MERCÚRIO",
+////                specs = "250W",
+////                stockQuantity = 62.0,
+////                stockAvailable = 48.0,
+////                requestUnit = "UN",
+////                type = "LÂMPADA"
+////            ),
+////        ),
+////        selectedMaterials = listOf(1, 2, 3),
+////        deposits = listOf(
+////            Deposit(
+////                depositId = 1,
+////                depositName = "GALPÃO ITAPECERICA",
+////                depositAddress = "Rua Antonio Claret Araújo",
+////                depositPhone = "31996546000"
+////            )
+////        ),
+////        stockists = listOf(
+////            Stockist(
+////                stockistId = 1,
+////                stockistName = "Gabriela",
+////                stockistPhone = "31999998080",
+////                depositId = 1
+////            )
+////        ),
+////        finish = { },
+////        back = {})
+//
+//    CheckStockContent(
+//        navController = rememberNavController(),
+//        lastRoute = null,
+//        hasInternet = true,
 //        message = "",
 //        loading = false,
-//        orderCode = "",
-//        navController = rememberNavController(),
 //        stockData = listOf(
 //            MaterialStock(
-//                materialId = 1,
-//                materialStockId = 11,
+//                materialStockId = 1,
+//                materialId = 2,
 //                materialName = "LUMINÁRIA LED",
 //                specs = "120W",
 //                stockQuantity = 12.0,
 //                stockAvailable = 0.0,
 //                requestUnit = "UN",
-//                type = "LED"
+//                type = "",
 //            ),
 //            MaterialStock(
+//                materialStockId = 2,
 //                materialId = 2,
-//                materialStockId = 22,
 //                materialName = "LÂMPADA DE SÓDIO TUBULAR",
 //                specs = "400W",
 //                stockQuantity = 15.0,
 //                stockAvailable = 10.0,
 //                requestUnit = "UN",
-//                type = "LÂMPADA"
+//                type = "",
 //            ),
 //            MaterialStock(
-//                materialId = 3,
-//                materialStockId = 33,
+//                materialStockId = 3,
+//                materialId = 2,
 //                materialName = "LÂMPADA DE MERCÚRIO",
 //                specs = "250W",
 //                stockQuantity = 62.0,
 //                stockAvailable = 48.0,
 //                requestUnit = "UN",
-//                type = "LÂMPADA"
+//                type = "",
 //            ),
 //        ),
-//        selectedMaterials = listOf(1, 2, 3),
-//        deposits = listOf(
-//            Deposit(
-//                depositId = 1,
-//                depositName = "GALPÃO ITAPECERICA",
-//                depositAddress = "Rua Antonio Claret Araújo",
-//                depositPhone = "31996546000"
-//            )
-//        ),
-//        stockists = listOf(
-//            Stockist(
-//                stockistId = 1,
-//                stockistName = "Gabriela",
-//                stockistPhone = "31999998080",
-//                depositId = 1
-//            )
-//        ),
-//        finish = { },
-//        back = {})
-
-    CheckStockContent(
-        navController = rememberNavController(),
-        lastRoute = null,
-        hasInternet = true,
-        message = "",
-        loading = false,
-        stockData = listOf(
-            MaterialStock(
-                materialStockId = 1,
-                materialId = 2,
-                materialName = "LUMINÁRIA LED",
-                specs = "120W",
-                stockQuantity = 12.0,
-                stockAvailable = 0.0,
-                requestUnit = "UN",
-                type = "",
-            ),
-            MaterialStock(
-                materialStockId = 2,
-                materialId = 2,
-                materialName = "LÂMPADA DE SÓDIO TUBULAR",
-                specs = "400W",
-                stockQuantity = 15.0,
-                stockAvailable = 10.0,
-                requestUnit = "UN",
-                type = "",
-            ),
-            MaterialStock(
-                materialStockId = 3,
-                materialId = 2,
-                materialName = "LÂMPADA DE MERCÚRIO",
-                specs = "250W",
-                stockQuantity = 62.0,
-                stockAvailable = 48.0,
-                requestUnit = "UN",
-                type = "",
-            ),
-        ),
-        resync = {},
-        next = {},
-        alertMessage = mapOf(),
-        alertModal = false,
-        closeAlertModal = {
-
-        },
-        selectedMaterialsCopy = emptyList(),
-        selectedModeCopy = false
-    )
-}
+//        resync = {},
+//        next = {},
+//        alertMessage = mapOf(),
+//        alertModal = false,
+//        closeAlertModal = {
+//
+//        },
+//        selectedMaterialsCopy = emptyList(),
+//        selectedModeCopy = false
+//    )
+//}

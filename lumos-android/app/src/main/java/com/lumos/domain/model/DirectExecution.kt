@@ -12,7 +12,7 @@ data class DirectReserve(
     val materialStockId: Long, // *_*
     val contractItemId: Long,
     val materialName: String,
-    val materialQuantity: Double,
+    val materialQuantity: String,
     val requestUnit: String,
 )
 
@@ -53,7 +53,7 @@ data class DirectExecutionStreetItem( //tabela nova
     val materialName: String,
     val contractItemId: Long,
     var directStreetId: Long = 0,
-    val quantityExecuted: Double
+    val quantityExecuted: String
 )
 
 data class DirectExecutionDTOResponse(
@@ -75,13 +75,13 @@ data class SendDirectExecutionDto(
     val lastPower: String?,
     val materials: List<ReservePartial>,
     val currentSupply: String?,
-    val finishAt: Instant?
+    val finishAt: String?
 )
 
 data class ReservePartial(
     val reserveId: Long = 0,
     val contractItemId: Long,
     val truckMaterialStockId: Long,
-    val quantityExecuted: Double,
+    val quantityExecuted: String,
     val materialName: String
 )

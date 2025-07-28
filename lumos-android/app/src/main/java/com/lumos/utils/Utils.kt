@@ -25,8 +25,25 @@ object Utils {
             return date.toInstant()
         }
 
-    fun timeSinceCreation(createdAt: Instant): String {
-        val duration = Duration.between(createdAt, dateTime)
+    private fun parseTimestamptzToInstant(raw: String): Instant {
+        // PostgreSQL retorna algo como "2025-07-27 22:34:10.952689+00"
+        // Ajuste para ISO 8601: "2025-07-27T22:34:10.952689+00:00"
+        val formatted = raw
+            .replace(" ", "T")
+            .replace(Regex("""\+(\d{2})$"""), "+$1:00")  // transforma +00 → +00:00
+
+        return Instant.parse(formatted)
+    }
+
+
+    fun timeSinceCreation(createdAtRaw: String): String {
+        val createdAt = parseTimestamptzToInstant(createdAtRaw)
+        val zoneId = ZoneId.of("America/Sao_Paulo")
+
+        val createdAtZoned = createdAt.atZone(zoneId)
+        val nowZoned = ZonedDateTime.now(zoneId)
+
+        val duration = Duration.between(createdAtZoned, nowZoned)
 
         return when {
             duration.toDays() > 0 -> "${duration.toDays()}d"

@@ -87,6 +87,8 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.sanitizeDecimalInput
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 
 @Composable
@@ -223,7 +225,7 @@ fun StreetMaintenanceContent(
                     val state = addr[3]
 
                     street.address =
-                        "$streetName, [nº não informado] - $neighborhood, $city - $state"
+                        "$streetName, - $neighborhood, $city - $state"
                     address = street.address
                 }
                 loadingCoordinates = false
@@ -453,7 +455,7 @@ fun StreetMaintenanceContent(
                                     // Tag de disponibilidade
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         when {
-                                            material.stockAvailable == 0.0 -> {
+                                            material.stockAvailable == "0" -> {
                                                 Tag(
                                                     "Sem estoque disponível",
                                                     Color.Red,
@@ -461,9 +463,9 @@ fun StreetMaintenanceContent(
                                                 )
                                             }
 
-                                            material.stockAvailable <= 10.0 -> {
+                                            BigDecimal(material.stockAvailable) <= BigDecimal(10)-> {
                                                 Tag(
-                                                    "Disponível: ${Utils.formatDouble(material.stockAvailable)} ${material.requestUnit}",
+                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
                                                     Color(0xFFFF9800),
                                                     Icons.Default.Warning
                                                 )
@@ -471,7 +473,7 @@ fun StreetMaintenanceContent(
 
                                             else -> {
                                                 Tag(
-                                                    "Disponível: ${Utils.formatDouble(material.stockAvailable)} ${material.requestUnit}",
+                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
                                                     MaterialTheme.colorScheme.primary,
                                                     Icons.Default.Check
                                                 )
@@ -483,7 +485,7 @@ fun StreetMaintenanceContent(
 
                                     // Quantidade total, mais discreto
                                     Text(
-                                        text = "Total em estoque: ${Utils.formatDouble(material.stockQuantity)} ${material.requestUnit}",
+                                        text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -500,7 +502,7 @@ fun StreetMaintenanceContent(
                                 IconToggleButton(
                                     checked = checked,
                                     onCheckedChange = { isChecked ->
-                                        if (material.stockAvailable == 0.0) {
+                                        if (material.stockAvailable == "0") {
                                             alertMessage["title"] = "Material sem estoque"
                                             alertMessage["body"] =
                                                 "Para selecionar esse material é necessário haver estoque disponível."
@@ -535,7 +537,7 @@ fun StreetMaintenanceContent(
                                                         "cabo",
                                                         ignoreCase = true
                                                     ) || isScrew
-                                                ) 0.0 else 1.0
+                                                ) "0" else "1"
                                             )
                                         } else {
                                             // Apenas remove esse item
@@ -789,12 +791,16 @@ fun StreetMaintenanceContent(
                         onValueChange = { newValue ->
                             cableError = null
                             val sanitized = sanitizeDecimalInput(newValue.text)
-                            val quantityInMeters = sanitized.toDoubleOrNull()?.div(100) ?: 0.0
+                            val quantityInMeters: BigDecimal = try {
+                                BigDecimal(sanitized).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+                            } catch (e: NumberFormatException) {
+                                BigDecimal.ZERO
+                            }
                             text = TextFieldValue(sanitized, TextRange(sanitized.length))
 
                             items = items.map {
                                 if (it.materialStockId == cableItem?.materialStockId)
-                                    it.copy(quantityExecuted = quantityInMeters)
+                                    it.copy(quantityExecuted = quantityInMeters.toString())
                                 else it
                             }
                         },
@@ -859,7 +865,7 @@ fun StreetMaintenanceContent(
                                 items = items.map {
                                     if (it.materialStockId == screw.materialStockId)
                                         it.copy(
-                                            quantityExecuted = sanitized.toDoubleOrNull() ?: 0.0
+                                            quantityExecuted = sanitized
                                         )
                                     else it
                                 }
@@ -920,16 +926,19 @@ fun StreetMaintenanceContent(
                 Spacer(Modifier.height(20.dp))
                 Button(
                     onClick = {
+                        val hasNumber = Regex("""\d+""").containsMatchIn(street.address)
+                        val hasSN = Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(street.address)
+
                         var error = false
                         if (street.address.isBlank()) {
                             alertMessage["title"] = "Você esqueceu de preencher o endereço"
                             alertMessage["body"] = "Por favor, informe a Rua, Nº - Bairro atual"
                             alertModal = true
                             return@Button
-                        } else if (street.address.contains("[nº não informado]")) {
-                            alertMessage["title"] = "Número do endereço não preenchido"
+                        } else if (!hasNumber && !hasSN) {
+                            alertMessage["title"] = "Número do endereço ausente"
                             alertMessage["body"] =
-                                "Por favor, informe o número do endereço antes de finalizar."
+                                "Por favor, informe o número do endereço ou indique que é 'S/N'."
                             alertModal = true
                             return@Button
                         } else if (items.isEmpty()) {
@@ -954,14 +963,14 @@ fun StreetMaintenanceContent(
                             }
                         }
 
-                        if (cableItem != null && cableItem?.quantityExecuted == 0.0) {
+                        if (cableItem != null && cableItem?.quantityExecuted == "0") {
                             cableError = "Informe a quantidade"
                             error = true
                         }
 
                         screws.forEach { screw ->
                             val item = items.find { it.materialStockId == screw.materialStockId }
-                            if (item?.quantityExecuted == null || item.quantityExecuted == 0.0) {
+                            if (item?.quantityExecuted == null || item.quantityExecuted == "0") {
                                 screwErrors[screw.materialStockId] = "Informe a quantidade"
                                 error = true
                             } else {
@@ -982,54 +991,54 @@ fun StreetMaintenanceContent(
     }
 
 }
-
-
-@Preview
-@Composable
-fun PrevStreetMaintenance() {
-    StreetMaintenanceContent(
-        maintenanceId = UUID.randomUUID(),
-        navController = rememberNavController(),
-        loading = false,
-        lastRoute = null,
-        back = {
-
-        },
-        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem> -> },
-        streetCreated = false,
-        newStreet = {},
-        stockData = listOf(
-            MaterialStock(
-                materialId = 1,
-                materialStockId = 11,
-                materialName = "LUMINÁRIA LED",
-                specs = "120W",
-                stockQuantity = 12.0,
-                stockAvailable = 0.0,
-                requestUnit = "UN",
-                type = "LED"
-            ),
-            MaterialStock(
-                materialId = 2,
-                materialStockId = 22,
-                materialName = "LÂMPADA DE SÓDIO TUBULAR",
-                specs = "400W",
-                stockQuantity = 15.0,
-                stockAvailable = 10.0,
-                requestUnit = "UN",
-                type = "LÂMPADA"
-            ),
-            MaterialStock(
-                materialId = 3,
-                materialStockId = 33,
-                materialName = "LÂMPADA DE MERCÚRIO",
-                specs = "250W",
-                stockQuantity = 62.0,
-                stockAvailable = 48.0,
-                requestUnit = "UN",
-                type = "LÂMPADA"
-            ),
-        ),
-        contractor = ""
-    )
-}
+//
+//
+//@Preview
+//@Composable
+//fun PrevStreetMaintenance() {
+//    StreetMaintenanceContent(
+//        maintenanceId = UUID.randomUUID(),
+//        navController = rememberNavController(),
+//        loading = false,
+//        lastRoute = null,
+//        back = {
+//
+//        },
+//        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem> -> },
+//        streetCreated = false,
+//        newStreet = {},
+//        stockData = listOf(
+//            MaterialStock(
+//                materialId = 1,
+//                materialStockId = 11,
+//                materialName = "LUMINÁRIA LED",
+//                specs = "120W",
+//                stockQuantity = 12.0,
+//                stockAvailable = 0.0,
+//                requestUnit = "UN",
+//                type = "LED"
+//            ),
+//            MaterialStock(
+//                materialId = 2,
+//                materialStockId = 22,
+//                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+//                specs = "400W",
+//                stockQuantity = 15.0,
+//                stockAvailable = 10.0,
+//                requestUnit = "UN",
+//                type = "LÂMPADA"
+//            ),
+//            MaterialStock(
+//                materialId = 3,
+//                materialStockId = 33,
+//                materialName = "LÂMPADA DE MERCÚRIO",
+//                specs = "250W",
+//                stockQuantity = 62.0,
+//                stockAvailable = 48.0,
+//                requestUnit = "UN",
+//                type = "LÂMPADA"
+//            ),
+//        ),
+//        contractor = ""
+//    )
+//}

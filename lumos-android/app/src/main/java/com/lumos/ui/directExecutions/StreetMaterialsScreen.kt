@@ -105,6 +105,7 @@ import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.utils.Utils.formatDouble
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
+import java.math.BigDecimal
 
 @Composable
 fun StreetMaterialScreen(
@@ -306,7 +307,7 @@ fun StreetMaterialScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -401,8 +402,8 @@ fun StreetMaterialScreen(
                     directExecutionViewModel.confirmModal = false
                     val address = directExecutionViewModel.street?.address.orEmpty()
                     val hasNumber = Regex("""\d+""").containsMatchIn(address)
-                    val hasSN =
-                        Regex("""(?i)\bS[\/\\]?N\b""").containsMatchIn(address)  // aceita S/N, s/n, S\N, etc.
+                    val hasSN = Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(address)
+
                     if (!hasNumber && !hasSN) {
                         message["title"] = "Número do endereço ausente"
                         message["body"] =
@@ -424,7 +425,7 @@ fun StreetMaterialScreen(
                     } else {
                         val quantities =
                             directExecutionViewModel.streetItems.map { it.quantityExecuted }
-                        if (quantities.any { it == 0.0 }) {
+                        if (quantities.any { it == "0" }) {
                             message["title"] = "Quantidade inválida"
                             message["body"] =
                                 "Não é permitido salvar itens com quantidade igual a 0."
@@ -473,7 +474,7 @@ fun StreetMaterialScreen(
                         reserveId = reserveId,
                         materialStockId = materialStockId,
                         contractItemId = contractItemId,
-                        quantityExecuted = 0.0,
+                        quantityExecuted = "0",
                         materialName = materialName
                     )
                     directExecutionViewModel.streetItems += newItem
@@ -490,7 +491,7 @@ fun StreetMaterialScreen(
                     message["body"] =
                         "A quantidade disponível desse material é $materialQuantity."
                     directExecutionViewModel.alertModal = true
-                } else if (quantityExecuted < 0) {
+                } else if (quantityExecuted < BigDecimal(0)) {
                     message["title"] = "Quantidade inválida"
                     message["body"] = "Não é possível registrar uma quantidade negativa."
                     directExecutionViewModel.alertModal = true
@@ -498,7 +499,7 @@ fun StreetMaterialScreen(
                     directExecutionViewModel.streetItems =
                         directExecutionViewModel.streetItems.map {
                             if (it.reserveId == reserveId) {
-                                it.copy(quantityExecuted = quantityExecuted)
+                                it.copy(quantityExecuted = quantityExecuted.toString())
                             } else it
                         }
                 }
@@ -531,7 +532,7 @@ fun StreetMaterialsContent(
     locationModal: Boolean,
     confirmLocation: (Boolean) -> Unit,
     changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
-    changeQuantity: (Double, Double, Long) -> Unit,
+    changeQuantity: (BigDecimal, BigDecimal, Long) -> Unit,
     errorMessage: String?,
     alertMessage: MutableMap<String, String>,
     streetItems: List<DirectExecutionStreetItem>
@@ -568,7 +569,7 @@ fun StreetMaterialsContent(
     var action by remember { mutableStateOf("") }
 
     val selectedIcon =
-        if (lastRoute == Routes.DIRECT_EXECUTION_SCREEN) BottomBar.EXECUTIONS.value else BottomBar.HOME.value
+        if (lastRoute == Routes.DIRECT_EXECUTION_SCREEN) BottomBar.EXECUTIONS.value else BottomBar.EXECUTIONS.value
 
     AppLayout(
         title = description,
@@ -849,28 +850,27 @@ fun StreetMaterialsContent(
 fun MaterialItem(
     material: DirectReserve,
     changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
-    changeQuantity: (Double, Double, Long) -> Unit,
+    changeQuantity: (BigDecimal, BigDecimal, Long) -> Unit,
     streetItems: List<DirectExecutionStreetItem>
 ) {
 
     val quantity = streetItems.find {
         it.reserveId == material.reserveId
-    }?.quantityExecuted ?: 0.0
+    }?.quantityExecuted ?: "0"
 
     var text by remember(material.reserveId) {
         mutableStateOf(
             TextFieldValue(
-                if (quantity % 1.0 == 0.0) {
+                if (BigDecimal(quantity) % BigDecimal(1) == BigDecimal(0)) {
                     quantity.toInt().toString()
                 } else {
-                    quantity.toString()
+                    quantity
                 }
             )
         )
     }
 
-    val quantityExecuted = text.text.toDoubleOrNull() ?: 0.0
-
+    val quantityExecuted = BigDecimal(text.text)
     val selected = remember(streetItems, material) {
         derivedStateOf {
             streetItems.any {
@@ -883,7 +883,7 @@ fun MaterialItem(
     LaunchedEffect(quantityExecuted) {
         changeQuantity(
             quantityExecuted,
-            material.materialQuantity,
+            BigDecimal(material.materialQuantity),
             material.reserveId
         )
     }
@@ -978,7 +978,7 @@ fun MaterialItem(
                         ) {
                             AnimatedVisibility(!selected.value) {
                                 Text(
-                                    text = "Quantidade disponível: ${formatDouble(material.materialQuantity)}",
+                                    text = "Quantidade disponível: ${material.materialQuantity}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -1056,127 +1056,127 @@ fun MaterialItem(
     }
 }
 
-
-@Preview
-@Composable
-fun PrevMStreetScreen() {
-    // Criando um contexto fake para a preview
-    val fakeContext = LocalContext.current
-
-    val reserves = listOf(
-        DirectReserve(
-            materialStockId = 10,
-            materialName = "LED 120W",
-            materialQuantity = 12.0,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 2,
-            materialName = "BRAÇO DE 3,5",
-            materialQuantity = 16.0,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 3,
-            materialName = "BRAÇO DE 3,5",
-            materialQuantity = 16.0,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 4,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 5,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 6,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 7,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        ),
-        DirectReserve(
-            materialStockId = 8,
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            requestUnit = "UN",
-            reserveId = -1,
-            contractItemId = -1,
-            directExecutionId = -1
-        )
-    )
-
-
-    StreetMaterialsContent(
-        isLoading = false,
-        description = "Prefeitura de Belo Horizonte",
-        reserves = reserves,
-        street = DirectExecutionStreet(
-            directStreetId = 1,
-            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
-            latitude = null,
-            longitude = null,
-            photoUri = null,
-            deviceId = "",
-            directExecutionId = 1,
-            description = "",
-            lastPower = "100W",
-            finishAt = "",
-            currentSupply = "",
-        ),
-        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
-        context = fakeContext,
-        navController = rememberNavController(),
-        notificationsBadge = "12",
-        takePhoto = { },
-        changeStreet = {},
-        confirmModal = { },
-        openConfirmModal = false,
-        openModal = {},
-        alertModal = false,
-        closeAlertModal = { },
-        markAsFinish = {},
-        locationModal = true,
-        confirmLocation = { },
-        changeMaterial = { _, _, _, _, _ -> },
-        changeQuantity = { _, _, _ -> },
-        errorMessage = null,
-        alertMessage = mutableMapOf(
-            "title" to "Título da mensagem",
-            "body" to "Conteúdo da mensagem"
-        ),
-        streetItems = emptyList()
-    )
-}
+//
+//@Preview
+//@Composable
+//fun PrevMStreetScreen() {
+//    // Criando um contexto fake para a preview
+//    val fakeContext = LocalContext.current
+//
+//    val reserves = listOf(
+//        DirectReserve(
+//            materialStockId = 10,
+//            materialName = "LED 120W",
+//            materialQuantity = 12.0,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 2,
+//            materialName = "BRAÇO DE 3,5",
+//            materialQuantity = 16.0,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 3,
+//            materialName = "BRAÇO DE 3,5",
+//            materialQuantity = 16.0,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 4,
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 5,
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 6,
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 7,
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        ),
+//        DirectReserve(
+//            materialStockId = 8,
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            requestUnit = "UN",
+//            reserveId = -1,
+//            contractItemId = -1,
+//            directExecutionId = -1
+//        )
+//    )
+//
+//
+//    StreetMaterialsContent(
+//        isLoading = false,
+//        description = "Prefeitura de Belo Horizonte",
+//        reserves = reserves,
+//        street = DirectExecutionStreet(
+//            directStreetId = 1,
+//            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
+//            latitude = null,
+//            longitude = null,
+//            photoUri = null,
+//            deviceId = "",
+//            directExecutionId = 1,
+//            description = "",
+//            lastPower = "100W",
+//            finishAt = "",
+//            currentSupply = "",
+//        ),
+//        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
+//        context = fakeContext,
+//        navController = rememberNavController(),
+//        notificationsBadge = "12",
+//        takePhoto = { },
+//        changeStreet = {},
+//        confirmModal = { },
+//        openConfirmModal = false,
+//        openModal = {},
+//        alertModal = false,
+//        closeAlertModal = { },
+//        markAsFinish = {},
+//        locationModal = true,
+//        confirmLocation = { },
+//        changeMaterial = { _, _, _, _, _ -> },
+//        changeQuantity = { _, _, _ -> },
+//        errorMessage = null,
+//        alertMessage = mutableMapOf(
+//            "title" to "Título da mensagem",
+//            "body" to "Conteúdo da mensagem"
+//        ),
+//        streetItems = emptyList()
+//    )
+//}

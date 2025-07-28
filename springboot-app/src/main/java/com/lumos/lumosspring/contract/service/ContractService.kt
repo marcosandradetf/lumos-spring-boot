@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.Instant
 import java.util.*
 
 @Service
@@ -77,7 +78,6 @@ class ContractService(
         contract.contractor = contractDTO.contractor
         contract.cnpj = contractDTO.cnpj
         contract.address = contractDTO.address
-        contract.creationDate = util.dateTime
         contract.createdBy = user.get().userId
         contract.unifyServices = contractDTO.unifyServices
         contract.noticeFile = if ((contractDTO.noticeFile?.length ?: 0) > 0) contractDTO.noticeFile else null
@@ -100,7 +100,7 @@ class ContractService(
             body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
             action = Routes.CONTRACT_SCREEN,
             role = Role.Values.RESPONSAVEL_TECNICO,
-            time = util.dateTime,
+            time = Instant.now(),
             type = NotificationType.CONTRACT
         )
 

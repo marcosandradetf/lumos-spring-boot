@@ -55,7 +55,7 @@ data class MaintenanceStreetItem(
     val maintenanceId: String,
     val maintenanceStreetId: String,
     val materialStockId: Long,
-    val quantityExecuted: Double = 1.0,
+    val quantityExecuted: String = "0",
 )
 
 data class MaintenanceJoin(

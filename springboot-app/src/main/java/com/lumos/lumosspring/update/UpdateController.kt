@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class UpdateController {
 
-    private val latestVersionCode = 8L
-    private val latestVersionName = "2.1.5"
-    private val apkUrl = "https://minio.thryon.com.br/apk/com.thryon.apps.android.release_8_2.1.5.apk"
+    private val latestVersionCode = 9L
+    private val latestVersionName = "2.1.6"
+    private val apkUrl = "https://minio.thryon.com.br/apk/com.thryon.apps.android.release_9_2.1.6.apk"
 
     @GetMapping("/mobile/check-update")
     fun checkUpdate(@RequestParam version: Long): ResponseEntity<Any> {

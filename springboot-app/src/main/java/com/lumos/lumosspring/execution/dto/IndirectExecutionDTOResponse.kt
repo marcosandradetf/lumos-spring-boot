@@ -41,7 +41,7 @@ data class MaterialInStockDTO(
     val materialLength: String?,
     val materialType: String,
     val deposit: String,
-    val availableQuantity: Double,
+    val availableQuantity: BigDecimal,
     val requestUnit: String,
 )
 
@@ -68,7 +68,7 @@ data class ReserveStreetDTOResponse(
 data class ItemResponseDTO(
     val itemId: Long,
     val description: String,
-    val quantity: Double,
+    val quantity: BigDecimal,
     val type: String,
     val linking: String?,
 )
@@ -144,10 +144,10 @@ data class IndirectReserve(
     val contractId: Long,
     val contractItemId: Long,
     val materialName: String,
-    val materialQuantity: Double,
+    val materialQuantity: BigDecimal,
     val streetId: Long,
     val requestUnit: String,
-    val quantityExecuted: Double? = null
+    val quantityExecuted: BigDecimal? = null
 )
 
 data class DirectReserve(
@@ -156,7 +156,7 @@ data class DirectReserve(
     val materialStockId: Long, // *_*
     val contractItemId: Long,
     val materialName: String,
-    val materialQuantity: Double,
+    val materialQuantity: BigDecimal,
     val requestUnit: String,
 )
 

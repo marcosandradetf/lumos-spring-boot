@@ -115,7 +115,7 @@ fun PMContent(
             items(contracts) { contract -> // Iteração na lista
                 val createdAt = "Iniciado há ${
                     Utils.timeSinceCreation(
-                        Instant.parse(contract.createdAt)
+                        contract.createdAt
                     )
                 }"
                 val expand = remember { mutableStateOf(false) }

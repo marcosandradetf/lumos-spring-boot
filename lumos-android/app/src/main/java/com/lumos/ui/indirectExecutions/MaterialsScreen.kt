@@ -537,7 +537,7 @@ fun MaterialItem(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Quantidade medida: ${formatDouble(material.materialQuantity)}",
+                            text = "Quantidade medida: ${material.materialQuantity}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -567,7 +567,8 @@ fun MaterialItem(
 
                         IconButton(
                             onClick = {
-                                val hasDecimalPart = material.materialQuantity % 1 != 0.0
+                                val hasDecimalPart = BigDecimal(material.materialQuantity) % BigDecimal(1) != BigDecimal(0)
+
                                 val increment =
                                     if (hasDecimalPart) BigDecimal("0.1") else BigDecimal("1")
                                 quantityExecuted = quantityExecuted.add(increment)
@@ -591,7 +592,7 @@ fun MaterialItem(
                         Spacer(modifier = Modifier.height(6.dp)) // Espaçamento entre os ícones
 
                         Text(
-                            text = formatDouble(quantityExecuted.toDouble()),
+                            text = quantityExecuted.toString(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -602,7 +603,7 @@ fun MaterialItem(
                         IconButton(
                             onClick = {
                                 if (quantityExecuted > BigDecimal.ZERO) {
-                                    val hasDecimalPart = material.materialQuantity % 1 != 0.0
+                                    val hasDecimalPart = BigDecimal(material.materialQuantity) % BigDecimal(1) != BigDecimal(0)
                                     val decrement =
                                         if (hasDecimalPart) BigDecimal("0.1") else BigDecimal("1")
 
@@ -632,7 +633,7 @@ fun MaterialItem(
 
         if (confirmModal)
             Confirm(
-                body = "Deseja confirmar a execução de ${formatDouble(quantityExecuted.toDouble())} ${material.requestUnit}?",
+                body = "Deseja confirmar a execução de ${quantityExecuted.toDouble()} ${material.requestUnit}?",
                 confirm = {
                     confirmModal = false
                     finish(quantityExecuted.toDouble())
@@ -644,129 +645,129 @@ fun MaterialItem(
     }
 }
 
-
-@Preview
-@Composable
-fun PrevMScreen() {
-    // Criando um contexto fake para a preview
-    val fakeContext = LocalContext.current
-    val values =
-        IndirectExecution(
-            streetId = 1,
-            streetName = "Rua Dona Tina",
-            streetNumber = "251",
-            executionStatus = "PENDING",
-            priority = true,
-            type = "INSTALLATION",
-            itemsQuantity = 7,
-            creationDate = "",
-            latitude = 0.0,
-            longitude = 0.0,
-            photoUri = "",
-            contractId = 1,
-            contractor = ""
-        )
-
-    val reserves = listOf(
-        IndirectReserve(
-            reserveId = 10,
-            materialName = "LED 120W",
-            materialQuantity = 12.0,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 2,
-            materialName = "BRAÇO DE 3,5",
-            materialQuantity = 16.0,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 3,
-
-            materialName = "BRAÇO DE 3,5",
-            materialQuantity = 16.0,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 4,
-
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 5,
-
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 6,
-
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 7,
-
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        ),
-        IndirectReserve(
-            reserveId = 8,
-
-            materialName = "CABO 1.5MM",
-            materialQuantity = 30.4,
-            streetId = 1,
-            requestUnit = "UN",
-            contractId = -1,
-            contractItemId = -1,
-        )
-    )
-
-
-    MaterialsContent(
-        execution = values,
-        reserves = reserves,
-        onNavigateToHome = { },
-        onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToExecutions = { },
-        onNavigateToNotifications = { },
-        context = fakeContext,
-        navController = rememberNavController(),
-        notificationsBadge = "12",
-        pSelected = BottomBar.HOME.value,
-        takePhoto = { },
-        onFinishMaterial = { _, _ -> },
-        alertModal = false,
-        closeAlertModal = { },
-        loadingReserves = true,
-        hasPosted = false,
-        errorMessage = null
-    )
-}
+//
+//@Preview
+//@Composable
+//fun PrevMScreen() {
+//    // Criando um contexto fake para a preview
+//    val fakeContext = LocalContext.current
+//    val values =
+//        IndirectExecution(
+//            streetId = 1,
+//            streetName = "Rua Dona Tina",
+//            streetNumber = "251",
+//            executionStatus = "PENDING",
+//            priority = true,
+//            type = "INSTALLATION",
+//            itemsQuantity = 7,
+//            creationDate = "",
+//            latitude = 0.0,
+//            longitude = 0.0,
+//            photoUri = "",
+//            contractId = 1,
+//            contractor = ""
+//        )
+//
+//    val reserves = listOf(
+//        IndirectReserve(
+//            reserveId = 10,
+//            materialName = "LED 120W",
+//            materialQuantity = 12.0,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 2,
+//            materialName = "BRAÇO DE 3,5",
+//            materialQuantity = 16.0,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 3,
+//
+//            materialName = "BRAÇO DE 3,5",
+//            materialQuantity = 16.0,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 4,
+//
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 5,
+//
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 6,
+//
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 7,
+//
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        ),
+//        IndirectReserve(
+//            reserveId = 8,
+//
+//            materialName = "CABO 1.5MM",
+//            materialQuantity = 30.4,
+//            streetId = 1,
+//            requestUnit = "UN",
+//            contractId = -1,
+//            contractItemId = -1,
+//        )
+//    )
+//
+//
+//    MaterialsContent(
+//        execution = values,
+//        reserves = reserves,
+//        onNavigateToHome = { },
+//        onNavigateToMenu = { },
+//        onNavigateToProfile = { },
+//        onNavigateToExecutions = { },
+//        onNavigateToNotifications = { },
+//        context = fakeContext,
+//        navController = rememberNavController(),
+//        notificationsBadge = "12",
+//        pSelected = BottomBar.HOME.value,
+//        takePhoto = { },
+//        onFinishMaterial = { _, _ -> },
+//        alertModal = false,
+//        closeAlertModal = { },
+//        loadingReserves = true,
+//        hasPosted = false,
+//        errorMessage = null
+//    )
+//}

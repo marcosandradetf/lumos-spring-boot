@@ -140,7 +140,7 @@ class DirectExecutionRepository(
     suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> =
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
-    private suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: Double) {
+    private suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: String) {
         db.directExecutionDao().debitMaterial(materialStockId, contractId, quantityExecuted)
     }
 
@@ -188,9 +188,6 @@ class DirectExecutionRepository(
         val street = db.directExecutionDao().getStreet(streetId)
         val materials = db.directExecutionDao().getStreetItems(streetId)
 
-        val finishAt: Instant? = runCatching {
-            Instant.parse(street.finishAt)
-        }.getOrNull()
 
         val dto = SendDirectExecutionDto(
             directExecutionId = street.directExecutionId,
@@ -203,7 +200,7 @@ class DirectExecutionRepository(
             lastPower = street.lastPower,
             materials = materials,
             currentSupply = street.currentSupply,
-            finishAt = finishAt,
+            finishAt = street.finishAt,
         )
 
         val json = gson.toJson(dto)

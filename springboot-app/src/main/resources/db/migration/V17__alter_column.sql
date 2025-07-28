@@ -54,3 +54,19 @@ SET finished_at = finished_at AT TIME ZONE 'America/Sao_Paulo' AT TIME ZONE 'UTC
 
 ALTER TABLE direct_execution_street
     ADD COLUMN IF NOT EXISTS current_supply text;
+
+CREATE OR REPLACE FUNCTION update_contract_value_on_insert()
+    RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE contract
+    SET contract_value = contract_value + NEW.total_price
+    WHERE contract_id = NEW.contract_contract_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_contract_value_after_insert
+    AFTER INSERT ON contract_item
+    FOR EACH ROW
+EXECUTE FUNCTION update_contract_value_on_insert();

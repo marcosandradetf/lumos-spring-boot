@@ -29,10 +29,10 @@ data class IndirectReserve(
     val contractId: Long,
     val contractItemId: Long,
     val materialName: String,
-    val materialQuantity: Double,
+    val materialQuantity: String,
     val streetId: Long,
     val requestUnit: String,
-    val quantityExecuted: Double? = null
+    val quantityExecuted: String? = null
 )
 
 data class ExecutionDTO(

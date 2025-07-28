@@ -642,9 +642,7 @@ fun MaintenanceHomeContent(
                                                 Text(
                                                     "Iniciada há ${
                                                         Utils.timeSinceCreation(
-                                                            Instant.parse(
                                                                 maintenance.dateOfVisit
-                                                            )
                                                         )
                                                     }"
                                                 )

@@ -27,10 +27,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.util.*
 import java.math.BigDecimal
-import java.text.ParseException
 import java.time.Instant
+import java.util.*
 
 @Service
 class ExecutionService(
@@ -172,7 +171,7 @@ class ExecutionService(
             teamId = execution.teamId,
             assignedBy = currentUserUUID,
             reservationManagementId = management.reservationManagementId!!,
-            assignedAt = util.dateTime,
+            assignedAt = Instant.now(),
             step = step
         )
 
@@ -224,7 +223,7 @@ class ExecutionService(
             title = "Nova Ordem Disponível",
             body = "Uma nova ordem foi atribuída a você. Acesse a tela de Gerenciamento de Reservas para iniciar o processo.",
             userId = execution.stockistId,
-            time = util.dateTime,
+            time = Instant.now(),
             type = NotificationType.ALERT,
         )
 
@@ -283,7 +282,7 @@ class ExecutionService(
                     ItemResponseDTO(
                         itemId = rs.getLong("itemId"),
                         description = rs.getString("description"),
-                        quantity = rs.getDouble("quantity"),
+                        quantity = rs.getBigDecimal("quantity"),
                         type = rs.getString("type"),
                         linking = rs.getString("linking")
                     )
@@ -341,7 +340,7 @@ class ExecutionService(
                     ItemResponseDTO(
                         itemId = rs.getLong("itemId"),
                         description = rs.getString("description"),
-                        quantity = rs.getDouble("quantity"),
+                        quantity = rs.getBigDecimal("quantity"),
                         type = rs.getString("type"),
                         linking = rs.getString("linking")
                     )
@@ -689,7 +688,7 @@ class ExecutionService(
                     title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
                     body = bodyMessage,
                     action = "REPLY_RESERVE",
-                    time = util.dateTime,
+                    time = Instant.now(),
                     type = NotificationType.ALERT,
                     persistCode = streetIdOrExecutionId
                 )
@@ -742,7 +741,7 @@ class ExecutionService(
                 title = "Existem $quantity materiais pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
                 body = bodyMessage,
                 action = "",
-                time = util.dateTime,
+                time = Instant.now(),
                 type = NotificationType.ALERT,
                 persistCode = streetIdOrExecutionId
             )

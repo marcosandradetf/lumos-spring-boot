@@ -8,6 +8,7 @@ import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
 import java.sql.Timestamp
 import java.util.*
 
@@ -149,7 +150,7 @@ class JdbcGetExecutionRepository(
                         contractId = 0,
                         contractItemId = r["contract_item_id"] as Long,
                         materialName = name,
-                        materialQuantity = r["reserved_quantity"] as Double,
+                        materialQuantity = BigDecimal(r["reserved_quantity"].toString()),
                         streetId = r["pre_measurement_street_id"] as Long,
                         requestUnit = r["request_unit"] as? String ?: "UN"
                     )
@@ -192,7 +193,7 @@ class JdbcGetExecutionRepository(
                         materialStockId = r["truck_material_stock_id"] as Long,
                         contractItemId = r["contract_item_id"] as Long,
                         materialName = name,
-                        materialQuantity = r["reserved_quantity"] as Double,
+                        materialQuantity = BigDecimal(r["reserved_quantity"].toString()),
                         requestUnit = r["request_unit"] as? String ?: "UN",
                     )
                 }

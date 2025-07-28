@@ -15,8 +15,8 @@ data class MaterialStock(
     val materialStockId: Long,
     val materialName: String,
     val specs: String?,
-    val stockQuantity: Double,
-    val stockAvailable: Double,
+    val stockQuantity: String,
+    val stockAvailable: String,
     val requestUnit: String,
     val type: String,
 )

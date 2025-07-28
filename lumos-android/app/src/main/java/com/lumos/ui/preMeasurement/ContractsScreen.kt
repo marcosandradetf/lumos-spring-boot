@@ -185,7 +185,7 @@ fun ContractsScreenContent(
                     items(contracts) { contract -> // Iteração na lista
                         val createdAt = "Criado por ${contract.createdBy} há ${
                             Utils.timeSinceCreation(
-                                Instant.parse(contract.createdAt)
+                                contract.createdAt
                             )
                         }"
                         val expand = remember { mutableStateOf(false) }

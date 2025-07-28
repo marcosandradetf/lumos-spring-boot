@@ -61,15 +61,6 @@ class Util(
         return "0,00"
     }
 
-    val dateTime: Instant
-        get() {
-            val date = ZonedDateTime.now(
-                ZoneId.of("America/Sao_Paulo")
-            )
-
-            return date.toInstant()
-        }
-
     fun normalizeWord(word: String): String {
         return Normalizer.normalize(word, Normalizer.Form.NFD)
             .replace("\\p{M}".toRegex(), "").uppercase(Locale.getDefault()) // Remove caracteres diacríticos (acentos)
@@ -84,16 +75,6 @@ class Util(
 
     fun extractNumber(value: String?): Double {
         return value?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: 0.0
-    }
-
-    fun timeSinceCreation(createdAt: Instant): String {
-        val duration = Duration.between(createdAt, dateTime)
-
-        return when {
-            duration.toDays() > 0 -> "${duration.toDays()}d"
-            duration.toHours() > 0 -> "${duration.toHours()}h"
-            else -> "${duration.toMinutes()}min"
-        }
     }
 
     fun extractMaskToList(mask: String): List<Long> {
