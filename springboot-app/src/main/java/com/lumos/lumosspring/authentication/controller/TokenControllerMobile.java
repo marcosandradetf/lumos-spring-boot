@@ -28,7 +28,7 @@ public class TokenControllerMobile {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String refreshToken) {
-        return tokenService.refreshToken(refreshToken, true);
+        return tokenService.refreshToken(refreshToken, null, true);
     }
 
     @PostMapping("/forgot-password")

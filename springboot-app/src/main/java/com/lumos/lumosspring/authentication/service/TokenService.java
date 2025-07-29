@@ -12,6 +12,7 @@ import com.lumos.lumosspring.user.*;
 import com.lumos.lumosspring.util.ErrorResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -68,21 +69,23 @@ public class TokenService {
         return userService.resetPassword(user.get().getUserId().toString());
     }
 
-    public ResponseEntity<LoginResponse> refreshToken(String refreshToken, boolean isMobile) {
+    public ResponseEntity<?> refreshToken(String refreshToken,  HttpServletResponse response, boolean isMobile) {
         var now = Instant.now();
         var expiresIn = 1800L; // 30 minutos para access token expirar
-
-        if (isMobile) {
-            expiresIn = 2592000L;
-        }
+        var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
 
         var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
         if (tokenFromDb.isEmpty() || tokenFromDb.get().isRevoked() || tokenFromDb.get().getExpiryDate().isBefore(now)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        var user = userRepository.findByUserId(tokenFromDb.get().getUser()).orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
+        var existingToken = tokenFromDb.get();
+
+        var user = userRepository.findByUserId(existingToken.getUser()).orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
         var scope = getScope(user);
+
+        existingToken.setRevoked(true);
+        refreshTokenRepository.save(existingToken);
 
         // Cria novo token de acesso com as mesmas informações do refresh token
         var accessTokenClaims = getAccessClaims(
@@ -92,9 +95,37 @@ public class TokenService {
                 scope
         );
 
-        var newAccessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
+        var refreshTokenClaims = getAccessClaims(
+                user,
+                now,
+                refreshExpiresIn,
+                scope
+        );
 
-        return ResponseEntity.ok(new LoginResponse(newAccessToken, expiresIn, getRoles(user), getTeams(user)));
+        var newAccessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
+        var newRefreshTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(refreshTokenClaims)).getTokenValue();
+
+        var newRefreshToken = new RefreshToken();
+        newRefreshToken.setToken(newRefreshTokenValue);
+        newRefreshToken.setExpiryDate(now.plusSeconds(refreshExpiresIn));
+        newRefreshToken.setUser(user.getUserId());
+        newRefreshToken.setRevoked(false);
+        refreshTokenRepository.save(newRefreshToken);
+
+        // Configura o refreshToken como um cookie HTTP-Only
+        if (!isMobile) {
+            // Spring não suporta SameSite diretamente via Cookie API — definimos manualmente o header:
+            String cookieValue = "refreshToken=" + newRefreshTokenValue +
+                    "; Max-Age=" + refreshExpiresIn +
+                    "; Path=/" +
+                    "; HttpOnly; Secure; SameSite=Strict";
+            response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
+
+            // Não enviar refresh token no body para web
+            return ResponseEntity.ok(new LoginResponse(newAccessToken, expiresIn, getRoles(user), getTeams(user)));
+        } else {
+            return ResponseEntity.ok(new LoginResponseMobile(newAccessToken, expiresIn, getRoles(user), getTeams(user), newRefreshTokenValue, null));
+        }
     }
 
     public ResponseEntity<?> login(LoginRequest loginRequest, HttpServletResponse response, boolean isMobile) {
@@ -132,11 +163,6 @@ public class TokenService {
         var expiresIn = 1800L; // 30 Minutos
         var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
 
-        if (isMobile) {
-            expiresIn = 2592000L;
-            refreshExpiresIn = 15552000L;
-        }
-
         var scopes = getScope(user.get());
 
         var accessTokenClaims = getAccessClaims(
@@ -166,12 +192,11 @@ public class TokenService {
 
         // Configura o refreshToken como um cookie HTTP-Only
         if (!isMobile) {
-            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshTokenValue);
-            refreshTokenCookie.setHttpOnly(true);
-            refreshTokenCookie.setSecure(true); // Use apenas em HTTPS em produção
-            refreshTokenCookie.setPath("/"); // Disponível em toda a aplicação
-            refreshTokenCookie.setMaxAge((int) refreshExpiresIn); // Expiração em 1 dia
-            response.addCookie(refreshTokenCookie);
+            String cookieValue = "refreshToken=" + refreshTokenValue +
+                    "; Max-Age=" + refreshExpiresIn +
+                    "; Path=/" +
+                    "; HttpOnly; Secure; SameSite=Strict";
+            response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             return ResponseEntity.ok(new LoginResponse(accessTokenValue, expiresIn, getRoles(user.get()), getTeams(user.get())));
         } else {
@@ -217,6 +242,7 @@ public class TokenService {
         var rolesNames = roleRepository.findRolesByUserId(appUser.getUserId());
         return String.join(" ", rolesNames);
     }
+
     private String getTeams(AppUser appUser) {
         Long numberTeamId = teamQueryRepository.getTeamIdByUserId(appUser.getUserId());
         String teamId = "";
@@ -235,7 +261,6 @@ public class TokenService {
                 .collect(Collectors.joining(" "));
 
     }
-
 
     private JwtClaimsSet getAccessClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
         return JwtClaimsSet.builder()

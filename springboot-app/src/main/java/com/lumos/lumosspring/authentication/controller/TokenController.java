@@ -27,8 +27,8 @@ public class TokenController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse> refreshToken(@CookieValue("refreshToken") String refreshToken) {
-        return tokenService.refreshToken(refreshToken, false);
+    public ResponseEntity<?> refreshToken(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
+        return tokenService.refreshToken(refreshToken, response,false);
     }
 
     @PostMapping("/forgot-password")

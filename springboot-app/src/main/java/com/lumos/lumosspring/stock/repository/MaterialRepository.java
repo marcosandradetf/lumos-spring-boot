@@ -53,6 +53,5 @@ public interface MaterialRepository extends CrudRepository<Material, Long> {
           AND name_for_import IS NOT NULL
         """)
     List<Material> findAllForImportPreMeasurement();
-
 }
 
