@@ -79,13 +79,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
@@ -102,7 +100,6 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
-import com.lumos.utils.Utils.formatDouble
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
 import java.math.BigDecimal
@@ -491,9 +488,9 @@ fun StreetMaterialScreen(
                     message["body"] =
                         "A quantidade disponível desse material é $materialQuantity."
                     directExecutionViewModel.alertModal = true
-                } else if (quantityExecuted < BigDecimal(0)) {
+                } else if (quantityExecuted <= BigDecimal.ZERO) {
                     message["title"] = "Quantidade inválida"
-                    message["body"] = "Não é possível registrar uma quantidade negativa."
+                    message["body"] = "Não é possível registrar uma quantidade zero ou negativa."
                     directExecutionViewModel.alertModal = true
                 } else {
                     directExecutionViewModel.streetItems =
@@ -861,7 +858,7 @@ fun MaterialItem(
     var text by remember(material.reserveId) {
         mutableStateOf(
             TextFieldValue(
-                if (BigDecimal(quantity) % BigDecimal(1) == BigDecimal(0)) {
+                if (BigDecimal(quantity) % BigDecimal.ONE== BigDecimal.ZERO) {
                     quantity.toInt().toString()
                 } else {
                     quantity

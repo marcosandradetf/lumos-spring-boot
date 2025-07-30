@@ -22,3 +22,8 @@ data class SyncQueueEntity(
     val where: String? = null,
     val equal: String? = null,
 )
+
+data class SyncEntityResponse(
+    val relatedId: Long,
+    val type: String,
+)

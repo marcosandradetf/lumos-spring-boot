@@ -124,7 +124,7 @@ fun CheckStockScreen(
     LaunchedEffect(Unit) {
         stockViewModel.getFlowExistsTypeInQueue(
             listOf(
-                SyncTypes.SYNC_STOCK, SyncTypes.POST_MAINTENANCE_STREET
+                SyncTypes.SYNC_STOCK, SyncTypes.POST_MAINTENANCE_STREET, SyncTypes.FINISHED_DIRECT_EXECUTION, SyncTypes.POST_INDIRECT_EXECUTION
             )
         )
 
@@ -349,7 +349,7 @@ fun CheckStockContent(
                                     // Tag de disponibilidade
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         when {
-                                            material.stockAvailable == "0" -> {
+                                            BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
                                                 Tag(
                                                     "Sem estoque disponível",
                                                     Color.Red,

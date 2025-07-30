@@ -78,6 +78,9 @@ fun SyncDetailsScreen(
                     SyncTypes.SYNC_STOCK,
                     SyncTypes.POST_ORDER,
                     SyncTypes.POST_MAINTENANCE_STREET,
+                    SyncTypes.POST_DIRECT_EXECUTION,
+                    SyncTypes.FINISHED_DIRECT_EXECUTION,
+                    SyncTypes.POST_INDIRECT_EXECUTION
                 )
             )
         }
@@ -217,8 +220,11 @@ fun SyncDetailsMaintenanceContent(
                 ) { m ->
 
                     val title = when (m.type) {
-                        SyncTypes.POST_MAINTENANCE -> "Envio de manutenção"
-                        SyncTypes.SYNC_STOCK -> "Sincronização de estoque"
+                        SyncTypes.POST_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Registro em campo"
+                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Envio"
+                        SyncTypes.SYNC_STOCK -> "Sincronização de dados de estoque"
+                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+                        SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
                         else -> m.type
                     }
 

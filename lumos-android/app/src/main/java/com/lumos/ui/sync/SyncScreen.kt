@@ -1,6 +1,7 @@
 package com.lumos.ui.sync
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -20,7 +21,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -53,7 +53,6 @@ fun SyncScreen(
         loading,
         error,
         currentNotifications,
-        context,
         navController
     )
 
@@ -65,7 +64,6 @@ fun SyncScreenContent(
     loading: Boolean,
     error: String,
     currentNotifications: String,
-    context: Context,
     navController: NavHostController
 ) {
 
@@ -94,47 +92,61 @@ fun SyncScreenContent(
             ) {
                 items(syncItems) { syncType ->
                     val type = when (syncType) {
-                        SyncTypes.POST_DIRECT_EXECUTION -> "Execuções sem pré-medição"
-                        SyncTypes.POST_MAINTENANCE -> "Sincronizações de Manutenções"
-                        SyncTypes.SYNC_STOCK -> "Sincronizações de Estoque"
-                        SyncTypes.POST_ORDER -> "Requisições de Materiais"
+                        SyncTypes.POST_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Registro em campo"
+                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Envio"
+                        SyncTypes.SYNC_STOCK -> "Sincronização de dados de estoque"
+                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+                        SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
                         else -> syncType
                     }
 
-                    ListItem(
-                        colors = ListItemColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            headlineColor = MaterialTheme.colorScheme.onSurface,
-                            leadingIconColor = MaterialTheme.colorScheme.onSurface,
-                            overlineColor = MaterialTheme.colorScheme.surface,
-                            supportingTextColor = MaterialTheme.colorScheme.surface,
-                            trailingIconColor = MaterialTheme.colorScheme.surface,
-                            disabledHeadlineColor = MaterialTheme.colorScheme.surface,
-                            disabledLeadingIconColor = MaterialTheme.colorScheme.surface,
-                            disabledTrailingIconColor = MaterialTheme.colorScheme.surface
-                        ),
-                        headlineContent = { Text(type) },
-                        leadingContent = {
-                            Icon(
-                                Icons.Default.SyncDisabled,
-                                contentDescription = type,
-                            )
-                        },
-                        shadowElevation = 10.dp,
+
+                    Box(
                         modifier = Modifier
                             .padding(bottom = 10.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .clickable {
-                                when (syncType) {
-                                    SyncTypes.POST_DIRECT_EXECUTION ->
-                                        navController
-                                            .navigate("${Routes.SYNC}/${SyncTypes.POST_DIRECT_EXECUTION}")
-                                    SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER, SyncTypes.POST_PRE_MEASUREMENT, SyncTypes.POST_GENERIC, SyncTypes.POST_MAINTENANCE_STREET ->
-                                        navController
-                                            .navigate("${Routes.SYNC}/${SyncTypes.POST_MAINTENANCE}")
+                            .background(MaterialTheme.colorScheme.surface)
+                    ) {
+
+                        ListItem(
+                            colors = ListItemColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                headlineColor = MaterialTheme.colorScheme.onSurface,
+                                leadingIconColor = MaterialTheme.colorScheme.onSurface,
+                                overlineColor = MaterialTheme.colorScheme.surface,
+                                supportingTextColor = MaterialTheme.colorScheme.surface,
+                                trailingIconColor = MaterialTheme.colorScheme.surface,
+                                disabledHeadlineColor = MaterialTheme.colorScheme.surface,
+                                disabledLeadingIconColor = MaterialTheme.colorScheme.surface,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.surface
+                            ),
+                            headlineContent = { Text(type) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.SyncDisabled,
+                                    contentDescription = type,
+                                )
+                            },
+                            shadowElevation = 10.dp,
+                            modifier = Modifier
+                                .padding(bottom = 10.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable {
+                                    when (syncType) {
+                                        SyncTypes.POST_DIRECT_EXECUTION ->
+                                            navController
+                                                .navigate("${Routes.SYNC}/${SyncTypes.POST_DIRECT_EXECUTION}")
+
+                                        SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER, SyncTypes.POST_PRE_MEASUREMENT,
+                                        SyncTypes.POST_GENERIC, SyncTypes.POST_MAINTENANCE_STREET, SyncTypes.FINISHED_DIRECT_EXECUTION
+                                            ->
+                                            navController
+                                                .navigate("${Routes.SYNC}/${SyncTypes.POST_MAINTENANCE}")
+                                    }
                                 }
-                            }
-                    )
+                        )
+
+                    }
 
                 }
             }
@@ -151,7 +163,6 @@ fun PrevSyncScreen() {
         loading = false,
         error = "",
         currentNotifications = "10",
-        context = LocalContext.current,
         navController = rememberNavController()
     )
 }

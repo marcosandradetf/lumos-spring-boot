@@ -60,25 +60,21 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.lumos.domain.model.IndirectExecution
 import com.lumos.domain.model.IndirectReserve
-import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 import com.lumos.utils.Utils.buildAddress
-import com.lumos.utils.Utils.formatDouble
 import java.io.File
 import java.math.BigDecimal
 
@@ -457,7 +453,7 @@ fun MaterialItem(
     var confirmModal by remember { mutableStateOf(false) }
 
     var quantityExecuted by remember(material.reserveId) {
-        mutableStateOf(BigDecimal(material.materialQuantity.toString()))
+        mutableStateOf(BigDecimal(material.materialQuantity))
     }
 
 
@@ -567,10 +563,10 @@ fun MaterialItem(
 
                         IconButton(
                             onClick = {
-                                val hasDecimalPart = BigDecimal(material.materialQuantity) % BigDecimal(1) != BigDecimal(0)
+                                val hasDecimalPart = BigDecimal(material.materialQuantity) % BigDecimal(1) != BigDecimal.ZERO
 
                                 val increment =
-                                    if (hasDecimalPart) BigDecimal("0.1") else BigDecimal("1")
+                                    if (hasDecimalPart) BigDecimal("0.1") else BigDecimal.ONE
                                 quantityExecuted = quantityExecuted.add(increment)
                             },
                             modifier = Modifier
@@ -603,9 +599,9 @@ fun MaterialItem(
                         IconButton(
                             onClick = {
                                 if (quantityExecuted > BigDecimal.ZERO) {
-                                    val hasDecimalPart = BigDecimal(material.materialQuantity) % BigDecimal(1) != BigDecimal(0)
+                                    val hasDecimalPart = BigDecimal(material.materialQuantity) % BigDecimal.ONE != BigDecimal.ZERO
                                     val decrement =
-                                        if (hasDecimalPart) BigDecimal("0.1") else BigDecimal("1")
+                                        if (hasDecimalPart) BigDecimal("0.1") else BigDecimal.ONE
 
                                     quantityExecuted =
                                         (quantityExecuted - decrement).coerceAtLeast(BigDecimal.ZERO) // para não ficar negativo

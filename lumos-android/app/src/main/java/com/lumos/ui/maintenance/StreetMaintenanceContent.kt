@@ -67,11 +67,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
@@ -463,7 +461,7 @@ fun StreetMaintenanceContent(
                                                 )
                                             }
 
-                                            BigDecimal(material.stockAvailable) <= BigDecimal(10)-> {
+                                            BigDecimal(material.stockAvailable) <= BigDecimal.TEN -> {
                                                 Tag(
                                                     "Disponível: ${material.stockAvailable} ${material.requestUnit}",
                                                     Color(0xFFFF9800),
@@ -537,7 +535,7 @@ fun StreetMaintenanceContent(
                                                         "cabo",
                                                         ignoreCase = true
                                                     ) || isScrew
-                                                ) "0" else "1"
+                                                ) BigDecimal.ZERO.toString() else BigDecimal.ONE.toString()
                                             )
                                         } else {
                                             // Apenas remove esse item
@@ -865,7 +863,7 @@ fun StreetMaintenanceContent(
                                 items = items.map {
                                     if (it.materialStockId == screw.materialStockId)
                                         it.copy(
-                                            quantityExecuted = sanitized
+                                            quantityExecuted = BigDecimal(sanitized).toString()
                                         )
                                     else it
                                 }
@@ -963,14 +961,14 @@ fun StreetMaintenanceContent(
                             }
                         }
 
-                        if (cableItem != null && cableItem?.quantityExecuted == "0") {
+                        if (cableItem != null && BigDecimal(cableItem?.quantityExecuted) == BigDecimal.ZERO) {
                             cableError = "Informe a quantidade"
                             error = true
                         }
 
                         screws.forEach { screw ->
                             val item = items.find { it.materialStockId == screw.materialStockId }
-                            if (item?.quantityExecuted == null || item.quantityExecuted == "0") {
+                            if (item?.quantityExecuted == null || BigDecimal(item.quantityExecuted) == BigDecimal.ZERO) {
                                 screwErrors[screw.materialStockId] = "Informe a quantidade"
                                 error = true
                             } else {

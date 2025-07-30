@@ -23,7 +23,7 @@ class ReservationService(
     @Transactional
     fun reply(replies: Replies): ResponseEntity<Void> {
         replyReservations(RepliesReserves(replies.approvedReserves, replies.rejectedReserves))
-        replyOrders(RepliesOrders(replies.approvedOrders, replies.rejectedOrders))
+//        replyOrders(RepliesOrders(replies.approvedOrders, replies.rejectedOrders))
 
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
@@ -132,93 +132,93 @@ class ReservationService(
         }
     }
 
-    @Transactional fun replyOrders(replies:  RepliesOrders) {
-        val orderIds = listOf(replies.approved.orderId, replies.rejected.orderId)
-        val orders = orderMaterialRepository.getDataForRequisition(orderIds)
-        val orderItems = replies.approved.orderItemRequests + replies.rejected.orderItemRequests
-
-        for (order in orders) {
-            if (order.status != ReservationStatus.PENDING) continue
-
-            for(item in orderItems) {
-                if (replies.approved.orderItemRequests.contains(OrderItemRequest(item.materialId, item.quantity))) {
-                    namedJdbc.update(
-                        """
-                            UPDATE order_material_item set status = :status
-                            WHERE order_id = :orderId and material_id = :materialId
-                        """.trimIndent(),
-                        mapOf(
-                            "orderId" to order.orderId,
-                            "materialId" to item.materialId,
-                            "status" to ReservationStatus.APPROVED
-                        )
-                    )
-
-//                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
-                } else if (replies.rejected.contains(ReserveItem(reservationId))) {
-
-                    namedJdbc.update(
-                        """
-                            UPDATE material_reservation set status = :status
-                            WHERE material_id_reservation in (:reservationId)
-                        """.trimIndent(),
-                        mapOf(
-                            "reservationId" to reservationId,
-                            "status" to ReservationStatus.REJECTED
-                        )
-                    )
-
-                    namedJdbc.update(
-                        """
-                            UPDATE material_stock set stock_available = stock_available + :reserveQuantity
-                            WHERE material_id_stock = :centralMaterialId
-                        """.trimIndent(),
-                        mapOf(
-                            "centralMaterialId" to centralMaterialId,
-                            "reserveQuantity" to reserveQuantity
-                        )
-                    )
-
-                    namedJdbc.update(
-                        """
-                            UPDATE reservation_management set status = :status
-                            WHERE reservation_management_id = :reservationManagementId
-                        """.trimIndent(),
-                        mapOf(
-                            "reservationManagementId" to reservationManagementId,
-                            "status" to ReservationStatus.PENDING
-                        )
-                    )
-
-                    if (directExecutionId != null) {
-                        namedJdbc.update(
-                            """
-                                UPDATE direct_execution_item set item_status = :status
-                                WHERE contract_item_id = :contractItemId
-                            """.trimIndent(),
-                            mapOf(
-                                "contractItemId" to contractItemId,
-                                "status" to ReservationStatus.PENDING
-                            )
-                        )
-                    } else {
-                        namedJdbc.update(
-                            """
-                                UPDATE pre_measurement_street_item set item_status = :status
-                                WHERE contract_item_id = :contractItemId
-                            """.trimIndent(),
-                            mapOf(
-                                "contractItemId" to contractItemId,
-                                "status" to ReservationStatus.PENDING
-                            )
-                        )
-                    }
-                }
-            }
-
-
-        }
-    }
+//    @Transactional fun replyOrders(replies:  RepliesOrders) {
+//        val orderIds = listOf(replies.approved.orderId, replies.rejected.orderId)
+//        val orders = orderMaterialRepository.getDataForRequisition(orderIds)
+//        val orderItems = replies.approved.orderItemRequests + replies.rejected.orderItemRequests
+//
+//        for (order in orders) {
+//            if (order.status != ReservationStatus.PENDING) continue
+//
+//            for(item in orderItems) {
+//                if (replies.approved.orderItemRequests.contains(OrderItemRequest(item.materialId, item.quantity))) {
+//                    namedJdbc.update(
+//                        """
+//                            UPDATE order_material_item set status = :status
+//                            WHERE order_id = :orderId and material_id = :materialId
+//                        """.trimIndent(),
+//                        mapOf(
+//                            "orderId" to order.orderId,
+//                            "materialId" to item.materialId,
+//                            "status" to ReservationStatus.APPROVED
+//                        )
+//                    )
+//
+////                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
+//                } else if (replies.rejected.contains(ReserveItem(reservationId))) {
+//
+//                    namedJdbc.update(
+//                        """
+//                            UPDATE material_reservation set status = :status
+//                            WHERE material_id_reservation in (:reservationId)
+//                        """.trimIndent(),
+//                        mapOf(
+//                            "reservationId" to reservationId,
+//                            "status" to ReservationStatus.REJECTED
+//                        )
+//                    )
+//
+//                    namedJdbc.update(
+//                        """
+//                            UPDATE material_stock set stock_available = stock_available + :reserveQuantity
+//                            WHERE material_id_stock = :centralMaterialId
+//                        """.trimIndent(),
+//                        mapOf(
+//                            "centralMaterialId" to centralMaterialId,
+//                            "reserveQuantity" to reserveQuantity
+//                        )
+//                    )
+//
+//                    namedJdbc.update(
+//                        """
+//                            UPDATE reservation_management set status = :status
+//                            WHERE reservation_management_id = :reservationManagementId
+//                        """.trimIndent(),
+//                        mapOf(
+//                            "reservationManagementId" to reservationManagementId,
+//                            "status" to ReservationStatus.PENDING
+//                        )
+//                    )
+//
+//                    if (directExecutionId != null) {
+//                        namedJdbc.update(
+//                            """
+//                                UPDATE direct_execution_item set item_status = :status
+//                                WHERE contract_item_id = :contractItemId
+//                            """.trimIndent(),
+//                            mapOf(
+//                                "contractItemId" to contractItemId,
+//                                "status" to ReservationStatus.PENDING
+//                            )
+//                        )
+//                    } else {
+//                        namedJdbc.update(
+//                            """
+//                                UPDATE pre_measurement_street_item set item_status = :status
+//                                WHERE contract_item_id = :contractItemId
+//                            """.trimIndent(),
+//                            mapOf(
+//                                "contractItemId" to contractItemId,
+//                                "status" to ReservationStatus.PENDING
+//                            )
+//                        )
+//                    }
+//                }
+//            }
+//
+//
+//        }
+//    }
 
     @Transactional
     fun markAsCollected(reservationIds: List<Long>): ResponseEntity<Void> {
