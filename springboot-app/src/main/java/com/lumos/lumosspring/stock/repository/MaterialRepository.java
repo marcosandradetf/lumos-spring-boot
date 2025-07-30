@@ -3,8 +3,10 @@ package com.lumos.lumosspring.stock.repository;
 import com.lumos.lumosspring.stock.entities.Material;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -53,5 +55,21 @@ public interface MaterialRepository extends CrudRepository<Material, Long> {
           AND name_for_import IS NOT NULL
         """)
     List<Material> findAllForImportPreMeasurement();
+
+    @Query("""
+        SELECT CASE\s
+            WHEN ms.stock_available >= :materialQuantity THEN null\s
+            ELSE m.material_name\s
+        END
+        FROM material m
+        JOIN material_stock ms ON ms.material_id = m.id_material
+        WHERE ms.deposit_id = :depositId AND m.id_material = :materialId
+   \s""")
+    String hasStockAvailable(
+            @Param("materialId") Long materialId,
+            @Param("depositId") Long depositId,
+            @Param("materialQuantity") BigDecimal materialQuantity
+    );
+
 }
 

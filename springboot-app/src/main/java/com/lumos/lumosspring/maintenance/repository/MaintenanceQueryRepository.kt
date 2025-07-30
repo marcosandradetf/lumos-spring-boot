@@ -4,14 +4,19 @@ package com.lumos.lumosspring.maintenance.repository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.lumos.lumosspring.stock.entities.MaterialHistory
+import com.lumos.lumosspring.stock.repository.MaterialHistoryRepository
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
+import java.time.Instant
 import java.util.UUID
 
 @Repository
 class MaintenanceQueryRepository(
     private val jdbcTemplate: NamedParameterJdbcTemplate,
-    private val objectMapper: ObjectMapper = jacksonObjectMapper()
+    private val objectMapper: ObjectMapper = jacksonObjectMapper(),
+    private val materialHistoryRepository: MaterialHistoryRepository
 ) {
     data class MaintenanceDTO(
         val maintenanceId: String,
@@ -33,8 +38,8 @@ class MaintenanceQueryRepository(
     )
 
     data class MaintenanceStreetDTO(
-        val maintenanceStreetId: String,
-        val maintenanceId: String,
+        val maintenanceStreetId: UUID,
+        val maintenanceId: UUID,
         var address: String,
         var latitude: Double? = null,
         var longitude: Double? = null,
@@ -51,11 +56,22 @@ class MaintenanceQueryRepository(
         val maintenanceId: String,
         val maintenanceStreetId: String,
         val materialStockId: Long,
-        val quantityExecuted: Double,
+        val quantityExecuted: BigDecimal,
     )
 
-    fun debitStock(items: List<MaintenanceStreetItemDTO>) {
+    fun debitStock(items: List<MaintenanceStreetItemDTO>, maintenanceStreetId: UUID) {
         for (item in items) {
+            materialHistoryRepository.save(
+                MaterialHistory(
+                    materialHistoryId = UUID.randomUUID(),
+                    materialStockId = item.materialStockId,
+                    maintenanceStreetId = maintenanceStreetId,
+                    usedQuantity = item.quantityExecuted,
+                    usedDate = Instant.now(),
+                    isNewEntry = true
+                )
+            )
+
             jdbcTemplate.update(
                 """
                 update material_stock 

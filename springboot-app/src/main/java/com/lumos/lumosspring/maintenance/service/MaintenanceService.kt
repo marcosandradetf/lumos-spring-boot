@@ -9,6 +9,7 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetItemRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
 import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.stock.repository.MaterialHistoryRepository
 import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils
 import com.lumos.lumosspring.util.Utils.getCurrentUserId
@@ -31,6 +32,7 @@ class MaintenanceService(
     private val maintenanceQueryRepository: MaintenanceQueryRepository,
     private val teamQueryRepository: TeamQueryRepository,
     private val minioService: MinioService,
+    private val materialHistoryRepository: MaterialHistoryRepository,
 ) {
     @Transactional
     fun finishMaintenance(
@@ -88,20 +90,11 @@ class MaintenanceService(
     fun saveStreet(
         street: MaintenanceQueryRepository.MaintenanceStreetWithItems,
     ): ResponseEntity<Any> {
-        var maintenanceUuid: UUID
-        var maintenanceStreetUuid: UUID
 
-        try {
-            maintenanceUuid = UUID.fromString(street.street.maintenanceId)
-            maintenanceStreetUuid = UUID.fromString(street.street.maintenanceStreetId)
-        } catch (ex: IllegalArgumentException) {
-            throw IllegalStateException(ex.message)
-        }
-
-        var exists = maintenanceRepository.existsById(maintenanceUuid)
+        var exists = maintenanceRepository.existsById(street.street.maintenanceId)
         if (!exists) {
             val newMaintenance = Maintenance(
-                maintenanceId = maintenanceUuid,
+                maintenanceId = street.street.maintenanceId,
                 contractId = null,
                 pendingPoints = false,
                 quantityPendingPoints = null,
@@ -114,14 +107,14 @@ class MaintenanceService(
             maintenanceRepository.save(newMaintenance)
         }
 
-        exists = maintenanceStreetRepository.existsById(maintenanceStreetUuid)
+        exists = maintenanceStreetRepository.existsById(street.street.maintenanceStreetId)
         if (exists) {
             return ResponseEntity.noContent().build()
         }
 
         val newStreet = MaintenanceStreet(
-            maintenanceStreetId = maintenanceStreetUuid,
-            maintenanceId = maintenanceUuid,
+            maintenanceStreetId = street.street.maintenanceStreetId,
+            maintenanceId = street.street.maintenanceId,
             address = street.street.address,
             latitude = street.street.latitude,
             longitude = street.street.longitude,
@@ -136,8 +129,8 @@ class MaintenanceService(
 
         val items = street.items.map {
             MaintenanceStreetItem(
-                maintenanceId = maintenanceUuid,
-                maintenanceStreetId = maintenanceStreetUuid,
+                maintenanceId = street.street.maintenanceId,
+                maintenanceStreetId = street.street.maintenanceStreetId,
                 materialStockId = it.materialStockId,
                 quantityExecuted = it.quantityExecuted,
             )
@@ -145,7 +138,7 @@ class MaintenanceService(
 
         maintenanceStreetItemRepository.saveAll(items)
 
-        maintenanceQueryRepository.debitStock(street.items)
+        maintenanceQueryRepository.debitStock(street.items, street.street.maintenanceStreetId)
 
         return ResponseEntity.noContent().build()
     }

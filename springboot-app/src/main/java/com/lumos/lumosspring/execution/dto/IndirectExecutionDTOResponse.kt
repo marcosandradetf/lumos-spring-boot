@@ -87,9 +87,8 @@ data class ReserveItemDTO(
 )
 
 data class ReserveMaterialDTO(
-    val centralMaterialStockId: Long? = null,
-    val truckMaterialStockId: Long? = null,
     val materialId: Long,
+    val depositId: Long,
     val materialQuantity: BigDecimal
 )
 

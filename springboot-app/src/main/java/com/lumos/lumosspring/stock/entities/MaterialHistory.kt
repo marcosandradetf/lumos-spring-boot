@@ -1,23 +1,29 @@
-package com.lumos.lumosspring.maintenance.entities
+package com.lumos.lumosspring.stock.entities
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Table
+import java.time.Instant
 import java.util.UUID
 import org.springframework.data.annotation.Transient
-import org.springframework.data.domain.Persistable
 import java.math.BigDecimal
 
+
 @Table
-data class MaintenanceStreetItem(
+data class MaterialHistory(
     @Id
-    val maintenanceId: UUID,
-    val maintenanceStreetId: UUID,
+    val materialHistoryId: UUID,
     val materialStockId: Long,
-    val quantityExecuted: BigDecimal,
+
+    val maintenanceStreetId: UUID? = null,
+    val executionStreetId: Long? = null,
+
+    val usedQuantity: BigDecimal,
+    val usedDate: Instant,
 
     @Transient
     private var isNewEntry: Boolean = true
 ): Persistable<UUID> {
-    override fun getId(): UUID = maintenanceId
+    override fun getId(): UUID = materialHistoryId
     override fun isNew(): Boolean = isNewEntry
 }
