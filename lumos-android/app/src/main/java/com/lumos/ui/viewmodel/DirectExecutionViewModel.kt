@@ -216,6 +216,7 @@ class DirectExecutionViewModel(
             try {
                 withContext(Dispatchers.IO) {
                     repository.markAsFinished(directExecutionId)
+                    street = null
                 }
             } catch (e: IllegalStateException) {
                 null

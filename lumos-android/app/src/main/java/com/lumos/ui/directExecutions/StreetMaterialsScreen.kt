@@ -667,7 +667,7 @@ fun StreetMaterialsContent(
 
                     Button(
                         onClick = {
-                            openModal("FINISH")
+                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
