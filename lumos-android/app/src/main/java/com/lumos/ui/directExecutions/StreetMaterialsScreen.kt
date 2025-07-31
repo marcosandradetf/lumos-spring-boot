@@ -58,6 +58,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -92,6 +93,7 @@ import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
+import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
@@ -102,6 +104,7 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
+import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
 import java.math.BigDecimal
@@ -111,6 +114,7 @@ fun StreetMaterialScreen(
     directExecutionId: Long,
     description: String,
     directExecutionViewModel: DirectExecutionViewModel,
+    stockViewModel: StockViewModel,
     context: Context,
     lastRoute: String?,
     navController: NavHostController,
@@ -118,6 +122,8 @@ fun StreetMaterialScreen(
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
+    var currentAddress by remember { mutableStateOf("") }
+    val stockData by stockViewModel.stock.collectAsState()
 
     val message = remember {
         mutableStateMapOf(
@@ -127,21 +133,16 @@ fun StreetMaterialScreen(
     }
 
     LaunchedEffect(Unit) {
-        try {
-            directExecutionViewModel.isLoading = true
-            directExecutionViewModel.initializeExecution(directExecutionId, description)
-            directExecutionViewModel.reserves =
-                directExecutionViewModel.getReservesOnce(directExecutionId)
-        } catch (e: Exception) {
-            directExecutionViewModel.isLoading = false
-        }
-        finally {
-            directExecutionViewModel.isLoading = false
-        }
+        directExecutionViewModel.loadExecutionData(directExecutionId, description)
     }
 
-    LaunchedEffect(directExecutionViewModel.confirmLocation) {
-        if (directExecutionViewModel.confirmLocation) {
+    LaunchedEffect(directExecutionViewModel.reserves.size) {
+        if (directExecutionViewModel.sameStreet) {
+            directExecutionViewModel.street =
+                directExecutionViewModel.street?.copy(
+                    address = currentAddress
+                )
+        } else if (directExecutionViewModel.reserves.isNotEmpty()) {
             directExecutionViewModel.loadingCoordinates = true
             coordinates.execute { latitude, longitude ->
                 if (latitude != null && longitude != null) {
@@ -157,6 +158,8 @@ fun StreetMaterialScreen(
                             directExecutionViewModel.street?.copy(
                                 address = "$streetName, - $neighborhood, $city - $state"
                             )
+
+                        currentAddress = "$streetName, - $neighborhood, $city - $state"
                     }
                     directExecutionViewModel.loadingCoordinates = false
                 } else {
@@ -263,6 +266,31 @@ fun StreetMaterialScreen(
                         )
                         Text(
                             "Ok, voltar a tela anterior"
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            directExecutionViewModel.clearViewModel()
+                            directExecutionViewModel.sameStreet = true
+                            directExecutionViewModel.loadExecutionData(
+                                directExecutionId,
+                                description
+                            )
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    ) {
+                        Text(
+                            "Iniciar nova instalação nessa rua"
                         )
                     }
                 }
@@ -466,30 +494,25 @@ fun StreetMaterialScreen(
             closeAlertModal = {
                 directExecutionViewModel.alertModal = false
             },
-            markAsFinish = {
-                if(directExecutionViewModel.street != null) {
-                    directExecutionViewModel.markAsFinished(directExecutionId)
-                }
-            },
-            locationModal = directExecutionViewModel.locationModal,
-            confirmLocation = {
-                if (it) {
-                    directExecutionViewModel.confirmLocation = true
-                    directExecutionViewModel.locationModal = false
-                } else {
-                    directExecutionViewModel.locationModal = false
-                }
-            },
             changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
-                if (selected) {
-                    val newItem = DirectExecutionStreetItem(
-                        reserveId = reserveId,
-                        materialStockId = materialStockId,
-                        contractItemId = contractItemId,
-                        quantityExecuted = "0",
-                        materialName = materialName
-                    )
-                    directExecutionViewModel.streetItems += newItem
+               if (selected) {
+                   val material = stockData.find { it.materialStockId == materialStockId }
+                   if(BigDecimal(material?.stockAvailable) == BigDecimal.ZERO) {
+                       message["title"] = "Quantidade indisponível"
+                       message["body"] =
+                           "Esse material está sem estoque"
+                       directExecutionViewModel.alertModal = true
+                   } else {
+                       val newItem = DirectExecutionStreetItem(
+                           reserveId = reserveId,
+                           materialStockId = materialStockId,
+                           contractItemId = contractItemId,
+                           quantityExecuted = "0",
+                           materialName = materialName
+                       )
+                       directExecutionViewModel.streetItems += newItem
+                   }
+
                 } else {
                     directExecutionViewModel.streetItems =
                         directExecutionViewModel.streetItems.filterNot {
@@ -497,11 +520,18 @@ fun StreetMaterialScreen(
                         }
                 }
             },
-            changeQuantity = { quantityExecuted, materialQuantity, reserveId ->
-                if (quantityExecuted > materialQuantity) {
+            changeQuantity = { materialStockId, quantityExecuted, balanceLimit, reserveId ->
+                val material = stockData.find { it.materialStockId == materialStockId }
+                if(BigDecimal(material?.stockAvailable) > quantityExecuted) {
+                    message["title"] = "Quantidade indisponível"
+                    message["body"] =
+                        "A quantidade em estoque desse material é ${material?.stockAvailable}."
+                    directExecutionViewModel.alertModal = true
+                }
+                else if (quantityExecuted > balanceLimit) {
                     message["title"] = "Quantidade inválida"
                     message["body"] =
-                        "A quantidade disponível desse material é $materialQuantity."
+                        "O Saldo contratual desse material é $balanceLimit."
                     directExecutionViewModel.alertModal = true
                 } else if (quantityExecuted <= BigDecimal.ZERO) {
                     message["title"] = "Quantidade inválida"
@@ -540,14 +570,11 @@ fun StreetMaterialsContent(
     openModal: (String) -> Unit,
     alertModal: Boolean,
     closeAlertModal: () -> Unit,
-    markAsFinish: () -> Unit,
-    locationModal: Boolean,
-    confirmLocation: (Boolean) -> Unit,
     changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
-    changeQuantity: (BigDecimal, BigDecimal, Long) -> Unit,
+    changeQuantity: (Long, BigDecimal, BigDecimal, Long) -> Unit,
     errorMessage: String?,
     alertMessage: MutableMap<String, String>,
-    streetItems: List<DirectExecutionStreetItem>
+    streetItems: List<DirectExecutionStreetItem>,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -621,10 +648,6 @@ fun StreetMaterialsContent(
             if (isLoading) {
                 Loading("Carregando materiais")
             } else if (reserves.isEmpty()) {
-                LaunchedEffect(Unit) {
-                    markAsFinish()
-                }
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -750,8 +773,9 @@ fun StreetMaterialsContent(
                     ) {
                         MaterialItem(
                             material = it,
-                            changeQuantity = { quantityExecuted, materialQuantity, reserveId ->
+                            changeQuantity = { materialStockId, quantityExecuted, materialQuantity, reserveId ->
                                 changeQuantity(
+                                    materialStockId,
                                     quantityExecuted,
                                     materialQuantity,
                                     reserveId
@@ -851,18 +875,6 @@ fun StreetMaterialsContent(
 
                 }
 
-                if (locationModal) {
-                    Confirm(
-                        body = "Você está na rua da execução nesse momento?",
-                        confirm = {
-                            confirmLocation(true)
-                        },
-                        cancel = {
-                            confirmLocation(false)
-                        }
-                    )
-                }
-
                 if (alertModal) {
                     Alert(
                         title = alertMessage["title"] ?: "",
@@ -895,7 +907,7 @@ fun StreetMaterialsContent(
 fun MaterialItem(
     material: DirectReserve,
     changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
-    changeQuantity: (BigDecimal, BigDecimal, Long) -> Unit,
+    changeQuantity: (Long, BigDecimal, BigDecimal, Long) -> Unit,
     streetItems: List<DirectExecutionStreetItem>
 ) {
 
@@ -927,6 +939,7 @@ fun MaterialItem(
 
     LaunchedEffect(quantityExecuted) {
         changeQuantity(
+            material.materialStockId,
             quantityExecuted,
             BigDecimal(material.materialQuantity),
             material.reserveId
@@ -1187,7 +1200,7 @@ fun PrevMStreetScreen() {
     StreetMaterialsContent(
         isLoading = false,
         description = "Prefeitura de Belo Horizonte",
-        reserves = emptyList(),
+        reserves = reserves,
         street = DirectExecutionStreet(
             directStreetId = 1,
             address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
@@ -1212,11 +1225,8 @@ fun PrevMStreetScreen() {
         openModal = {},
         alertModal = false,
         closeAlertModal = { },
-        markAsFinish = {},
-        locationModal = false,
-        confirmLocation = { },
         changeMaterial = { _, _, _, _, _ -> },
-        changeQuantity = { _, _, _ -> },
+        changeQuantity = { _, _, _, _ -> },
         errorMessage = null,
         alertMessage = mutableMapOf(
             "title" to "Título da mensagem",

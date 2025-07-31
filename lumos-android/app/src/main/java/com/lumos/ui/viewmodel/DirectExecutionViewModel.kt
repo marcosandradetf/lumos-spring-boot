@@ -33,12 +33,6 @@ class DirectExecutionViewModel(
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _isLoadingReserves = MutableStateFlow(false)
-    val isLoadingReserves: StateFlow<Boolean> = _isLoadingReserves
-
-    private val _isSyncing = MutableStateFlow(false)
-    val isSyncing: StateFlow<Boolean> = _isSyncing
-
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
@@ -53,6 +47,7 @@ class DirectExecutionViewModel(
     var confirmLocation by mutableStateOf(false)
     var loadingCoordinates by mutableStateOf(false)
     var nextStep by mutableStateOf(false)
+    var sameStreet by mutableStateOf(false)
 
     var isLoading by mutableStateOf(false)
 
@@ -60,7 +55,7 @@ class DirectExecutionViewModel(
 
     var reserves by mutableStateOf<List<DirectReserve>>(emptyList())
 
-    fun initializeExecution(directExecutionId: Long, description: String) {
+    private fun initializeExecution(directExecutionId: Long, description: String) {
         if (street == null) {
             street = DirectExecutionStreet(
                 address = "",
@@ -91,15 +86,16 @@ class DirectExecutionViewModel(
         confirmLocation = false
         loadingCoordinates = false
         nextStep = false
+        sameStreet = false
 
         isLoading = false
     }
 
     fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            _isSyncing.value = true
             _syncError.value = null
             try {
+                isLoading = true
                 val response = repository.checkUpdate(currentVersion)
                 val result = when (response) {
                     is RequestResult.Timeout -> null to null
@@ -114,16 +110,18 @@ class DirectExecutionViewModel(
                     callback(result.first, result.second)
                 }
             } catch (e: Exception) {
-                null
+                isLoading = false
+            } finally {
+                isLoading = false
             }
         }
     }
 
     fun syncExecutions() {
         viewModelScope.launch(Dispatchers.IO) {
-            _isSyncing.value = true
             _syncError.value = null
             try {
+                isLoading = true
                 val response = repository.syncDirectExecutions()
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
@@ -140,9 +138,10 @@ class DirectExecutionViewModel(
                     }
                 }
             } catch (e: Exception) {
+                isLoading = false
                 _syncError.value = e.message ?: "Erro inesperado."
             } finally {
-                _isSyncing.value = false
+                isLoading = false
             }
         }
     }
@@ -182,7 +181,7 @@ class DirectExecutionViewModel(
 //        }
 //    }
 
-    suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> {
+    private suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> {
         return withContext(Dispatchers.IO) {
             repository.getReservesOnce(directExecutionId)
         }
@@ -195,18 +194,20 @@ class DirectExecutionViewModel(
         onError: (String) -> Unit = {}
     ) {
         viewModelScope.launch {
-            _isLoadingReserves.value = true
             try {
+                isLoading = true
                 withContext(Dispatchers.IO) {
                     repository.createStreet(street.copy(finishAt = Instant.now().toString()), items)
                 }
                 onPostExecuted()
             } catch (e: IllegalStateException) {
+                isLoading = false
                 onError(e.message ?: "Erro inesperado")
             } catch (e: Exception) {
+                isLoading = false
                 onError("Erro: ${e.localizedMessage}")
             } finally {
-                _isLoadingReserves.value = false
+                isLoading = false
             }
         }
     }
@@ -225,6 +226,24 @@ class DirectExecutionViewModel(
             }
         }
     }
+
+    fun loadExecutionData(directExecutionId: Long, description: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                isLoading = true
+                initializeExecution(directExecutionId, description)
+                reserves = getReservesOnce(directExecutionId)
+                if(reserves.isEmpty()) {
+                    markAsFinished(directExecutionId)
+                }
+            } catch (e: Exception) {
+                errorMessage = e.message
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
 
 
 }

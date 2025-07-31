@@ -162,6 +162,8 @@ class DirectExecutionRepository(
                         directStreetId = streetId
                     )
                 )
+
+                db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
             }
 
             queuePostDirectExecution(streetId)

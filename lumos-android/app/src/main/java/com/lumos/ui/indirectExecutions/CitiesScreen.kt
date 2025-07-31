@@ -62,12 +62,14 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
+import com.lumos.ui.viewmodel.StockViewModel
 
 @Composable
 fun CitiesScreen(
     lastRoute: String? = null,
     indirectExecutionViewModel: IndirectExecutionViewModel,
     directExecutionViewModel: DirectExecutionViewModel,
+    stockViewModel: StockViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -79,6 +81,7 @@ fun CitiesScreen(
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
     val title = if (directExecution) "Execuções sem pré-medição" else "Execuções com pré-medição"
+    val stockData by stockViewModel.stock.collectAsState()
 
 //    val allExecutions by executionViewModel.executions.collectAsState()
     val allExecutions by if (directExecution) {
@@ -87,11 +90,7 @@ fun CitiesScreen(
         indirectExecutionViewModel.executions.collectAsState()
     }
 
-    val isSyncing by if (directExecution) {
-        directExecutionViewModel.isSyncing.collectAsState()
-    } else {
-        indirectExecutionViewModel.isSyncing.collectAsState()
-    }
+    val isSyncing = directExecutionViewModel.isLoading
 
     val responseError by if (directExecution) {
         directExecutionViewModel.syncError.collectAsState()
@@ -142,7 +141,8 @@ fun CitiesScreen(
         directExecution = directExecution,
         markAsFinished = { contractId ->
             directExecutionViewModel.markAsFinished(contractId)
-        }
+        },
+        stockDataSize = stockData.size
     )
 }
 
@@ -163,9 +163,11 @@ fun ContentCitiesScreen(
     error: String?,
     refresh: () -> Unit,
     directExecution: Boolean = false,
-    markAsFinished: (Long) -> Unit = {}
+    markAsFinished: (Long) -> Unit = {},
+    stockDataSize: Int
 ) {
     var openModal by remember { mutableStateOf(false) }
+    var showModal by remember { mutableStateOf(false) }
     var contractId by remember { mutableLongStateOf(0) }
 
     val navigateBack: (() -> Unit)? =
@@ -186,6 +188,18 @@ fun ContentCitiesScreen(
             navController.navigate(Routes.MAINTENANCE)
         }
     ) { _, _ ->
+
+        if (showModal) {
+            Confirm(
+                title = "Carregar estoque",
+                body = "Você precisa carregar os dados do estoque para criar uma nova manutenção. Deseja fazer isso agora?",
+                confirm = {
+                    showModal = false
+                    navController.navigate(Routes.STOCK)
+                },
+                cancel = { showModal = false }
+            )
+        }
 
         PullToRefreshBox(
             isRefreshing = isSyncing,
@@ -239,7 +253,8 @@ fun ContentCitiesScreen(
                             .fillMaxWidth(0.9f)
                             .padding(3.dp)
                             .clickable {
-                                select(execution.contractId, execution.contractor)
+                                if(stockDataSize > 0) select(execution.contractId, execution.contractor)
+                                else showModal = true
                             },
                         elevation = CardDefaults.cardElevation(1.dp),
                         colors = CardDefaults.cardColors(
@@ -436,7 +451,8 @@ fun PrevContentCitiesScreen() {
         select = { _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {},
-        directExecution = true
+        directExecution = true,
+        stockDataSize = 0
     )
 }
 

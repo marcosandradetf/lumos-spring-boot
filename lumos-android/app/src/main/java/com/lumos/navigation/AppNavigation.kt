@@ -542,7 +542,8 @@ fun AppNavigation(
                             navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
                         },
                         roles = secureStorage.getRoles(),
-                        directExecution = false
+                        directExecution = false,
+                        stockViewModel = stockViewModel
                     )
                 }
 
@@ -627,7 +628,8 @@ fun AppNavigation(
                             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/$contractId/$contractor")
                         },
                         roles = secureStorage.getRoles(),
-                        directExecution = true
+                        directExecution = true,
+                        stockViewModel = stockViewModel
                     )
                 }
 
@@ -649,6 +651,7 @@ fun AppNavigation(
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
                         lastRoute = lastRoute,
+                        stockViewModel = stockViewModel
                     )
                 }
 
