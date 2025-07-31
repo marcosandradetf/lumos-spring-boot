@@ -2,6 +2,7 @@ package com.lumos.lumosspring.execution.dto
 
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.UUID
 
 data class DelegateDTO(
     val preMeasurementId: Long,
@@ -27,8 +28,8 @@ data class ExecutionWithoutPreMeasurementItems(
 data class DirectExecutionDTO(
     val contractId: Long,
     val teamId: Long,
-    val currentUserUUID: String,
-    val stockistId: String,
+    val currentUserId: UUID,
+    val stockistId: UUID,
     val instructions: String?,
     val items: List<ExecutionWithoutPreMeasurementItems>
 )
@@ -87,8 +88,9 @@ data class ReserveItemDTO(
 )
 
 data class ReserveMaterialDTO(
+    val centralMaterialStockId: Long? = null,
+    val truckMaterialStockId: Long? = null,
     val materialId: Long,
-    val depositId: Long,
     val materialQuantity: BigDecimal
 )
 

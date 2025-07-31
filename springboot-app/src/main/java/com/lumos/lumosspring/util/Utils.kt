@@ -77,4 +77,13 @@ object Utils {
         return format.format(amount)
     }
 
+    fun uuidToShortCodeWithPrefix(prefix: String, uuid: UUID, length: Int = 10): String {
+        val mostSigBits = uuid.mostSignificantBits
+        val base36 = java.lang.Long.toUnsignedString(mostSigBits, 36).uppercase()
+
+        // Ajusta tamanho fixo e adiciona prefixo REQ-
+        val code = base36.padStart(length, '0').takeLast(length)
+        return "$prefix-$code"
+    }
+
 }

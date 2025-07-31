@@ -435,7 +435,8 @@ fun PrevContentCitiesScreen() {
         isSyncing = false,
         select = { _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
-        refresh = {}
+        refresh = {},
+        directExecution = true
     )
 }
 

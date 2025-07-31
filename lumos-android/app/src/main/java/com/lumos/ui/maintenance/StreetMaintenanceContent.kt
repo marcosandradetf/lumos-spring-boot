@@ -67,9 +67,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
@@ -453,7 +455,7 @@ fun StreetMaintenanceContent(
                                     // Tag de disponibilidade
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         when {
-                                            material.stockAvailable == "0" -> {
+                                            BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
                                                 Tag(
                                                     "Sem estoque disponível",
                                                     Color.Red,
@@ -500,8 +502,9 @@ fun StreetMaintenanceContent(
                                 IconToggleButton(
                                     checked = checked,
                                     onCheckedChange = { isChecked ->
-                                        if (material.stockAvailable == "0") {
-                                            alertMessage["title"] = "Material sem estoque"
+                                        if (BigDecimal(material.stockAvailable) == BigDecimal.ZERO) {
+                                            alertMessage["title"] =
+                                                "Material sem estoque disponível"
                                             alertMessage["body"] =
                                                 "Para selecionar esse material é necessário haver estoque disponível."
                                             alertModal = true
@@ -790,7 +793,11 @@ fun StreetMaintenanceContent(
                             cableError = null
                             val sanitized = sanitizeDecimalInput(newValue.text)
                             val quantityInMeters: BigDecimal = try {
-                                BigDecimal(sanitized).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+                                BigDecimal(sanitized).divide(
+                                    BigDecimal(100),
+                                    2,
+                                    RoundingMode.HALF_UP
+                                )
                             } catch (e: NumberFormatException) {
                                 BigDecimal.ZERO
                             }
@@ -925,7 +932,8 @@ fun StreetMaintenanceContent(
                 Button(
                     onClick = {
                         val hasNumber = Regex("""\d+""").containsMatchIn(street.address)
-                        val hasSN = Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(street.address)
+                        val hasSN =
+                            Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(street.address)
 
                         var error = false
                         if (street.address.isBlank()) {
@@ -964,12 +972,25 @@ fun StreetMaintenanceContent(
                         if (cableItem != null && BigDecimal(cableItem?.quantityExecuted) == BigDecimal.ZERO) {
                             cableError = "Informe a quantidade"
                             error = true
+                        } else {
+                            val material =
+                                stockData.find { it.materialStockId == cableItem?.materialStockId }
+                            if (BigDecimal(material?.stockAvailable) < BigDecimal(cableItem?.quantityExecuted)) {
+                                cableError = "Quantidade informada indisponível"
+                                error = true
+                            }
                         }
 
                         screws.forEach { screw ->
                             val item = items.find { it.materialStockId == screw.materialStockId }
+                            val material =
+                                stockData.find { it.materialStockId == screw.materialStockId }
+
                             if (item?.quantityExecuted == null || BigDecimal(item.quantityExecuted) == BigDecimal.ZERO) {
                                 screwErrors[screw.materialStockId] = "Informe a quantidade"
+                                error = true
+                            } else if (BigDecimal(material?.stockAvailable) < BigDecimal(screw.quantityExecuted)) {
+                                cableError = "Quantidade informada indisponível"
                                 error = true
                             } else {
                                 screwErrors[screw.materialStockId] = null
@@ -989,54 +1010,54 @@ fun StreetMaintenanceContent(
     }
 
 }
-//
-//
-//@Preview
-//@Composable
-//fun PrevStreetMaintenance() {
-//    StreetMaintenanceContent(
-//        maintenanceId = UUID.randomUUID(),
-//        navController = rememberNavController(),
-//        loading = false,
-//        lastRoute = null,
-//        back = {
-//
-//        },
-//        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem> -> },
-//        streetCreated = false,
-//        newStreet = {},
-//        stockData = listOf(
-//            MaterialStock(
-//                materialId = 1,
-//                materialStockId = 11,
-//                materialName = "LUMINÁRIA LED",
-//                specs = "120W",
-//                stockQuantity = 12.0,
-//                stockAvailable = 0.0,
-//                requestUnit = "UN",
-//                type = "LED"
-//            ),
-//            MaterialStock(
-//                materialId = 2,
-//                materialStockId = 22,
-//                materialName = "LÂMPADA DE SÓDIO TUBULAR",
-//                specs = "400W",
-//                stockQuantity = 15.0,
-//                stockAvailable = 10.0,
-//                requestUnit = "UN",
-//                type = "LÂMPADA"
-//            ),
-//            MaterialStock(
-//                materialId = 3,
-//                materialStockId = 33,
-//                materialName = "LÂMPADA DE MERCÚRIO",
-//                specs = "250W",
-//                stockQuantity = 62.0,
-//                stockAvailable = 48.0,
-//                requestUnit = "UN",
-//                type = "LÂMPADA"
-//            ),
-//        ),
-//        contractor = ""
-//    )
-//}
+
+
+@Preview
+@Composable
+fun PrevStreetMaintenance() {
+    StreetMaintenanceContent(
+        maintenanceId = UUID.randomUUID(),
+        navController = rememberNavController(),
+        loading = false,
+        lastRoute = null,
+        back = {
+
+        },
+        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem> -> },
+        streetCreated = false,
+        newStreet = {},
+        stockData = listOf(
+            MaterialStock(
+                materialId = 1,
+                materialStockId = 11,
+                materialName = "LUMINÁRIA LED",
+                specs = "120W",
+                stockQuantity = "12.0",
+                stockAvailable = "0.0",
+                requestUnit = "UN",
+                type = "LED"
+            ),
+            MaterialStock(
+                materialId = 2,
+                materialStockId = 22,
+                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+                specs = "400W",
+                stockQuantity = "15.0",
+                stockAvailable = "10.0",
+                requestUnit = "UN",
+                type = "LÂMPADA"
+            ),
+            MaterialStock(
+                materialId = 3,
+                materialStockId = 33,
+                materialName = "LÂMPADA DE MERCÚRIO",
+                specs = "250W",
+                stockQuantity = "62.0",
+                stockAvailable = "48.0",
+                requestUnit = "UN",
+                type = "LÂMPADA"
+            ),
+        ),
+        contractor = ""
+    )
+}

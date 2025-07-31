@@ -78,18 +78,21 @@ class DirectExecutionViewModel(
     }
 
     fun clearViewModel() {
+        isLoading = true
+
         street = null
         streetItems = emptyList()
         reserves = emptyList()
         hasPosted = false
         errorMessage = null
-        isLoading = false
         alertModal = false
         confirmModal = false
         locationModal = true
         confirmLocation = false
         loadingCoordinates = false
         nextStep = false
+
+        isLoading = false
     }
 
     fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {

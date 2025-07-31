@@ -79,11 +79,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
@@ -125,12 +127,15 @@ fun StreetMaterialScreen(
     }
 
     LaunchedEffect(Unit) {
-        directExecutionViewModel.isLoading = true
         try {
+            directExecutionViewModel.isLoading = true
             directExecutionViewModel.initializeExecution(directExecutionId, description)
             directExecutionViewModel.reserves =
                 directExecutionViewModel.getReservesOnce(directExecutionId)
-        } finally {
+        } catch (e: Exception) {
+            directExecutionViewModel.isLoading = false
+        }
+        finally {
             directExecutionViewModel.isLoading = false
         }
     }
@@ -297,7 +302,10 @@ fun StreetMaterialScreen(
                         label = { Text("Fornecedor atual") },
                         supportingText = {
                             if (triedToSubmit && directExecutionViewModel.street?.currentSupply.isNullOrBlank()) {
-                                Text("Informe o fornecedor atual", color = MaterialTheme.colorScheme.error)
+                                Text(
+                                    "Informe o fornecedor atual",
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         },
                         shape = RoundedCornerShape(12.dp),
@@ -325,7 +333,10 @@ fun StreetMaterialScreen(
                         label = { Text("Potência anterior") },
                         supportingText = {
                             if (triedToSubmit && directExecutionViewModel.street?.lastPower.isNullOrBlank()) {
-                                Text("Informe a potência anterior", color = MaterialTheme.colorScheme.error)
+                                Text(
+                                    "Informe a potência anterior",
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         },
                         shape = RoundedCornerShape(12.dp),
@@ -355,7 +366,9 @@ fun StreetMaterialScreen(
                                     directExecutionViewModel.saveAndPost(
                                         street = street,
                                         items = directExecutionViewModel.streetItems,
-                                        onPostExecuted = { directExecutionViewModel.hasPosted = true },
+                                        onPostExecuted = {
+                                            directExecutionViewModel.hasPosted = true
+                                        },
                                         onError = {
                                             directExecutionViewModel.errorMessage = it
                                         }
@@ -454,7 +467,9 @@ fun StreetMaterialScreen(
                 directExecutionViewModel.alertModal = false
             },
             markAsFinish = {
-                directExecutionViewModel.markAsFinished(directExecutionId)
+                if(directExecutionViewModel.street != null) {
+                    directExecutionViewModel.markAsFinished(directExecutionId)
+                }
             },
             locationModal = directExecutionViewModel.locationModal,
             confirmLocation = {
@@ -606,35 +621,68 @@ fun StreetMaterialsContent(
             if (isLoading) {
                 Loading("Carregando materiais")
             } else if (reserves.isEmpty()) {
-                NothingData("Nenhum material pendente, execução finalizada.")
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = {
-                        markAsFinish()
-                    },
+                LaunchedEffect(Unit) {
+                    markAsFinish()
+                }
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
-                    )
+                        .fillMaxHeight(fraction = 0.7f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CloudUpload,
-                        contentDescription = "Finalizar e enviar",
-                        modifier = Modifier.padding(end = 8.dp)
+                        imageVector = Icons.Rounded.TaskAlt,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = CircleShape
+                            )
+                            .padding(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Text(
-                        text = "Finalizar e enviar",
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        text = "Saldo igual a zero.\nExecução finalizada!",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Nenhuma ação é necessária!\nEstamos processando o envio dos dados!!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = {
+                            openModal("FINISH")
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 8.dp
+                        )
+                    ) {
+                        Text(
+                            text = "Ok, voltar a tela anterior",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -858,7 +906,7 @@ fun MaterialItem(
     var text by remember(material.reserveId) {
         mutableStateOf(
             TextFieldValue(
-                if (BigDecimal(quantity) % BigDecimal.ONE== BigDecimal.ZERO) {
+                if (BigDecimal(quantity) % BigDecimal.ONE == BigDecimal.ZERO) {
                     quantity.toInt().toString()
                 } else {
                     quantity
@@ -1053,127 +1101,127 @@ fun MaterialItem(
     }
 }
 
-//
-//@Preview
-//@Composable
-//fun PrevMStreetScreen() {
-//    // Criando um contexto fake para a preview
-//    val fakeContext = LocalContext.current
-//
-//    val reserves = listOf(
-//        DirectReserve(
-//            materialStockId = 10,
-//            materialName = "LED 120W",
-//            materialQuantity = 12.0,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 2,
-//            materialName = "BRAÇO DE 3,5",
-//            materialQuantity = 16.0,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 3,
-//            materialName = "BRAÇO DE 3,5",
-//            materialQuantity = 16.0,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 4,
-//            materialName = "CABO 1.5MM",
-//            materialQuantity = 30.4,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 5,
-//            materialName = "CABO 1.5MM",
-//            materialQuantity = 30.4,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 6,
-//            materialName = "CABO 1.5MM",
-//            materialQuantity = 30.4,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 7,
-//            materialName = "CABO 1.5MM",
-//            materialQuantity = 30.4,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        ),
-//        DirectReserve(
-//            materialStockId = 8,
-//            materialName = "CABO 1.5MM",
-//            materialQuantity = 30.4,
-//            requestUnit = "UN",
-//            reserveId = -1,
-//            contractItemId = -1,
-//            directExecutionId = -1
-//        )
-//    )
-//
-//
-//    StreetMaterialsContent(
-//        isLoading = false,
-//        description = "Prefeitura de Belo Horizonte",
-//        reserves = reserves,
-//        street = DirectExecutionStreet(
-//            directStreetId = 1,
-//            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
-//            latitude = null,
-//            longitude = null,
-//            photoUri = null,
-//            deviceId = "",
-//            directExecutionId = 1,
-//            description = "",
-//            lastPower = "100W",
-//            finishAt = "",
-//            currentSupply = "",
-//        ),
-//        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
-//        context = fakeContext,
-//        navController = rememberNavController(),
-//        notificationsBadge = "12",
-//        takePhoto = { },
-//        changeStreet = {},
-//        confirmModal = { },
-//        openConfirmModal = false,
-//        openModal = {},
-//        alertModal = false,
-//        closeAlertModal = { },
-//        markAsFinish = {},
-//        locationModal = true,
-//        confirmLocation = { },
-//        changeMaterial = { _, _, _, _, _ -> },
-//        changeQuantity = { _, _, _ -> },
-//        errorMessage = null,
-//        alertMessage = mutableMapOf(
-//            "title" to "Título da mensagem",
-//            "body" to "Conteúdo da mensagem"
-//        ),
-//        streetItems = emptyList()
-//    )
-//}
+
+@Preview
+@Composable
+fun PrevMStreetScreen() {
+    // Criando um contexto fake para a preview
+    val fakeContext = LocalContext.current
+
+    val reserves = listOf(
+        DirectReserve(
+            materialStockId = 10,
+            materialName = "LED 120W",
+            materialQuantity = "12",
+            requestUnit = "UN",
+            reserveId = 1,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 2,
+            materialName = "BRAÇO DE 3,5",
+            materialQuantity = "16",
+            requestUnit = "UN",
+            reserveId = 2,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 3,
+            materialName = "BRAÇO DE 3,5",
+            materialQuantity = "16",
+            requestUnit = "UN",
+            reserveId = 3,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 4,
+            materialName = "CABO 1.5MM",
+            materialQuantity = "30.4",
+            requestUnit = "UN",
+            reserveId = 4,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 5,
+            materialName = "CABO 1.5MM",
+            materialQuantity = "30.4",
+            requestUnit = "UN",
+            reserveId = 5,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 6,
+            materialName = "CABO 1.5MM",
+            materialQuantity = "30.4",
+            requestUnit = "UN",
+            reserveId = -1,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 7,
+            materialName = "CABO 1.5MM",
+            materialQuantity = "30.4",
+            requestUnit = "UN",
+            reserveId = -1,
+            contractItemId = -1,
+            directExecutionId = -1
+        ),
+        DirectReserve(
+            materialStockId = 8,
+            materialName = "CABO 1.5MM",
+            materialQuantity = "30.4",
+            requestUnit = "UN",
+            reserveId = -1,
+            contractItemId = -1,
+            directExecutionId = -1
+        )
+    )
+
+
+    StreetMaterialsContent(
+        isLoading = false,
+        description = "Prefeitura de Belo Horizonte",
+        reserves = emptyList(),
+        street = DirectExecutionStreet(
+            directStreetId = 1,
+            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
+            latitude = null,
+            longitude = null,
+            photoUri = null,
+            deviceId = "",
+            directExecutionId = 1,
+            description = "",
+            lastPower = "100W",
+            finishAt = "",
+            currentSupply = "",
+        ),
+        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
+        context = fakeContext,
+        navController = rememberNavController(),
+        notificationsBadge = "12",
+        takePhoto = { },
+        changeStreet = {},
+        confirmModal = { },
+        openConfirmModal = false,
+        openModal = {},
+        alertModal = false,
+        closeAlertModal = { },
+        markAsFinish = {},
+        locationModal = false,
+        confirmLocation = { },
+        changeMaterial = { _, _, _, _, _ -> },
+        changeQuantity = { _, _, _ -> },
+        errorMessage = null,
+        alertMessage = mutableMapOf(
+            "title" to "Título da mensagem",
+            "body" to "Conteúdo da mensagem"
+        ),
+        streetItems = emptyList()
+    )
+}
