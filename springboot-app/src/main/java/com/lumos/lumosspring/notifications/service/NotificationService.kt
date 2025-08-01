@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.notifications.service
 
+import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.AndroidConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
@@ -10,7 +11,9 @@ import java.time.Duration
 import java.time.Instant
 
 @Service
-class NotificationService {
+class NotificationService(
+    private val firebaseApp: FirebaseApp
+) {
 
     fun sendNotificationForRole(
         title: String,

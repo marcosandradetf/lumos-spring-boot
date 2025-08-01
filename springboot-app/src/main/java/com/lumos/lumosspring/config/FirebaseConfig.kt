@@ -6,14 +6,13 @@ import com.google.firebase.FirebaseOptions
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ClassPathResource
-import java.io.FileInputStream
 
 
 @Configuration
-open class FirebaseConfig {
+class FirebaseConfig {
 
     @Bean
-    open fun firebaseInit(): FirebaseApp {
+    fun firebaseInit(): FirebaseApp {
         // Verifica se o Firebase já foi inicializado
         return if (FirebaseApp.getApps().isEmpty()) {
             // mudar para parametro no properties
