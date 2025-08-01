@@ -20,6 +20,7 @@ import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import com.lumos.lumosspring.util.Utils.formatMoney
 import com.lumos.lumosspring.util.Utils.replacePlaceholders
 import com.lumos.lumosspring.util.Utils.sendHtmlToPuppeteer
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
@@ -30,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
+
 
 @Service
 class ExecutionService(
@@ -964,7 +966,7 @@ class ExecutionService(
             """
                 SELECT 1 as result 
                 FROM direct_execution de
-                JOIN direct_execution_street on des.direct_execution_id = de.direct_execution_id
+                JOIN direct_execution_street des on des.direct_execution_id = de.direct_execution_id
                 WHERE des.device_street_id = :deviceStreetId AND des.device_id = :deviceId and de.direct_execution_status = 'FINISHED'
             """.trimIndent(),
             mapOf("deviceStreetId" to executionDTO.deviceStreetId, "deviceId" to executionDTO.deviceId)
@@ -990,7 +992,15 @@ class ExecutionService(
         val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
         executionStreet.executionPhotoUri = fileUri
 
-        executionStreet = directExecutionRepositoryStreet.save(executionStreet)
+        try {
+            executionStreet = directExecutionRepositoryStreet.save(executionStreet)
+        } catch (ex: DataIntegrityViolationException) {
+            val rootMessage = ex.mostSpecificCause.message ?: ""
+            if (rootMessage.contains("UNIQUE_SEND_STREET", ignoreCase = true)) {
+                return ResponseEntity.ok().build()
+            }
+            throw ex
+        }
 
         for (m in executionDTO.materials) {
 
@@ -998,7 +1008,7 @@ class ExecutionService(
                 """
                     UPDATE material_stock
                     SET stock_quantity = stock_quantity - :quantityCompleted, 
-                        stock_available = stock_available - :quantityCompleted,
+                        stock_available = stock_available - :quantityCompleted
                     WHERE material_id_stock = :materialStockId
                 """.trimIndent(),
                 mapOf(
@@ -1135,7 +1145,7 @@ class ExecutionService(
     fun finishDirectExecution(directExecutionId: Long): ResponseEntity<Any> {
         val hasFinished = JdbcUtil.getSingleRow(
             namedJdbc,
-            "SELECT 1 as result FROM direct_execution WHERE direct_execution_status = :status AND direct_execution_id = :directExecutionId",
+            "SELECT 1 as result FROM direct_execution des WHERE direct_execution_status = :status AND direct_execution_id = :directExecutionId",
             mapOf(
                 "directExecutionId" to directExecutionId,
                 "status" to ExecutionStatus.FINISHED
