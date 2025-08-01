@@ -38,7 +38,7 @@ export interface ReserveStreetDTOResponse {
 export interface ItemResponseDTO {
   itemId: number,
   description: string,
-  quantity: number,
+  quantity: string,
   type: string,
   linking: string,
 
@@ -46,7 +46,7 @@ export interface ItemResponseDTO {
     centralMaterialStockId: number | null,
     truckMaterialStockId: number | null,
     materialId: number | null,
-    materialQuantity: number,
+    materialQuantity: string,
   }[]
 }
 
@@ -58,18 +58,18 @@ export interface MaterialInStockDTO {
   materialLength: string,
   materialType: string,
   deposit: string,
-  availableQuantity: number,
+  availableQuantity: string,
   requestUnit: string,
 }
 
 export interface DirectExecutionDTO {
   contractId: number,
   teamId: number,
+  currentUserId: string,
   stockistId: string,
-  currentUserUUID: string,
   instructions: string | null;
   items: {
     contractItemId: number,
-    quantity: number,
+    quantity: string,
   }[],
 }

@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -59,11 +60,13 @@ class ContractService(
         return ResponseEntity.ok().body(referenceItemsResponse)
     }
 
+    @Transactional
     fun deleteById(contractId: Long): ResponseEntity<Any> {
         try {
-            contractRepository.deleteById(contractId);
+            contractItemsQuantitativeRepository.deleteByContractId((contractId))
+            contractRepository.deleteById(contractId)
         } catch (e: Exception) {
-            throw IllegalStateException("Como este contrato já possui registros vinculados (como reservas, medições ou execuções), a exclusão não é permitida.")
+            throw IllegalStateException("Como este contrato já possui registros vinculados (como manutenções ou instalações já executadas), a exclusão não é permitida.")
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()

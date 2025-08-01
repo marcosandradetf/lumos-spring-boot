@@ -144,16 +144,16 @@ export class SidebarComponent implements OnInit {
         style: {
           border: 'none'
         },
-        label: 'Requisições',
+        label: 'Solicitações ao Estoquista',
         expanded: this.bToggleRequest,
         command: () => {
           this.toggleRequest();
         },
         items: [
           {
-            label: 'Gerenciamento de Reservas',
+            label: 'Gerenciamento de Estoque – Pré-instalação',
             icon: 'pi pi-box text-black text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/requisicoes/execucoes/reservas/gerenciamento'],
+            routerLink: ['/requisicoes/instalacoes/gerenciamento-estoque'],
           },
           {
             label: 'Materiais pendentes de Aprovação',

@@ -186,7 +186,7 @@ export const routes: Routes = [
 
   // start request path
   {
-    path: 'requisicoes/execucoes/reservas/gerenciamento',
+    path: 'requisicoes/instalacoes/gerenciamento-estoque',
     loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
     canActivate: [AuthGuard],
     data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},

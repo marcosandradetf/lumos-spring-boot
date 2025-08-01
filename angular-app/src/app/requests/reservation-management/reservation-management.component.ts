@@ -28,7 +28,7 @@ export class ReservationManagementComponent {
               private utils: UtilsService,
               protected router: Router,
               private executionService: ExecutionService) {
-    this.titleService.setTitle("Gerenciamento de Reservas");
+    this.titleService.setTitle("Gerenciamento de Estoque – Pré-instalação");
 
     this.executionService.getPendingReservesForStockist(this.authService.getUser().uuid).subscribe({
       next: (response) => {

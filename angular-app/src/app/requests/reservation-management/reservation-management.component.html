@@ -4,11 +4,11 @@
       <div class="breadcrumbs text-sm">
         <ul class="select-none">
           <li><a href="/">Início</a></li>
-          <li><a>Requisições</a></li>
-          <li>Gerenciamento de Reservas</li>
+          <li><a>Solicitações ao Estoquista</a></li>
+          <li>Gerenciamento de Estoque – Pré-instalação</li>
         </ul>
       </div>
-      <h3 class="text-medium pr-5 hidden lg:block">Clique em uma requisição para continuar</h3>
+      <h3 class="text-medium pr-5 hidden lg:block">Clique em uma solicitação para continuar</h3>
     </div>
 
     <app-loading *ngIf="loading"></app-loading>
@@ -21,33 +21,37 @@
               d="M14 22h20M14 28h20M10 10h28a2 2 0 012 2v24a2 2 0 01-2 2H10a2 2 0 01-2-2V12a2 2 0 012-2z"/>
       </svg>
 
-      <h3 class="text-lg font-semibold mb-2 dark:text-white">Nenhuma requisição encontrada</h3>
+      <h3 class="text-lg font-semibold mb-2 dark:text-white">Nenhuma solicitação no momento</h3>
     </div>
 
-    <div *ngIf="!loading && reservations.length > 0"
-         class="flex flex-col text-center w-full">
-      <ol class="flex flex-wrap">
-        <li *ngFor="let r of reservations; index as i;"
-            class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="router.navigate(['/requisicoes/gerenciamento/execucao'],
-            {
-              state: {
-                reserve: r
-              }
-            })">
-          <div class="flex flex-col border rounded px-4 py-2 card-execution">
-            <span class="badge badge-primary dark:badge-accent rounded mb-4 mt-2">
-                INSTALAÇÃO
-            </span>
+    <div *ngIf="!loading && reservations.length > 0" class="flex flex-col items-center w-full px-4">
+      <ol class="flex flex-wrap justify-center gap-4" aria-haspopup="true">
+        <li *ngFor="let r of reservations; index as i"
+            class="relative w-full max-w-sm cursor-pointer transition-transform duration-300 hover:scale-105 hover:-translate-y-1 m-2"
+            (click)="router.navigate(['/requisicoes/gerenciamento/execucao'], { state: { reserve: r } })">
+
+          <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md hover:shadow-lg bg-white dark:bg-gray-900 p-6">
+        <span class="self-start px-3 py-1 text-xs font-semibold text-white bg-blue-600 dark:bg-blue-400 rounded-full mb-4">
+          INSTALAÇÃO
+        </span>
 
             <h3 class="text-xl leading-[1.15rem] font-light text-left">{{ r.description }}</h3>
-            <span class="text-sm flex items-center pt-5">Solicitação atribuida por {{ r.streets[0].assignedBy }}<span
-              class="material-icons text-sm ml-1 text-blue-500 dark:text-[#88f4ff]">verified</span></span>
-            <span class="text-base pt-1 text-left">{{ getItemsQuantity(r) }} itens pendentes</span>
+
+            <div class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+              <div class="flex items-center">
+                <span class="material-icons text-blue-500 text-base mr-1">verified</span>
+                Solicitação atribuída por {{ r.streets[0].assignedBy }}
+              </div>
+            </div>
+
+            <p class="text-base text-left pt-5 text-gray-500 dark:text-gray-400">
+              {{ getItemsQuantity(r) }} itens pendentes
+            </p>
           </div>
         </li>
       </ol>
     </div>
+
 
 
   </div>

@@ -132,7 +132,7 @@ export class ReservationManagementSelectComponent {
         this.currentTeamId = this.street.teamId;
       }
     } else {
-      void this.router.navigate(['/requisicoes/execucoes/reservas/gerenciamento']);
+      void this.router.navigate(['/requisicoes/instalacoes/gerenciamento-estoque']);
     }
 
     this.userUUID = this.authService.getUser().uuid;
@@ -147,7 +147,7 @@ export class ReservationManagementSelectComponent {
   }
 
 
-  quantity: number | null = null;
+  quantity: string | null = null;
   loading: boolean = false;
 
   onRowExpand(item: ItemResponseDTO) {
@@ -231,7 +231,7 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    if (material.availableQuantity < quantity) {
+    if (Number(material.availableQuantity) < quantity) {
       this.utils.showMessage("O Material informado não possuí estoque disponível, faça a movimentação de estoque.", 'error', "Material sem estoque");
       return;
     }
@@ -246,13 +246,13 @@ export class ReservationManagementSelectComponent {
       ? {
         centralMaterialStockId: null,
         truckMaterialStockId: material.materialStockId,
-        materialQuantity: Number(this.quantity),
+        materialQuantity: this.quantity!!,
         materialId: material.materialId,
       }
       : {
         centralMaterialStockId: material.materialStockId,
         truckMaterialStockId: null,
-        materialQuantity: Number(this.quantity),
+        materialQuantity: this.quantity!!,
         materialId: material.materialId,
       };
 
@@ -266,7 +266,7 @@ export class ReservationManagementSelectComponent {
       const materials = this.street.items[currentItemIndex].materials;
       if (!materials) this.street.items[currentItemIndex].materials = [];
       this.street.items[currentItemIndex].materials.push(newMaterial);
-      this.utils.showMessage(`QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva realizada com sucesso');
+      this.utils.showMessage(`QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Material alocado com sucesso');
     } else {
       const propToCompare = material.deposit.includes("CAMINHÃO") ? 'truckMaterialStockId' : 'centralMaterialStockId';
       const matIndex = this.street.items[currentItemIndex].materials
@@ -275,13 +275,13 @@ export class ReservationManagementSelectComponent {
       if (matIndex === -1) {
         this.utils.showMessage("Erro ao editar item, tente novamente", 'error');
       }
-      this.street.items[currentItemIndex].materials[matIndex].materialQuantity = newMaterial.materialQuantity;
-      this.utils.showMessage(`NOVA QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Reserva alterada com sucesso');
+      this.street.items[currentItemIndex].materials[matIndex].materialQuantity = newMaterial.materialQuantity!!;
+      this.utils.showMessage(`NOVA QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Material alterado com sucesso');
     }
 
     this.tableCollapse?.saveRowEdit(material, rowElement);
     this.selectedMaterial = null;
-    this.quantity = 0;
+    this.quantity = "0";
     this.currentMaterialId = 0;
   }
 
@@ -309,7 +309,7 @@ export class ReservationManagementSelectComponent {
           this.streetId = null;
         }
 
-        this.utils.showMessage(response.message, 'success', 'Reserva realizada com sucesso', true);
+        this.utils.showMessage(response.message, 'success', 'Material alocado com sucesso', true);
       },
       error: (error) => {
         this.utils.showMessage(error.error.message, 'error', 'Erro ao salvar');
@@ -357,7 +357,7 @@ export class ReservationManagementSelectComponent {
 
     this.tableCollapse?.saveRowEdit(material, rowElement);
     this.selectedMaterial = null;
-    this.quantity = 0.0;
+    this.quantity = "0";
     this.currentMaterialId = 0;
   }
 

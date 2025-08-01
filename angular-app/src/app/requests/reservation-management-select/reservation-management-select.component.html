@@ -2,8 +2,8 @@
   <div class="flex justify-between items-center">
     <app-breadcrumb
       [currentTitle]="description"
-      previousPath="/requisicoes/execucoes/reservas/gerenciamento"
-      previousTitle="Gerenciamento">
+      previousPath="/requisicoes/instalacoes/gerenciamento-estoque"
+      previousTitle="Gerenciamento de Estoque – Pré-instalação">
     </app-breadcrumb>
 
     <p
@@ -25,8 +25,7 @@
           class="mb-4 border p-4 rounded min-w-96 w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2 card-execution select-none">
           <h3 class="text-lg font-semibold mb-2">{{ street.streetName }}</h3>
           <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de
-              reserva</p>
+            <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de verificação</p>
             <i class="fa-solid fa-triangle-exclamation text-warning" *ngIf="street.prioritized"></i>
           </div>
 
@@ -54,7 +53,7 @@
           <th pSortableColumn="quantity">Quantidade Necessária
             <p-sortIcon field="quantity"/>
           </th>
-          <th pSortableColumn="quantity">Quantidade Reservada
+          <th pSortableColumn="quantity">Quantidade Alocada
             <p-sortIcon field="quantity"/>
           </th>
           <th pSortableColumn="inventoryStatus">Status
@@ -113,7 +112,7 @@
           <th pSortableColumn="quantity">Quantidade Necessária
             <p-sortIcon field="quantity"/>
           </th>
-          <th pSortableColumn="quantity">Quantidade Reservada
+          <th pSortableColumn="quantity">Quantidade Alocada
             <p-sortIcon field="quantity"/>
           </th>
           <th pSortableColumn="inventoryStatus">Status
@@ -140,7 +139,7 @@
           <td>{{ item.quantity }}</td>
           <td>{{ getTotalQuantity(item.materials) }}</td>
           <td>
-            <p-tag [value]="item.materials?.length > 0 ? 'RESERVADO' : 'PENDENTE'"
+            <p-tag [value]="item.materials?.length > 0 ? 'ALOCADO' : 'PENDENTE'"
                    [severity]="item.materials?.length > 0 ? 'success' : 'danger'"/>
           </td>
         </tr>

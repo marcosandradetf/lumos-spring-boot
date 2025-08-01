@@ -66,7 +66,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
     contractId: 0,
     teamId: 0,
     stockistId: '',
-    currentUserUUID: '',
+    currentUserId: '',
     instructions: null,
     items: [],
   }
@@ -100,7 +100,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
     }
     this.contractId = Number(contractId);
     this.execution.contractId = this.contractId;
-    this.execution.currentUserUUID = this.authService.getUser().uuid;
+    this.execution.currentUserId = this.authService.getUser().uuid;
 
     this.contractService.getContractItems(this.contractId).subscribe({
       next: items => {
@@ -162,7 +162,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
 
     if (this.table) {
       this.currentItemId = item.contractItemId;
-      this.quantity = this.getQuantity(item.contractItemId);
+      this.quantity = Number(this.getQuantity(item.contractItemId));
       this.table.initRowEdit(item);
       setTimeout(() => {
         this.qtyInput?.nativeElement?.focus();
@@ -172,7 +172,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
 
 
   getQuantity(contractItemId: number) {
-    let quantity: number | null = null;
+    let quantity: string | null = null;
     const item = this.execution.items.find(i => i.contractItemId === contractItemId);
     if (item) quantity = item?.quantity ?? null;
     return quantity;
@@ -215,12 +215,12 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
       this.execution.items.push(
         {
           contractItemId: this.currentItemId,
-          quantity: this.quantity ?? 0
+          quantity: this.quantity?.toString() ?? "0"
         }
       );
       this.utils.showMessage("Item adiconado com sucesso.", "success", "Adição");
     } else {
-      this.execution.items[index].quantity = this.quantity ?? 0;
+      this.execution.items[index].quantity = this.quantity?.toString() ?? "0";
       this.utils.showMessage("Item alterado com sucesso.", "success", "Alteração");
     }
 

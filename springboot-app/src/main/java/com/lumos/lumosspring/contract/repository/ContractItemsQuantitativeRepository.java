@@ -4,4 +4,5 @@ import com.lumos.lumosspring.contract.entities.ContractItem;
 import org.springframework.data.repository.CrudRepository;
 
 public interface ContractItemsQuantitativeRepository extends CrudRepository<ContractItem, Long> {
+    void deleteByContractId(Long contractId);
 }
