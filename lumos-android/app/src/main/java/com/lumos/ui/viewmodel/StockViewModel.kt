@@ -18,6 +18,9 @@ class StockViewModel(
     private val _stock = MutableStateFlow<List<MaterialStock>>(emptyList())
     val stock = _stock
 
+    private val _count = MutableStateFlow(0)
+    val count = _count
+
     private val _deposits = MutableStateFlow<List<Deposit>>(emptyList())
     val deposits = _deposits
 
@@ -83,11 +86,12 @@ class StockViewModel(
         }
     }
 
-    fun getFlowExistsTypeInQueue(types: List<String>) {
+    fun hasTypesInQueue(types: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.getFlowExistsTypeInQueue(types).collectLatest {
-                    _loading.value = it
+                _loading.value = repository.hasTypesInQueue(types)
+                if(!_loading.value) {
+                    callSyncStock()
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "ViewModel - Problema ao verificar fila"

@@ -85,7 +85,8 @@ class ReservationService(
 
                 namedJdbc.update(
                     """
-                            UPDATE material_stock set stock_available = stock_available + :reserveQuantity
+                            UPDATE material_stock 
+                            set stock_available = stock_available + :reserveQuantity
                             WHERE material_id_stock = :centralMaterialId
                         """.trimIndent(),
                     mapOf(
@@ -237,7 +238,7 @@ class ReservationService(
             namedJdbc,
             """
                     SELECT material_id_reservation, central_material_stock_id, reserved_quantity,
-                    direct_execution_id, pre_measurement_street_id, status
+                    direct_execution_id, pre_measurement_street_id, status, truck_material_stock_id
                     FROM material_reservation
                     WHERE material_id_reservation in (:reservationIds)
                 """.trimIndent(),
@@ -249,6 +250,7 @@ class ReservationService(
 
             val reservationId = r["material_id_reservation"] as Long
             val centralMaterialId = r["central_material_stock_id"] as Long
+            val truckMaterialId = r["truck_material_stock_id"] as Long
             val reserveQuantity = r["reserved_quantity"] as Long
             val directExecutionId = r["direct_execution_id"] as? Long
             val streetId = r["pre_measurement_street_id"] as? Long
@@ -272,6 +274,19 @@ class ReservationService(
 
             namedJdbc.update(
                 """
+                        UPDATE material_stock 
+                        set stock_quantity = stock_quantity + :reserveQuantity,
+                            stock_available = stock_available + :reserveQuantity
+                        where material_id_stock = :truckMaterialId
+                    """.trimIndent(),
+                mapOf(
+                    "reserveQuantity" to reserveQuantity,
+                    "truckMaterialId" to truckMaterialId,
+                )
+            )
+
+            namedJdbc.update(
+                """
                         UPDATE material_reservation set status = :status
                         where material_id_reservation in (:reservationId)
                     """.trimIndent(),
@@ -283,8 +298,9 @@ class ReservationService(
 
             namedJdbc.update(
                 """
-                        UPDATE material_stock set stock_quantity = stock_quantity - :reserveQuantity
-                        where material_stock.material_id_stock = :centralMaterialId
+                        UPDATE material_stock 
+                        set stock_quantity = stock_quantity - :reserveQuantity
+                        where material_id_stock = :centralMaterialId
                     """.trimIndent(),
                 mapOf(
                     "reserveQuantity" to reserveQuantity,

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.stock.controller.dto.MaterialResponse;
+import com.lumos.lumosspring.dto.stock.MaterialResponse;
 import com.lumos.lumosspring.stock.repository.MaterialRepository;
 import com.lumos.lumosspring.stock.service.MaterialService;
 

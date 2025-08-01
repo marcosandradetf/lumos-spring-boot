@@ -61,7 +61,7 @@ fun AppLayout(
     content: @Composable (Modifier, showSnackBar: (String, String?) -> Unit) -> Unit,
 ) {
     val selectedItem by remember { mutableIntStateOf(selectedIcon) }
-    val items = listOf("Início", "Estoque", "Manutenção", "Execução", "Mais")
+    val items = listOf("Início", "Estoque", "Manuten.", "Instalação", "Mais")
     val selectedIcons =
         listOf(
             Icons.Filled.Home,

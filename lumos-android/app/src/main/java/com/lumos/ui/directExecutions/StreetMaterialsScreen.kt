@@ -14,17 +14,14 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -33,21 +30,22 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.IconToggleButtonColors
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -58,7 +56,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -68,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -80,6 +78,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -92,8 +91,7 @@ import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
-import com.lumos.domain.model.DirectReserve
-import com.lumos.domain.model.MaterialStock
+import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
@@ -102,9 +100,8 @@ import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
-import com.lumos.ui.components.NothingData
+import com.lumos.ui.components.Tag
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
-import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
 import java.math.BigDecimal
@@ -114,7 +111,6 @@ fun StreetMaterialScreen(
     directExecutionId: Long,
     description: String,
     directExecutionViewModel: DirectExecutionViewModel,
-    stockViewModel: StockViewModel,
     context: Context,
     lastRoute: String?,
     navController: NavHostController,
@@ -123,7 +119,6 @@ fun StreetMaterialScreen(
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
     var currentAddress by remember { mutableStateOf("") }
-    val stockData by stockViewModel.stock.collectAsState()
 
     val message = remember {
         mutableStateMapOf(
@@ -463,7 +458,7 @@ fun StreetMaterialScreen(
                     } else {
                         val quantities =
                             directExecutionViewModel.streetItems.map { it.quantityExecuted }
-                        if (quantities.any { it == "0" }) {
+                        if (quantities.any { BigDecimal(it) == BigDecimal.ZERO }) {
                             message["title"] = "Quantidade inválida"
                             message["body"] =
                                 "Não é permitido salvar itens com quantidade igual a 0."
@@ -494,24 +489,23 @@ fun StreetMaterialScreen(
             closeAlertModal = {
                 directExecutionViewModel.alertModal = false
             },
-            changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
-               if (selected) {
-                   val material = stockData.find { it.materialStockId == materialStockId }
-                   if(BigDecimal(material?.stockAvailable) == BigDecimal.ZERO) {
-                       message["title"] = "Quantidade indisponível"
-                       message["body"] =
-                           "Esse material está sem estoque"
-                       directExecutionViewModel.alertModal = true
-                   } else {
-                       val newItem = DirectExecutionStreetItem(
-                           reserveId = reserveId,
-                           materialStockId = materialStockId,
-                           contractItemId = contractItemId,
-                           quantityExecuted = "0",
-                           materialName = materialName
-                       )
-                       directExecutionViewModel.streetItems += newItem
-                   }
+            changeMaterial = { selected, reserveId, contractItemId, materialStockId, materialName, stockAvailable ->
+                if (selected) {
+                    if (stockAvailable == BigDecimal.ZERO) {
+                        message["title"] = "Quantidade indisponível"
+                        message["body"] =
+                            "Esse material está sem estoque"
+                        directExecutionViewModel.alertModal = true
+                    } else {
+                        val newItem = DirectExecutionStreetItem(
+                            reserveId = reserveId,
+                            materialStockId = materialStockId,
+                            contractItemId = contractItemId,
+                            quantityExecuted = "0",
+                            materialName = materialName
+                        )
+                        directExecutionViewModel.streetItems += newItem
+                    }
 
                 } else {
                     directExecutionViewModel.streetItems =
@@ -520,35 +514,58 @@ fun StreetMaterialScreen(
                         }
                 }
             },
-            changeQuantity = { materialStockId, quantityExecuted, balanceLimit, reserveId ->
-                val material = stockData.find { it.materialStockId == materialStockId }
-                if(BigDecimal(material?.stockAvailable) > quantityExecuted) {
-                    message["title"] = "Quantidade indisponível"
-                    message["body"] =
-                        "A quantidade em estoque desse material é ${material?.stockAvailable}."
+
+
+            changeQuantity = { reserveId, quantityExecuted, balanceLimit, stockAvailable ->
+
+                fun resetQuantityWithMessage(title: String, body: String) {
+                    message["title"] = title
+                    message["body"] = body
                     directExecutionViewModel.alertModal = true
-                }
-                else if (quantityExecuted > balanceLimit) {
-                    message["title"] = "Quantidade inválida"
-                    message["body"] =
-                        "O Saldo contratual desse material é $balanceLimit."
-                    directExecutionViewModel.alertModal = true
-                } else if (quantityExecuted <= BigDecimal.ZERO) {
-                    message["title"] = "Quantidade inválida"
-                    message["body"] = "Não é possível registrar uma quantidade zero ou negativa."
-                    directExecutionViewModel.alertModal = true
-                } else {
+
                     directExecutionViewModel.streetItems =
                         directExecutionViewModel.streetItems.map {
                             if (it.reserveId == reserveId) {
-                                it.copy(quantityExecuted = quantityExecuted.toString())
+                                it.copy(quantityExecuted = "0")
                             } else it
                         }
+                }
+
+                when {
+                    quantityExecuted < BigDecimal.ZERO -> {
+                        resetQuantityWithMessage(
+                            title = "Quantidade inválida",
+                            body = "Não é possível registrar uma quantidade negativa."
+                        )
+                    }
+
+                    quantityExecuted > balanceLimit -> {
+                        resetQuantityWithMessage(
+                            title = "Saldo contratual excedido",
+                            body = "O máximo permitido é $balanceLimit."
+                        )
+                    }
+
+                    stockAvailable < quantityExecuted -> {
+                        resetQuantityWithMessage(
+                            title = "Estoque insuficiente",
+                            body = "Há apenas $stockAvailable disponíveis em estoque."
+                        )
+                    }
+
+                    else -> {
+                        directExecutionViewModel.streetItems =
+                            directExecutionViewModel.streetItems.map {
+                                if (it.reserveId == reserveId) {
+                                    it.copy(quantityExecuted = quantityExecuted.toString())
+                                } else it
+                            }
+                    }
                 }
             },
             errorMessage = directExecutionViewModel.errorMessage,
             alertMessage = message,
-            streetItems = directExecutionViewModel.streetItems
+            streetItems = directExecutionViewModel.streetItems,
         )
 
 }
@@ -557,7 +574,7 @@ fun StreetMaterialScreen(
 fun StreetMaterialsContent(
     isLoading: Boolean,
     description: String,
-    reserves: List<DirectReserve>,
+    reserves: List<ReserveMaterialJoin>,
     street: DirectExecutionStreet?,
     lastRoute: String?,
     context: Context,
@@ -570,8 +587,8 @@ fun StreetMaterialsContent(
     openModal: (String) -> Unit,
     alertModal: Boolean,
     closeAlertModal: () -> Unit,
-    changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
-    changeQuantity: (Long, BigDecimal, BigDecimal, Long) -> Unit,
+    changeMaterial: (Boolean, Long, Long, Long, String, BigDecimal) -> Unit,
+    changeQuantity: (Long, BigDecimal, BigDecimal, BigDecimal) -> Unit,
     errorMessage: String?,
     alertMessage: MutableMap<String, String>,
     streetItems: List<DirectExecutionStreetItem>,
@@ -773,21 +790,22 @@ fun StreetMaterialsContent(
                     ) {
                         MaterialItem(
                             material = it,
-                            changeQuantity = { materialStockId, quantityExecuted, materialQuantity, reserveId ->
+                            changeQuantity = { reserveId, quantityExecuted, materialQuantity, stockAvailable ->
                                 changeQuantity(
-                                    materialStockId,
+                                    reserveId,
                                     quantityExecuted,
                                     materialQuantity,
-                                    reserveId
+                                    stockAvailable
                                 )
                             },
-                            changeMaterial = { materialStockId, contractItemId, selected, reserveId, materialName ->
+                            changeMaterial = { selected, reserveId, contractItemId, materialStockId, materialName, stockAvailable ->
                                 changeMaterial(
-                                    materialStockId,
-                                    contractItemId,
                                     selected,
                                     reserveId,
-                                    materialName
+                                    contractItemId,
+                                    materialStockId,
+                                    materialName,
+                                    stockAvailable,
                                 )
                             },
                             streetItems = streetItems,
@@ -905,29 +923,27 @@ fun StreetMaterialsContent(
 
 @Composable
 fun MaterialItem(
-    material: DirectReserve,
-    changeMaterial: (Long, Long, Boolean, Long, String) -> Unit,
-    changeQuantity: (Long, BigDecimal, BigDecimal, Long) -> Unit,
-    streetItems: List<DirectExecutionStreetItem>
+    material: ReserveMaterialJoin,
+    changeMaterial: (Boolean, Long, Long, Long, String, BigDecimal) -> Unit,
+    changeQuantity: (Long, BigDecimal, BigDecimal, BigDecimal) -> Unit,
+    streetItems: List<DirectExecutionStreetItem>,
 ) {
-
-    val quantity = streetItems.find {
-        it.reserveId == material.reserveId
-    }?.quantityExecuted ?: "0"
+    val quantity = remember(streetItems, material) {
+        derivedStateOf {
+            streetItems.find {
+                it.reserveId == material.reserveId
+            }?.quantityExecuted ?: BigDecimal.ZERO.toString()
+        }
+    }
 
     var text by remember(material.reserveId) {
         mutableStateOf(
             TextFieldValue(
-                if (BigDecimal(quantity) % BigDecimal.ONE == BigDecimal.ZERO) {
-                    quantity.toInt().toString()
-                } else {
-                    quantity
-                }
+                quantity.value
             )
         )
     }
 
-    val quantityExecuted = BigDecimal(text.text)
     val selected = remember(streetItems, material) {
         derivedStateOf {
             streetItems.any {
@@ -937,181 +953,147 @@ fun MaterialItem(
     }
 
 
-    LaunchedEffect(quantityExecuted) {
-        changeQuantity(
-            material.materialStockId,
-            quantityExecuted,
-            BigDecimal(material.materialQuantity),
-            material.reserveId
-        )
-    }
-
-    Card(
-        shape = RoundedCornerShape(5.dp),
-        modifier = Modifier
-            .fillMaxWidth(0.9f)
-            .padding(3.dp),
-        elevation = CardDefaults.cardElevation(1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min) // Isso é o truque!
-        ) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = material.materialName,
+                style = MaterialTheme.typography.titleMedium,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        overlineContent = {
             Column(
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(10.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Linha vertical com bolinha no meio
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight(0.7f)
-                        .padding(start = 20.dp)
-                        .width(4.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary
+                // Tag de disponibilidade
+                when {
+                    BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
+                        Tag(
+                            text = "Sem estoque disponível",
+                            color = Color.Red,
+                            icon = Icons.Default.Close
                         )
-                )
+                    }
 
-                // Bolinha com ícone (no meio da linha)
-                Box(
-                    modifier = Modifier
-                        .offset(x = 10.dp) // posiciona sobre a linha
-                        .size(24.dp) // tamanho do círculo
-                        .clip(CircleShape)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Build,
-                        contentDescription = "Local",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+                    BigDecimal(material.stockAvailable) <= BigDecimal.TEN -> {
+                        Tag(
+                            text = "Estoque: ${material.stockAvailable} ${material.requestUnit}",
+                            color = Color(0xFFFF9800),
+                            icon = Icons.Default.Warning
+                        )
+                    }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(2.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // 📦 Nome e quantidade do material
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = material.materialName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            AnimatedVisibility(!selected.value) {
-                                Text(
-                                    text = "Quantidade disponível: ${material.materialQuantity}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-
-                            AnimatedVisibility(visible = selected.value) {
-                                OutlinedTextField(
-                                    value = text,
-                                    onValueChange = { newValue ->
-                                        val sanitized = sanitizeDecimalInput(newValue.text)
-                                        text =
-                                            TextFieldValue(
-                                                sanitized,
-                                                TextRange(sanitized.length)
-                                            )
-                                    },
-                                    label = { Text("Qtde Exec") },
-                                    textStyle = LocalTextStyle.current.copy(
-                                        textAlign = TextAlign.Center,
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    modifier = Modifier
-                                        .size(width = 90.dp, height = 60.dp),
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Number,
-                                        imeAction = ImeAction.Done
-                                    ),
-                                )
-                            }
-                            IconToggleButton(
-                                checked = selected.value,
-                                onCheckedChange = { isChecked ->
-                                    changeMaterial(
-                                        material.materialStockId,
-                                        material.contractItemId,
-                                        isChecked,
-                                        material.reserveId,
-                                        material.materialName
-                                    )
-                                },
-                                colors = IconToggleButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.background,
-                                    contentColor = MaterialTheme.colorScheme.onBackground,
-                                    disabledContentColor = MaterialTheme.colorScheme.background,
-                                    disabledContainerColor = MaterialTheme.colorScheme.background,
-                                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedContainerColor = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier
-                                    .border(
-                                        border = BorderStroke(
-                                            if (!selected.value) 2.dp else 0.dp,
-                                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                                        ), shape = CircleShape
-                                    )
-                                    .size(30.dp)
-                            ) {
-                                if (selected.value)
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Check",
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                            }
-                        }
-
-
+                    else -> {
+                        Tag(
+                            text = "Estoque: ${material.stockAvailable} ${material.requestUnit}",
+                            color = MaterialTheme.colorScheme.primary,
+                            icon = Icons.Default.Check
+                        )
                     }
                 }
-            }
-        }
 
-    }
+                // Quantidade restante
+                Text(
+                    text = "Saldo a executar: ${material.materialQuantity} ${material.requestUnit}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        supportingContent = {
+            AnimatedVisibility(visible = selected.value) {
+                OutlinedTextField(
+                    value = TextFieldValue(quantity.value, TextRange(quantity.value.length)),
+                    onValueChange = { newValue ->
+                        val sanitized = sanitizeDecimalInput(newValue.text)
+                        text = TextFieldValue(sanitized, TextRange(sanitized.length))
+
+                        changeQuantity(
+                            material.reserveId,
+                            BigDecimal(text.text),
+                            BigDecimal(material.materialQuantity),
+                            BigDecimal(material.stockAvailable)
+                        )
+                    },
+                    label = { Text("Quantidade") },
+                    placeholder = { Text("0.00") },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .fillMaxWidth(0.5f)
+                        .height(56.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                )
+            }
+        },
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Default.Inventory2,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        },
+        trailingContent = {
+            IconToggleButton(
+                checked = selected.value,
+                onCheckedChange = { isChecked ->
+                    changeMaterial(
+                        isChecked,
+                        material.reserveId,
+                        material.contractItemId,
+                        material.materialStockId,
+                        material.materialName,
+                        BigDecimal(material.stockAvailable)
+                    )
+                },
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        if (selected.value)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.surface,
+                        shape = CircleShape
+                    )
+                    .border(
+                        BorderStroke(
+                            1.dp,
+                            if (selected.value)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Selecionar",
+                    tint = if (selected.value)
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .shadow(3.dp, RoundedCornerShape(12.dp)),
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    )
+
 }
 
 
@@ -1122,77 +1104,85 @@ fun PrevMStreetScreen() {
     val fakeContext = LocalContext.current
 
     val reserves = listOf(
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 10,
             materialName = "LED 120W",
             materialQuantity = "12",
             requestUnit = "UN",
             reserveId = 1,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 2,
-            materialName = "BRAÇO DE 3,5",
+            materialName = "BRAÇO DE PROJEÇÃO HORIZONTAL DE 3,5M",
             materialQuantity = "16",
             requestUnit = "UN",
             reserveId = 2,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 3,
             materialName = "BRAÇO DE 3,5",
             materialQuantity = "16",
             requestUnit = "UN",
             reserveId = 3,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 4,
             materialName = "CABO 1.5MM",
             materialQuantity = "30.4",
             requestUnit = "UN",
             reserveId = 4,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 5,
             materialName = "CABO 1.5MM",
             materialQuantity = "30.4",
             requestUnit = "UN",
             reserveId = 5,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 6,
             materialName = "CABO 1.5MM",
             materialQuantity = "30.4",
             requestUnit = "UN",
             reserveId = -1,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 7,
             materialName = "CABO 1.5MM",
             materialQuantity = "30.4",
             requestUnit = "UN",
             reserveId = -1,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         ),
-        DirectReserve(
+        ReserveMaterialJoin(
             materialStockId = 8,
             materialName = "CABO 1.5MM",
             materialQuantity = "30.4",
             requestUnit = "UN",
             reserveId = -1,
             contractItemId = -1,
-            directExecutionId = -1
+            directExecutionId = -1,
+            stockAvailable = "100"
         )
     )
 
@@ -1225,13 +1215,13 @@ fun PrevMStreetScreen() {
         openModal = {},
         alertModal = false,
         closeAlertModal = { },
-        changeMaterial = { _, _, _, _, _ -> },
+        changeMaterial = { _, _, _, _, _, _ -> },
         changeQuantity = { _, _, _, _ -> },
         errorMessage = null,
         alertMessage = mutableMapOf(
             "title" to "Título da mensagem",
             "body" to "Conteúdo da mensagem"
         ),
-        streetItems = emptyList()
+        streetItems = emptyList(),
     )
 }

@@ -116,7 +116,7 @@ interface QueueDao {
             )
         """
     )
-    fun getFlowExistsTypeInQueue(types: List<String>): Flow<Boolean>
+    suspend fun hasTypesInQueue(types: List<String>): Boolean
 
 
     @Query(

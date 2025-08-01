@@ -2,7 +2,9 @@ package com.lumos.ui.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +16,7 @@ import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.ReserveMaterialJoin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,8 +46,6 @@ class DirectExecutionViewModel(
     var alertModal by mutableStateOf(false)
     var confirmModal by mutableStateOf(false)
 
-    var locationModal by mutableStateOf(true)
-    var confirmLocation by mutableStateOf(false)
     var loadingCoordinates by mutableStateOf(false)
     var nextStep by mutableStateOf(false)
     var sameStreet by mutableStateOf(false)
@@ -53,7 +54,8 @@ class DirectExecutionViewModel(
 
     var errorMessage by mutableStateOf<String?>(null)
 
-    var reserves by mutableStateOf<List<DirectReserve>>(emptyList())
+    var reserves by mutableStateOf<List<ReserveMaterialJoin>>(emptyList())
+    var stockCount by  mutableIntStateOf(0)
 
     private fun initializeExecution(directExecutionId: Long, description: String) {
         if (street == null) {
@@ -82,8 +84,6 @@ class DirectExecutionViewModel(
         errorMessage = null
         alertModal = false
         confirmModal = false
-        locationModal = true
-        confirmLocation = false
         loadingCoordinates = false
         nextStep = false
         sameStreet = false
@@ -181,7 +181,7 @@ class DirectExecutionViewModel(
 //        }
 //    }
 
-    private suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> {
+    private suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> {
         return withContext(Dispatchers.IO) {
             repository.getReservesOnce(directExecutionId)
         }
@@ -244,6 +244,17 @@ class DirectExecutionViewModel(
         }
     }
 
+    fun countStock() {
+        viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    stockCount = repository.countStock()
+                } catch (e: Exception) {
+                    errorMessage = e.message
+                } finally {
+                    isLoading = false
+                }
+        }
+    }
 
 
 }

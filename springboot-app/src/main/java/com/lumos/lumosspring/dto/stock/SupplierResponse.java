@@ -1,7 +1,6 @@
-package com.lumos.lumosspring.stock.controller.dto;
+package com.lumos.lumosspring.dto.stock;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lumos.lumosspring.stock.entities.Material;
 import com.lumos.lumosspring.stock.entities.Supplier;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)  // Isso vai garantir que valores nulos não sejam serializados

@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.stock.controller;
 
-import com.lumos.lumosspring.stock.controller.dto.TypeDTO;
+import com.lumos.lumosspring.dto.stock.TypeDTO;
 import com.lumos.lumosspring.stock.entities.MaterialType;
 import com.lumos.lumosspring.stock.service.TypeService;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,8 @@
 package com.lumos.lumosspring.stock.controller;
 
-import com.lumos.lumosspring.stock.controller.dto.*;
+import com.lumos.lumosspring.dto.stock.StockMovementDTO;
+import com.lumos.lumosspring.dto.stock.SupplierDTO;
+import com.lumos.lumosspring.dto.stock.SupplierResponse;
 import com.lumos.lumosspring.stock.entities.Supplier;
 import com.lumos.lumosspring.stock.repository.StockQueryRepository;
 import com.lumos.lumosspring.stock.repository.SupplierRepository;

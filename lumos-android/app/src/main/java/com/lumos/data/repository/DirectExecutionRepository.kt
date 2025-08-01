@@ -18,6 +18,7 @@ import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.SendDirectExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
@@ -137,7 +138,7 @@ class DirectExecutionRepository(
     suspend fun getExecution(contractId: Long): DirectExecution? =
         db.directExecutionDao().getExecution(contractId)
 
-    suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve> =
+    suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> =
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
     private suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: String) {
@@ -296,6 +297,10 @@ class DirectExecutionRepository(
             db = db,
             directExecutionId = directExecutionId
         )
+    }
+
+    suspend fun countStock(): Int {
+        return db.stockDao().materialCount()
     }
 
 }

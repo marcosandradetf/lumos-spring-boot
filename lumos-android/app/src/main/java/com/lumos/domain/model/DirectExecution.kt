@@ -85,3 +85,15 @@ data class ReservePartial(
     val quantityExecuted: String,
     val materialName: String
 )
+
+
+data class ReserveMaterialJoin(
+    val reserveId: Long,
+    val directExecutionId: Long,
+    val materialStockId: Long, // *_*
+    val contractItemId: Long,
+    val materialName: String,
+    val materialQuantity: String,
+    val requestUnit: String,
+    val stockAvailable: String
+)

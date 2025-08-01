@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.controller.dto;
+package com.lumos.lumosspring.dto.stock;
 
 public record SupplierDTO(String name,
                           String cnpj,

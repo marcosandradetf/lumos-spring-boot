@@ -124,7 +124,7 @@ public class TokenService {
             // Não enviar refresh token no body para web
             return ResponseEntity.ok(new LoginResponse(newAccessToken, expiresIn, getRoles(user), getTeams(user)));
         } else {
-            return ResponseEntity.ok(new LoginResponseMobile(newAccessToken, expiresIn, getRoles(user), getTeams(user), newRefreshTokenValue, null));
+            return ResponseEntity.ok(new LoginResponseMobile(newAccessToken, expiresIn, getRoles(user), getTeams(user), newRefreshTokenValue, ""));
         }
     }
 

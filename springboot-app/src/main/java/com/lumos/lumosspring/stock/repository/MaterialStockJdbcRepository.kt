@@ -1,9 +1,7 @@
 package com.lumos.lumosspring.stock.repository
 
 import com.lumos.lumosspring.execution.dto.MaterialInStockDTO
-import com.lumos.lumosspring.stock.controller.dto.MaterialResponse
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
+import com.lumos.lumosspring.dto.stock.MaterialResponse
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -33,7 +31,7 @@ class MaterialStockJdbcRepository(
             materialLength = rs.getString("materialLength"),
             buyUnit = rs.getString("buyUnit"),
             requestUnit = rs.getString("requestUnit"),
-            stockQt = rs.getDouble("stockQt"),
+            stockQt = rs.getBigDecimal("stockQt"),
             inactive = rs.getBoolean("inactive"),
             materialType = rs.getString("materialType"),
             materialGroup = rs.getString("materialGroup"),
@@ -275,7 +273,7 @@ class MaterialStockJdbcRepository(
             materialLength   = rs.getString("materialLength"),
             buyUnit          = rs.getString("buyUnit"),
             requestUnit      = rs.getString("requestUnit"),
-            stockQt          = rs.getDouble("stockQt"),
+            stockQt          = rs.getBigDecimal("stockQt"),
             inactive         = rs.getBoolean("inactive"),
             materialType     = rs.getString("materialType"),
             materialGroup    = rs.getString("materialGroup"),
@@ -383,7 +381,7 @@ class MaterialStockJdbcRepository(
                 materialLength = rs.getString("materialLength"),
                 buyUnit = rs.getString("buyUnit"),
                 requestUnit = rs.getString("requestUnit"),
-                stockQt = rs.getDouble("stockQt"),
+                stockQt = rs.getBigDecimal("stockQt"),
                 inactive = rs.getBoolean("inactive"),
                 materialType = rs.getString("materialType"),
                 materialGroup = rs.getString("materialGroup"),

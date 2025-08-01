@@ -7,6 +7,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api")
@@ -21,7 +22,7 @@ class ExecutionController(
     fun delegateDirectExecution(@RequestBody execution: DirectExecutionDTO): ResponseEntity<Any> = executionService.delegateDirectExecution(execution)
 
     @GetMapping("/execution/get-reservations/{userUUID}")
-    fun getPendingReservesForStockist(@PathVariable userUUID: String): ResponseEntity<Any> =
+    fun getPendingReservesForStockist(@PathVariable userUUID: UUID): ResponseEntity<Any> =
         executionService.getPendingReservesForStockist(userUUID)
 
     @GetMapping("/execution/get-stock-materials/{linking}/{type}/{truckDepositName}")

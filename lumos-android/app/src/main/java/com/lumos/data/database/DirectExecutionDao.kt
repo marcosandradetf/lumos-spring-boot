@@ -10,6 +10,7 @@ import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.ReservePartial
 import kotlinx.coroutines.flow.Flow
 
@@ -49,8 +50,15 @@ interface DirectExecutionDao {
     @Query("select * from direct_execution where directExecutionId = :directExecutionId")
     suspend fun getExecution(directExecutionId: Long): DirectExecution?
 
-    @Query("select * from direct_reserve where directExecutionId = :directExecutionId AND materialQuantity  > 0.0")
-    suspend fun getReservesOnce(directExecutionId: Long): List<DirectReserve>
+    @Query("""
+        SELECT de.reserveId as reserveId, de.directExecutionId as directExecutionId, de.materialStockId,
+        de.contractItemId, de.materialName as materialName, de.materialQuantity as materialQuantity, 
+        de.requestUnit as requestUnit,  ms.stockAvailable as stockAvailable 
+        from direct_reserve de
+        JOIN material_stock ms on ms.materialStockId = de.materialStockId
+        WHERE de.directExecutionId = :directExecutionId AND CAST(de.materialQuantity AS NUMERIC) > 0
+    """)
+    suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin>
 
     @Insert(onConflict = IGNORE)
     suspend fun createStreet(street: DirectExecutionStreet): Long

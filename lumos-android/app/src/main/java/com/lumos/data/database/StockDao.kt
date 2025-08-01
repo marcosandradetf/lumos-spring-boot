@@ -27,6 +27,13 @@ interface StockDao {
 
     @Query(
         """
+        select count(*) from material_stock
+    """
+    )
+    suspend fun materialCount(): Int
+
+    @Query(
+        """
         select * from deposit order by depositName
     """
     )

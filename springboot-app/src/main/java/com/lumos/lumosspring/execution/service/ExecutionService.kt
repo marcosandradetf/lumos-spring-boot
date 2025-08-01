@@ -39,7 +39,6 @@ class ExecutionService(
     private val materialReservationRepository: MaterialReservationRepository,
     private val materialStockRepository: MaterialStockRepository,
     private val notificationService: NotificationService,
-    private val util: Util,
     private val userRepository: UserRepository,
     private val reservationManagementRepository: ReservationManagementRepository,
     private val minioService: MinioService,
@@ -122,29 +121,29 @@ class ExecutionService(
             .body(DefaultResponse("Contrato não encontrado"))
 
         val currentUserUUID = execution.currentUserId
-
-        val exists = JdbcUtil.getSingleRow(
-            namedJdbc,
-            """
-                select 1 as result from direct_execution
-                where contract_id = :contractId
-                and direct_execution_status <> :status
-                limit 1
-            """.trimIndent(),
-            mapOf(
-                "contractId" to execution.contractId,
-                "status" to ExecutionStatus.FINISHED
-            )
-        )?.get("result") != null
-
-        if (exists) {
-            throw IllegalArgumentException(
-                """
-                    Existe uma etapa em andamento para este contrato que ainda não foi finalizada. 
-                    Para criar uma nova etapa, finalize a etapa atual ou acompanhe o progresso no sistema.
-                """.trimIndent()
-            )
-        }
+//
+//        val exists = JdbcUtil.getSingleRow(
+//            namedJdbc,
+//            """
+//                select 1 as result from direct_execution
+//                where contract_id = :contractId
+//                and direct_execution_status <> :status
+//                limit 1
+//            """.trimIndent(),
+//            mapOf(
+//                "contractId" to execution.contractId,
+//                "status" to ExecutionStatus.FINISHED
+//            )
+//        )?.get("result") != null
+//
+//        if (exists) {
+//            throw IllegalArgumentException(
+//                """
+//                    Existe uma etapa em andamento para este contrato que ainda não foi finalizada.
+//                    Para criar uma nova etapa, finalize a etapa atual ou acompanhe o progresso no sistema.
+//                """.trimIndent()
+//            )
+//        }
 
         val step: Int = namedJdbc.queryForObject(
             """
@@ -227,7 +226,7 @@ class ExecutionService(
             type = NotificationType.ALERT,
         )
 
-        return ResponseEntity.ok().build()
+        return ResponseEntity.ok().body("$step etapa criada com sucesso")
     }
 
     fun getPendingReservesForStockist(userUUID: UUID): ResponseEntity<Any> {
@@ -458,18 +457,20 @@ class ExecutionService(
                         mapOf("materialId" to materialReserve.centralMaterialStockId, "userId" to userUUID)
                     )
 
-                    val status = if (stockistMatch) ReservationStatus.APPROVED else ReservationStatus.PENDING
-
-                    namedJdbc.update(
-                        """
+                    val status = if (stockistMatch) {
+                        namedJdbc.update(
+                            """
                             UPDATE material_stock set stock_available = stock_available - :materialQuantity 
                             WHERE material_id_stock = :centralMaterialStockId
                         """.trimIndent(),
-                        mapOf(
-                            "materialQuantity" to materialReserve.materialQuantity,
-                            "centralMaterialStockId" to materialReserve.centralMaterialStockId
+                            mapOf(
+                                "materialQuantity" to materialReserve.materialQuantity,
+                                "centralMaterialStockId" to materialReserve.centralMaterialStockId
+                            )
                         )
-                    )
+
+                        ReservationStatus.APPROVED
+                    } else ReservationStatus.PENDING
 
                     val truckMaterialStockId = JdbcUtil.getSingleRow(
                         namedJdbc,
@@ -495,18 +496,6 @@ class ExecutionService(
                     )
 
                 } else {
-
-                    namedJdbc.update(
-                        """
-                            UPDATE material_stock set stock_available = stock_available - :materialQuantity
-                            WHERE material_id_stock = :truckMaterialStockId
-                        """.trimIndent(),
-                        mapOf(
-                            "materialQuantity" to materialReserve.materialQuantity,
-                            "truckMaterialStockId" to materialReserve.truckMaterialStockId
-                        )
-                    )
-
                     MaterialReservation(
                         description = preMeasurementStreet?.street,
                         reservedQuantity = materialReserve.materialQuantity,
@@ -597,13 +586,13 @@ class ExecutionService(
         } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
             directExecution.directExecutionStatus = ExecutionStatus.WAITING_COLLECT
             responseMessage =
-                "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
+                "Como nenhum material foi solicitado em almoxarifado de terceiros. Não será necessário aprovação. " +
                         "Mas os materiais estão pendentes de coleta pela equipe."
 
         } else if (reservation.any { it.status == ReservationStatus.PENDING }) {
             directExecution.directExecutionStatus = ExecutionStatus.WAITING_RESERVE_CONFIRMATION
             responseMessage =
-                "Como alguns itens foram reservadas em almoxarifados de terceiros. Será necessária aprovação. " +
+                "Como alguns itens foram solicitados em almoxarifados de terceiros. Será necessária aprovação. " +
                         "Após isso estes materiais estarão disponíveis para coleta."
         }
 
@@ -672,7 +661,7 @@ class ExecutionService(
             val teamCode = team?.teamCode
 
             bodyMessage = """
-                Por favor, aceite ou negar as reservas com urgência!
+                Por favor, aceite ou negue as solicitações com urgência!
                 """.trimIndent()
 
             if (teamCode != null)
@@ -1005,6 +994,31 @@ class ExecutionService(
 
         for (m in executionDTO.materials) {
 
+            namedJdbc.update(
+                """
+                    UPDATE material_stock
+                    SET stock_quantity = stock_quantity - :quantityCompleted, 
+                        stock_available = stock_available - :quantityCompleted,
+                    WHERE material_id_stock = :materialStockId
+                """.trimIndent(),
+                mapOf(
+                    "quantityCompleted" to m.quantityExecuted,
+                    "materialStockId" to m.truckMaterialStockId,
+                )
+            )
+
+            namedJdbc.update(
+                """
+                    UPDATE material_reservation
+                    SET quantity_completed = quantity_completed + :quantityCompleted
+                    WHERE material_id_reservation = :reserveId
+                """.trimIndent(),
+                mapOf(
+                    "quantityCompleted" to m.quantityExecuted,
+                    "reserveId" to m.reserveId,
+                )
+            )
+
             val item = DirectExecutionStreetItem(
                 executedQuantity = m.quantityExecuted,
                 materialStockId = m.truckMaterialStockId,
@@ -1088,31 +1102,6 @@ class ExecutionService(
                     params
                 )
             }
-
-            namedJdbc.update(
-                """
-                    UPDATE material_reservation
-                    SET quantity_completed = quantity_completed + :quantityCompleted
-                    WHERE material_id_reservation = :reserveId
-                """.trimIndent(),
-                mapOf(
-                    "quantityCompleted" to m.quantityExecuted,
-                    "reserveId" to m.reserveId,
-                )
-            )
-
-            namedJdbc.update(
-                """
-                    UPDATE material_stock
-                    SET stock_quantity = stock_quantity - :quantityCompleted
-                    WHERE material_id_stock = :materialStockId
-                """.trimIndent(),
-                mapOf(
-                    "quantityCompleted" to m.quantityExecuted,
-                    "materialStockId" to m.truckMaterialStockId,
-                )
-            )
-
         }
 
         return ResponseEntity.ok().build()
@@ -1154,50 +1143,20 @@ class ExecutionService(
         )?.get("result") != null
 
         if (hasFinished) {
-            return ResponseEntity.status(409).build()
+            return ResponseEntity.status(409).body("Execução já finalizada anteriormente")
         }
 
-        val reservations = getRawData(
-            namedJdbc,
+        namedJdbc.update(
             """
-                select material_id_reservation, reserved_quantity - quantity_completed as quantity_to_return, truck_material_stock_id
-                from material_reservation
-                where direct_execution_id = :directExecutionId
-            """.trimIndent(),
-            mapOf("directExecutionId" to directExecutionId)
-        )
-
-        for (reserve in reservations) {
-            val quantityToReturn = BigDecimal(reserve["quantity_to_return"].toString())
-            val truckMaterialId = reserve["truck_material_stock_id"] as Long
-            val reservationId = reserve["material_id_reservation"] as Long
-
-            namedJdbc.update(
-                """
                         UPDATE material_reservation
                         SET status = :status
-                        WHERE material_id_reservation = :reservationId
+                        WHERE direct_execution_id = :directExecutionId
                     """.trimIndent(),
-                mapOf(
-                    "reservationId" to reservationId,
-                    "status" to ReservationStatus.FINISHED
-                )
+            mapOf(
+                "directExecutionId" to directExecutionId,
+                "status" to ReservationStatus.FINISHED
             )
-
-            if (quantityToReturn > BigDecimal.ZERO) {
-                namedJdbc.update(
-                    """
-                        UPDATE material_stock
-                        SET stock_available = stock_available + :quantityToReturn
-                        WHERE material_id_stock = :truckMaterialIdStock
-                    """.trimIndent(),
-                    mapOf(
-                        "quantityToReturn" to quantityToReturn,
-                        "truckMaterialIdStock" to truckMaterialId
-                    )
-                )
-            }
-        }
+        )
 
         namedJdbc.update(
             """

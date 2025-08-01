@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,14 +63,12 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
-import com.lumos.ui.viewmodel.StockViewModel
 
 @Composable
 fun CitiesScreen(
     lastRoute: String? = null,
     indirectExecutionViewModel: IndirectExecutionViewModel,
     directExecutionViewModel: DirectExecutionViewModel,
-    stockViewModel: StockViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -81,7 +80,6 @@ fun CitiesScreen(
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
     val title = if (directExecution) "Execuções sem pré-medição" else "Execuções com pré-medição"
-    val stockData by stockViewModel.stock.collectAsState()
 
 //    val allExecutions by executionViewModel.executions.collectAsState()
     val allExecutions by if (directExecution) {
@@ -104,6 +102,8 @@ fun CitiesScreen(
         if (!roles.any { it in requiredRoles }) {
             navController.navigate(Routes.NO_ACCESS + "/${if (directExecution) Routes.DIRECT_EXECUTION_SCREEN else Routes.EXECUTION_SCREEN}")
         }
+
+        directExecutionViewModel.countStock()
 
         if (directExecution)
             directExecutionViewModel.syncExecutions()
@@ -142,7 +142,7 @@ fun CitiesScreen(
         markAsFinished = { contractId ->
             directExecutionViewModel.markAsFinished(contractId)
         },
-        stockDataSize = stockData.size
+        stockDataSize = directExecutionViewModel.stockCount
     )
 }
 

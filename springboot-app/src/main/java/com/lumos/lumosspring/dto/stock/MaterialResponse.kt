@@ -1,4 +1,6 @@
-package com.lumos.lumosspring.stock.controller.dto
+package com.lumos.lumosspring.dto.stock
+
+import java.math.BigDecimal
 
 data class MaterialResponse(
     val idMaterial: Long,
@@ -9,7 +11,7 @@ data class MaterialResponse(
     val materialLength: String?,
     val buyUnit: String,
     val requestUnit: String,
-    val stockQt: Double,
+    val stockQt: BigDecimal,
     val inactive: Boolean,
     val materialType: String,
     val materialGroup: String,

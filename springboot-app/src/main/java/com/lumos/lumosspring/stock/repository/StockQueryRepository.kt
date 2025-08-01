@@ -3,6 +3,7 @@ package com.lumos.lumosspring.stock.repository
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
 import java.util.*
 
 @Repository
@@ -15,8 +16,8 @@ class StockQueryRepository(
         val materialStockId: Long,
         val materialName: String,
         val specs: String?,
-        val stockQuantity: Double,
-        val stockAvailable: Double,
+        val stockQuantity: BigDecimal,
+        val stockAvailable: BigDecimal,
         val requestUnit: String,
         val type: String,
     )
@@ -58,8 +59,8 @@ class StockQueryRepository(
                 materialStockId = rs.getLong("material_id_stock"),
                 materialName = rs.getString("material_name"),
                 specs = rs.getString("specs"),
-                stockQuantity = rs.getDouble("stock_quantity"),
-                stockAvailable = rs.getDouble("stock_available"),
+                stockQuantity = rs.getBigDecimal("stock_quantity"),
+                stockAvailable = rs.getBigDecimal("stock_available"),
                 requestUnit = rs.getString("request_unit"),
                 type = rs.getString("type_name"),
             )

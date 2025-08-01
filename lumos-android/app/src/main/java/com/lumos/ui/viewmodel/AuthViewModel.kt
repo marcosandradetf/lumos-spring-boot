@@ -1,12 +1,10 @@
 package com.lumos.ui.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
-import com.lumos.midleware.SecureStorage
 import com.lumos.data.repository.AuthRepository
+import com.lumos.midleware.SecureStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

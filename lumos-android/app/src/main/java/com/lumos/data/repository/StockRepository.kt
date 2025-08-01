@@ -29,8 +29,8 @@ class StockRepository(
 ) {
     private val stockApi = api.createApi(StockApi::class.java)
 
-    fun getFlowExistsTypeInQueue(types: List<String>): Flow<Boolean> {
-        return db.queueDao().getFlowExistsTypeInQueue(types)
+    suspend fun hasTypesInQueue(types: List<String>): Boolean {
+        return db.queueDao().hasTypesInQueue(types)
     }
 
     suspend fun queueGetStock() {

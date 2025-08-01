@@ -102,6 +102,13 @@ class SecureStorage(private val context: Context) {
         }
     }
 
+    fun saveRefreshToken(newRefreshToken: String) {
+        val prefs = getSharedPreferences()
+        prefs.edit {
+            putString(KEY_REFRESH_TOKEN, newRefreshToken)
+        }
+    }
+
     fun clearAll() {
         getSharedPreferences().edit { clear() }
     }

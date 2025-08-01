@@ -60,7 +60,7 @@ class AuthInterceptor(
 
                     if (tokenResponse.isSuccessful) {
                         // Retorna o novo token de acesso se a resposta for bem-sucedida
-                        tokenResponse.body()?.accessToken
+                        tokenResponse.body()
                     } else {
                         // Trata a falha na requisição (por exemplo, token de refresh inválido)
                         Log.e(
@@ -86,11 +86,12 @@ class AuthInterceptor(
 
             // Se obtivemos um novo access token, tenta a requisição novamente com o novo token
             if (newAccessToken != null) {
-                secureStorage.saveAccessToken(newAccessToken)
+                secureStorage.saveAccessToken(newAccessToken.accessToken)
+                secureStorage.saveRefreshToken(newAccessToken.refreshToken)
 
                 // Aqui, fazemos a chamada novamente com o novo token
                 val newRequest = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer $newAccessToken")
+                    .addHeader("Authorization", "Bearer ${newAccessToken.accessToken}")
                     .build()
                 return chain.proceed(newRequest)
             }

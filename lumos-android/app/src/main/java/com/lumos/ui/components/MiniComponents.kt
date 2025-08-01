@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.UpdateDisabled
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
@@ -366,32 +368,28 @@ fun NoInternet(message: String? = null) {
         }
     }
 }
-
 @Composable
-fun Tag(text: String, color: Color, icon: ImageVector? = null) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .background(color, RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        icon?.let {
-            Icon(
-                imageVector = it,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.background,
-                modifier = Modifier
-                    .size(14.dp)
-                    .padding(end = 4.dp)
+fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
+    AssistChip(
+        onClick = {},
+        label = {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium
             )
-        }
-        Text(
-            text = text,
-            color = MaterialTheme.colorScheme.background,
-            style = MaterialTheme.typography.labelSmall,
-        )
-    }
+        },
+        leadingIcon = {
+            if(icon!=null)Icon(imageVector = icon, contentDescription = null)
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = color.copy(alpha = 0.1f),
+            labelColor = color,
+            leadingIconContentColor = color
+        ),
+        modifier = Modifier.padding(vertical = 2.dp)
+    )
 }
+
 
 
 
