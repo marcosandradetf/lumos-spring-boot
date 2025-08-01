@@ -228,7 +228,7 @@ class ExecutionService(
             type = NotificationType.ALERT,
         )
 
-        return ResponseEntity.ok().body("$step etapa criada com sucesso")
+        return ResponseEntity.ok().body(DefaultResponse("$step etapa criada com sucesso"))
     }
 
     fun getPendingReservesForStockist(userUUID: UUID): ResponseEntity<Any> {
