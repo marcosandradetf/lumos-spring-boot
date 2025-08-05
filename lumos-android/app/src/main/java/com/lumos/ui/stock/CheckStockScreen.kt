@@ -145,7 +145,13 @@ fun CheckStockScreen(
             if (ConnectivityUtils.hasRealInternetConnection()) {
                 hasInternet = true
 
-                stockViewModel.callSyncStock()
+                stockViewModel.hasTypesInQueue(
+                    listOf(
+                        SyncTypes.POST_MAINTENANCE_STREET,
+                        SyncTypes.POST_DIRECT_EXECUTION,
+                        SyncTypes.POST_INDIRECT_EXECUTION
+                    )
+                )
             } else {
                 hasInternet = false
             }

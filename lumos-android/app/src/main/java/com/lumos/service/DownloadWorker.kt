@@ -36,7 +36,7 @@ class DownloadWorker(
             val fileName = url.substringAfterLast("/")
 
             // Verifica a conectividade antes de tentar o download
-            if (ConnectivityUtils.isNetworkGood(applicationContext)) {
+            if (ConnectivityUtils.hasRealInternetConnection()) {
                 // Realiza o download do arquivo
                 val response = api.downloadFile(url)
                 if (!response.isSuccessful || response.body() == null) {

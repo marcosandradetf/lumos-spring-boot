@@ -198,7 +198,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (ConnectivityUtils.isNetworkGood(applicationContext) && ConnectivityUtils.hasRealInternetConnection()) {
+            if (ConnectivityUtils.hasRealInternetConnection()) {
                 Log.e("postGeneric", "Internet")
                 queueDao.update(inProgressItem)
                 val request = UpdateEntity(
@@ -256,7 +256,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) {
+            if (!ConnectivityUtils.hasRealInternetConnection()) {
                 return Result.retry()
             }
 
@@ -312,7 +312,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if (ConnectivityUtils.isNetworkGood(applicationContext) && ConnectivityUtils.hasRealInternetConnection()) {
+            if (ConnectivityUtils.hasRealInternetConnection()) {
                 Log.e("SyncStock", "Internet")
                 queueDao.update(inProgressItem)
                 val response = contractRepository.syncContractItems()
@@ -349,7 +349,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if (ConnectivityUtils.isNetworkGood(applicationContext) && ConnectivityUtils.hasRealInternetConnection()) {
+            if (ConnectivityUtils.hasRealInternetConnection()) {
                 Log.e("syncContract", "Internet")
                 queueDao.update(inProgressItem)
                 val response = contractRepository.syncContracts()
@@ -382,7 +382,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -418,7 +418,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -462,7 +462,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -503,7 +503,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -549,7 +549,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -596,7 +596,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -643,7 +643,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -687,7 +687,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.isNetworkGood(applicationContext) && !ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa

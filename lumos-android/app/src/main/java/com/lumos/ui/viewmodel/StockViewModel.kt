@@ -40,10 +40,10 @@ class StockViewModel(
         loadStockFlow()
     }
 
-    fun callSyncStock() {
+    private fun callSyncStock() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.queueGetStock()
+                repository.callGetStock()
             } catch (e: Exception) {
                 _message.value = e.message ?: "ViewModel - Erro ao tentar sincronizar estoque"
             }
