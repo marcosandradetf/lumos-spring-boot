@@ -163,5 +163,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
 
     implementation("androidx.compose.material3:material3:1.3.0")
+    implementation("com.google.android.play:app-update:2.1.0")
+
 }
 

@@ -1,10 +1,11 @@
 package com.lumos.utils
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.compose.ui.text.toLowerCase
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -16,6 +17,17 @@ import java.util.Locale
 import java.util.UUID
 
 object Utils {
+
+    fun Context.findActivity(): Activity? {
+        var ctx = this
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) return ctx
+            ctx = ctx.baseContext
+        }
+        return null
+    }
+
+
     val dateTime: Instant
         get() {
             val date = ZonedDateTime.now(

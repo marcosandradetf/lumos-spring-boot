@@ -1,11 +1,7 @@
 package com.lumos.ui.components
 
-import android.graphics.drawable.Icon
-import android.graphics.fonts.Font
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,29 +18,25 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.UpdateDisabled
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -391,6 +383,93 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
 }
 
 
+@Composable
+fun UpdateModal(
+    context: Context,
+    title: String = "Atualização em andamento",
+    body: String = "Por favor, aguarde enquanto o app está sendo atualizado...",
+    progress: Int = 0,
+    onRestart: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val iconId = context.applicationInfo.icon
+    val appIcon = if (iconId != 0) painterResource(id = iconId) else null
+
+    AlertDialog(
+        onDismissRequest = { /* bloquear dismiss para não fechar sozinho */ },
+        shape = RoundedCornerShape(12.dp),
+        icon = {
+            appIcon?.let {
+                Icon(
+                    painter = it,
+                    contentDescription = "App Icon",
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Column(
+                Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "$body $progress%",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                LinearProgressIndicator(
+                    progress = { progress / 100f },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                )
+            }
+        },
+        confirmButton = {
+            if (progress >= 100) {
+                TextButton(
+                    onClick = onRestart,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Reiniciar App",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            if (progress < 100) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Cancelar",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    )
+}
 
 
 @Preview(showBackground = true)

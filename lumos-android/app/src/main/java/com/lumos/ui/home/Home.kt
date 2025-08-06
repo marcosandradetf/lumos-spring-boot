@@ -1,5 +1,6 @@
 package com.lumos.ui.home
 
+import android.content.IntentSender
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
@@ -28,8 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +42,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.lumos.data.repository.ContractStatus
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.InstallState
+import com.google.android.play.core.install.InstallStateUpdatedListener
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.InstallStatus
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.ExecutionHolder
 import com.lumos.midleware.SecureStorage
@@ -47,11 +56,16 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.UpdateModal
 import com.lumos.ui.viewmodel.ContractViewModel
 import com.lumos.ui.viewmodel.DirectExecutionViewModel
 import com.lumos.ui.viewmodel.IndirectExecutionViewModel
 import com.lumos.utils.ConnectivityUtils
+import com.lumos.utils.Utils.findActivity
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlin.system.exitProcess
+
 
 @Composable
 fun HomeScreen(
@@ -67,49 +81,25 @@ fun HomeScreen(
 ) {
     val TWELVE_HOURS = 12 * 60 * 60 * 1000L
 
-
     val context = LocalContext.current
     val executions = directExecutionViewModel.directExecutions.collectAsState()
     val contracts = contractViewModel.contracts.collectAsState()
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
 
-    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-    val currentVersionCode =
-        packageInfo.longVersionCode
-
     var updateModal by remember { mutableStateOf(false) }
     var noUpdateModal by remember { mutableStateOf(false) }
-    var encodedUrl by remember { mutableStateOf("") }
+    var updateCompleted by remember { mutableStateOf(false) }
+    var updateProgress by remember { mutableIntStateOf(0) }
 
+    val appUpdateManager = AppUpdateManagerFactory.create(context)
+    val activity = context.findActivity()
 
-    LaunchedEffect(Unit) {
-        contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
-
-        val lastCheck = secureStorage.getLastUpdateCheck()
-        val now = System.currentTimeMillis()
-        val isStaleCheck = now >= lastCheck && (now - lastCheck > TWELVE_HOURS)
-
-        if (isStaleCheck) { // 12h
-            secureStorage.setLastUpdateCheck()
-
-            directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
-                if (newVersion != null && apkUrl != null && newVersion > currentVersionCode) {
-                    encodedUrl = Uri.encode(apkUrl)
-                    if (ConnectivityUtils.wifiConnected(context))
-                        navController.navigate(Routes.UPDATE + "/$encodedUrl")
-                    else
-                        updateModal = true
-                }
-
-            }
-
-            directExecutionViewModel.syncExecutions()
-            contractViewModel.syncContracts()
-        }
-
+    val restartApp = {
+        activity?.finishAffinity()
+        exitProcess(0)
     }
-
+    val scope = rememberCoroutineScope()
 
     AppLayout(
         title = "Início",
@@ -126,7 +116,76 @@ fun HomeScreen(
         navigateToMaintenance = {
             navController.navigate(Routes.MAINTENANCE)
         }
-    ) { modifier, _ ->
+    ) { modifier, showSnackBar ->
+
+        suspend fun checkUpdate() {
+            val appUpdateInfo = appUpdateManager.appUpdateInfo.await()
+            val options = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                updateModal = true // mostrar modal de atualização em progresso
+
+                val listener = object : InstallStateUpdatedListener {
+                    override fun onStateUpdate(state: InstallState) {
+                        when (state.installStatus()) {
+                            InstallStatus.INSTALLED -> {
+                                appUpdateManager.unregisterListener(this)
+                                updateModal = false
+                                updateCompleted = true
+                            }
+
+                            InstallStatus.DOWNLOADING,
+                            InstallStatus.INSTALLING -> {
+                                val progress = if (state.totalBytesToDownload() > 0)
+                                    (state.bytesDownloaded() * 100 / state.totalBytesToDownload()).toInt()
+                                else 0
+                                updateProgress = progress
+                            }
+
+                            InstallStatus.FAILED -> {
+                                appUpdateManager.unregisterListener(this)
+                                updateModal = false
+                                showSnackBar("Falha ao atualizar o app", null)
+                            }
+
+                            else -> {}
+                        }
+                    }
+                }
+
+                appUpdateManager.registerListener(listener)
+
+                try {
+                    appUpdateManager.startUpdateFlow(
+                        appUpdateInfo,
+                        activity!!,
+                        options
+                    )
+                } catch (e: IntentSender.SendIntentException) {
+                    updateModal = false
+                    Log.e("UpdateCheck", "Erro ao iniciar atualização: ${e.message}")
+                    showSnackBar("Erro ao iniciar atualização: ${e.message}", null)
+                }
+            } else {
+                noUpdateModal = true
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            val lastCheck = secureStorage.getLastUpdateCheck()
+            val now = System.currentTimeMillis()
+            val isStaleCheck = now >= lastCheck && (now - lastCheck > TWELVE_HOURS)
+
+            if (isStaleCheck) {
+                secureStorage.setLastUpdateCheck()
+                checkUpdate()
+                directExecutionViewModel.syncExecutions()
+                contractViewModel.syncContracts()
+            }
+        }
+
         Column(
             modifier = modifier
                 .padding(2.dp)
@@ -146,22 +205,8 @@ fun HomeScreen(
 
             Button(
                 onClick = {
-                    directExecutionViewModel.checkUpdate(currentVersionCode) { newVersion, apkUrl ->
-                        Log.e("v", newVersion.toString())
-                        newVersion?.let {
-                            if (newVersion > currentVersionCode) {
-                                apkUrl?.let {
-                                    encodedUrl = Uri.encode(apkUrl)
-
-                                    if (ConnectivityUtils.wifiConnected(context))
-                                        navController.navigate(Routes.UPDATE + "/$encodedUrl")
-                                    else
-                                        updateModal = true
-                                }
-                            } else {
-                                noUpdateModal = true
-                            }
-                        }
+                    scope.launch {
+                        checkUpdate()
                     }
                 },
                 modifier = Modifier
@@ -203,20 +248,18 @@ fun HomeScreen(
         }
 
         if (updateModal) {
-            Confirm(
-                "Nova atualização disponível",
-                body = "Deseja atualizar agora?",
-                icon = Icons.Filled.SystemUpdate,
-                confirm = {
-                    navController.navigate(Routes.UPDATE + "/$encodedUrl")
-                },
-                cancel = {
+            UpdateModal(
+                context = context,
+                progress = updateProgress,
+                onDismiss = { updateModal = false },
+                onRestart = {
                     updateModal = false
-                },
+                    restartApp()
+                }
             )
         }
 
-        if(noUpdateModal) {
+        if (noUpdateModal) {
             Alert(
                 title = "Atualização",
                 body = "Nenhuma atualização disponível, avisaremos quando surgir uma nova versão.",
