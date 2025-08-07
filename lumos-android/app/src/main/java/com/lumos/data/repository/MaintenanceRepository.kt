@@ -8,7 +8,6 @@ import com.lumos.data.api.ApiExecutor
 import com.lumos.data.api.ApiService
 import com.lumos.data.api.MaintenanceApi
 import com.lumos.data.api.RequestResult
-import com.lumos.data.api.RequestResult.ServerError
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
@@ -16,14 +15,14 @@ import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
 
 class MaintenanceRepository(
     private val db: AppDatabase,
@@ -54,16 +53,25 @@ class MaintenanceRepository(
         }
     }
 
+
     suspend fun getItemsByStreetId(maintenanceStreetId: String): List<MaintenanceStreetItem> {
         return db.maintenanceDao().getItemsByStreetId(maintenanceStreetId)
     }
 
     fun getFlowMaintenance(status: String): Flow<List<MaintenanceJoin>> {
-        return db.maintenanceDao().getFlowMaintenance(status)
+        return db.maintenanceDao()
+            .getFlowMaintenance(status)
+            .flowOn(Dispatchers.IO)
     }
 
     fun getFlowStreets(): Flow<List<MaintenanceStreet>> {
-        return db.maintenanceDao().getFlowStreets()
+        return db.maintenanceDao()
+            .getFlowStreets()
+            .flowOn(Dispatchers.IO)
+    }
+
+    suspend fun getMaintenanceByStatus(status: String): List<MaintenanceJoin> {
+        return db.maintenanceDao().getMaintenancesByStatus(status)
     }
 
     private suspend fun queuePostMaintenance(maintenanceId: String) {

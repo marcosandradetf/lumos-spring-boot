@@ -1,5 +1,8 @@
 package com.lumos.ui.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.api.RequestResult
@@ -17,6 +20,7 @@ class AuthViewModel(
 ) : ViewModel() {
     private val _isAuthenticated = MutableStateFlow<Boolean?>(null)
     val isAuthenticated: StateFlow<Boolean?> = _isAuthenticated
+    var loading by mutableStateOf(false)
 
     fun login(
         username: String,
@@ -37,6 +41,7 @@ class AuthViewModel(
                 is RequestResult.Success -> {
                     onSuccess()
                 }
+
                 is RequestResult.SuccessEmptyBody -> onFailure()
                 is RequestResult.NoInternet -> onFailure()
                 is RequestResult.ServerError -> onFailure()
@@ -46,19 +51,32 @@ class AuthViewModel(
         }
     }
 
-     fun logout(
+    fun logout(
         onSuccess: () -> Unit,
     ) {
-         viewModelScope.launch(Dispatchers.Main) {
-             _isAuthenticated.value = false
-             authRepository.logout(onSuccess)
-         }
+        viewModelScope.launch {
+            loading = true
+            withContext(Dispatchers.IO) {
+                authRepository.logout(onSuccess)
+            }
+            _isAuthenticated.value = false
+            loading = false
+        }
     }
 
     fun authenticate() {
         viewModelScope.launch {
-            val accessToken = secureStorage.getAccessToken()
-            _isAuthenticated.value = accessToken != null
+            loading = true
+            try {
+                val accessToken = withContext(Dispatchers.IO) {
+                    secureStorage.getAccessToken()
+                }
+                _isAuthenticated.value = accessToken != null
+            } catch (_: Exception) {
+
+            } finally {
+                loading = false
+            }
         }
     }
 

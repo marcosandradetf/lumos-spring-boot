@@ -24,11 +24,36 @@ interface MaintenanceDao {
     suspend fun insertMaintenanceStreetItems(items: List<MaintenanceStreetItem>)
 
     @Query("""
-        select m.*, c.contractor from maintenance m
-        join contracts c on c.contractId = m.contractId
-        where m.status = :status
+         SELECT 
+            m.maintenanceId AS maintenanceId,
+            m.contractId AS contractId,
+            m.pendingPoints AS pendingPoints,
+            m.quantityPendingPoints AS quantityPendingPoints,
+            m.dateOfVisit AS dateOfVisit,
+            m.type AS type,
+            m.status AS status,
+            c.contractor AS contractor
+        FROM maintenance m
+        JOIN contracts c ON c.contractId = m.contractId
+        WHERE m.status = :status
     """)
     fun getFlowMaintenance(status: String): Flow<List<MaintenanceJoin>>
+
+    @Query("""
+        SELECT 
+            m.maintenanceId AS maintenanceId,
+            m.contractId AS contractId,
+            m.pendingPoints AS pendingPoints,
+            m.quantityPendingPoints AS quantityPendingPoints,
+            m.dateOfVisit AS dateOfVisit,
+            m.type AS type,
+            m.status AS status,
+            c.contractor AS contractor
+        FROM maintenance m
+        JOIN contracts c ON c.contractId = m.contractId
+        WHERE m.status = :status
+    """)
+    suspend fun getMaintenancesByStatus(status: String): List<MaintenanceJoin>
 
     @Query("select * from maintenancestreet")
     fun getFlowStreets(): Flow<List<MaintenanceStreet>>

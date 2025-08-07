@@ -31,7 +31,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +51,7 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.CurrentScreenLoading
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
@@ -61,7 +61,6 @@ import com.lumos.ui.viewmodel.StockViewModel
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.abbreviate
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import java.util.UUID
 
 enum class MaintenanceUIState {
@@ -80,64 +79,44 @@ fun MaintenanceScreen(
     lastRoute: String?,
 ) {
     val viewModelAux: MaintenanceHomeViewModel = viewModel()
+    val uiState by maintenanceViewModel.uiState.collectAsState()
 
     val stock by stockViewModel.stock.collectAsState()
-    val contractSelected by maintenanceViewModel.contractSelected.collectAsState()
-    val streetCreated by maintenanceViewModel.streetCreated.collectAsState()
-    val finish by maintenanceViewModel.finish.collectAsState()
-
-    val maintenanceLoading by maintenanceViewModel.loading.collectAsState()
-    val maintenanceMessage by maintenanceViewModel.message.collectAsState()
     val contractLoading by contractViewModel.isSyncing.collectAsState()
     val contractMessage by contractViewModel.syncError.collectAsState()
     val hasInternet by contractViewModel.hasInternet.collectAsState()
     var forceLoading by remember { mutableStateOf(false) }
-
-    val maintenanceId by maintenanceViewModel.maintenanceId.collectAsState()
-    val maintenances by maintenanceViewModel.maintenances.collectAsState()
-    val streets by maintenanceViewModel.maintenanceStreets.collectAsState()
     val contracts by contractViewModel.contracts.collectAsState()
-    val message = maintenanceMessage ?: contractMessage
 
     var resync by remember { mutableIntStateOf(0) }
     var screenState by remember { mutableStateOf<MaintenanceUIState?>(null) }
 
-    val alertMessage = remember {
-        mutableStateMapOf(
-            "title" to "Título da mensagem", "body" to "Você está na rua da execução neste momento?"
-        )
+    val maintenanceMap by remember(uiState.maintenances) {
+        derivedStateOf { uiState.maintenances.associateBy { it.maintenanceId } }
     }
 
-    var alertModal by remember { mutableStateOf(false) }
-
-    val maintenanceMap by remember(maintenances) {
-        derivedStateOf { maintenances.associateBy { it.maintenanceId } }
-    }
-
-    val maintenance by remember(maintenanceId) {
+    val maintenance by remember(uiState.maintenanceId, maintenanceMap) {
         derivedStateOf {
-            maintenanceId?.toString()?.let { maintenanceMap[it] }
+            uiState.maintenanceId?.toString()?.let { maintenanceMap[it] }
         }
     }
 
-    val filteredStreets by remember(maintenanceId, streets) {
+    val filteredStreets by remember(uiState.maintenanceId, uiState.maintenanceStreets) {
         derivedStateOf {
-            val id = maintenanceId.toString()
-            streets.filter { it.maintenanceId == id }
+            uiState.maintenanceId?.toString()?.let { idString ->
+                uiState.maintenanceStreets.filter { it.maintenanceId == idString }
+            } ?: emptyList()
         }
     }
 
-    val loading by remember(
-        maintenanceLoading, forceLoading
-    ) {
+    val loading by remember(uiState.loading, forceLoading) {
         derivedStateOf {
-            maintenanceLoading || forceLoading
+            uiState.loading || forceLoading
         }
     }
 
     LaunchedEffect(Unit) {
-        val loadedMaintenances = maintenanceViewModel.maintenances
-            .first()
+        val loadedMaintenances = uiState.maintenances
 
         screenState = when {
             loadedMaintenances.size == 1 -> {
@@ -154,11 +133,10 @@ fun MaintenanceScreen(
         if (resync < 10) contractViewModel.syncContracts()
     }
 
-    LaunchedEffect(contractSelected) {
-        if (contractSelected) {
-            screenState = MaintenanceUIState.STREET
-            forceLoading = false
-        }
+    if (uiState.contractSelected) {
+        screenState = MaintenanceUIState.STREET
+        forceLoading = false
+        maintenanceViewModel.setContractSelected(false)
     }
 
     when (screenState) {
@@ -186,10 +164,10 @@ fun MaintenanceScreen(
                     )
                 },
                 back = {
-                    maintenanceViewModel.clearViewModel()
-                    screenState = if (maintenances.size == 1) {
+                    maintenanceViewModel.resetAllState()
+                    screenState = if (uiState.maintenances.size == 1) {
                         forceLoading = true
-                        maintenanceViewModel.setMaintenanceId(UUID.fromString(maintenances.first().maintenanceId))
+                        maintenanceViewModel.setMaintenanceId(UUID.fromString(uiState.maintenances.first().maintenanceId))
                         MaintenanceUIState.HOME
                     } else {
                         MaintenanceUIState.LIST
@@ -199,63 +177,67 @@ fun MaintenanceScreen(
         }
 
         MaintenanceUIState.STREET -> {
-            maintenanceId?.let {
+            val maintenanceNonNull = maintenance
+            if (uiState.maintenanceId != null && maintenanceNonNull?.contractor != null) {
                 StreetMaintenanceContent(
-                    maintenanceId = it,
-                    contractor = maintenance?.contractor,
+                    maintenanceId = uiState.maintenanceId!!,
+                    contractor = maintenanceNonNull.contractor,
                     navController = navController,
                     loading = loading,
                     back = {
-                        maintenanceViewModel.clearViewModelPartial()
+                        maintenanceViewModel.resetFormState()
                         screenState = MaintenanceUIState.HOME
                     },
                     saveStreet = { street, items ->
                         maintenanceViewModel.insertMaintenanceStreet(street, items)
                     },
                     lastRoute = lastRoute,
-                    streetCreated = streetCreated,
+                    streetCreated = uiState.streetCreated,
                     newStreet = {
-                        maintenanceViewModel.clearViewModelPartial()
+                        maintenanceViewModel.resetFormState()
                     },
                     stockData = stock
                 )
+            } else {
+                CurrentScreenLoading(navController, "Manutenções", "Carregando dados da manutenção...")
             }
         }
+
 
         MaintenanceUIState.LIST -> {
             MaintenanceListContent(
                 stockSize = stock.size,
-                maintenances = maintenances,
+                maintenances = uiState.maintenances,
                 navController = navController,
                 loading = loading,
                 selectMaintenance = { id ->
                     forceLoading = true
-                    maintenanceViewModel.clearViewModel()
+                    maintenanceViewModel.resetAllState()
                     maintenanceViewModel.setMaintenanceId(UUID.fromString(id))
                     screenState = MaintenanceUIState.HOME
                 },
                 newMaintenance = {
-                    maintenanceViewModel.clearViewModel()
+                    maintenanceViewModel.resetAllState()
                     screenState = MaintenanceUIState.NEW
                 },
             )
         }
 
         MaintenanceUIState.HOME -> {
-            LaunchedEffect(Unit) {
-                if (maintenanceId != null) {
+            LaunchedEffect(uiState.maintenanceId) {
+                if (uiState.maintenanceId != null) {
                     delay(300L) // um pequeno tempo para garantir que carregou
                     forceLoading = false
                 }
             }
 
-            if (finish) {
+            if (uiState.finish) {
                 AppLayout(
                     title = "Gerenciar manutenção",
                     selectedIcon = BottomBar.MAINTENANCE.value,
                     navigateBack = {
                         forceLoading = false
-                        maintenanceViewModel.clearViewModel()
+                        maintenanceViewModel.resetAllState()
                         viewModelAux.clear()
                         screenState = MaintenanceUIState.LIST
                     },
@@ -320,7 +302,7 @@ fun MaintenanceScreen(
                                     .fillMaxWidth(fraction = 0.5f),
                                 onClick = {
                                     forceLoading = false
-                                    maintenanceViewModel.clearViewModel()
+                                    maintenanceViewModel.resetAllState()
                                     viewModelAux.clear()
                                     screenState = MaintenanceUIState.LIST
                                 }
@@ -331,19 +313,20 @@ fun MaintenanceScreen(
                     }
                 }
             } else {
-                maintenance?.let { maintenanceNonNull ->
+                val maintenanceNonNull = maintenance
+                if (maintenanceNonNull?.contractor != null) {
                     MaintenanceHomeContent(
                         viewModel = viewModelAux,
                         maintenance = maintenanceNonNull,
                         streets = filteredStreets,
-                        maintenanceSize = maintenances.size,
+                        maintenanceSize = uiState.maintenances.size,
                         navController = navController,
                         loading = loading,
                         newStreet = {
                             screenState = MaintenanceUIState.STREET
                         },
                         newMaintenance = {
-                            maintenanceViewModel.clearViewModel()
+                            maintenanceViewModel.resetAllState()
                             screenState = MaintenanceUIState.NEW
                         },
                         finishMaintenance = {
@@ -352,36 +335,18 @@ fun MaintenanceScreen(
                         },
                         back = {
                             forceLoading = false
-                            maintenanceViewModel.clearViewModel()
+                            maintenanceViewModel.resetAllState()
                             screenState = MaintenanceUIState.LIST
                         }
                     )
+                } else {
+                    CurrentScreenLoading(navController, "Manutenções", "Carregando dados da manutenção...")
                 }
             }
         }
 
         else -> {
-            AppLayout(
-                title = "Manutenções",
-                selectedIcon = BottomBar.MAINTENANCE.value,
-                navigateToHome = {
-                    navController.navigate(Routes.HOME)
-                },
-                navigateToMore = {
-                    navController.navigate(Routes.MORE)
-                },
-                navigateToStock = {
-                    navController.navigate(Routes.STOCK)
-                },
-                navigateToMaintenance = {
-                    navController.navigate(Routes.MAINTENANCE)
-                },
-                navigateToExecutions = {
-                    navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
-                }
-            ) { _, _ ->
-                Loading()
-            }
+            CurrentScreenLoading(navController, "Manutenções", "Carregando dados da manutenção...")
         }
     }
 
@@ -509,7 +474,6 @@ fun NewMaintenanceContent(
 }
 
 @Preview
-
 @Composable
 fun PrevMaintenance() {
     NewMaintenanceContent(

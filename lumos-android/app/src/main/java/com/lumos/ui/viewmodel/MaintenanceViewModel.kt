@@ -10,71 +10,97 @@ import com.lumos.domain.model.MaintenanceStreetItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
+
+data class MaintenanceUiState(
+    val maintenanceId: UUID? = null,
+    val loading: Boolean = false,
+    val streetCreated: Boolean = false,
+    val contractSelected: Boolean = false,
+    val finish: Boolean = false,
+    val message: String? = null,
+    val maintenances: List<MaintenanceJoin> = emptyList(),
+    val maintenanceStreets: List<MaintenanceStreet> = emptyList()
+)
 
 class MaintenanceViewModel(
     private val repository: MaintenanceRepository
 ) : ViewModel() {
-    private val _maintenanceId = MutableStateFlow<UUID?>(null)
-    val maintenanceId: StateFlow<UUID?> = _maintenanceId
 
-    private val _loading = MutableStateFlow(true)
-    val loading = _loading
-
-    private val _streetCreated = MutableStateFlow(false)
-    val streetCreated = _streetCreated
-
-    private val _contractSelected = MutableStateFlow(false)
-    val contractSelected = _contractSelected
-
-    private val _finish = MutableStateFlow(false)
-    val finish = _finish
-
-    private val _message = MutableStateFlow<String?>(null)
-    val message = _message
-
-    private val _maintenances = MutableStateFlow<List<MaintenanceJoin>>(emptyList())
-    val maintenances = _maintenances
-
-    private val _maintenanceStreets = MutableStateFlow<List<MaintenanceStreet>>(emptyList())
-    val maintenanceStreets: StateFlow<List<MaintenanceStreet>> = _maintenanceStreets
+    private val _uiState = MutableStateFlow(MaintenanceUiState(loading = true))
+    var uiState: StateFlow<MaintenanceUiState> = _uiState.asStateFlow()
 
     init {
         loadMaintenances("IN_PROGRESS")
         loadMaintenanceStreets()
     }
 
+
+    private fun setLoading(isLoading: Boolean) {
+        _uiState.update { it.copy(loading = isLoading) }
+    }
+
+    private fun setMessage(message: String?) {
+        _uiState.update { it.copy(message = message) }
+    }
+
+    private fun setMaintenances(list: List<MaintenanceJoin>) {
+        _uiState.update { it.copy(maintenances = list) }
+    }
+
+    private fun setMaintenanceStreets(list: List<MaintenanceStreet>) {
+        _uiState.update { it.copy(maintenanceStreets = list) }
+    }
+
+    fun setMaintenanceId(id: UUID?) {
+        _uiState.update { it.copy(maintenanceId = id) }
+    }
+
+    private fun setStreetCreated(value: Boolean) {
+        _uiState.update { it.copy(streetCreated = value) }
+    }
+
+    fun setContractSelected(value: Boolean) {
+        _uiState.update { it.copy(contractSelected = value) }
+    }
+
+    private fun setFinish(value: Boolean) {
+        _uiState.update { it.copy(finish = value) }
+    }
+
     private fun loadMaintenances(status: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            _loading.value = true
+            setLoading(true)
             repository.getFlowMaintenance(status)
                 .catch { e ->
-                    _loading.value = false
-                    _message.value = e.message ?: "Erro ao carregar manutenções"
-                    _maintenances.value = emptyList()
+                    setLoading(false)
+                    setMessage(e.message ?: "Erro ao carregar manutenções")
+                    setMaintenances(emptyList())
                 }
                 .collectLatest {
-                    _maintenances.value = it
-                    _loading.value = false
+                    setMaintenances(it)
+                    setLoading(false)
                 }
         }
     }
 
     private fun loadMaintenanceStreets() {
         viewModelScope.launch {
-            _loading.value = true
+            setLoading(true)
             repository.getFlowStreets()
                 .catch { e ->
-                    _loading.value = false
-                    _message.value = e.message ?: "Erro ao carregar ruas"
-                    _maintenanceStreets.value = emptyList()
+                    setLoading(false)
+                    setMessage(e.message ?: "Erro ao carregar ruas")
+                    setMaintenanceStreets(emptyList())
                 }
                 .collectLatest {
-                    _maintenanceStreets.value = it
-                    _loading.value = false
+                    setMaintenanceStreets(it)
+                    setLoading(false)
                 }
         }
     }
@@ -82,20 +108,20 @@ class MaintenanceViewModel(
     fun insertMaintenance(maintenance: Maintenance) {
         viewModelScope.launch {
             try {
-                _loading.value = true
+                setLoading(true)
                 val uuid = repository.getMaintenanceIdByContractId(maintenance.contractId)
-                if(uuid != null) {
-                    _maintenanceId.value = UUID.fromString(uuid)
-                    _contractSelected.value = true
+                if (uuid != null) {
+                    setMaintenanceId(UUID.fromString(uuid))
+                    setContractSelected(true)
                     return@launch
                 }
-                _maintenanceId.value = UUID.fromString(maintenance.maintenanceId)
+                setMaintenanceId(UUID.fromString(maintenance.maintenanceId))
                 repository.insertMaintenance(maintenance)
-                _contractSelected.value = true
+                setContractSelected(true)
             } catch (e: Exception) {
-                _message.value = e.message ?: ""
+                setMessage(e.message ?: "")
             } finally {
-                _loading.value = false
+                setLoading(false)
             }
         }
     }
@@ -103,49 +129,45 @@ class MaintenanceViewModel(
     fun insertMaintenanceStreet(street: MaintenanceStreet, items: List<MaintenanceStreetItem>) {
         viewModelScope.launch {
             try {
-                _loading.value = true
+                setLoading(true)
                 repository.insertMaintenanceStreet(street, items)
-                _streetCreated.value = true
+                setStreetCreated(true)
             } catch (e: Exception) {
-                _message.value = e.message ?: "Erro inesperado"
+                setMessage(e.message ?: "Erro inesperado")
             } finally {
-                _loading.value = false
+                setLoading(false)
             }
         }
-    }
-
-    fun clearViewModel() {
-        _maintenanceId.value = null
-        _message.value = ""
-        _finish.value = false
-        _streetCreated.value = false
-        _contractSelected.value = false
-    }
-
-    fun clearViewModelPartial() {
-        _message.value = ""
-        _finish.value = false
-        _streetCreated.value = false
-        _contractSelected.value = false
-    }
-
-    fun setMaintenanceId(uuid: UUID) {
-        _maintenanceId.value = uuid
     }
 
     fun finishMaintenance(maintenance: Maintenance) {
         viewModelScope.launch {
             try {
-                _loading.value = true
+                setLoading(true)
                 repository.finishMaintenance(maintenance)
-                _finish.value = true
+                setFinish(true)
             } catch (e: Exception) {
-                _message.value = e.message ?: "Erro inesperado"
+                setMessage(e.message ?: "Erro inesperado")
             } finally {
-                _loading.value = false
+                setLoading(false)
             }
         }
     }
 
+    fun resetAllState() {
+        _uiState.value = MaintenanceUiState()
+    }
+
+    fun resetFormState() {
+        _uiState.update {
+            it.copy(
+                message = null,
+                finish = false,
+                streetCreated = false,
+                contractSelected = false
+            )
+        }
+    }
 
 }
+

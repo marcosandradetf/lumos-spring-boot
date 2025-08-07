@@ -39,6 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 
 @Composable
 fun Loading(label: String? = null) {
@@ -380,6 +383,31 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
         ),
         modifier = Modifier.padding(vertical = 2.dp)
     )
+}
+
+@Composable
+fun CurrentScreenLoading(navController: NavHostController, currentScreenName: String, loadingLabel: String? = null) {
+    AppLayout(
+        title = currentScreenName,
+        selectedIcon = BottomBar.MAINTENANCE.value,
+        navigateToHome = {
+            navController.navigate(Routes.HOME)
+        },
+        navigateToMore = {
+            navController.navigate(Routes.MORE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE)
+        },
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        }
+    ) { _, _ ->
+        Loading(loadingLabel)
+    }
 }
 
 
