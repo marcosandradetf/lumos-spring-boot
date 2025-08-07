@@ -15,6 +15,7 @@ import {TeamService} from './team-service.service';
 import {catchError, tap} from 'rxjs';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {TeamsModel} from '../../models/teams.model';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-team',
@@ -27,7 +28,7 @@ import {TeamsModel} from '../../models/teams.model';
     ReactiveFormsModule,
     TableComponent,
     NgClass,
-    AlertMessageComponent
+    Toast
   ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss'
@@ -216,20 +217,16 @@ export class TeamComponent {
 
   insertTeams() {
 
-    this.teamService.insertTeams(this.teams).pipe(
-      tap(r => {
-        this.showMessage("Equipes criadas com sucesso!");
+    this.teamService.insertTeams(this.teams).subscribe({
+      next: () => {
+        this.utils.showMessage("Equipes criadas com sucesso!", 'success', 'Sucesso');
         this.alertType = "alert-success";
-        this.teams = r;
-        this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
-        this.add = false;
-      }),
-      catchError(err => {
-        this.showMessage(err.error.message);
-        this.alertType = "alert-error";
-        throw err;
-      })
-    ).subscribe();
+
+      },
+      error: err => {
+        this.utils.showMessage(err.error.message, 'error', 'Erro');
+      },
+    });
 
   }
 
@@ -239,44 +236,28 @@ export class TeamComponent {
     const noneSelected = this.teams.every(t => !t.sel);
 
     if (noneSelected) {
-      this.showMessage("Nenhuma equipe foi selecionada.");
+      this.utils.showMessage("Nenhuma equipe foi selecionada.", 'warn', 'Atenção');
       this.alertType = "alert-error";
       this.loading = false;
       return;
     }
 
-    this.teamService.updateTeams(this.teams)
-      .pipe(tap(r => {
-          this.showMessage("Equipes atualizadas com sucesso.");
-          this.alertType = "alert-success";
-          this.teams = r;
-          this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
-          this.change = false;
-        }),
-        catchError(err => {
-          this.showMessage(err.error.message);
-          this.alertType = "alert-error";
-          throw err;
-        })
-      ).subscribe();
+    this.teamService.updateTeams(this.teams).subscribe({
+      next: (r) => {
+        this.utils.showMessage("Equipes atualizadas com sucesso!", 'success', 'Sucesso');
+        this.alertType = "alert-success";
+        this.teams = r;
+        this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
+        this.change = false;
+      },
+      error: err => {
+        this.utils.showMessage(err.error.message, 'error', 'Erro');
+        console.log(err);
+      },
+    });
 
   }
 
 
-  showMessage(message
-              :
-              string, timeout = 3000
-  ) {
-    this.serverMessage = message;
-    setTimeout(() => {
-      this.serverMessage = null;
-    }, timeout);
-  }
 
-
-
-  debug(team: any, teams: any) {
-    console.log(team)
-    console.log(teams)
-  }
 }

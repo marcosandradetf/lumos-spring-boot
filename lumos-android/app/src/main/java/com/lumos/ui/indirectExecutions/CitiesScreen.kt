@@ -186,6 +186,9 @@ fun ContentCitiesScreen(
         navigateBack = navigateBack,
         navigateToMaintenance = {
             navController.navigate(Routes.MAINTENANCE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
         }
     ) { _, _ ->
 

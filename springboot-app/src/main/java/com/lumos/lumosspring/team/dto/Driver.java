@@ -1,4 +1,6 @@
 package com.lumos.lumosspring.team.dto;
 
-public record Driver(String driverId, String driverName) {
+import java.util.UUID;
+
+public record Driver(UUID driverId, String driverName) {
 }

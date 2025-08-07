@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-//    id("kotlin-kapt")
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
 
@@ -14,11 +13,11 @@ android {
 
     defaultConfig {
         applicationId = "com.thryon.lumos"
-        minSdk = 28
-        targetSdk = 34
+        minSdk = 26
+        targetSdk = 35
 
-        versionCode = 13
-        versionName = "2.2.0"
+        versionCode = 16
+        versionName = "1.0.02"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -80,7 +79,7 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -96,8 +95,10 @@ android {
 
 
 dependencies {
-
+    // Core
     implementation(libs.androidx.core.ktx)
+
+    // Lifecycle & Compose
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -105,12 +106,52 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.runtime.livedata)
+
+    // Navigation
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.navigation.compose)
+
+    // Location
     implementation(libs.play.services.location)
+
+    // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.runtime.livedata)
-//    implementation(libs.androidx.security.crypto.ktx)
+
+    // Segurança
+    implementation(libs.androidx.security.crypto)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Imagens
+    implementation(libs.coil.compose)
+
+    // Retrofit / Gson
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+    // Logging Interceptor
+    implementation(libs.logging.interceptor)
+
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Moshi
+    implementation(libs.moshi.kotlin)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+
+    // Testes
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -118,52 +159,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    implementation(libs.coil.compose)
-    implementation(libs.androidx.navigation.compose)
-
-    // Retrofit para chamadas de API
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    // Interceptor para autenticação
-    implementation(libs.logging.interceptor)
-    // Shared Preferences seguras
-    implementation(libs.androidx.security.crypto)
-
-//    implementation(libs.androidx.room.common)
-//    implementation(libs.androidx.room.runtime)
-//    implementation(libs.androidx.room.compiler)
-
-    val room_version = "2.6.1"
-    implementation("androidx.room:room-runtime:$room_version")
-    // If this project only uses Java source, use the Java annotationProcessor
-    // No additional plugins are necessary
-    ksp("androidx.room:room-compiler:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-    implementation(libs.androidx.material.icons.extended)
-
-
-
-    implementation("org.java-websocket:Java-WebSocket:1.5.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
-
-    implementation("com.squareup.moshi:moshi-kotlin:1.14.0") // Para converter JSON
-    implementation("androidx.core:core-ktx:1.9.0") // Para notificações
-    implementation("io.reactivex.rxjava2:rxjava:2.2.21") // RxJava 2
-    implementation("io.reactivex.rxjava2:rxandroid:2.1.1") // RxAndroid 2
-    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6") // Biblioteca STOMP
-
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
-
-    // Add the dependencies for the Firebase Cloud Messaging and Analytics libraries
-    // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation("com.google.firebase:firebase-messaging")
-    implementation("com.google.firebase:firebase-analytics")
-
-    implementation("androidx.compose.material3:material3:1.3.0")
-    implementation("com.google.android.play:app-update:2.1.0")
-
 }
-

@@ -1,6 +1,7 @@
 package com.lumos.midleware
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -24,44 +25,30 @@ class SecureStorage(private val context: Context) {
     }
 
     // Função modificada para tratar erro específico do Keystore
-    private fun getSharedPreferences() =
-        try {
+    private fun getSharedPreferences(): SharedPreferences {
+        return try {
             EncryptedSharedPreferences.create(
                 context,
                 PREFS_NAME,
-                MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+                MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build(),
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: AEADBadTagException) {
-            // Erro de autenticação de dados criptografados - limpa os dados
-            Log.e(
-                "SecureStorage",
-                "Erro de autenticação de dados criptografados. Redefinindo preferências.",
-                e
-            )
-            // Limpa os dados criptografados
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
-            // Relança a exceção para indicar que algo deu errado
-            throw RuntimeException(
-                "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.",
-                e
-            )
+            Log.e("SecureStorage", "Erro de autenticação - dados corrompidos. Resetando prefs.", e)
+            // Limpa os dados e usa SharedPreferences simples
+            val fallbackPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            fallbackPrefs.edit { clear() }
+            fallbackPrefs
         } catch (e: Exception) {
-            // Outro erro genérico
-            Log.e(
-                "SecureStorage",
-                "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.",
-                e
-            )
-            // Limpa os dados
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
-            // Relança a exceção para que o app lide com isso
-            throw RuntimeException(
-                "Erro ao acessar EncryptedSharedPreferences. Dados foram resetados.",
-                e
-            )
+            Log.e("SecureStorage", "Erro ao acessar EncryptedSharedPreferences. Usando fallback.", e)
+            // Também usa SharedPreferences simples como fallback
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         }
+    }
+
 
     fun saveTokens(accessToken: String, refreshToken: String, uuid: String) {
         val prefs = getSharedPreferences()
@@ -70,6 +57,7 @@ class SecureStorage(private val context: Context) {
                 .putString(KEY_REFRESH_TOKEN, refreshToken)
                 .putString(KEY_USER_UUID, uuid)
         }
+        Log.d("SecureStorage", "Tokens salvos: accessToken=$accessToken, refreshToken=$refreshToken, uuid=$uuid")
     }
 
     fun saveAssignments(roles: Set<String>, teams: Set<String>) {

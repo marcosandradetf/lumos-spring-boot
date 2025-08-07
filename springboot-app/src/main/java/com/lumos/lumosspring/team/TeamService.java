@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.team;
 
+import com.lumos.lumosspring.notifications.service.NotificationService;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.team.dto.*;
@@ -9,10 +10,14 @@ import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.StreamSupport;
@@ -23,14 +28,16 @@ public class TeamService {
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
     private final DepositRepository depositRepository;
+    private final NotificationService notificationService;
 
 
     public TeamService(TeamRepository teamRepository, RegionRepository regionRepository, UserRepository userRepository,
-                       DepositRepository depositRepository) {
+                       DepositRepository depositRepository, NotificationService notificationService) {
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.userRepository = userRepository;
         this.depositRepository = depositRepository;
+        this.notificationService = notificationService;
     }
 
     @Cacheable("getAllTeams")
@@ -42,13 +49,13 @@ public class TeamService {
                     // Buscar driver pelo driverId
                     var driverOpt = userRepository.findById(team.getDriverId());
                     Driver driver = driverOpt
-                            .map(d -> new Driver(d.getUserId().toString(), d.getCompletedName()))
+                            .map(d -> new Driver(d.getUserId(), d.getCompletedName()))
                             .orElse(null); // Ou lance erro se não encontrar
 
                     // Buscar eletricista pelo electricianId
                     var electricianOpt = userRepository.findById(team.getElectricianId());
                     Electrician electrician = electricianOpt
-                            .map(e -> new Electrician(e.getUserId().toString(), e.getCompletedName()))
+                            .map(e -> new Electrician(e.getUserId(), e.getCompletedName()))
                             .orElse(null); // Ou lance erro se não encontrar
 
                     // Buscar os membros complementares explicitamente
@@ -87,8 +94,10 @@ public class TeamService {
         return ResponseEntity.ok(teamsResponses);
     }
 
-
-
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getAll", allEntries = true),
+    })
+    @Transactional
     public ResponseEntity<?> insertTeams(List<TeamCreate> teams) {
         var hasInvalidUser = teams.stream().noneMatch(u -> u.idTeam() == 0);
 
@@ -102,29 +111,38 @@ public class TeamService {
                 continue;
             }
 
-            if(teamRepository.findByTeamName(t.teamName()).isPresent()) {
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."Equipe \{t.teamName()} já existe no sistema."));
+            if (teamRepository.findByTeamName(t.teamName()).isPresent()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        STR."Equipe \{t.teamName()} já existe no sistema."
+                );
             }
 
-            var driver = userRepository.findByUserId(UUID.fromString(t.driver().driverId()));
-            var electrician = userRepository.findByUserId(UUID.fromString(t.electrician().electricianId()));
+            var driverId = t.driver().driverId();
+            var electricianId = t.electrician().electricianId();
 
-            if (electrician.isEmpty() || driver.isEmpty()) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("Motorista ou eletricista não encontrado no sistema."));
+
+            if (t.electrician().electricianId().equals(t.driver().driverId())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
+                );
             }
 
-            if (t.electrician().electricianId().equals(t.driver().driverId())){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."));
+            var hasTeamExists = teamRepository.findByDriverId(driverId);
+            if (hasTeamExists.isPresent()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        STR."Motorista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
+                );
             }
 
-            var hasTeamExists = teamRepository.findByDriverId(driver.get().getUserId());
-            if(hasTeamExists.isPresent()){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."Motorista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"));
-            }
-
-            hasTeamExists = teamRepository.findByElectricianId(electrician.get().getUserId());
-            if(hasTeamExists.isPresent()){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."Eletricista informado para equipe \{t.teamName()}  está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"));
+            hasTeamExists = teamRepository.findByElectricianId(electricianId);
+            if (hasTeamExists.isPresent()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        STR."Eletricista informado para equipe \{t.teamName()}  está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
+                );
             }
 
             var region = regionRepository.findRegionByRegionName(t.regionName());
@@ -139,19 +157,24 @@ public class TeamService {
 
             var newTeam = new Team();
             newTeam.setTeamName(t.teamName());
-            newTeam.setDriverId(driver.orElse(null).getUserId());
-            newTeam.setElectricianId(electrician.orElse(null).getUserId());
+            newTeam.setDriverId(driverId);
+            newTeam.setElectricianId(electricianId);
 
             newTeam.setPlateVehicle(t.plate());
             newTeam.setUFName(t.UFName());
             newTeam.setCityName(t.cityName());
             newTeam.setRegion(region.orElse(null).getRegionId());
-            newTeam =  teamRepository.save(newTeam);
+
+            teamRepository.save(newTeam);
         }
 
         return this.getAll();
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getAll", allEntries = true),
+    })
     public ResponseEntity<?> updateTeams(List<TeamCreate> teams) {
         boolean hasInvalidUser = teams.stream().noneMatch(TeamCreate::sel);
 
@@ -166,37 +189,34 @@ public class TeamService {
                     .body(new ErrorResponse("Erro: Foi enviado uma ou mais equipes sem identificação."));
         }
 
+        List<UUID> history = new ArrayList<>();
         for (TeamCreate t : teams) {
             if (!t.sel()) {
                 continue;
             }
 
-            var driver = userRepository.findByUserId(UUID.fromString(t.driver().driverId()));
-            var electrician = userRepository.findByUserId(UUID.fromString(t.electrician().electricianId()));
+            var driverId = t.driver().driverId();
+            var electricianId = t.electrician().electricianId();
 
-            if (electrician.isEmpty() || driver.isEmpty()) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("Motorista ou eletricista não encontrado no sistema."));
+            if (history.contains(driverId)) {
+                throw new IllegalStateException(
+                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
+                );
+            } else if (history.contains(electricianId)) {
+                throw new IllegalStateException(
+                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
+                );
             }
 
-            if (t.electrician().electricianId().equals(t.driver().driverId())){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."));
-            }
+            history.add(driverId);
+            history.add(electricianId);
 
-            var hasTeamExists = teamRepository.findByDriverId(driver.get().getUserId());
-            if(hasTeamExists.isPresent() && hasTeamExists.get().getIdTeam() != t.idTeam()){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."Motorista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"));
-            }
 
-            hasTeamExists = teamRepository.findByElectricianId(electrician.get().getUserId());
-            if(hasTeamExists.isPresent() && hasTeamExists.get().getIdTeam() != t.idTeam()){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."Eletricista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"));
+            if (t.electrician().electricianId().equals(t.driver().driverId())) {
+                throw new IllegalStateException(
+                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
+                );
             }
-
-            hasTeamExists = teamRepository.findByTeamName(t.teamName());
-            if(hasTeamExists.isPresent() && hasTeamExists.get().getIdTeam() != t.idTeam()){
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."Equipe \{t.teamName()} já existe no sistema."));
-            }
-
 
             var region = regionRepository.findRegionByRegionName(t.regionName());
             if (region.isEmpty()) {
@@ -210,18 +230,33 @@ public class TeamService {
 
             var team = teamRepository.findById(t.idTeam());
             if (team.isEmpty()) {
-                return ResponseEntity.badRequest().body(new ErrorResponse(STR."O time \{t.teamName()} não foi encontrado no sistema."));
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        STR."O time \{t.teamName()} não foi encontrado no sistema."
+                );
             }
 
             team.get().setTeamName(t.teamName());
-            team.get().setDriverId(driver.orElse(null).getUserId());
-            team.get().setElectricianId(electrician.orElse(null).getUserId());
+            team.get().setDriverId(driverId);
+            team.get().setElectricianId(electricianId);
 
             team.get().setPlateVehicle(t.plate());
             team.get().setUFName(t.UFName());
             team.get().setCityName(t.cityName());
             team.get().setRegion(region.orElse(null).getRegionId());
+
+            var driverCurrentTeamId = teamRepository.getCurrentTeamId(driverId).orElse(-1L);
+            var electricianCurrentTeamId = teamRepository.getCurrentTeamId(electricianId).orElse(-1L);
+
             teamRepository.save(team.get());
+
+            if(!driverCurrentTeamId.equals(t.idTeam())) {
+                notificationService.updateTeam(driverId, "Sua equipe foi alterada pelo Administrador", "Os dados da equipe anterior foram excluidos, sincronize novamente");
+            }
+            if(!electricianCurrentTeamId.equals(t.idTeam())) {
+                notificationService.updateTeam(driverId, "Sua equipe foi alterada pelo Administrador", "Os dados da equipe anterior foram excluidos, sincronize novamente");
+            }
+
         }
 
         return this.getAll();

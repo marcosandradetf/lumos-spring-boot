@@ -563,7 +563,7 @@ fun MaintenanceHomeContent(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(IntrinsicSize.Min) // Isso é o truque!
+                                        .height(120.dp) // Isso é o truque!
                                 ) {
                                     Column(
                                         verticalArrangement = Arrangement.Center,

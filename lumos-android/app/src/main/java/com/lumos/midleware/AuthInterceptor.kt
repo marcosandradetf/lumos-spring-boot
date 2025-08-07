@@ -13,14 +13,12 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.atomic.AtomicBoolean
 
 class AuthInterceptor(
     context: Context,
     private val secureStorage: SecureStorage,
 ) : Interceptor {
 
-    private val isRefreshing = AtomicBoolean(false)
     private val notificationManager = NotificationManager(context, secureStorage)
     private val appContext = context.applicationContext
 
@@ -43,8 +41,9 @@ class AuthInterceptor(
         // Se o token expirar (status 401), tenta renovar o token
         if (response.code == 401) {
             // Usando runBlocking para aguardar a renovação do token de forma síncrona
-            val newAccessToken = runBlocking(Dispatchers.IO) {
+            val refreshTokenResponse = runBlocking(Dispatchers.IO) {
                 val refreshToken = secureStorage.getRefreshToken()
+                Log.d("Token", "Enviando refresh token: $refreshToken")
 
                 // Usando Retrofit para renovar o token
                 val retrofit = Retrofit.Builder()
@@ -85,13 +84,13 @@ class AuthInterceptor(
             }
 
             // Se obtivemos um novo access token, tenta a requisição novamente com o novo token
-            if (newAccessToken != null) {
-                secureStorage.saveAccessToken(newAccessToken.accessToken)
-                secureStorage.saveRefreshToken(newAccessToken.refreshToken)
+            if (refreshTokenResponse != null) {
+                secureStorage.saveAccessToken(refreshTokenResponse.accessToken)
+                secureStorage.saveRefreshToken(refreshTokenResponse.refreshToken)
 
                 // Aqui, fazemos a chamada novamente com o novo token
                 val newRequest = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${newAccessToken.accessToken}")
+                    .addHeader("Authorization", "Bearer ${refreshTokenResponse.accessToken}")
                     .build()
                 return chain.proceed(newRequest)
             }

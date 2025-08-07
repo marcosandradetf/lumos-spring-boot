@@ -1,4 +1,6 @@
 package com.lumos.lumosspring.team.dto;
 
-public record Electrician(String electricianId, String electricianName) {
+import java.util.UUID;
+
+public record Electrician(UUID electricianId, String electricianName) {
 }

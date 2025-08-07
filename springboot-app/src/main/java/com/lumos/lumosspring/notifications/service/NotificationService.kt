@@ -9,6 +9,7 @@ import com.lumos.lumosspring.util.NotificationType
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 
 @Service
 class NotificationService(
@@ -113,6 +114,27 @@ class NotificationService(
         try {
             val response = FirebaseMessaging.getInstance().send(message)
             println("✅ Notificação enviada para o tópico $userId com sucesso: $response")
+        } catch (e: Exception) {
+            println("❌ Erro ao enviar notificação: ${e.message}")
+        }
+    }
+
+    fun updateTeam(userId: UUID, title: String, body: String) {
+        // Criar a mensagem para o tópico
+        val messageBuilder = Message.builder()
+            .setTopic("UPDATE_$userId")  // Nome do tópico
+            .putData("title", title)  // 🔹 Agora a notificação será tratada no onMessageReceived
+            .putData("body", body)
+            .putData("time", Instant.now().toString())
+            .putData("type", "UPDATE")
+            .putData("action", "UPDATE")
+
+        val message = messageBuilder.build()
+
+        // Enviar a notificação
+        try {
+            val response = FirebaseMessaging.getInstance().send(message)
+            println("✅ Notificação enviada para o tópico UPDATE com sucesso: $response")
         } catch (e: Exception) {
             println("❌ Erro ao enviar notificação: ${e.message}")
         }

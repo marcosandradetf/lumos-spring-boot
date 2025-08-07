@@ -576,7 +576,7 @@ fun StreetMaintenanceContent(
                                 }
                             },
                             modifier = Modifier
-                                .height(140.dp)
+//                                .height(160.dp)
                                 .padding(bottom = 10.dp)
                                 .padding(end = 10.dp)
                                 .clip(RoundedCornerShape(10.dp)),
@@ -969,13 +969,14 @@ fun StreetMaintenanceContent(
                             }
                         }
 
-                        if (cableItem != null && BigDecimal(cableItem?.quantityExecuted) == BigDecimal.ZERO) {
-                            cableError = "Informe a quantidade"
-                            error = true
-                        } else {
+                        if (cableItem != null) {
                             val material =
                                 stockData.find { it.materialStockId == cableItem?.materialStockId }
-                            if (BigDecimal(material?.stockAvailable) < BigDecimal(cableItem?.quantityExecuted)) {
+
+                            if (BigDecimal(cableItem?.quantityExecuted) == BigDecimal.ZERO) {
+                                cableError = "Informe a quantidade"
+                                error = true
+                            } else if (BigDecimal(material?.stockAvailable) < BigDecimal(cableItem?.quantityExecuted)) {
                                 cableError = "Quantidade informada indisponível"
                                 error = true
                             }
