@@ -55,9 +55,9 @@ import com.lumos.ui.components.CurrentScreenLoading
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.MaintenanceViewModel
-import com.lumos.ui.viewmodel.StockViewModel
+import com.lumos.viewmodel.ContractViewModel
+import com.lumos.viewmodel.MaintenanceViewModel
+import com.lumos.viewmodel.StockViewModel
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.abbreviate
 import kotlinx.coroutines.delay

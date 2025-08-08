@@ -1,7 +1,6 @@
 package com.lumos.ui.home
 
 import android.content.IntentSender
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -57,10 +56,9 @@ import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.UpdateModal
-import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.DirectExecutionViewModel
-import com.lumos.ui.viewmodel.IndirectExecutionViewModel
-import com.lumos.utils.ConnectivityUtils
+import com.lumos.viewmodel.ContractViewModel
+import com.lumos.viewmodel.DirectExecutionViewModel
+import com.lumos.viewmodel.IndirectExecutionViewModel
 import com.lumos.utils.Utils.findActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await

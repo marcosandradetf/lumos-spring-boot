@@ -87,7 +87,7 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.components.Tag
-import com.lumos.ui.viewmodel.StockViewModel
+import com.lumos.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
 import com.lumos.worker.SyncTypes
 import java.math.BigDecimal

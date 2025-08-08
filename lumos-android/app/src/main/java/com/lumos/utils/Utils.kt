@@ -1,11 +1,15 @@
 package com.lumos.utils
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.location.LocationManager
 import android.net.Uri
+import androidx.core.content.ContextCompat
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -229,6 +233,23 @@ object Utils {
     fun hasFullName(input: String): Boolean {
         val parts = input.trim().split("\\s+".toRegex())
         return parts.size >= 2 && parts.all { it.length >= 2 }
+    }
+
+    fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    fun hasLocationPermission(context: Context): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
     }
 
 }

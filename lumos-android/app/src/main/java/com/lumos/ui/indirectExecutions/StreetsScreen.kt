@@ -51,13 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.repository.ExecutionStatus
+import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.IndirectExecution
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.IndirectExecutionViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

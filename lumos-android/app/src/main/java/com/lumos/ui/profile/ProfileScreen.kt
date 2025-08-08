@@ -21,7 +21,7 @@ import androidx.navigation.NavHostController
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.viewmodel.AuthViewModel
+import com.lumos.viewmodel.AuthViewModel
 
 @Composable
 fun ProfileScreen(

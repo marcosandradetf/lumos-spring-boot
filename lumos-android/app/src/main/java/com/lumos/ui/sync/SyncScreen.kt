@@ -30,7 +30,7 @@ import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.SyncViewModel
+import com.lumos.viewmodel.SyncViewModel
 import com.lumos.worker.SyncTypes
 
 @Composable

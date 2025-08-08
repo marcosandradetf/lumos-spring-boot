@@ -386,10 +386,10 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
 }
 
 @Composable
-fun CurrentScreenLoading(navController: NavHostController, currentScreenName: String, loadingLabel: String? = null) {
+fun CurrentScreenLoading(navController: NavHostController, currentScreenName: String, loadingLabel: String? = null, selectedIcon: Int = BottomBar.MAINTENANCE.value) {
     AppLayout(
         title = currentScreenName,
-        selectedIcon = BottomBar.MAINTENANCE.value,
+        selectedIcon = selectedIcon,
         navigateToHome = {
             navController.navigate(Routes.HOME)
         },

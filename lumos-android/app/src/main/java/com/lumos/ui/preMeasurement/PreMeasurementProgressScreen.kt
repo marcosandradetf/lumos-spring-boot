@@ -52,8 +52,8 @@ import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.PreMeasurementViewModel
+import com.lumos.viewmodel.ContractViewModel
+import com.lumos.viewmodel.PreMeasurementViewModel
 import java.time.Instant
 
 @Composable

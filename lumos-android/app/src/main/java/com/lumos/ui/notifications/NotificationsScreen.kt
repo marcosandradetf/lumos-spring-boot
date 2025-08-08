@@ -39,12 +39,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.api.NotificationType
+import com.lumos.api.NotificationType
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.notifications.NotificationItem
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.viewmodel.NotificationViewModel
+import com.lumos.viewmodel.NotificationViewModel
 import com.lumos.utils.Utils
 import java.time.Instant
 

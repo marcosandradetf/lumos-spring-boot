@@ -34,11 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.navigation.BottomBar
@@ -47,7 +44,7 @@ import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.SyncViewModel
+import com.lumos.viewmodel.SyncViewModel
 import com.lumos.worker.SyncTypes
 
 @Composable

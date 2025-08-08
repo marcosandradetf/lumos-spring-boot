@@ -8,6 +8,8 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.*
+import com.lumos.utils.Utils.hasLocationPermission
+import com.lumos.utils.Utils.isLocationEnabled
 import kotlin.math.abs
 
 class CoordinatesService(
@@ -22,15 +24,7 @@ class CoordinatesService(
 
     fun execute(callback: (Double?, Double?) -> Unit) {
         // Verifique se as permissões foram concedidas
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!hasLocationPermission(context) || !isLocationEnabled(context)) {
             // Permissões ausentes, retorne valores nulos
             Log.e("GET LOCATION", "Permissões de localização não concedidas.")
             callback(null, null)

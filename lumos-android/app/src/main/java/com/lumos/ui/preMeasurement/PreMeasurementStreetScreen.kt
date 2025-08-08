@@ -1,9 +1,7 @@
 package com.lumos.ui.preMeasurement
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
-import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,9 +52,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,7 +87,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
-import com.lumos.data.api.UserExperience
+import com.lumos.api.UserExperience
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurementStreet
@@ -99,11 +98,14 @@ import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
-import com.lumos.ui.viewmodel.ContractViewModel
-import com.lumos.ui.viewmodel.PreMeasurementViewModel
+import com.lumos.ui.components.CurrentScreenLoading
+import com.lumos.ui.components.Tag
+import com.lumos.utils.Utils
+import com.lumos.viewmodel.ContractViewModel
+import com.lumos.viewmodel.PreMeasurementViewModel
 import java.io.File
 
-@SuppressLint("HardwareIds")
+
 @Composable
 fun PreMeasurementStreetScreen(
     back: (Long) -> Unit,
@@ -121,20 +123,13 @@ fun PreMeasurementStreetScreen(
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coord = CoordinatesService(context, fusedLocationProvider)
     val isLoading by contractViewModel.isSyncing.collectAsState()
-
-    var vLatitude by remember { mutableStateOf<Double?>(null) }
-    var vLongitude by remember { mutableStateOf<Double?>(null) }
-    var showModal by remember { mutableStateOf(false) }
-    var finishMeasurement by remember { mutableStateOf(false) }
     var contract by remember { mutableStateOf<Contract?>(null) }
-
-    // Obtém o estado atual dos depósitos
     val items by contractViewModel.items.collectAsState()
 
-    val deviceId = Settings.Secure.getString(
-        context.contentResolver,
-        Settings.Secure.ANDROID_ID
-    )
+
+    var showModal by remember { mutableStateOf(false) }
+    var finishMeasurement by remember { mutableStateOf(false) }
+
 
     val preMeasurementStreet by remember {
         mutableStateOf(
@@ -148,7 +143,7 @@ fun PreMeasurementStreetScreen(
                 number = "",
                 city = "",
                 state = "",
-                deviceId = deviceId
+                deviceId = preMeasurementViewModel.deviceId.toString()
             )
         )
     }
@@ -157,7 +152,7 @@ fun PreMeasurementStreetScreen(
         mutableStateOf(
             PreMeasurementStreetPhoto(
                 preMeasurementStreetId = 0,
-                deviceId = deviceId,
+                deviceId = preMeasurementViewModel.deviceId.toString(),
                 photoUri = null,
                 contractId = contractId
             )
@@ -189,10 +184,11 @@ fun PreMeasurementStreetScreen(
 
     // Execute a função assíncrona
     LaunchedEffect(Unit) {
+        preMeasurementViewModel.locationLoading = true
         coord.execute { latitude, longitude ->
             if (latitude != null && longitude != null) {
-                vLatitude = latitude
-                vLongitude = longitude
+                preMeasurementViewModel.latitude = latitude
+                preMeasurementViewModel.longitude = longitude
                 val addr = AddressService(context).execute(latitude, longitude)
 
                 val street = addr?.get(0).toString()
@@ -204,37 +200,21 @@ fun PreMeasurementStreetScreen(
                 preMeasurementStreet.neighborhood = neighborhood
                 preMeasurementStreet.city = city
                 preMeasurementStreet.state = state
-                preMeasurementStreet.latitude = vLatitude
-                preMeasurementStreet.longitude = vLongitude
+                preMeasurementStreet.latitude = latitude
+                preMeasurementStreet.longitude = longitude
 
-            } else {
-                Log.e("GET Address", "Latitude ou Longitude são nulos.")
             }
         }
+        preMeasurementViewModel.locationLoading = false
     }
 
-    if (vLatitude == null || vLongitude == null) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.width(32.dp),
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
-            Text(
-                text = "Carregando coordenadas...",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+    if (preMeasurementViewModel.locationLoading) {
+        CurrentScreenLoading(
+            navController,
+            "Pré-medição ${preMeasurementStreet.city ?: ""}",
+            "Tentando carregar coordenadas",
+            BottomBar.MORE.value
+        )
     } else {
         PMSContent(
             context = context,
@@ -249,14 +229,6 @@ fun PreMeasurementStreetScreen(
                                     preMeasurementStreetItems,
                                     preMeasurementStreetId
                                 )
-
-                                preMeasurementViewModel.savePhotoOffLine(
-                                    preMeasurementStreetPhoto.copy(
-                                        preMeasurementStreetId = preMeasurementStreetId
-                                    )
-                                )
-
-                                finishMeasurement = true
                             } catch (e: Exception) {
                                 Log.e("SaveError", "Erro ao salvar itens offline: ${e.message}", e)
                             }
@@ -410,48 +382,6 @@ fun PMSContent(
                     }
                 }
         ) {
-            FloatingActionButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .padding(bottom = 40.dp)
-                    .height(48.dp)
-                    .align(Alignment.BottomStart),
-                shape = RoundedCornerShape(8.dp),
-
-                onClick = {
-                    if (preMeasurementStreetItems.isEmpty()) {
-                        Toast
-                            .makeText(
-                                context,
-                                "Adicione os itens",
-                                Toast.LENGTH_SHORT
-                            )
-                            .show()
-                    } else if (!validFields(street, number, neighborhood, city)) {
-                        Toast
-                            .makeText(
-                                context,
-                                "Todos os campos são obrigatórios",
-                                Toast.LENGTH_SHORT
-                            )
-                            .show()
-                    } else {
-                        saveStreet()
-                        back(pStreet.contractId)
-                    }
-                },
-            ) {
-                Text(
-                    text = "Salvar",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-
-            }
-
 
             if (exitMeasurement) {
                 Confirm(
@@ -476,12 +406,9 @@ fun PMSContent(
                     verticalAlignment = Alignment.CenterVertically // Certificando que os itens dentro da Row ficam alinhados verticalmente
                 ) {
                     Column {
-                        Text(
-                            text = "${pStreet.latitude}, ${pStreet.longitude}",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary // Azul escuro
-                            )
+                        Tag(
+                            "${pStreet.latitude}, ${pStreet.longitude}",
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -523,110 +450,152 @@ fun PMSContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Row {
-                    OutlinedTextField(
-                        textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                        value = street ?: "",
-                        onValueChange = {
-                            street = it
-                            onValueChange("street", street)
-                        },
-                        label = {
-                            Text(
-                                text = "Rua:",
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                        maxLines = 1,
-                        modifier = Modifier
-                            .fillMaxWidth(0.80f)
-                            .padding(end = 10.dp)
-                    )
-
-                    OutlinedTextField(
-                        textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                        value = number,
-                        onValueChange = {
-                            number = it
-                            onValueChange("number", number)
-                        },
-                        label = {
-                            Text(
-                                text = "№:",
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        maxLines = 1,
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        isError = number.isEmpty()
-                    )
-                }
-
-                Row {
-                    OutlinedTextField(
-                        textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                        value = neighborhood ?: "",
-                        onValueChange = {
-                            neighborhood = it
-                            onValueChange("neighborhood", neighborhood)
-                        },
-                        label = {
-                            Text(
-                                text = "Bairro:",
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                        maxLines = 1,
-                        modifier = Modifier
-                            .fillMaxWidth(0.5f)
-                            .padding(end = 10.dp)
-
-                    )
-
-                    OutlinedTextField(
-                        textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                        value = city ?: "",
-                        onValueChange = {
-                            city = it
-                            onValueChange("city", city)
-                        },
-                        label = {
-                            Text(
-                                text = "Cidade:",
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                        maxLines = 1,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Row {
-                    pStreet.lastPower?.isEmpty()?.let { empty ->
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         OutlinedTextField(
-                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                            value = lastPower,
+                            value = street ?: "",
                             onValueChange = {
-                                lastPower = if (it.endsWith("W")) it else it + "W"
-                                onValueChange("lastPower", lastPower)
+                                street = it
+                                onValueChange("street", street)
                             },
                             label = {
                                 Text(
-                                    text = "Potência atual:",
+                                    text = "Rua:",
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                             },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                             maxLines = 1,
-                            modifier = Modifier.fillMaxWidth(),
-                            isError = empty
+                            isError = street.isNullOrBlank(),
+                            supportingText = {
+                                if (street.isNullOrBlank()) Text(
+                                    "Informe a rua",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            modifier = Modifier.weight(0.8f),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                                cursorColor = MaterialTheme.colorScheme.primary
+
+                            )
+                        )
+
+                    }
+
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = neighborhood ?: "",
+                            onValueChange = {
+                                neighborhood = it
+                                onValueChange("neighborhood", neighborhood)
+                            },
+                            label = {
+                                Text(
+                                    text = "Bairro:",
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            maxLines = 1,
+                            isError = neighborhood.isNullOrBlank(),
+                            supportingText = {
+                                if (neighborhood.isNullOrBlank()) Text(
+                                    "Informe o bairro",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            modifier = Modifier.weight(0.5f),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                                cursorColor = MaterialTheme.colorScheme.primary
+
+                            )
+                        )
+
+                        OutlinedTextField(
+                            value = city ?: "",
+                            onValueChange = {
+                                city = it
+                                onValueChange("city", city)
+                            },
+                            label = {
+                                Text(
+                                    text = "Cidade:",
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
+                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            maxLines = 1,
+                            isError = city.isNullOrBlank(),
+                            supportingText = {
+                                if (city.isNullOrBlank()) Text(
+                                    "Informe a cidade",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            modifier = Modifier.weight(0.5f),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                                cursorColor = MaterialTheme.colorScheme.primary
+
+                            )
                         )
                     }
+
+
+                    val lastPowerEmpty = pStreet.lastPower.isNullOrEmpty()
+                    OutlinedTextField(
+                        value = lastPower,
+                        onValueChange = {
+                            lastPower = if (it.endsWith("W")) it else it + "W"
+                            onValueChange("lastPower", lastPower)
+                        },
+                        label = {
+                            Text(
+                                text = "Potência atual:",
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        },
+                        textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        maxLines = 1,
+                        isError = lastPowerEmpty,
+                        supportingText = {
+                            if (lastPowerEmpty) Text(
+                                "Informe a potência atual",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                            cursorColor = MaterialTheme.colorScheme.primary
+
+                        )
+                    )
                 }
+
 
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -685,46 +654,58 @@ fun PMSContent(
                     )
                 }
 
-
-                Spacer(modifier = Modifier.height(80.dp))
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(
+                    onClick = { showModal() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    // Card redondo para o botão
-                    Card(
-                        modifier = Modifier
-                            .size(50.dp) // Tamanho maior para um botão redondo
-                            .clickable {
-                                showModal()
-                            }, // Adiciona interação de clique
-                        shape = RoundedCornerShape(10.dp), // Formato circular
-                        elevation = CardDefaults.cardElevation(5.dp), // Sombra
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer // Cor de fundo do botão
-                        )
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = "Adicionar",
-                                tint = MaterialTheme.colorScheme.onBackground, // Cor do ícone
-                                modifier = Modifier.size(30.dp) // Tamanho do ícone
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp)) // Espaço entre o botão e o texto
                     Text(
-                        text = "Adicionar Itens",
-                        color = MaterialTheme.colorScheme.onBackground, // Cor do texto
-                        fontSize = 16.sp, // Tamanho da fonte
-                        fontWeight = FontWeight.Medium // Peso da fonte
+                        text = "Adicionar itens",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     )
                 }
 
+                Button(
+                    onClick = {
+                        if (preMeasurementStreetItems.isEmpty()) {
+                            showSnackBar("Adicione os itens", "")
+                        } else if (!validFields(street, number, neighborhood, city)) {
+                            showSnackBar("Todos os campos são obrigatórios", "")
+                        } else if(Utils.) {
+
+                        } else {
+                            saveStreet()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text(
+                        text = "Salvar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
             }
 
         }

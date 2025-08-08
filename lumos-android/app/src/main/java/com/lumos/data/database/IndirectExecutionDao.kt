@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.lumos.data.repository.ExecutionStatus
+import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.ExecutionHolder
 import com.lumos.domain.model.IndirectExecution
 import com.lumos.domain.model.IndirectReserve

@@ -73,7 +73,7 @@ import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
-import com.lumos.ui.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.IndirectExecutionViewModel
 import com.lumos.utils.Utils.buildAddress
 import java.io.File
 import java.math.BigDecimal

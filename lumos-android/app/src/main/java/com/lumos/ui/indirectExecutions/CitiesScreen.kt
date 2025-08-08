@@ -39,7 +39,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,8 +60,8 @@ import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.NothingData
-import com.lumos.ui.viewmodel.DirectExecutionViewModel
-import com.lumos.ui.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.DirectExecutionViewModel
+import com.lumos.viewmodel.IndirectExecutionViewModel
 
 @Composable
 fun CitiesScreen(

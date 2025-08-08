@@ -222,10 +222,9 @@ fun StreetMaintenanceContent(
                     val streetName = addr[0]
                     val neighborhood = addr[1]
                     val city = addr[2]
-                    val state = addr[3]
 
                     street.address =
-                        "$streetName, - $neighborhood, $city - $state"
+                        "$streetName, - $neighborhood, $city"
                     address = street.address
                 }
                 loadingCoordinates = false

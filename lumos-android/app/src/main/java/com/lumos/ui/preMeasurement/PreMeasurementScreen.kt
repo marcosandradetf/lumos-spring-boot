@@ -39,12 +39,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.data.repository.ExecutionStatus
+import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.viewmodel.ContractViewModel
+import com.lumos.viewmodel.ContractViewModel
 import com.lumos.utils.Utils
 import java.time.Instant
 

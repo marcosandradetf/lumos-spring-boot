@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.lumos.MainActivity
-import com.lumos.data.api.AuthApi
+import com.lumos.api.AuthApi
 import com.lumos.notifications.NotificationManager
 import com.lumos.utils.ConnectivityUtils.BASE_URL
 import kotlinx.coroutines.Dispatchers
