@@ -145,7 +145,7 @@ fun HomeScreen(
                             InstallStatus.FAILED -> {
                                 appUpdateManager.unregisterListener(this)
                                 updateModal = false
-                                showSnackBar("Falha ao atualizar o app", null)
+                                showSnackBar("Falha ao atualizar o app", null, null)
                             }
 
                             else -> {}
@@ -164,7 +164,7 @@ fun HomeScreen(
                 } catch (e: IntentSender.SendIntentException) {
                     updateModal = false
                     Log.e("UpdateCheck", "Erro ao iniciar atualização: ${e.message}")
-                    showSnackBar("Erro ao iniciar atualização: ${e.message}", null)
+                    showSnackBar("Erro ao iniciar atualização: ${e.message}", null, null)
                 }
             } else {
                 noUpdateModal = true

@@ -62,11 +62,11 @@ object SyncManager {
         )
     }
 
-    suspend fun queuePostPreMeasurement(context: Context, db: AppDatabase, contractId: Long) {
-        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_PRE_MEASUREMENT, contractId)
+    suspend fun queuePostPreMeasurement(context: Context, db: AppDatabase, preMeasurementId: String) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_PRE_MEASUREMENT, uuid = preMeasurementId)
         if (count == 0) {
             val syncItem = SyncQueueEntity(
-                relatedId = contractId,
+                relatedUuid = preMeasurementId,
                 type = SyncTypes.POST_PRE_MEASUREMENT,
                 priority = 30 // mais prioritário
             )

@@ -1,49 +1,45 @@
 package com.lumos.data.database
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.domain.model.PreMeasurementStreetPhoto
 
 @Dao
 interface PreMeasurementDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStreet(preMeasurementStreet: PreMeasurementStreet): Long
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMeasurement(preMeasurement: PreMeasurement)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItem(preMeasurementStreetItem: PreMeasurementStreetItem)
+    @Query("DELETE FROM pre_measurement WHERE preMeasurementId = :preMeasurementId")
+    suspend fun deletePreMeasurement(preMeasurementId: String)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPhoto(photo: PreMeasurementStreetPhoto)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertStreet(preMeasurementStreet: PreMeasurementStreet)
 
-    @Query("SELECT * FROM pre_measurement_streets WHERE contractId = :preMeasurementId AND status = 'MEASURED'")
-    suspend fun getStreets(preMeasurementId : Long): List<PreMeasurementStreet>
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertItems(preMeasurementStreetItems: List<PreMeasurementStreetItem>)
 
-    @Query("SELECT * FROM pre_measurement_streets WHERE contractId = :preMeasurementId")
-    suspend fun getAllStreets(preMeasurementId : Long): List<PreMeasurementStreet>
+    @Query("SELECT * FROM pre_measurement_street WHERE preMeasurementId = :preMeasurementId AND status = 'MEASURED'")
+    suspend fun getStreets(preMeasurementId: String): List<PreMeasurementStreet>
 
-    @Query("SELECT * FROM pre_measurement_street_photos WHERE contractId = :contractId")
-    suspend fun getStreetPhotos(contractId : Long): List<PreMeasurementStreetPhoto>
+    @Query("SELECT * FROM pre_measurement_street WHERE preMeasurementId = :preMeasurementId")
+    suspend fun getAllStreets(preMeasurementId: String): List<PreMeasurementStreet>
 
-    @Query("SELECT * FROM pre_measurement_street_items WHERE contractId = :contractId")
-    suspend fun getItems(contractId: Long): List<PreMeasurementStreetItem>
+    @Query("SELECT * FROM pre_measurement_street_item WHERE preMeasurementId = :preMeasurementId")
+    suspend fun getItems(preMeasurementId: String): List<PreMeasurementStreetItem>
 
-    @Query("DELETE FROM pre_measurement_streets WHERE contractId = :preMeasurementId")
-    suspend fun deleteStreets(preMeasurementId: Long)
+    @Query("DELETE FROM pre_measurement_street WHERE preMeasurementStreetId in (:preMeasurementStreetIds)")
+    suspend fun deleteStreets(preMeasurementStreetIds: List<String>)
 
-    @Query("DELETE FROM pre_measurement_street_items WHERE contractId = :contractId")
-    suspend fun deleteItems(contractId: Long)
+    @Query("DELETE FROM pre_measurement_street_item WHERE preMeasurementId = :preMeasurementId")
+    suspend fun deleteItems(preMeasurementId: String)
 
-    @Query("SELECT COUNT(preMeasurementStreetId) from pre_measurement_street_photos WHERE contractId = :lng")
-    suspend fun countPhotos(lng: Long): Int
+    @Query("SELECT COUNT(*) from pre_measurement_street WHERE preMeasurementId = :preMeasurementId")
+    suspend fun countPhotos(preMeasurementId: String): Int
 
-    @Query("UPDATE pre_measurement_streets SET status = 'FINISHED' WHERE contractId = (:lng)")
-    suspend fun finishAll(lng: Long)
-
-    @Query("DELETE FROM pre_measurement_street_photos WHERE preMeasurementStreetId in (:longs)")
-    suspend fun deletePhotos(longs: MutableList<Long>)
-
-    @Query("select contractId from pre_measurement_streets")
-    suspend fun getContractInUse(): List<Long>
-
+    @Query("UPDATE pre_measurement_street SET status = 'FINISHED' WHERE preMeasurementId = (:preMeasurementId)")
+    suspend fun finishAll(preMeasurementId: String)
 }

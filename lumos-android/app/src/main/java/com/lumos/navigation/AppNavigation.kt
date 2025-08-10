@@ -495,27 +495,11 @@ fun AppNavigation(
                     val contractId =
                         backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
                     PreMeasurementStreetScreen(
-                        back = {
-                            navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
-                        },
                         context = LocalContext.current,
                         preMeasurementViewModel = preMeasurementViewModel,
                         contractId = contractId,
                         contractViewModel = contractViewModel,
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
-                        navController = navController,
-                        notificationsBadge = notifications.size.toString()
+                        navController = navController
                     )
                 }
 

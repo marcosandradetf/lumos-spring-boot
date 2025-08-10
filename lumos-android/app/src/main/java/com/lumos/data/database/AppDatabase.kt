@@ -22,9 +22,9 @@ import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.model.OrderMaterial
 import com.lumos.domain.model.OrderMaterialItem
+import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.domain.model.PreMeasurementStreetPhoto
 import com.lumos.domain.model.Stockist
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.notifications.NotificationItem
@@ -32,9 +32,9 @@ import java.util.concurrent.Executors
 
 @Database(
     entities = [
+        (PreMeasurement::class),
         (PreMeasurementStreet::class),
         (PreMeasurementStreetItem::class),
-        (PreMeasurementStreetPhoto::class),
 
         (Contract::class),
         (Item::class),
@@ -63,7 +63,7 @@ import java.util.concurrent.Executors
         (MaintenanceStreetItem::class),
 
     ],
-    version = 13,
+    version = 14,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao

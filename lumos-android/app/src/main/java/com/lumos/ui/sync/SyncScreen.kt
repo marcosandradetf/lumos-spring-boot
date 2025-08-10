@@ -79,7 +79,7 @@ fun SyncScreenContent(
         navigateToExecutions = { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) }
     ) { modifier, snackBar ->
 
-        if (error.isNotEmpty()) snackBar(error, null)
+        if (error.isNotEmpty()) snackBar(error, null, null)
 
         if (loading)
             Box {

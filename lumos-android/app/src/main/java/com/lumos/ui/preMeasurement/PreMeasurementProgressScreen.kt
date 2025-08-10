@@ -77,7 +77,7 @@ fun PreMeasurementProgressScreen(
     LaunchedEffect(contractId) {
 
         contract = contractViewModel.getContract(contractId)
-        preMeasurementViewModel.loadStreets(contractId)
+        preMeasurementViewModel.loadStreets(TODO())
     }
 
     if (contract != null)
@@ -103,7 +103,7 @@ fun PreMeasurementProgressScreen(
                         .show()
 //                    preMeasurementViewModel.
                     onNavigateToHome()
-                    preMeasurementViewModel.queueSendMeasurement(contractId)
+                    preMeasurementViewModel.queueSendMeasurement(TODO())
                 } else {
                     Toast
                         .makeText(
@@ -374,7 +374,7 @@ fun Streets(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = street.street ?: "",
+                                text = street.address ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -423,241 +423,241 @@ fun FinishPreMeasurementButton(onClick: () -> Unit) {
 @Composable
 fun PrevPMP() {
     // Criando um contexto fake para a preview
-    val fakeContext = LocalContext.current
-    val value =
-        Contract(
-            contractId = 1,
-            contractor = "Prefeitura Municipal de Belo Horizonte",
-            contractFile = "arquivo.pdf",
-            createdBy = "Gabriela",
-            createdAt = Instant.parse("2025-03-20T20:00:50.765Z").toString(),
-            status = ""
-        )
-
-    val streets =
-        listOf(
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-            PreMeasurementStreet(
-                preMeasurementStreetId = 1,
-                contractId = 1,
-                lastPower = "",
-                latitude = 1.9,
-                longitude = 2.2,
-                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
-                number = "",
-                neighborhood = "",
-                city = "",
-                state = "",
-                deviceId = ""
-            ),
-        )
-
-
-    PMPContent(
-        contract = value,
-        onNavigateToHome = { },
-        onNavigateToMenu = { },
-        onNavigateToPreMeasurements = { },
-        onNavigateToStreet = { },
-        navController = rememberNavController(),
-        "12",
-        streets,
-        { }
-    )
+//    val fakeContext = LocalContext.current
+//    val value =
+//        Contract(
+//            contractId = 1,
+//            contractor = "Prefeitura Municipal de Belo Horizonte",
+//            contractFile = "arquivo.pdf",
+//            createdBy = "Gabriela",
+//            createdAt = Instant.parse("2025-03-20T20:00:50.765Z").toString(),
+//            status = ""
+//        )
+//
+//    val streets =
+//        listOf(
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//            PreMeasurementStreet(
+//                preMeasurementStreetId = 1,
+//                contractId = 1,
+//                lastPower = "",
+//                latitude = 1.9,
+//                longitude = 2.2,
+//                street = "Rua D, 12 - Jardim tal, Belo Horizonte - MG",
+//                number = "",
+//                neighborhood = "",
+//                city = "",
+//                state = "",
+//                deviceId = ""
+//            ),
+//        )
+//
+//
+//    PMPContent(
+//        contract = value,
+//        onNavigateToHome = { },
+//        onNavigateToMenu = { },
+//        onNavigateToPreMeasurements = { },
+//        onNavigateToStreet = { },
+//        navController = rememberNavController(),
+//        "12",
+//        streets,
+//        { }
+//    )
 
 //    Loading(
 //        fakeContext,

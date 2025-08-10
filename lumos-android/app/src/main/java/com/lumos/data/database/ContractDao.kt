@@ -14,8 +14,8 @@ interface ContractDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertContracts(contract: List<Contract>)
 
-    @Query("DELETE FROM contracts WHERE contractId NOT IN (:contractIds)")
-    suspend fun deleteContracts(contractIds: List<Long>)
+    @Query("DELETE FROM contracts")
+    suspend fun deleteContracts()
 
     @Query("SELECT * FROM contracts WHERE status = :status")
     fun getFlowContracts(status: String): Flow<List<Contract>>

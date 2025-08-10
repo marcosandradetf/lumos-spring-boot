@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.lumos"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.thryon.lumos"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
 
         versionCode = 16
         versionName = "1.0.02"
@@ -52,7 +52,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlin{
+    kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
@@ -89,7 +89,12 @@ android {
                 "proguard-rules.pro"
             )
         }
+
         getByName("debug") {
+
+//            applicationIdSuffix = ".debug"  // Adiciona ".debug" ao packageName
+
+
             // Opcional: assinar debug com mesma chave
             signingConfig = signingConfigs.getByName("release")
         }

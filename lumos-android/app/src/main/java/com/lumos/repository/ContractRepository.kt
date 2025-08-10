@@ -25,8 +25,7 @@ class ContractRepository(
         return when (response) {
             is RequestResult.Success -> {
                 // get contracts in use
-                val contractIds = db.preMeasurementDao().getContractInUse()
-                db.contractDao().deleteContracts(contractIds) // delete all contracts except those currently in use
+                db.contractDao().deleteContracts()
                 db.contractDao().insertContracts(response.data)
                 RequestResult.Success(Unit)
             }

@@ -192,7 +192,7 @@ fun SyncDetailsMaintenanceContent(
     ) { modifier, snackBar ->
 
         if (message.isNotBlank() && message != lastMessageShown) {
-            snackBar(message, null)
+            snackBar(message, null, null)
             lastMessageShown = message
         }
 
@@ -328,7 +328,7 @@ fun SyncDetailsStreetsContent(
     ) { modifier, snackBar ->
 
         if (message.isNotBlank() && message != lastMessageShown) {
-            snackBar(message, null)
+            snackBar(message, null, null)
             lastMessageShown = message
         }
 

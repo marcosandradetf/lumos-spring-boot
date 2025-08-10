@@ -289,7 +289,7 @@ fun CheckStockContent(
 
         if (message.isNotBlank() && message != lastMessage) {
             lastMessage = message
-            showSnackBar(message, null)
+            showSnackBar(message, null, null)
         }
 
         PullToRefreshBox(
@@ -606,7 +606,7 @@ fun SelectDeposit(
         navigateToExecutions = { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) }) { _, showSnackBar ->
 
         if (message.isNotBlank() && message != lastMessage) {
-            showSnackBar(message, null)
+            showSnackBar(message, null, null)
             lastMessage = message
         }
 

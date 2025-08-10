@@ -148,6 +148,7 @@ fun ContractsScreenContent(
             error?.let {
                 snackBar(
                     it,
+                    null,
                     null
                 )
             }

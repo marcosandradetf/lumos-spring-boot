@@ -31,6 +31,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,7 +59,7 @@ fun AppLayout(
     navigateToMaintenance: (() -> Unit?)? = null,
     navigateToExecutions: (() -> Unit?)? = null,
     navigateToNotifications: (() -> Unit)? = null,
-    content: @Composable (Modifier, showSnackBar: (String, String?) -> Unit) -> Unit,
+    content: @Composable (Modifier, showSnackBar: (String, String?, (() -> Unit)?) -> Unit) -> Unit,
 ) {
     val selectedItem by remember { mutableIntStateOf(selectedIcon) }
     val items = listOf("Início", "Estoque", "Manuten.", "Instalação", "Mais")
@@ -82,15 +83,21 @@ fun AppLayout(
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    val showSnackBar: (String, String?) -> Unit = { message, label ->
+    val showSnackBar: (String, String?, (() -> Unit)?) -> Unit = { message, label, action ->
         scope.launch {
-            snackBarHostState.showSnackbar(
+            val result = snackBarHostState.showSnackbar(
                 message = message,
                 actionLabel = label,
+                withDismissAction = action != null,
                 duration = SnackbarDuration.Short
             )
+            if (result == SnackbarResult.ActionPerformed) {
+                action?.invoke()
+            }
         }
     }
+
+
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

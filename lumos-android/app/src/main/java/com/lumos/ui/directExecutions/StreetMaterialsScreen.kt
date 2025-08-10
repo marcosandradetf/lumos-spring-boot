@@ -144,14 +144,13 @@ fun StreetMaterialScreen(
                         val streetName = addr[0]
                         val neighborhood = addr[1]
                         val city = addr[2]
-                        val state = addr[3]
+
+                        currentAddress = "$streetName, - $neighborhood, $city"
 
                         directExecutionViewModel.street =
                             directExecutionViewModel.street?.copy(
-                                address = "$streetName, - $neighborhood, $city - $state"
+                                address = currentAddress
                             )
-
-                        currentAddress = "$streetName, - $neighborhood, $city - $state"
                     }
                     directExecutionViewModel.loadingCoordinates = false
                 } else {

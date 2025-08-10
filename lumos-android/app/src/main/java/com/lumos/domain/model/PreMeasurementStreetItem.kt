@@ -1,13 +1,12 @@
 package com.lumos.domain.model
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "pre_measurement_street_items")
+@Entity(tableName = "pre_measurement_street_item",
+    primaryKeys = ["preMeasurementStreetId", "contractReferenceItemId", "preMeasurementId"])
 data class PreMeasurementStreetItem(
-    @PrimaryKey(autoGenerate = true) val preMeasurementItemId: Long = 0,
-    var preMeasurementStreetId: Long,
-    val itemContractId: Long,
-    val itemContractQuantity: Int,
-    val contractId: Long,
+    var preMeasurementStreetId: String,
+    val contractReferenceItemId: Long,
+    val preMeasurementId: String,
+    var measuredQuantity: String,
 )

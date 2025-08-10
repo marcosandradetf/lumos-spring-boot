@@ -1,173 +1,136 @@
 package com.lumos.ui.preMeasurement
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.PhotoCamera
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
+import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
-import com.lumos.api.UserExperience
-import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Item
-import com.lumos.domain.model.PreMeasurementStreet
-import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.domain.model.PreMeasurementStreetPhoto
 import com.lumos.domain.service.AddressService
 import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
+import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.CurrentScreenLoading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
+import com.lumos.utils.Utils.sanitizeDecimalInput
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.PreMeasurementViewModel
+import kotlinx.coroutines.launch
 import java.io.File
-
+import java.math.BigDecimal
+import java.util.UUID
 
 @Composable
 fun PreMeasurementStreetScreen(
-    back: (Long) -> Unit,
     context: Context,
     preMeasurementViewModel: PreMeasurementViewModel,
     contractId: Long,
     contractViewModel: ContractViewModel,
-    onNavigateToHome: () -> Unit,
-    onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     navController: NavHostController,
-    notificationsBadge: String,
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
-    val coord = CoordinatesService(context, fusedLocationProvider)
-    val isLoading by contractViewModel.isSyncing.collectAsState()
-    var contract by remember { mutableStateOf<Contract?>(null) }
+    val coordinates = CoordinatesService(context, fusedLocationProvider)
+    var currentAddress by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
+    val message = remember {
+        mutableStateMapOf(
+            "title" to "Título da mensagem",
+            "body" to "Você está na rua da execução neste momento?"
+        )
+    }
+
     val items by contractViewModel.items.collectAsState()
 
 
-    var showModal by remember { mutableStateOf(false) }
-    var finishMeasurement by remember { mutableStateOf(false) }
-
-
-    val preMeasurementStreet by remember {
-        mutableStateOf(
-            PreMeasurementStreet(
-                contractId = contractId,
-                lastPower = "",
-                latitude = 0.0,
-                longitude = 0.0,
-                street = "",
-                neighborhood = "",
-                number = "",
-                city = "",
-                state = "",
-                deviceId = preMeasurementViewModel.deviceId.toString()
-            )
-        )
-    }
-
-    val preMeasurementStreetPhoto by remember {
-        mutableStateOf(
-            PreMeasurementStreetPhoto(
-                preMeasurementStreetId = 0,
-                deviceId = preMeasurementViewModel.deviceId.toString(),
-                photoUri = null,
-                contractId = contractId
-            )
-        )
-    }
-
-    var preMeasurementStreetItems by remember {
-        mutableStateOf<List<PreMeasurementStreetItem>>(
-            emptyList()
-        )
-    }
-
     LaunchedEffect(contractId) {
-        contract = contractViewModel.getContract(contractId)
-        preMeasurementViewModel.loadStreets(contractId)
+        preMeasurementViewModel.loading = true
+
+        val contract = contractViewModel.getContract(contractId)
 
         contract?.let { loadedContract ->
             val itemsIdsList = loadedContract.itemsIds
@@ -179,13 +142,15 @@ fun PreMeasurementStreetScreen(
             contractViewModel.loadItemsFromContract(itemsIdsList)
 
             contractViewModel.syncContractItems()
-        }
-    }
 
-    // Execute a função assíncrona
-    LaunchedEffect(Unit) {
+            preMeasurementViewModel.newPreMeasurement(contractId, loadedContract.contractor)
+        }
+
+        preMeasurementViewModel.loading = false
+
         preMeasurementViewModel.locationLoading = true
-        coord.execute { latitude, longitude ->
+
+        coordinates.execute { latitude, longitude ->
             if (latitude != null && longitude != null) {
                 preMeasurementViewModel.latitude = latitude
                 preMeasurementViewModel.longitude = longitude
@@ -194,15 +159,14 @@ fun PreMeasurementStreetScreen(
                 val street = addr?.get(0).toString()
                 val neighborhood = addr?.get(1).toString()
                 val city = addr?.get(2).toString()
-                val state = addr?.get(3).toString()
 
-                preMeasurementStreet.street = street
-                preMeasurementStreet.neighborhood = neighborhood
-                preMeasurementStreet.city = city
-                preMeasurementStreet.state = state
-                preMeasurementStreet.latitude = latitude
-                preMeasurementStreet.longitude = longitude
+                currentAddress = "$street, - $neighborhood, $city"
 
+                preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
+                    latitude = latitude,
+                    longitude = longitude,
+                    address = currentAddress
+                )
             }
         }
         preMeasurementViewModel.locationLoading = false
@@ -211,148 +175,266 @@ fun PreMeasurementStreetScreen(
     if (preMeasurementViewModel.locationLoading) {
         CurrentScreenLoading(
             navController,
-            "Pré-medição ${preMeasurementStreet.city ?: ""}",
-            "Tentando carregar coordenadas",
+            "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            "Tentando carregar as coordenadas...",
             BottomBar.MORE.value
         )
-    } else {
-        PMSContent(
-            context = context,
-            preMeasurementStreetItems = preMeasurementStreetItems,
-            saveStreet = {
-                preMeasurementViewModel.saveStreetOffline(
-                    preMeasurementStreet,
-                    callback = { preMeasurementStreetId ->
-                        if (preMeasurementStreetId != null) {
-                            try {
-                                preMeasurementViewModel.saveItemsOffline(
-                                    preMeasurementStreetItems,
-                                    preMeasurementStreetId
-                                )
-                            } catch (e: Exception) {
-                                Log.e("SaveError", "Erro ao salvar itens offline: ${e.message}", e)
-                            }
-                        } else {
-                            Log.e("SaveError", "preMeasurementStreetId retornou null")
-                        }
-                    }
-                )
-            },
-            back = {
-                back(it)
-            },
-            onValueChange = { field, value ->
-                when (field) {
-                    "street" -> preMeasurementStreet.street = value
-                    "number" -> preMeasurementStreet.number = value
-                    "neighborhood" -> preMeasurementStreet.neighborhood = value
-                    "city" -> preMeasurementStreet.city = value
-                    "state" -> preMeasurementStreet.state = value
-                    "lastPower" -> preMeasurementStreet.lastPower = value
-                }
-
-            },
-            showModal = {
-                showModal = true
-            },
-            pStreet = preMeasurementStreet,
-            takePhoto = {
-                preMeasurementStreetPhoto.photoUri = it.toString()
-            },
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToMenu = onNavigateToMenu,
-            onNavigateToProfile = onNavigateToProfile,
-            onNavigateToNotifications = onNavigateToNotifications,
-            navController = navController,
-            notificationsBadge = notificationsBadge,
+    } else if (preMeasurementViewModel.loading || items.isEmpty()) {
+        CurrentScreenLoading(
+            navController,
+            "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            "Carregando...",
+            BottomBar.MORE.value
         )
-    }
-
-    // Abrir o BottomSheetDialog quando isDialogOpen for true
-    if (showModal) {
-        BottomSheetDialog(
-            onDismissRequest = { selected ->
-                preMeasurementStreetItems = selected
-                showModal = false
+    } else if (preMeasurementViewModel.nextStep) {
+        AppLayout(
+            title = "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            selectedIcon = BottomBar.MORE.value,
+            navigateBack = {
+                navController.popBackStack()
             },
-            preList = preMeasurementStreetItems,
-            items = items,
-            preMeasurementStreetId = preMeasurementStreet.preMeasurementStreetId,
-            contractId = contractId,
-            context = context,
-            isLoading = isLoading,
-            refresh = {
-                contractViewModel.syncContractItems()
+            navigateToMaintenance = {
+                navController.navigate(Routes.MAINTENANCE)
+            },
+            navigateToHome = {
+                navController.navigate(Routes.HOME)
+            },
+            navigateToMore = {
+                navController.navigate(Routes.MORE)
+            },
+            navigateToStock = {
+                navController.navigate(Routes.STOCK)
+            },
+            navigateToExecutions = {
+                preMeasurementViewModel.clearViewModel()
+                navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
             }
+        ) { _, _ ->
+            var triedToSubmit by remember { mutableStateOf(false) }
+
+            if (preMeasurementViewModel.hasPosted) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp, vertical = 150.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Rounded.TaskAlt,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(72.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface,
+                                    shape = CircleShape
+                                )
+                                .padding(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Rua adicionada!",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Escolha a sua próxima ação.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            preMeasurementViewModel.clearViewModel()
+                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(
+                            "Voltar a tela anterior"
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                preMeasurementViewModel.preMeasurementStreetId = UUID.randomUUID()
+                                preMeasurementViewModel.street?.copy(
+                                    preMeasurementStreetId = preMeasurementViewModel.preMeasurementStreetId.toString(),
+                                    address = currentAddress
+                                )
+                                preMeasurementViewModel.streetItems.clear()
+                                preMeasurementViewModel.hasPosted = false
+                                preMeasurementViewModel.nextStep = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    ) {
+                        Text(
+                            "Continuar pré-medição nessa rua"
+                        )
+                    }
+                }
+            } else
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Text(
+                        text = "Dados da Pré-medição",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                    )
+
+                    Text(
+                        text = "Preencha os dados abaixo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp)
+                    )
+
+
+                    OutlinedTextField(
+                        value = preMeasurementViewModel.street?.lastPower ?: "",
+                        onValueChange = {
+                            triedToSubmit = false
+                            preMeasurementViewModel.street =
+                                preMeasurementViewModel.street?.copy(lastPower = it)
+                        },
+                        isError = triedToSubmit && preMeasurementViewModel.street?.lastPower.isNullOrBlank(),
+                        singleLine = true,
+                        label = { Text("Potência anterior") },
+                        supportingText = {
+                            if (triedToSubmit && preMeasurementViewModel.street?.lastPower.isNullOrBlank()) {
+                                Text(
+                                    "Informe a potência anterior",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 32.dp),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            errorBorderColor = MaterialTheme.colorScheme.error
+                        )
+                    )
+
+                    Button(
+                        onClick = {
+                            triedToSubmit = true
+
+                            val isLastPowerValid =
+                                !preMeasurementViewModel.street?.lastPower.isNullOrBlank()
+
+                            if (isLastPowerValid) {
+                                preMeasurementViewModel.street?.let { street ->
+                                    preMeasurementViewModel.save()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .padding(horizontal = 8.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            "Enviar",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+        }
+    } else
+        StreetItemsContent(
+            description = "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            preMeasurementViewModel = preMeasurementViewModel,
+            context = context,
+            navController = navController,
+            items = items
         )
-    }
-
-    if (finishMeasurement) {
-        preMeasurementStreetItems = emptyList()
-        Toast
-            .makeText(
-                context,
-                "Medição salva com sucesso!",
-                Toast.LENGTH_SHORT
-            )
-            .show()
-        finishMeasurement = false
-    }
-
 
 }
 
-
 @Composable
-fun PMSContent(
+fun StreetItemsContent(
+    description: String,
+    preMeasurementViewModel: PreMeasurementViewModel,
     context: Context,
-    preMeasurementStreetItems: List<PreMeasurementStreetItem>,
-    saveStreet: () -> Unit,
-    back: (Long) -> Unit,
-    onValueChange: (String?, String?) -> Unit,
-    showModal: () -> Unit,
-    pStreet: PreMeasurementStreet,
-    takePhoto: (uri: Uri) -> Unit,
-    onNavigateToHome: () -> Unit,
-    onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     navController: NavHostController,
-    notificationsBadge: String
+    items: List<Item>,
 ) {
-
     val keyboardController = LocalSoftwareKeyboardController.current
-    var exitMeasurement by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
-    var street by remember { mutableStateOf(pStreet.street) }
-    var number by remember { mutableStateOf("") }
-    var neighborhood by remember { mutableStateOf(pStreet.neighborhood) }
-    var city by remember { mutableStateOf(pStreet.city) }
-    var state by remember { mutableStateOf(pStreet.state ?: "") }
-    var lastPower by remember { mutableStateOf("") }
+    val fileUri: MutableState<Uri?> = remember {
+        mutableStateOf(
+            preMeasurementViewModel.street?.photoUri?.toUri()
+        )
+    }
 
-    val fileUri: MutableState<Uri?> = remember { mutableStateOf(null) }
-
-    val imageSaved = remember { mutableStateOf(false) }
+    val imageSaved = remember { mutableStateOf(preMeasurementViewModel.street?.photoUri != null) }
     val createFile: () -> Uri = {
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
         file.createNewFile() // Garante que o arquivo seja criado
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-
-        Log.d("ImageDebug", "URI criada: $uri") // 📌 Adiciona log aqui
-
         uri
     }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success) {
-                Log.d(
-                    "ImageDebug",
-                    "Foto tirada com sucesso! URI: ${fileUri.value}"
-                ) // 🔍 Verifica se foi salvo
                 fileUri.value?.let { uri ->
-                    takePhoto(uri)
+                    preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
+                        photoUri = uri.toString()
+                    )
                     imageSaved.value = true
                 }
             } else {
@@ -360,831 +442,421 @@ fun PMSContent(
             }
         }
 
-    AppLayout(
-        title = "Pré-medição ${city ?: ""} ",
-        selectedIcon = BottomBar.MORE.value,
-        notificationsBadge = notificationsBadge,
-        navigateToMore = onNavigateToMenu,
-        navigateToHome = onNavigateToHome,
+    var action by remember { mutableStateOf("") }
 
+
+    AppLayout(
+        title = description,
+        selectedIcon = BottomBar.MORE.value,
+        navigateToMore = {
+            action = Routes.MORE
+//            openModal(Routes.MORE)
+        },
+        navigateToHome = {
+            action = Routes.HOME
+//            openModal(Routes.HOME)
+        },
         navigateBack = {
-            exitMeasurement = true
+            action = Routes.DIRECT_EXECUTION_SCREEN
+//            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+
+        navigateToStock = {
+            action = Routes.STOCK
+//            openModal(Routes.STOCK)
+        },
+        navigateToExecutions = {
+            action = Routes.DIRECT_EXECUTION_SCREEN
+//            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+        },
+        navigateToMaintenance = {
+            action = Routes.MAINTENANCE
+//            openModal(Routes.MAINTENANCE)
         }
+
     ) { _, showSnackBar ->
+        if (preMeasurementViewModel.message != null) {
+            showSnackBar(preMeasurementViewModel.message!!, null, null)
+            preMeasurementViewModel.message = null
+        }
+
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures {
-                        // Fechar o teclado ao tocar em qualquer lugar da tela
-                        keyboardController?.hide()
-                    }
-                }
+            modifier = Modifier.fillMaxSize()
         ) {
 
-            if (exitMeasurement) {
-                Confirm(
-                    body = "Você tem certeza que deseja cancelar a pré-medição atual?",
-                    confirm = {
-                        back(pStreet.contractId)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 90.dp)// deixa espaço pros botões
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = {
+                            focusManager.clearFocus() // ⌨️ Fecha o teclado
+                        })
                     },
-                    cancel = {
-                        exitMeasurement = false
-                    }
-                )
-            }
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
 
-            Column(
-                Modifier.fillMaxWidth(),
             ) {
-
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically // Certificando que os itens dentro da Row ficam alinhados verticalmente
-                ) {
-                    Column {
-                        Tag(
-                            "${pStreet.latitude}, ${pStreet.longitude}",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally, // Alinha o conteúdo da coluna no centro
-                        modifier = Modifier.clickable {
-                            showModal()
-                        }
-                    ) {
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = Color.Red,
-                                    contentColor = MaterialTheme.colorScheme.onSecondary
-                                ) {
-                                    Text(
-                                        text = preMeasurementStreetItems.size.toString(),
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                        ) {
+                item {
+                    TextField(
+                        value = preMeasurementViewModel.street?.address ?: "",
+                        onValueChange = {
+                            preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
+                                address = it
+                            )
+                        },
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            focusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            disabledContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        placeholder = {
+                            Text(
+                                text = "Qual o endereço atual?",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 19.sp,
+                            )
+                        },
+                        leadingIcon = {
                             Icon(
-                                imageVector = Icons.Filled.Lightbulb,
-                                contentDescription = "Shopping cart",
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Localização",
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
-                        }
-
-                        Text(
-                            text = "Itens adicionados",
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
-                }
-
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = street ?: "",
-                            onValueChange = {
-                                street = it
-                                onValueChange("street", street)
-                            },
-                            label = {
-                                Text(
-                                    text = "Rua:",
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            },
-                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            maxLines = 1,
-                            isError = street.isNullOrBlank(),
-                            supportingText = {
-                                if (street.isNullOrBlank()) Text(
-                                    "Informe a rua",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            modifier = Modifier.weight(0.8f),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                                cursorColor = MaterialTheme.colorScheme.primary
-
-                            )
-                        )
-
-                    }
-
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = neighborhood ?: "",
-                            onValueChange = {
-                                neighborhood = it
-                                onValueChange("neighborhood", neighborhood)
-                            },
-                            label = {
-                                Text(
-                                    text = "Bairro:",
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            },
-                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            maxLines = 1,
-                            isError = neighborhood.isNullOrBlank(),
-                            supportingText = {
-                                if (neighborhood.isNullOrBlank()) Text(
-                                    "Informe o bairro",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            modifier = Modifier.weight(0.5f),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                                cursorColor = MaterialTheme.colorScheme.primary
-
-                            )
-                        )
-
-                        OutlinedTextField(
-                            value = city ?: "",
-                            onValueChange = {
-                                city = it
-                                onValueChange("city", city)
-                            },
-                            label = {
-                                Text(
-                                    text = "Cidade:",
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            },
-                            textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            maxLines = 1,
-                            isError = city.isNullOrBlank(),
-                            supportingText = {
-                                if (city.isNullOrBlank()) Text(
-                                    "Informe a cidade",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            modifier = Modifier.weight(0.5f),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                                cursorColor = MaterialTheme.colorScheme.primary
-
-                            )
-                        )
-                    }
-
-
-                    val lastPowerEmpty = pStreet.lastPower.isNullOrEmpty()
-                    OutlinedTextField(
-                        value = lastPower,
-                        onValueChange = {
-                            lastPower = if (it.endsWith("W")) it else it + "W"
-                            onValueChange("lastPower", lastPower)
                         },
-                        label = {
-                            Text(
-                                text = "Potência atual:",
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
-                        textStyle = TextStyle(MaterialTheme.colorScheme.onBackground),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        maxLines = 1,
-                        isError = lastPowerEmpty,
-                        supportingText = {
-                            if (lastPowerEmpty) Text(
-                                "Informe a potência atual",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                            cursorColor = MaterialTheme.colorScheme.primary
-
+                        shape = CircleShape,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                keyboardController?.hide()
+                            }
                         )
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    Text(
+                        "Selecione os itens da Pré-medição",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
+                items(
+                    items = items,
+                    key = { it.contractReferenceItemId }
+                ) {
+                    ContractItem(
+                        item = it,
+                        preMeasurementViewModel = preMeasurementViewModel
+                    )
+                }
+            }
+
+            FloatingActionButton(
+                onClick = {
+                    val newUri = createFile() // Gera um novo Uri
+                    fileUri.value = newUri // Atualiza o estado
+                    launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
+                    .padding(16.dp)
+            ) {
+                AnimatedVisibility(visible = imageSaved.value) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(LocalContext.current)
+                                .data(fileUri.value)
+                                .crossfade(true) // Para um fade suave
+                                .build()
+                        ),
+                        contentDescription = "Imagem da foto",
+                        modifier = Modifier
+                            .size(70.dp)
+                            .padding(0.dp),
+                        contentScale = ContentScale.Crop
                     )
                 }
 
-
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp)
-                ) {
-
-                    Card(
+                AnimatedVisibility(visible = !imageSaved.value) {
+                    Box(
                         modifier = Modifier
-                            .padding(end = 5.dp)
-                            .clickable {
-                                val newUri = createFile() // Gera um novo Uri
-                                fileUri.value = newUri // Atualiza o estado
-                                launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
-                            },
-                        shape = RoundedCornerShape(10.dp), // Formato
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer // Cor de fundo do botão
-                        )
-                    ) {
-
-                        AnimatedVisibility(visible = imageSaved.value) {
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    ImageRequest.Builder(LocalContext.current)
-                                        .data(fileUri.value)
-                                        .crossfade(true) // Para um fade suave
-                                        .build()
-                                ),
-                                contentDescription = "Imagem da foto",
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .padding(0.dp),
-                                contentScale = ContentScale.Crop
+                            .clip(
+                                shape = RoundedCornerShape(8.dp)
                             )
-                        }
-
-                        AnimatedVisibility(visible = !imageSaved.value) {
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(10.dp)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Icon(
-                                modifier = Modifier
-                                    .padding(10.dp)
-                                    .size(30.dp),
-                                imageVector = Icons.Outlined.PhotoCamera,
-                                contentDescription = "Foto",
+                                contentDescription = null,
+                                imageVector = Icons.Rounded.PhotoCamera,
+                                modifier = Modifier.size(30.dp),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                        }
-                    }
-                    Text(
-                        modifier = Modifier.padding(top = 5.dp),
-                        text = "Tirar foto",
-                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-                        fontStyle = MaterialTheme.typography.bodyLarge.fontStyle
-                    )
-                }
-
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Button(
-                    onClick = { showModal() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Adicionar itens",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
-
-                Button(
-                    onClick = {
-                        if (preMeasurementStreetItems.isEmpty()) {
-                            showSnackBar("Adicione os itens", "")
-                        } else if (!validFields(street, number, neighborhood, city)) {
-                            showSnackBar("Todos os campos são obrigatórios", "")
-                        } else if(Utils.) {
-
-                        } else {
-                            saveStreet()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text(
-                        text = "Salvar",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
-            }
-
-        }
-    }
-
-
-}
-
-fun validFields(
-    street: String?,
-    number: String?,
-    neighborhood: String?,
-    city: String?
-): Boolean {
-    return listOf(street, number, neighborhood, city).all { !it.isNullOrEmpty() }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BottomSheetDialog(
-    onDismissRequest: (List<PreMeasurementStreetItem>) -> Unit,
-    items: List<Item>,
-    preList: List<PreMeasurementStreetItem>,
-    preMeasurementStreetId: Long,
-    contractId: Long,
-    context: Context,
-    isLoading: Boolean,
-    refresh: () -> Unit
-) {
-    var searchQuery by remember { mutableStateOf("") }
-    val preMeasurementStreetItems = remember { mutableStateListOf<PreMeasurementStreetItem>() }
-    val filteredList = items.filter {
-        it.nameForImport.contains(searchQuery, ignoreCase = true) ||
-                it.linking?.contains(searchQuery, ignoreCase = true) ?: false
-    }
-
-    LaunchedEffect(preList) {
-        if (preList.isNotEmpty()) {
-            preMeasurementStreetItems.clear()
-            // Adiciona os itens de preList à lista reativa
-            preMeasurementStreetItems.addAll(preList)
-        }
-    }
-
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = {
-            it != SheetValue.Hidden
-        }
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = { onDismissRequest(preMeasurementStreetItems) },
-        dragHandle = null,
-        modifier = Modifier.fillMaxSize(),
-        sheetState = sheetState
-    ) {
-        if (isLoading)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        else if (items.isEmpty())
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-
-                    // Top Row: Botões "Voltar" e "Concluir"
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = { onDismissRequest(preMeasurementStreetItems) }) {
                             Text(
-                                "Voltar",
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontSize = 16.sp
+                                "Tirar Foto",
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontSize = 12.sp
                             )
                         }
+
                     }
+                }
+            }
 
-                    Button(
-                        onClick = { refresh() },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.small,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        elevation = ButtonDefaults.buttonElevation(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Atualizar",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            "Atualizar",
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
+            FloatingActionButton(
+                onClick = {
+                    action = "SEND"
+//                    openModal("SEND")
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
+                    .padding(20.dp),
+                containerColor = MaterialTheme.colorScheme.inverseSurface,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.inverseSurface)
+                        .padding(20.dp)
+                ) {
                     Text(
-                        "Nenhum item encontrado.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 16.sp,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        "CONFIRMAR",
+                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
+
             }
-        else
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .padding(top = 40.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Selecione os itens", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    TextButton(
-                        onClick = {
-                            onDismissRequest(
-                                preMeasurementStreetItems
-                            )
-                        }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Concluir", fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                                modifier = Modifier.padding(end = 5.dp)
-                            )
-                            Icon(
-                                imageVector = Icons.Outlined.Done,
-                                contentDescription = "Icone Concluir"
-                            )
-                        }
 
-                    }
-                }
+//            if (alertModal) {
+//                Alert(
+//                    title = alertMessage["title"] ?: "",
+//                    body = alertMessage["body"] ?: "",
+//                    confirm = {
+//                        closeAlertModal()
+//                    })
+//            }
+//
+//            if (openConfirmModal) {
+//                Confirm(
+//                    body = alertMessage["body"] ?: "",
+//                    confirm = {
+//                        confirmModal(action)
+//                    },
+//                    cancel = {
+//                        confirmModal("CLOSE")
+//                    }
+//                )
+//            }
 
-                Spacer(modifier = Modifier.height(8.dp))
 
-                // Barra de pesquisa
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Buscar") },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Pesquisar"
-                        )
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    "Não se preocupe com cabos, relés e serviços",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    "O sistema os trata automaticamente",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(10.dp))
-
-                LazyColumn {
-                    items(
-                        items = filteredList,
-                        key = { it.contractReferenceItemId }
-                    ) { item ->
-                        val selectedItem =
-                            preMeasurementStreetItems.find { it.itemContractId == item.contractReferenceItemId }
-                        // Passando diretamente o estado de 'selected' e 'quantity' do Composable 1
-                        ItemLightRow(
-                            item = item,
-                            preSelected = selectedItem != null,
-                            preQuantity = selectedItem?.itemContractQuantity
-                                ?: 0,
-                            onItemSelected = { m ->
-                                if (preMeasurementStreetItems.find { item -> item.itemContractId == m.contractReferenceItemId } == null) {
-                                    preMeasurementStreetItems.add(
-                                        PreMeasurementStreetItem(
-                                            preMeasurementStreetId = preMeasurementStreetId,
-                                            itemContractId = m.contractReferenceItemId,
-                                            itemContractQuantity = 0,
-                                            contractId = contractId
-                                        )
-                                    )
-                                } else {
-                                    preMeasurementStreetItems.removeAll { item -> item.itemContractId == m.contractReferenceItemId }
-                                }
-                            },
-                            onQuantityChange = { materialId, quantity ->
-                                preMeasurementStreetItems.replaceAll {
-                                    if (it.itemContractId == materialId) it.copy(
-                                        itemContractQuantity = quantity
-                                    ) else it
-                                }
-                            },
-                            context = context
-                        )
-                    }
-                }
-            }
+        }
     }
-
 }
 
 @Composable
-fun ItemLightRow(
+fun ContractItem(
     item: Item,
-    onItemSelected: (Item) -> Unit,
-    onQuantityChange: (Long, Int) -> Unit,
-    context: Context,
-    preSelected: Boolean,
-    preQuantity: Int
+    preMeasurementViewModel: PreMeasurementViewModel
 ) {
-    var selected = preSelected
-    var quantity = preQuantity
-
-    val materialChar = item.linking ?: ""
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.background,
-        label = ""
-    )
-
-    AnimatedVisibility(!selected) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            UserExperience.vibrate(context = context, 10)
-                            selected = !selected
-                            onItemSelected(item)
-                        }
-                    )
-                },
-            elevation = CardDefaults.cardElevation(10.dp),
-            colors = CardColors(
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-                containerColor = backgroundColor,
-                disabledContainerColor = MaterialTheme.colorScheme.onSecondary,
-                disabledContentColor = MaterialTheme.colorScheme.onSecondary
-            )
-        ) {
-            Row(
-                modifier = if (materialChar.isNotEmpty()) Modifier.padding(16.dp)
-                else Modifier.padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.nameForImport,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
-                    )
-                    if (materialChar.isNotEmpty()) {
-                        Text(
-                            text = materialChar,
-                            fontSize = 14.sp,
-                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-
-                    // Só mostra o controle de quantidade se o item estiver selecionado
-
-                }
-                Icon(
-                    imageVector = Icons.Default.Fingerprint,
-                    contentDescription = "Pressione e segure",
-                    modifier = Modifier.padding(top = 8.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-
+    val quantity = remember(preMeasurementViewModel.streetItems, item) {
+        derivedStateOf {
+            preMeasurementViewModel.streetItems.find {
+                it.contractReferenceItemId == item.contractReferenceItemId
+            }?.measuredQuantity ?: BigDecimal.ZERO.toString()
         }
     }
 
-    AnimatedVisibility(selected) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            UserExperience.vibrate(context = context, 10)
-                            selected = !selected
-                            onItemSelected(item)
-                        }
-                    )
-                },
-            elevation = CardDefaults.cardElevation(10.dp),
-            colors = CardColors(
-                contentColor = MaterialTheme.colorScheme.onError,
-                containerColor = backgroundColor,
-                disabledContainerColor = MaterialTheme.colorScheme.onError,
-                disabledContentColor = MaterialTheme.colorScheme.onError
+    var text by remember(item.contractReferenceItemId) {
+        mutableStateOf(
+            TextFieldValue(
+                quantity.value
             )
-        ) {
+        )
+    }
+
+    val selected = remember(preMeasurementViewModel.streetItems, item) {
+        derivedStateOf {
+            preMeasurementViewModel.streetItems.any {
+                it.contractReferenceItemId == item.contractReferenceItemId
+            }
+        }
+    }
+
+
+    ListItem(
+        headlineContent = {
+            Text(
+                text = item.description,
+                style = MaterialTheme.typography.titleMedium,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        overlineContent = {
             Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally, // Centraliza tudo dentro do Card
-                verticalArrangement = Arrangement.Center // Centraliza verticalmente
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Texto para o nome do material ou outros detalhes, se necessário
-                Text(
-                    text = if (materialChar.isNotEmpty()) "${item.nameForImport} - $materialChar"
-                    else item.nameForImport,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSecondary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp)) // Espaçamento entre os itens
-
-                // Linha com os botões de aumentar e diminuir a quantidade
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center // Centraliza os itens
-                ) {
-                    IconButton(
-                        onClick = {
-                            if (quantity > 0) {
-                                quantity -= 1
-                                onQuantityChange(
-                                    item.contractReferenceItemId,
-                                    quantity
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
-                            .padding(5.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Remove,
-                            contentDescription = "Diminuir",
-                            tint = MaterialTheme.colorScheme.onBackground
+                // Tag de disponibilidade
+                when {
+                    item.itemDependency != null -> {
+                        Tag(
+                            text = "Possuí serviço vínculado",
+                            color = Color.Red,
+                            icon = Icons.Default.Close
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp)) // Espaçamento entre os ícones
-
-                    Text(
-                        text = quantity.toString(),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondary
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    IconButton(
-                        onClick = {
-                            quantity += 1
-                            onQuantityChange(item.contractReferenceItemId, quantity)
-                        },
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.onError, shape = CircleShape)
-                            .padding(5.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Aumentar",
-                            tint = MaterialTheme.colorScheme.onBackground
+                    item.type?.lowercase() == "serviço" -> {
+                        Tag(
+                            text = "Serviço",
+                            color = Color(0xFFFF9800),
+                            icon = Icons.Default.Warning
                         )
                     }
+
+                    item.type?.lowercase() == "projeto" -> {
+                        Tag(
+                            text = "Projeto",
+                            color = Color(0xFFFF9800),
+                            icon = Icons.Default.Warning
+                        )
+                    }
+
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+            }
+        },
+        supportingContent = {
+            AnimatedVisibility(visible = selected.value) {
+                OutlinedTextField(
+                    value = TextFieldValue(quantity.value, TextRange(quantity.value.length)),
+                    onValueChange = { newValue ->
+                        val sanitized = sanitizeDecimalInput(newValue.text)
+                        text = TextFieldValue(sanitized, TextRange(sanitized.length))
 
-                Text(
-                    text = "Quantidade",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontWeight = FontWeight.Medium
+                        preMeasurementViewModel.setQuantity(item.contractReferenceItemId, text.text)
+
+                    },
+                    label = { Text("Quantidade") },
+                    placeholder = { Text("0.00") },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .fillMaxWidth(0.5f)
+                        .height(56.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    shape = RoundedCornerShape(10.dp)
                 )
             }
-        }
-    }
-
-}
-
-
-@Preview
-@Composable
-fun PrevStreet() {
-
-    val list = listOf(
-        PreMeasurementStreetItem(
-            preMeasurementStreetId = 1,
-            itemContractId = 1,
-            itemContractQuantity = 1,
-            contractId = 1
+        },
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Default.Inventory2,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        },
+        trailingContent = {
+            IconToggleButton(
+                checked = selected.value,
+                onCheckedChange = { isChecked ->
+                    if (isChecked) {
+                        preMeasurementViewModel.addItem(item.contractReferenceItemId)
+                    } else {
+                        preMeasurementViewModel.removeItem(item.contractReferenceItemId)
+                    }
+                },
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        if (selected.value)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.surface,
+                        shape = CircleShape
+                    )
+                    .border(
+                        BorderStroke(
+                            1.dp,
+                            if (selected.value)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Selecionar",
+                    tint = if (selected.value)
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .shadow(3.dp, RoundedCornerShape(12.dp)),
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surface
         )
     )
 
-//    val items = listOf(
-//        Material(
-//            materialId = 1,
-//            materialName = "LED",
-//            materialPower = "100W",
-//            materialAmps = null,
-//            materialLength = null
-//        )
-//    )
+}
 
-    PMSContent(
-        context = LocalContext.current,
-        preMeasurementStreetItems = list,
-        saveStreet = { },
-        back = { _ -> },
-        onValueChange = { _, _ -> },
-        showModal = { },
-        pStreet = PreMeasurementStreet(
-            preMeasurementStreetId = 1,
-            contractId = 1,
-            lastPower = "",
-            latitude = 1.1,
-            longitude = 2.2,
-            street = "",
-            neighborhood = "",
-            number = "",
-            city = "",
-            state = "",
-            deviceId = ""
-        ),
-        takePhoto = { },
-        onNavigateToHome = { },
-        onNavigateToMenu = {},
-        onNavigateToProfile = {},
-        onNavigateToNotifications = {},
+
+@SuppressLint("ViewModelConstructorInComposable")
+@Preview
+@Composable
+fun PrevPMStreet() {
+    // Criando um contexto fake para a preview
+    val fakeContext = LocalContext.current
+    val viewModel = PreMeasurementViewModel()
+
+    StreetItemsContent(
+        description =  "Pré-mediçao",
+        preMeasurementViewModel = viewModel,
+        context = fakeContext,
         navController = rememberNavController(),
-        notificationsBadge = "12",
+        items = listOf(
+            Item(
+                contractReferenceItemId = 1,
+                description = "BRAÇO DE 3,5",
+                nameForImport = "BRAÇO DE 3,5",
+                type = "BRAÇO",
+                linking = null,
+                itemDependency = null
+            ),
+            Item(
+                contractReferenceItemId = 2,
+                description = "BRAÇO DE 3,5",
+                nameForImport = "BRAÇO DE 3,5",
+                type = "SERVIÇO",
+                linking = null,
+                itemDependency = null
+            )
+        )
     )
-
-//    ItemLightRow(
-//        item = Item(
-//            contractReferenceItemId = 1,
-//            description = "LED",
-//            materialPower = "100W",
-//            materialAmps = null,
-//            materialLength = null
-//        ),
-//        onItemSelected = {  },
-//        onQuantityChange = { _,_ ->},
-//        context = LocalContext.current,
-//        preSelected = true,
-//        preQuantity = 12
-//    )
-
 
 }

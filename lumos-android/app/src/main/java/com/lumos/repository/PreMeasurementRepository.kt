@@ -11,9 +11,9 @@ import com.lumos.api.PreMeasurementStreetDto
 import com.lumos.api.RequestResult
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.domain.model.PreMeasurementStreetPhoto
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
 import okhttp3.MediaType.Companion.toMediaType
@@ -26,12 +26,19 @@ class PreMeasurementRepository(
     private val app: Application
 ) {
 
-    suspend fun saveStreet(preMeasurementStreet: PreMeasurementStreet): Long? {
-        return try {
-            db.preMeasurementDao().insertStreet(preMeasurementStreet)
+    suspend fun save(
+        preMeasurement: PreMeasurement,
+        preMeasurementStreet: PreMeasurementStreet,
+        items: List<PreMeasurementStreetItem>
+    ) {
+        try {
+            db.withTransaction {
+                db.preMeasurementDao().insertMeasurement(preMeasurement)
+                db.preMeasurementDao().insertStreet(preMeasurementStreet)
+                db.preMeasurementDao().insertItems(items)
+            }
         } catch (e: Exception) {
-            Log.e("Error saveMeasurement", e.message.toString())
-            null
+            throw e
         }
     }
 
@@ -49,8 +56,8 @@ class PreMeasurementRepository(
         preMeasurementStreetItems: List<PreMeasurementStreetItem>,
         userUuid: String,
     ): RequestResult<*> {
-        if (preMeasurementStreet.isEmpty()) {
-            return uploadStreetPhotos(contractId)
+        if (preMeasurementStreetItems.isEmpty()) {
+            return uploadStreetPhotos(TODO(), preMeasurementStreet)
         }
 
         val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
@@ -75,11 +82,11 @@ class PreMeasurementRepository(
         val response = ApiExecutor.execute { api.sendPreMeasurement(dto, userUuid) }
         return when (response) {
             is RequestResult.Success -> {
-                uploadStreetPhotos(contractId)
+                uploadStreetPhotos(TODO(), preMeasurementStreet)
             }
 
             is RequestResult.SuccessEmptyBody -> {
-                uploadStreetPhotos(contractId)
+                uploadStreetPhotos(TODO(), preMeasurementStreet)
             }
 
             is RequestResult.NoInternet -> {
@@ -101,52 +108,43 @@ class PreMeasurementRepository(
 
     }
 
-    private suspend fun finishPreMeasurement(contractId: Long) {
-        db.preMeasurementDao().deleteStreets(contractId)
-        db.preMeasurementDao().deleteItems(contractId)
+    private suspend fun finishPreMeasurement(preMeasurementId: String) {
+        db.preMeasurementDao().deletePreMeasurement(preMeasurementId)
+        db.preMeasurementDao().deleteItems(preMeasurementId)
     }
 
-    suspend fun saveItem(preMeasurementStreetItem: PreMeasurementStreetItem, photo: PreMeasurementStreetPhoto) {
-        db.withTransaction {
-            db.preMeasurementDao().insertItem(preMeasurementStreetItem)
-            saveStreetPhoto(photo)
-        }
+    suspend fun getItems(preMeasurementId: String): List<PreMeasurementStreetItem> {
+        return db.preMeasurementDao().getItems(preMeasurementId)
     }
 
-    private suspend fun saveStreetPhoto(photo: PreMeasurementStreetPhoto) {
-        db.preMeasurementDao().insertPhoto(photo)
-    }
-
-    suspend fun getItems(contractId: Long): List<PreMeasurementStreetItem> {
-        return db.preMeasurementDao().getItems(contractId)
-    }
-
-    suspend fun queueSendMeasurement(contractId: Long) {
-        db.preMeasurementDao().finishAll(contractId)
+    suspend fun queueSendMeasurement(preMeasurementId: String) {
+        db.preMeasurementDao().finishAll(preMeasurementId)
         SyncManager.queuePostPreMeasurement(
             app.applicationContext,
             db,
-            contractId
+            preMeasurementId
         )
     }
 
-    suspend fun getStreets(contractId: Long): List<PreMeasurementStreet> {
-        return db.preMeasurementDao().getStreets(contractId)
+    suspend fun getStreets(preMeasurementId: String): List<PreMeasurementStreet> {
+        return db.preMeasurementDao().getStreets(preMeasurementId)
     }
 
-    suspend fun getAllStreets(contractId: Long): List<PreMeasurementStreet> {
-        return db.preMeasurementDao().getAllStreets(contractId)
+    suspend fun getAllStreets(preMeasurementId: String): List<PreMeasurementStreet> {
+        return db.preMeasurementDao().getAllStreets(preMeasurementId)
     }
 
-    private suspend fun uploadStreetPhotos(contractId: Long): RequestResult<*> {
+    private suspend fun uploadStreetPhotos(
+        preMeasurementId: String,
+        streets: List<PreMeasurementStreet>
+    ): RequestResult<*> {
         return try {
-            finishPreMeasurement(contractId)
+            finishPreMeasurement(preMeasurementId)
 
             Log.e("Enviando fotos", "Enviando fotos")
 
             val images = mutableListOf<MultipartBody.Part>()
-            val streets = db.preMeasurementDao().getStreetPhotos(contractId)
-            val streetsToDelete = mutableListOf<Long>()
+            val streetsToDelete = mutableListOf<String>()
             var quantity = 0
 
             for (street in streets) {
@@ -160,7 +158,7 @@ class PreMeasurementRepository(
                             images.add(
                                 MultipartBody.Part.createFormData(
                                     "photos",
-                                    "${street.deviceId}#${street.preMeasurementStreetId}#file.jpg",
+                                    "${street.preMeasurementStreetId}#${street.preMeasurementStreetId}#file.jpg",
                                     requestFile
                                 )
                             )
@@ -183,8 +181,8 @@ class PreMeasurementRepository(
             when (response) {
                 is RequestResult.Success,
                 is RequestResult.SuccessEmptyBody -> {
-                    db.preMeasurementDao().deletePhotos(streetsToDelete)
-                    val count = db.preMeasurementDao().countPhotos(contractId).toString()
+                    db.preMeasurementDao().deleteStreets(streetsToDelete)
+                    val count = db.preMeasurementDao().countPhotos(preMeasurementId).toString()
                     RequestResult.Success(count)
                 }
 

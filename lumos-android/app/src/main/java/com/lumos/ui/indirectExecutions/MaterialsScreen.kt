@@ -219,7 +219,7 @@ fun MaterialsContent(
 
             LaunchedEffect(errorMessage) {
                 if (errorMessage != null)
-                    snackBar(errorMessage, null)
+                    snackBar(errorMessage, null, null)
             }
 
             if (!hasPosted) {

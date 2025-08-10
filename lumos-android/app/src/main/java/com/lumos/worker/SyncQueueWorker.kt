@@ -269,8 +269,8 @@ class SyncQueueWorker(
             }
 
             queueDao.update(inProgressItem)
-            val streets = preMeasurementRepository.getAllStreets(item.relatedId)
-            val items = preMeasurementRepository.getItems(item.relatedId)
+            val streets = preMeasurementRepository.getAllStreets(item.relatedUuid!!)
+            val items = preMeasurementRepository.getItems(item.relatedUuid)
 
             val response = preMeasurementRepository.sendMeasurementToBackend(
                 item.relatedId,

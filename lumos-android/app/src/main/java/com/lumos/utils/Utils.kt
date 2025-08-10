@@ -252,4 +252,13 @@ object Utils {
                 ) == PackageManager.PERMISSION_GRANTED
     }
 
+    fun hasNumber(address: String): Boolean {
+        val hasNumber = Regex("""\d+""").containsMatchIn(address)
+        val hasSN =
+            Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(address)
+
+        return hasNumber || hasSN
+    }
+
+
 }
