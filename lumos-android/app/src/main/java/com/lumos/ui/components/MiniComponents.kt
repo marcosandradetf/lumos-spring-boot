@@ -499,6 +499,20 @@ fun UpdateModal(
     )
 }
 
+@Composable
+fun ConfirmNavigation(route: String, navController: NavHostController, onDismiss: () -> Unit) {
+    Confirm(
+        title = "Confirme sua ação",
+        body = "Deseja sair?",
+        confirm = {
+            navController.navigate(route)
+        },
+        cancel = {
+            onDismiss()
+        }
+    )
+}
+
 
 @Preview(showBackground = true)
 @Composable

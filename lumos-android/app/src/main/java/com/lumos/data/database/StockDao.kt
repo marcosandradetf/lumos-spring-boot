@@ -79,5 +79,8 @@ interface StockDao {
         quantityExecuted: String
     )
 
+    @Query("DELETE FROM material_stock")
+    suspend fun deleteStock()
+
 
 }

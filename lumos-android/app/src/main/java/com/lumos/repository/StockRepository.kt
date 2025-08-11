@@ -54,10 +54,12 @@ class StockRepository(
 
     suspend fun callGetStock(): RequestResult<Unit> {
         val uuid = secureStorage.getUserUuid()
+        val teamId = secureStorage.getTeamId()
 
         val response = ApiExecutor.execute {
             stockApi.getStock(
-                uuid ?: throw IllegalStateException("UUID do usuário atual não encontrado")
+                uuid ?: throw IllegalStateException("UUID do usuário atual não encontrado"),
+                if (teamId == 0L) null else teamId
             )
         }
 
@@ -130,11 +132,13 @@ class StockRepository(
     suspend fun callPostOrder(orderId: String): RequestResult<Unit> {
         val uuid = secureStorage.getUserUuid()
         val order = db.stockDao().getOrderWithItems(orderId)
+        val teamId = secureStorage.getTeamId()
 
         val response = ApiExecutor.execute {
             stockApi.sendOrder(
                 uuid = uuid ?: throw IllegalStateException("UUID do usuário atual não encontrado"),
-                order = order
+                order = order,
+                teamId = if (teamId == 0L) null else teamId
             )
         }
 
@@ -160,7 +164,6 @@ class StockRepository(
         }
 
     }
-
 
 
 }

@@ -41,6 +41,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.PreMeasurement
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -61,18 +62,16 @@ fun PreMeasurementScreen(
     roles: Set<String>,
 
     ) {
-    val contracts by contractViewModel.contracts.collectAsState()
     val requiredRoles = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
             navController.navigate(Routes.NO_ACCESS + "/Pré-medição")
         }
-        contractViewModel.loadFlowContracts(ExecutionStatus.IN_PROGRESS)
     }
 
     PMContent(
-        contracts = contracts,
+        contracts = preMeasurementViewModel.preMeasurements,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
         navController = navController,
@@ -82,7 +81,7 @@ fun PreMeasurementScreen(
 
 @Composable
 fun PMContent(
-    contracts: List<Contract>,
+    preMeasurements: List<PreMeasurement>,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     navController: NavHostController,
@@ -112,10 +111,10 @@ fun PMContent(
                 .padding(2.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
         ) {
-            items(contracts) { contract -> // Iteração na lista
+            items(preMeasurements) { preMeasurement -> // Iteração na lista
                 val createdAt = "Iniciado há ${
                     Utils.timeSinceCreation(
-                        contract.createdAt
+                        preMeasurement.createdAt
                     )
                 }"
                 val expand = remember { mutableStateOf(false) }
@@ -147,7 +146,7 @@ fun PMContent(
 
                                 ) {
                                 Text(
-                                    text = contract.contractor,
+                                    text = preMeasurement.contractor,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -212,7 +211,7 @@ fun PMContent(
 
 
                                 TextButton(onClick = {
-                                    navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/${contract.contractId}")
+                                    navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/${preMeasurement.preMeasurementId}")
                                 }) {
                                     Text(
                                         text = "Acessar Pré-Medição",

@@ -11,12 +11,14 @@ import retrofit2.http.Query
 interface StockApi {
     @GET("api/mobile/stock/get-truck-stock")
     suspend fun getStock(
-        @Query("uuid") uuid: String
+        @Query("uuid") uuid: String,
+        @Query("teamId") teamId: Long?,
     ): Response<StockResponse>
 
     @POST("api/mobile/stock/send-order")
     suspend fun sendOrder(
         @Query("uuid") uuid: String,
+        @Query("teamId") teamId: Long?,
         @Body order: OrderWithItems
     ): Response<Void>
 

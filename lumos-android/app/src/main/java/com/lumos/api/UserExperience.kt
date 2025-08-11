@@ -76,4 +76,5 @@ object NotificationType {
     const val CASH = "CASH"
     const val ALERT = "ALERT"
     const val EXECUTION = "EXECUTION"
+    const val CHANGE_TEAM = "CHANGE_TEAM"
 }

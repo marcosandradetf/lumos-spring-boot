@@ -1,6 +1,5 @@
 package com.lumos.ui.preMeasurement
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
 import android.widget.Toast
@@ -45,16 +44,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.repository.ContractStatus
 import com.lumos.domain.model.Contract
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.repository.ContractStatus
 import com.lumos.ui.components.AppLayout
-import com.lumos.viewmodel.ContractViewModel
 import com.lumos.utils.Utils
+import com.lumos.viewmodel.ContractViewModel
 import java.time.Instant
 
-@SuppressLint("HardwareIds")
+
 @Composable
 fun ContractsScreen(
     onNavigateToHome: () -> Unit,
@@ -75,10 +74,6 @@ fun ContractsScreen(
 
 
     val hasError by contractViewModel.syncError.collectAsState()
-    val deviceId = Settings.Secure.getString(
-        context.contentResolver,
-        Settings.Secure.ANDROID_ID
-    )
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
@@ -96,7 +91,7 @@ fun ContractsScreen(
         navController = navController,
         notificationsBadge = notificationsBadge,
         start = {
-            contractViewModel.startPreMeasurement(it, deviceId)
+            contractViewModel.startPreMeasurement(it)
             onNavigateToPreMeasurement(it)
         },
         download = {

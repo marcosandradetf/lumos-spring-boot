@@ -114,4 +114,17 @@ class SecureStorage(private val context: Context) {
         return getSharedPreferences().getLong("last_update_check", 0L)
     }
 
+    fun setTeamId(teamId: Long) {
+        val prefs = getSharedPreferences()
+
+        prefs.edit {
+            putLong("team_id", teamId)
+        }
+    }
+
+    fun getTeamId(): Long {
+        val prefs = getSharedPreferences()
+        return prefs.getLong("team_id", 0L)
+    }
+
 }

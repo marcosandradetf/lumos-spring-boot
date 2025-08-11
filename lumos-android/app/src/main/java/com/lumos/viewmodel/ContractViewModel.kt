@@ -152,18 +152,6 @@ class ContractViewModel(
         return
     }
 
-    fun startPreMeasurement(contractId: Long, deviceId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.setStatus(contractId, ExecutionStatus.IN_PROGRESS)
-                repository.startAt(contractId, Utils.dateTime.toString(), deviceId)
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-            }
-        }
-
-    }
-
     fun loadFlowContractsForMaintenance() {
         viewModelScope.launch {
             try {

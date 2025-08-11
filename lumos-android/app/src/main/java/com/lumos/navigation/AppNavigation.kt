@@ -439,12 +439,6 @@ fun AppNavigation(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MORE)
                         },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
                         onNavigateToPreMeasurements = {
                             navController.navigate(Routes.PRE_MEASUREMENTS)
                         },

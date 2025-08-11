@@ -93,6 +93,7 @@ import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.ConfirmNavigation
 import com.lumos.ui.components.CurrentScreenLoading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
@@ -442,7 +443,8 @@ fun StreetItemsContent(
             }
         }
 
-    var action by remember { mutableStateOf("") }
+    var action by remember { mutableStateOf<String?>(null) }
+    var openModal by remember { mutableStateOf("") }
 
 
     AppLayout(
@@ -450,34 +452,44 @@ fun StreetItemsContent(
         selectedIcon = BottomBar.MORE.value,
         navigateToMore = {
             action = Routes.MORE
-//            openModal(Routes.MORE)
+            Unit
         },
         navigateToHome = {
             action = Routes.HOME
-//            openModal(Routes.HOME)
+            Unit
         },
         navigateBack = {
             action = Routes.DIRECT_EXECUTION_SCREEN
-//            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+            Unit
         },
 
         navigateToStock = {
             action = Routes.STOCK
-//            openModal(Routes.STOCK)
+            Unit
         },
         navigateToExecutions = {
             action = Routes.DIRECT_EXECUTION_SCREEN
-//            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+            Unit
         },
         navigateToMaintenance = {
             action = Routes.MAINTENANCE
-//            openModal(Routes.MAINTENANCE)
+            Unit
         }
 
     ) { _, showSnackBar ->
         if (preMeasurementViewModel.message != null) {
             showSnackBar(preMeasurementViewModel.message!!, null, null)
             preMeasurementViewModel.message = null
+        }
+
+        if(action != null) {
+            ConfirmNavigation(
+                action!!,
+                navController,
+                {
+                    action = null
+                }
+            )
         }
 
         Box(

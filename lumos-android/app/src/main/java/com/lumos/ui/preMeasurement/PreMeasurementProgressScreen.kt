@@ -41,48 +41,42 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.PreMeasurementViewModel
-import java.time.Instant
 
 @Composable
 fun PreMeasurementProgressScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     onNavigateToPreMeasurements: () -> Unit,
     onNavigateToStreet: (Long) -> Unit,
     context: Context,
-    contractViewModel: ContractViewModel,
     preMeasurementViewModel: PreMeasurementViewModel,
     navController: NavHostController,
     notificationsBadge: String,
-    contractId: Long,
+    preMeasurementId: String,
     ) {
-    var contract by remember { mutableStateOf<Contract?>(null) }
+    var preMeasurement by remember { mutableStateOf<PreMeasurement?>(null) }
     val streets by preMeasurementViewModel.streets
 
-    LaunchedEffect(contractId) {
+    LaunchedEffect(preMeasurementId) {
 
-        contract = contractViewModel.getContract(contractId)
+        preMeasurement = preMeasurementViewModel.getPreMeasurement(preMeasurementId)
         preMeasurementViewModel.loadStreets(TODO())
     }
 
-    if (contract != null)
+    if (preMeasurement != null)
         PMPContent(
-            contract = contract!!,
+            contract = preMeasurement!!,
             onNavigateToHome = onNavigateToHome,
             onNavigateToMenu = onNavigateToMenu,
             onNavigateToPreMeasurements = onNavigateToPreMeasurements,
@@ -94,6 +88,7 @@ fun PreMeasurementProgressScreen(
             streets = streets,
             sendPreMeasurement = {
                 if (streets.isNotEmpty()) {
+                    preMeasurementViewModel.queueSendMeasurement(TODO())
                     Toast
                         .makeText(
                             context,
@@ -101,9 +96,7 @@ fun PreMeasurementProgressScreen(
                             Toast.LENGTH_SHORT
                         )
                         .show()
-//                    preMeasurementViewModel.
                     onNavigateToHome()
-                    preMeasurementViewModel.queueSendMeasurement(TODO())
                 } else {
                     Toast
                         .makeText(
@@ -267,7 +260,7 @@ fun PMPContent(
                     ) {
                         Button(
                             onClick = {
-                                onNavigateToStreet(contract.contractId)
+                                onNavigateToStreet(preMeasurement.preMeasurementId)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul
@@ -426,7 +419,7 @@ fun PrevPMP() {
 //    val fakeContext = LocalContext.current
 //    val value =
 //        Contract(
-//            contractId = 1,
+//            preMeasurementId = 1,
 //            contractor = "Prefeitura Municipal de Belo Horizonte",
 //            contractFile = "arquivo.pdf",
 //            createdBy = "Gabriela",
@@ -438,7 +431,7 @@ fun PrevPMP() {
 //        listOf(
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -451,7 +444,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -464,7 +457,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -477,7 +470,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -490,7 +483,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -503,7 +496,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -516,7 +509,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -529,7 +522,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -542,7 +535,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -555,7 +548,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -568,7 +561,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -581,7 +574,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -594,7 +587,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -607,7 +600,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -620,7 +613,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,
@@ -633,7 +626,7 @@ fun PrevPMP() {
 //            ),
 //            PreMeasurementStreet(
 //                preMeasurementStreetId = 1,
-//                contractId = 1,
+//                preMeasurementId = 1,
 //                lastPower = "",
 //                latitude = 1.9,
 //                longitude = 2.2,

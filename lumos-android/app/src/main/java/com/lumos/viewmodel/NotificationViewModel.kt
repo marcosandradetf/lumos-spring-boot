@@ -5,9 +5,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lumos.api.NotificationType
 import com.lumos.repository.NotificationRepository
 import com.lumos.notifications.NotificationItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NotificationViewModel(
     private val repository: NotificationRepository,
@@ -59,7 +62,13 @@ class NotificationViewModel(
         var notifications = 0
         viewModelScope.launch {
             try {
-                notifications = repository.insert(notificationItem)
+                notifications = withContext(Dispatchers.IO) {
+                    if(notificationItem.type == NotificationType.CHANGE_TEAM) {
+                        repository.changeTeam(notificationItem.persistCode)
+                    }
+                    repository.insert(notificationItem)
+                }
+
                 loadNotifications()
             } catch (e: Exception) {
                 // Tratar erros aqui
