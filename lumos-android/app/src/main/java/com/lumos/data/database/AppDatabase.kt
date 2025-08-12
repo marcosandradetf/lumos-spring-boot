@@ -20,6 +20,7 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaterialStock
+import com.lumos.domain.model.OperationalUsers
 import com.lumos.domain.model.OrderMaterial
 import com.lumos.domain.model.OrderMaterialItem
 import com.lumos.domain.model.PreMeasurement
@@ -27,6 +28,7 @@ import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.domain.model.Stockist
 import com.lumos.domain.model.SyncQueueEntity
+import com.lumos.domain.model.Team
 import com.lumos.notifications.NotificationItem
 import java.util.concurrent.Executors
 
@@ -62,6 +64,9 @@ import java.util.concurrent.Executors
         (MaintenanceStreet::class),
         (MaintenanceStreetItem::class),
 
+        (OperationalUsers::class),
+        (Team::class),
+
     ],
     version = 14,
 )
@@ -74,6 +79,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun directExecutionDao(): DirectExecutionDao
     abstract fun maintenanceDao(): MaintenanceDao
     abstract fun stockDao(): StockDao
+    abstract fun teamDao(): TeamDao
 
     companion object {
         @Volatile
@@ -264,16 +270,18 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_4_5 = object : Migration(4,5) {
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("""
+                db.execSQL(
+                    """
                     alter table sync_queue_entity
                     add column errorMessage text null
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
 
-        private val MIGRATION_5_6 = object : Migration(5,6) {
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     """
@@ -290,7 +298,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_6_7 = object : Migration(6,7) {
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     """
@@ -316,7 +324,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_7_8 = object : Migration(7,8) {
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     """
@@ -345,7 +353,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_8_9 = object : Migration(8,9) {
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     """
@@ -452,27 +460,27 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_9_10 = object : Migration(9,10) {
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("alter table maintenance add column responsible text")
                 db.execSQL("alter table maintenance add column signPath text")
             }
         }
 
-        private val MIGRATION_10_11 = object : Migration(10,11) {
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("alter table maintenance add column signDate text")
             }
         }
 
-        private val MIGRATION_11_12 = object : Migration(11,12) {
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("alter table direct_execution_street add column finishAt text")
                 db.execSQL("alter table direct_execution_street add column currentSupply text")
             }
         }
 
-        private val MIGRATION_12_13 = object : Migration(12,13) {
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("drop table material_stock")
                 db.execSQL("drop table MaintenanceStreetItem")
@@ -480,7 +488,8 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("drop table indirect_reserve")
                 db.execSQL("drop table direct_execution_street_item")
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                         CREATE TABLE IF NOT EXISTS material_stock (
                             materialId INTEGER NOT NULL,
                             materialStockId INTEGER NOT NULL,
@@ -492,7 +501,8 @@ abstract class AppDatabase : RoomDatabase() {
                             type TEXT NOT NULL,
                             PRIMARY KEY (materialId, materialStockId)
                         );
-                """.trimIndent())
+                """.trimIndent()
+                )
 
 
                 db.execSQL(
@@ -553,6 +563,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_13_14 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("drop table pre_measurement_street")
+                db.execSQL("drop table pre_measurement_street_item")
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS OperationalUsers (
+                            userId TEXT NOT NULL PRIMARY KEY,
+                            completeName TEXT NOT NULL;
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS Team (
+                            teamId INTEGER NOT NULL PRIMARY KEY,
+                            depositName TEXT NOT NULL,
+                            teamName TEXT NOT NULL,
+                            plateVehicle TEXT NOT NULL;
+                        );
+                """.trimIndent()
+                )
+            }
+        }
 
 
         fun getInstance(context: Context): AppDatabase {
@@ -574,6 +610,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_10_11,
                     MIGRATION_11_12,
                     MIGRATION_12_13,
+                    MIGRATION_13_14,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

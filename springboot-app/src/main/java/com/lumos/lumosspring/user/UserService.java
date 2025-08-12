@@ -6,6 +6,7 @@ import com.lumos.lumosspring.dto.user.CreateUserDto;
 import com.lumos.lumosspring.dto.user.PasswordDTO;
 import com.lumos.lumosspring.dto.user.UpdateUserDto;
 import com.lumos.lumosspring.dto.user.UserResponse;
+import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import org.springframework.cache.annotation.CacheEvict;
@@ -17,7 +18,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import com.lumos.lumosspring.dto.user.OperationalAndTeamsResponse;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -30,19 +31,21 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final TeamRepository teamRepository;
 
     public UserService(UserRepository userRepository,
                        BCryptPasswordEncoder passwordEncoder,
                        EmailService emailService,
                        RoleRepository roleRepository,
                        RefreshTokenRepository refreshTokenRepository,
-                       NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                       NamedParameterJdbcTemplate namedParameterJdbcTemplate, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+        this.teamRepository = teamRepository;
     }
 
     @Cacheable("getAllUsers")
@@ -419,6 +422,14 @@ public class UserService {
     }
 
     public ResponseEntity<?> getOperationalUsers() {
-        return ResponseEntity.ok().body(userRepository.getOperationalUsers());
+        var operationalUsers = userRepository.getOperationalUsers();
+        var teams = teamRepository.getTeams();
+
+        return ResponseEntity.ok().body(
+                new OperationalAndTeamsResponse(
+                        operationalUsers,
+                        teams
+                )
+        );
     }
 }

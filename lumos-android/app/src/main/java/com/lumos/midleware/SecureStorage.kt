@@ -127,4 +127,17 @@ class SecureStorage(private val context: Context) {
         return prefs.getLong("team_id", 0L)
     }
 
+    fun setOperationalUsers(operationalUsers: Set<String>) {
+        val prefs = getSharedPreferences()
+
+        prefs.edit {
+            putStringSet("operational_users", operationalUsers)
+        }
+    }
+
+    fun getOperationalUsers(): Set<String> {
+        val prefs = getSharedPreferences()
+        return prefs.getStringSet("operational_users", emptySet()) ?: emptySet()
+    }
+
 }

@@ -1,9 +1,11 @@
 package com.lumos.lumosspring.team.repository;
 
+import com.lumos.lumosspring.dto.team.TeamResponseForConfirmation;
 import com.lumos.lumosspring.team.entities.Team;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,4 +16,12 @@ import java.util.UUID;
     Optional<Long> getCurrentTeamId(UUID userId);
 
     Optional<Team> findByTeamName(String teamName);
+
+    @Query("""
+        select t.id_team as teamId, d.deposit_name as depositName, 
+               t.team_name as teamName, t.plate_vehicle as plateVehicle
+        from team t
+        join deposit d on d.id_deposit = t.deposit_id_deposit
+    """)
+    List<TeamResponseForConfirmation> getTeams();
 }
