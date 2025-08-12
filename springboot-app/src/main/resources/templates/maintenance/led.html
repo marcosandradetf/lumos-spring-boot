@@ -151,167 +151,158 @@
 </head>
 
 <body>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <!-- {{logo}} -->
-        <img src="{{LOGO_IMAGE}}" alt="Logo" style="width: 100px; height: auto;">
-        <h1>MANUTENÇÕES EM LEDS - {{CONTRACT_NUMBER}}</h1>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <!-- {{logo}} -->
+    <img src="{{LOGO_IMAGE}}" alt="Logo" style="width: 100px; height: auto;">
+    <h1>MANUTENÇÕES EM LEDS - {{CONTRACT_NUMBER}}</h1>
+</div>
 
-    <table style="margin-top: 10px;">
-        <thead>
-            <tr>
-                <th colspan="2" class="cell-title">EMPRESA PRESTADORA</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td style="text-align: left; margin: 0;">
-                    <p class="label">Razão Social</p>
-                    <p class="cell-text">{{COMPANY_SOCIAL_REASON}}</p>
-                </td>
-                <td style="text-align: right;">
-                    <p class="label">CNPJ</p>
-                    <p class="cell-text">{{COMPANY_CNPJ}}</p>
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align: left;">
-                    <p class="label">Endereço</p>
-                    <p class="cell-text">{{COMPANY_ADDRESS}}</p>
-                </td>
-                <td style="text-align: right; margin: 0;">
-                    <p class="label">Telefone</p>
-                    <p class="cell-text">{{COMPANY_PHONE}}</p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+<table style="margin-top: 10px;">
+    <thead>
+    <tr>
+        <th colspan="2" class="cell-title">EMPRESA PRESTADORA</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td style="text-align: left; margin: 0;">
+            <p class="label">Razão Social</p>
+            <p class="cell-text">{{COMPANY_SOCIAL_REASON}}</p>
+        </td>
+        <td style="text-align: right;">
+            <p class="label">CNPJ</p>
+            <p class="cell-text">{{COMPANY_CNPJ}}</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: left;">
+            <p class="label">Endereço</p>
+            <p class="cell-text">{{COMPANY_ADDRESS}}</p>
+        </td>
+        <td style="text-align: right; margin: 0;">
+            <p class="label">Telefone</p>
+            <p class="cell-text">{{COMPANY_PHONE}}</p>
+        </td>
+    </tr>
+    </tbody>
+</table>
 
-    <table>
-        <thead>
-            <tr>
-                <th colspan="2" class="cell-title">CONTRATANTE</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td style="text-align: left; margin: 0;">
-                    <p class="label">Razão Social</p>
-                    <p class="cell-text">{{CONTRACTOR_SOCIAL_REASON}}</p>
-                </td>
-                <td style="text-align: right;">
-                    <p class="label">CNPJ</p>
-                    <p class="cell-text">{{CONTRACTOR_CNPJ}}</p>
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align: left;">
-                    <p class="label">Endereço</p>
-                    <p class="cell-text">{{CONTRACTOR_ADDRESS}}</p>
-                </td>
-                <td style="text-align: right; margin: 0;">
-                    <p class="label">Telefone</p>
-                    <p class="cell-text">{{CONTRACTOR_PHONE}}</p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+<table>
+    <thead>
+    <tr>
+        <th colspan="2" class="cell-title">CONTRATANTE</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td style="text-align: left; margin: 0;">
+            <p class="label">Razão Social</p>
+            <p class="cell-text">{{CONTRACTOR_SOCIAL_REASON}}</p>
+        </td>
+        <td style="text-align: right;">
+            <p class="label">CNPJ</p>
+            <p class="cell-text">{{CONTRACTOR_CNPJ}}</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: left;">
+            <p class="label">Endereço</p>
+            <p class="cell-text">{{CONTRACTOR_ADDRESS}}</p>
+        </td>
+        <td style="text-align: right; margin: 0;">
+            <p class="label">Telefone</p>
+            <p class="cell-text">{{CONTRACTOR_PHONE}}</p>
+        </td>
+    </tr>
+    </tbody>
+</table>
 
-    <table>
-        <thead>
-            <tr>
-                <th colspan="11" class="cell-title">
-                    MATERIAIS
-                </th>
-            </tr>
-            <tr>
-                <th>Nº</th>
-                <th>Endereço completo</th>
-                <th>Relé</th>
-                <th>Conexão</th>
-                <th>Fabricante<br>Retirado</th>
-                <th>Fabricante<br>Utilizado</th>
-                <th>Potência<br>Retirada</th>
-                <th>Potência<br>Atual</th>
-                <th>Problema Detectado</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{STREET_LINES}}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="2" style="text-align: left; font-weight: bold;">Total por item:</td>
-                <td style="text-align: right; font-weight: bold;">{{RELAY_TOTAL}}</td>
-                <td style="text-align: right; font-weight: bold;">{{CONNECTION_TOTAL}}</td>
-                <td style="text-align: right; font-weight: bold;">N/A</td>
-                <td style="text-align: right; font-weight: bold;">N/A</td>
-                <td style="text-align: right; font-weight: bold;">N/A</td>
-                <td style="text-align: right; font-weight: bold;">N/A</td>
-                <td style="text-align: right; font-weight: bold;">N/A</td>
-            </tr>
-        </tfoot>
+<table>
+    <thead>
+    <tr>
+        <th colspan="11" class="cell-title">
+            MATERIAIS
+        </th>
+    </tr>
+    <tr>
+        <th>Nº</th>
+        <th>Endereço completo</th>
+        <th>Relé</th>
+        <th>Conexão</th>
+        <th>Fabricante<br>Retirado</th>
+        <th>Fabricante<br>Utilizado</th>
+        <th>Potência<br>Retirada</th>
+        <th>Potência<br>Atual</th>
+        <th>Problema Detectado</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{STREET_LINES}}
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="2" style="text-align: left; font-weight: bold;">Total por item:</td>
+        <td style="text-align: right; font-weight: bold;">{{RELAY_TOTAL}}</td>
+        <td style="text-align: right; font-weight: bold;">{{CONNECTION_TOTAL}}</td>
+        <td style="text-align: right; font-weight: bold;">N/A</td>
+        <td style="text-align: right; font-weight: bold;">N/A</td>
+        <td style="text-align: right; font-weight: bold;">N/A</td>
+        <td style="text-align: right; font-weight: bold;">N/A</td>
+        <td style="text-align: right; font-weight: bold;">N/A</td>
+    </tr>
+    </tfoot>
 
-    </table>
+</table>
 
-    <div class="obs">
-        <strong>Demais materiais utilizados ou Observações:</strong>
-        <p>{{OBSERVATIONS}}</p>
-    </div>
+<div class="obs">
+    <strong>Demais materiais utilizados ou Observações:</strong>
+    <p>{{OBSERVATIONS}}</p>
+</div>
 
 
-    <div style=" border: 1px solid #aaa; border-top: 0; padding: 6px; display: flex; align-items: center; gap: 15px;">
-        <div>
-            <label style="padding-right: 10px;">Teve Pendências a realizar no município?</label>
-            <span class="checkbox-group">
+<div style=" border: 1px solid #aaa; border-top: 0; padding: 6px; display: flex; align-items: center; gap: 15px;">
+    <div>
+        <label style="padding-right: 10px;">Teve Pendências a realizar no município?</label>
+        <span class="checkbox-group">
                 <label style="font-weight: bold;">SIM<input type="checkbox" {{PENDING}}></label>
                 <label style="font-weight: bold;">NÃO<input type="checkbox" {{NO_PENDING}}></label>
             </span>
-        </div>
-        <div>
-            <label>Quantidade de Pendências:</label><span
-                style="font-weight: bold; margin-left: 5px;">{{PENDING_QUANTITY}}</span>
-        </div>
-        <div>
-            <label>Local:</label>
-            <span style="font-weight: bold; margin-left: 5px;">{{LOCAL}}</span>
-        </div>
-        <div>
-            <label>Data da visita:</label>
-            <span style="font-weight: bold; margin-left: 5px;">{{DATE_OF_VISIT}}</span>
-        </div>
     </div>
-
-    <table style="page-break-inside: avoid;">
-        <thead>
-            <tr>
-                <th colspan="2" class="cell-title" style="text-align: center;">
-                    EQUIPE RESPONSÁVEL PELA EXECUÇÃO DO SERVIÇO
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
-                    <p class="label">Eletricista:</p>
-                    <p class="cell-text">{{ELECTRICIAN_NAME}}</p>
-                </td>
-                <td>
-                    <p class="label">Motorista:</p>
-                    <p class="cell-text">{{DRIVER_NAME}}</p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    {{SIGN_SECTION}}
-
-    <div class="footer-marketing">
-        <p style="text-align: center; font-size: 12px; color: #666;">
-            Relatório gerado por <strong>Lumos</strong> —
-            <a href="https://lumos.thryon.com.br" target="_blank">https://lumos.thryon.com.br</a>
-        </p>
+    <div>
+        <label>Quantidade de Pendências:</label><span
+            style="font-weight: bold; margin-left: 5px;">{{PENDING_QUANTITY}}</span>
     </div>
+    <div>
+        <label>Local:</label>
+        <span style="font-weight: bold; margin-left: 5px;">{{LOCAL}}</span>
+    </div>
+    <div>
+        <label>Data da visita:</label>
+        <span style="font-weight: bold; margin-left: 5px;">{{DATE_OF_VISIT}}</span>
+    </div>
+</div>
+
+<table style="page-break-inside: avoid;">
+    <thead>
+    <tr>
+        <th colspan="2" class="cell-title" style="text-align: center;">
+            EQUIPE RESPONSÁVEL PELA EXECUÇÃO DO SERVIÇO
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    {{TEAM_ROWS}}
+    </tbody>
+</table>
+
+{{SIGN_SECTION}}
+
+<div class="footer-marketing">
+    <p style="text-align: center; font-size: 12px; color: #666;">
+        Relatório gerado por <strong>Lumos</strong> —
+        <a href="https://lumos.thryon.com.br" target="_blank">https://lumos.thryon.com.br</a>
+    </p>
+</div>
 </body>
 
 </html>

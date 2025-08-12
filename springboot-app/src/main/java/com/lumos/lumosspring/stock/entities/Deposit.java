@@ -21,6 +21,8 @@ public class Deposit {
 
     private String depositPhone;
 
+    private Boolean isTruck;
+
     @Column("company_id")
     private Long companyId;
 
@@ -111,5 +113,13 @@ public class Deposit {
 
     public void setRegion(Long region) {
         this.region = region;
+    }
+
+    public Boolean getTruck() {
+        return isTruck;
+    }
+
+    public void setTruck(Boolean truck) {
+        isTruck = truck;
     }
 }

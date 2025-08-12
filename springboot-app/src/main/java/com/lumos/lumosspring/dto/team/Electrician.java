@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.team.dto;
+package com.lumos.lumosspring.dto.team;
 
 import java.util.UUID;
 

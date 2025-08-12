@@ -13,10 +13,6 @@ public class Team {
 
     private String teamName;
 
-    private UUID driverId;
-
-    private UUID electricianId;
-
     private String plateVehicle;
 
     @Column("ufname")
@@ -49,11 +45,9 @@ public class Team {
     }
 
 
-    public Team(Long idTeam, String teamName, UUID driverId, UUID electricianId, String plateVehicle, String UFName, String cityName, String teamPhone, Long region, Long depositId) {
+    public Team(Long idTeam, String teamName, String plateVehicle, String UFName, String cityName, String teamPhone, Long region, Long depositId) {
         this.idTeam = idTeam;
         this.teamName = teamName;
-        this.driverId = driverId;
-        this.electricianId = electricianId;
         this.plateVehicle = plateVehicle;
         this.UFName = UFName;
         this.cityName = cityName;
@@ -63,22 +57,6 @@ public class Team {
     }
 
     public Team() {}
-
-    public UUID getDriverId() {
-        return driverId;
-    }
-
-    public void setDriverId(UUID driverId) {
-        this.driverId = driverId;
-    }
-
-    public UUID getElectricianId() {
-        return electricianId;
-    }
-
-    public void setElectricianId(UUID electricianId) {
-        this.electricianId = electricianId;
-    }
 
     public String getPlateVehicle() {
         return plateVehicle;
@@ -127,11 +105,5 @@ public class Team {
     public void setDepositId(Long depositId) {
         this.depositId = depositId;
     }
-
-
-    public String getTeamCode() {
-        return getDriverId().toString().concat("_").concat(String.valueOf(idTeam));
-    }
-
 
 }

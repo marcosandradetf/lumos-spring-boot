@@ -1,12 +1,13 @@
 package com.lumos.lumosspring.team;
 
+import com.lumos.lumosspring.dto.team.*;
 import com.lumos.lumosspring.notifications.service.NotificationService;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
-import com.lumos.lumosspring.team.dto.*;
 import com.lumos.lumosspring.team.entities.Region;
 import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.team.repository.RegionRepository;
+import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
@@ -29,15 +30,17 @@ public class TeamService {
     private final UserRepository userRepository;
     private final DepositRepository depositRepository;
     private final NotificationService notificationService;
+    private final TeamQueryRepository teamQueryRepository;
 
 
     public TeamService(TeamRepository teamRepository, RegionRepository regionRepository, UserRepository userRepository,
-                       DepositRepository depositRepository, NotificationService notificationService) {
+                       DepositRepository depositRepository, NotificationService notificationService, TeamQueryRepository teamQueryRepository) {
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.userRepository = userRepository;
         this.depositRepository = depositRepository;
         this.notificationService = notificationService;
+        this.teamQueryRepository = teamQueryRepository;
     }
 
     @Cacheable("getAllTeams")
@@ -157,8 +160,6 @@ public class TeamService {
 
             var newTeam = new Team();
             newTeam.setTeamName(t.teamName());
-            newTeam.setDriverId(driverId);
-            newTeam.setElectricianId(electricianId);
 
             newTeam.setPlateVehicle(t.plate());
             newTeam.setUFName(t.UFName());
@@ -237,8 +238,6 @@ public class TeamService {
             }
 
             team.get().setTeamName(t.teamName());
-            team.get().setDriverId(driverId);
-            team.get().setElectricianId(electricianId);
 
             team.get().setPlateVehicle(t.plate());
             team.get().setUFName(t.UFName());
@@ -260,5 +259,11 @@ public class TeamService {
         }
 
         return this.getAll();
+    }
+
+    public ResponseEntity<?> updateTeam(TeamEdit team) {
+        teamQueryRepository.renewTeam(team.idTeam(), team.userIds());
+
+        return ResponseEntity.noContent().build();
     }
 }

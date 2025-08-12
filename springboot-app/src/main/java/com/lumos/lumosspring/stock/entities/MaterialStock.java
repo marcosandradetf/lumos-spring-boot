@@ -31,6 +31,8 @@ public class MaterialStock {
 
     private boolean inactive;
 
+
+
     public  MaterialStock() {}
 
     public MaterialStock(Long materialIdStock, Long materialId, Long depositId, Long companyId, String buyUnit, String requestUnit, BigDecimal stockQuantity, BigDecimal stockAvailable, BigDecimal costPerItem, BigDecimal costPrice, boolean inactive) {

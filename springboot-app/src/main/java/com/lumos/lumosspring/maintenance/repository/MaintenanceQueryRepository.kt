@@ -74,7 +74,7 @@ class MaintenanceQueryRepository(
 
             jdbcTemplate.update(
                 """
-                update material_stock 
+                update material_stock
                 set stock_quantity = stock_quantity - :quantityExecuted,
                 stock_available = stock_available - :quantityExecuted
                 where material_id_stock = :materialStockId
@@ -119,8 +119,8 @@ class MaintenanceQueryRepository(
               ) AS maintenances
 
             FROM maintenance m
-            JOIN contract c ON c.contract_id = m.contract_id 
-            JOIN team t ON t.id_team = m.team_id 
+            JOIN contract c ON c.contract_id = m.contract_id
+            JOIN team t ON t.id_team = m.team_id
             JOIN app_user e ON t.electrician_id = e.user_id
             JOIN app_user d ON t.driver_id = d.user_id
             WHERE m.status = 'FINISHED'
@@ -145,18 +145,18 @@ class MaintenanceQueryRepository(
     fun getConventionalMaintenances(maintenanceId: UUID): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
-		SELECT 
+                SELECT
             msi.maintenance_street_id,
             material_name_unaccent,
             m.material_power
-	          FROM maintenance_street_item msi
-	          join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id 
-	          JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
-	          JOIN material m ON m.id_material = mstk.material_id
-	          WHERE msi.maintenance_id  = :maintenanceId
-	          		and ms.last_power is null and ms.reason is null
+                  FROM maintenance_street_item msi
+                  join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id
+                  JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
+                  JOIN material m ON m.id_material = mstk.material_id
+                  WHERE msi.maintenance_id  = :maintenanceId
+                                and ms.last_power is null and ms.reason is null
             )
-    
+
             SELECT
               json_build_object(
                 'social_reason', com.social_reason,
@@ -166,7 +166,7 @@ class MaintenanceQueryRepository(
                 'company_logo', com.company_logo,
                 'bucket', com.bucket_file_name
               ) AS company,
-    
+
               json_build_object(
                 'contract_number', c.contract_number,
                 'contractor', c.contractor,
@@ -174,7 +174,7 @@ class MaintenanceQueryRepository(
                 'address', c.address,
                 'phone', c.phone
               ) AS contract,
-    
+
               json_build_object(
                 'date_of_visit', m.date_of_visit,
                 'pending_points', m.pending_points,
@@ -184,37 +184,28 @@ class MaintenanceQueryRepository(
                 'signature_uri', m.signature_uri,
                 'sign_date', m.sign_date
               ) AS maintenance,
-    
-              json_build_object(
-                'electrician', json_build_object(
-                  'name', e.name,
-                  'last_name', e.last_name
-                ),
-                'driver', json_build_object(
-                  'name', d.name,
-                  'last_name', d.last_name
-                )
-              ) AS team,
-    
+
+              execs.executors AS team,
+
               (
                 SELECT json_agg(
                   json_build_object(
                     'address', ms.address,
                     'comment', ms.comment,
-    
+
                     'relay', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                         AND ibs.material_name_unaccent LIKE '%rele%'
                         AND ibs.material_name_unaccent NOT LIKE '%base%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'connection', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                         AND ibs.material_name_unaccent LIKE '%conector%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'bulb', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
@@ -222,21 +213,21 @@ class MaintenanceQueryRepository(
                         AND ibs.material_name_unaccent NOT LIKE '%sodio%'
                         AND ibs.material_name_unaccent NOT LIKE '%mercurio%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'sodium', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                         AND ibs.material_name_unaccent LIKE '%lampada%'
                         AND ibs.material_name_unaccent LIKE '%sodio%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'mercury', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                         AND ibs.material_name_unaccent LIKE '%lampada%'
                         AND ibs.material_name_unaccent LIKE '%mercurio%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'power', COALESCE((
                       SELECT ibs.material_power
                       FROM items_by_street ibs
@@ -244,21 +235,21 @@ class MaintenanceQueryRepository(
                         AND ibs.material_power IS NOT NULL
                       LIMIT 1
                     ), ''),
-    
+
                     'external_reactor', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                         AND ibs.material_name_unaccent LIKE '%reator%'
                         AND ibs.material_name_unaccent LIKE '%externo%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'internal_reactor', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                         AND ibs.material_name_unaccent LIKE '%reator%'
                         AND ibs.material_name_unaccent LIKE '%interno%'
                     ) THEN 'X' ELSE '' END,
-    
+
                     'relay_base', CASE WHEN EXISTS (
                       SELECT 1 FROM items_by_street ibs
                       WHERE ibs.maintenance_street_id = ms.maintenance_street_id
@@ -271,14 +262,14 @@ class MaintenanceQueryRepository(
                 WHERE ms.maintenance_id = m.maintenance_id
                   and ms.last_power is null and ms.reason is null
               ) AS streets,
-    
+
               (
                 SELECT json_build_object(
                   'relay', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent NOT LIKE '%base%'),
                   'connection', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%conector%'),
                   'bulb', COUNT(*) FILTER (
-                    WHERE material_name_unaccent LIKE '%lampada%' 
-                      AND material_name_unaccent NOT LIKE '%sodio%' 
+                    WHERE material_name_unaccent LIKE '%lampada%'
+                      AND material_name_unaccent NOT LIKE '%sodio%'
                       AND material_name_unaccent NOT LIKE '%mercurio%'
                   ),
                   'sodium', COUNT(*) FILTER (
@@ -299,13 +290,22 @@ class MaintenanceQueryRepository(
                 )
                 FROM items_by_street
               ) AS total_by_item
-    
+
             FROM maintenance m
             JOIN contract c ON c.contract_id = m.contract_id
             JOIN company com ON com.id_company = 1
-            JOIN team t ON t.id_team = m.team_id
-            JOIN app_user e ON t.electrician_id = e.user_id
-            JOIN app_user d ON t.driver_id = d.user_id
+            LEFT JOIN LATERAL (
+                SELECT json_agg(
+                    json_build_object(
+                    'name', au.name,
+                    'last_name', au.last_name,
+                    'role', me.role
+                    )
+            ) AS executors
+            FROM maintenance_executors me
+            JOIN app_user au ON au.user_id = me.user_id
+            WHERE me.maintenance_id = m.maintenance_id
+                ) execs ON TRUE
             WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 
@@ -331,16 +331,16 @@ class MaintenanceQueryRepository(
     fun getLedMaintenances(maintenanceId: UUID): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
-          SELECT 
+          SELECT
             msi.maintenance_street_id,
             material_name_unaccent,
             m.material_power
           FROM maintenance_street_item msi
-          join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id 
+          join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id
           JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
           JOIN material m ON m.id_material = mstk.material_id
           WHERE msi.maintenance_id  = :maintenanceId
-          	and (ms.last_power is not null or ms.reason is not null)
+                and (ms.last_power is not null or ms.reason is not null)
         )
 
         SELECT
@@ -371,17 +371,7 @@ class MaintenanceQueryRepository(
             'sign_date', m.sign_date
           ) AS maintenance,
 
-          json_build_object(
-            'electrician', json_build_object(
-              'name', e.name,
-              'last_name', e.last_name
-            ),
-            'driver', json_build_object(
-              'name', d.name,
-              'last_name', d.last_name
-            )
-          ) AS team,
-
+          execs.executors AS team,
           (
             SELECT json_agg(
               json_build_object(
@@ -392,7 +382,7 @@ class MaintenanceQueryRepository(
                     AND ibs.material_name_unaccent LIKE '%rele%'
                     AND ibs.material_name_unaccent NOT LIKE '%base%'
                 ) THEN 'X' ELSE '' END,
-                
+
                 'connection', CASE WHEN EXISTS (
                   SELECT 1 FROM items_by_street ibs
                   WHERE ibs.maintenance_street_id = ms.maintenance_street_id
@@ -430,9 +420,18 @@ class MaintenanceQueryRepository(
         FROM maintenance m
         JOIN contract c ON c.contract_id = m.contract_id
         JOIN company com ON com.id_company = 1
-        JOIN team t ON t.id_team = m.team_id
-        JOIN app_user e ON t.electrician_id = e.user_id
-        JOIN app_user d ON t.driver_id = d.user_id
+        LEFT JOIN LATERAL (
+            SELECT json_agg(
+                json_build_object(
+                    'name', au.name,
+                    'last_name', au.last_name,
+                    'role', me.role
+                )
+            ) AS executors
+            FROM maintenance_executors me
+            JOIN app_user au ON au.user_id = me.user_id
+            WHERE me.maintenance_id = m.maintenance_id
+        ) execs ON TRUE
         WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 

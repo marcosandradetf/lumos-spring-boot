@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.user.dto;
+package com.lumos.lumosspring.dto.user;
 
 import java.util.List;
 

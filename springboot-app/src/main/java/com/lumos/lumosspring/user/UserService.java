@@ -2,10 +2,10 @@ package com.lumos.lumosspring.user;
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.notifications.service.EmailService;
-import com.lumos.lumosspring.user.dto.CreateUserDto;
-import com.lumos.lumosspring.user.dto.PasswordDTO;
-import com.lumos.lumosspring.user.dto.UpdateUserDto;
-import com.lumos.lumosspring.user.dto.UserResponse;
+import com.lumos.lumosspring.dto.user.CreateUserDto;
+import com.lumos.lumosspring.dto.user.PasswordDTO;
+import com.lumos.lumosspring.dto.user.UpdateUserDto;
+import com.lumos.lumosspring.dto.user.UserResponse;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import org.springframework.cache.annotation.CacheEvict;
@@ -418,4 +418,7 @@ public class UserService {
         }
     }
 
+    public ResponseEntity<?> getOperationalUsers() {
+        return ResponseEntity.ok().body(userRepository.getOperationalUsers());
+    }
 }

@@ -162,16 +162,14 @@ class ExecutionService(
         )
         management = reservationManagementRepository.save(management)
 
-        val reservationManagementId = management.reservationManagementId
-        requireNotNull(reservationManagementId) { "reservationManagementId não foi gerado!" }
-
         var directExecution = DirectExecution(
             description = "Etapa $step - ${contract.contractor}",
             instructions = execution.instructions,
             contractId = execution.contractId,
             teamId = execution.teamId,
             assignedBy = currentUserUUID,
-            reservationManagementId = management.reservationManagementId,
+            reservationManagementId = management.reservationManagementId
+                ?: throw IllegalStateException("Execution Service - reservationManagementId não foi gerado!"),
             assignedAt = Instant.now(),
             step = step
         )
@@ -258,13 +256,13 @@ class ExecutionService(
 
                 val items = namedJdbc.query(
                     """
-                            SELECT dei.direct_execution_item_id as itemId, cri.name_for_import as description, 
-                            dei.measured_item_quantity as quantity, cri.type, cri.linking 
+                            SELECT dei.direct_execution_item_id as itemId, cri.name_for_import as description,
+                            dei.measured_item_quantity as quantity, cri.type, cri.linking
                             FROM direct_execution_item dei
                             INNER JOIN contract_item ci ON ci.contract_item_id = dei.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                            WHERE dei.direct_execution_id = :direct_execution_id 
-                                AND dei.item_status = :itemStatus AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO')
+                            WHERE dei.direct_execution_id = :direct_execution_id
+                                AND dei.item_status = :itemStatus AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS')
                             ORDER BY cri.name_for_import
                         """.trimIndent(),
                     MapSqlParameterSource(
@@ -317,13 +315,13 @@ class ExecutionService(
 
                 val items = namedJdbc.query(
                     """
-                            SELECT pmsi.pre_measurement_street_item_id as itemId, cri.name_for_import as description, 
-                            pmsi.measured_item_quantity as quantity, cri.type, cri.linking 
+                            SELECT pmsi.pre_measurement_street_item_id as itemId, cri.name_for_import as description,
+                            pmsi.measured_item_quantity as quantity, cri.type, cri.linking
                             FROM pre_measurement_street_item pmsi
                             INNER JOIN contract_item ci ON ci.contract_item_id = pmsi.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
                             WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id and pmsi.item_status = :itemStatus
-                            AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO')
+                            AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS')
                         """.trimIndent(),
                     MapSqlParameterSource(
                         mapOf(
@@ -462,7 +460,7 @@ class ExecutionService(
                     val status = if (stockistMatch) {
                         namedJdbc.update(
                             """
-                            UPDATE material_stock set stock_available = stock_available - :materialQuantity 
+                            UPDATE material_stock set stock_available = stock_available - :materialQuantity
                             WHERE material_id_stock = :centralMaterialStockId
                         """.trimIndent(),
                             mapOf(
@@ -602,7 +600,7 @@ class ExecutionService(
 
         jdbcTemplate.update(
             """
-            UPDATE reservation_management set status = ? 
+            UPDATE reservation_management set status = ?
             where reservation_management_id = ?
         """.trimIndent(),
             ReservationStatus.FINISHED, directExecution.reservationManagementId
@@ -666,7 +664,7 @@ class ExecutionService(
                 Por favor, aceite ou negue as solicitações com urgência!
                 """.trimIndent()
 
-            if (teamCode != null)
+            if (teamCode != null) {
                 notificationService.sendNotificationForTeam(
                     team = teamCode,
                     title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
@@ -676,6 +674,7 @@ class ExecutionService(
                     type = NotificationType.ALERT,
                     persistCode = streetIdOrExecutionId
                 )
+            }
 
         }
 
@@ -759,25 +758,25 @@ class ExecutionService(
             namedJdbc,
             """
                     -- Reservas para execucoes
-                    select pms.city, c.contractor, mr.material_id_reservation, cast(null as uuid) as order_id, 
-                    mr.reserved_quantity as request_quantity, mr.description, m.id_material, 
-                    m.material_name, m.material_power, m.material_length, t.team_name, 
+                    select pms.city, c.contractor, mr.material_id_reservation, cast(null as uuid) as order_id,
+                    mr.reserved_quantity as request_quantity, mr.description, m.id_material,
+                    m.material_name, m.material_power, m.material_length, t.team_name,
                     ms.stock_quantity, mr.status, cast(null as timestamp) as created_at
                     from material_reservation mr
                     inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
                     inner join material m on m.id_material = ms.material_id
-                    left join direct_execution de on mr.direct_execution_id = de.direct_execution_id 
+                    left join direct_execution de on mr.direct_execution_id = de.direct_execution_id
                     left join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
                     inner join team t on t.id_team = mr.team_id
-                    left join contract c on de.contract_id = c.contract_id 
+                    left join contract c on de.contract_id = c.contract_id
                     where ms.deposit_id = :deposit_id and mr.status = :status
-                        
+
                     UNION ALL
-                        
+
                     -- Pedidos da equipe
-                    select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id, 
-                    cast(null as bigint) as request_quantity, om.order_code as description, m.id_material, 
-                    m.material_name, m.material_power, m.material_length, t.team_name, 
+                    select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id,
+                    cast(null as bigint) as request_quantity, om.order_code as description, m.id_material,
+                    m.material_name, m.material_power, m.material_length, t.team_name,
                     ms.stock_quantity, om.status, om.created_at
                     from order_material om
                     inner join order_material_item omi on omi.order_id = om.order_id
@@ -785,7 +784,7 @@ class ExecutionService(
                     inner join material m on m.id_material = ms.material_id
                     inner join team t on t.id_team = om.team_id
                     where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
-                        
+
                     order by created_at nulls last, material_id_reservation nulls last;
                     """.trimIndent(),
             mapOf("deposit_id" to depositId, "status" to status)
@@ -964,7 +963,7 @@ class ExecutionService(
         val exists = JdbcUtil.getSingleRow(
             namedJdbc,
             """
-                SELECT 1 as result 
+                SELECT 1 as result
                 FROM direct_execution de
                 JOIN direct_execution_street des on des.direct_execution_id = de.direct_execution_id
                 WHERE des.device_street_id = :deviceStreetId AND des.device_id = :deviceId and de.direct_execution_status = 'FINISHED'
@@ -1007,7 +1006,7 @@ class ExecutionService(
             namedJdbc.update(
                 """
                     UPDATE material_stock
-                    SET stock_quantity = stock_quantity - :quantityCompleted, 
+                    SET stock_quantity = stock_quantity - :quantityCompleted,
                         stock_available = stock_available - :quantityCompleted
                     WHERE material_id_stock = :materialStockId
                 """.trimIndent(),
@@ -1064,9 +1063,9 @@ class ExecutionService(
                                 SELECT ci.contract_item_id, false as isService
                                 FROM contract_item ci
                                 WHERE ci.contract_item_id = :contractItemId
-                    
+
                                 UNION ALL
-                            
+
                                 SELECT ci.contract_item_id, true as isService
                                 FROM contract_item ci
                                 JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
@@ -1328,7 +1327,7 @@ class ExecutionService(
                       border-bottom: 2px solid #054686;
                       font-family: Arial, Helvetica, sans-serif;
                     ">
-                    
+
                     <!-- Endereço -->
                     <p style="
                     margin: 0;
@@ -1341,7 +1340,7 @@ class ExecutionService(
                   ">
                         ${line["address"].asText()}
                     </p>
-                
+
                     <!-- Coordenadas -->
                     <p style="
                     margin: 0;
@@ -1353,7 +1352,7 @@ class ExecutionService(
                   ">
                         Coordenadas: Latitude ${line["latitude"].asText()}, Longitude ${line["longitude"].asText()}
                     </p>
-                
+
                     <!-- Foto -->
                     <img
                             src="$photoUrl"
@@ -1365,7 +1364,7 @@ class ExecutionService(
                               display: block;
                             "
                     >
-                
+
                     <!-- Data -->
                     <p style="
                     margin: 0;
@@ -1377,7 +1376,7 @@ class ExecutionService(
                   ">
                         ${line["finished_at"].asText()}
                     </p>
-                
+
                 </div>
             """.trimIndent()
         }

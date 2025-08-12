@@ -15,12 +15,30 @@ class TeamQueryRepository(
 
         return try {
             jdbcTemplate.queryForObject("""
-                SELECT id_team from team
-                where driver_id =:userId or electrician_id = :userId
+                SELECT team_id from app_user
+                where user_id = :userId 
             """.trimIndent(), params, Long::class.java)
         } catch (_: EmptyResultDataAccessException) {
             null
         }
     }
+    fun renewTeam(teamId: Long, usersIds: List<UUID>) {
+        val sql = """
+        UPDATE app_user
+        SET team_id = CASE
+            WHEN user_id IN (:usersIds) THEN :teamId
+        END
+        WHERE team_id = :teamId
+    """.trimIndent()
+
+        val params = mapOf(
+            "teamId" to teamId,
+            "usersIds" to usersIds
+        )
+
+        jdbcTemplate.update(sql, params)
+    }
+
+
 
 }

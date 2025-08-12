@@ -17,6 +17,7 @@ public class AppUser {
     private String username;
 
     private String name;
+
     private String lastName;
 
     private String email;
@@ -32,6 +33,8 @@ public class AppUser {
     private LocalDate dateOfBirth;
 
     private Boolean status;
+
+    private Long teamId;
 
     public UUID getUserId() {
         return userId;
@@ -129,5 +132,13 @@ public class AppUser {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
     }
 }

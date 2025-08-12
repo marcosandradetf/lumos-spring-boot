@@ -1,6 +1,8 @@
 package com.lumos.lumosspring.maintenance.service
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.lumos.lumosspring.maintenance.entities.Maintenance
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
@@ -9,7 +11,6 @@ import com.lumos.lumosspring.maintenance.repository.MaintenanceRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetItemRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
 import com.lumos.lumosspring.minio.service.MinioService
-import com.lumos.lumosspring.stock.repository.MaterialHistoryRepository
 import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils
 import com.lumos.lumosspring.util.Utils.getCurrentUserId
@@ -32,7 +33,7 @@ class MaintenanceService(
     private val maintenanceQueryRepository: MaintenanceQueryRepository,
     private val teamQueryRepository: TeamQueryRepository,
     private val minioService: MinioService,
-    private val materialHistoryRepository: MaterialHistoryRepository,
+    private val objectMapper: ObjectMapper
 ) {
     @Transactional
     fun finishMaintenance(
@@ -161,6 +162,26 @@ class MaintenanceService(
         val maintenance = jsonData["maintenance"]!!
         val streets = jsonData["streets"]!!
         val team = jsonData["team"]!!
+
+        val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
+
+        val teamRows = teamArray.map { member ->
+            val role = when (member["role"]?.asText()?.lowercase()) {
+                "electrician" -> "Eletricista"
+                "driver" -> "Motorista"
+                else -> "Executor"
+            }
+            val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
+            """
+    <tr>
+        <td>
+            <p class="label">$role:</p>
+            <p class="cell-text">$fullName</p>
+        </td>
+    </tr>
+    """.trimIndent()
+        }.joinToString("\n")
+
         val total_by_item = jsonData["total_by_item"]!!
 
         var observations = "";
@@ -219,8 +240,7 @@ class MaintenanceService(
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
             .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")))
-            .replace("{{ELECTRICIAN_NAME}}", "${team["electrician"]?.get("name")?.asText().orEmpty()} ${team["electrician"]?.get("last_name")?.asText().orEmpty()}")
-            .replace("{{DRIVER_NAME}}", "${team["driver"]?.get("name")?.asText().orEmpty()} ${team["driver"]?.get("last_name")?.asText().orEmpty()}")
+            .replace("{{TEAM_ROWS}}", teamRows)
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = minioService.getPresignedObjectUrl(
@@ -230,7 +250,7 @@ class MaintenanceService(
             val signDate = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["sign_date"].asText()))
 
             val signSection =
-            """
+                """
             <table >
               <thead>
                   <tr>
@@ -260,7 +280,7 @@ class MaintenanceService(
                       </td>
                   </tr>
               </tbody>
-            </table>   
+            </table>
             """.trimIndent()
             templateHtml = templateHtml
                 .replace("{{SIGN_SECTION}}", signSection)
@@ -301,6 +321,29 @@ class MaintenanceService(
         val maintenance = jsonData["maintenance"]!!
         val streets = jsonData["streets"]!!
         val team = jsonData["team"]!!
+
+        val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
+
+        val teamRows = teamArray.map { member ->
+            val role = when (member["role"]?.asText()?.lowercase()) {
+                "electrician" -> "Eletricista"
+                "driver" -> "Motorista"
+                else -> "Executor"
+            }
+            val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
+            """
+    <tr>
+        <td>
+            <p class="label">$role:</p>
+            <p class="cell-text">$fullName</p>
+        </td>
+    </tr>
+    """.trimIndent()
+        }.joinToString("\n")
+
+        templateHtml = templateHtml.replace("{{TEAM_ROWS}}", teamRows)
+
+
         val total_by_item = jsonData["total_by_item"]!!
 
         var observations = "";
@@ -357,8 +400,8 @@ class MaintenanceService(
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
             .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")))
-            .replace("{{ELECTRICIAN_NAME}}", "${team["electrician"]?.get("name")?.asText().orEmpty()} ${team["electrician"]?.get("last_name")?.asText().orEmpty()}")
-            .replace("{{DRIVER_NAME}}", "${team["driver"]?.get("name")?.asText().orEmpty()} ${team["driver"]?.get("last_name")?.asText().orEmpty()}")
+            .replace("{{TEAM_ROWS}}", teamRows)
+
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = minioService.getPresignedObjectUrl(
@@ -398,7 +441,7 @@ class MaintenanceService(
                       </td>
                   </tr>
               </tbody>
-            </table>   
+            </table>
             """.trimIndent()
             templateHtml = templateHtml
                 .replace("{{SIGN_SECTION}}", signSection)

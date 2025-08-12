@@ -9,14 +9,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface TeamRepository extends CrudRepository<Team, Long> {
+    public interface TeamRepository extends CrudRepository<Team, Long> {
     @Query("SELECT id_team from team where driver_id = :userId or electrician_id = :userId")
     Optional<Long> getCurrentTeamId(UUID userId);
 
-    Optional<Team> findByDriverId(UUID driverId);
-
-    Optional<Team> findByElectricianId(UUID electricianId);
-
     Optional<Team> findByTeamName(String teamName);
-
 }
