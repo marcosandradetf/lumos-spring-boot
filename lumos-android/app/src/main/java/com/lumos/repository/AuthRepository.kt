@@ -45,14 +45,13 @@ class AuthRepository(
                 is Success -> {
                     val body = response.data
 
-                    secureStorage.saveTokens(body.accessToken, body.refreshToken, body.userUUID)
+                    secureStorage.saveTokens(body.accessToken, body.refreshToken)
+                    secureStorage.saveUserUuid(body.userUUID)
                     val roles = body.roles.trim().split(' ').toSet()
                     val teams = body.teams.trim().split(' ').toSet()
                     if (roles.isNotEmpty() && teams.isNotEmpty())
-                        secureStorage.saveAssignments(
-                            roles,
-                            teams
-                        )
+                        secureStorage.saveRoles(roles)
+                        secureStorage.saveTeams(teams)
                     Success(Unit)
                 }
 

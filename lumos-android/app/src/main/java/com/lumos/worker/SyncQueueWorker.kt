@@ -21,16 +21,17 @@ import com.lumos.api.UpdateEntity
 import com.lumos.api.UserExperience
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.database.QueueDao
-import com.lumos.repository.ContractRepository
-import com.lumos.repository.DirectExecutionRepository
-import com.lumos.repository.IndirectExecutionRepository
-import com.lumos.repository.GenericRepository
-import com.lumos.repository.MaintenanceRepository
-import com.lumos.repository.StockRepository
-import com.lumos.repository.PreMeasurementRepository
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.Routes
+import com.lumos.repository.ContractRepository
+import com.lumos.repository.DirectExecutionRepository
+import com.lumos.repository.GenericRepository
+import com.lumos.repository.IndirectExecutionRepository
+import com.lumos.repository.MaintenanceRepository
+import com.lumos.repository.PreMeasurementRepository
+import com.lumos.repository.StockRepository
+import com.lumos.repository.TeamRepository
 import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.parseToAny
@@ -56,6 +57,7 @@ object SyncTypes {
     const val POST_MAINTENANCE = "POST_MAINTENANCE"
     const val POST_ORDER = "POST_ORDER"
     const val POST_MAINTENANCE_STREET = "POST_MAINTENANCE_STREET"
+    const val UPDATE_TEAM = "UPDATE_TEAM"
 
     const val FINISHED_DIRECT_EXECUTION = "FINISHED_DIRECT_EXECUTION"
 
@@ -79,7 +81,7 @@ class SyncQueueWorker(
     private val genericRepository: GenericRepository
     private val stockRepository: StockRepository
     private val maintenanceRepository: MaintenanceRepository
-
+    private val teamRepository: TeamRepository
 
     init {
         val api = ApiService(app.applicationContext, secureStorage)
@@ -133,6 +135,13 @@ class SyncQueueWorker(
             api = api,
             app = app
         )
+
+        teamRepository = TeamRepository(
+            db = db,
+            api = api,
+            secureStorage = secureStorage,
+            app = app
+        )
     }
 
     override suspend fun doWork(): Result {
@@ -140,9 +149,6 @@ class SyncQueueWorker(
 
         val uuid = secureStorage.getUserUuid() ?: return Result.failure()
         val pendingItems = queueDao.getItemsToProcess()
-
-        var shouldRetry = false
-        var hasFailures = false
 
         for (item in pendingItems) {
             queueDao.update(item.copy(status = SyncStatus.IN_PROGRESS))
@@ -160,10 +166,10 @@ class SyncQueueWorker(
                 SyncTypes.POST_ORDER -> postOrder(item)
                 SyncTypes.POST_MAINTENANCE_STREET -> postMaintenanceStreet(item)
                 SyncTypes.POST_MAINTENANCE -> postMaintenance(item)
-
+                SyncTypes.UPDATE_TEAM -> updateTeam(item)
 
                 SyncTypes.FINISHED_DIRECT_EXECUTION -> finishedDirectExecution(item)
-//                SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
+                // SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
                     queueDao.update(item.copy(status = SyncStatus.FAILED))
@@ -171,16 +177,15 @@ class SyncQueueWorker(
                 }
             }
 
-            if (result == Result.failure()) hasFailures = true
-            if (result == Result.retry()) shouldRetry = true
+            if(result == Result.retry()) {
+                // Rede/servidor indisponível → retry global seguro
+                return Result.retry()
+            }
         }
 
-        return when {
-            shouldRetry -> Result.retry()
-            hasFailures -> Result.success()
-            else -> Result.success()
-        }
+        return Result.success()
     }
+
 
     private suspend fun postGeneric(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
@@ -711,6 +716,42 @@ class SyncQueueWorker(
                 context = applicationContext,
                 title = "Erro ao enviar execução",
                 body = "Verifique o erro no caminho Mais -> Perfil -> Tarefas em Sincronizações",
+            )
+            Result.failure()
+        }
+    }
+
+    private suspend fun updateTeam(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = teamRepository.callPostUpdateTeam()
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Erro ao enviar pré-mediçao",
+                body = "Verifique o erro em Perfil - Sincronizações",
             )
             Result.failure()
         }

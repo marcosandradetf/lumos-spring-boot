@@ -2,28 +2,19 @@ package com.lumos.repository
 
 import android.app.Application
 import android.util.Log
-import androidx.room.withTransaction
 import com.lumos.api.ApiExecutor
 import com.lumos.api.ApiService
-import com.lumos.api.StockApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.api.TeamApi
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.Deposit
-import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.model.OperationalUsers
-import com.lumos.domain.model.OrderMaterial
-import com.lumos.domain.model.OrderMaterialItem
 import com.lumos.domain.model.SendTeamEdit
-import com.lumos.domain.model.Stockist
 import com.lumos.domain.model.Team
 import com.lumos.midleware.SecureStorage
-import com.lumos.utils.Utils.uuidToShortCodeWithPrefix
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
-import java.util.UUID
 
 class TeamRepository(
     private val db: AppDatabase,
@@ -47,7 +38,6 @@ class TeamRepository(
     fun getTeamsFlow(): Flow<List<Team>> {
         return db.teamDao().getTeamsFlow()
     }
-
 
     suspend fun callGetOperationalAndTeams(): RequestResult<Unit> {
         val response = ApiExecutor.execute {
@@ -78,7 +68,7 @@ class TeamRepository(
         }
     }
 
-    suspend fun callPostUpdateTeam(orderId: String): RequestResult<Unit> {
+    suspend fun callPostUpdateTeam(): RequestResult<Unit> {
         val team = SendTeamEdit(
             idTeam = secureStorage.getTeamId(),
             userIds = secureStorage.getOperationalUsers().toList()
@@ -110,6 +100,5 @@ class TeamRepository(
         }
 
     }
-
 
 }

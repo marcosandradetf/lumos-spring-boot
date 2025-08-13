@@ -85,8 +85,7 @@ class AuthInterceptor(
 
             // Se obtivemos um novo access token, tenta a requisição novamente com o novo token
             if (refreshTokenResponse != null) {
-                secureStorage.saveAccessToken(refreshTokenResponse.accessToken)
-                secureStorage.saveRefreshToken(refreshTokenResponse.refreshToken)
+                secureStorage.saveTokens(refreshTokenResponse.accessToken, refreshTokenResponse.refreshToken)
 
                 // Aqui, fazemos a chamada novamente com o novo token
                 val newRequest = chain.request().newBuilder()

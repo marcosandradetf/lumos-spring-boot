@@ -233,4 +233,16 @@ object SyncManager {
         }
     }
 
+    suspend fun queueUpdateTeam(context: Context, db: AppDatabase) {
+        val count = db.queueDao().countPendingItemsByType(SyncTypes.UPDATE_TEAM)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                type = SyncTypes.UPDATE_TEAM,
+                priority = 10
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
 }
