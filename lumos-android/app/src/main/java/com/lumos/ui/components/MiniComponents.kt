@@ -1,6 +1,12 @@
 package com.lumos.ui.components
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,9 +21,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -25,9 +36,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,20 +77,57 @@ fun Loading(label: String? = null) {
 
 @Composable
 fun NothingData(description: String) {
+    // micro animação de entrada (fade + leve scale)
+    val visible = remember { MutableTransitionState(false).apply { targetState = true } }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Default.Info, contentDescription = "Info")
-        Text(
-            description, Modifier
-                .width(300.dp)
-                .padding(top = 10.dp), textAlign = TextAlign.Center
-        )
+        AnimatedVisibility(
+            visibleState = visible,
+            enter = fadeIn() + scaleIn(initialScale = 0.98f),
+            exit = fadeOut()
+        ) {
+            // cartão bem clean, só com borda suave
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.Transparent,
+                tonalElevation = 0.dp,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                        .widthIn(max = 420.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = 340.dp)
+                    )
+                }
+            }
+        }
     }
 }
+
 
 @Composable
 fun Confirm(
@@ -86,6 +136,7 @@ fun Confirm(
     icon: ImageVector? = null,
     confirm: () -> Unit,
     cancel: () -> Unit,
+    textAlign: TextAlign = TextAlign.Center
 ) {
     AlertDialog(
         shape = RoundedCornerShape(12.dp),
@@ -109,7 +160,7 @@ fun Confirm(
                 text = body,
                 modifier = Modifier
                     .fillMaxWidth(),
-                textAlign = TextAlign.Center,
+                textAlign = textAlign,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -352,7 +403,8 @@ fun NoInternet(message: String? = null) {
                 .background(MaterialTheme.colorScheme.errorContainer)
         ) {
             Text(
-                text = message ?: "Estamos com problemas para conectar aos servidores. Por favor, reconecte.",
+                text = message
+                    ?: "Estamos com problemas para conectar aos servidores. Utilizando dados em cache.",
                 modifier = Modifier
                     .fillMaxWidth(fraction = 0.9f)
                     .padding(8.dp),
@@ -363,8 +415,9 @@ fun NoInternet(message: String? = null) {
         }
     }
 }
+
 @Composable
-fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
+fun Tag(text: String, color: Color, icon: ImageVector? = null) {
     AssistChip(
         onClick = {},
         label = {
@@ -374,7 +427,7 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
             )
         },
         leadingIcon = {
-            if(icon!=null)Icon(imageVector = icon, contentDescription = null)
+            if (icon != null) Icon(imageVector = icon, contentDescription = null)
         },
         colors = AssistChipDefaults.assistChipColors(
             containerColor = color.copy(alpha = 0.1f),
@@ -386,7 +439,12 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null ) {
 }
 
 @Composable
-fun CurrentScreenLoading(navController: NavHostController, currentScreenName: String, loadingLabel: String? = null, selectedIcon: Int = BottomBar.MAINTENANCE.value) {
+fun CurrentScreenLoading(
+    navController: NavHostController,
+    currentScreenName: String,
+    loadingLabel: String? = null,
+    selectedIcon: Int = BottomBar.MAINTENANCE.value
+) {
     AppLayout(
         title = currentScreenName,
         selectedIcon = selectedIcon,
@@ -505,7 +563,12 @@ fun ConfirmNavigation(route: String, navController: NavHostController, onDismiss
         title = "Confirme sua ação",
         body = "Deseja sair?",
         confirm = {
-            navController.navigate(route)
+            if(route == "back") {
+                navController.popBackStack()
+            } else {
+                navController.navigate(route)
+            }
+
         },
         cancel = {
             onDismiss()
@@ -513,9 +576,34 @@ fun ConfirmNavigation(route: String, navController: NavHostController, onDismiss
     )
 }
 
+@Composable
+fun UserAvatar(name: String, modifier: Modifier = Modifier) {
+    val initials = remember(name) {
+        name.trim()
+            .split(Regex("\\s+"))
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+            .joinToString("")
+            .ifEmpty { "?" }
+    }
+    Box(
+        modifier = modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.secondaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initials,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-    NoInternet()
+//    NoInternet()
+
 }

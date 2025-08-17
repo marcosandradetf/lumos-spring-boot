@@ -1,6 +1,7 @@
 package com.lumos.ui.maintenance
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -74,6 +75,7 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.LandscapeModeWrapper
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.SignatureScreenLandscape
 import com.lumos.ui.components.Tag
@@ -102,12 +104,13 @@ class MaintenanceHomeViewModel : ViewModel() {
                 quantityPendingPoints = maintenance.quantityPendingPoints,
                 dateOfVisit = maintenance.dateOfVisit,
                 type = maintenance.type,
-                status = "FINISHED"
+                status = "FINISHED",
+                executorsIds = maintenance.executorsIds
             )
         }
     }
 
-    fun clear(){
+    fun clear() {
         showSignScreen = false
         showFinishForm = false
         maintenanceSend = null
@@ -523,7 +526,9 @@ fun MaintenanceHomeContent(
                                 if (
                                     viewModel.hasResponsible == true
                                     && (viewModel.maintenanceSend?.responsible == null ||
-                                            (viewModel.maintenanceSend?.responsible != null && !hasFullName(viewModel.maintenanceSend?.responsible!!)
+                                            (viewModel.maintenanceSend?.responsible != null && !hasFullName(
+                                                viewModel.maintenanceSend?.responsible!!
+                                            )
                                                     )
                                             )
                                 ) {
@@ -642,7 +647,7 @@ fun MaintenanceHomeContent(
                                                 Text(
                                                     "Iniciada há ${
                                                         Utils.timeSinceCreation(
-                                                                maintenance.dateOfVisit
+                                                            maintenance.dateOfVisit
                                                         )
                                                     }"
                                                 )

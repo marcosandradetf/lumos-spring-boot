@@ -4,12 +4,15 @@ import android.app.Application
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.lumos.MainActivity
 import com.lumos.R
 import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
@@ -58,7 +61,6 @@ object SyncTypes {
     const val POST_ORDER = "POST_ORDER"
     const val POST_MAINTENANCE_STREET = "POST_MAINTENANCE_STREET"
     const val UPDATE_TEAM = "UPDATE_TEAM"
-
     const val FINISHED_DIRECT_EXECUTION = "FINISHED_DIRECT_EXECUTION"
 
 }
@@ -73,7 +75,6 @@ class SyncQueueWorker(
 
     private val queueDao: QueueDao
     private val secureStorage: SecureStorage = SecureStorage(app.applicationContext)
-
     private val preMeasurementRepository: PreMeasurementRepository
     private val contractRepository: ContractRepository
     private val indirectExecutionRepository: IndirectExecutionRepository
@@ -133,7 +134,8 @@ class SyncQueueWorker(
         maintenanceRepository = MaintenanceRepository(
             db = db,
             api = api,
-            app = app
+            app = app,
+            secureStorage = secureStorage
         )
 
         teamRepository = TeamRepository(
@@ -807,10 +809,25 @@ class SyncQueueWorker(
                         errorMessage = response.message,
                     )
                 )
+
+                val intent = Intent(applicationContext, MainActivity::class.java).apply {
+                    putExtra("destination", Routes.SYNC) // 👉 identificando a rota
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+
+                val pendingIntent = PendingIntent.getActivity(
+                    applicationContext,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+
                 UserExperience.sendNotification(
                     context = applicationContext,
                     title = message,
-                    body = "Clique para saber mais",
+                    body = response.message ?: "Clique para saber mais",
+                    intent = pendingIntent,
                     action = Routes.SYNC,
                     time = Utils.dateTime.toString(),
                     type = NotificationType.WARNING

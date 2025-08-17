@@ -1,7 +1,10 @@
 package com.lumos.lumosspring.execution.controller
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.lumos.lumosspring.execution.dto.*
+import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTO
+import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTOResponse
+import com.lumos.lumosspring.dto.direct_execution.SendDirectExecutionDto
+import com.lumos.lumosspring.dto.indirect_execution.*
 import com.lumos.lumosspring.execution.service.ExecutionService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -25,16 +28,16 @@ class ExecutionController(
     fun getPendingReservesForStockist(@PathVariable userUUID: UUID): ResponseEntity<Any> =
         executionService.getPendingReservesForStockist(userUUID)
 
-    @GetMapping("/execution/get-stock-materials/{linking}/{type}/{truckDepositName}")
+    @GetMapping("/execution/get-stock-materials/{linking}/{type}/{teamId}")
     fun getStockMaterialForLinking(
         @PathVariable linking: String,
         @PathVariable type: String,
-        @PathVariable truckDepositName: String
+        @PathVariable teamId: Long
     ): ResponseEntity<Any> =
         executionService.getStockMaterialForLinking(
             linking,
             type,
-            truckDepositName
+            teamId
         )
 
     @PostMapping("/execution/reserve-materials-for-execution/{userUUID}")
@@ -74,8 +77,11 @@ class ExecutionController(
     fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)
 
     @PostMapping("/mobile/execution/finish-direct-execution/{directExecutionId}")
-    fun finishDirectExecution(@PathVariable directExecutionId: Long): ResponseEntity<Any> =
-        executionService.finishDirectExecution(directExecutionId)
+    fun finishDirectExecution(
+        @PathVariable directExecutionId: Long,
+        @RequestParam(required = false) operationalUsers: List<UUID>?
+    ): ResponseEntity<Any> =
+        executionService.finishDirectExecution(directExecutionId, operationalUsers)
 
     @PostMapping("/execution/generate-report/{type}/{executionId}")
     fun generateReport(@PathVariable type: String, @PathVariable executionId: Long): ResponseEntity<ByteArray> {

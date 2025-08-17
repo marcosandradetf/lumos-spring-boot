@@ -308,8 +308,7 @@
             <thead>
             <tr class="bg-gray-200 dark:bg-gray-800 text-xs uppercase text-gray-600 dark:text-neutral-100">
               <th>Equipe</th>
-              <th>Motorista</th>
-              <th>Eletricista</th>
+              <th>Colaboradores</th>
               <th>Placa do veículo</th>
               <th>Região geográfica</th>
             </tr>
@@ -319,8 +318,7 @@
             <tr class="hover:bg-blue-100 hover:text-blue-700" *ngFor="let team of teams; let i = index"
                 (click)="selectTeam(team, isMultiTeam)">
               <td>{{ team.teamName }}</td>
-              <td>{{ team.driver.driverName }}</td>
-              <td>{{ team.electrician.electricianName }}</td>
+              <td>{{ team.memberNames.join(', ') }}</td>
               <td>{{ team.plate }}</td>
               <td>{{ team.regionName }}</td>
             </tr>
@@ -333,15 +331,13 @@
             <!-- head -->
             <thead>
             <tr class="bg-gray-200 text-xs uppercase text-gray-600">
-              <th>{{ getTeam(getReserve().teamId)?.electrician?.electricianName }}</th>
-              <th>{{ getTeam(getReserve().teamId)?.driver?.driverName }}</th>
+              <th>{{ getTeam(getReserve().teamId)?.memberNames?.join(', ') }}</th>
             </tr>
             </thead>
             <tbody>
             <!-- row 1 -->
             <tr class="hover:bg-blue-100 hover:text-blue-700">
               <td>Telefone não cadastrado {{ 1 }}</td>
-              <td>Telefone não cadastrado {{ 2 }}</td>
             </tr>
             </tbody>
           </table>

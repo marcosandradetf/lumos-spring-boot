@@ -9,7 +9,7 @@ import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.api.TeamApi
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.OperationalUsers
+import com.lumos.domain.model.OperationalUser
 import com.lumos.domain.model.SendTeamEdit
 import com.lumos.domain.model.Team
 import com.lumos.midleware.SecureStorage
@@ -31,7 +31,14 @@ class TeamRepository(
         )
     }
 
-    fun getUsersFlow(): Flow<List<OperationalUsers>> {
+    suspend fun queueGetStock() {
+        SyncManager.queueGetStock(
+            context = app.applicationContext,
+            db = db
+        )
+    }
+
+    fun getUsersFlow(): Flow<List<OperationalUser>> {
         return db.teamDao().getUsersFlow()
     }
 
@@ -78,6 +85,8 @@ class TeamRepository(
             teamApi.updateTeam(team)
         }
 
+        Log.e("callPostUpdateTeam", response.toString())
+
         return when (response) {
             is RequestResult.Success -> {
                 RequestResult.Success(Unit)
@@ -94,11 +103,27 @@ class TeamRepository(
             is RequestResult.Timeout -> RequestResult.Timeout
             is ServerError -> ServerError(response.code, response.message)
             is RequestResult.UnknownError -> {
-                Log.e("Sync", "Erro desconhecido", response.error)
                 RequestResult.UnknownError(response.error)
             }
         }
 
+    }
+
+    suspend fun setTeamAndQueue(teamId: Long, operationalUsers: Set<String>) {
+        try {
+            val currentTeamId = secureStorage.getTeamId()
+            secureStorage.saveOperationalUsers(operationalUsers)
+            secureStorage.setLastTeamCheck()
+            queueUpdateTeam()
+
+            if(currentTeamId != teamId) {
+                secureStorage.setTeamId(teamId)
+                db.stockDao().deleteStock()
+                queueGetStock()
+            }
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
 }

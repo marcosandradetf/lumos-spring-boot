@@ -3,7 +3,10 @@ package com.lumos.lumosspring.execution.service
 import com.fasterxml.jackson.databind.JsonNode
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.service.ContractService
-import com.lumos.lumosspring.execution.dto.*
+import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTO
+import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTOResponse
+import com.lumos.lumosspring.dto.direct_execution.SendDirectExecutionDto
+import com.lumos.lumosspring.dto.indirect_execution.*
 import com.lumos.lumosspring.execution.entities.*
 import com.lumos.lumosspring.execution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
@@ -56,6 +59,7 @@ class ExecutionService(
     private val contractService: ContractService,
     private val materialRepository: MaterialRepository,
     private val jdbcInstallationRepository: JdbcInstallationRepository,
+    private val directExecutionExecutorRepository: DirectExecutionExecutorRepository,
 ) {
 
 //    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
@@ -238,9 +242,9 @@ class ExecutionService(
             mapOf("status" to ReservationStatus.PENDING, "stockist_id" to userUUID)
         )
 
-        for (row in pendingManagement) {
-            val reservationManagementId = (row["reservation_management_id"] as? Number)?.toLong() ?: 0L
-            val description = row["description"] as? String ?: ""
+        for (pRow in pendingManagement) {
+            val reservationManagementId = (pRow["reservation_management_id"] as? Number)?.toLong() ?: 0L
+            val description = pRow["description"] as? String ?: ""
             val directExecutionWaiting = getRawData(
                 namedJdbc,
                 "select de.direct_execution_id, au.name || ' ' || au.last_name as completedName ,  t.id_team, t.team_name, d.deposit_name from direct_execution de \n" +
@@ -362,15 +366,15 @@ class ExecutionService(
         return ResponseEntity.ok(response)
     }
 
-    fun getStockMaterialForLinking(linking: String, type: String, truckDepositName: String): ResponseEntity<Any> {
+    fun getStockMaterialForLinking(linking: String, type: String, teamId: Long): ResponseEntity<Any> {
         val materials: List<MaterialInStockDTO> = if (type != "NULL" && linking != "NULL") {
             materialStockJdbcRepository.findAllByLinkingAndType(
                 linking.lowercase(),
                 type.lowercase(),
-                truckDepositName.lowercase()
+                teamId
             )
         } else {
-            materialStockJdbcRepository.findAllByType(type.lowercase(), truckDepositName.lowercase())
+            materialStockJdbcRepository.findAllByType(type.lowercase(), teamId)
         }
 
         return ResponseEntity.ok(materials)
@@ -658,23 +662,23 @@ class ExecutionService(
             val teamId = (reserve.first()["id_team"] as? Number)?.toLong()
             val team = teamRepository.findById(teamId ?: 0).orElse(null)
 
-            val teamCode = team?.teamCode
+//            val teamCode = team?.teamCode
 
             bodyMessage = """
                 Por favor, aceite ou negue as solicitações com urgência!
                 """.trimIndent()
 
-            if (teamCode != null) {
-                notificationService.sendNotificationForTeam(
-                    team = teamCode,
-                    title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
-                    body = bodyMessage,
-                    action = "REPLY_RESERVE",
-                    time = Instant.now(),
-                    type = NotificationType.ALERT,
-                    persistCode = streetIdOrExecutionId
-                )
-            }
+//            if (teamCode != null) {
+//                notificationService.sendNotificationForTeam(
+//                    team = teamCode,
+//                    title = "Existem ${reserve.size} materiais pendentes de aprovação no seu almoxarifado (${deposit?.depositName ?: ""})",
+//                    body = bodyMessage,
+//                    action = "REPLY_RESERVE",
+//                    time = Instant.now(),
+//                    type = NotificationType.ALERT,
+//                    persistCode = streetIdOrExecutionId
+//                )
+//            }
 
         }
 
@@ -696,7 +700,7 @@ class ExecutionService(
 
             val team = teamRepository.findById(teamId ?: 0).orElse(null)
 
-            val teamCode = team?.teamCode ?: ""
+//            val teamCode = team?.teamCode ?: ""
             val quantity = reserve.size
             val stockistName = JdbcUtil.getDescription(
                 jdbcTemplate,
@@ -719,15 +723,15 @@ class ExecutionService(
                     Responsável: $responsible"
                 """.trimIndent()
 
-            notificationService.sendNotificationForTeam(
-                team = teamCode,
-                title = "Existem $quantity materiais pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
-                body = bodyMessage,
-                action = "",
-                time = Instant.now(),
-                type = NotificationType.ALERT,
-                persistCode = streetIdOrExecutionId
-            )
+//            notificationService.sendNotificationForTeam(
+//                team = teamCode,
+//                title = "Existem $quantity materiais pendentes de coleta no almoxarifado ${deposit?.depositName ?: ""}",
+//                body = bodyMessage,
+//                action = "",
+//                time = Instant.now(),
+//                type = NotificationType.ALERT,
+//                persistCode = streetIdOrExecutionId
+//            )
 
         }
 
@@ -847,7 +851,7 @@ class ExecutionService(
                 """.trimIndent(),
             mapOf("streetId" to executionDTO.streetId)
         )
-        if (execution == null) throw IllegalArgumentException("Street com ID ${executionDTO.streetId} não encontrada")
+        if (execution == null) throw Utils.BusinessException("Street com ID ${executionDTO.streetId} não encontrada")
 
         if (execution["street_status"] as String != ExecutionStatus.AVAILABLE_EXECUTION) {
             return ResponseEntity.badRequest().body("Execução já enviada")
@@ -859,7 +863,7 @@ class ExecutionService(
 
         val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
 
-        val sql = """
+        var sql = """
             UPDATE pre_measurement_street
             SET execution_photo_uri = :fileUri,
             street_status = :streetStatus
@@ -884,11 +888,11 @@ class ExecutionService(
             )
 
             if (!exists) {
-                throw IllegalArgumentException("Reserva com ID ${r.reserveId} não encontrada")
+                throw Utils.BusinessException("Reserva com ID ${r.reserveId} não encontrada")
             }
 
 
-            val sql = if (r.materialName.contains("led", ignoreCase = true)) {
+            sql = if (r.materialName.contains("led", ignoreCase = true)) {
                 """
                     UPDATE contract_item ci
                     SET quantity_executed = quantity_executed + :quantityExecuted
@@ -1003,6 +1007,36 @@ class ExecutionService(
 
         for (m in executionDTO.materials) {
 
+            var balance = namedJdbc.queryForObject(
+                """
+                    select contracted_quantity - quantity_executed as balance
+                    from contract_item
+                    where contract_item_id = :contractItemId
+                    limit 1
+                """.trimIndent(),
+                mapOf("contractItemId" to m.contractItemId),
+                BigDecimal::class.java
+            )
+
+            if (balance == null || balance < m.quantityExecuted) {
+                throw Utils.BusinessException("Sem saldo contratual para o material: " + m.contractItemId + " - " + m.materialName)
+            }
+
+            balance = namedJdbc.queryForObject(
+                """
+                    select stock_quantity
+                    from material_stock
+                    where material_id_stock = :materialStockId
+                    limit 1
+                """.trimIndent(),
+                mapOf("materialStockId" to m.truckMaterialStockId),
+                BigDecimal::class.java
+            )
+
+            if (balance == null || balance < m.quantityExecuted) {
+                throw Utils.BusinessException("Sem estoque para o material: " + m.contractItemId + " - " + m.materialName)
+            }
+
             namedJdbc.update(
                 """
                     UPDATE material_stock
@@ -1089,14 +1123,14 @@ class ExecutionService(
 
                     if (!isService) continue
 
-                    val item = DirectExecutionStreetItem(
+                    val serviceItem = DirectExecutionStreetItem(
                         executedQuantity = m.quantityExecuted,
                         materialStockId = null,
                         contractItemId = serviceItemId,
                         directExecutionStreetId = executionStreet.directExecutionStreetId
                             ?: throw IllegalStateException("directExecutionStreetId not set")
                     )
-                    directExecutionRepositoryStreetItem.save(item)
+                    directExecutionRepositoryStreetItem.save(serviceItem)
                 }
 
             } else {
@@ -1141,7 +1175,7 @@ class ExecutionService(
     }
 
     @Transactional
-    fun finishDirectExecution(directExecutionId: Long): ResponseEntity<Any> {
+    fun finishDirectExecution(directExecutionId: Long, operationalUsers: List<UUID>? = null): ResponseEntity<Any> {
         val hasFinished = JdbcUtil.getSingleRow(
             namedJdbc,
             "SELECT 1 as result FROM direct_execution des WHERE direct_execution_status = :status AND direct_execution_id = :directExecutionId",
@@ -1153,6 +1187,18 @@ class ExecutionService(
 
         if (hasFinished) {
             return ResponseEntity.status(409).body("Execução já finalizada anteriormente")
+        }
+
+        operationalUsers?.let { users ->
+            directExecutionExecutorRepository.saveAll(
+                users.map { userId ->
+                    DirectExecutionExecutor(
+                        directExecutionId = directExecutionId,
+                        userId = userId,
+                        isNewEntry = true
+                    )
+                }
+            )
         }
 
         namedJdbc.update(
@@ -1283,7 +1329,7 @@ class ExecutionService(
             .replace("{{STREET_LINES}}", streetLinesHtml)
             .replace("{{STREET_FOOTER}}", streetFooterHtml)
             .replace("{{COLUMN_LENGTH}}", (columnsList.size + 1).toString())
-            .replace("{{EXECUTION_DATE}}", if (dates != null && !dates.contains("null")) dates else "")
+            .replace("{{EXECUTION_DATE}}", if (dates != null && dates?.contains("null") == true) dates!! else "")
 
         try {
             val response = sendHtmlToPuppeteer(templateHtml)

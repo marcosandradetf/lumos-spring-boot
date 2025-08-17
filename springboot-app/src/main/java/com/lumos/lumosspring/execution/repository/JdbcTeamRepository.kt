@@ -1,9 +1,10 @@
 package com.lumos.lumosspring.execution.repository
 
-import com.lumos.lumosspring.execution.dto.DirectExecutionDTOResponse
-import com.lumos.lumosspring.execution.dto.DirectReserve
-import com.lumos.lumosspring.execution.dto.IndirectExecutionDTOResponse
-import com.lumos.lumosspring.execution.dto.IndirectReserve
+import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTOResponse
+import com.lumos.lumosspring.dto.direct_execution.DirectReserve
+import com.lumos.lumosspring.dto.indirect_execution.IndirectExecutionDTOResponse
+import com.lumos.lumosspring.dto.indirect_execution.IndirectReserve
+import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -14,14 +15,14 @@ import java.util.*
 
 @Repository
 class JdbcGetExecutionRepository(
-    private val namedJdbc: NamedParameterJdbcTemplate
+    private val namedJdbc: NamedParameterJdbcTemplate,
+    val teamRepository: TeamRepository,
 ) {
 
     fun getIndirectExecutions(operatorUUID: UUID): List<IndirectExecutionDTOResponse> {
-        val teamsId = getTeamsIdsByUser(operatorUUID)
-        if (teamsId.isEmpty()) return emptyList()
+        val teamId = teamRepository.getCurrentTeamId(operatorUUID) ?: return emptyList()
 
-        val streets = getStreetsByTeams(teamsId)
+        val streets = getStreetsByTeams(teamId.get())
         val streetIds = streets.map { it["pre_measurement_street_id"] as Long }
         if (streetIds.isEmpty()) return emptyList()
 
@@ -52,10 +53,9 @@ class JdbcGetExecutionRepository(
     }
 
     fun getDirectExecutions(operatorUUID: UUID): List<DirectExecutionDTOResponse> {
-        val teamsId = getTeamsIdsByUser(operatorUUID)
-        if (teamsId.isEmpty()) return emptyList()
+        val teamId = teamRepository.getCurrentTeamId(operatorUUID) ?: return emptyList()
 
-        val directExecutions = getDirectExecutionsByTeam(teamsId)
+        val directExecutions = getDirectExecutionsByTeam(teamId.get())
         val directExecutionsIds = directExecutions.map { it["direct_execution_id"] as Long }
 
         if (directExecutionsIds.isEmpty()) return emptyList()
@@ -76,20 +76,7 @@ class JdbcGetExecutionRepository(
         }
     }
 
-    private fun getTeamsIdsByUser(uuid: UUID): List<Long> {
-        val teams = JdbcUtil.getRawData(
-            namedJdbc,
-            """
-                SELECT id_team FROM team
-                WHERE driver_id = :uuid OR electrician_id = :uuid
-            """.trimIndent(),
-            mapOf("uuid" to uuid)
-        )
-
-        return teams.map { it["id_team"] as Long }
-    }
-
-    private fun getStreetsByTeams(teamsId: List<Long>): List<Map<String, Any>> {
+    private fun getStreetsByTeams(teamId: Long): List<Map<String, Any>> {
         return JdbcUtil.getRawData(
             namedJdbc,
             """
@@ -99,21 +86,21 @@ class JdbcGetExecutionRepository(
                 FROM pre_measurement_street pms
                 INNER JOIN pre_measurement p ON p.pre_measurement_id = pms.pre_measurement_id
                 INNER JOIN contract c ON c.contract_id = p.contract_contract_id
-                WHERE pms.team_id IN (:teams_ids) AND pms.street_status = :status
+                WHERE pms.team_id = :teamId AND pms.street_status = :status
             """.trimIndent(),
-            mapOf("teams_ids" to teamsId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
+            mapOf("teamId" to teamId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
         )
     }
 
-    private fun getDirectExecutionsByTeam(teamsId: List<Long>): List<Map<String, Any>> {
+    private fun getDirectExecutionsByTeam(teamId: Long): List<Map<String, Any>> {
         return JdbcUtil.getRawData(
             namedJdbc,
             """
                 SELECT de.direct_execution_id, de.instructions, de.description, de.assigned_at
                 FROM direct_execution de
-                WHERE de.team_id IN (:teams_ids) AND de.direct_execution_status = :status
+                WHERE de.team_id = :teamId AND de.direct_execution_status = :status
             """.trimIndent(),
-            mapOf("teams_ids" to teamsId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
+            mapOf("teamId" to teamId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
         )
     }
 

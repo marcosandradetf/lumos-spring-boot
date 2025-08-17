@@ -79,6 +79,43 @@ public class DepositService {
         return depositResponses;
     }
 
+    @Cacheable("getAllDeposits")
+    public List<DepositResponse> findAllTruckDeposit() {
+        var deposits = depositRepository.findAllTruckDeposit();
+        List<DepositResponse> depositResponses = new ArrayList<>();
+        String companyName;
+        String depositRegion;
+
+        for (var deposit : deposits) {
+            // Verifica se o campo 'company' é nulo
+            if (deposit.getCompanyId() != null) {
+                companyName = companyRepository.findById(deposit.getCompanyId()).orElseThrow().getSocialReason();
+            } else {
+                companyName = "Não definido";  // Valor padrão
+            }
+
+            if (deposit.getRegion() != null) {
+                depositRegion =  regionRepository.findById(deposit.getRegion()).orElseThrow().getRegionName();
+            } else {
+                depositRegion = "Não definido";  // Valor padrão
+            }
+
+            depositResponses.add(new DepositResponse(
+                    deposit.getIdDeposit(),
+                    deposit.getDepositName(),
+                    companyName,
+                    deposit.getDepositAddress(),
+                    deposit.getDepositDistrict(),
+                    deposit.getDepositCity(),
+                    deposit.getDepositState(),
+                    depositRegion,
+                    deposit.getDepositPhone()
+            ));
+        }
+
+        return depositResponses;
+    }
+
     public Deposit findById(Long id) {
         return depositRepository.findById(id).orElse(null);
     }

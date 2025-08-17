@@ -2,6 +2,7 @@ package com.lumos.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,12 +22,11 @@ class AuthViewModel(
     private val _isAuthenticated = MutableStateFlow<Boolean?>(null)
     val isAuthenticated: StateFlow<Boolean?> = _isAuthenticated
     var loading by mutableStateOf(false)
-
+    var message by mutableStateOf<String?>(null)
     fun login(
         username: String,
         password: String,
         onSuccess: () -> Unit,
-        onFailure: () -> Unit
     ) {
         viewModelScope.launch {
             val response = withContext(Dispatchers.IO) {
@@ -39,14 +39,25 @@ class AuthViewModel(
 
             when (response) {
                 is RequestResult.Success -> {
+                    message = "Login realizado com sucesso!"
                     onSuccess()
                 }
 
-                is RequestResult.SuccessEmptyBody -> onFailure()
-                is RequestResult.NoInternet -> onFailure()
-                is RequestResult.ServerError -> onFailure()
-                is RequestResult.Timeout -> onFailure()
-                is RequestResult.UnknownError -> onFailure()
+                is RequestResult.SuccessEmptyBody -> {
+                    message = "Erro ao fazer login - EmptyBody. Tente Novamente ou informe o Admin!"
+                }
+                is RequestResult.NoInternet -> {
+                    message = "Problema ao enviar requisição - Sem internet. Tente novamente!"
+                }
+                is RequestResult.ServerError -> {
+                    message = "Usuário/CPF ou Senha incorretos."
+                }
+                is RequestResult.Timeout -> {
+                    message = "Problema ao enviar requisição - Internet Lenta. Tente novamente!"
+                }
+                is RequestResult.UnknownError -> {
+                    message = "Erro ao fazer login - Desconhecido. Tente Novamente ou informe o Admin!"
+                }
             }
         }
     }

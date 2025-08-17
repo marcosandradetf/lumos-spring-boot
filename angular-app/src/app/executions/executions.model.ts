@@ -60,6 +60,8 @@ export interface MaterialInStockDTO {
   deposit: string,
   availableQuantity: string,
   requestUnit: string,
+  isTruck: boolean,
+  plateVehicle: string | null,
 }
 
 export interface DirectExecutionDTO {

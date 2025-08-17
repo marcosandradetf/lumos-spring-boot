@@ -102,22 +102,6 @@ class StockQueryRepository(
         )
     }
 
-    fun getTruckDepositId(uuid: UUID): Long? {
-        val sql = """
-        SELECT deposit_id_deposit FROM team
-        WHERE electrician_id = :uuid OR driver_id = :uuid
-        LIMIT 1;
-    """.trimIndent()
-
-        val params = mapOf("uuid" to uuid)
-
-        return try {
-            jdbcTemplate.queryForObject(sql, params, Long::class.java)
-        } catch (_: EmptyResultDataAccessException) {
-            null
-        }
-    }
-
     data class OrderWithItems(
         val orderMaterial: OrderMaterial,
         val items: List<OrderMaterialItem>

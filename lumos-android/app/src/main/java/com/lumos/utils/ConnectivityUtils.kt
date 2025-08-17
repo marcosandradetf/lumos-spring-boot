@@ -12,7 +12,7 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 object ConnectivityUtils {
-//    const val BASE_URL = "https://9c7b5e76d229.ngrok-free.app/"
+//    const val BASE_URL = "https://27d06f88f5fb.ngrok-free.app/"
     const val BASE_URL = "https://api.thryon.com.br/spring/"
     private const val PING_URL = "https://api.thryon.com.br/spring/ping"
 
@@ -41,4 +41,5 @@ object ConnectivityUtils {
         return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
                 && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+
 }

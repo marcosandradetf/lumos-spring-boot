@@ -17,7 +17,6 @@ data class Maintenance(
     val dateOfVisit: Instant,
     val type: String, //rural ou urbana
     val status: String,
-    val teamId: Long?,
 
     val signDate: Instant? = null,
     val responsible: String? = null,

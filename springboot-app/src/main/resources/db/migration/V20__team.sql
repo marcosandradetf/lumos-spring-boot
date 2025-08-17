@@ -8,21 +8,22 @@ DROP TABLE IF EXISTS team_complementary_members;
 DO
 $$
     BEGIN
-        IF EXISTS (SELECT 1
-                   FROM information_schema.tables
-                   WHERE table_schema = 'public'
-                     AND table_name = 'maintenance_executors') THEN
+        IF EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name = 'maintenance_executors'
+        ) THEN
+            EXECUTE 'ALTER TABLE maintenance_executors DROP COLUMN role';
             EXECUTE 'ALTER TABLE maintenance_executors RENAME TO maintenance_executor';
         END IF;
     END;
 $$;
 
-
 CREATE TABLE IF NOT EXISTS maintenance_executor
 (
     maintenance_id UUID NOT NULL,
     user_id        UUID NOT NULL,
-    role           VARCHAR(50),
 
     CONSTRAINT maintenance_executor_pkey PRIMARY KEY (maintenance_id, user_id),
 
@@ -37,32 +38,10 @@ CREATE TABLE IF NOT EXISTS maintenance_executor
             ON DELETE CASCADE
 );
 
-
-CREATE TABLE IF NOT EXISTS installation_executor
-(
-    maintenance_id UUID NOT NULL,
-    user_id        UUID NOT NULL,
-    role           VARCHAR(50),
-
-    CONSTRAINT maintenance_executor_pkey PRIMARY KEY (maintenance_id, user_id),
-
-    CONSTRAINT maintenance_executors_maintenance_id_fkey
-        FOREIGN KEY (maintenance_id)
-            REFERENCES maintenance (maintenance_id)
-            ON DELETE CASCADE,
-
-    CONSTRAINT maintenance_executors_user_id_fkey
-        FOREIGN KEY (user_id)
-            REFERENCES app_user (user_id)
-            ON DELETE CASCADE
-);
-
-
-CREATE TABLE IF NOT EXISTS installation_executor
+CREATE TABLE IF NOT EXISTS direct_execution_executor
 (
     direct_execution_id BIGINT,
     user_id             UUID NOT NULL,
-    role                VARCHAR(50),
 
     CONSTRAINT installation_executor_pkey PRIMARY KEY (direct_execution_id, user_id),
 
@@ -100,3 +79,7 @@ $$;
 
 ALTER TABLE deposit
     ADD COLUMN IF NOT EXISTS is_truck boolean;
+
+alter table maintenance
+    drop column if exists team_id;
+

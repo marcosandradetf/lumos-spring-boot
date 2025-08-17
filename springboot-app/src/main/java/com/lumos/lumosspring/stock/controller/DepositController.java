@@ -21,6 +21,11 @@ public class DepositController {
         return depositService.findAll();
     }
 
+    @GetMapping("/truck-deposits")
+    public List<DepositResponse> findAllTruckDeposit() {
+        return depositService.findAllTruckDeposit();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Deposit> getById(@PathVariable Long id) {
         Deposit deposit = depositService.findById(id);

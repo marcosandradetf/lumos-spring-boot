@@ -104,7 +104,7 @@ object SyncManager {
         if (count == 0) {
             val syncItem = SyncQueueEntity(
                 type = SyncTypes.SYNC_EXECUTIONS,
-                priority = 20
+                priority = 21
             )
             db.queueDao().insert(syncItem)
             enqueueSync(context)
@@ -160,7 +160,7 @@ object SyncManager {
             val syncItem = SyncQueueEntity(
                 relatedId = streetId,
                 type = SyncTypes.POST_DIRECT_EXECUTION,
-                priority = 18
+                priority = 17
             )
 
             db.queueDao().insert(syncItem)
@@ -213,7 +213,7 @@ object SyncManager {
         if (count == 0) {
             val syncItem = SyncQueueEntity(
                 type = SyncTypes.SYNC_STOCK,
-                priority = 17
+                priority = 22
             )
             db.queueDao().insert(syncItem)
             enqueueSync(context)

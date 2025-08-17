@@ -2,7 +2,9 @@ package com.lumos.ui.home
 
 import android.content.IntentSender
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.FireTruck
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.SecurityUpdateGood
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -35,6 +38,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +60,7 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.UpdateModal
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.DirectExecutionViewModel
@@ -82,8 +88,13 @@ fun HomeScreen(
     val context = LocalContext.current
     val executions = directExecutionViewModel.directExecutions.collectAsState()
     val contracts = contractViewModel.contracts.collectAsState()
+
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
+
+    val currentUserName = secureStorage.getUserName()
+
+    var confirmTeamModal by remember { mutableStateOf(false) }
 
     var updateModal by remember { mutableStateOf(false) }
     var noUpdateModal by remember { mutableStateOf(false) }
@@ -116,7 +127,7 @@ fun HomeScreen(
         }
     ) { modifier, showSnackBar ->
 
-        suspend fun checkUpdate() {
+        suspend fun checkUpdate(buttonClick: Boolean = false) {
             val appUpdateInfo = appUpdateManager.appUpdateInfo.await()
             val options = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
 
@@ -166,15 +177,20 @@ fun HomeScreen(
                     Log.e("UpdateCheck", "Erro ao iniciar atualização: ${e.message}")
                     showSnackBar("Erro ao iniciar atualização: ${e.message}", null, null)
                 }
-            } else {
+            } else if (buttonClick) {
                 noUpdateModal = true
             }
+
         }
 
         LaunchedEffect(Unit) {
-            val lastCheck = secureStorage.getLastUpdateCheck()
             val now = System.currentTimeMillis()
+
+            val lastCheck = secureStorage.getLastUpdateCheck()
             val isStaleCheck = now >= lastCheck && (now - lastCheck > TWELVE_HOURS)
+
+            val lastTeamCheck = secureStorage.getLastTeamCheck()
+            val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
 
             if (isStaleCheck) {
                 secureStorage.setLastUpdateCheck()
@@ -182,13 +198,65 @@ fun HomeScreen(
                 directExecutionViewModel.syncExecutions()
                 contractViewModel.syncContracts()
             }
+
+            if (isStaleCheckTeam) {
+                navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.HOME.value}")
+            }
         }
+
 
         Column(
             modifier = modifier
-                .padding(2.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate(Routes.PROFILE) },
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.secondary,
+                                    MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        )
+                        .padding(vertical = 20.dp, horizontal = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Usuário autenticado",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = currentUserName ?: "Desconhecido",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Toque para ver seu perfil",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Cards Minimalistas
             if (roles.any { it in operators }) {
                 MaintenanceStatusCard(executions.value, navController)
@@ -198,13 +266,12 @@ fun HomeScreen(
                 PreMeasurementCard(contracts.value, navController)
             }
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
                     scope.launch {
-                        checkUpdate()
+                        checkUpdate(true)
                     }
                 },
                 modifier = Modifier
@@ -232,17 +299,38 @@ fun HomeScreen(
                 )
             }
 
+            Button(
+                onClick = {
+                    confirmTeamModal = true
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FireTruck,
+                    contentDescription = "Ícone de atualização",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    text = "Atualizar Equipe",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
             AlertsCard()
-
-            // Botão de Ação Principal
-            Spacer(modifier = Modifier.height(24.dp))
-            ReportProblemButton()
-
-            // Lista de Atividades Recentes
-            Spacer(modifier = Modifier.height(24.dp))
-            RecentActivitiesList()
         }
 
         if (updateModal) {
@@ -267,6 +355,19 @@ fun HomeScreen(
                 }
             )
         }
+
+        if (confirmTeamModal) {
+            Confirm(
+                title = "Atenção!!",
+                body = "Na próxima tela você poderá alterar sua equipe, essa ação é irreversível. Deseja continuar?",
+                confirm = {
+                    navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.HOME.value}")
+                },
+                cancel = {
+                    confirmTeamModal = false
+                }
+            )
+        }
     }
 }
 
@@ -275,8 +376,9 @@ fun MaintenanceStatusCard(
     executions: List<ExecutionHolder>,
     navController: NavHostController
 ) {
-    val text = if (executions.size > 1) "Sua equipe possuí ${executions.size} execuções alocadas"
-    else "Sua equipe possuí ${executions.size} execução alocada"
+    val text = if (executions.size > 1) "Sua equipe possui ${executions.size} execuções alocadas"
+    else if (executions.size == 1) "Sua equipe possui ${executions.size} execução alocada"
+    else "Sua equipe não possui nenhuma execução alocada"
 
     Card(
         modifier = Modifier
@@ -412,32 +514,6 @@ fun AlertsCard() {
                 color = MaterialTheme.colorScheme.secondary
             )
         }
-    }
-}
-
-@Composable
-fun ReportProblemButton() {
-    Button(
-        onClick = { /* Ação para reportar problema */ },
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer) // Azul
-    ) {
-        Text(text = "Reportar Problema", color = MaterialTheme.colorScheme.error)
-    }
-}
-
-@Composable
-fun RecentActivitiesList() {
-
-
-    Column {
-        Text(
-            text = "Atividades Recentes",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
     }
 }
 

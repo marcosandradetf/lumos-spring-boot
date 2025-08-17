@@ -39,7 +39,8 @@ interface ExecutionApi {
 
     @POST("api/mobile/execution/finish-direct-execution/{directExecutionId}")
     suspend fun finishDirectExecution(
-        @Path("directExecutionId") directExecutionId: Long
+        @Path("directExecutionId") directExecutionId: Long,
+        @Query("operationalUsers") operationalUsers: Set<String>
     ): Response<Void>
 
 

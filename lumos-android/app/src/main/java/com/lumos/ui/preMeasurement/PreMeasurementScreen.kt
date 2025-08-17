@@ -70,13 +70,13 @@ fun PreMeasurementScreen(
         }
     }
 
-    PMContent(
-        contracts = preMeasurementViewModel.preMeasurements,
-        onNavigateToHome = onNavigateToHome,
-        onNavigateToMenu = onNavigateToMenu,
-        navController = navController,
-        notificationsBadge = notificationsBadge
-    )
+//    PMContent(
+//        contracts = preMeasurementViewModel.preMeasurements,
+//        onNavigateToHome = onNavigateToHome,
+//        onNavigateToMenu = onNavigateToMenu,
+//        navController = navController,
+//        notificationsBadge = notificationsBadge
+//    )
 }
 
 @Composable
@@ -112,11 +112,11 @@ fun PMContent(
             verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
         ) {
             items(preMeasurements) { preMeasurement -> // Iteração na lista
-                val createdAt = "Iniciado há ${
-                    Utils.timeSinceCreation(
-                        preMeasurement.createdAt
-                    )
-                }"
+//                val createdAt = "Iniciado há ${
+//                    Utils.timeSinceCreation(
+////                        preMeasurement.createdAt
+//                    )
+//                }"
                 val expand = remember { mutableStateOf(false) }
                 Card(
                     modifier = Modifier
@@ -169,13 +169,13 @@ fun PMContent(
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
                                 )
-                                Text(
-                                    modifier = Modifier.padding(start = 5.dp),
-                                    text = createdAt,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Light,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+//                                Text(
+//                                    modifier = Modifier.padding(start = 5.dp),
+//                                    text = createdAt,
+//                                    style = MaterialTheme.typography.bodySmall,
+//                                    fontWeight = FontWeight.Light,
+//                                    color = MaterialTheme.colorScheme.onSurface
+//                                )
                             }
                         }
 
@@ -267,12 +267,12 @@ fun PrevPM() {
         )
 
 
-    PMContent(
-        contracts = values,
-        onNavigateToHome = { },
-        onNavigateToMenu = { },
-        navController = rememberNavController(),
-        "12"
-    )
+//    PMContent(
+//        contracts = values,
+//        onNavigateToHome = { },
+//        onNavigateToMenu = { },
+//        navController = rememberNavController(),
+//        "12"
+//    )
 }
 

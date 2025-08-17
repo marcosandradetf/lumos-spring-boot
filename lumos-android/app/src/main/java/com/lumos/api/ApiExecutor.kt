@@ -1,5 +1,6 @@
 package com.lumos.api
 
+import org.json.JSONObject
 import retrofit2.Response
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -21,7 +22,11 @@ object ApiExecutor {
 
             } else {
                 val errorBody = response.errorBody()?.string()
-                val errorMessage = errorBody?.ifBlank { null } ?: response.message()
+                val errorMessage = try {
+                    JSONObject(errorBody ?: "").optString("error", response.message())
+                } catch (e: Exception) {
+                    response.message()
+                }
 
                 RequestResult.ServerError(
                     response.code(),

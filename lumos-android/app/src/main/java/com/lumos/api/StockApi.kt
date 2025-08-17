@@ -22,5 +22,4 @@ interface StockApi {
         @Body order: OrderWithItems
     ): Response<Void>
 
-
 }

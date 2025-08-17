@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.StreamSupport;
 
 @RestController
@@ -33,10 +34,11 @@ public class StockController {
     }
 
     @GetMapping("/mobile/stock/get-truck-stock")
-    public ResponseEntity<StockQueryRepository.StockResponse> getStock(
-            @RequestParam(value = "uuid") String uuid
+    public ResponseEntity<?> getStock(
+            @RequestParam(value = "uuid") UUID uuid,
+            @RequestParam(value = "teamId", required = false) Long teamId
     ) {
-        return stockService.getMaterialsForMaintenance(uuid);
+        return stockService.getMaterialsForMaintenance(uuid, teamId);
     }
 
     @PostMapping("/mobile/stock/send-order")

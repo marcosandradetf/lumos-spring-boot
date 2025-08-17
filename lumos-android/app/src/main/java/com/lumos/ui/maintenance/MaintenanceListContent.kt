@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,16 +45,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.MaintenanceJoin
+import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
-import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.utils.Utils
-import java.time.Instant
-import kotlin.reflect.jvm.internal.impl.types.checker.TypeRefinementSupport.Enabled
 
 @Composable
 fun MaintenanceListContent(
@@ -63,8 +62,16 @@ fun MaintenanceListContent(
     loading: Boolean,
     selectMaintenance: (String) -> Unit,
     newMaintenance: () -> Unit,
+    secureStorage: SecureStorage
 ) {
     var showModal by remember { mutableStateOf(false) }
+
+    val TWELVE_HOURS = 12 * 60 * 60 * 1000L
+
+    val now = System.currentTimeMillis()
+
+    val lastTeamCheck = secureStorage.getLastTeamCheck()
+    val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
 
     AppLayout(
         title = "Manutenções em andamento",
@@ -217,10 +224,15 @@ fun MaintenanceListContent(
 
             FloatingActionButton(
                 onClick = {
-                    if (stockSize > 0)
+                    if(isStaleCheckTeam) {
+                        navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.MAINTENANCE.value}")
+                    }
+                    else if (stockSize > 0) {
                         newMaintenance()
-                    else
+                    }
+                    else {
                         showModal = true
+                    }
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
@@ -261,12 +273,14 @@ fun PrevMaintenanceListContent() {
                 dateOfVisit = "2025-07-14T15:42:30Z",
                 type = "",
                 status = "IN_PROGRESS",
-                contractor = ""
+                contractor = "",
+                executorsIds = emptyList()
             )
         ),
         navController = rememberNavController(),
         loading = false,
         selectMaintenance = { },
-        newMaintenance = { }
+        newMaintenance = { },
+        SecureStorage(LocalContext.current)
     )
 }

@@ -185,8 +185,8 @@
                       [severity]="material.availableQuantity ? 'success' : 'danger'"></p-tag>
                   </td>
                   <td>
-                    <p-tag #tag [value]="material.deposit"
-                           [severity]="material.deposit.toUpperCase().includes('CAMINH') ? 'info' : 'warn'"/>
+                    <p-tag #tag [value]="material.isTruck ? 'CAMINHÃO PLACA - ' + material.plateVehicle : material.deposit"
+                           [severity]="material.isTruck ? 'info' : 'warn'"/>
                   </td>
                   <td>
                     <p-cellEditor>

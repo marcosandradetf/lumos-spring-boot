@@ -32,7 +32,8 @@ interface MaintenanceDao {
             m.dateOfVisit AS dateOfVisit,
             m.type AS type,
             m.status AS status,
-            c.contractor AS contractor
+            c.contractor AS contractor,
+            m.executorsIds as executorsIds
         FROM maintenance m
         JOIN contracts c ON c.contractId = m.contractId
         WHERE m.status = :status
@@ -55,7 +56,11 @@ interface MaintenanceDao {
     """)
     suspend fun getMaintenancesByStatus(status: String): List<MaintenanceJoin>
 
-    @Query("select * from maintenancestreet")
+    @Query("""
+        select ms.* from maintenancestreet ms
+        join maintenance m on m.maintenanceId = ms.maintenanceId
+        where m.status = 'IN_PROGRESS'
+    """)
     fun getFlowStreets(): Flow<List<MaintenanceStreet>>
 
     @Query("select * from maintenance where maintenanceId = :maintenanceId")
@@ -83,7 +88,7 @@ interface MaintenanceDao {
     @Query("delete from maintenancestreetitem where maintenanceId = :maintenanceId")
     suspend fun deleteStreetItemByMaintenanceId(maintenanceId: String)
 
-    @Query("select maintenanceId from maintenance where contractId = :contractId limit 1")
+    @Query("select maintenanceId from maintenance where contractId = :contractId and status = 'IN_PROGRESS' limit 1")
     suspend fun getMaintenanceIdByContractId(contractId: Long): String?
 
     @Update

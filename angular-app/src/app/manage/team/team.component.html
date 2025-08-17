@@ -57,9 +57,8 @@
           <th *ngIf="change"></th>
           <th hidden>Código</th>
           <th>Descrição</th>
-          <th class="max-w-52">Motorista</th>
-          <th class="max-w-52">Eletricista</th>
-          <th>Placa do Veículo</th>
+          <th class="max-w-52">Colaboradores</th>
+          <th>Placa do Caminhão</th>
           <th class="max-w-52">Estado</th>
           <th class="max-w-52">Cidade</th>
           <th class="min-w-52">Região</th>
@@ -95,51 +94,15 @@
                 <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
             </td>
-            <td>
-              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.driver.driverName }}</p>
-              <div *ngIf="team.sel">
-                <select
-                  class="select select-bordered select-xs"
-                  [(ngModel)]="team.driver.driverId"
-                  [disabled]="!team.sel"
-                  name="driverId{{i}}"
-                  required
-                  #driverId="ngModel">
-                  <option value="" disabled>Selecione o motorista</option>
-                  @for (driver of drivers; track driver.driverId) {
-                    <option [value]="driver.driverId"
-                            [selected]="driver.driverId === team.driver.driverId">{{ driver.driverName }}
-                    </option>
-                  }
-                </select>
-                <div *ngIf="driverId.invalid && (driverId.touched || teamForm.submitted)">
-                  <small *ngIf="driverId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
-            </td>
 
             <td>
-              <p *ngIf="!team.sel"
-                 class="input input-bordered input-xs input-disabled">{{ team.electrician.electricianName }}</p>
-              <div *ngIf="team.sel">
-                <select
-                  class="select select-bordered select-xs"
-                  [(ngModel)]="team.electrician.electricianId"
-                  [disabled]="!team.sel"
-                  name="electricianId{{i}}"
-                  required
-                  #electricianId="ngModel">
-                  <option value="" disabled>Selecione o Eletricista</option>
-                  @for (electrician of electricians; track electrician.electricianId) {
-                    <option [value]="electrician.electricianId"
-                            [selected]="electrician.electricianId === team.electrician.electricianId">{{ electrician.electricianName }}
-                    </option>
-                  }
-                </select>
-                <div *ngIf="electricianId.invalid && (electricianId.touched || teamForm.submitted)">
-                  <small *ngIf="electricianId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
+              <p-multiselect [options]="users"
+                             [(ngModel)]="team.memberIds"
+                             optionLabel="name"
+                             optionValue="userId"
+                             placeholder="Selecionar Colaboradores"
+                             [maxSelectedLabels]="3" class="w-full md:w-80" />
+
             </td>
 
             <td>
@@ -234,52 +197,7 @@
               </div>
             </td>
             <td>
-              <p *ngIf="team.idTeam"
-                 class="input input-bordered input-xs input-disabled">{{ team.driver.driverName }}</p>
-              <div *ngIf="!team.idTeam">
-                <select
-                  class="select select-bordered select-xs"
-                  [(ngModel)]="team.driver.driverId"
-                  [disabled]="team.idTeam !== ''"
-                  name="driverId{{i}}"
-                  required
-                  #driverId="ngModel">
-                  <option value=""
-                          disabled>Selecione o Motorista
-                  </option>
-                  @for (driver of drivers; track driver.driverId) {
-                    <option [value]="driver.driverId"
-                            [selected]="driver.driverId === team.driver.driverId">{{ driver.driverName }}
-                    </option>
-                  }
-                </select>
-                <div *ngIf="driverId.invalid && (driverId.touched || teamForm.submitted)">
-                  <small *ngIf="driverId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
-            </td>
-            <td>
-              <p *ngIf="team.idTeam"
-                 class="input input-bordered input-xs input-disabled">{{ team.electrician.electricianName }}</p>
-              <div *ngIf="!team.idTeam">
-                <select
-                  class="select select-bordered select-xs"
-                  [(ngModel)]="team.electrician.electricianId"
-                  [disabled]="team.idTeam !== ''"
-                  name="electricianId{{i}}"
-                  required
-                  #electricianId="ngModel">
-                  <option value=""
-                          disabled>Selecione o Eletricista
-                  </option>
-                  @for (electrician of electricians; track electrician.electricianId) {
-                    <option [value]="electrician.electricianId">{{ electrician.electricianName }}</option>
-                  }
-                </select>
-                <div *ngIf="electricianId.invalid && (electricianId.touched || teamForm.submitted)">
-                  <small *ngIf="electricianId.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
+              <p-multiselect [options]="users" [(ngModel)]="team.memberIds" optionLabel="name" placeholder="Selecionar Colaboradores" [maxSelectedLabels]="3" class="w-full md:w-80" />
             </td>
 
             <td>
@@ -353,8 +271,7 @@
           } @else {
             <td hidden disabled>{{ team.idTeam }}</td>
             <td>{{ team.teamName }}</td>
-            <td>{{ team.driver.driverName }}</td>
-            <td>{{ team.electrician.electricianName }}</td>
+            <td>{{ team.memberNames.join(', ') }}</td>
             <td>{{ team.plate }}</td>
             <td>{{ team.UFName }}</td>
             <td>{{ team.cityName }}</td>

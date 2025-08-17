@@ -13,14 +13,14 @@ data class Team(
 )
 
 @Entity
-data class OperationalUsers(
+data class OperationalUser(
     @PrimaryKey
     val userId: String,
     val completeName: String
 )
 
 data class OperationalAndTeamsResponse(
-    val users: List<OperationalUsers>,
+    val users: List<OperationalUser>,
     val teams: List<Team>
 )
 

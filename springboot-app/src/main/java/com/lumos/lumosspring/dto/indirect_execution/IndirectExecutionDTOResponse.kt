@@ -1,8 +1,7 @@
-package com.lumos.lumosspring.execution.dto
+package com.lumos.lumosspring.dto.indirect_execution
 
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 data class DelegateDTO(
     val preMeasurementId: Long,
@@ -20,19 +19,6 @@ data class DelegateStreetDTO(
     val comment: String,
 )
 
-data class ExecutionWithoutPreMeasurementItems(
-    val contractItemId: Long,
-    val quantity: BigDecimal,
-)
-
-data class DirectExecutionDTO(
-    val contractId: Long,
-    val teamId: Long,
-    val currentUserId: UUID,
-    val stockistId: UUID,
-    val instructions: String?,
-    val items: List<ExecutionWithoutPreMeasurementItems>
-)
 
 data class MaterialInStockDTO(
     val materialStockId: Long,
@@ -44,6 +30,8 @@ data class MaterialInStockDTO(
     val deposit: String,
     val availableQuantity: BigDecimal,
     val requestUnit: String,
+    val isTruck: Boolean,
+    val plateVehicle: String?,
 )
 
 data class ReserveDTOResponse(
@@ -131,15 +119,6 @@ data class IndirectExecutionDTOResponse(
     val reserves: List<IndirectReserve>,
 )
 
-data class DirectExecutionDTOResponse(
-    val directExecutionId: Long,
-    val currentDirectExecutionId: Long,
-    val description: String,
-    val instructions: String?,
-    val creationDate: String,
-    val reserves: List<DirectReserve>,
-)
-
 data class IndirectReserve(
     val reserveId: Long, // *_*
     val contractId: Long,
@@ -149,16 +128,6 @@ data class IndirectReserve(
     val streetId: Long,
     val requestUnit: String,
     val quantityExecuted: BigDecimal? = null
-)
-
-data class DirectReserve(
-    val reserveId: Long, // *_*
-    val directExecutionId: Long,
-    val materialStockId: Long, // *_*
-    val contractItemId: Long,
-    val materialName: String,
-    val materialQuantity: BigDecimal,
-    val requestUnit: String,
 )
 
 data class SendExecutionDto(
@@ -174,16 +143,3 @@ data class ReservePartial(
     val materialName: String
 )
 
-data class SendDirectExecutionDto(
-    val directExecutionId: Long,
-    val description: String,
-    val deviceStreetId: Long,
-    val deviceId: String,
-    val latitude: Double?,
-    val longitude: Double?,
-    val address: String,
-    val lastPower: String?,
-    val materials: List<ReservePartial>,
-    val currentSupply: String?,
-    val finishAt: Instant?
-)

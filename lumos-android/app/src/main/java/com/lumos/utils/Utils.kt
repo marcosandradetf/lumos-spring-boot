@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory
 import android.location.LocationManager
 import android.net.Uri
 import androidx.core.content.ContextCompat
+import com.lumos.api.RequestResult
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -19,6 +20,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.UUID
+
 
 object Utils {
 
@@ -260,5 +262,37 @@ object Utils {
         return hasNumber || hasSN
     }
 
+    fun checkResponse(response: RequestResult<Unit>): String? {
+        return when (response) {
+            is RequestResult.Success -> {
+                null
+            }
+
+            is RequestResult.SuccessEmptyBody -> {
+                null
+            }
+
+            is RequestResult.NoInternet -> {
+                "Sem internet - Falha na comunicação com o servidor. Reconecte e tente novamente!"
+            }
+
+            is RequestResult.Timeout -> {
+                "Timeout - Solicitação excedeu o tempo de espera. Tente novamente!"
+
+            }
+
+            is RequestResult.ServerError -> {
+                response.message
+            }
+
+            is RequestResult.UnknownError -> {
+                response.error.message ?: response.error.toString()
+            }
+
+        }
+    }
+
+
 
 }
+

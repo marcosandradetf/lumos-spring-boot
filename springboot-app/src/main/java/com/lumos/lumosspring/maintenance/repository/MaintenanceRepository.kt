@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.maintenance.repository
 
 import com.lumos.lumosspring.maintenance.entities.Maintenance
+import com.lumos.lumosspring.maintenance.entities.MaintenanceExecutor
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
 import org.springframework.data.repository.CrudRepository
@@ -17,4 +18,8 @@ interface MaintenanceStreetRepository : CrudRepository<MaintenanceStreet, UUID> 
 
 @Repository
 interface MaintenanceStreetItemRepository : CrudRepository<MaintenanceStreetItem, UUID> {
+}
+
+@Repository
+interface MaintenanceExecutorRepository : CrudRepository<MaintenanceExecutor, UUID> {
 }

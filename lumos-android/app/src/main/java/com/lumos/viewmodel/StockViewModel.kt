@@ -6,6 +6,7 @@ import com.lumos.repository.StockRepository
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.model.Stockist
+import com.lumos.utils.Utils.checkResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -42,10 +43,15 @@ class StockViewModel(
 
     private fun callSyncStock() {
         viewModelScope.launch(Dispatchers.IO) {
+            loading.value = true
             try {
-                repository.callGetStock()
+                val response = checkResponse(repository.callGetStock())
+                if (response != null) _message.value = response
+
             } catch (e: Exception) {
                 _message.value = e.message ?: "ViewModel - Erro ao tentar sincronizar estoque"
+            } finally {
+                loading.value = false
             }
         }
     }
@@ -90,7 +96,7 @@ class StockViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _loading.value = repository.hasTypesInQueue(types)
-                if(!_loading.value) {
+                if (!_loading.value) {
                     callSyncStock()
                 }
             } catch (e: Exception) {
@@ -99,7 +105,7 @@ class StockViewModel(
         }
     }
 
-    fun saveOrder(materials: List<Long>, depositId:Long) {
+    fun saveOrder(materials: List<Long>, depositId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _loading.value = true

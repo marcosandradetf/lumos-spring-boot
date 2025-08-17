@@ -1,6 +1,7 @@
 // app/app.routes.ts
 import {Routes} from '@angular/router';
 import {AuthGuard} from './core/auth/auth.guard';
+import {TruckDepositComponent} from './stock/truck-deposits/deposits.component';
 
 
 export const routes: Routes = [
@@ -58,6 +59,13 @@ export const routes: Routes = [
   {
     path: 'estoque/almoxarifados',
     loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+  },
+
+  {
+    path: 'estoque/caminhoes',
+    loadComponent: () => import('./stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
   },

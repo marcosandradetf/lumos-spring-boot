@@ -1,7 +1,8 @@
 package com.lumos.lumosspring.maintenance
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
+import com.lumos.lumosspring.dto.maintenance.SendMaintenanceDTO
+import com.lumos.lumosspring.dto.maintenance.MaintenanceStreetWithItems
 import com.lumos.lumosspring.maintenance.service.MaintenanceService
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -17,7 +18,7 @@ class MaintenanceController(
 
     @PostMapping("/maintenance/send-street")
     fun sendStreet(
-        @RequestBody street: MaintenanceQueryRepository.MaintenanceStreetWithItems,
+        @RequestBody street: MaintenanceStreetWithItems,
     ): ResponseEntity<Any> {
         return maintenanceService.saveStreet(street)
     }
@@ -25,7 +26,7 @@ class MaintenanceController(
     @PostMapping("/maintenance/finish-maintenance")
     fun finishMaintenance(
         @RequestPart("signature") signature: MultipartFile?,
-        @RequestPart("maintenance") maintenance: MaintenanceQueryRepository.MaintenanceDTO?
+        @RequestPart("maintenance") maintenance: SendMaintenanceDTO?
     ): ResponseEntity<Any> {
         return maintenanceService.finishMaintenance(maintenance, signature)
     }

@@ -18,7 +18,7 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
     List<AppUser> findByStatusTrueOrderByNameAsc();
 
     @Query("""
-        select distinct au.user_id as userId, au."name" || ' ' || au.last_name as completeName
+        select distinct au.user_id, au."name" || ' ' || au.last_name as complete_name
         from app_user au
         join user_role ur on ur.id_user = au.user_id
         join role r on r.role_id = ur.id_role

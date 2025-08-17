@@ -87,6 +87,7 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.sanitizeDecimalInput
+import com.lumos.viewmodel.MaintenanceUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.UUID
@@ -103,6 +104,7 @@ fun StreetMaintenanceContent(
     newStreet: () -> Unit,
     stockData: List<MaterialStock>,
     contractor: String?,
+    message: String?,
 ) {
     val context = LocalContext.current
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
@@ -224,7 +226,10 @@ fun StreetMaintenanceContent(
                     val city = addr[2]
 
                     street.address =
-                        "$streetName, - $neighborhood, $city"
+                        "$streetName, $neighborhood, $city"
+                    street.latitude = latitude
+                    street.longitude = longitude
+
                     address = street.address
                 }
                 loadingCoordinates = false
@@ -233,6 +238,7 @@ fun StreetMaintenanceContent(
                 loadingCoordinates = false
             }
         }
+
     }
 
     AppLayout(
@@ -251,7 +257,11 @@ fun StreetMaintenanceContent(
         navigateToExecutions = {
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         }
-    ) { _, _ ->
+    ) { _, showSnackBar ->
+
+        if(message != null) {
+            showSnackBar(message, null, null)
+        }
 
         if (alertModal) {
             Alert(
@@ -1058,6 +1068,7 @@ fun PrevStreetMaintenance() {
                 type = "LÂMPADA"
             ),
         ),
-        contractor = ""
+        contractor = "",
+        message =  null
     )
 }

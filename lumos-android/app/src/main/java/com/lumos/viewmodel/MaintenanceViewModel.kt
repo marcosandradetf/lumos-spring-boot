@@ -2,12 +2,14 @@ package com.lumos.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lumos.repository.MaintenanceRepository
 import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
+import com.lumos.repository.MaintenanceRepository
+import com.lumos.ui.maintenance.MaintenanceUIState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +27,8 @@ data class MaintenanceUiState(
     val finish: Boolean = false,
     val message: String? = null,
     val maintenances: List<MaintenanceJoin> = emptyList(),
-    val maintenanceStreets: List<MaintenanceStreet> = emptyList()
+    val maintenanceStreets: List<MaintenanceStreet> = emptyList(),
+    val screenState: MaintenanceUIState? = null
 )
 
 class MaintenanceViewModel(
@@ -33,6 +36,7 @@ class MaintenanceViewModel(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MaintenanceUiState(loading = true))
+
     var uiState: StateFlow<MaintenanceUiState> = _uiState.asStateFlow()
 
     init {
@@ -40,14 +44,22 @@ class MaintenanceViewModel(
         loadMaintenanceStreets()
     }
 
-
     private fun setLoading(isLoading: Boolean) {
         _uiState.update { it.copy(loading = isLoading) }
     }
 
+    fun setScreenState(state: MaintenanceUIState) = _uiState.update { it.copy(screenState = state) }
+
     private fun setMessage(message: String?) {
-        _uiState.update { it.copy(message = message) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(message = message) }
+
+            delay(5000)
+
+            _uiState.update { it.copy(message = null) }
+        }
     }
+
 
     private fun setMaintenances(list: List<MaintenanceJoin>) {
         _uiState.update { it.copy(maintenances = list) }
@@ -119,7 +131,11 @@ class MaintenanceViewModel(
                 repository.insertMaintenance(maintenance)
                 setContractSelected(true)
             } catch (e: Exception) {
-                setMessage(e.message ?: "")
+                if(e.message?.lowercase()?.contains("unique") == true) {
+                    setMessage("Manutenção já salva anteriormente")
+                } else {
+                    setMessage(e.message ?: "")
+                }
             } finally {
                 setLoading(false)
             }
@@ -133,7 +149,11 @@ class MaintenanceViewModel(
                 repository.insertMaintenanceStreet(street, items)
                 setStreetCreated(true)
             } catch (e: Exception) {
-                setMessage(e.message ?: "Erro inesperado")
+                if(e.message?.lowercase()?.contains("unique") == true) {
+                    setMessage("Esse ponto já foi salvo - Informe outro ponto ou outro número")
+                } else {
+                    setMessage(e.message ?: "")
+                }
             } finally {
                 setLoading(false)
             }
@@ -161,6 +181,7 @@ class MaintenanceViewModel(
     fun resetFormState() {
         _uiState.update {
             it.copy(
+                maintenanceId = null,
                 message = null,
                 finish = false,
                 streetCreated = false,

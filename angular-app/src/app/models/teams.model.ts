@@ -1,8 +1,8 @@
 export interface TeamsModel {
   idTeam: string;
   teamName: string;
-  driver: { driverId: string; driverName: string };
-  electrician: { electricianId: string; electricianName: string };
+  memberNames: [];
+  memberIds: [];
   UFName: string;
   cityName: string;
   regionName: string;

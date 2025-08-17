@@ -70,45 +70,45 @@ fun PreMeasurementProgressScreen(
 
     LaunchedEffect(preMeasurementId) {
 
-        preMeasurement = preMeasurementViewModel.getPreMeasurement(preMeasurementId)
+//        preMeasurement = preMeasurementViewModel.getPreMeasurement(preMeasurementId)
         preMeasurementViewModel.loadStreets(TODO())
     }
 
     if (preMeasurement != null)
-        PMPContent(
-            contract = preMeasurement!!,
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToMenu = onNavigateToMenu,
-            onNavigateToPreMeasurements = onNavigateToPreMeasurements,
-            onNavigateToStreet = {
-                onNavigateToStreet(it)
-            },
-            navController = navController,
-            notificationsBadge = notificationsBadge,
-            streets = streets,
-            sendPreMeasurement = {
-                if (streets.isNotEmpty()) {
-                    preMeasurementViewModel.queueSendMeasurement(TODO())
-                    Toast
-                        .makeText(
-                            context,
-                            "Pré-medição enviada com sucesso!",
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
-                    onNavigateToHome()
-                } else {
-                    Toast
-                        .makeText(
-                            context,
-                            "Não é permitido enviar sem adicionar pelo menos uma rua!",
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
-                }
-
-            }
-        )
+//        PMPContent(
+//            contract = preMeasurement!!,
+//            onNavigateToHome = onNavigateToHome,
+//            onNavigateToMenu = onNavigateToMenu,
+//            onNavigateToPreMeasurements = onNavigateToPreMeasurements,
+//            onNavigateToStreet = {
+//                onNavigateToStreet(it)
+//            },
+//            navController = navController,
+//            notificationsBadge = notificationsBadge,
+//            streets = streets,
+//            sendPreMeasurement = {
+//                if (streets.isNotEmpty()) {
+//                    preMeasurementViewModel.queueSendMeasurement(TODO())
+//                    Toast
+//                        .makeText(
+//                            context,
+//                            "Pré-medição enviada com sucesso!",
+//                            Toast.LENGTH_SHORT
+//                        )
+//                        .show()
+//                    onNavigateToHome()
+//                } else {
+//                    Toast
+//                        .makeText(
+//                            context,
+//                            "Não é permitido enviar sem adicionar pelo menos uma rua!",
+//                            Toast.LENGTH_SHORT
+//                        )
+//                        .show()
+//                }
+//
+//            }
+//        )
     else
         Loading(
             context,
@@ -260,7 +260,7 @@ fun PMPContent(
                     ) {
                         Button(
                             onClick = {
-                                onNavigateToStreet(preMeasurement.preMeasurementId)
+//                                onNavigateToStreet(preMeasurement.preMeasurementId)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul

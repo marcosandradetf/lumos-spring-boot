@@ -1,11 +1,10 @@
 package com.lumos.lumosspring.util
 
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
 import java.text.NumberFormat
@@ -13,8 +12,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.util.Locale
-import java.util.UUID
+import java.util.*
 
 object Utils {
     fun getCurrentUserId(): UUID {
@@ -85,5 +83,20 @@ object Utils {
         val code = base36.padStart(length, '0').takeLast(length)
         return "$prefix-$code"
     }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    class BusinessException(message: String?) : RuntimeException(message)
+
+    @RestControllerAdvice
+    class GlobalExceptionHandler {
+
+        @ExceptionHandler(BusinessException::class)
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        fun handleBusinessException(ex: BusinessException): Map<String, String> {
+            return mapOf("error" to (ex.message ?: "Erro de negócio"))
+        }
+    }
+
+
 
 }

@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -131,7 +133,7 @@ fun CheckStockScreen(
                 listOf(
                     SyncTypes.POST_MAINTENANCE_STREET,
                     SyncTypes.POST_DIRECT_EXECUTION,
-                    SyncTypes.POST_INDIRECT_EXECUTION
+                    SyncTypes.POST_INDIRECT_EXECUTION,
                 )
             )
         } else {
@@ -149,7 +151,7 @@ fun CheckStockScreen(
                     listOf(
                         SyncTypes.POST_MAINTENANCE_STREET,
                         SyncTypes.POST_DIRECT_EXECUTION,
-                        SyncTypes.POST_INDIRECT_EXECUTION
+                        SyncTypes.POST_INDIRECT_EXECUTION,
                     )
                 )
             } else {
@@ -328,9 +330,24 @@ fun CheckStockContent(
                 }
             } else if (!hasInternet) {
                 NoInternet()
-                NothingData("Arraste para baixo para tentar novamente.")
+                Column(
+                    modifier =
+                        Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    NothingData("Arraste para baixo para tentar novamente.")
+                }
+
             } else if (stockData.isEmpty()) {
-                NothingData("Nenhum material encontrado, Arraste para baixo para buscar novamente.")
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(top = 24.dp)
+                            .verticalScroll(rememberScrollState())
+                ) {
+                    NothingData("Nenhum material encontrado, Arraste para baixo para buscar novamente.")
+                }
+
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -921,109 +938,109 @@ fun SelectDeposit(
 @Composable
 @Preview
 fun PrevStockContent() {
-//    SelectDeposit(
-//        message = "",
-//        loading = false,
-//        orderCode = "",
-//        navController = rememberNavController(),
-//        stockData = listOf(
-//            MaterialStock(
-//                materialId = 1,
-//                materialStockId = 11,
-//                materialName = "LUMINÁRIA LED",
-//                specs = "120W",
-//                stockQuantity = 12.0,
-//                stockAvailable = 0.0,
-//                requestUnit = "UN",
-//                type = "LED"
-//            ),
-//            MaterialStock(
-//                materialId = 2,
-//                materialStockId = 22,
-//                materialName = "LÂMPADA DE SÓDIO TUBULAR",
-//                specs = "400W",
-//                stockQuantity = 15.0,
-//                stockAvailable = 10.0,
-//                requestUnit = "UN",
-//                type = "LÂMPADA"
-//            ),
-//            MaterialStock(
-//                materialId = 3,
-//                materialStockId = 33,
-//                materialName = "LÂMPADA DE MERCÚRIO",
-//                specs = "250W",
-//                stockQuantity = 62.0,
-//                stockAvailable = 48.0,
-//                requestUnit = "UN",
-//                type = "LÂMPADA"
-//            ),
-//        ),
-//        selectedMaterials = listOf(1, 2, 3),
-//        deposits = listOf(
-//            Deposit(
-//                depositId = 1,
-//                depositName = "GALPÃO ITAPECERICA",
-//                depositAddress = "Rua Antonio Claret Araújo",
-//                depositPhone = "31996546000"
-//            )
-//        ),
-//        stockists = listOf(
-//            Stockist(
-//                stockistId = 1,
-//                stockistName = "Gabriela",
-//                stockistPhone = "31999998080",
-//                depositId = 1
-//            )
-//        ),
-//        finish = { },
-//        back = {})
-
-    CheckStockContent(
-        navController = rememberNavController(),
-        lastRoute = null,
-        hasInternet = true,
+    SelectDeposit(
         message = "",
         loading = false,
+        orderCode = "",
+        navController = rememberNavController(),
         stockData = listOf(
             MaterialStock(
-                materialStockId = 1,
-                materialId = 2,
+                materialId = 1,
+                materialStockId = 11,
                 materialName = "LUMINÁRIA LED",
                 specs = "120W",
                 stockQuantity = "12",
-                stockAvailable = "0",
+                stockAvailable = "12",
                 requestUnit = "UN",
-                type = "",
+                type = "LED"
             ),
             MaterialStock(
-                materialStockId = 2,
                 materialId = 2,
+                materialStockId = 22,
                 materialName = "LÂMPADA DE SÓDIO TUBULAR",
                 specs = "400W",
                 stockQuantity = "15",
                 stockAvailable = "10",
                 requestUnit = "UN",
-                type = "",
+                type = "LÂMPADA"
             ),
             MaterialStock(
-                materialStockId = 3,
-                materialId = 2,
+                materialId = 3,
+                materialStockId = 33,
                 materialName = "LÂMPADA DE MERCÚRIO",
                 specs = "250W",
-                stockQuantity = "15",
-                stockAvailable = "48",
+                stockQuantity = "62",
+                stockAvailable = "62",
                 requestUnit = "UN",
-                type = "",
+                type = "LÂMPADA"
             ),
         ),
-        resync = {},
-        next = {},
-        alertMessage = mapOf(),
-        alertModal = false,
-        closeAlertModal = {
+        selectedMaterials = listOf(1, 2, 3),
+        deposits = listOf(
+            Deposit(
+                depositId = 1,
+                depositName = "GALPÃO ITAPECERICA",
+                depositAddress = "Rua Antonio Claret Araújo",
+                depositPhone = "31996546000"
+            )
+        ),
+        stockists = listOf(
+            Stockist(
+                stockistId = 1,
+                stockistName = "Gabriela",
+                stockistPhone = "31999998080",
+                depositId = 1
+            )
+        ),
+        finish = { },
+        back = {})
 
-        },
-        selectedMaterialsCopy = emptyList(),
-        selectedModeCopy = false
-    )
+//    CheckStockContent(
+//        navController = rememberNavController(),
+//        lastRoute = null,
+//        hasInternet = true,
+//        message = "",
+//        loading = false,
+//        stockData = listOf(
+//            MaterialStock(
+//                materialStockId = 1,
+//                materialId = 2,
+//                materialName = "LUMINÁRIA LED",
+//                specs = "120W",
+//                stockQuantity = "12",
+//                stockAvailable = "0",
+//                requestUnit = "UN",
+//                type = "",
+//            ),
+//            MaterialStock(
+//                materialStockId = 2,
+//                materialId = 2,
+//                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+//                specs = "400W",
+//                stockQuantity = "15",
+//                stockAvailable = "10",
+//                requestUnit = "UN",
+//                type = "",
+//            ),
+//            MaterialStock(
+//                materialStockId = 3,
+//                materialId = 2,
+//                materialName = "LÂMPADA DE MERCÚRIO",
+//                specs = "250W",
+//                stockQuantity = "15",
+//                stockAvailable = "48",
+//                requestUnit = "UN",
+//                type = "",
+//            ),
+//        ),
+//        resync = {},
+//        next = {},
+//        alertMessage = mapOf(),
+//        alertModal = false,
+//        closeAlertModal = {
+//
+//        },
+//        selectedMaterialsCopy = emptyList(),
+//        selectedModeCopy = false
+//    )
 }

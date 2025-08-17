@@ -140,11 +140,18 @@ class DirectExecutionRepository(
     suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> =
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
-    private suspend fun debitMaterial(materialStockId: Long, contractId: Long, quantityExecuted: String) {
+    private suspend fun debitMaterial(
+        materialStockId: Long,
+        contractId: Long,
+        quantityExecuted: String
+    ) {
         db.directExecutionDao().debitMaterial(materialStockId, contractId, quantityExecuted)
     }
 
-    suspend fun createStreet(street: DirectExecutionStreet, items: List<DirectExecutionStreetItem>) {
+    suspend fun createStreet(
+        street: DirectExecutionStreet,
+        items: List<DirectExecutionStreetItem>
+    ) {
         db.withTransaction {
             val streetId = db.directExecutionDao().createStreet(street)
             if (streetId <= 0) {
@@ -167,6 +174,10 @@ class DirectExecutionRepository(
             }
 
             queuePostDirectExecution(streetId)
+            SyncManager.queueGetStock(
+                context = app.applicationContext,
+                db = db,
+            )
         }
     }
 
@@ -258,7 +269,12 @@ class DirectExecutionRepository(
 
     suspend fun finishedDirectExecution(directExecutionId: Long): RequestResult<Unit> {
         val response =
-            ApiExecutor.execute { api.finishDirectExecution(directExecutionId = directExecutionId) }
+            ApiExecutor.execute {
+                api.finishDirectExecution(
+                    directExecutionId = directExecutionId,
+                    operationalUsers = secureStorage.getOperationalUsers()
+                )
+            }
 
         return when (response) {
             is RequestResult.Success -> {

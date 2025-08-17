@@ -3,17 +3,16 @@ package com.lumos.lumosspring.maintenance.service
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
+import com.lumos.lumosspring.dto.maintenance.SendMaintenanceDTO
+import com.lumos.lumosspring.dto.maintenance.MaintenanceStreetWithItems
 import com.lumos.lumosspring.maintenance.entities.Maintenance
+import com.lumos.lumosspring.maintenance.entities.MaintenanceExecutor
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
-import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
-import com.lumos.lumosspring.maintenance.repository.MaintenanceRepository
-import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetItemRepository
-import com.lumos.lumosspring.maintenance.repository.MaintenanceStreetRepository
+import com.lumos.lumosspring.maintenance.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils
-import com.lumos.lumosspring.util.Utils.getCurrentUserId
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -33,32 +32,27 @@ class MaintenanceService(
     private val maintenanceQueryRepository: MaintenanceQueryRepository,
     private val teamQueryRepository: TeamQueryRepository,
     private val minioService: MinioService,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val maintenanceExecutorRepository: MaintenanceExecutorRepository
 ) {
     @Transactional
     fun finishMaintenance(
-        maintenance: MaintenanceQueryRepository.MaintenanceDTO?,
+        maintenance: SendMaintenanceDTO?,
         signature: MultipartFile?
     ): ResponseEntity<Any> {
-        var maintenanceUuid: UUID
         var dateOfVisit: Instant
         var signDate: Instant?
-        var userId: UUID
 
         if (maintenance == null) {
             return ResponseEntity.badRequest().body("Execution DTO está vazio.")
         }
 
         try {
-            maintenanceUuid = UUID.fromString(maintenance.maintenanceId)
             dateOfVisit = Instant.parse(maintenance.dateOfVisit)
-            signDate = maintenance.signDate?.let {Instant.parse(it)}
-            userId = getCurrentUserId()
+            signDate = maintenance.signDate?.let { Instant.parse(it) }
         } catch (ex: IllegalArgumentException) {
             throw IllegalStateException(ex.message)
         }
-
-        val teamId = teamQueryRepository.getTeamIdByUserId(userId) ?: throw IllegalStateException("Maintenance Service - Equipe não cadastrada para o usuário atual")
 
         val fileUri = signature?.let {
             val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
@@ -66,14 +60,13 @@ class MaintenanceService(
         }
 
         val newMaintenance = Maintenance(
-            maintenanceId = maintenanceUuid,
+            maintenanceId = maintenance.maintenanceId,
             contractId = maintenance.contractId,
             pendingPoints = maintenance.pendingPoints,
             quantityPendingPoints = maintenance.quantityPendingPoints,
             dateOfVisit = dateOfVisit,
             type = maintenance.type,
             status = "FINISHED",
-            teamId = teamId,
 
             signatureUri = fileUri,
             responsible = maintenance.responsible,
@@ -84,12 +77,20 @@ class MaintenanceService(
 
         maintenanceRepository.save(newMaintenance)
 
+        val executors = maintenance.executorsIds?.map {
+            MaintenanceExecutor(
+                maintenanceId = maintenance.maintenanceId,
+                userId = it,
+            )
+        }
+        if (executors != null) maintenanceExecutorRepository.saveAll(executors)
+
         return ResponseEntity.noContent().build()
     }
 
     @Transactional
     fun saveStreet(
-        street: MaintenanceQueryRepository.MaintenanceStreetWithItems,
+        street: MaintenanceStreetWithItems,
     ): ResponseEntity<Any> {
 
         var exists = maintenanceRepository.existsById(street.street.maintenanceId)
@@ -100,8 +101,7 @@ class MaintenanceService(
                 pendingPoints = false,
                 quantityPendingPoints = null,
                 dateOfVisit = Instant.now(),
-                type = "",
-                teamId = null,
+                type = "DRAFT - ${street.street.address}",
                 status = "DRAFT",
             )
 
@@ -165,22 +165,25 @@ class MaintenanceService(
 
         val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
 
-        val teamRows = teamArray.map { member ->
+        val teamRows = teamArray.joinToString("\n") { member ->
             val role = when (member["role"]?.asText()?.lowercase()) {
                 "electrician" -> "Eletricista"
                 "driver" -> "Motorista"
+                "ELETRICISTA" -> "Eletricista"
+                "MOTORISTA" -> "Motorista"
                 else -> "Executor"
             }
             val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
+
             """
-    <tr>
-        <td>
-            <p class="label">$role:</p>
-            <p class="cell-text">$fullName</p>
-        </td>
-    </tr>
-    """.trimIndent()
-        }.joinToString("\n")
+                <tr>
+                    <td>
+                        <p class="label">$role:</p>
+                        <p class="cell-text">$fullName</p>
+                    </td>
+                </tr>
+            """.trimIndent()
+        }
 
         val total_by_item = jsonData["total_by_item"]!!
 
@@ -324,22 +327,25 @@ class MaintenanceService(
 
         val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
 
-        val teamRows = teamArray.map { member ->
+        val teamRows = teamArray.joinToString("\n") { member ->
             val role = when (member["role"]?.asText()?.lowercase()) {
                 "electrician" -> "Eletricista"
                 "driver" -> "Motorista"
+                "ELETRICISTA" -> "Eletricista"
+                "MOTORISTA" -> "Motorista"
                 else -> "Executor"
             }
             val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
+
             """
-    <tr>
-        <td>
-            <p class="label">$role:</p>
-            <p class="cell-text">$fullName</p>
-        </td>
-    </tr>
-    """.trimIndent()
-        }.joinToString("\n")
+                <tr>
+                    <td>
+                        <p class="label">$role:</p>
+                        <p class="cell-text">$fullName</p>
+                    </td>
+                </tr>
+            """.trimIndent()
+        }
 
         templateHtml = templateHtml.replace("{{TEAM_ROWS}}", teamRows)
 
@@ -466,7 +472,6 @@ class MaintenanceService(
             throw RuntimeException(e.message, e.cause)
         }
     }
-
 
 
 }

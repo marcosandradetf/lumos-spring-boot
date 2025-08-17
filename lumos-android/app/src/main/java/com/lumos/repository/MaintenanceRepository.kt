@@ -1,6 +1,7 @@
 package com.lumos.repository
 
 import android.app.Application
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.google.gson.Gson
@@ -13,6 +14,7 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
+import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.Dispatchers
@@ -26,33 +28,52 @@ import okhttp3.RequestBody.Companion.toRequestBody
 
 class MaintenanceRepository(
     private val db: AppDatabase,
-    api: ApiService,
-    private val app: Application
+    val api: ApiService,
+    private val app: Application,
+    val secureStorage: SecureStorage
 ) {
     private val maintenanceApi = api.createApi(MaintenanceApi::class.java)
 
     suspend fun insertMaintenance(maintenance: Maintenance) {
-        db.maintenanceDao().insertMaintenance(maintenance)
+        try {
+            db.maintenanceDao().insertMaintenance(
+                maintenance.copy(
+                    executorsIds = secureStorage.getOperationalUsers().toList()
+                )
+            )
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     suspend fun insertMaintenanceStreet(
         maintenanceStreet: MaintenanceStreet,
         items: List<MaintenanceStreetItem>
     ) {
-        db.withTransaction {
-            db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
-            db.maintenanceDao().insertMaintenanceStreetItems(items)
-            for (item in items) {
-                db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
-            }
-            SyncManager.queuePostMaintenanceStreet(
-                context = app.applicationContext,
-                db = db,
-                id = maintenanceStreet.maintenanceStreetId
-            )
-        }
-    }
+        try {
+            db.withTransaction {
+                db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
+                db.maintenanceDao().insertMaintenanceStreetItems(items)
+                for (item in items) {
+                    db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
+                }
 
+                SyncManager.queuePostMaintenanceStreet(
+                    context = app.applicationContext,
+                    db = db,
+                    id = maintenanceStreet.maintenanceStreetId
+                )
+
+                SyncManager.queueGetStock(
+                    context = app.applicationContext,
+                    db = db,
+                )
+            }
+        } catch (e: Exception) {
+            throw e
+        }
+
+    }
 
     suspend fun getItemsByStreetId(maintenanceStreetId: String): List<MaintenanceStreetItem> {
         return db.maintenanceDao().getItemsByStreetId(maintenanceStreetId)
@@ -85,13 +106,19 @@ class MaintenanceRepository(
     suspend fun callPostMaintenance(maintenanceId: String): RequestResult<Unit> {
         val gson = Gson()
         val maintenance = db.maintenanceDao().getMaintenance(maintenanceId)
+        Log.e("callPostMaintenance", maintenance.toString())
+
         val signUri = maintenance.signPath
 
         val json = gson.toJson(maintenance)
         val jsonBody = json.toRequestBody("application/json".toMediaType())
 
         val imagePart = signUri?.let {
-            val file = getFileFromUri(app.applicationContext, it.toUri(), "signature_${System.currentTimeMillis()}.png")
+            val file = getFileFromUri(
+                app.applicationContext,
+                it.toUri(),
+                "signature_${System.currentTimeMillis()}.png"
+            )
             val requestFile = file.asRequestBody("image/png".toMediaTypeOrNull())
             MultipartBody.Part.createFormData("signature", file.name, requestFile)
         }

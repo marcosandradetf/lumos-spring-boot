@@ -145,7 +145,7 @@ fun StreetMaterialScreen(
                         val neighborhood = addr[1]
                         val city = addr[2]
 
-                        currentAddress = "$streetName, - $neighborhood, $city"
+                        currentAddress = "$streetName, $neighborhood, $city"
 
                         directExecutionViewModel.street =
                             directExecutionViewModel.street?.copy(

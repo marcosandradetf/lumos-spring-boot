@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.stock.repository
 
-import com.lumos.lumosspring.execution.dto.MaterialInStockDTO
+import com.lumos.lumosspring.dto.indirect_execution.MaterialInStockDTO
 import com.lumos.lumosspring.dto.stock.MaterialResponse
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -175,7 +175,7 @@ class MaterialStockJdbcRepository(
     }
 
 
-    fun findAllByType(type: String, depositName: String): List<MaterialInStockDTO> {
+    fun findAllByType(type: String, teamId: Long): List<MaterialInStockDTO> {
         val sql = """
             SELECT 
               ms.material_id_stock AS materialIdStock,
@@ -186,20 +186,23 @@ class MaterialStockJdbcRepository(
               mt.type_name AS typeName,
               d.deposit_name AS depositName,
               ms.stock_available AS stockAvailable,
-              ms.request_unit AS requestUnit
+              ms.request_unit AS requestUnit,
+              d.is_truck AS isTruck,
+              t.plate_vehicle as plateVehicle
             FROM material_stock ms
               JOIN material m ON ms.material_id = m.id_material
               JOIN material_type mt ON m.id_material_type = mt.id_type
               JOIN deposit d ON ms.deposit_id = d.id_deposit
+              LEFT JOIN team t on t.deposit_id_deposit = d.id_deposit
             WHERE LOWER(mt.type_name) = :type
               AND ms.inactive = false
               AND (
-                LOWER(d.deposit_name) = LOWER(:depositName)
-                OR LOWER(d.deposit_name) NOT LIKE '%caminhão%'
+                t.id_team = :teamId
+                OR d.is_truck = false
               )
-            ORDER BY d.deposit_name
+            ORDER BY  (d.is_truck::int) DESC, d.deposit_name;
         """
-        val params = mapOf("type" to type.lowercase(), "depositName" to depositName)
+        val params = mapOf("type" to type.lowercase(), "teamId" to teamId)
         return jdbc.query(sql, params) { rs, _ ->
             MaterialInStockDTO(
                 materialStockId = rs.getLong("materialIdStock"),
@@ -210,12 +213,14 @@ class MaterialStockJdbcRepository(
                 materialType = rs.getString("typeName"),
                 deposit = rs.getString("depositName"),
                 availableQuantity = rs.getBigDecimal("stockAvailable"),
-                requestUnit = rs.getString("requestUnit")
+                requestUnit = rs.getString("requestUnit"),
+                isTruck = rs.getBoolean("isTruck"),
+                plateVehicle = rs.getString("plateVehicle"),
             )
         }
     }
 
-    fun findAllByLinkingAndType(linking: String, type: String, depositName: String): List<MaterialInStockDTO> {
+    fun findAllByLinkingAndType(linking: String, type: String, teamId: Long): List<MaterialInStockDTO> {
         val sql = """
             SELECT 
               ms.material_id_stock AS materialIdStock,
@@ -226,11 +231,14 @@ class MaterialStockJdbcRepository(
               mt.type_name AS typeName,
               d.deposit_name AS depositName,
               ms.stock_available AS stockAvailable,
-              ms.request_unit AS requestUnit
+              ms.request_unit AS requestUnit,
+              d.is_truck AS isTruck,
+              t.plate_vehicle as plateVehicle
             FROM material_stock ms
               JOIN material m ON ms.material_id = m.id_material
               JOIN material_type mt ON m.id_material_type = mt.id_type
               JOIN deposit d ON ms.deposit_id = d.id_deposit
+              LEFT JOIN team t on t.deposit_id_deposit = d.id_deposit
             WHERE LOWER(mt.type_name) = :type
               AND (
                 LOWER(m.material_power) = :linking
@@ -238,15 +246,15 @@ class MaterialStockJdbcRepository(
               )
               AND ms.inactive = false
               AND (
-                LOWER(d.deposit_name) = LOWER(:depositName)
-                OR LOWER(d.deposit_name) NOT LIKE '%caminhão%'
+                t.id_team = :teamId
+                OR d.is_truck = false
               )
-            ORDER BY d.deposit_name
+            ORDER BY  (d.is_truck::int) DESC, d.deposit_name;
         """
         val params = mapOf(
             "linking" to linking.lowercase(),
             "type" to type.lowercase(),
-            "depositName" to depositName
+            "teamId" to teamId
         )
         return jdbc.query(sql, params) { rs, _ ->
             MaterialInStockDTO(
@@ -258,7 +266,9 @@ class MaterialStockJdbcRepository(
                 materialType = rs.getString("typeName"),
                 deposit = rs.getString("depositName"),
                 availableQuantity = rs.getBigDecimal("stockAvailable"),
-                requestUnit = rs.getString("requestUnit")
+                requestUnit = rs.getString("requestUnit"),
+                isTruck = rs.getBoolean("isTruck"),
+                plateVehicle = rs.getString("plateVehicle")
             )
         }
     }

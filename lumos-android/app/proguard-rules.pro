@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Suprimir warnings de anotações que só existem em tempo de compilação
+-dontwarn org.intellij.lang.annotations.Language
+-dontwarn org.jetbrains.annotations.NotNull
+-dontwarn org.jetbrains.annotations.Nullable

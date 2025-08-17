@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 
 }
 
@@ -15,72 +16,46 @@ android {
         applicationId = "com.thryon.lumos"
         minSdk = 26
         targetSdk = 36
-
         versionCode = 16
-        versionName = "1.0.02"
-
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    flavorDimensions += listOf("env")
 
+    // 1) Flavors controlam o appId
+    flavorDimensions += listOf("env")
     productFlavors {
         create("dev") {
             dimension = "env"
+            // instala lado a lado com o app da Play:
+            applicationIdSuffix = ".dev"                 // -> com.thryon.lumos.dev
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "Lumos (Dev)")
             buildConfigField("String", "API_URL", "\"http://192.168.3.2:8080\"")
         }
-
         create("prod") {
             dimension = "env"
+            // sem sufixo: mesmo applicationId da produção
+            resValue("string", "app_name", "Lumos")
             buildConfigField("String", "API_URL", "\"https://spring.thryon.com.br\"")
         }
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-        debug {
-            buildConfigField("boolean", "ROOM_LOGGING_ENABLED", "true")
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-        }
-    }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
-
-    configurations {
-        create("cleanedAnnotations")
-        implementation {
-            exclude(group = "org.jetbrains", module = "annotations")
-        }
-    }
-
+    // 2) Consolide buildTypes (um bloco só)
     signingConfigs {
         create("release") {
-//            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
-            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"
         }
+        // debug: use o default (debug.keystore) — não precisa declarar
     }
 
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("boolean", "ROOM_LOGGING_ENABLED", "true")
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
@@ -89,17 +64,20 @@ android {
                 "proguard-rules.pro"
             )
         }
-
-        getByName("debug") {
-
-//            applicationIdSuffix = ".debug"  // Adiciona ".debug" ao packageName
-
-
-            // Opcional: assinar debug com mesma chave
-            signingConfig = signingConfigs.getByName("release")
-        }
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11) } }
+
+    buildFeatures { compose = true; buildConfig = true }
+
+    configurations {
+        create("cleanedAnnotations")
+        implementation { exclude(group = "org.jetbrains", module = "annotations") }
+    }
 }
 
 
@@ -159,6 +137,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
+    implementation("com.google.firebase:firebase-crashlytics-ndk")
 
     // Testes
     testImplementation(libs.junit)

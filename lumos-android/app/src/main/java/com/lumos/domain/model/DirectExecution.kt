@@ -27,8 +27,7 @@ data class DirectExecution( //tabela nova
     val creationDate: String,
 )
 
-@Entity(tableName = "direct_execution_street",
-        indices = [Index(value = ["address"], unique = true)])
+@Entity(tableName = "direct_execution_street")
 data class DirectExecutionStreet( //tabela nova
     @PrimaryKey(autoGenerate = true) val directStreetId: Long = 0,
     var address: String,

@@ -25,7 +25,6 @@ import {Dialog} from 'primeng/dialog';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
 
-
 @Component({
   selector: 'app-reservation-management-select',
   standalone: true,
@@ -173,7 +172,7 @@ export class ReservationManagementSelectComponent {
       this.filteredMaterials = this.materials.filter(m =>
         (m.materialLength?.toLowerCase() === linking ||
           m.materialPower?.toLowerCase() === linking ||
-          m.materialType?.toLowerCase() === linking) && !m.deposit.toLowerCase().includes("caminhão")
+          m.materialType?.toLowerCase() === linking) && !m.isTruck
       );
 
       this.filteredMaterials =
@@ -182,11 +181,16 @@ export class ReservationManagementSelectComponent {
             m.deposit === this.street.truckDepositName &&
             (m.materialLength?.toLowerCase() === linking ||
               m.materialType?.toLowerCase() === linking ||
-              m.materialPower?.toLowerCase() === linking))];
+              m.materialPower?.toLowerCase() === linking))]
+          .sort((a, b) => {
+          const depositOrder = a.deposit.localeCompare(b.deposit);
+          if (depositOrder !== 0) return depositOrder;
+          return Number(b.isTruck) - Number(a.isTruck);
+        });
 
       this.loading = false;
     } else {
-      this.executionService.getStockMaterialForLinking(item.linking ?? 'NULL', item.type ?? 'NULL', this.street.truckDepositName).subscribe({
+      this.executionService.getStockMaterialForLinking(item.linking ?? 'NULL', item.type ?? 'NULL', this.currentTeamId).subscribe({
         next: (response) => {
           const news = response.filter(n =>
             !this.materials.some(m =>
@@ -309,7 +313,7 @@ export class ReservationManagementSelectComponent {
           this.streetId = null;
         }
 
-        this.utils.showMessage(response.message, 'success', 'Material alocado com sucesso', true);
+        this.utils.showMessage(response.message, 'success', 'Gerenciamento finalizado com sucesso', true);
       },
       error: (error) => {
         this.utils.showMessage(error.error.message, 'error', 'Erro ao salvar');
@@ -413,18 +417,17 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    this.utils.getObject<Array<{ driver_id: string; electrician_id: string }>>({
-      fields: ['driver_id', 'electrician_id'],
-      table: 'team',
-      where: 'id_team',
+    this.utils.getObject<Array<{ user_id: string }>>({
+      fields: ['user_id'],
+      table: 'app_user',
+      where: 'team_id',
       equal: [this.currentTeamId]
     }).subscribe({
       next: (teamData) => {
         const uuid: string[] = [];
 
         teamData.forEach(user => {
-          if (user.driver_id) uuid.push(user.driver_id);
-          if (user.electrician_id) uuid.push(user.electrician_id);
+          uuid.push(user.user_id);
         });
 
         if (uuid.length === 0) {

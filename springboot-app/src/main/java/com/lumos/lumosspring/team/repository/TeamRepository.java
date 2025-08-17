@@ -1,5 +1,7 @@
 package com.lumos.lumosspring.team.repository;
 
+import com.lumos.lumosspring.dto.team.MemberTeamResponse;
+import com.lumos.lumosspring.dto.team.TeamResponse;
 import com.lumos.lumosspring.dto.team.TeamResponseForConfirmation;
 import com.lumos.lumosspring.team.entities.Team;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -12,16 +14,22 @@ import java.util.UUID;
 
 @Repository
     public interface TeamRepository extends CrudRepository<Team, Long> {
-    @Query("SELECT id_team from team where driver_id = :userId or electrician_id = :userId")
+    @Query("SELECT team_id from app_user where user_id = :userId")
     Optional<Long> getCurrentTeamId(UUID userId);
 
     Optional<Team> findByTeamName(String teamName);
 
     @Query("""
-        select t.id_team as teamId, d.deposit_name as depositName, 
-               t.team_name as teamName, t.plate_vehicle as plateVehicle
+        select t.id_team as team_id,
+               d.deposit_name as deposit_name,
+               t.team_name as team_name,
+               t.plate_vehicle as plate_vehicle
         from team t
         join deposit d on d.id_deposit = t.deposit_id_deposit
-    """)
+   \s""")
     List<TeamResponseForConfirmation> getTeams();
+
+    @Query("Select name || ' ' || last_name as member_name, user_id from app_user where team_id = :teamId")
+    List<MemberTeamResponse> getMembers(long teamId);
+
 }

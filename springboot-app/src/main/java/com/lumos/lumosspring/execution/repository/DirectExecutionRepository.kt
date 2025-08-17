@@ -1,9 +1,6 @@
 package com.lumos.lumosspring.execution.repository
 
-import com.lumos.lumosspring.execution.entities.DirectExecution
-import com.lumos.lumosspring.execution.entities.DirectExecutionItem
-import com.lumos.lumosspring.execution.entities.DirectExecutionStreet
-import com.lumos.lumosspring.execution.entities.DirectExecutionStreetItem
+import com.lumos.lumosspring.execution.entities.*
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
@@ -23,4 +20,8 @@ interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet
 
 @Repository
 interface DirectExecutionRepositoryStreetItem : CrudRepository<DirectExecutionStreetItem, Long> {
+}
+
+@Repository
+interface DirectExecutionExecutorRepository : CrudRepository<DirectExecutionExecutor, Long> {
 }

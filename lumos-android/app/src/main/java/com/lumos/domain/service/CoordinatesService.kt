@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.*
 import com.lumos.utils.Utils.hasLocationPermission
@@ -86,11 +87,16 @@ class CoordinatesService(
         }
 
         // Inicia a primeira solicitação de localização
-        locationProvider.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper() // Looper principal
-        )
+        try {
+            locationProvider.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.getMainLooper()
+            )
+        } catch (se: SecurityException) {
+            Log.e("GET LOCATION", "Falha ao requisitar updates de localização", se)
+            callback(null, null)
+        }
     }
 
     private fun isLocationStable(location: Location): Boolean {

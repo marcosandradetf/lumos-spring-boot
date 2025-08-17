@@ -4,6 +4,7 @@ package com.lumos.lumosspring.maintenance.repository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.lumos.lumosspring.dto.maintenance.MaintenanceStreetItemDTO
 import com.lumos.lumosspring.stock.entities.MaterialHistory
 import com.lumos.lumosspring.stock.repository.MaterialHistoryRepository
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -18,47 +19,6 @@ class MaintenanceQueryRepository(
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
     private val materialHistoryRepository: MaterialHistoryRepository
 ) {
-    data class MaintenanceDTO(
-        val maintenanceId: String,
-        val contractId: Long,
-        val pendingPoints: Boolean,
-        var quantityPendingPoints: Int?,
-        val dateOfVisit: String,
-        val type: String, //rural ou urbana
-
-        val status: String,
-        val responsible: String? = null,
-        val signPath: String? = null,
-        val signDate: String? = null
-    )
-
-    data class MaintenanceStreetWithItems(
-        val street: MaintenanceStreetDTO,
-        val items: List<MaintenanceStreetItemDTO>
-    )
-
-    data class MaintenanceStreetDTO(
-        val maintenanceStreetId: UUID,
-        val maintenanceId: UUID,
-        var address: String,
-        var latitude: Double? = null,
-        var longitude: Double? = null,
-        val comment: String?,
-        val lastPower: String?,
-
-        val lastSupply: String?, // n obrigatorio
-        val currentSupply: String?, // obrigatorio
-        val reason: String?// se led - perguntar qual o problema/motivo da troca
-
-    )
-
-    data class MaintenanceStreetItemDTO(
-        val maintenanceId: String,
-        val maintenanceStreetId: String,
-        val materialStockId: Long,
-        val quantityExecuted: BigDecimal,
-    )
-
     fun debitStock(items: List<MaintenanceStreetItemDTO>, maintenanceStreetId: UUID) {
         for (item in items) {
             materialHistoryRepository.save(
@@ -295,17 +255,26 @@ class MaintenanceQueryRepository(
             JOIN contract c ON c.contract_id = m.contract_id
             JOIN company com ON com.id_company = 1
             LEFT JOIN LATERAL (
-                SELECT json_agg(
-                    json_build_object(
-                    'name', au.name,
-                    'last_name', au.last_name,
-                    'role', me.role
-                    )
-            ) AS executors
-            FROM maintenance_executors me
-            JOIN app_user au ON au.user_id = me.user_id
-            WHERE me.maintenance_id = m.maintenance_id
-                ) execs ON TRUE
+            SELECT json_agg(
+                   json_build_object(
+                        'name', au.name,
+                        'last_name', au.last_name,
+                        'role', r.role_name
+                        )
+                   ) AS executors
+                FROM (
+                    SELECT DISTINCT ON (au.user_id)
+                           au.name,
+                           au.last_name,
+                           r.role_name
+                    FROM maintenance_executors me
+                    JOIN app_user au ON au.user_id = me.user_id
+                    JOIN user_role ur ON ur.id_user = au.user_id
+                    JOIN role r ON r.role_id = ur.id_role
+                    WHERE me.maintenance_id = m.maintenance_id
+                    ORDER BY au.user_id, r.role_name ASC
+                ) t
+            ) execs ON TRUE
             WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 
@@ -354,7 +323,7 @@ class MaintenanceQueryRepository(
           ) AS company,
 
           json_build_object(
-            'contract_number', c.contract_number,
+            'contract_number', COALESCE(c.contract_number, ''),
             'contractor', c.contractor,
             'cnpj', c.cnpj,
             'address', c.address,
@@ -422,16 +391,26 @@ class MaintenanceQueryRepository(
         JOIN company com ON com.id_company = 1
         LEFT JOIN LATERAL (
             SELECT json_agg(
-                json_build_object(
-                    'name', au.name,
-                    'last_name', au.last_name,
-                    'role', me.role
-                )
-            ) AS executors
-            FROM maintenance_executors me
-            JOIN app_user au ON au.user_id = me.user_id
-            WHERE me.maintenance_id = m.maintenance_id
+                       json_build_object(
+                           'name', au.name,
+                           'last_name', au.last_name,
+                           'role', r.role_name
+                       )
+                   ) AS executors
+            FROM (
+                SELECT DISTINCT ON (au.user_id)
+                       au.name,
+                       au.last_name,
+                       r.role_name
+                FROM maintenance_executors me
+                JOIN app_user au ON au.user_id = me.user_id
+                JOIN user_role ur ON ur.id_user = au.user_id
+                JOIN role r ON r.role_id = ur.id_role
+                WHERE me.maintenance_id = m.maintenance_id
+                ORDER BY au.user_id, r.role_name ASC
+            ) t
         ) execs ON TRUE
+
         WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 

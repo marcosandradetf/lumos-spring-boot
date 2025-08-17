@@ -5,11 +5,9 @@ import com.lumos.lumosspring.notifications.service.NotificationService;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.team.entities.Region;
-import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
-import com.lumos.lumosspring.user.UserRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,17 +25,18 @@ import java.util.stream.StreamSupport;
 public class TeamService {
     private final TeamRepository teamRepository;
     private final RegionRepository regionRepository;
-    private final UserRepository userRepository;
     private final DepositRepository depositRepository;
     private final NotificationService notificationService;
     private final TeamQueryRepository teamQueryRepository;
 
+    public TeamService(TeamRepository teamRepository,
+                       RegionRepository regionRepository,
+                       DepositRepository depositRepository,
+                       NotificationService notificationService,
+                       TeamQueryRepository teamQueryRepository) {
 
-    public TeamService(TeamRepository teamRepository, RegionRepository regionRepository, UserRepository userRepository,
-                       DepositRepository depositRepository, NotificationService notificationService, TeamQueryRepository teamQueryRepository) {
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
-        this.userRepository = userRepository;
         this.depositRepository = depositRepository;
         this.notificationService = notificationService;
         this.teamQueryRepository = teamQueryRepository;
@@ -49,28 +48,6 @@ public class TeamService {
 
         List<TeamResponse> teamsResponses = StreamSupport.stream(teamsIterable.spliterator(), false)
                 .map(team -> {
-                    // Buscar driver pelo driverId
-                    var driverOpt = userRepository.findById(team.getDriverId());
-                    Driver driver = driverOpt
-                            .map(d -> new Driver(d.getUserId(), d.getCompletedName()))
-                            .orElse(null); // Ou lance erro se não encontrar
-
-                    // Buscar eletricista pelo electricianId
-                    var electricianOpt = userRepository.findById(team.getElectricianId());
-                    Electrician electrician = electricianOpt
-                            .map(e -> new Electrician(e.getUserId(), e.getCompletedName()))
-                            .orElse(null); // Ou lance erro se não encontrar
-
-                    // Buscar os membros complementares explicitamente
-//                    List<Member> complementaryMembers = team.getComplementaryMembers().stream()
-//                            .map(member -> {
-//                                // buscar cada membro pelo userId
-//                                var memberOpt = teamComplementaryMemberRepository.findAllby(member.getUserId());
-//                                return memberOpt
-//                                        .map(m -> new Member(m.getUserId().toString(), m.getName() + " " + m.getLastName()))
-//                                        .orElseGet(() -> new Member(member.getUserId().toString(), "Nome não encontrado"));
-//                            })
-//                            .toList();
 
                     // Buscar o depósito usando o depositId
                     var depositOpt = depositRepository.findById(team.getDepositId());
@@ -78,17 +55,21 @@ public class TeamService {
                             .map(Deposit::getDepositName)
                             .orElseThrow(() -> new IllegalStateException("Equipe sem depósito associado, faça a correção na tela de gerenciamento de equipes!"));
                     var region = regionRepository.findById(team.getRegion()).orElse(null);
+                    var members = teamRepository.getMembers(team.getIdTeam());
+
+                    var memberIds = members.stream().map(MemberTeamResponse::userId).toList();
+                    var memberNames = members.stream().map(MemberTeamResponse::memberName).toList();
 
                     return new TeamResponse(
                             team.getIdTeam(),
                             team.getTeamName(),
-                            driver,
-                            electrician,
                             team.getUFName(),
                             team.getCityName(),
                             region.getRegionName(),
                             team.getPlateVehicle(),
-                            depositName // Aqui a string do nome do depósito
+                            depositName,
+                            memberIds,
+                            memberNames
                     );
                 })
                 .sorted(Comparator.comparing(TeamResponse::teamName))
@@ -109,65 +90,65 @@ public class TeamService {
                     .body(new ErrorResponse("Erro: Foi enviado apenas equipes já existentes no sistema!"));
         }
 
-        for (TeamCreate t : teams) {
-            if (t.idTeam() != 0) {
-                continue;
-            }
-
-            if (teamRepository.findByTeamName(t.teamName()).isPresent()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        STR."Equipe \{t.teamName()} já existe no sistema."
-                );
-            }
-
-            var driverId = t.driver().driverId();
-            var electricianId = t.electrician().electricianId();
-
-
-            if (t.electrician().electricianId().equals(t.driver().driverId())) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
-                );
-            }
-
-            var hasTeamExists = teamRepository.findByDriverId(driverId);
-            if (hasTeamExists.isPresent()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        STR."Motorista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
-                );
-            }
-
-            hasTeamExists = teamRepository.findByElectricianId(electricianId);
-            if (hasTeamExists.isPresent()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        STR."Eletricista informado para equipe \{t.teamName()}  está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
-                );
-            }
-
-            var region = regionRepository.findRegionByRegionName(t.regionName());
-            if (region.isEmpty()) {
-                var newRegion = new Region(
-                        null,
-                        t.regionName()
-                );
-                regionRepository.save(newRegion);
-                region = regionRepository.findRegionByRegionName(t.regionName());
-            }
-
-            var newTeam = new Team();
-            newTeam.setTeamName(t.teamName());
-
-            newTeam.setPlateVehicle(t.plate());
-            newTeam.setUFName(t.UFName());
-            newTeam.setCityName(t.cityName());
-            newTeam.setRegion(region.orElse(null).getRegionId());
-
-            teamRepository.save(newTeam);
-        }
+//        for (TeamCreate t : teams) {
+//            if (t.idTeam() != 0) {
+//                continue;
+//            }
+//
+//            if (teamRepository.findByTeamName(t.teamName()).isPresent()) {
+//                throw new ResponseStatusException(
+//                        HttpStatus.BAD_REQUEST,
+//                        STR."Equipe \{t.teamName()} já existe no sistema."
+//                );
+//            }
+//
+//            var driverId = t.driver().driverId();
+//            var electricianId = t.electrician().electricianId();
+//
+//
+//            if (t.electrician().electricianId().equals(t.driver().driverId())) {
+//                throw new ResponseStatusException(
+//                        HttpStatus.BAD_REQUEST,
+//                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
+//                );
+//            }
+//
+//            var hasTeamExists = teamRepository.findByDriverId(driverId);
+//            if (hasTeamExists.isPresent()) {
+//                throw new ResponseStatusException(
+//                        HttpStatus.BAD_REQUEST,
+//                        STR."Motorista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
+//                );
+//            }
+//
+//            hasTeamExists = teamRepository.findByElectricianId(electricianId);
+//            if (hasTeamExists.isPresent()) {
+//                throw new ResponseStatusException(
+//                        HttpStatus.BAD_REQUEST,
+//                        STR."Eletricista informado para equipe \{t.teamName()}  está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
+//                );
+//            }
+//
+//            var region = regionRepository.findRegionByRegionName(t.regionName());
+//            if (region.isEmpty()) {
+//                var newRegion = new Region(
+//                        null,
+//                        t.regionName()
+//                );
+//                regionRepository.save(newRegion);
+//                region = regionRepository.findRegionByRegionName(t.regionName());
+//            }
+//
+//            var newTeam = new Team();
+//            newTeam.setTeamName(t.teamName());
+//
+//            newTeam.setPlateVehicle(t.plate());
+//            newTeam.setUFName(t.UFName());
+//            newTeam.setCityName(t.cityName());
+//            newTeam.setRegion(region.orElse(null).getRegionId());
+//
+//            teamRepository.save(newTeam);
+//        }
 
         return this.getAll();
     }

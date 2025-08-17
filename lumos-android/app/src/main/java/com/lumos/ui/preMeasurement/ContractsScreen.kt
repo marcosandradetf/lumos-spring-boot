@@ -1,7 +1,6 @@
 package com.lumos.ui.preMeasurement
 
 import android.content.Context
-import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -58,8 +57,6 @@ import java.time.Instant
 fun ContractsScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
     onNavigateToPreMeasurement: (Long) -> Unit,
     context: Context,
     contractViewModel: ContractViewModel,
@@ -91,7 +88,7 @@ fun ContractsScreen(
         navController = navController,
         notificationsBadge = notificationsBadge,
         start = {
-            contractViewModel.startPreMeasurement(it)
+//            contractViewModel.startPreMeasurement(it)
             onNavigateToPreMeasurement(it)
         },
         download = {

@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.ExecutionHolder
+import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -75,7 +76,8 @@ fun CitiesScreen(
     notificationsBadge: String,
     onNavigateToStreetScreen: (Long, String) -> Unit,
     roles: Set<String>,
-    directExecution: Boolean
+    directExecution: Boolean,
+    secureStorage: SecureStorage
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
     val title = if (directExecution) "Execuções sem pré-medição" else "Execuções com pré-medição"
@@ -98,16 +100,25 @@ fun CitiesScreen(
     var executions by remember { mutableStateOf<List<ExecutionHolder>>(emptyList()) }
 
     LaunchedEffect(Unit) {
+        val TWELVE_HOURS = 12 * 60 * 60 * 1000L
+
+        val now = System.currentTimeMillis()
+
+        val lastTeamCheck = secureStorage.getLastTeamCheck()
+        val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
+
         if (!roles.any { it in requiredRoles }) {
             navController.navigate(Routes.NO_ACCESS + "/${if (directExecution) Routes.DIRECT_EXECUTION_SCREEN else Routes.EXECUTION_SCREEN}")
         }
 
-        directExecutionViewModel.countStock()
-
-        if (directExecution)
+        if(isStaleCheckTeam)
+            navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.EXECUTIONS.value}")
+        else if (directExecution)
             directExecutionViewModel.syncExecutions()
         else
             indirectExecutionViewModel.syncExecutions()
+
+        directExecutionViewModel.countStock()
     }
 
     LaunchedEffect(allExecutions) {

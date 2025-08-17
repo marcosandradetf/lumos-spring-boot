@@ -14,15 +14,17 @@ class SecureStorage(private val context: Context) {
         private const val SECURE_PREFS_NAME = "secure_prefs"
         private const val NORMAL_PREFS_NAME = "normal_prefs"
         private const val MIGRATION_FLAG = "migration_done"
-
         private const val KEY_ACCESS_TOKEN = "accessToken"
         private const val KEY_REFRESH_TOKEN = "refreshToken"
         private const val KEY_USER_UUID = "userUUID"
+
+        private const val KEY_USER_NAME = "user_name"
         private const val KEY_ROLES = "roles"
         private const val KEY_TEAMS = "teams"
         private const val KEY_OPERATIONAL_USERS = "operational_users"
         private const val KEY_TEAM_ID = "team_id"
         private const val KEY_LAST_UPDATE_CHECK = "last_update_check"
+        private const val KEY_LAST_TEAM_CHECK = "last_team_check"
     }
 
     // Cache de instâncias
@@ -108,10 +110,13 @@ class SecureStorage(private val context: Context) {
 
     // Migração única: dados não sensíveis do secure_prefs para normal_prefs
     private fun migrateIfNeeded() {
-        val normalPrefs = normalPrefsInstance!!
+        val normalPrefs = normalPrefsInstance ?: return
+
+        // Garante inicialização do securePrefs
+        val securePrefs = securePrefsInstance ?: getSecurePrefs()
+
         if (normalPrefs.getBoolean(MIGRATION_FLAG, false)) return
 
-        val securePrefs = securePrefsInstance!!
         val editor = normalPrefs.edit()
         var migrated = false
 
@@ -176,7 +181,13 @@ class SecureStorage(private val context: Context) {
         getNormalPrefs().edit { putString(KEY_USER_UUID, uuid) }
     }
 
+    fun setUserName(name: String) {
+        getNormalPrefs().edit { putString(KEY_USER_NAME, name) }
+    }
+
     fun getUserUuid(): String? = getNormalPrefs().getString(KEY_USER_UUID, null)
+
+    fun getUserName(): String? = getNormalPrefs().getString(KEY_USER_NAME, null)
 
     fun saveRoles(roles: Set<String>) {
         getNormalPrefs().edit { putStringSet(KEY_ROLES, roles) }
@@ -209,6 +220,13 @@ class SecureStorage(private val context: Context) {
     }
 
     fun getLastUpdateCheck(): Long = getNormalPrefs().getLong(KEY_LAST_UPDATE_CHECK, 0L)
+
+    fun setLastTeamCheck() {
+        val now = System.currentTimeMillis()
+        getNormalPrefs().edit { putLong(KEY_LAST_TEAM_CHECK, now) }
+    }
+
+    fun getLastTeamCheck(): Long = getNormalPrefs().getLong(KEY_LAST_TEAM_CHECK, 0L)
 
     // Limpar tudo (tokens no seguro + dados normais)
     fun clearAll() {

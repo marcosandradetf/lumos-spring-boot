@@ -42,6 +42,7 @@ import com.lumos.notifications.FCMService
 import com.lumos.notifications.FCMService.FCMBus
 import com.lumos.notifications.NotificationManager
 import com.lumos.notifications.NotificationsBadge
+import com.lumos.repository.TeamRepository
 import com.lumos.ui.auth.Login
 import com.lumos.ui.directExecutions.StreetMaterialScreen
 import com.lumos.ui.indirectExecutions.CitiesScreen
@@ -53,7 +54,6 @@ import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.noAccess.NoAccessScreen
 import com.lumos.ui.notifications.NotificationsScreen
 import com.lumos.ui.preMeasurement.ContractsScreen
-import com.lumos.ui.preMeasurement.MeasurementHome
 import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
 import com.lumos.ui.preMeasurement.PreMeasurementScreen
 import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
@@ -61,6 +61,7 @@ import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.stock.CheckStockScreen
 import com.lumos.ui.sync.SyncDetailsScreen
 import com.lumos.ui.sync.SyncScreen
+import com.lumos.ui.team.CheckTeamScreen
 import com.lumos.ui.updater.ApkUpdateDownloader
 import com.lumos.viewmodel.AuthViewModel
 import com.lumos.viewmodel.ContractViewModel
@@ -71,6 +72,7 @@ import com.lumos.viewmodel.StockViewModel
 import com.lumos.viewmodel.NotificationViewModel
 import com.lumos.viewmodel.PreMeasurementViewModel
 import com.lumos.viewmodel.SyncViewModel
+import com.lumos.viewmodel.TeamViewModel
 import com.lumos.worker.SyncManager.enqueueSync
 import com.lumos.worker.SyncManager.schedulePeriodicSync
 import kotlinx.coroutines.CoroutineScope
@@ -153,10 +155,9 @@ fun AppNavigation(
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
 
     val notificationViewModel: NotificationViewModel = viewModel {
-        val notificationDao = app.database.notificationDao()
-
         val notificationRepository = NotificationRepository(
-            dao = notificationDao,
+            db = app.database,
+            app = app
         )
         NotificationViewModel(
             repository = notificationRepository
@@ -187,11 +188,25 @@ fun AppNavigation(
         val maintenanceRepository = MaintenanceRepository(
             db = app.database,
             api = ApiService(app.applicationContext, secureStorage),
-            app = app
+            app = app,
+            secureStorage = secureStorage
         )
 
         MaintenanceViewModel(
             repository = maintenanceRepository
+        )
+    }
+
+    val teamViewModel: TeamViewModel = viewModel {
+        val teamRepository = TeamRepository(
+            db = app.database,
+            api = ApiService(app.applicationContext, secureStorage),
+            secureStorage = secureStorage,
+            app = app
+        )
+
+        TeamViewModel(
+            repository = teamRepository
         )
     }
 
@@ -391,11 +406,8 @@ fun AppNavigation(
                             notificationManager.unsubscribeFromSavedTopics()
                             secureStorage.clearAll()
 
-                            CoroutineScope(Dispatchers.IO).launch {
-                                app.database.clearAllTables()
-                                withContext(Dispatchers.Main) {
-                                    navController.navigate(Routes.LOGIN)
-                                }
+                            CoroutineScope(Dispatchers.Main).launch {
+                                navController.navigate(Routes.LOGIN)
                             }
                         },
                         authViewModel = authViewModel,
@@ -412,12 +424,6 @@ fun AppNavigation(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MORE)
                         },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
                         onNavigateToPreMeasurement = {
                             navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
                         },
@@ -429,9 +435,10 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.PRE_MEASUREMENT_PROGRESS + "/{contractId}") { backStackEntry ->
-                    val contractId =
-                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                composable(Routes.PRE_MEASUREMENT_PROGRESS + "/{preMeasurementId}") { backStackEntry ->
+                    val preMeasurementId =
+                        backStackEntry.arguments?.getString("preMeasurementId")
+
                     PreMeasurementProgressScreen(
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -446,11 +453,10 @@ fun AppNavigation(
                             navController.navigate(Routes.PRE_MEASUREMENT_STREET + "/$it")
                         },
                         context = LocalContext.current,
-                        contractViewModel = contractViewModel,
                         preMeasurementViewModel = preMeasurementViewModel,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        contractId = contractId,
+                        preMeasurementId = preMeasurementId!!,
                     )
                 }
 
@@ -477,12 +483,12 @@ fun AppNavigation(
                 }
 
                 composable(Routes.PRE_MEASUREMENT_STREET_HOME) {
-                    MeasurementHome(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        navController = navController
-                    )
+//                    MeasurementHome(
+//                        onNavigateToHome = {
+//                            navController.navigate(Routes.HOME)
+//                        },
+//                        navController = navController
+//                    )
                 }
 
                 composable(Routes.PRE_MEASUREMENT_STREET + "/{contractId}") { backStackEntry ->
@@ -520,7 +526,8 @@ fun AppNavigation(
                             navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
                         },
                         roles = secureStorage.getRoles(),
-                        directExecution = false
+                        directExecution = false,
+                        secureStorage = secureStorage
                     )
                 }
 
@@ -605,7 +612,8 @@ fun AppNavigation(
                             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/$contractId/$contractor")
                         },
                         roles = secureStorage.getRoles(),
-                        directExecution = true
+                        directExecution = true,
+                        secureStorage = secureStorage
                     )
                 }
 
@@ -692,7 +700,21 @@ fun AppNavigation(
                         stockViewModel = stockViewModel,
                         navController = navController,
                         lastRoute = lastRoute,
+                        secureStorage = secureStorage
                     )
+                }
+
+                composable(Routes.TEAM_SCREEN + "/{currentScreen}") { backStackEntry ->
+                    val currentScreen =
+                        backStackEntry.arguments?.getString("currentScreen")?.toInt()
+
+                    CheckTeamScreen(
+                        viewModel = teamViewModel,
+                        navController = navController,
+                        currentScreen = currentScreen!!,
+                        secureStorage= secureStorage
+                    )
+
                 }
 
             }
@@ -729,4 +751,6 @@ object Routes {
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
     const val UPDATE = "update"
     const val SYNC = "sync"
+
+    const val TEAM_SCREEN = "team-screen"
 }

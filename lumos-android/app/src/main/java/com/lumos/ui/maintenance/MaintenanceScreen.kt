@@ -1,5 +1,6 @@
 package com.lumos.ui.maintenance
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +49,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Maintenance
+import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -77,6 +79,7 @@ fun MaintenanceScreen(
     stockViewModel: StockViewModel,
     navController: NavHostController,
     lastRoute: String?,
+    secureStorage: SecureStorage
 ) {
     val viewModelAux: MaintenanceHomeViewModel = viewModel()
     val uiState by maintenanceViewModel.uiState.collectAsState()
@@ -89,13 +92,16 @@ fun MaintenanceScreen(
     val contracts by contractViewModel.contracts.collectAsState()
 
     var resync by remember { mutableIntStateOf(0) }
-    var screenState by remember { mutableStateOf<MaintenanceUIState?>(null) }
 
     val maintenanceMap by remember(uiState.maintenances) {
+        Log.e("maintenances", uiState.maintenances.toString())
+
         derivedStateOf { uiState.maintenances.associateBy { it.maintenanceId } }
     }
 
     val maintenance by remember(uiState.maintenanceId, maintenanceMap) {
+        Log.e("Maintenance", maintenanceMap.toString())
+
         derivedStateOf {
             uiState.maintenanceId?.toString()?.let { maintenanceMap[it] }
         }
@@ -116,30 +122,35 @@ fun MaintenanceScreen(
     }
 
     LaunchedEffect(Unit) {
-        val loadedMaintenances = uiState.maintenances
+        if(uiState.screenState != MaintenanceUIState.HOME) {
+                val loadedMaintenances = uiState.maintenances
 
-        screenState = when {
-            loadedMaintenances.size == 1 -> {
-                forceLoading = true
-                maintenanceViewModel.setMaintenanceId(UUID.fromString(loadedMaintenances.first().maintenanceId))
-                MaintenanceUIState.HOME
+                val screenState = when {
+                    loadedMaintenances.size == 1 -> {
+                        forceLoading = true
+                        maintenanceViewModel.setMaintenanceId(UUID.fromString(loadedMaintenances.first().maintenanceId))
+                        MaintenanceUIState.HOME
+                    }
+
+                    else -> MaintenanceUIState.LIST
+                }
+                maintenanceViewModel.setScreenState(screenState)
             }
-
-            else -> MaintenanceUIState.LIST
-        }
     }
 
     LaunchedEffect(resync) {
-        if (resync < 10) contractViewModel.syncContracts()
+        if(uiState.screenState != MaintenanceUIState.HOME) {
+            if (resync < 10) contractViewModel.syncContracts()
+        }
     }
 
     if (uiState.contractSelected) {
-        screenState = MaintenanceUIState.STREET
-        forceLoading = false
+        Log.e("entrou no contract", "contract")
+        maintenanceViewModel.setScreenState(MaintenanceUIState.STREET)
         maintenanceViewModel.setContractSelected(false)
     }
 
-    when (screenState) {
+    when (uiState.screenState) {
         MaintenanceUIState.NEW -> {
             NewMaintenanceContent(
                 navController = navController,
@@ -159,19 +170,21 @@ fun MaintenanceScreen(
                             quantityPendingPoints = null,
                             dateOfVisit = Utils.dateTime.toString(),
                             type = "",
-                            status = "IN_PROGRESS"
+                            status = "IN_PROGRESS",
+                            executorsIds = null
                         )
                     )
                 },
                 back = {
-                    maintenanceViewModel.resetAllState()
-                    screenState = if (uiState.maintenances.size == 1) {
+                    maintenanceViewModel.resetFormState()
+                    val screenState = if (uiState.maintenances.size == 1) {
                         forceLoading = true
                         maintenanceViewModel.setMaintenanceId(UUID.fromString(uiState.maintenances.first().maintenanceId))
                         MaintenanceUIState.HOME
                     } else {
                         MaintenanceUIState.LIST
                     }
+                    maintenanceViewModel.setScreenState(screenState)
                 }
             )
         }
@@ -185,8 +198,10 @@ fun MaintenanceScreen(
                     navController = navController,
                     loading = loading,
                     back = {
+                        val currentId = uiState.maintenanceId
                         maintenanceViewModel.resetFormState()
-                        screenState = MaintenanceUIState.HOME
+                        maintenanceViewModel.setMaintenanceId(currentId)
+                        maintenanceViewModel.setScreenState(MaintenanceUIState.HOME)
                     },
                     saveStreet = { street, items ->
                         maintenanceViewModel.insertMaintenanceStreet(street, items)
@@ -194,12 +209,19 @@ fun MaintenanceScreen(
                     lastRoute = lastRoute,
                     streetCreated = uiState.streetCreated,
                     newStreet = {
+                        val currentMaintenanceId = uiState.maintenanceId
                         maintenanceViewModel.resetFormState()
+                        maintenanceViewModel.setMaintenanceId(currentMaintenanceId)
                     },
-                    stockData = stock
+                    stockData = stock,
+                    message = uiState.message
                 )
             } else {
-                CurrentScreenLoading(navController, "Manutenções", "Carregando dados da manutenção...")
+                CurrentScreenLoading(
+                    navController,
+                    "Manutenções",
+                    "Carregando dados da manutenção..."
+                )
             }
         }
 
@@ -212,14 +234,15 @@ fun MaintenanceScreen(
                 loading = loading,
                 selectMaintenance = { id ->
                     forceLoading = true
-                    maintenanceViewModel.resetAllState()
+                    maintenanceViewModel.resetFormState()
                     maintenanceViewModel.setMaintenanceId(UUID.fromString(id))
-                    screenState = MaintenanceUIState.HOME
+                    maintenanceViewModel.setScreenState(MaintenanceUIState.HOME)
                 },
                 newMaintenance = {
-                    maintenanceViewModel.resetAllState()
-                    screenState = MaintenanceUIState.NEW
+                    maintenanceViewModel.resetFormState()
+                    maintenanceViewModel.setScreenState(MaintenanceUIState.NEW)
                 },
+                secureStorage = secureStorage
             )
         }
 
@@ -237,9 +260,9 @@ fun MaintenanceScreen(
                     selectedIcon = BottomBar.MAINTENANCE.value,
                     navigateBack = {
                         forceLoading = false
-                        maintenanceViewModel.resetAllState()
+                        maintenanceViewModel.resetFormState()
                         viewModelAux.clear()
-                        screenState = MaintenanceUIState.LIST
+                        maintenanceViewModel.setScreenState(MaintenanceUIState.LIST)
                     },
                     navigateToHome = {
                         navController.navigate(Routes.HOME)
@@ -302,9 +325,9 @@ fun MaintenanceScreen(
                                     .fillMaxWidth(fraction = 0.5f),
                                 onClick = {
                                     forceLoading = false
-                                    maintenanceViewModel.resetAllState()
+                                    maintenanceViewModel.resetFormState()
                                     viewModelAux.clear()
-                                    screenState = MaintenanceUIState.LIST
+                                    maintenanceViewModel.setScreenState(MaintenanceUIState.LIST)
                                 }
                             ) {
                                 Text("Voltar")
@@ -313,21 +336,22 @@ fun MaintenanceScreen(
                     }
                 }
             } else {
-                val maintenanceNonNull = maintenance
-                if (maintenanceNonNull?.contractor != null) {
+                if (maintenance != null) {
                     MaintenanceHomeContent(
                         viewModel = viewModelAux,
-                        maintenance = maintenanceNonNull,
+                        maintenance = maintenance!!,
                         streets = filteredStreets,
                         maintenanceSize = uiState.maintenances.size,
                         navController = navController,
                         loading = loading,
                         newStreet = {
-                            screenState = MaintenanceUIState.STREET
+                            maintenanceViewModel.setScreenState(MaintenanceUIState.STREET)
                         },
                         newMaintenance = {
-                            maintenanceViewModel.resetAllState()
-                            screenState = MaintenanceUIState.NEW
+                            maintenanceViewModel.resetFormState()
+                            maintenanceViewModel.setScreenState(
+                                MaintenanceUIState.NEW
+                            )
                         },
                         finishMaintenance = {
                             if (it != null)
@@ -335,12 +359,18 @@ fun MaintenanceScreen(
                         },
                         back = {
                             forceLoading = false
-                            maintenanceViewModel.resetAllState()
-                            screenState = MaintenanceUIState.LIST
+                            maintenanceViewModel.resetFormState()
+                            maintenanceViewModel.setScreenState(
+                                MaintenanceUIState.LIST
+                            )
                         }
                     )
                 } else {
-                    CurrentScreenLoading(navController, "Manutenções", "Carregando dados da manutenção...")
+                    CurrentScreenLoading(
+                        navController,
+                        "Manutenções",
+                        "Carregando dados da manutenção..."
+                    )
                 }
             }
         }

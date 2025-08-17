@@ -250,6 +250,11 @@ export class SidebarComponent implements OnInit {
             icon: 'pi pi-warehouse text-neutral-800 dark:text-neutral-200',
             routerLink: ['/estoque/almoxarifados'],
           },
+          {
+            label: 'Gerenciar Caminhões',
+            icon: 'pi pi-truck text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/caminhoes'],
+          },
         ]
       },
       {

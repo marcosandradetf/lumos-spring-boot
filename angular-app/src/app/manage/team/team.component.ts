@@ -16,6 +16,7 @@ import {catchError, tap} from 'rxjs';
 import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {TeamsModel} from '../../models/teams.model';
 import {Toast} from 'primeng/toast';
+import {MultiSelect} from 'primeng/multiselect';
 
 @Component({
   selector: 'app-team',
@@ -28,7 +29,8 @@ import {Toast} from 'primeng/toast';
     ReactiveFormsModule,
     TableComponent,
     NgClass,
-    Toast
+    Toast,
+    MultiSelect
   ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss'
@@ -43,8 +45,8 @@ export class TeamComponent {
     {
       idTeam: '',
       teamName: '',
-      driver: {driverId: '', driverName: ''},
-      electrician: {electricianId: '', electricianName: ''},
+      memberIds: [],
+      memberNames: [],
       UFName: '',
       cityName: '',
       regionName: '',
@@ -88,16 +90,6 @@ export class TeamComponent {
     role: string[]
   }[] = [];
 
-  drivers: {
-    driverId: string,
-    driverName: string,
-  }[] = [];
-
-  electricians: {
-    electricianId: string,
-    electricianName: string,
-  }[] = [];
-
   serverMessage: string | null = null;
   alertType: string = '';
 
@@ -116,21 +108,6 @@ export class TeamComponent {
         response.forEach((user) => {
           if (Array.isArray(user.role) && (user.role.includes('MOTORISTA') || user.role.includes('ELETRICISTA'))) {
             this.users.push(user);
-          }
-        });
-
-        this.users.forEach((user) => {
-          if (Array.isArray(user.role) && user.role.includes('MOTORISTA')) {
-            this.drivers.push({
-              driverId: user.userId,
-              driverName: `${user.name} ${user.lastname}`,
-            });
-          }
-          if (Array.isArray(user.role) && user.role.includes('ELETRICISTA')) {
-            this.electricians.push({
-              electricianId: user.userId,
-              electricianName: `${user.name} ${user.lastname}`,
-            });
           }
         });
       }
@@ -194,15 +171,15 @@ export class TeamComponent {
   newTeam() {
     const team = {
       idTeam: '',
-        teamName: '',
-        driver: {driverId: '', driverName: ''},
-      electrician: {electricianId: '', electricianName: ''},
-        UFName: '',
-        cityName: '',
-        regionName: '',
-        plate: '',
-        depositName: '',
-        sel: false,
+      teamName: '',
+      memberIds: [] = [],
+      memberNames: [] = [],
+      UFName: '',
+      cityName: '',
+      regionName: '',
+      plate: '',
+      depositName: '',
+      sel: false,
     };
     this.teams.push(team);
   }

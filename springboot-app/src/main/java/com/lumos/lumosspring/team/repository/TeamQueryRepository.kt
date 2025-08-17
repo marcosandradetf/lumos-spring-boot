@@ -3,6 +3,7 @@ package com.lumos.lumosspring.team.repository
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Repository
@@ -22,19 +23,27 @@ class TeamQueryRepository(
             null
         }
     }
+
+    @Transactional
     fun renewTeam(teamId: Long, usersIds: List<UUID>) {
-        val sql = """
-        UPDATE app_user
-        SET team_id = CASE
-            WHEN user_id IN (:usersIds) THEN :teamId
-        END
-        WHERE team_id = :teamId
-    """.trimIndent()
+        var sql = """
+            UPDATE app_user
+            SET team_id = null
+            WHERE team_id = :teamId
+        """.trimIndent()
 
         val params = mapOf(
             "teamId" to teamId,
             "usersIds" to usersIds
         )
+
+        jdbcTemplate.update(sql, params)
+
+        sql = """
+            UPDATE app_user
+            SET team_id = :teamId
+            WHERE user_id in (:usersIds)
+        """.trimIndent()
 
         jdbcTemplate.update(sql, params)
     }

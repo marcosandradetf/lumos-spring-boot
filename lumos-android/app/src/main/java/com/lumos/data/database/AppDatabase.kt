@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.lumos.data.converter.Converters
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.DirectExecution
@@ -20,7 +22,7 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.domain.model.MaterialStock
-import com.lumos.domain.model.OperationalUsers
+import com.lumos.domain.model.OperationalUser
 import com.lumos.domain.model.OrderMaterial
 import com.lumos.domain.model.OrderMaterialItem
 import com.lumos.domain.model.PreMeasurement
@@ -64,12 +66,13 @@ import java.util.concurrent.Executors
         (MaintenanceStreet::class),
         (MaintenanceStreetItem::class),
 
-        (OperationalUsers::class),
+        (OperationalUser::class),
         (Team::class),
 
     ],
-    version = 14,
+    version = 15,
 )
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun preMeasurementDao(): PreMeasurementDao
     abstract fun contractDao(): ContractDao
@@ -563,16 +566,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_13_14 = object : Migration(12, 13) {
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("drop table pre_measurement_street")
                 db.execSQL("drop table pre_measurement_street_item")
 
                 db.execSQL(
                     """
-                        CREATE TABLE IF NOT EXISTS OperationalUsers (
+                        CREATE TABLE IF NOT EXISTS OperationalUser (
                             userId TEXT NOT NULL PRIMARY KEY,
-                            completeName TEXT NOT NULL;
+                            completeName TEXT NOT NULL
                         );
                 """.trimIndent()
                 )
@@ -583,10 +586,55 @@ abstract class AppDatabase : RoomDatabase() {
                             teamId INTEGER NOT NULL PRIMARY KEY,
                             depositName TEXT NOT NULL,
                             teamName TEXT NOT NULL,
-                            plateVehicle TEXT NOT NULL;
+                            plateVehicle TEXT NOT NULL
                         );
                 """.trimIndent()
                 )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS pre_measurement (
+                            preMeasurementId TEXT NOT NULL PRIMARY KEY,
+                            contractId INTEGER NOT NULL,
+                            contractor TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS pre_measurement_street (
+                            preMeasurementStreetId TEXT NOT NULL PRIMARY KEY,
+                            preMeasurementId TEXT NOT NULL,
+                            lastPower TEXT,
+                            latitude REAL,
+                            longitude REAL,
+                            address TEXT,
+                            photoUri TEXT,
+                            status TEXT
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS pre_measurement_street_item (
+                            preMeasurementStreetId TEXT NOT NULL,
+                            contractReferenceItemId INTEGER NOT NULL,
+                            preMeasurementId TEXT NOT NULL,
+                            measuredQuantity TEXT NOT NULL,
+                            PRIMARY KEY (preMeasurementStreetId, contractReferenceItemId, preMeasurementId)
+                        );
+                """.trimIndent()
+                )
+            }
+        }
+
+        private val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("alter table maintenance add column executorsIds TEXT")
+                db.execSQL("DROP INDEX IF EXISTS index_direct_execution_street_address")
+
             }
         }
 
@@ -611,6 +659,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_11_12,
                     MIGRATION_12_13,
                     MIGRATION_13_14,
+                    MIGRATION_14_15
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

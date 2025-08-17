@@ -19,7 +19,7 @@ interface QueueDao {
             SELECT * FROM sync_queue_entity
             WHERE (status = :pending OR status = :inProgress)
                OR (status = :failed AND attemptCount <= :maxAttempts)
-               ORDER BY priority ASC, createdAt ASC
+            ORDER BY priority ASC, createdAt ASC
         """
     )
     suspend fun getItemsToProcess(
@@ -32,7 +32,7 @@ interface QueueDao {
     @Query(
         """
             SELECT * FROM sync_queue_entity
-            WHERE type in (:types)
+            WHERE type in (:types) and attemptCount > 0
         """
     )
     suspend fun getItem(
@@ -71,11 +71,11 @@ interface QueueDao {
     @Query(
         """
             SELECT distinct type FROM sync_queue_entity
-            where status = :status or errorMessage is not null
+            where attemptCount > 0
             ORDER BY priority ASC, createdAt ASC
         """
     )
-    fun getFlowItemsToProcess(status: String = SyncStatus.FAILED): Flow<List<String>>
+    fun getFlowItemsToProcess(): Flow<List<String>>
 
     @Query(
         """
