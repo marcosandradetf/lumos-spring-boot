@@ -568,8 +568,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("drop table pre_measurement_street")
-                db.execSQL("drop table pre_measurement_street_item")
+                db.execSQL("DROP TABLE IF EXISTS pre_measurement_street")
+                db.execSQL("DROP TABLE IF EXISTS pre_measurement_street_item")
 
                 db.execSQL(
                     """
