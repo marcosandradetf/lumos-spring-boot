@@ -12,8 +12,8 @@
       <!-- Conteúdo principal -->
       <div class="flex space-x-2 max-h-screen overflow-auto">
         @if (authService.isLoggedIn$ | async) {
-          <div class="border rounded overflow-y-auto overflow-x-hidden max-h-screen">
-            <app-sidebar></app-sidebar>
+          <div *ngIf="menuOpen" class="border rounded overflow-y-auto overflow-x-hidden max-h-screen" #menu>
+            <app-sidebar ></app-sidebar>
           </div>
         }
         <div class="border rounded max-h-screen overflow-auto w-screen">

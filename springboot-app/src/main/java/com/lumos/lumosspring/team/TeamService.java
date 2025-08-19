@@ -9,11 +9,13 @@ import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.util.ErrorResponse;
+import com.lumos.lumosspring.util.Utils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,18 +30,20 @@ public class TeamService {
     private final DepositRepository depositRepository;
     private final NotificationService notificationService;
     private final TeamQueryRepository teamQueryRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public TeamService(TeamRepository teamRepository,
                        RegionRepository regionRepository,
                        DepositRepository depositRepository,
                        NotificationService notificationService,
-                       TeamQueryRepository teamQueryRepository) {
+                       TeamQueryRepository teamQueryRepository, JdbcTemplate jdbcTemplate) {
 
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.depositRepository = depositRepository;
         this.notificationService = notificationService;
         this.teamQueryRepository = teamQueryRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Cacheable("getAllTeams")
@@ -171,33 +175,9 @@ public class TeamService {
                     .body(new ErrorResponse("Erro: Foi enviado uma ou mais equipes sem identificação."));
         }
 
-        List<UUID> history = new ArrayList<>();
         for (TeamCreate t : teams) {
             if (!t.sel()) {
                 continue;
-            }
-
-            var driverId = t.driver().driverId();
-            var electricianId = t.electrician().electricianId();
-
-            if (history.contains(driverId)) {
-                throw new IllegalStateException(
-                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
-                );
-            } else if (history.contains(electricianId)) {
-                throw new IllegalStateException(
-                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
-                );
-            }
-
-            history.add(driverId);
-            history.add(electricianId);
-
-
-            if (t.electrician().electricianId().equals(t.driver().driverId())) {
-                throw new IllegalStateException(
-                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
-                );
             }
 
             var region = regionRepository.findRegionByRegionName(t.regionName());
@@ -212,30 +192,27 @@ public class TeamService {
 
             var team = teamRepository.findById(t.idTeam());
             if (team.isEmpty()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
+                throw new Utils.BusinessException(
                         STR."O time \{t.teamName()} não foi encontrado no sistema."
                 );
             }
 
             team.get().setTeamName(t.teamName());
-
             team.get().setPlateVehicle(t.plate());
             team.get().setUFName(t.UFName());
             team.get().setCityName(t.cityName());
             team.get().setRegion(region.orElse(null).getRegionId());
 
-            var driverCurrentTeamId = teamRepository.getCurrentTeamId(driverId).orElse(-1L);
-            var electricianCurrentTeamId = teamRepository.getCurrentTeamId(electricianId).orElse(-1L);
+            var depositId = team.get().getDepositId();
+            jdbcTemplate.update("""
+                        update deposit\s
+                        set deposit_name = :teamName
+                        where id_deposit = :depositId
+                   \s""", Map.of("teamName", t.teamName(), "depositId", depositId)
+            );
+
 
             teamRepository.save(team.get());
-
-            if(!driverCurrentTeamId.equals(t.idTeam())) {
-                notificationService.updateTeam(driverId, "Sua equipe foi alterada pelo Administrador", "Os dados da equipe anterior foram excluidos, sincronize novamente");
-            }
-            if(!electricianCurrentTeamId.equals(t.idTeam())) {
-                notificationService.updateTeam(driverId, "Sua equipe foi alterada pelo Administrador", "Os dados da equipe anterior foram excluidos, sincronize novamente");
-            }
 
         }
 
