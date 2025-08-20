@@ -16,8 +16,8 @@ android {
         applicationId = "com.thryon.lumos"
         minSdk = 26
         targetSdk = 36
-        versionCode = 18
-        versionName = "1.0.4"
+        versionCode = 19
+        versionName = "1.0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -55,6 +55,11 @@ android {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("boolean", "ROOM_LOGGING_ENABLED", "true")
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")

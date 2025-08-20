@@ -1,7 +1,7 @@
 package com.lumos.data.converter
 
 import androidx.room.TypeConverter
-import com.google.common.reflect.TypeToken
+import com.google.gson.reflect.TypeToken
 import com.google.gson.Gson
 
 class Converters {
@@ -19,3 +19,4 @@ class Converters {
         return gson.fromJson(data, type)
     }
 }
+
