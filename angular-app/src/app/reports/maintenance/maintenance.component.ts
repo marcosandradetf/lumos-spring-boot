@@ -9,6 +9,7 @@ import {DatePipe, NgForOf, NgIf} from '@angular/common';
 import {Toast} from 'primeng/toast';
 import {Menu} from 'primeng/menu';
 import {MenuItem} from 'primeng/api';
+import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
 
 @Component({
   selector: 'app-maintenance',
@@ -20,7 +21,8 @@ import {MenuItem} from 'primeng/api';
     SafeUrlPipe,
     DatePipe,
     Toast,
-    Menu
+    Menu,
+    PrimeConfirmDialogComponent
   ],
   providers: [SafeUrlPipe],
   templateUrl: './maintenance.component.html',
@@ -70,15 +72,27 @@ export class MaintenanceComponent implements OnInit {
     {
       label: 'Arquivar',
       icon: 'pi pi-folder-open',
-      command: () => this.actionArchive(),
+      command: () => {
+        this.action = "ARCHIVE";
+      },
+    },
+    {
+      label: 'Excluir',
+      icon: 'pi pi-trash',
+      command: () => {
+        this.action = "DELETE";
+      },
     },
   ];
 
-  selectedStep: any = null;
+  maintenanceId: string | null = null;
+  currentContractId: number | null = null;
+  action: string | null = null;
 
-  openContextMenu(event: MouseEvent, step: any) {
+  openContextMenu(event: MouseEvent, maintenanceId: string, contractId: number) {
     event.preventDefault();
-    this.selectedStep = step;
+    this.maintenanceId = maintenanceId;
+    this.currentContractId = contractId;
 
     // Abre o menu popup alinhado ao botão clicado
     this.menu?.show(event);
@@ -86,16 +100,45 @@ export class MaintenanceComponent implements OnInit {
 
   // Métodos para as ações do menu
   conventionalDataReport() {
-    this.loadPdf(this.selectedStep.maintenance_id, 'conventional');
+    this.loadPdf(this.maintenanceId!!, 'conventional');
   }
 
   ledDataReport() {
-    this.loadPdf(this.selectedStep.maintenance_id, 'led');
+    this.loadPdf(this.maintenanceId!!, 'led');
   }
 
-  actionArchive() {
-    this.utilService.showMessage("Recurso não implementado", "contrast", "Lumos - Relatórios")
+  actionArchiveOrDelete() {
+    this.loading = true;
+    const message = this.action === "ARCHIVE" ? "Relatório arquivado com sucesso"
+      : "Relatório excluido com sucesso";
+
+    this.reportService.archiveOrDelete(this.maintenanceId!!, this.action!!).subscribe({
+      next: () => {
+        const index = this.data.findIndex(c => c.contract.contract_id === this.currentContractId);
+        if (index !== -1) {
+          this.data[index].maintenances = this.data[index].maintenances
+            .filter(m => m.maintenance_id !== this.maintenanceId!!);
+
+          // remove o contrato se não restar nenhuma manutenção
+          if (this.data[index].maintenances.length === 0) {
+            this.data.splice(index, 1);
+          }
+        }
+
+        this.utilService.showMessage(message, "success", "Lumos - Relatórios")
+      },
+      error: err => {
+        this.utilService.showMessage(err.error.error ?? err.error.message, "info", "Lumos - Relatórios")
+        this.loading = false;
+        this.action = null;
+      },
+      complete: () => {
+        this.loading = false;
+        this.action = null;
+      }
+    });
   }
+
 
   constructor(private reportService: ReportService, private utilService: UtilsService, private title: Title) {
   }
@@ -122,7 +165,7 @@ export class MaintenanceComponent implements OnInit {
 
   public loadPdf(maintenanceId: string, type: string) {
     let desc = '';
-    if(type === 'led') desc = 'Led';
+    if (type === 'led') desc = 'Led';
     else desc = 'Convencional';
 
     this.loading = true;

@@ -47,5 +47,10 @@ class MaintenanceController(
         }
     }
 
+    @PostMapping("/maintenance/archive-or-delete")
+    fun archiveOrDelete(@RequestBody payload: Map<String, Any>): ResponseEntity<Any> {
+        return maintenanceService.archiveOrDelete(payload)
+    }
+
 
 }

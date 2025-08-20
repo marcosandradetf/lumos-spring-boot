@@ -17,6 +17,7 @@ import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -33,7 +34,8 @@ class MaintenanceService(
     private val teamQueryRepository: TeamQueryRepository,
     private val minioService: MinioService,
     private val objectMapper: ObjectMapper,
-    private val maintenanceExecutorRepository: MaintenanceExecutorRepository
+    private val maintenanceExecutorRepository: MaintenanceExecutorRepository,
+    private val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
 ) {
     @Transactional
     fun finishMaintenance(
@@ -471,6 +473,27 @@ class MaintenanceService(
         } catch (e: Exception) {
             throw RuntimeException(e.message, e.cause)
         }
+    }
+
+    fun archiveOrDelete(payload: Map<String, Any>): ResponseEntity<Any> {
+        val maintenanceId = UUID.fromString(payload["maintenanceId"].toString())
+        val action =
+            payload["action"] as? String ?: throw Utils.BusinessException("Tente novamente - ação não recebida")
+
+        if (action == "ARCHIVE") {
+            namedParameterJdbcTemplate.update(
+                """
+                    update maintenance 
+                    set status = 'ARCHIVED'
+                    WHERE maintenance_id = :maintenanceId
+                """.trimIndent(),
+                mapOf("maintenanceId" to maintenanceId)
+            )
+        } else {
+            throw Utils.BusinessException("Recurso em desenvolvimento - Previsão de término até às 17:00")
+        }
+
+        return ResponseEntity.noContent().build()
     }
 
 

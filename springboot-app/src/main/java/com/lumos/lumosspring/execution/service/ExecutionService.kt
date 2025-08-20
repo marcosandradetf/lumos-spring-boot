@@ -28,6 +28,7 @@ import org.springframework.http.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.jdbc.core.query
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -1460,6 +1461,54 @@ class ExecutionService(
         } catch (e: Exception) {
             throw RuntimeException(e.message, e.cause)
         }
+    }
+
+    @Transactional
+    fun cancelStep(payLoad: Map<String, Any>): ResponseEntity<Any> {
+        val ids = (payLoad["currentIds"] as? List<*>)
+            ?.mapNotNull { (it as? Number)?.toLong() }
+            ?: emptyList()
+        val type = payLoad["type"] as? String
+
+        try{
+            if(type == "DIRECT_EXECUTION") {
+                namedJdbc.update("""
+                    delete from direct_execution_item
+                    where direct_execution_id in (:ids)
+                """.trimIndent(),
+                    mapOf("ids" to ids)
+                )
+
+                namedJdbc.query(
+                    """
+                        delete from direct_execution
+                        where direct_execution_id in (:ids)
+                        returning reservation_management_id
+                """.trimIndent(),
+                    mapOf("ids" to ids)
+                ) {
+                    rs, _ ->
+
+                    val id = rs.getLong("reservation_management_id")
+                    namedJdbc.update("""
+                        delete from reservation_management
+                        where reservation_management.reservation_management_id = :id
+                    """.trimIndent(),
+                        mapOf("id" to id)
+                    )
+
+                }
+
+
+            } else {
+                throw Utils.BusinessException("Exclusão não implementada para instalações com pré-medição - Comunique ao fabricante do sistema.")
+            }
+
+        } catch (e: DataIntegrityViolationException) {
+            throw Utils.BusinessException(e.message)
+        }
+
+        return ResponseEntity.noContent().build()
     }
 
 }

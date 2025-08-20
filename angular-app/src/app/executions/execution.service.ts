@@ -69,4 +69,11 @@ export class ExecutionService {
     return this.http.post(this.baseUrl + "/execution/delegate-direct-execution", execution);
   }
 
+  cancelStep(currentIds: number[], type: string | null) {
+    return this.http.post(this.baseUrl + "/execution/cancel-step", {
+      currentIds: currentIds,
+      type: type
+    });
+  }
+
 }

@@ -14,7 +14,7 @@ import {ButtonModule} from 'primeng/button';
 })
 export class PrimeConfirmDialogComponent implements OnChanges {
   @Input() message: string = '';
-  @Input() type: 'confirm' | '' = '';
+  @Input() type: 'confirm' | '' = 'confirm';
 
   @Output() action = new EventEmitter<'accept' | 'reject'>();
 
@@ -34,6 +34,7 @@ export class PrimeConfirmDialogComponent implements OnChanges {
       message: this.message,
       header: 'Confirmação',
       icon: 'pi pi-exclamation-triangle',
+      
       closable: true,
       closeOnEscape: true,
       rejectButtonProps: {

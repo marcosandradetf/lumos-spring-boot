@@ -6,6 +6,7 @@ import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTOResponse
 import com.lumos.lumosspring.dto.direct_execution.SendDirectExecutionDto
 import com.lumos.lumosspring.dto.indirect_execution.*
 import com.lumos.lumosspring.execution.service.ExecutionService
+import com.lumos.lumosspring.util.Utils
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -22,7 +23,8 @@ class ExecutionController(
 //    fun delegate(@RequestBody delegateDTO: DelegateDTO): ResponseEntity<Any> = executionService.delegate(delegateDTO)
 
     @PostMapping("/execution/delegate-direct-execution")
-    fun delegateDirectExecution(@RequestBody execution: DirectExecutionDTO): ResponseEntity<Any> = executionService.delegateDirectExecution(execution)
+    fun delegateDirectExecution(@RequestBody execution: DirectExecutionDTO): ResponseEntity<Any> =
+        executionService.delegateDirectExecution(execution)
 
     @GetMapping("/execution/get-reservations/{userUUID}")
     fun getPendingReservesForStockist(@PathVariable userUUID: UUID): ResponseEntity<Any> =
@@ -71,10 +73,12 @@ class ExecutionController(
     ): ResponseEntity<Any> = executionService.uploadDirectExecution(photo, execution)
 
     @GetMapping("/mobile/execution/get-executions")
-    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<IndirectExecutionDTOResponse>> = executionService.getIndirectExecutions(uuid)
+    fun getIndirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<IndirectExecutionDTOResponse>> =
+        executionService.getIndirectExecutions(uuid)
 
     @GetMapping("/mobile/execution/get-direct-executions")
-    fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> = executionService.getDirectExecutions(uuid)
+    fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> =
+        executionService.getDirectExecutions(uuid)
 
     @PostMapping("/mobile/execution/finish-direct-execution/{directExecutionId}")
     fun finishDirectExecution(
@@ -85,9 +89,9 @@ class ExecutionController(
 
     @PostMapping("/execution/generate-report/{type}/{executionId}")
     fun generateReport(@PathVariable type: String, @PathVariable executionId: Long): ResponseEntity<ByteArray> {
-        if(type == "data") {
+        if (type == "data") {
             return executionService.generateDataReport(executionId)
-        } else if(type == "photos") {
+        } else if (type == "photos") {
             return executionService.generatePhotoReport(executionId)
         } else {
             return ResponseEntity.badRequest().body(ByteArray(0))
@@ -98,5 +102,15 @@ class ExecutionController(
     @GetMapping("/execution/get-finished")
     fun getGroupedMaintenances(): ResponseEntity<List<Map<String, JsonNode>>> =
         ResponseEntity.ok(executionService.getGroupedInstallations())
+
+    @PostMapping("/execution/cancel-step")
+    fun cancelStep(@RequestBody payload: Map<String, Any>): ResponseEntity<Any> {
+        return executionService.cancelStep(payload)
+    }
+
+    @PostMapping("/execution/archive-or-delete")
+    fun archiveOrDelete(@RequestBody payload: Map<String, Any>): ResponseEntity<Any> {
+        return executionService.cancelStep(payload)
+    }
 
 }

@@ -33,5 +33,11 @@ export class ReportService {
   }
 
 
+  archiveOrDelete(maintenanceId: string, action: string) {
+    return this.http.post(`${this.endpoint}/api/maintenance/archive-or-delete`, {
+      maintenanceId: maintenanceId,
+      action: action
+    });
+  }
 
 }

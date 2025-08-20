@@ -3,12 +3,13 @@ import {Title} from '@angular/platform-browser';
 import {ExecutionService} from '../../executions/execution.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {GetObjectRequest, SetObjectRequest, UtilsService} from '../../core/service/utils.service';
-import {ReserveDTOResponse} from '../../executions/executions.model';
+import {ReserveDTOResponse, ReserveStreetDTOResponse} from '../../executions/executions.model';
 import {NgForOf, NgIf} from '@angular/common';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {Router} from '@angular/router';
 import {Menu} from 'primeng/menu';
 import {MenuItem} from 'primeng/api';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-reservation-management',
@@ -17,7 +18,8 @@ import {MenuItem} from 'primeng/api';
     NgIf,
     LoadingComponent,
     NgForOf,
-    Menu
+    Menu,
+    Toast
   ],
   templateUrl: './reservation-management.component.html',
   styleUrl: './reservation-management.component.scss'
@@ -58,46 +60,40 @@ export class ReservationManagementComponent {
   @ViewChild('menu') menu: Menu | undefined;
   contextItems: MenuItem[] = [
     {
-      label: 'Cancelar e excluir solicitação',
-      icon: 'pi pi-close',
+      label: 'Cancelar e excluir etapa',
+      icon: 'pi pi-trash',
       command: () => this.cancelDirectManagement(),
     },
   ];
 
-  currentId: number | null = null;
+  description: string | null = null;
+  currentIds: number[] = [];
   type: string | null = null;
 
-  openContextMenu(event: MouseEvent, management: any) {
+  openContextMenu(event: MouseEvent, management: ReserveDTOResponse) {
     event.preventDefault();
-    if (management.directExecutionId !== null) {
-      this.type = 'directExecution';
-      this.currentId = management.directExecutionId;
-      console.log(management);
-    } else {
-      this.type = 'indirectExecution';
-      this.currentId = management.preMeasurementStreetId;
-    }
+    this.description = management ? management.description : null;
+    this.type = management.streets[0].comment;
+    this.currentIds = management.streets
+      .map(u => u.directExecutionId ?? u.preMeasurementStreetId)
+      .filter((id): id is number => id !== null && id !== undefined);
 
     // Abre o menu popup alinhado ao botão clicado
     this.menu?.show(event);
   }
 
   cancelDirectManagement() {
-    const command: SetObjectRequest = {
-      command: "delete",
-      tables: ['direct_execution_item', 'direct_execution', 'reservation_management'],
-      where: 'direct_execution_id',
-      equal: 118
-    }
-
-    this.utils.setObject(command).subscribe({
+    this.loading = true;
+    this.executionService.cancelStep(this.currentIds, this.type).subscribe({
       next: () => {
-        this.reservations = this.reservations.filter(r =>
-          r.streets.some(s => s.directExecutionId === this.currentId)
+        this.reservations = this.reservations.filter(reservation =>
+          reservation.description !== this.description
         );
-      }, error: (error) => {
-        this.utils.showMessage(error.error.message, 'error');
-        this.loading = false
+        this.utils.showMessage(this.description + " foi excluida.", "success", "Operação realizda com sucesso");
+      },
+      error: (error) => {
+        this.utils.showMessage(error.error.error ?? error.error.message , 'info', "Não foi possível excluir a etapa");
+        this.loading = false;
       },
       complete: () => {
         this.loading = false;
