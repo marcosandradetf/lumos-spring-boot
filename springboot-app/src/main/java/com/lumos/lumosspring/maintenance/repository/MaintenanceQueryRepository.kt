@@ -264,10 +264,10 @@ class MaintenanceQueryRepository(
                    ) AS executors
                 FROM (
                     SELECT DISTINCT ON (au.user_id)
-                           au.name,
-                           au.last_name,
-                           r.role_name
-                    FROM maintenance_executors me
+                           t.name,
+                           t.last_name,
+                           t.role_name
+                    FROM maintenance_executor me
                     JOIN app_user au ON au.user_id = me.user_id
                     JOIN user_role ur ON ur.id_user = au.user_id
                     JOIN role r ON r.role_id = ur.id_role
@@ -399,10 +399,10 @@ class MaintenanceQueryRepository(
                    ) AS executors
             FROM (
                 SELECT DISTINCT ON (au.user_id)
-                       au.name,
-                       au.last_name,
-                       r.role_name
-                FROM maintenance_executors me
+                       t.name,
+                       t.last_name,
+                       t.role_name
+                FROM maintenance_executor me
                 JOIN app_user au ON au.user_id = me.user_id
                 JOIN user_role ur ON ur.id_user = au.user_id
                 JOIN role r ON r.role_id = ur.id_role
