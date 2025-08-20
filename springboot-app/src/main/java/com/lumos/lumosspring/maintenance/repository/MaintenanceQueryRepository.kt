@@ -66,12 +66,12 @@ class MaintenanceQueryRepository(
                   'date_of_visit', m.date_of_visit,
                   'team', json_build_object(
                     'electrician', json_build_object(
-                      'name', e.name,
-                      'last_name', e.last_name
+                       'name', 'Campo temporariamente',
+                      'last_name', 'desativado'
                     ),
                     'driver', json_build_object(
-                      'name', d.name,
-                      'last_name', d.last_name
+                       'name', 'Campo temporariamente',
+                      'last_name', 'desativado'
                     )
                   )
                 )
@@ -80,9 +80,6 @@ class MaintenanceQueryRepository(
 
             FROM maintenance m
             JOIN contract c ON c.contract_id = m.contract_id
-            JOIN team t ON t.id_team = m.team_id
-            JOIN app_user e ON t.electrician_id = e.user_id
-            JOIN app_user d ON t.driver_id = d.user_id
             WHERE m.status = 'FINISHED'
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contract_id;
@@ -257,16 +254,16 @@ class MaintenanceQueryRepository(
             LEFT JOIN LATERAL (
             SELECT json_agg(
                    json_build_object(
-                        'name', au.name,
-                        'last_name', au.last_name,
-                        'role', r.role_name
+                        'name', t.name,
+                        'last_name', t.last_name,
+                        'role', t.role_name
                         )
                    ) AS executors
                 FROM (
                     SELECT DISTINCT ON (au.user_id)
-                           t.name,
-                           t.last_name,
-                           t.role_name
+                           au.name,
+                           au.last_name,
+                           r.role_name
                     FROM maintenance_executor me
                     JOIN app_user au ON au.user_id = me.user_id
                     JOIN user_role ur ON ur.id_user = au.user_id
@@ -391,26 +388,25 @@ class MaintenanceQueryRepository(
         JOIN company com ON com.id_company = 1
         LEFT JOIN LATERAL (
             SELECT json_agg(
-                       json_build_object(
-                           'name', au.name,
-                           'last_name', au.last_name,
-                           'role', r.role_name
-                       )
+                   json_build_object(
+                        'name', t.name,
+                        'last_name', t.last_name,
+                        'role', t.role_name
+                        )
                    ) AS executors
-            FROM (
-                SELECT DISTINCT ON (au.user_id)
-                       t.name,
-                       t.last_name,
-                       t.role_name
-                FROM maintenance_executor me
-                JOIN app_user au ON au.user_id = me.user_id
-                JOIN user_role ur ON ur.id_user = au.user_id
-                JOIN role r ON r.role_id = ur.id_role
-                WHERE me.maintenance_id = m.maintenance_id
-                ORDER BY au.user_id, r.role_name ASC
-            ) t
-        ) execs ON TRUE
-
+                FROM (
+                    SELECT DISTINCT ON (au.user_id)
+                           au.name,
+                           au.last_name,
+                           r.role_name
+                    FROM maintenance_executor me
+                    JOIN app_user au ON au.user_id = me.user_id
+                    JOIN user_role ur ON ur.id_user = au.user_id
+                    JOIN role r ON r.role_id = ur.id_role
+                    WHERE me.maintenance_id = m.maintenance_id
+                    ORDER BY au.user_id, r.role_name ASC
+                ) t
+            ) execs ON TRUE
         WHERE m.maintenance_id = :maintenanceId;
         """.trimIndent()
 

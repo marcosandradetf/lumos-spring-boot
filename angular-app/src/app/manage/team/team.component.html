@@ -52,7 +52,7 @@
         }
 
       </div>
-      <app-table>
+      <app-table [large]="true">
         <tr header>
           <th *ngIf="change"></th>
           <th hidden>Código</th>
@@ -101,7 +101,10 @@
                              optionLabel="name"
                              optionValue="userId"
                              placeholder="Selecionar Colaboradores"
-                             [maxSelectedLabels]="3" class="w-full md:w-80" />
+                             class="w-full md:w-80">
+              </p-multiselect>
+
+
 
             </td>
 

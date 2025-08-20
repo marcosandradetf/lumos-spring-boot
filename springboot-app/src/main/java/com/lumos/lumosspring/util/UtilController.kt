@@ -28,6 +28,13 @@ class UtilController(
         val equal: Any
     )
 
+    data class SetEntity(
+        val command: String,
+        val tables: List<String>,
+        val where: String,
+        val equal: Any
+    )
+
     @PostMapping("/util/generic/get-object")
     fun getObject(@RequestBody request: GetObjectRequest): ResponseEntity<Any> {
         val result = util.getObject(request)

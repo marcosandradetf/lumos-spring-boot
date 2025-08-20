@@ -5,6 +5,7 @@ import com.lumos.lumosspring.notifications.service.NotificationService;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import com.lumos.lumosspring.stock.repository.DepositRepository;
 import com.lumos.lumosspring.team.entities.Region;
+import com.lumos.lumosspring.team.entities.Team;
 import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.TeamRepository;
@@ -13,12 +14,13 @@ import com.lumos.lumosspring.util.Utils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.StreamSupport;
@@ -28,22 +30,19 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final RegionRepository regionRepository;
     private final DepositRepository depositRepository;
-    private final NotificationService notificationService;
     private final TeamQueryRepository teamQueryRepository;
-    private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public TeamService(TeamRepository teamRepository,
                        RegionRepository regionRepository,
                        DepositRepository depositRepository,
-                       NotificationService notificationService,
-                       TeamQueryRepository teamQueryRepository, JdbcTemplate jdbcTemplate) {
+                       TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.depositRepository = depositRepository;
-        this.notificationService = notificationService;
         this.teamQueryRepository = teamQueryRepository;
-        this.jdbcTemplate = jdbcTemplate;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     @Cacheable("getAllTeams")
@@ -94,65 +93,50 @@ public class TeamService {
                     .body(new ErrorResponse("Erro: Foi enviado apenas equipes já existentes no sistema!"));
         }
 
-//        for (TeamCreate t : teams) {
-//            if (t.idTeam() != 0) {
-//                continue;
-//            }
-//
-//            if (teamRepository.findByTeamName(t.teamName()).isPresent()) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        STR."Equipe \{t.teamName()} já existe no sistema."
-//                );
-//            }
-//
-//            var driverId = t.driver().driverId();
-//            var electricianId = t.electrician().electricianId();
-//
-//
-//            if (t.electrician().electricianId().equals(t.driver().driverId())) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        STR."O motorista e o eletricista da equipe \{t.teamName()} não podem ser a mesma pessoa."
-//                );
-//            }
-//
-//            var hasTeamExists = teamRepository.findByDriverId(driverId);
-//            if (hasTeamExists.isPresent()) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        STR."Motorista informado para equipe \{t.teamName()} está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
-//                );
-//            }
-//
-//            hasTeamExists = teamRepository.findByElectricianId(electricianId);
-//            if (hasTeamExists.isPresent()) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        STR."Eletricista informado para equipe \{t.teamName()}  está cadastrado na equipe \{hasTeamExists.get().getTeamName()}"
-//                );
-//            }
-//
-//            var region = regionRepository.findRegionByRegionName(t.regionName());
-//            if (region.isEmpty()) {
-//                var newRegion = new Region(
-//                        null,
-//                        t.regionName()
-//                );
-//                regionRepository.save(newRegion);
-//                region = regionRepository.findRegionByRegionName(t.regionName());
-//            }
-//
-//            var newTeam = new Team();
-//            newTeam.setTeamName(t.teamName());
-//
-//            newTeam.setPlateVehicle(t.plate());
-//            newTeam.setUFName(t.UFName());
-//            newTeam.setCityName(t.cityName());
-//            newTeam.setRegion(region.orElse(null).getRegionId());
-//
-//            teamRepository.save(newTeam);
-//        }
+        for (TeamCreate t : teams) {
+            if (t.idTeam() != 0) {
+                continue;
+            }
+
+            var region = regionRepository.findRegionByRegionName(t.regionName())
+                    .orElseGet(() -> regionRepository.save(new Region(null, t.regionName())));
+
+            var newTeam = new Team();
+            newTeam.setTeamName(t.teamName());
+
+            newTeam.setPlateVehicle(t.plate());
+            newTeam.setUFName(t.UFName());
+            newTeam.setCityName(t.cityName());
+            newTeam.setRegion(region.getRegionId());
+
+            var deposit = new Deposit();
+
+            deposit.setRegion(region.getRegionId());
+            deposit.setDepositCity(t.cityName());
+            deposit.setDepositName(t.teamName());
+            deposit.setTruck(true);
+            deposit.setCompanyId(1L);
+
+            try {
+                deposit = depositRepository.save(deposit);
+                newTeam.setDepositId(deposit.getIdDeposit());
+                newTeam = teamRepository.save(newTeam);
+
+                updateTeam(
+                        new TeamEdit(
+                                newTeam.getIdTeam(),
+                                t.membersIds()
+                        )
+                );
+            } catch (DuplicateKeyException ex) {
+                throw new Utils.BusinessException(
+                        "Não é possível salvar: já existe uma equipe com esse nome e placa de veículo."
+                );
+            } catch (DataAccessException ex) {
+                // pega erros do JDBC sem ser duplicidade
+                throw new Utils.BusinessException("Erro ao atualizar o depósito: " + ex.getMessage());
+            }
+        }
 
         return this.getAll();
     }
@@ -180,39 +164,46 @@ public class TeamService {
                 continue;
             }
 
-            var region = regionRepository.findRegionByRegionName(t.regionName());
-            if (region.isEmpty()) {
-                var newRegion = new Region(
-                        null,
-                        t.regionName()
-                );
-                regionRepository.save(newRegion);
-                region = regionRepository.findRegionByRegionName(t.regionName());
-            }
+            var region = regionRepository.findRegionByRegionName(t.regionName())
+                    .orElseGet(() -> regionRepository.save(new Region(null, t.regionName())));
 
-            var team = teamRepository.findById(t.idTeam());
-            if (team.isEmpty()) {
+
+            var team = teamRepository.findById(t.idTeam())
+                    .orElseThrow(() -> new Utils.BusinessException(
+                            "O time %s não foi encontrado no sistema.".formatted(t.teamName())
+                    ));
+
+            team.setTeamName(t.teamName());
+            team.setPlateVehicle(t.plate());
+            team.setUFName(t.UFName());
+            team.setCityName(t.cityName());
+            team.setRegion(region.getRegionId());
+
+            var depositId = team.getDepositId();
+
+
+            try {
+                teamRepository.save(team);
+                namedParameterJdbcTemplate.update("""
+                            UPDATE deposit
+                            SET deposit_name = :teamName
+                            WHERE id_deposit = :depositId
+                        """, Map.of("teamName", t.teamName(), "depositId", depositId));
+
+                updateTeam(
+                        new TeamEdit(
+                                t.idTeam(),
+                                t.membersIds()
+                        )
+                );
+            } catch (DuplicateKeyException ex) {
                 throw new Utils.BusinessException(
-                        STR."O time \{t.teamName()} não foi encontrado no sistema."
+                        "Não é possível salvar: já existe uma equipe com esse nome e placa de veículo."
                 );
+            } catch (DataAccessException ex) {
+                // pega erros do JDBC sem ser duplicidade
+                throw new Utils.BusinessException("Erro ao atualizar o depósito: " + ex.getMessage());
             }
-
-            team.get().setTeamName(t.teamName());
-            team.get().setPlateVehicle(t.plate());
-            team.get().setUFName(t.UFName());
-            team.get().setCityName(t.cityName());
-            team.get().setRegion(region.orElse(null).getRegionId());
-
-            var depositId = team.get().getDepositId();
-            jdbcTemplate.update("""
-                        update deposit\s
-                        set deposit_name = :teamName
-                        where id_deposit = :depositId
-                   \s""", Map.of("teamName", t.teamName(), "depositId", depositId)
-            );
-
-
-            teamRepository.save(team.get());
 
         }
 

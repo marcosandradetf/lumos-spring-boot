@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,12 +23,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -46,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.lumos.R
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 
@@ -478,20 +478,15 @@ fun UpdateModal(
     onRestart: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val iconId = context.applicationInfo.icon
-    val appIcon = if (iconId != 0) painterResource(id = iconId) else null
-
     AlertDialog(
         onDismissRequest = { /* bloquear dismiss para não fechar sozinho */ },
         shape = RoundedCornerShape(12.dp),
         icon = {
-            appIcon?.let {
-                Icon(
-                    painter = it,
-                    contentDescription = "App Icon",
-                    modifier = Modifier.size(48.dp)
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.ic_lumos), // Agora no drawable
+                contentDescription = "Ícone do App",
+                modifier = Modifier.size(50.dp)
+            )
         },
         title = {
             Text(
@@ -604,6 +599,15 @@ fun UserAvatar(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-//    NoInternet()
+    UpdateModal(
+        context = LocalContext.current,
+        progress = 100,
+        onRestart = {
+
+        },
+        onDismiss = {
+
+        }
+    )
 
 }

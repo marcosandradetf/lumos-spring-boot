@@ -471,10 +471,10 @@ export class ReservationManagementSelectComponent {
     centralMaterialStockId: number | null,
     truckMaterialStockId: number | null,
     materialId: number | null,
-    materialQuantity: number,
+    materialQuantity: string,
   }[] | undefined): number {
     if (materials) {
-      return materials.reduce((total, m) => total + m.materialQuantity, 0);
+      return materials.reduce((total, m) => total + Number(m.materialQuantity), 0);
     } else return 0;
   }
 

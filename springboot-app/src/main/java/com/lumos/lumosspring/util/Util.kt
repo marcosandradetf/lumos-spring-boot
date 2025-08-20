@@ -2,16 +2,16 @@ package com.lumos.lumosspring.util
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.Normalizer
 import java.text.NumberFormat
-import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -20,7 +20,8 @@ import java.util.*
 class Util(
     private val jwtDecoder: JwtDecoder,
     private val jdbcTemplate: JdbcTemplate,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
 ) {
     fun convertToBigDecimal(value: String?): BigDecimal? {
         if (value == null) {
@@ -91,18 +92,37 @@ class Util(
         "team" to setOf("id_team", "team_name", "team_phone", "driver_id", "electrician_id"),
         "material_reservation" to setOf("pre_measurement_street_id", "status"),
         "pre_measurement_street" to setOf("pre_measurement_street_id", "street_status"),
-    )
+
+        "maintenance" to setOf("maintenance_id"),
+        "maintenance_street" to setOf("maintenance_id"),
+        "maintenance_street_item" to setOf("maintenance_id"),
+        "maintenance_executor" to setOf("maintenance_id"),
+
+        "direct_execution" to setOf("direct_execution_id"),
+        "direct_execution_item" to setOf("direct_execution_id"),
+        "reservation_management" to setOf("reservation_management_id"),
+
+        )
 
     val columnTypesByTable = mapOf(
         "app_user" to mapOf(
             "user_id" to "uuid",
             "team_id" to "number"
         ),
-        "team" to mapOf(
-            "driver_id" to "uuid",
-            "electrician_id" to "uuid",
+
+        "maintenance" to mapOf(
+            "maintenance_id" to "uuid",
+        ),
+
+        "maintenance_street" to mapOf(
+            "maintenance_id" to "uuid",
+        ),
+
+        "maintenance_street_item" to mapOf(
+            "maintenance_id" to "uuid",
+        ),
+
         )
-    )
 
     fun getObject(request: UtilController.GetObjectRequest): List<Map<String, Any>> {
         val allowedColumns = allowedColumnsByTable[request.table.lowercase()]
@@ -132,6 +152,7 @@ class Util(
         }
     }
 
+
     fun updateEntity(request: UtilController.UpdateEntity) {
         val allowedColumns = allowedColumnsByTable[request.table.lowercase()]
             ?: throw IllegalArgumentException("Tabela não permitida: ${request.table}")
@@ -145,7 +166,8 @@ class Util(
 
         if (!safeNameRegex.matches(request.table) ||
             !safeNameRegex.matches(request.field) ||
-            !safeNameRegex.matches(request.where)) {
+            !safeNameRegex.matches(request.where)
+        ) {
             throw IllegalArgumentException("Identificadores inválidos")
         }
 
@@ -156,7 +178,6 @@ class Util(
 
         jdbcTemplate.update(sql, request.set, request.equal)
     }
-
 
 
 }

@@ -39,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,10 +61,10 @@ import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.UpdateModal
+import com.lumos.utils.Utils.findActivity
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.DirectExecutionViewModel
 import com.lumos.viewmodel.IndirectExecutionViewModel
-import com.lumos.utils.Utils.findActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.system.exitProcess
@@ -127,14 +126,20 @@ fun HomeScreen(
         }
     ) { modifier, showSnackBar ->
 
-        suspend fun checkUpdate(buttonClick: Boolean = false) {
+        suspend fun checkUpdate(
+            buttonClick: Boolean = false,
+            updateType: Int = AppUpdateType.IMMEDIATE // padrão
+        ) {
             val appUpdateInfo = appUpdateManager.appUpdateInfo.await()
-            val options = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+            val options = AppUpdateOptions.newBuilder(updateType).build()
 
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
-                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+                appUpdateInfo.isUpdateTypeAllowed(updateType)
             ) {
-                updateModal = true // mostrar modal de atualização em progresso
+                if (updateType == AppUpdateType.FLEXIBLE) {
+                    // mostra modal se for flexible
+                    updateModal = true
+                }
 
                 val listener = object : InstallStateUpdatedListener {
                     override fun onStateUpdate(state: InstallState) {
@@ -143,14 +148,25 @@ fun HomeScreen(
                                 appUpdateManager.unregisterListener(this)
                                 updateModal = false
                                 updateCompleted = true
+
+                                if (updateType == AppUpdateType.FLEXIBLE) {
+                                    // aqui você pode pedir para o usuário reiniciar
+                                    showSnackBar(
+                                        "Atualização instalada. Reinicie o app.",
+                                        null,
+                                        null
+                                    )
+                                }
                             }
 
                             InstallStatus.DOWNLOADING,
                             InstallStatus.INSTALLING -> {
-                                val progress = if (state.totalBytesToDownload() > 0)
-                                    (state.bytesDownloaded() * 100 / state.totalBytesToDownload()).toInt()
-                                else 0
-                                updateProgress = progress
+                                if (updateType == AppUpdateType.FLEXIBLE) {
+                                    val progress = if (state.totalBytesToDownload() > 0)
+                                        (state.bytesDownloaded() * 100 / state.totalBytesToDownload()).toInt()
+                                    else 0
+                                    updateProgress = progress
+                                }
                             }
 
                             InstallStatus.FAILED -> {
@@ -180,8 +196,8 @@ fun HomeScreen(
             } else if (buttonClick) {
                 noUpdateModal = true
             }
-
         }
+
 
         LaunchedEffect(Unit) {
             val now = System.currentTimeMillis()

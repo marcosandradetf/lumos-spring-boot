@@ -7,11 +7,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.lumos.MainActivity
 import com.lumos.R
 import com.lumos.api.ApiService
@@ -147,7 +150,7 @@ class SyncQueueWorker(
     }
 
     override suspend fun doWork(): Result {
-        setForeground(ForegroundInfo(1, createNotification()))
+        setForeground(foregroundInfo())
 
         val uuid = secureStorage.getUserUuid() ?: return Result.failure()
         val pendingItems = queueDao.getItemsToProcess()
@@ -188,6 +191,29 @@ class SyncQueueWorker(
         return Result.success()
     }
 
+    private fun foregroundInfo(): ForegroundInfo {
+        val channelId = "sync_worker_channel"
+        val nm = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.createNotificationChannel(
+            NotificationChannel(
+                channelId,
+                "Sincronização",
+                NotificationManager.IMPORTANCE_LOW
+            )
+        )
+
+        val notification = NotificationCompat.Builder(applicationContext, channelId)
+            .setContentTitle("Sincronizando dados")
+            .setContentText("Enviando informações ao servidor…")
+            .setSmallIcon(R.drawable.ic_lumos) // ícone válido
+            .setOngoing(true)
+            .build()
+
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
+
+        return ForegroundInfo(1001, notification, type)
+    }
 
     private suspend fun postGeneric(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
@@ -229,31 +255,7 @@ class SyncQueueWorker(
         }
     }
 
-    private fun createNotification(): Notification {
-        val channelId = "sync_worker_channel"
-        val channelName = "Sync Worker Notifications"
 
-
-        val channel = NotificationChannel(
-            channelId,
-            channelName,
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = "Notificações do serviço de sincronização"
-        }
-
-        val notificationManager =
-            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
-
-
-        return NotificationCompat.Builder(applicationContext, channelId)
-            .setContentTitle("Sincronizando dados")
-            .setContentText("O aplicativo está sincronizando dados em segundo plano.")
-            .setSmallIcon(R.drawable.ic_lumos) // ícone precisa existir!
-            .setOngoing(true)
-            .build()
-    }
 
 
     private suspend fun postPreMeasurement(item: SyncQueueEntity, uuid: String): Result {
@@ -535,6 +537,7 @@ class SyncQueueWorker(
                 title = "Erro ao enviar pré-mediçao",
                 body = "Verifique o erro em Perfil - Sincronizações",
             )
+            FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
     }
@@ -628,6 +631,9 @@ class SyncQueueWorker(
                 title = "Falha ao rua finalizada da manutenção",
                 body = "Clique para saber mais",
             )
+
+            FirebaseCrashlytics.getInstance().recordException(e)
+
             Result.failure()
         }
 
@@ -675,6 +681,7 @@ class SyncQueueWorker(
                 title = "Falha ao enviar manutenção",
                 body = "Clique para saber mais",
             )
+            FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
 
@@ -719,6 +726,7 @@ class SyncQueueWorker(
                 title = "Erro ao enviar execução",
                 body = "Verifique o erro no caminho Mais -> Perfil -> Tarefas em Sincronizações",
             )
+            FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
     }
@@ -832,6 +840,9 @@ class SyncQueueWorker(
                     time = Utils.dateTime.toString(),
                     type = NotificationType.WARNING
                 )
+
+                FirebaseCrashlytics.getInstance().recordException(Exception("$message - $inProgressItem: $message"))
+
                 Result.retry()
             }
 
@@ -854,7 +865,7 @@ class SyncQueueWorker(
                 )
 
                 // Pode enviar para um sistema de logs, Crashlytics etc
-//                Crashlytics.logException(Exception("Erro desconhecido na sync: $inProgressItem"))
+                FirebaseCrashlytics.getInstance().recordException(Exception("$message - $inProgressItem: $message"))
 
                 return Result.retry()
             }

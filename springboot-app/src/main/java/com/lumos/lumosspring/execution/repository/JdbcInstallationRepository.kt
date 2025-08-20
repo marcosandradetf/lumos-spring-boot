@@ -26,12 +26,12 @@ class JdbcInstallationRepository(
                   'type', 'direct_execution',
                   'team', json_build_object(
                     'electrician', json_build_object(
-                      'name', e.name,
-                      'last_name', e.last_name
+                       'name', 'Campo temporariamente',
+                      'last_name', 'desativado'
                     ),
                     'driver', json_build_object(
-                      'name', d.name,
-                      'last_name', d.last_name
+                       'name', 'Campo temporariamente',
+                      'last_name', 'desativado'
                     )
                   )
                 )
@@ -39,9 +39,6 @@ class JdbcInstallationRepository(
               ) AS steps
             FROM direct_execution de
             JOIN contract c ON c.contract_id = de.contract_id
-            JOIN team t ON t.id_team = de.team_id
-            JOIN app_user e ON t.electrician_id = e.user_id
-            JOIN app_user d ON t.driver_id = d.user_id
             WHERE de.direct_execution_status = 'FINISHED'
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contract_id;            
@@ -197,8 +194,6 @@ class JdbcInstallationRepository(
         JOIN contract c ON c.contract_id = de.contract_id
         JOIN company com ON com.id_company = 1
         JOIN team t ON t.id_team = de.team_id
-        JOIN app_user e ON t.electrician_id = e.user_id
-        JOIN app_user d ON t.driver_id = d.user_id
         WHERE de.direct_execution_id = :directExecutionId;
         """.trimIndent()
 

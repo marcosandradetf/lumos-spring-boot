@@ -60,7 +60,7 @@ export class UtilsService {
     return str.replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  
+
   private capitalizeWithAcronyms(str: string): string {
     const words = str.split(' ');
     const lastIndex = words.length - 1;
@@ -209,8 +209,12 @@ export class UtilsService {
     }
   }
 
-  getObject<T>(params: GetObjectRequest): Observable<T> {
-    return this.http.post<T>(environment.springboot + '/api/util/generic/get-object', params);
+  getObject<T>(body: GetObjectRequest): Observable<T> {
+    return this.http.post<T>(environment.springboot + '/api/util/generic/get-object', body);
+  }
+
+  setObject(body: SetObjectRequest) {
+    return this.http.post(environment.springboot + '/api/util/generic/set-object', body);
   }
 
 
@@ -221,4 +225,11 @@ export interface GetObjectRequest {
   table: string;
   where: string;
   equal: string[] | number[];
+}
+
+export interface SetObjectRequest {
+  command: string;
+  tables: string[];
+  where: string;
+  equal: any;
 }
