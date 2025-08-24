@@ -1429,8 +1429,8 @@ class ExecutionService(
                     </p>
 
                     <!-- Coordenadas -->
-                    ${
-                line["latitude"]?.asText().let { latitude ->
+                ${
+                    if (line["latitude"].asText() != "null")
                     """
                                 <p style="
                                     margin: 0;
@@ -1440,11 +1440,11 @@ class ExecutionService(
                                     color: #333;
                                     border-bottom: 1px solid #ccc;
                                   ">
-                                    Coordenadas - Latitude: $latitude, Longitude: ${line["longitude"].asText()}
+                                    Coordenadas - Latitude: ${line["latitude"].asText()}, Longitude: ${line["longitude"].asText()}
                                 </p>
                             """.trimIndent()
+                    else ""
                 }
-            }
 
                     <!-- Foto -->
                     <img

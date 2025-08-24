@@ -253,10 +253,10 @@ class MaintenanceService(
             .replace("{{NO_PENDING}}", if (!hasPending) "checked" else "")
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
-            .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")))
+            .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yy 'às' HH:mm")))
             .replace(
                 "{{SIGN_DATE}}",
-                if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")) else "Sem registro"
+                if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yy 'às' HH:mm")) else "Sem registro"
             )
             .replace("{{TEAM_ROWS}}", teamRows)
 
@@ -426,10 +426,10 @@ class MaintenanceService(
             .replace("{{NO_PENDING}}", if (!hasPending) "checked" else "")
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
-            .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")))
+            .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yy 'às' HH:mm")))
             .replace(
                 "{{SIGN_DATE}}",
-                if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")) else "Sem registro"
+                if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yy 'às' HH:mm")) else "Sem registro"
             )
             .replace("{{TEAM_ROWS}}", teamRows)
 
