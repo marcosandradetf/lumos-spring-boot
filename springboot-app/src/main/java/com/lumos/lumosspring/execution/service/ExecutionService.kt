@@ -1336,7 +1336,7 @@ class ExecutionService(
             val items = line[2]  // ArrayNode
 
             val date = Utils.convertToSaoPauloLocal(Instant.parse(line[3].asText()))
-                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                .format(DateTimeFormatter.ofPattern("dd/MM/yy"))
             val supplier = line[4].asText()
 
             if (index == 0) {
@@ -1370,7 +1370,7 @@ class ExecutionService(
             .replace("{{STREET_LINES}}", streetLinesHtml)
             .replace("{{STREET_FOOTER}}", streetFooterHtml)
             .replace("{{COLUMN_LENGTH}}", (columnsList.size + 1).toString())
-            .replace("{{EXECUTION_DATE}}", if (dates != null && dates?.contains("null") == true) dates!! else "")
+            .replace("{{EXECUTION_DATE}}", if (dates != null) dates!! else "")
 
         try {
             val response = sendHtmlToPuppeteer(templateHtml)
