@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -1335,6 +1336,7 @@ class ExecutionService(
             val items = line[2]  // ArrayNode
 
             val date = Utils.convertToSaoPauloLocal(Instant.parse(line[3].asText()))
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
             val supplier = line[4].asText()
 
             if (index == 0) {
@@ -1428,8 +1430,8 @@ class ExecutionService(
 
                     <!-- Coordenadas -->
                     ${
-                        line["latitude"]?.asText().let { latitude ->
-                            """
+                line["latitude"]?.asText().let { latitude ->
+                    """
                                 <p style="
                                     margin: 0;
                                     padding: 6px 12px;
@@ -1441,8 +1443,8 @@ class ExecutionService(
                                     Coordenadas - Latitude: $latitude, Longitude: ${line["longitude"].asText()}
                                 </p>
                             """.trimIndent()
-                        }
-                    }
+                }
+            }
 
                     <!-- Foto -->
                     <img

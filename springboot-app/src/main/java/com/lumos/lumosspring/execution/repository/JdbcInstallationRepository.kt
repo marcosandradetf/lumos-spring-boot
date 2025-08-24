@@ -163,7 +163,7 @@ class JdbcInstallationRepository(
 				        )
 				        FROM items_by_street_distinct ci
 				      ),
-				      coalesce(to_char(des.finished_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY "às" HH24:MI'), ''),
+				      des.finished_at,
 				      coalesce(des.current_supply, '')
 				    ) AS street_row
 				    FROM direct_execution_street des

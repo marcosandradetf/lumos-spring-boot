@@ -218,11 +218,15 @@ class MaintenanceService(
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
         val hasPending = maintenance["pending_points"].asBoolean()
-        val signDate = Utils.convertToSaoPauloLocal(
-            Instant.parse(
-                maintenance["sign_date"]?.asText() ?: maintenance["date_of_visit"].asText()
-            )
-        )
+
+        val signDate =
+            if (maintenance["sign_date"].asText() != "null")
+                Utils.convertToSaoPauloLocal(
+                    Instant.parse(maintenance["sign_date"].asText())
+                )
+            else
+                dateOfVisit
+
 
         templateHtml = templateHtml
             .replace("{{LOGO_IMAGE}}", companyLink)
@@ -388,11 +392,13 @@ class MaintenanceService(
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
-        val signDate = Utils.convertToSaoPauloLocal(
-            Instant.parse(
-                maintenance["sign_date"]?.asText() ?: maintenance["date_of_visit"].asText()
-            )
-        )
+        val signDate =
+            if (maintenance["sign_date"].asText() != "null")
+                Utils.convertToSaoPauloLocal(
+                    Instant.parse(maintenance["sign_date"].asText())
+                )
+            else
+                dateOfVisit
         val hasPending = maintenance["pending_points"].asBoolean()
 
         templateHtml = templateHtml
