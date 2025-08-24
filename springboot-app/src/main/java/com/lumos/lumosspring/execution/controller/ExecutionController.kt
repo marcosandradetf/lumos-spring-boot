@@ -110,7 +110,7 @@ class ExecutionController(
 
     @PostMapping("/execution/archive-or-delete")
     fun archiveOrDelete(@RequestBody payload: Map<String, Any>): ResponseEntity<Any> {
-        return executionService.cancelStep(payload)
+        return executionService.archiveOrDelete(payload)
     }
 
 }

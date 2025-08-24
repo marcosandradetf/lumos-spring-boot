@@ -129,7 +129,7 @@ class MaintenanceQueryRepository(
                 'contractor', c.contractor,
                 'cnpj', c.cnpj,
                 'address', c.address,
-                'phone', c.phone
+                'phone', COALESCE(c.phone, '')
               ) AS contract,
 
               json_build_object(
@@ -324,7 +324,7 @@ class MaintenanceQueryRepository(
             'contractor', c.contractor,
             'cnpj', c.cnpj,
             'address', c.address,
-            'phone', c.phone
+            'phone', COALESCE(c.phone, '')
           ) AS contract,
 
           json_build_object(

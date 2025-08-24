@@ -87,6 +87,12 @@ object Utils {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     class BusinessException(message: String?) : RuntimeException(message)
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    class BusinessExceptionObjectResponse(
+        val data: Any
+    ) : RuntimeException()
+
+
     @RestControllerAdvice
     class GlobalExceptionHandler {
 
@@ -95,7 +101,15 @@ object Utils {
         fun handleBusinessException(ex: BusinessException): Map<String, String> {
             return mapOf("error" to (ex.message ?: "Erro de negócio"))
         }
+
+        @ExceptionHandler(BusinessExceptionObjectResponse::class)
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        fun handleBusinessExceptionObject(ex: BusinessExceptionObjectResponse): Any {
+            return ex.data  // pode ser List, Map, DTO, etc.
+        }
     }
+
+
 
 
 

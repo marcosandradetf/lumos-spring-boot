@@ -34,7 +34,7 @@ export class PrimeConfirmDialogComponent implements OnChanges {
       message: this.message,
       header: 'Confirmação',
       icon: 'pi pi-exclamation-triangle',
-      
+
       closable: true,
       closeOnEscape: true,
       rejectButtonProps: {

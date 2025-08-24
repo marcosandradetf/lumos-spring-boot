@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -9,7 +10,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="true"/>
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <queries>
@@ -27,8 +31,7 @@
         android:roundIcon="@mipmap/ic_lumos"
         android:supportsRtl="true"
         android:theme="@style/Theme.Lumos"
-        android:usesCleartextTraffic="true"
-        >
+        android:usesCleartextTraffic="true">
 
 
         <service
@@ -39,12 +42,18 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
 
         <!--noinspection LockedOrientationActivity-->
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="portrait"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Lumos">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -55,7 +64,7 @@
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="default_channel_id"/>
+            android:value="default_channel_id" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -68,7 +77,6 @@
         </provider>
 
     </application>
-
 
 
 </manifest>

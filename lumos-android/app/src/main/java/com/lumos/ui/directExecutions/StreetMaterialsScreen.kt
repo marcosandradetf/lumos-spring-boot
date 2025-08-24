@@ -132,8 +132,19 @@ fun StreetMaterialScreen(
         if (directExecutionViewModel.sameStreet) {
             directExecutionViewModel.street =
                 directExecutionViewModel.street?.copy(
-                    address = currentAddress
+                    address = currentAddress,
                 )
+
+            coordinates.execute { latitude, longitude ->
+                if (latitude != null && longitude != null) {
+                    directExecutionViewModel.street =
+                        directExecutionViewModel.street?.copy(
+                            latitude = latitude,
+                            longitude = longitude
+                        )
+                }
+            }
+
         } else if (directExecutionViewModel.reserves.isNotEmpty()) {
             directExecutionViewModel.loadingCoordinates = true
             coordinates.execute { latitude, longitude ->
@@ -149,7 +160,9 @@ fun StreetMaterialScreen(
 
                         directExecutionViewModel.street =
                             directExecutionViewModel.street?.copy(
-                                address = currentAddress
+                                address = currentAddress,
+                                latitude = latitude,
+                                longitude = longitude
                             )
                     }
                     directExecutionViewModel.loadingCoordinates = false

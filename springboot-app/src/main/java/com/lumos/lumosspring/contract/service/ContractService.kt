@@ -233,8 +233,9 @@ class ContractService(
             val contractItemId: Long,
             val description: String,
             val unitPrice: String,
-            val contractedQuantity: Double,
-            val executedQuantity: Double,
+            val contractedQuantity: BigDecimal,
+            val executedQuantity: BigDecimal,
+            val reservedQuantity: BigDecimal,
             val linking: String?,
             val nameForImport: String?,
             val type: String
@@ -244,7 +245,13 @@ class ContractService(
             namedJdbc = namedJdbc,
             """
                 select ci.contract_item_id, cri.description, ci.unit_price, ci.contracted_quantity,
-                ci.quantity_executed, cri.linking, cri.name_for_import, cri.type
+                ci.quantity_executed, cri.linking, cri.name_for_import, cri.type, 
+                (
+                    select coalesce(sum(reserved_quantity - quantity_completed),0)
+                    from material_reservation 
+                    where contract_item_id = ci.contract_item_id
+                        and status <> 'FINISHED' and quantity_completed < reserved_quantity
+        	    ) as reserved_quantity
                 from contract_item ci
                 join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
                 where ci.contract_contract_id = :contractId
@@ -261,8 +268,9 @@ class ContractService(
                         contractItemId = it["contract_Item_Id"] as Long,
                         description = it["description"] as String,
                         unitPrice = (it["unit_Price"] as BigDecimal).toPlainString(),
-                        contractedQuantity = (it["contracted_Quantity"] as Number).toDouble(),
-                        executedQuantity = (it["quantity_Executed"] as Number).toDouble(),
+                        contractedQuantity = BigDecimal(it["contracted_Quantity"].toString()),
+                        executedQuantity = BigDecimal(it["quantity_Executed"].toString()),
+                        reservedQuantity = BigDecimal(it["reserved_quantity"].toString()),
                         linking = it["linking"] as? String,
                         nameForImport = it["name_For_Import"] as? String,
                         type = it["type"] as String,

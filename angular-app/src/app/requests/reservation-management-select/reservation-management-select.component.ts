@@ -292,13 +292,13 @@ export class ReservationManagementSelectComponent {
   sendData() {
     const hasUndefinedItems = this.street.items.some(i => i.materials === undefined);
     if (hasUndefinedItems) {
-      this.utils.showMessage("Existem itens pendentes", 'error', 'Não foi possível salvar');
+      this.utils.showMessage("Existem itens pendentes", 'warn', 'Não foi possível salvar');
       return;
     }
 
     const hasPendingItems = this.street.items.some(i => i.materials.length === 0);
     if (hasPendingItems) {
-      this.utils.showMessage("Existem itens pendentes", 'error', 'Não foi possível salvar');
+      this.utils.showMessage("Existem itens pendentes", 'warn', 'Não foi possível salvar');
       return;
     }
 
@@ -316,7 +316,7 @@ export class ReservationManagementSelectComponent {
         this.utils.showMessage(response.message, 'success', 'Gerenciamento finalizado com sucesso', true);
       },
       error: (error) => {
-        this.utils.showMessage(error.error.message, 'error', 'Erro ao salvar');
+        this.utils.showMessage(error.error.error ?? error.message ?? error, 'info', 'Não foi possível salvar', true);
       },
       complete: () => {
         this.loading = false;

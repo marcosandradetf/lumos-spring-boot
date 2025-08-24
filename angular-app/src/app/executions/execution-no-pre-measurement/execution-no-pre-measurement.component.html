@@ -189,7 +189,7 @@
             </td>
             <td>
               <p-cellEditor>
-                <ng-template pTemplate="output">{{ getQuantity(item.contractItemId) }}</ng-template>
+                <ng-template pTemplate="output">{{ getQuantity(item.contractItemId) ?? 0 }}</ng-template>
                 <ng-template pTemplate="input">
                   <input pInputText
                          #qtyInput

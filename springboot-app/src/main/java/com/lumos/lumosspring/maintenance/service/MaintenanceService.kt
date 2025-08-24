@@ -72,7 +72,7 @@ class MaintenanceService(
 
             signatureUri = fileUri,
             responsible = maintenance.responsible,
-            signDate = signDate,
+            signDate = signDate ?: Instant.now(),
 
             isNewEntry = false,
         )
@@ -171,8 +171,8 @@ class MaintenanceService(
             val role = when (member["role"]?.asText()?.lowercase()) {
                 "electrician" -> "Eletricista"
                 "driver" -> "Motorista"
-                "ELETRICISTA" -> "Eletricista"
-                "MOTORISTA" -> "Motorista"
+                "eletricista" -> "Eletricista"
+                "motorista" -> "Motorista"
                 else -> "Executor"
             }
             val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
@@ -218,6 +218,11 @@ class MaintenanceService(
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
         val hasPending = maintenance["pending_points"].asBoolean()
+        val signDate = Utils.convertToSaoPauloLocal(
+            Instant.parse(
+                maintenance["sign_date"]?.asText() ?: maintenance["date_of_visit"].asText()
+            )
+        )
 
         templateHtml = templateHtml
             .replace("{{LOGO_IMAGE}}", companyLink)
@@ -245,6 +250,10 @@ class MaintenanceService(
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
             .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")))
+            .replace(
+                "{{SIGN_DATE}}",
+                if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")) else "Sem registro"
+            )
             .replace("{{TEAM_ROWS}}", teamRows)
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
@@ -252,7 +261,6 @@ class MaintenanceService(
                 company["bucket"]?.asText() ?: throw IllegalArgumentException("Bucket ausente"),
                 maintenance["signature_uri"]?.asText() ?: ""
             )
-            val signDate = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["sign_date"].asText()))
 
             val signSection =
                 """
@@ -333,8 +341,8 @@ class MaintenanceService(
             val role = when (member["role"]?.asText()?.lowercase()) {
                 "electrician" -> "Eletricista"
                 "driver" -> "Motorista"
-                "ELETRICISTA" -> "Eletricista"
-                "MOTORISTA" -> "Motorista"
+                "eletricista" -> "Eletricista"
+                "motorista" -> "Motorista"
                 else -> "Executor"
             }
             val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
@@ -380,6 +388,11 @@ class MaintenanceService(
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
+        val signDate = Utils.convertToSaoPauloLocal(
+            Instant.parse(
+                maintenance["sign_date"]?.asText() ?: maintenance["date_of_visit"].asText()
+            )
+        )
         val hasPending = maintenance["pending_points"].asBoolean()
 
         templateHtml = templateHtml
@@ -408,6 +421,10 @@ class MaintenanceService(
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
             .replace("{{DATE_OF_VISIT}}", dateOfVisit.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")))
+            .replace(
+                "{{SIGN_DATE}}",
+                if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")) else "Sem registro"
+            )
             .replace("{{TEAM_ROWS}}", teamRows)
 
 
@@ -416,7 +433,6 @@ class MaintenanceService(
                 company["bucket"]?.asText() ?: throw IllegalArgumentException("Bucket ausente"),
                 maintenance["signature_uri"]?.asText() ?: ""
             )
-            val signDate = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["sign_date"].asText()))
 
             val signSection =
                 """
@@ -475,6 +491,7 @@ class MaintenanceService(
         }
     }
 
+    @Transactional
     fun archiveOrDelete(payload: Map<String, Any>): ResponseEntity<Any> {
         val maintenanceId = UUID.fromString(payload["maintenanceId"].toString())
         val action =
@@ -490,7 +507,71 @@ class MaintenanceService(
                 mapOf("maintenanceId" to maintenanceId)
             )
         } else {
-            throw Utils.BusinessException("Recurso em desenvolvimento - Previsão de término até às 17:00")
+            namedParameterJdbcTemplate.query(
+                """
+                select material_stock_id, quantity_executed, maintenance_street_id
+                from maintenance_street_item
+                where maintenance_id = :maintenanceId
+            """.trimIndent(),
+                mapOf("maintenanceId" to maintenanceId)
+            ) { rs, _ ->
+                val materialStockId = rs.getLong("material_stock_id")
+                val maintenanceStreetId = UUID.fromString(rs.getString("maintenance_street_id"))
+                val quantityExecuted = rs.getBigDecimal("quantity_executed")
+
+                namedParameterJdbcTemplate.update(
+                    """
+                    delete from material_history
+                    WHERE maintenance_street_id = :maintenance_street_id
+                """.trimIndent(),
+                    mapOf("maintenance_street_id" to maintenanceStreetId)
+                )
+
+                namedParameterJdbcTemplate.update(
+                    """
+                        update material_stock
+                        set stock_quantity = stock_quantity + :quantity_executed,
+                            stock_available = stock_available + :quantity_executed
+                        where material_id_stock = :material_stock_id
+                    """.trimIndent(),
+                    mapOf(
+                        "material_stock_id" to materialStockId,
+                        "quantity_executed" to quantityExecuted
+                    )
+                )
+            }
+
+            namedParameterJdbcTemplate.update(
+                """
+                    delete from maintenance_street_item 
+                    WHERE maintenance_id = :maintenanceId
+                """.trimIndent(),
+                mapOf("maintenanceId" to maintenanceId)
+            )
+
+            namedParameterJdbcTemplate.update(
+                """
+                    delete from maintenance_street
+                    WHERE maintenance_id = :maintenanceId
+                """.trimIndent(),
+                mapOf("maintenanceId" to maintenanceId)
+            )
+
+            namedParameterJdbcTemplate.update(
+                """
+                    delete from maintenance 
+                    WHERE maintenance_id = :maintenanceId
+                """.trimIndent(),
+                mapOf("maintenanceId" to maintenanceId)
+            )
+
+            namedParameterJdbcTemplate.update(
+                """
+                    delete from maintenance_executor 
+                    WHERE maintenance_id = :maintenanceId
+                """.trimIndent(),
+                mapOf("maintenanceId" to maintenanceId)
+            )
         }
 
         return ResponseEntity.noContent().build()

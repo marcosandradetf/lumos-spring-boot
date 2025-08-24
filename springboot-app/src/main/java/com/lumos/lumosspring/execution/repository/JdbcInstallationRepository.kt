@@ -243,8 +243,8 @@ class JdbcInstallationRepository(
                   json_build_object(
                     'address', x.address,
                     'finished_at', coalesce(to_char(x.finished_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY "às" HH24:MI'), ''),
-                    'latitude', coalesce(x.latitude::text, ''),
-            		'longitude', coalesce(x.longitude::text, ''),
+                    'latitude', x.latitude,
+            		'longitude', x.longitude,
                     'execution_photo_uri', coalesce(x.execution_photo_uri, '')
                   )
                 )

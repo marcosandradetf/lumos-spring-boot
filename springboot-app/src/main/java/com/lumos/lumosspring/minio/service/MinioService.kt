@@ -1,11 +1,13 @@
 package com.lumos.lumosspring.minio.service
 
+import com.lumos.lumosspring.util.Utils
 import io.minio.*
 import io.minio.errors.MinioException
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import io.minio.http.Method
+import io.minio.messages.DeleteObject
 
 
 @Service
@@ -58,5 +60,26 @@ class MinioService(private val minioClient: MinioClient) {
         )
         return url
     }
+
+    fun deleteFiles(bucketName: String, objectNames: Set<String>) {
+        val objects = objectNames.map { DeleteObject(it) }
+
+        val results = minioClient.removeObjects(
+            RemoveObjectsArgs.builder()
+                .bucket(bucketName)
+                .objects(objects)
+                .build()
+        )
+
+        // Itera sobre possíveis erros
+        results.forEach { result ->
+            try {
+                result.get() // dispara exceção se houve erro ao remover esse objeto
+            } catch (e: Exception) {
+                throw Utils.BusinessException("Erro ao fazer delete para o MinIO: ${e.message}")
+            }
+        }
+    }
+
 
 }

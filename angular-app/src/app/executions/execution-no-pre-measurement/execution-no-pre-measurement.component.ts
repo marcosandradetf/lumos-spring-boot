@@ -162,7 +162,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
 
     if (this.table) {
       this.currentItemId = item.contractItemId;
-      this.quantity = Number(this.getQuantity(item.contractItemId));
+      this.quantity = this.getQuantity(item.contractItemId);
       this.table.initRowEdit(item);
       setTimeout(() => {
         this.qtyInput?.nativeElement?.focus();
@@ -195,19 +195,32 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
     return this.execution.items.some(i => i.contractItemId === contractItemId);
   }
 
-  quantity: number | null = null;
+  quantity: string | null = null;
   teams: TeamsModel[] = [];
   teamName: string | null = null;
 
   Confirm(item: ContractItemsResponse, rowElement: HTMLTableRowElement) {
     const index = this.execution.items.findIndex(i => i.contractItemId === this.currentItemId);
-    if ((this.quantity ?? 0) < 1) {
+    if ((Number(this.quantity) ?? 0) < 1) {
       this.utils.showMessage("A quantidade não pode ser igual a 0.", "warn", "Atenção");
       return;
     }
 
-    if ((this.quantity ?? 0) > (item.contractedQuantity - item.executedQuantity)) {
-      this.utils.showMessage(`O Saldo atual desse item é igual a ${item.contractedQuantity - item.executedQuantity}`, "error", "Saldo contratual não disponível");
+    if ((Number(this.quantity) ?? 0) > (item.contractedQuantity - item.executedQuantity)) {
+      this.utils.showMessage(`O Saldo atual desse item é igual a ${item.contractedQuantity - item.executedQuantity}`, "info", "Saldo contratual não disponível");
+      return;
+    }
+
+    const realBalance = item.contractedQuantity - item.executedQuantity - item.reservedQuantity
+    if ((Number(this.quantity) ?? 0) > realBalance) {
+      this.utils.showMessage(
+        `Apesar de existir saldo de ${item.contractedQuantity - item.executedQuantity} para este item existem ${item.reservedQuantity} itens reservados em execuções em andamento.
+
+        Para evitar que o saldo seja estourado, apenas ${realBalance} itens podem ser utilizados neste momento.`,
+        "warn",
+        "Saldo bloqueado por execução - Verifique as execuções não finalizadas",
+        true
+      );
       return;
     }
 
@@ -226,7 +239,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
 
     this.table?.saveRowEdit(item, rowElement);
     this.selectedItem = null;
-    this.quantity = 0;
+    this.quantity = null;
     this.currentItemId = 0;
 
   }
@@ -236,7 +249,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
   }
 
   goToNextStep() {
-    if(this.execution.items.length === 0) {
+    if (this.execution.items.length === 0) {
       this.utils.showMessage("Para continuar, é necessário selecionar os itens", "warn", "Atenção");
       return;
     }
@@ -245,8 +258,9 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
   }
 
   finish = false;
+
   sendData() {
-    if(this.execution.stockistId.length === 0) {
+    if (this.execution.stockistId.length === 0) {
       this.utils.showMessage("Para conlcuir, é necessário selecionar o estoquista", "warn", "Atenção");
       return;
     }

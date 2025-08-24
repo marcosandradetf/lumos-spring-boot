@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.execution.service
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.service.ContractService
 import com.lumos.lumosspring.dto.direct_execution.DirectExecutionDTO
@@ -28,7 +29,6 @@ import org.springframework.http.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.jdbc.core.query
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -61,6 +61,7 @@ class ExecutionService(
     private val materialRepository: MaterialRepository,
     private val jdbcInstallationRepository: JdbcInstallationRepository,
     private val directExecutionExecutorRepository: DirectExecutionExecutorRepository,
+    private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
 ) {
 
 //    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
@@ -201,10 +202,20 @@ class ExecutionService(
                 val contractedQuantity = BigDecimal((ciq["contracted_quantity"] as Number).toString())
                 val executedQuantity = BigDecimal((ciq["quantity_executed"] as Number).toString())
 
-                val available = contractedQuantity - executedQuantity
+                var available = contractedQuantity - executedQuantity
 
                 if (available < item.quantity) {
                     throw IllegalStateException("Não há saldo disponível para o item $description")
+                }
+
+                available = contractItemsQuantitativeRepository.getTotalBalance(item.contractItemId)
+
+                if (available < item.quantity) {
+//                    val response = contractItemsQuantitativeRepository.getInProgressReservations(item.contractItemId)
+//                    if (response.isEmpty())
+                    throw Utils.BusinessException("Apesar de no sistema existir saldo para o item $description existem execuções em andamentos que podem fazer o saldo estourar")
+
+//                    throw Utils.BusinessExceptionObjectResponse(response)
                 }
 
                 val directExecutionItem = DirectExecutionItem(
@@ -440,6 +451,32 @@ class ExecutionService(
                             mapOf("directItemId" to item.itemId)
                         )?.get("contract_item_id") as? Long
                             ?: throw IllegalStateException("Contrato do item ${item.itemId} enviado não foi encontrado")
+
+                val available = contractItemsQuantitativeRepository.getTotalBalance(contractItemId)
+
+                if (available < materialReserve.materialQuantity) {
+                    val response = contractItemsQuantitativeRepository.getInProgressReservations(contractItemId)
+                    if (response.isEmpty()) throw Utils.BusinessException("Apesar de no sistema existir saldo para o item $contractItemId existem execuções em andamentos que podem fazer o saldo estourar")
+                    var message = """
+                        O sistema mostra saldo disponível para o item ${response[0].itemName}, porém existem reservas para instalações em andamento que podem causar estouro no saldo.
+                        
+                        Instalações afetadas:
+                        """
+                    for (r in response) {
+                        message += """          
+                            ${r.description}
+                                - Quantidade Reservada: ${r.reservedQuantity}
+                                - Quantidade Completada: ${r.quantityCompleted}
+                            ___________________
+                        """
+                    }
+
+                    message += """
+                        Saldo atual: ${contractItemsQuantitativeRepository.getTotalBalance(contractItemId)}
+                    """
+
+                    throw Utils.BusinessException(message)
+                }
 
                 val reservation = if (materialReserve.centralMaterialStockId != null) {
                     val materialStock =
@@ -1296,7 +1333,8 @@ class ExecutionService(
             val address = line[0].asText()
             val lastPower = line[1].asText()
             val items = line[2]  // ArrayNode
-            val date = line[3].asText()
+
+            val date = Utils.convertToSaoPauloLocal(Instant.parse(line[3].asText()))
             val supplier = line[4].asText()
 
             if (index == 0) {
@@ -1389,16 +1427,22 @@ class ExecutionService(
                     </p>
 
                     <!-- Coordenadas -->
-                    <p style="
-                    margin: 0;
-                    padding: 6px 12px;
-                    text-align: center;
-                    font-size: 11px;
-                    color: #333;
-                    border-bottom: 1px solid #ccc;
-                  ">
-                        Coordenadas: Latitude ${line["latitude"].asText()}, Longitude ${line["longitude"].asText()}
-                    </p>
+                    ${
+                        line["latitude"]?.asText().let { latitude ->
+                            """
+                                <p style="
+                                    margin: 0;
+                                    padding: 6px 12px;
+                                    text-align: center;
+                                    font-size: 11px;
+                                    color: #333;
+                                    border-bottom: 1px solid #ccc;
+                                  ">
+                                    Coordenadas - Latitude: $latitude, Longitude: ${line["longitude"].asText()}
+                                </p>
+                            """.trimIndent()
+                        }
+                    }
 
                     <!-- Foto -->
                     <img
@@ -1470,9 +1514,10 @@ class ExecutionService(
             ?: emptyList()
         val type = payLoad["type"] as? String
 
-        try{
-            if(type == "DIRECT_EXECUTION") {
-                namedJdbc.update("""
+        try {
+            if (type == "DIRECT_EXECUTION") {
+                namedJdbc.update(
+                    """
                     delete from direct_execution_item
                     where direct_execution_id in (:ids)
                 """.trimIndent(),
@@ -1486,11 +1531,11 @@ class ExecutionService(
                         returning reservation_management_id
                 """.trimIndent(),
                     mapOf("ids" to ids)
-                ) {
-                    rs, _ ->
+                ) { rs, _ ->
 
                     val id = rs.getLong("reservation_management_id")
-                    namedJdbc.update("""
+                    namedJdbc.update(
+                        """
                         delete from reservation_management
                         where reservation_management.reservation_management_id = :id
                     """.trimIndent(),
@@ -1506,6 +1551,116 @@ class ExecutionService(
 
         } catch (e: DataIntegrityViolationException) {
             throw Utils.BusinessException(e.message)
+        }
+
+        return ResponseEntity.noContent().build()
+    }
+
+    @Transactional
+    fun archiveOrDelete(payload: Map<String, Any>): ResponseEntity<Any> {
+        val directExecutionId = (payload["directExecutionId"] as Number).toLong()
+        val action =
+            payload["action"] as? String ?: throw Utils.BusinessException("Tente novamente - ação não recebida")
+
+        if (action == "ARCHIVE") {
+            namedJdbc.update(
+                """
+                    update direct_execution 
+                    set direct_execution_status = 'ARCHIVED'
+                    WHERE direct_execution_id = :directExecutionId
+                """.trimIndent(),
+                mapOf("directExecutionId" to directExecutionId)
+            )
+        } else {
+            val uriObject: MutableSet<String> = mutableSetOf()
+
+            namedJdbc.query(
+                """
+                select desi.material_stock_id, desi.contract_item_id, desi.executed_quantity, des.execution_photo_uri
+                from direct_execution_street_item desi
+                join direct_execution_street des on des.direct_execution_street_id = desi.direct_execution_street_id
+                where des.direct_execution_id = :directExecutionId
+            """.trimIndent(),
+                mapOf("directExecutionId" to directExecutionId)
+            ) { rs, _ ->
+                val materialStockId = rs.getLong("material_stock_id")
+                val contractItemId = rs.getLong("contract_item_id")
+                val executedQuantity = rs.getBigDecimal("executed_quantity")
+                val photoUri = rs.getString("execution_photo_uri")
+
+                if (!photoUri.isNullOrBlank()) {
+                    uriObject.add(photoUri)
+                }
+
+                namedJdbc.update(
+                    """
+                        update material_stock
+                        set stock_quantity = stock_quantity + :quantity_executed,
+                            stock_available = stock_available + :quantity_executed
+                        where material_id_stock = :material_stock_id
+                    """.trimIndent(),
+                    mapOf(
+                        "material_stock_id" to materialStockId,
+                        "quantity_executed" to executedQuantity
+                    )
+                )
+
+                namedJdbc.update(
+                    """
+                        update contract_item
+                        set quantity_executed = quantity_executed - :quantity_executed
+                        where contract_item_id = :contract_item_id
+                    """.trimIndent(),
+                    mapOf(
+                        "contract_item_id" to contractItemId,
+                        "quantity_executed" to executedQuantity
+                    )
+                )
+            }
+
+            namedJdbc.update(
+                """
+                    DELETE FROM direct_execution_street_item desi
+                    USING direct_execution_street des
+                    WHERE des.direct_execution_id = :direct_execution_id
+                        AND des.direct_execution_street_id = desi.direct_execution_street_id
+                """.trimIndent(),
+                mapOf("direct_execution_id" to directExecutionId)
+            )
+
+            namedJdbc.update(
+                """
+                    delete from material_reservation
+                    WHERE direct_execution_id = :direct_execution_id
+                """.trimIndent(),
+                mapOf("direct_execution_id" to directExecutionId)
+            )
+
+            minioService.deleteFiles("scl-construtora", uriObject)
+
+            namedJdbc.update(
+                """
+                    DELETE FROM direct_execution_street
+                    WHERE direct_execution_id = :direct_execution_id
+                """.trimIndent(),
+                mapOf("direct_execution_id" to directExecutionId)
+            )
+
+            namedJdbc.update(
+                """
+                    DELETE FROM direct_execution 
+                    WHERE direct_execution_id = :direct_execution_id
+                """.trimIndent(),
+                mapOf("direct_execution_id" to directExecutionId)
+            )
+
+            namedJdbc.update(
+                """
+                    delete from direct_execution_executor
+                    WHERE direct_execution_id = :maintenanceId
+                """.trimIndent(),
+                mapOf("direct_execution_id" to directExecutionId)
+            )
         }
 
         return ResponseEntity.noContent().build()
