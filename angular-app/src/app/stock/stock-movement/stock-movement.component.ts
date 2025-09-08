@@ -4,10 +4,8 @@ import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {Title} from '@angular/platform-browser';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {PaginationComponent} from '../../shared/components/pagination/pagination.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {Deposit} from '../../models/almoxarifado.model';
 import {MaterialResponse} from '../../models/material-response.dto';
 import {StockMovementDTO} from '../../models/stock-movement.dto';
@@ -17,11 +15,11 @@ import {UtilsService} from '../../core/service/utils.service';
 import {SupplierDTO} from '../../models/supplier.dto';
 import {Steps} from 'primeng/steps';
 import {MenuItem} from 'primeng/api';
-import {Select} from 'primeng/select';
-import {Paginator, PaginatorState} from 'primeng/paginator';
+import {Paginator} from 'primeng/paginator';
 import {TableModule} from 'primeng/table';
 import {Skeleton} from 'primeng/skeleton';
 import {Toast} from 'primeng/toast';
+import {DropdownModule} from 'primeng/dropdown';
 
 
 @Component({
@@ -36,11 +34,11 @@ import {Toast} from 'primeng/toast';
     NgIf,
     NgClass,
     Steps,
-    Select,
     Paginator,
     TableModule,
     Skeleton,
     Toast,
+    DropdownModule,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'

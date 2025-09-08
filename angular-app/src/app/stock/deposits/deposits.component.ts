@@ -73,7 +73,7 @@ export class DepositsComponent {
       c => this.companies = c
     );
     this.stockService.getDeposits().subscribe(
-      d => this.deposits = d
+      d => this.deposits = d.filter(d => !d.isTruck)
     );
 
     this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {

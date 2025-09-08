@@ -148,6 +148,13 @@ export class UtilsService {
     (event.target as HTMLInputElement).value = value;
   }
 
+  formatPlate(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+    value = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+    (event.target as HTMLInputElement).value = value;
+  }
+
   showMessage(messageContent: string,
               typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary',
               summary: string = typeMessage,

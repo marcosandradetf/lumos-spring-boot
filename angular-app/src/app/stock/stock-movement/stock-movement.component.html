@@ -17,14 +17,24 @@
     </div>
 
     <div class="mb-2" *ngIf="!currentDeposit">
-      <p-select
+      <p-dropdown
         (onChange)="loadMaterials()"
         [(ngModel)]="currentDeposit"
         [options]="deposits"
-        optionLabel="depositName"
-        size="small"
-        placeholder="Selecione o Almoxarifado desejado"
-        class="w-full"/>
+        placeholder="Selecione o Almoxarifado"
+        class="w-full">
+
+        <!-- Label na lista -->
+        <ng-template let-deposit
+                     pTemplate="item"> {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
+        </ng-template>
+
+        <!-- Label selecionada -->
+        <ng-template let-deposit pTemplate="selectedItem">
+          {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
+        </ng-template>
+      </p-dropdown>
+
     </div>
 
     <app-table [search]="true"

@@ -8,4 +8,7 @@ export interface Deposit {
   depositState: string,
   depositRegion: string,
   depositPhone: string,
+  isTruck: boolean,
+  teamName: string,
+  plateVehicle: string,
 }

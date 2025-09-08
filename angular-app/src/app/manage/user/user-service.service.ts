@@ -29,7 +29,8 @@ export class UserService {
       year: string;
       role: string[],
       status: boolean,
-      sel: boolean
+      sel: boolean,
+      show: boolean,
     }[]>(`${this.endpoint}/get-users`);
   }
 
@@ -49,7 +50,7 @@ export class UserService {
       status: boolean,
       phone: string,
       department: string,
-      sel: boolean
+      sel: boolean,
     }>(`${this.endpoint}/get-user/${uuid}`);
   }
 
@@ -93,7 +94,8 @@ export class UserService {
       day: string;
       role: string[],
       status: boolean
-      sel: boolean
+      sel: boolean,
+      show: boolean,
     }[]>(`${this.endpoint}/update-users`, user);
   }
 
@@ -123,7 +125,8 @@ export class UserService {
       day: string;
       role: string[],
       status: boolean
-      sel: boolean
+      sel: boolean,
+      show: boolean,
     }[]>(`${this.endpoint}/insert-users`, user);
   }
 

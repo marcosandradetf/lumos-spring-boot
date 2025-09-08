@@ -9,6 +9,7 @@ import com.lumos.lumosspring.dto.user.UserResponse;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.util.DefaultResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
+import com.lumos.lumosspring.util.Utils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -19,8 +20,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.lumos.lumosspring.dto.user.OperationalAndTeamsResponse;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -65,7 +68,7 @@ public class UserService {
                         appUser.getName(),
                         appUser.getLastName(),
                         appUser.getEmail(),
-                        appUser.getCpf(),
+                        maskCpf(appUser.getCpf()),
                         roles,
                         dateOfBirth != null ? dateOfBirth.getYear() : null,
                         dateOfBirth != null ? dateOfBirth.getMonth().getValue() : null,
@@ -77,6 +80,14 @@ public class UserService {
 
         return ResponseEntity.status(HttpStatus.OK).body(userResponses);
     }
+
+    private String maskCpf(String cpf) {
+        if (cpf == null || cpf.length() < 11) {
+            return cpf; // retorna como está se for inválido
+        }
+        return "***." + cpf.substring(3, 6) + "." + cpf.substring(6, 9) + "-**";
+    }
+
 
     @Cacheable("getUserByUUID")
     public ResponseEntity<UserResponse> find(String uuid) {
@@ -202,6 +213,7 @@ public class UserService {
             @CacheEvict(cacheNames = "getAllUsers", allEntries = true),
             @CacheEvict(cacheNames = "getUserByUUID", allEntries = true)
     })
+    @Transactional
     public ResponseEntity<?> updateUsers(List<UpdateUserDto> dto) {
         boolean hasInvalidUser = dto.stream().noneMatch(UpdateUserDto::sel);
         String regex = "^(?!.*\\.\\.)(?!.*\\.@)(?!.*@\\.)(?!.*@example)(?!.*@teste)(?!.*@email)\\b[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}\\b$";
@@ -212,48 +224,43 @@ public class UserService {
                     .body(new ErrorResponse("Erro: Nenhum usuário selecionado foi enviado."));
         }
 
-        hasInvalidUser = dto.stream().anyMatch(u -> u.userId() == null || u.userId().isEmpty());
-        if (hasInvalidUser) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Erro: Foi enviado um ou mais usuário sem identificação."));
-        }
 
         for (UpdateUserDto u : dto) {
             if (!u.sel()) {
                 continue;
             }
-            var user = userRepository.findByUserId(UUID.fromString(u.userId()));
-            if (user.isEmpty()) {
+
+            if (u.userId() == null || u.userId().isEmpty() || u.userId().isBlank()) {
+                this.insertUser(u);
                 continue;
             }
 
+            var user = userRepository.findByUserId(UUID.fromString(u.userId()))
+                    .orElseThrow(() -> new Utils.BusinessException(
+                            "O usuário %s não foi encontrado no sistema.".formatted(u.name()))
+                    );
+
             if (!pattern.matcher(u.email()).matches()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
+                throw new Utils.BusinessException(STR."ERRO: Email \{u.email()} é inválido'.");
             }
 
             if (!isValidCPF(u.cpf())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ErrorResponse(STR."ERRO: CPF \{u.cpf()} é inválido."));
+                throw new Utils.BusinessException(STR."ERRO: CPF \{u.cpf()} é inválido.");
             }
 
             // Verifica se o username já existe no sistema
             Optional<AppUser> userOptional = userRepository.findByUsernameIgnoreCase(u.username());
             if (userOptional.isPresent() && !userOptional.get().getUserId().equals(UUID.fromString(u.userId()))) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                        new ErrorResponse(String.format("Username %s já existente no sistema.", u.username()))
-                );
+                throw new Utils.BusinessException(String.format("Username %s já existente no sistema.", u.username()));
             }
 
             // Verifica se o e-mail já existe no banco de dados
             userOptional = userRepository.findByCpfIgnoreCase(u.cpf());
             if (userOptional.isPresent() && !userOptional.get().getUserId().equals(UUID.fromString(u.userId()))) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                        new ErrorResponse(String.format("CPF %s já existente no sistema.", u.cpf()))
-                );
+                throw new Utils.BusinessException(String.format("CPF %s já existente no sistema.", u.cpf()));
             }
 
 
-            var currentRoles = roleRepository.findRolesByUserId(UUID.fromString(u.userId()));
             Set<Role> userRoles = new HashSet<>();
             var date = LocalDate.of(u.year(), u.month(), u.day());
 
@@ -263,44 +270,52 @@ public class UserService {
                 }
 
                 var role = roleRepository.findByRoleName(r);
-                if (role == null || currentRoles.contains(role.getRoleName())) {
-                    continue;
-                }
                 userRoles.add(role);
             }
 
-            var oldRoleNames = roleRepository.findRolesByUserId(user.get().getUserId());
+            var oldRoleNames = roleRepository.findRolesByUserId(user.getUserId());
 
             List<String> newRoleNames = new ArrayList<>(u.role());
 
             if (!u.status() || !oldRoleNames.equals(newRoleNames)) {
-                refreshTokenRepository.findByAppUser(user.get().getUserId())
+                refreshTokenRepository.findByAppUser(user.getUserId())
                         .ifPresent(tokens -> tokens.forEach(token -> {
-                            token.setRevoked(true);
-                            refreshTokenRepository.save(token);
+                            if (token.getExpiryDate().isBefore(Instant.now())) {
+                                var params = new MapSqlParameterSource()
+                                        .addValue("id_token", token.getIdToken());
+
+                                namedParameterJdbcTemplate.update("""
+                                    delete from refresh_token where id_token = :id_token
+                                """, params);
+                            }
                         }));
             }
 
-            user.get().setUsername(u.username());
-            user.get().setName(u.name());
-            user.get().setLastName(u.lastname());
-            user.get().setEmail(u.email());
-            user.get().setCpf(u.cpf());
-            user.get().setDateOfBirth(date);
-            user.get().setStatus(u.status());
+            user.setUsername(u.username());
+            user.setName(u.name());
+            user.setLastName(u.lastname());
+            user.setEmail(u.email());
+            user.setCpf(u.cpf());
+            user.setDateOfBirth(date);
+            user.setStatus(u.status());
 
             for (Role role : userRoles) {
                 var params = new MapSqlParameterSource()
                         .addValue("userId", UUID.fromString(u.userId()))
                         .addValue("roleId", role.getRoleId());
+
                 namedParameterJdbcTemplate.update("""
-                    INSERT INTO user_role (id_user, id_role)
-                    VALUES (:userId, :roleId)
-                """, params);
+                            delete from user_role where id_user = :userId
+                        """, params);
+
+                namedParameterJdbcTemplate.update("""
+                            INSERT INTO user_role (id_user, id_role)
+                            VALUES (:userId, :roleId)
+                        """, params);
             }
 
 
-            userRepository.save(user.get());
+            userRepository.save(user);
 
         }
 
@@ -311,85 +326,75 @@ public class UserService {
             @CacheEvict(cacheNames = "getAllUsers", allEntries = true),
             @CacheEvict(cacheNames = "getUserByUUID", allEntries = true)
     })
-    public ResponseEntity<?> insertUsers(List<CreateUserDto> dto) {
-        var hasInvalidUser = dto.stream().noneMatch(u -> u.userId().isEmpty());
+    public void insertUser(UpdateUserDto u) {
         String regex = "^(?!.*\\.\\.)(?!.*\\.@)(?!.*@\\.)(?!.*@example)(?!.*@teste)(?!.*@email)\\b[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}\\b$";
         Pattern pattern = Pattern.compile(regex);
 
-        if (hasInvalidUser) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Erro: Foi enviado apenas usuários já existentes no sistema!"));
+
+        if (!u.userId().isEmpty()) {
+            return;
         }
 
-        for (CreateUserDto u : dto) {
-            if (!u.userId().isEmpty()) {
+        if (u.username().contains(" ")) {
+            throw new Utils.BusinessException(STR."ERRO: Username \{u.username()} foi enviado com espaços.");
+        }
+
+        if (!pattern.matcher(u.email()).matches()) {
+            throw new Utils.BusinessException(STR."ERRO: Email \{u.email()} é inválido'.");
+        }
+
+        if (!isValidCPF(u.cpf())) {
+            throw new Utils.BusinessException(STR."ERRO: CPF \{u.cpf()} é inválido.");
+        }
+
+
+        if (userRepository.findByUsernameIgnoreCase(u.username()).isPresent()) {
+            throw new Utils.BusinessException(STR."Username \{u.username()} já existente no sistema, recupere a senha ou utilize outro username.");
+        }
+
+        if (userRepository.findByCpfIgnoreCase(u.cpf()).isPresent()) {
+            throw new Utils.BusinessException(STR."CPF \{u.email()} já existente no sistema, recupere a senha ou utilize outro CPF.");
+        }
+
+        Set<Role> userRoles = new HashSet<>();
+        var user = new AppUser();
+        var date = LocalDate.of(u.year(), u.month(), u.day());
+        var password = UUID.randomUUID().toString();
+
+        for (String r : u.role()) {
+            if (r.isEmpty()) {
                 continue;
             }
 
-            if (u.username().contains(" ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Username \{u.username()} foi enviado com espaços."));
+            var role = roleRepository.findByRoleName(r);
+            if (role == null) {
+                continue;
             }
-
-            if (!pattern.matcher(u.email()).matches()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."ERRO: Email \{u.email()} é inválido'."));
-            }
-
-            if (!isValidCPF(u.cpf())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ErrorResponse(STR."ERRO: CPF \{u.cpf()} é inválido."));
-            }
-
-
-            if (userRepository.findByUsernameIgnoreCase(u.username()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."Username \{u.username()} já existente no sistema, recupere a senha ou utilize outro username."));
-            }
-
-            if (userRepository.findByCpfIgnoreCase(u.cpf()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(STR."CPF \{u.email()} já existente no sistema, recupere a senha ou utilize outro CPF."));
-            }
-
-            Set<Role> userRoles = new HashSet<>();
-            var user = new AppUser();
-            var date = LocalDate.of(u.year(), u.month(), u.day());
-            var password = UUID.randomUUID().toString();
-
-            for (String r : u.role()) {
-                if (r.isEmpty()) {
-                    continue;
-                }
-
-                var role = roleRepository.findByRoleName(r);
-                if (role == null) {
-                    continue;
-                }
-                userRoles.add(role);
-            }
-
-            user.setUsername(u.username());
-            user.setPassword(passwordEncoder.encode(password));
-            user.setName(u.name());
-            user.setLastName(u.lastname());
-            user.setEmail(u.email());
-            user.setCpf(u.cpf());
-            user.setDateOfBirth(date);
-            user.setStatus(u.status());
-            user = userRepository.save(user);
-
-            for (Role role : userRoles) {
-                var params = new MapSqlParameterSource()
-                        .addValue("userId", UUID.fromString(u.userId()))
-                        .addValue("roleId", role.getRoleId());
-                namedParameterJdbcTemplate.update("""
-                    INSERT INTO user_role (id_user, id_role)
-                    VALUES (:userId, :roleId)
-                """, params);
-            }
-
-            emailService.sendPasswordForEmail(u.name(), u.email(), password);
+            userRoles.add(role);
         }
 
+        user.setUsername(u.username());
+        user.setPassword(passwordEncoder.encode(password));
+        user.setName(u.name());
+        user.setLastName(u.lastname());
+        user.setEmail(u.email());
+        user.setCpf(u.cpf());
+        user.setDateOfBirth(date);
+        user.setStatus(u.status());
+        user = userRepository.save(user);
 
-        return this.findAll();
+        for (Role role : userRoles) {
+            var params = new MapSqlParameterSource()
+                    .addValue("userId", UUID.fromString(u.userId()))
+                    .addValue("roleId", role.getRoleId());
+            namedParameterJdbcTemplate.update("""
+                        INSERT INTO user_role (id_user, id_role)
+                        VALUES (:userId, :roleId)
+                    """, params);
+        }
+
+        emailService.sendPasswordForEmail(u.name(), u.email(), password);
+
     }
 
 

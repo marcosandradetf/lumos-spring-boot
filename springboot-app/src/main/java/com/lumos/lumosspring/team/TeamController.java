@@ -23,12 +23,6 @@ public class TeamController {
         return teamService.getAll();
     }
 
-    @PostMapping("/teams/post-teams")
-    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_ANALISTA')")
-    public ResponseEntity<?> postAll(@RequestBody List<TeamCreate> teams) {
-        return teamService.insertTeams(teams);
-    }
-
     @PostMapping("/teams/update-teams")
     @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_ANALISTA')")
     public ResponseEntity<?> updateAll(@RequestBody List<TeamCreate> teams) {

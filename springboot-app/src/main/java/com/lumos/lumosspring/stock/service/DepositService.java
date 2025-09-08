@@ -45,75 +45,7 @@ public class DepositService {
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
-        var deposits = depositRepository.findAllByOrderByIdDeposit();
-        List<DepositResponse> depositResponses = new ArrayList<>();
-        String companyName;
-        String depositRegion;
-
-        for (var deposit : deposits) {
-            // Verifica se o campo 'company' é nulo
-            if (deposit.getCompanyId() != null) {
-                companyName = companyRepository.findById(deposit.getCompanyId()).orElseThrow().getSocialReason();
-            } else {
-                companyName = "Não definido";  // Valor padrão
-            }
-
-            if (deposit.getRegion() != null) {
-                depositRegion =  regionRepository.findById(deposit.getRegion()).orElseThrow().getRegionName();
-            } else {
-                depositRegion = "Não definido";  // Valor padrão
-            }
-
-            depositResponses.add(new DepositResponse(
-                    deposit.getIdDeposit(),
-                    deposit.getDepositName(),
-                    companyName,
-                    deposit.getDepositAddress(),
-                    deposit.getDepositDistrict(),
-                    deposit.getDepositCity(),
-                    deposit.getDepositState(),
-                    depositRegion,
-                    deposit.getDepositPhone()
-            ));
-        }
-        return depositResponses;
-    }
-
-    @Cacheable("getAllDeposits")
-    public List<DepositResponse> findAllTruckDeposit() {
-        var deposits = depositRepository.findAllTruckDeposit();
-        List<DepositResponse> depositResponses = new ArrayList<>();
-        String companyName;
-        String depositRegion;
-
-        for (var deposit : deposits) {
-            // Verifica se o campo 'company' é nulo
-            if (deposit.getCompanyId() != null) {
-                companyName = companyRepository.findById(deposit.getCompanyId()).orElseThrow().getSocialReason();
-            } else {
-                companyName = "Não definido";  // Valor padrão
-            }
-
-            if (deposit.getRegion() != null) {
-                depositRegion =  regionRepository.findById(deposit.getRegion()).orElseThrow().getRegionName();
-            } else {
-                depositRegion = "Não definido";  // Valor padrão
-            }
-
-            depositResponses.add(new DepositResponse(
-                    deposit.getIdDeposit(),
-                    deposit.getDepositName(),
-                    companyName,
-                    deposit.getDepositAddress(),
-                    deposit.getDepositDistrict(),
-                    deposit.getDepositCity(),
-                    deposit.getDepositState(),
-                    depositRegion,
-                    deposit.getDepositPhone()
-            ));
-        }
-
-        return depositResponses;
+        return depositRepository.findAllByOrderByIdDeposit();
     }
 
     public Deposit findById(Long id) {
@@ -125,7 +57,6 @@ public class DepositService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este almoxarifado já existe."));
         }
 
-
         var deposit = new Deposit();
         deposit.setDepositName(depositDTO.depositName());
         deposit.setCompanyId(depositDTO.companyId());
@@ -136,18 +67,15 @@ public class DepositService {
         deposit.setDepositPhone(depositDTO.depositPhone());
 
         if (depositDTO.depositRegion() != null && !depositDTO.depositRegion().isEmpty()) {
-            var region = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
-            if (region.isPresent()) {
-                deposit.setRegion(region.get().getRegionId());
+            var regions = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
+            Region region;
+            if (regions.isEmpty()) {
+                region = regionRepository.save(new Region(null, depositDTO.depositRegion()));
             } else {
-                var newRegion = new Region(
-                        null,
-                        depositDTO.depositRegion()
-                );
-                newRegion.setRegionName(depositDTO.depositRegion());
-                regionRepository.save(newRegion);
-                deposit.setRegion(newRegion.getRegionId());
+                region = regions.getFirst();
             }
+
+            deposit.setRegion(region.getRegionId());
         }
 
         depositRepository.save(deposit);
@@ -171,18 +99,15 @@ public class DepositService {
         deposit.setDepositPhone(depositDTO.depositPhone());
 
         if (depositDTO.depositRegion() != null && !depositDTO.depositRegion().isEmpty()) {
-            var region = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
-            if (region.isPresent()) {
-                deposit.setRegion(region.get().getRegionId());
+            var regions = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
+            Region region;
+            if (regions.isEmpty()) {
+                region = regionRepository.save(new Region(null, depositDTO.depositRegion()));
             } else {
-                var newRegion = new Region(
-                        null,
-                        depositDTO.depositRegion()
-                );
-                newRegion.setRegionName(depositDTO.depositRegion());
-                regionRepository.save(newRegion);
-                deposit.setRegion(newRegion.getRegionId());
+                region = regions.getFirst();
             }
+
+            deposit.setRegion(region.getRegionId());
         }
 
         depositRepository.save(deposit);

@@ -22,39 +22,32 @@
 
     <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)"
           class="w-full pl-2 items-center justify-center">
-      <div class="flex justify-evenly pb-5 items-center">
-        @if (!add && !change) {
-          <app-button title="Alterar Equipes" (click)="change = true">
-          </app-button>
-        }
-        @if (!add && !change) {
-          <app-button title="Adicionar Equipes" classButton="btn btn-success text-white" (click)="add = true">
-          </app-button>
-        }
-        @if (add || change) {
-          <app-button title="Cancelar" classButton="btn" [action]="resetView()">
-          </app-button>
-          <app-button title="Salvar" typeButton="submit" [loading]="loading"
-                      classButton="btn btn-primary w-32 text-white">
-          </app-button>
-          @if (add) {
-            <div class="flex">
-              <div class="flex flex-col items-center mr-2">
-                <button class="btn btn-outline btn-primary btn-xs" (click)="newTeam()" type="button">+</button>
-                <p class="text-xs">Adicionar</p>
-              </div>
-              <div class="flex flex-col items-center">
-                <button class="btn btn-outline btn-xs" (click)="removeTeam()" type="button">-</button>
-                <p class="text-xs">Remover</p>
-              </div>
-            </div>
-          }
-        }
 
-      </div>
-      <app-table [large]="true">
+        <div class="flex items-center gap-3 pb-2">
+          <!-- Botão adicionar -->
+          <button
+            class="btn btn-primary btn-circle btn-sm tooltip tooltip-right"
+            (click)="newTeam()"
+            type="button"
+            data-tip="Adicionar equipe">
+            <i class="pi pi-user-plus"></i>
+          </button>
+
+          <!-- Botão remover -->
+          <button
+            class="btn btn-error btn-circle btn-sm tooltip tooltip-right"
+            (click)="removeTeam()"
+            type="button"
+            data-tip="Remover equipe">
+            <i class="pi pi-user-minus"></i>
+          </button>
+        </div>
+
+
+
+      <app-table [large]="false">
         <tr header>
-          <th *ngIf="change"></th>
+          <th></th>
           <th hidden>Código</th>
           <th>Descrição</th>
           <th class="max-w-52">Colaboradores</th>
@@ -65,221 +58,132 @@
         </tr>
 
         <tr *ngFor="let team of teams; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
-          @if (change) {
-            <td>
-              <input type="checkbox"
-                     class="check-box"
-                     [(ngModel)]="team.sel"
-                     (change)="team.sel ? getCities(team.UFName) : null"
-                     name="sel{{i}}">
-            </td>
-            <td hidden>
-              <input disabled
-                     [(ngModel)]="team.idTeam"
-                     name="idTeam{{i}}"
-                     type="text"
-                     class="input input-bordered input-xs"
-              ></td>
-            <td>
+
+          <!-- Ação principal (editar/cancelar/salvar) -->
+          <td [ngClass]="team.sel ? 'w-24' : ''">
+            <button
+              class="btn btn-info btn-circle btn-sm tooltip tooltip-right"
+              (click)="team.idTeam !== '' ? team.sel = !team.sel : removeTeam()"
+              type="button"
+              [attr.data-tip]="team.sel ? 'Cancelar' : 'Editar Equipe'">
+              <i class="pi" [ngClass]="team.sel ? 'pi-times' : 'pi-pencil'"></i>
+            </button>
+            <button
+              *ngIf="team.sel"
+              class="btn btn-info btn-circle btn-sm tooltip tooltip-right ml-2"
+              type="submit"
+              [attr.data-tip]="'Salvar'">
+              <i class="pi pi-save"></i>
+            </button>
+          </td>
+
+          <!-- ID -->
+          <td hidden>{{ team.idTeam }}</td>
+
+          <!-- Nome da equipe -->
+          <td>
+            <ng-container *ngIf="team.sel; else showTeamName">
               <input required
-                     [disabled]="!team.sel"
                      [(ngModel)]="team.teamName"
                      name="teamName{{i}}"
                      type="text"
                      placeholder="Insira o nome da equipe"
-                     class="input input-bordered input-xs"
-                     #teamName="ngModel"
-              >
+                     class="input input-bordered input-sm"
+                     #teamName="ngModel">
               <div *ngIf="teamName.invalid && (teamName.touched || teamForm.submitted)">
                 <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
-            </td>
+            </ng-container>
+            <ng-template #showTeamName>{{ team.teamName }}</ng-template>
+          </td>
 
-            <td>
-              <p-multiselect [options]="users"
-                             [(ngModel)]="team.memberIds"
-                             optionLabel="name"
-                             optionValue="userId"
-                             placeholder="Selecionar Colaboradores"
-                             class="w-full md:w-80">
+          <!-- Colaboradores -->
+          <td>
+            <ng-container *ngIf="team.sel; else showMembers">
+              <p-multiselect
+                name="team_{{team.idTeam}}"
+                [options]="users"
+                [(ngModel)]="team.memberIds"
+                optionLabel="name"
+                optionValue="userId"
+                placeholder="Selecionar Colaboradores"
+                [maxSelectedLabels]="3"
+                (onChange)="test(team)"
+                class="w-full md:w-80">
               </p-multiselect>
+            </ng-container>
+            <ng-template #showMembers>
+              {{ team.memberNames?.join(', ') }}
+            </ng-template>
+          </td>
 
-
-
-            </td>
-
-            <td>
+          <!-- Placa do caminhão -->
+          <td>
+            <ng-container *ngIf="team.sel; else showPlate">
               <input required
-                     [disabled]="!team.sel"
                      [(ngModel)]="team.plate"
                      name="plate{{i}}"
                      type="text"
                      placeholder="Insira a placa do veículo"
-                     class="input input-bordered input-xs"
-                     #plate="ngModel"
-              >
+                     (input)="utils.formatPlate($event)"
+                     minlength="7"
+                     maxlength="7"
+                     class="input input-bordered input-sm"
+                     #plate="ngModel">
               <div *ngIf="plate.invalid && (plate.touched || teamForm.submitted)">
                 <small *ngIf="plate.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
-            </td>
+            </ng-container>
+            <ng-template #showPlate>{{ team.plate }}</ng-template>
+          </td>
 
-            <td>
-              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.UFName }}</p>
-              <div *ngIf="team.sel">
-                <select
-                  class="select select-bordered select-xs"
-                  [(ngModel)]="team.UFName"
-                  [disabled]="!team.sel"
-                  name="UFName{{i}}"
-                  required
-                  #UFName="ngModel">
-                  <option value="" disabled>Selecione o estado da equipe</option>
-                  @for (uf of ufs; track uf.nome) {
-                    <option [value]="uf.sigla">{{ uf.nome }}</option>
-                  }
-                </select>
-                <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
-                  <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
+          <!-- Estado -->
+          <td>
+            <ng-container *ngIf="team.sel; else showUF">
+              <select
+                class="select select-bordered select-sm"
+                [(ngModel)]="team.UFName"
+                name="UFName{{i}}"
+                required
+                (change)="getCities(team.UFName)"
+                #UFName="ngModel">
+                <option value="" disabled>Selecione o estado</option>
+                <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>
+              </select>
+              <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
+                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
-            </td>
-            <td>
-              <p *ngIf="!team.sel" class="input input-bordered input-xs input-disabled">{{ team.cityName }}</p>
-              <div
-                *ngIf="team.sel"
-                [ngClass]="{'tooltip': !team.UFName, 'tooltip-bottom': !team.UFName}"
-                [attr.data-tip]="team.UFName ? '' : 'Selecione o Estado Primeiro'"
-                class="tooltip tooltip-bottom form-control w-full max-w-xs">
-                <select
-                  (click)="getCities(team.UFName)"
-                  (change)="updateRegion($any($event.target).value,i)"
-                  [(ngModel)]="team.cityName"
-                  class="select select-xs select-bordered"
-                  name="cityName{{i}}"
-                  [disabled]="!team.UFName"
-                  #cityName="ngModel"
-                  required>
-                  <option value="" disabled>Selecione a cidade da equipe</option>
-                  @for (city of cities; track city.nome) {
-                    <option [value]="city.nome">{{ city.nome }}</option>
-                  }
-                </select>
-                <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
-                  <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div
-                class="tooltip tooltip-bottom form-control w-full max-w-xs">
-                <p
-                  class="input input-xs input-disabled">{{ team.regionName ? team.regionName : 'Selecione a Cidade' }}</p>
-              </div>
-            </td>
+            </ng-container>
+            <ng-template #showUF>{{ team.UFName }}</ng-template>
+          </td>
 
-          } @else if (add) {
-            <td hidden>
-              <input disabled
-                     [(ngModel)]="team.idTeam"
-                     name="idTeam{{i}}"
-                     type="text"
-                     class="input input-bordered input-xs"
-              ></td>
-            <td>
-              <input required
-                     [disabled]="team.idTeam !== ''"
-                     [(ngModel)]="team.teamName"
-                     name="teamName{{i}}"
-                     type="text"
-                     placeholder="Insira o nome da equipe"
-                     class="input input-bordered input-xs"
-                     #teamName="ngModel"
-              >
-              <div *ngIf="teamName.invalid && (teamName.touched || teamForm.submitted)">
-                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+          <!-- Cidade -->
+          <td>
+            <ng-container *ngIf="team.sel; else showCity">
+              <select
+                (change)="updateRegion($any($event.target).value, i)"
+                (click)="getCities(team.UFName)"
+                [(ngModel)]="team.cityName"
+                class="select select-sm select-bordered"
+                name="cityName{{i}}"
+                [disabled]="!team.UFName"
+                #cityName="ngModel"
+                required>
+                <option value="" disabled>Selecione a cidade</option>
+                <option *ngFor="let city of cities" [value]="city.nome">{{ city.nome }}</option>
+              </select>
+              <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
+                <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
               </div>
-            </td>
-            <td>
-              <p-multiselect [options]="users" [(ngModel)]="team.memberIds" optionLabel="name" placeholder="Selecionar Colaboradores" [maxSelectedLabels]="3" class="w-full md:w-80" />
-            </td>
+            </ng-container>
+            <ng-template #showCity>{{ team.cityName }}</ng-template>
+          </td>
 
-            <td>
-              <input required
-                     [disabled]="team.idTeam !== ''"
-                     [(ngModel)]="team.plate"
-                     name="plate{{i}}"
-                     type="text"
-                     placeholder="Insira a placa do veículo"
-                     class="input input-bordered input-xs"
-                     #plate="ngModel"
-              >
-              <div *ngIf="plate.invalid && (plate.touched || teamForm.submitted)">
-                <small *ngIf="plate.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-              </div>
-            </td>
-            <td>
-              <p *ngIf="team.idTeam" class="input input-bordered input-xs input-disabled">{{ team.UFName }}</p>
-              <div *ngIf="!team.idTeam">
-                <select
-                  class="select select-bordered select-xs"
-                  [(ngModel)]="team.UFName"
-                  name="UFName{{i}}"
-                  [disabled]="team.idTeam !== ''"
-                  required
-                  #UFName="ngModel">
-                  <option value="" disabled>{{ team.UFName ? team.UFName : 'Selecione o estado da equipe' }}</option>
-                  @for (uf of ufs; track uf.nome) {
-                    <option [value]="uf.sigla">{{ uf.nome }}</option>
-                  }
-                </select>
-                <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
-                  <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
-            </td>
-            <td>
-              <p *ngIf="team.idTeam" class="input input-bordered input-xs input-disabled">{{ team.cityName }}</p>
-              <div
-                *ngIf="!team.idTeam"
-                [ngClass]="{'tooltip': !team.UFName, 'tooltip-bottom': !team.UFName}"
-                [attr.data-tip]="team.UFName ? '' : 'Selecione o Estado Primeiro'"
-                class="tooltip tooltip-bottom form-control w-full max-w-xs">
-                <select
-                  (change)="updateRegion($any($event.target).value, i)"
-                  (click)="getCities(team.UFName)"
-                  [(ngModel)]="team.cityName"
-                  class="select select-xs select-bordered"
-                  name="cityName{{i}}"
-                  [disabled]="!team.UFName"
-                  #cityName="ngModel"
-                  required>
-                  <option value="" disabled>{{ team.cityName ? team.cityName : 'Selecione a cidade da equipe' }}
-                  </option>
-                  @for (city of cities; track city.nome) {
-                    <option [value]="city.nome">{{ city.nome }}</option>
-                  }
-                </select>
-                <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
-                  <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div
-                class="tooltip tooltip-bottom form-control w-full max-w-xs">
-                <p
-                  class="input input-xs input-disabled">{{ team.regionName ? team.regionName : 'Selecione a Cidade' }}</p>
-              </div>
-            </td>
-          } @else {
-            <td hidden disabled>{{ team.idTeam }}</td>
-            <td>{{ team.teamName }}</td>
-            <td>{{ team.memberNames.join(', ') }}</td>
-            <td>{{ team.plate }}</td>
-            <td>{{ team.UFName }}</td>
-            <td>{{ team.cityName }}</td>
-            <td>{{ team.regionName }}</td>
-          }
+          <!-- Região -->
+          <td>
+            {{ team.regionName ? team.regionName : 'Selecione a Cidade' }}
+          </td>
+
         </tr>
       </app-table>
     </form>

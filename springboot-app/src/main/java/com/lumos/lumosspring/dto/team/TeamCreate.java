@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TeamCreate(long idTeam, String teamName, List<UUID> membersIds, String UFName, String cityName, String regionName, String plate, boolean sel) {
+public record TeamCreate(long idTeam, String teamName, List<UUID> memberIds, String UFName, String cityName, String regionName, String plate, boolean sel) {
 }
 

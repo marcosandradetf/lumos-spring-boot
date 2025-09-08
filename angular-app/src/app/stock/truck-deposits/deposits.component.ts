@@ -72,8 +72,8 @@ export class TruckDepositComponent {
     this.stockService.getCompanies().subscribe(
       c => this.companies = c
     );
-    this.stockService.getTruckDeposits().subscribe(
-      d => this.deposits = d
+    this.stockService.getDeposits().subscribe(
+      d => this.deposits = d.filter(d => d.isTruck)
     );
 
     this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {

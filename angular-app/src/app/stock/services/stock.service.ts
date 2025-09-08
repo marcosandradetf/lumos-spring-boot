@@ -41,10 +41,6 @@ export class StockService {
     return this.http.get<Deposit[]>(`${this.endpoint}/deposit`);
   }
 
-  getTruckDeposits() {
-    return this.http.get<Deposit[]>(`${this.endpoint}/deposit/truck-deposits`);
-  }
-
 
   getSuppliers() {
     return this.http.get<SupplierDTO[]>(`${this.endpoint}/stock/get-suppliers`);

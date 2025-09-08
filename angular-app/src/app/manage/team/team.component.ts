@@ -147,17 +147,11 @@ export class TeamComponent {
 
     this.loading = true;
 
-    const insert = this.teams.some(t => t.idTeam === '');
-    const update = this.teams.every(t => t.idTeam !== '');
     const updateCheckSel = this.teams.some(t => t.sel);
 
-    if (insert && this.teams.length !== this.teamsBackup.length) {
-      this.insertTeams();
-    } else if (update && updateCheckSel) {
+    if (updateCheckSel) {
       this.updateTeams();
     }
-
-    this.loading = false;
   }
 
   resetView() {
@@ -179,15 +173,15 @@ export class TeamComponent {
       regionName: '',
       plate: '',
       depositName: '',
-      sel: false,
+      sel: true,
     };
-    this.teams.push(team);
+    this.teams.splice(0, 0, team);
   }
 
   removeTeam() {
-    const lastElement = this.teams[this.teams.length - 1];
+    const lastElement = this.teams[0];
     if (lastElement.idTeam === '') {
-      this.teams.pop();
+      this.teams = this.teams.filter(t => t.idTeam !== lastElement.idTeam);
     }
   }
 
@@ -226,15 +220,18 @@ export class TeamComponent {
         this.teams = r;
         this.teamsBackup = JSON.parse(JSON.stringify(this.teams));
         this.change = false;
+        this.loading = false;
       },
       error: err => {
-        this.utils.showMessage(err.error.message, 'error', 'Erro');
+        this.loading = false;
+        this.utils.showMessage(err.error.error, 'error', 'Erro');
         console.log(err);
       },
     });
 
   }
-
-
+  test(t:any){
+    console.log(t);
+  }
 
 }

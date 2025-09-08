@@ -3,7 +3,7 @@ import {Router} from '@angular/router';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {NgForOf, NgIf} from '@angular/common';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {UserService} from './user-service.service';
 import {catchError, tap, throwError} from 'rxjs';
 import {UtilsService} from '../../core/service/utils.service';
@@ -13,6 +13,7 @@ import {AuthService} from '../../core/auth/auth.service';
 import {Title} from '@angular/platform-browser';
 import {NgxMaskDirective, NgxMaskPipe, provideNgxMask} from 'ngx-mask';
 import {Toast} from 'primeng/toast';
+import {MultiSelect} from 'primeng/multiselect';
 
 @Component({
   selector: 'app-user',
@@ -28,7 +29,9 @@ import {Toast} from 'primeng/toast';
     ModalComponent,
     NgxMaskDirective,
     NgxMaskPipe,
-    Toast
+    Toast,
+    NgClass,
+    MultiSelect
   ],
   providers: [provideNgxMask()],
   templateUrl: './user.component.html',
@@ -40,33 +43,35 @@ export class UserComponent {
 
   change: boolean = false;
   users: {
-    userId: string,
-    username: string,
-    name: string,
-    lastname: string,
-    email: string,
-    cpf: string,
+    userId: string;
+    username: string;
+    name: string;
+    lastname: string;
+    email: string;
+    cpf: string;
     year: string;
     month: string;
     day: string;
-    role: string[],
-    status: boolean
-    sel: boolean
+    role: string[];
+    status: boolean;
+    sel: boolean;
+    show: boolean;
   }[] = [];
 
   usersBackup: {
-    userId: string,
-    username: string,
-    name: string,
-    lastname: string,
-    email: string,
-    cpf: string,
+    userId: string;
+    username: string;
+    name: string;
+    lastname: string;
+    email: string;
+    cpf: string;
     year: string;
     month: string;
     day: string;
-    role: string[],
-    status: boolean
-    sel: boolean
+    role: string[];
+    status: boolean;
+    sel: boolean;
+    show: boolean;
   }[] = [];
 
 
@@ -102,7 +107,6 @@ export class UserComponent {
   ];
 
   formSubmitted: boolean = false;
-  validation: string = '';
   serverMessage: string | null = null;
   alertType: string | null = null;
   loading: boolean = false;
@@ -174,36 +178,11 @@ export class UserComponent {
 
     this.loading = true;
 
-    const insert = this.users.some(u => u.userId === '');
-    const update = this.users.every(u => u.userId !== '');
-    const updateCheckSel = this.users.some(u => u.sel);
+    const someSel = this.users.some(u => u.sel);
 
-    if (insert && this.users.length !== this.usersBackup.length) {
-      this.insertUsers();
-    } else if (update && updateCheckSel) {
+    if (someSel) {
       this.updateUsers();
     }
-
-    this.loading = false;
-    this.validation = "";
-  }
-
-  private insertUsers() {
-
-    this.userService.insertUsers(this.users).pipe(
-      tap(r => {
-        this.showMessage("Usuários criados com sucesso, a senha provisória foi enviada para o email cadastrado de cada usuário.");
-        this.alertType = "alert-success";
-        this.users = r;
-        this.usersBackup = JSON.parse(JSON.stringify(this.users));
-        this.add = false;
-      }),
-      catchError(err => {
-        this.showMessage(err.error.message);
-        this.alertType = "alert-error";
-        throw err;
-      })
-    ).subscribe();
 
   }
 
@@ -213,7 +192,7 @@ export class UserComponent {
 
     if (noneSelected) {
       // this.serverMessage = "Nenhum usuário foi selecionado."
-      this.showMessage("Nenhum usuário foi selecionado.");
+      this.utils.showMessage("Nenhum usuário foi selecionado.", 'info', 'Atenção');
       this.alertType = "alert-error";
       this.loading = false;
       return;
@@ -221,15 +200,15 @@ export class UserComponent {
 
     this.userService.updateUser(this.users)
       .pipe(tap(r => {
-          this.showMessage("Usuários atualizados com sucesso.");
-          this.alertType = "alert-success";
+          this.utils.showMessage("Caso algum usuário tenha sido cadastrado, a senha foi enviada para o email informado.", 'success', 'Usuários atualizados com sucesso.', true)
           this.users = r;
           this.usersBackup = JSON.parse(JSON.stringify(this.users));
           this.change = false;
+          this.loading = false;
         }),
         catchError(err => {
-          this.showMessage(err.error.message);
-          this.alertType = "alert-error";
+          this.utils.showMessage(err.error.message, 'error', 'Atenção');
+          this.loading = false;
           throw err;
         })
       ).subscribe();
@@ -244,6 +223,7 @@ export class UserComponent {
   }
 
   currentPassword: string | null = null
+
   resetPassword() {
     this.loading = true;
     if (this.userId !== '') {
@@ -274,16 +254,17 @@ export class UserComponent {
       day: "",
       role: [],
       status: true,
-      sel: false
+      sel: true,
+      show: false,
     };
-    this.users.push(user);
+    this.users.splice(0, 0, user);
   }
 
 
   removeUser() {
-    const lastElement = this.users[this.users.length - 1];
-    if (lastElement.userId === '') {
-      this.users.pop();
+    const firstElement = this.users[0];
+    if (firstElement.userId === '') {
+      this.users = this.users.filter(u => u.userId !== firstElement.userId);
     }
   }
 
@@ -293,11 +274,6 @@ export class UserComponent {
       return;
     }
 
-    // const user = this.users.find(u => u.userId === id);
-    // if (!user) {
-    //   console.log('Usuário não encontrado');
-    //   return;
-    // }
 
     // Obter todas as roles associadas ao usuário
     let roles = this.rolesUser.filter(u => u.index === userIndex);
@@ -330,6 +306,27 @@ export class UserComponent {
   filterRolesByUserId(index: number) {
     return this.rolesUser.filter(role => role.index === index);
   }
+
+  changeRoleFromMulti(userIndex: number, selectedRoles: string[]) {
+    // Zera as roles do usuário
+    this.rolesUser = this.rolesUser.filter(u => u.index !== userIndex);
+    this.users[userIndex].role = [];
+
+    // Reinsere as roles selecionadas
+    selectedRoles.forEach(roleName => {
+      this.rolesUser.push({index: userIndex, role: roleName});
+      this.users[userIndex].role.push(roleName);
+    });
+  }
+
+
+  getRolesString(index: number): string {
+    return this.rolesUser
+      .filter(r => r.index === index)
+      .map(r => r.role)
+      .join(', ');
+  }
+
 
   verifyRole(index: number, nomeRole: string): boolean {
     const userRoles = this.filterRolesByUserId(index); // Obtém as roles do usuário filtrado
@@ -390,18 +387,21 @@ export class UserComponent {
       this.openConfirmationModal = true;
       this.userId = userId;
       this.email = email;
+    } else {
+      this.utils.showMessage("Ação disponível apenas para usuários cadastrados.", "info", "Lumos™");
     }
 
   }
 
   copyPassword() {
     if (this.currentPassword) {
-      navigator.clipboard.writeText(this.currentPassword).then(() => {
+      navigator.clipboard.writeText(this.currentPassword ?? '').then(() => {
         this.openConfirmationModal = false;
         this.currentPassword = null;
         this.utils.showMessage("Senha copiada com sucesso", "success", "Lumos™");
       });
     }
   }
+
 
 }
