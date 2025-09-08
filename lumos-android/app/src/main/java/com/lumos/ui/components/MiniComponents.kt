@@ -27,9 +27,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -55,6 +57,7 @@ import androidx.navigation.NavHostController
 import com.lumos.R
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.ui.maintenance.MaintenanceUIState
 
 @Composable
 fun Loading(label: String? = null) {
@@ -558,7 +561,7 @@ fun ConfirmNavigation(route: String, navController: NavHostController, onDismiss
         title = "Confirme sua ação",
         body = "Deseja sair?",
         confirm = {
-            if(route == "back") {
+            if (route == "back") {
                 navController.popBackStack()
             } else {
                 navController.navigate(route)
@@ -593,6 +596,94 @@ fun UserAvatar(name: String, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSecondaryContainer
         )
+    }
+}
+
+@Composable
+fun FinishScreen(
+    screenTitle: String,
+
+    navigateBack: (() -> Unit)? = null,
+
+    messageTitle: String = "Missão cumprida!",
+    messageBody: String = "Os dados serão enviados para o sistema.",
+    navController: NavHostController,
+    clickBack: () -> Unit
+) {
+
+    AppLayout(
+        title = screenTitle,
+        selectedIcon = BottomBar.MAINTENANCE.value,
+        navigateBack = {
+            navigateBack
+        },
+        navigateToHome = {
+            navController.navigate(Routes.HOME)
+        },
+        navigateToMore = {
+            navController.navigate(Routes.MORE)
+        },
+        navigateToStock = {
+            navController.navigate(Routes.STOCK)
+        },
+        navigateToExecutions = {
+            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+        }
+    ) { _, _ ->
+
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.8f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.TaskAlt,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(72.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape
+                        )
+                        .padding(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = messageTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = messageBody,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = 0.5f),
+                    onClick = {
+                        clickBack()
+                    }
+                ) {
+                    Text("Voltar")
+                }
+            }
+        }
     }
 }
 

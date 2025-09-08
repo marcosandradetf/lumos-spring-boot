@@ -9,6 +9,7 @@ data class PreMeasurement(
     val preMeasurementId: String,
     var contractId: Long,
     var contractor: String,
+    var status: String = "IN_PROGRESS"
 )
 
 @Entity(tableName = "pre_measurement_street")

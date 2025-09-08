@@ -19,6 +19,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.lumos.lumosspring.dto.user.OperationalAndTeamsResponse;
+
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -111,13 +113,20 @@ public class UserService {
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
         }
-        String newPassword = UUID.randomUUID().toString();
+
+        SecureRandom random = new SecureRandom();
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) { // tamanho da senha
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        String newPassword = sb.toString();
+
         user.get().setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user.get());
 
-        emailService.sendNewPasswordForEmail(user.get().getName(), user.get().getEmail(), newPassword);
 
-        return ResponseEntity.ok(new DefaultResponse(STR."Foi enviada uma nova senha para \{user.get().getEmail()}, por favor verifique sua caixa de entrada e spam."));
+        return ResponseEntity.ok(new DefaultResponse(newPassword));
     }
 
     public ResponseEntity<?> changePassword(String userId, String oldPassword, String newPassword) {

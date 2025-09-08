@@ -1,6 +1,5 @@
 package com.lumos.ui.preMeasurement
 
-import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,8 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,27 +35,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
-import com.lumos.viewmodel.ContractViewModel
-import com.lumos.utils.Utils
+import com.lumos.viewmodel.PreMeasurementViewModel
 import java.time.Instant
 
 @Composable
 fun PreMeasurementScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    context: Context,
-    contractViewModel: ContractViewModel,
+    preMeasurementViewModel: PreMeasurementViewModel,
     navController: NavHostController,
-    notificationsBadge: String,
     roles: Set<String>,
 
     ) {
@@ -68,15 +58,23 @@ fun PreMeasurementScreen(
         if (!roles.any { it in requiredRoles }) {
             navController.navigate(Routes.NO_ACCESS + "/Pré-medição")
         }
+
+        preMeasurementViewModel.loadPreMeasurements()
     }
 
-//    PMContent(
-//        contracts = preMeasurementViewModel.preMeasurements,
-//        onNavigateToHome = onNavigateToHome,
-//        onNavigateToMenu = onNavigateToMenu,
-//        navController = navController,
-//        notificationsBadge = notificationsBadge
-//    )
+    LaunchedEffect(preMeasurementViewModel.preMeasurementId) {
+        if (preMeasurementViewModel.preMeasurementId != null) navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS)
+    }
+
+    PMContent(
+        preMeasurements = preMeasurementViewModel.measurements,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToMenu = onNavigateToMenu,
+        navController = navController,
+        accessMeasurement = {
+            preMeasurementViewModel.startPreMeasurement(currentPreMeasurementId = it)
+        }
+    )
 }
 
 @Composable
@@ -85,15 +83,16 @@ fun PMContent(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     navController: NavHostController,
-    notificationsBadge: String
+    accessMeasurement: (String) -> Unit
 ) {
     AppLayout(
         title = "Pré-mediçoes em andamento",
         selectedIcon = BottomBar.MORE.value,
-        notificationsBadge = notificationsBadge,
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
-        navigateBack = onNavigateToMenu,
+        navigateBack = {
+            navController.popBackStack()
+        },
         navigateToExecutions = {
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         },
@@ -211,7 +210,7 @@ fun PMContent(
 
 
                                 TextButton(onClick = {
-                                    navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/${preMeasurement.preMeasurementId}")
+                                    accessMeasurement(preMeasurement.preMeasurementId)
                                 }) {
                                     Text(
                                         text = "Acessar Pré-Medição",

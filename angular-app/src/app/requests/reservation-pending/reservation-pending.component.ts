@@ -296,7 +296,7 @@ export class ReservationPendingComponent implements OnInit {
       this.reservations = this.reservationsBackup;
     }
 
-    this.reservations = this.reservations.filter(r => r.description.toLowerCase().includes(value.toLowerCase()));
+    this.reservations = this.reservationsBackup.filter(r => r.description.toLowerCase().includes(value.toLowerCase()));
   }
 
 

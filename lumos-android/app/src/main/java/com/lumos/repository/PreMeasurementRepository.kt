@@ -46,8 +46,8 @@ class PreMeasurementRepository(
         return db.contractDao().getContracts(ExecutionStatus.FINISHED)
     }
 
-    suspend fun getPreMeasurement(contractId: Long): Contract? {
-        return db.contractDao().getContract(contractId)
+    suspend fun getPreMeasurement(preMeasurementId: String): PreMeasurement {
+        return db.preMeasurementDao().getPreMeasurementById(preMeasurementId)
     }
 
     suspend fun sendMeasurementToBackend(
@@ -205,6 +205,26 @@ class PreMeasurementRepository(
         } catch (e: Exception) {
             Log.e("Upload", "Falha geral no upload", e)
             RequestResult.UnknownError(e)
+        }
+    }
+
+    suspend fun existsPreMeasurementByContractId(contractId: Long): PreMeasurement? {
+        return db.preMeasurementDao().existsPreMeasurementByContractId(contractId)
+    }
+
+    suspend fun saveNewPreMeasurement(newPreMeasurement: PreMeasurement) {
+        try {
+            db.preMeasurementDao().insertMeasurement(newPreMeasurement)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    suspend fun getPreMeasurements(): List<PreMeasurement> {
+        try {
+            return db.preMeasurementDao().getPreMeasurements()
+        } catch (e: Exception) {
+            throw e
         }
     }
 

@@ -25,6 +25,10 @@ class ContractController(
     fun deleteById(@RequestBody contractId: Long) : ResponseEntity<Any> =
         contractService.deleteById(contractId)
 
+    @PostMapping("/contracts/archive-by-id")
+    fun archiveById(@RequestBody contractId: Long) : ResponseEntity<Any> =
+        contractService.archiveById(contractId)
+
 
     @GetMapping("/contracts/get-contract/{contractId}")
     fun getContract(@PathVariable contractId: Long): ResponseEntity<Any> =

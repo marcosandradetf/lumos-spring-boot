@@ -41,6 +41,8 @@ export class ContractService {
     return this.http.get<ContractItemsResponseWithExecutionsSteps[]>(this.endpoint + "/get-contract-items-with-executions-steps/" + contractId);
   }
 
-
+  archiveById(contractId: number) {
+    return this.http.post(this.endpoint + "/archive-by-id", contractId);
+  }
 
 }

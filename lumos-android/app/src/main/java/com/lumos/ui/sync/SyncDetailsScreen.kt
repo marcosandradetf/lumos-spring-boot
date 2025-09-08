@@ -4,18 +4,26 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SyncProblem
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -31,10 +39,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.SyncQueueEntity
@@ -42,10 +53,12 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.FinishScreen
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NothingData
 import com.lumos.viewmodel.SyncViewModel
 import com.lumos.worker.SyncTypes
+import kotlinx.coroutines.delay
 
 @Composable
 fun SyncDetailsScreen(
@@ -57,29 +70,37 @@ fun SyncDetailsScreen(
     type: String,
     lastRoute: String? = null
 ) {
-    var syncItems by remember { mutableStateOf<List<SyncQueueEntity>>(emptyList()) }
+    val syncItems by syncViewModel.syncItems.collectAsState()
     var streets by remember { mutableStateOf<List<DirectExecutionStreet>>(emptyList()) }
 
     val loading by syncViewModel.loading.collectAsState()
     val message by syncViewModel.message.collectAsState()
 
     LaunchedEffect(Unit) {
-        if (type == SyncTypes.POST_DIRECT_EXECUTION) {
-            syncItems = syncViewModel.getItems(listOf(type))
-            val streetIds = syncItems.map { it.relatedId!! }
-            streets = syncViewModel.getStreets(streetIds)
-        } else {
-            syncItems = syncViewModel.getItems(
-                listOf(
-                    SyncTypes.POST_MAINTENANCE,
-                    SyncTypes.SYNC_STOCK,
-                    SyncTypes.POST_ORDER,
-                    SyncTypes.POST_MAINTENANCE_STREET,
-                    SyncTypes.POST_DIRECT_EXECUTION,
-                    SyncTypes.FINISHED_DIRECT_EXECUTION,
-                    SyncTypes.POST_INDIRECT_EXECUTION
+        when (type) {
+            SyncTypes.POST_DIRECT_EXECUTION -> {
+                syncViewModel.getItems(listOf(type))
+                val streetIds = syncItems.map { it.relatedId!! }
+                streets = syncViewModel.getStreets(streetIds)
+            }
+            SyncTypes.POST_MAINTENANCE -> {
+                syncViewModel.getItems(
+                    listOf(
+                        SyncTypes.POST_MAINTENANCE,
+                        SyncTypes.SYNC_STOCK,
+                        SyncTypes.POST_ORDER,
+                        SyncTypes.POST_MAINTENANCE_STREET,
+                        SyncTypes.POST_DIRECT_EXECUTION,
+                        SyncTypes.FINISHED_DIRECT_EXECUTION,
+                        SyncTypes.POST_INDIRECT_EXECUTION
+                    )
                 )
-            )
+            }
+            else -> {
+                syncViewModel.getItems(
+                    listOf(type)
+                )
+            }
         }
     }
 
@@ -100,7 +121,6 @@ fun SyncDetailsScreen(
                     context = applicationContext,
                 )
 
-                syncItems = syncItems.filter { s -> s.relatedId != it }
                 streets = streets.filter { s -> s.directStreetId != it }
             },
             cancel = {
@@ -110,7 +130,7 @@ fun SyncDetailsScreen(
                     context = applicationContext,
                 )
 
-                syncItems = syncItems.filter { s -> s.relatedId != it }
+
                 streets = streets.filter { s -> s.directStreetId != it }
             }
         )
@@ -129,15 +149,17 @@ fun SyncDetailsScreen(
                     context = applicationContext,
                 )
 
-                syncItems = syncItems.filter { s -> s.id != it }
             },
-            cancel = {
-                syncViewModel.cancelById(
-                    id = it,
-                    context = applicationContext,
-                )
+            cancel = { id, count ->
+                if (count == 0) {
+                    syncViewModel.setMessage("Não é permitido cancelar itens sem falha, no menu clique em tentar novamente.")
+                } else {
+                    syncViewModel.cancelById(
+                        id = id,
+                        context = applicationContext,
+                    )
 
-                syncItems = syncItems.filter { s -> s.id != it }
+                }
             }
         )
     }
@@ -154,31 +176,45 @@ fun SyncDetailsMaintenanceContent(
     navController: NavHostController,
     lastRoute: String?,
     retry: (Long) -> Unit,
-    cancel: (Long) -> Unit
+    cancel: (Long, Int) -> Unit
 ) {
     val type = when (syncType) {
-        SyncTypes.POST_MAINTENANCE -> "Sincronizações de manutençoes"
+        SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
+        SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
+
+        SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
+
+        SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
+        SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
+
+        SyncTypes.SYNC_STOCK -> "Dados de estoque"
+        SyncTypes.POST_ORDER -> "Requisição de materiais"
+
+        SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
+
         else -> syncType
     }
+
     var expandedItemId by remember { mutableStateOf<Long?>(null) }
     var syncItem by remember { mutableStateOf<SyncQueueEntity?>(null) }
-    var lastMessageShown by remember { mutableStateOf("") }
 
     val selectedIcon =
-        if (lastRoute == Routes.MAINTENANCE) BottomBar.MAINTENANCE.value
-        else if (lastRoute == Routes.STOCK) BottomBar.STOCK.value
-        else BottomBar.MORE.value
+        when (lastRoute) {
+            Routes.MAINTENANCE -> BottomBar.MAINTENANCE.value
+            Routes.STOCK -> BottomBar.STOCK.value
+            Routes.HOME -> BottomBar.HOME.value
+            else -> BottomBar.MORE.value
+        }
+
 
     AppLayout(
-        title = type,
+        title = "Fila de sincronização",
         selectedIcon = selectedIcon,
         notificationsBadge = currentNotifications,
         navigateToMore = { navController.navigate(Routes.MORE) },
         navigateToHome = { navController.navigate(Routes.HOME) },
         navigateBack = {
-            if (lastRoute == Routes.MAINTENANCE) navController.navigate(Routes.MAINTENANCE)
-            else if (lastRoute == Routes.STOCK) navController.navigate(Routes.STOCK)
-            else navController.navigate(Routes.PROFILE)
+            navController.popBackStack()
         },
         navigateToStock = {
             navController.navigate(Routes.STOCK)
@@ -191,18 +227,32 @@ fun SyncDetailsMaintenanceContent(
         }
     ) { modifier, snackBar ->
 
-        if (message.isNotBlank() && message != lastMessageShown) {
+        if (message.isNotBlank()) {
             snackBar(message, null, null)
-            lastMessageShown = message
         }
 
-        if (loading) Loading("Carregando")
-        else if (syncItems.isEmpty()) NothingData("Nenhum dado encontrado")
+        if (loading) Loading("Reprocessando fila")
+        else if (syncItems.isEmpty()) {
+            FinishScreen(
+                screenTitle = "Fila de sincronização",
+                navigateBack = {
+                    navController.navigate(Routes.HOME)
+                },
+                messageTitle = "Nenhuma pendência",
+                messageBody = "Nenhuma sincronização pendente",
+                navController = navController,
+                clickBack = {
+                    navController.navigate(Routes.HOME)
+                }
+            )
+//            NothingData("Nenhuma pendência de sincronização")
+        }
         else {
             if (syncItem != null) {
                 Alert(
                     title = "Motivo da falha",
-                    body = syncItem?.errorMessage ?: "Motivo não registrado",
+                    body = syncItem?.errorMessage
+                        ?: "Não houve uma falha identificada, no menu anterior clique em tentar novamente.",
                     confirm = {
                         syncItem = null
                     }
@@ -211,17 +261,42 @@ fun SyncDetailsMaintenanceContent(
             LazyColumn(
                 modifier = modifier,
             ) {
+                item {
+                    Column {
+
+                        Text(
+                            text = "Clique no menu para ver as opções",
+                            modifier = Modifier
+                                .padding(
+                                    bottom = 20.dp,
+                                    start = 10.dp
+                                )
+                                .fillMaxWidth(),
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
+
                 items(
                     items = syncItems,
                     key = { it.id }
                 ) { m ->
 
                     val title = when (m.type) {
-                        SyncTypes.POST_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Registro em campo"
-                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Envio"
-                        SyncTypes.SYNC_STOCK -> "Sincronização de dados de estoque"
-                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+                        SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
                         SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
+
+                        SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
+
+                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
+                        SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
+
+                        SyncTypes.SYNC_STOCK -> "Dados de estoque"
+                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+
+                        SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
+
                         else -> m.type
                     }
 
@@ -232,7 +307,11 @@ fun SyncDetailsMaintenanceContent(
                             .background(MaterialTheme.colorScheme.surface)
                     ) {
                         ListItem(
-                            headlineContent = { Text(title) },
+                            headlineContent = {
+                                Text(
+                                    "Enviar $title"
+                                )
+                            },
                             leadingContent = {
                                 Icon(
                                     Icons.Default.SyncProblem,
@@ -281,7 +360,7 @@ fun SyncDetailsMaintenanceContent(
                             DropdownMenuItem(
                                 onClick = {
                                     expandedItemId = null
-                                    cancel(m.id)
+                                    cancel(m.id, m.attemptCount)
                                 },
                                 text = { Text("Cancelar o envio") },
                                 leadingIcon = {
@@ -318,13 +397,14 @@ fun SyncDetailsStreetsContent(
     var syncItem by remember { mutableStateOf<SyncQueueEntity?>(null) }
     var lastMessageShown by remember { mutableStateOf("") }
 
+
     AppLayout(
         title = type,
         selectedIcon = BottomBar.MORE.value,
         notificationsBadge = currentNotifications,
         navigateToMore = { navController.navigate(Routes.MORE) },
         navigateToHome = { navController.navigate(Routes.HOME) },
-        navigateBack = { navController.navigate(Routes.PROFILE) }
+        navigateBack = { navController.popBackStack() }
     ) { modifier, snackBar ->
 
         if (message.isNotBlank() && message != lastMessageShown) {
@@ -332,7 +412,7 @@ fun SyncDetailsStreetsContent(
             lastMessageShown = message
         }
 
-        if (loading) Loading("Carregando")
+        if (loading) Loading("Reprocessando fila")
         else if (streets.isEmpty()) NothingData("Nenhuma rua encontrada")
         else {
             if (syncItem != null) {

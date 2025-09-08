@@ -10,7 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
+import com.lumos.navigation.Routes
 import com.lumos.repository.PreMeasurementRepository
+import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,6 +27,7 @@ class PreMeasurementViewModel(
 
     var measurement by mutableStateOf<PreMeasurement?>(null)
     var street by mutableStateOf<PreMeasurementStreet?>(null)
+
     val streetItems = mutableListOf<PreMeasurementStreetItem>()
 
 
@@ -33,9 +36,10 @@ class PreMeasurementViewModel(
     var loading by mutableStateOf(false)
     var locationLoading by mutableStateOf(false)
 
-    private val _streets = mutableStateOf<List<PreMeasurementStreet>>(emptyList()) // estado da lista
+    var measurements by mutableStateOf<List<PreMeasurement>>(emptyList())
+    private val _streets =
+        mutableStateOf<List<PreMeasurementStreet>>(emptyList()) // estado da lista
     val streets: State<List<PreMeasurementStreet>> = _streets // estado acessível externamente
-
 
 
     var hasPosted by mutableStateOf(false)
@@ -44,16 +48,28 @@ class PreMeasurementViewModel(
     var nextStep by mutableStateOf(false)
     var message by mutableStateOf<String?>(null)
 
-    fun newPreMeasurement(contractId: Long, contractor: String) {
-        if(measurement == null) {
-            preMeasurementId = UUID.randomUUID()
-            measurement = PreMeasurement(
-                preMeasurementId = preMeasurementId.toString(),
-                contractId = contractId,
-                contractor = contractor
-            )
+    init {
+        viewModelScope.launch {
+            NavEvents.route.collect { route ->
+                println(route)
+                when (route) {
+                    Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS -> {
+                        preMeasurementId = null
+                        measurement = null
+                    }
+
+                    Routes.PRE_MEASUREMENT_PROGRESS -> {
+                        preMeasurementStreetId = null
+                        street = null
+                        streetItems.clear()
+                    }
+                }
+            }
         }
-        if(street == null && preMeasurementId != null) {
+    }
+
+    fun newPreMeasurementStreet() {
+        if (street == null && preMeasurementId != null) {
             preMeasurementStreetId = UUID.randomUUID()
             street = PreMeasurementStreet(
                 preMeasurementStreetId = preMeasurementStreetId.toString(),
@@ -89,7 +105,6 @@ class PreMeasurementViewModel(
     }
 
 
-
     fun save() {
         viewModelScope.launch {
             loading = true
@@ -108,10 +123,10 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun loadStreets(preMeasurementId: String) {
+    fun loadStreets() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val fetched = repository?.getStreets(preMeasurementId)
+                val fetched = repository?.getStreets(preMeasurementId.toString())
                 _streets.value = fetched!! // atualiza o estado com os dados obtidos
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
@@ -119,12 +134,20 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun queueSendMeasurement(preMeasurementId: String) {
+    fun queueSendMeasurement() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository?.queueSendMeasurement(preMeasurementId)
+                loading = true
+                withContext(Dispatchers.IO) {
+                    repository?.queueSendMeasurement(preMeasurementId.toString())
+                }
+
+                preMeasurementId = null
+                measurement = null
             } catch (e: Exception) {
                 Log.e("Erro view model - sendPreMeasurementSync", e.message.toString())
+            } finally {
+                loading = false
             }
         }
     }
@@ -141,6 +164,58 @@ class PreMeasurementViewModel(
         nextStep = false
 
         loading = false
+    }
+
+    fun startPreMeasurement(contractId: Long? = null, contractor: String? = null, currentPreMeasurementId: String? = null) {
+        viewModelScope.launch {
+            val newPreMeasurementId = UUID.randomUUID()
+
+            try {
+                loading = true
+                if(contractId != null && contractor != null) {
+                    val exists = repository?.existsPreMeasurementByContractId(contractId)
+                    if (exists != null) {
+                        preMeasurementId = UUID.fromString(exists.preMeasurementId)
+                        measurement = exists
+                    } else {
+                        measurement = PreMeasurement(
+                            preMeasurementId = newPreMeasurementId.toString(),
+                            contractId = contractId,
+                            contractor = contractor,
+                        )
+                        repository?.saveNewPreMeasurement(measurement!!)
+                        preMeasurementId = newPreMeasurementId
+                    }
+                } else if(currentPreMeasurementId != null) {
+                    measurement = repository?.getPreMeasurement(currentPreMeasurementId)
+                    preMeasurementId = UUID.fromString(currentPreMeasurementId)
+                }
+
+            } catch (e: Exception) {
+                message = if (e.message?.lowercase()?.contains("unique") == true) {
+                    "Pré-medição já salva anteriormente"
+                } else {
+                    e.message
+                }
+            } finally {
+                loading = false
+            }
+        }
+    }
+
+    fun loadPreMeasurements() {
+        viewModelScope.launch {
+            loading = true
+            try {
+                withContext(Dispatchers.IO) {
+                    measurements = repository?.getPreMeasurements() ?: emptyList()
+                }
+            } catch (e: Exception) {
+                message = e.message
+            } finally {
+                loading = false
+            }
+        }
     }
 
 

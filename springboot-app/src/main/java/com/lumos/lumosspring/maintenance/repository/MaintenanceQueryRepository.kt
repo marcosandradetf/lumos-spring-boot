@@ -64,22 +64,34 @@ class MaintenanceQueryRepository(
                     WHERE ms.maintenance_id = m.maintenance_id
                   ),
                   'date_of_visit', m.date_of_visit,
-                  'team', json_build_object(
-                    'electrician', json_build_object(
-                       'name', 'Campo temporariamente',
-                      'last_name', 'desativado'
-                    ),
-                    'driver', json_build_object(
-                       'name', 'Campo temporariamente',
-                      'last_name', 'desativado'
-                    )
-                  )
+                  'team', execs.executors
                 )
                 ORDER BY m.maintenance_id
               ) AS maintenances
 
             FROM maintenance m
             JOIN contract c ON c.contract_id = m.contract_id
+            LEFT JOIN LATERAL (
+            SELECT json_agg(
+                   json_build_object(
+                        'name', t.name,
+                        'last_name', t.last_name,
+                        'role', t.role_name
+                        )
+                   ) AS executors
+                FROM (
+                    SELECT DISTINCT ON (au.user_id)
+                           au.name,
+                           au.last_name,
+                           r.role_name
+                    FROM maintenance_executor me
+                    JOIN app_user au ON au.user_id = me.user_id
+                    JOIN user_role ur ON ur.id_user = au.user_id
+                    JOIN role r ON r.role_id = ur.id_role
+                    WHERE me.maintenance_id = m.maintenance_id
+                    ORDER BY au.user_id, r.role_name ASC
+                ) t
+            ) execs ON TRUE
             WHERE m.status = 'FINISHED'
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contract_id;

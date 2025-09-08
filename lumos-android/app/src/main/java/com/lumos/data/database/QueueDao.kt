@@ -32,12 +32,12 @@ interface QueueDao {
     @Query(
         """
             SELECT * FROM sync_queue_entity
-            WHERE type in (:types) and attemptCount > 0
+            WHERE type in (:types)
         """
     )
-    suspend fun getItem(
+    fun getItem(
         types: List<String>,
-    ): List<SyncQueueEntity>
+    ): Flow<List<SyncQueueEntity>>
 
     @Update
     suspend fun update(item: SyncQueueEntity)
@@ -71,7 +71,6 @@ interface QueueDao {
     @Query(
         """
             SELECT distinct type FROM sync_queue_entity
-            where attemptCount > 0
             ORDER BY priority ASC, createdAt ASC
         """
     )

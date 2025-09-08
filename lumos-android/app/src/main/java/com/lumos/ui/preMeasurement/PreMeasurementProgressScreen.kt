@@ -34,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,12 +46,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.CurrentScreenLoading
+import com.lumos.ui.components.FinishScreen
+import com.lumos.utils.Utils
 import com.lumos.viewmodel.PreMeasurementViewModel
 
 @Composable
@@ -58,116 +63,89 @@ fun PreMeasurementProgressScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToPreMeasurements: () -> Unit,
-    onNavigateToStreet: (Long) -> Unit,
     context: Context,
     preMeasurementViewModel: PreMeasurementViewModel,
     navController: NavHostController,
-    notificationsBadge: String,
-    preMeasurementId: String,
-    ) {
-    var preMeasurement by remember { mutableStateOf<PreMeasurement?>(null) }
-    val streets by preMeasurementViewModel.streets
-
-    LaunchedEffect(preMeasurementId) {
-
-//        preMeasurement = preMeasurementViewModel.getPreMeasurement(preMeasurementId)
-        preMeasurementViewModel.loadStreets(TODO())
-    }
-
-    if (preMeasurement != null)
-//        PMPContent(
-//            contract = preMeasurement!!,
-//            onNavigateToHome = onNavigateToHome,
-//            onNavigateToMenu = onNavigateToMenu,
-//            onNavigateToPreMeasurements = onNavigateToPreMeasurements,
-//            onNavigateToStreet = {
-//                onNavigateToStreet(it)
-//            },
-//            navController = navController,
-//            notificationsBadge = notificationsBadge,
-//            streets = streets,
-//            sendPreMeasurement = {
-//                if (streets.isNotEmpty()) {
-//                    preMeasurementViewModel.queueSendMeasurement(TODO())
-//                    Toast
-//                        .makeText(
-//                            context,
-//                            "Pré-medição enviada com sucesso!",
-//                            Toast.LENGTH_SHORT
-//                        )
-//                        .show()
-//                    onNavigateToHome()
-//                } else {
-//                    Toast
-//                        .makeText(
-//                            context,
-//                            "Não é permitido enviar sem adicionar pelo menos uma rua!",
-//                            Toast.LENGTH_SHORT
-//                        )
-//                        .show()
-//                }
-//
-//            }
-//        )
-    else
-        Loading(
-            context,
-            navController,
-            notificationsBadge
-        )
-}
-
-@Composable
-fun Loading(
-    context: Context,
-    navController: NavHostController,
-    notificationsBadge: String,
 ) {
-    AppLayout(
-        title = "Pré-medição",
-        selectedIcon = BottomBar.MORE.value,
-        notificationsBadge = notificationsBadge
-    ) { modifier, snackBar ->
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                Image(
-//                    bitmap = ImageBitmap.imageResource(id = R.mipmap.ic_lumos),
-//                    contentDescription = null
-//                )
-//                Spacer(modifier = Modifier.height(16.dp)) // Dá um espaço entre os elementos
-                CircularProgressIndicator(
-                    modifier = Modifier.size(32.dp), // Use size() ao invés de width()
-                    color = MaterialTheme.colorScheme.secondary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+    val streets by preMeasurementViewModel.streets
+    val measurement = preMeasurementViewModel.measurement
+    var currentContractor = ""
+
+
+    LaunchedEffect(Unit) {
+        currentContractor = measurement?.contractor ?: ""
+        preMeasurementViewModel.loadStreets()
+    }
+
+
+    if (preMeasurementViewModel.loading) {
+        CurrentScreenLoading(
+            navController = navController,
+            currentScreenName = Utils.abbreviate(measurement?.contractor!!),
+            loadingLabel = "Loading",
+            selectedIcon = BottomBar.MORE.value
+        )
+    } else if (measurement == null) {
+        FinishScreen(
+            screenTitle = Utils.abbreviate(currentContractor),
+            navigateBack = {
+                navController.popBackStack()
+            },
+            messageTitle = "Pré-medição finalizada!",
+            messageBody = "Os dados serão enviados ao sistema.",
+            navController = navController,
+            clickBack = {
+                navController.popBackStack()
             }
-        }
+        )
+    } else {
+        PMPContent(
+            measurement = measurement,
+            onNavigateToHome = onNavigateToHome,
+            onNavigateToMenu = onNavigateToMenu,
+            onNavigateToPreMeasurements = onNavigateToPreMeasurements,
+            onNavigateToStreet = {
+                navController.navigate(Routes.PRE_MEASUREMENT_STREET + "/$it")
+            },
+            navController = navController,
+            streets = streets,
+            sendPreMeasurement = {
+                if (streets.isNotEmpty()) {
+                    preMeasurementViewModel.queueSendMeasurement()
+                } else {
+                    Toast
+                        .makeText(
+                            context,
+                            "Não é permitido enviar sem finalizar pelo menos uma rua!",
+                            Toast.LENGTH_SHORT
+                        )
+                        .show()
+                }
+
+            }
+        )
     }
 }
-
 
 @Composable
 fun PMPContent(
-    contract: Contract,
+    measurement: PreMeasurement,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToPreMeasurements: () -> Unit,
-    onNavigateToStreet: (Long) -> Unit,
+    onNavigateToStreet: (String) -> Unit,
     navController: NavHostController,
-    notificationsBadge: String,
     streets: List<PreMeasurementStreet>,
     sendPreMeasurement: () -> Unit
 ) {
     AppLayout(
-        title = "Pré-medição",
+        title = Utils.abbreviate(measurement.contractor),
         selectedIcon = BottomBar.MORE.value,
-        notificationsBadge = notificationsBadge,
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
-        navigateBack = onNavigateToPreMeasurements,
+        navigateBack = {
+            navController.popBackStack()
+        },
         navigateToExecutions = {
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         },
@@ -214,7 +192,7 @@ fun PMPContent(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        text = contract.contractor,
+                                        text = measurement.contractor,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimary
@@ -260,7 +238,7 @@ fun PMPContent(
                     ) {
                         Button(
                             onClick = {
-//                                onNavigateToStreet(preMeasurement.preMeasurementId)
+                                onNavigateToStreet(measurement.preMeasurementId)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul
@@ -411,8 +389,7 @@ fun FinishPreMeasurementButton(onClick: () -> Unit) {
 }
 
 
-@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
-@Preview(name = "Light Mode", showBackground = true)
+@Preview()
 @Composable
 fun PrevPMP() {
     // Criando um contexto fake para a preview
@@ -652,10 +629,6 @@ fun PrevPMP() {
 //        { }
 //    )
 
-//    Loading(
-//        fakeContext,
-//        rememberNavController(),
-//        "12"
-//    )
+
 }
 

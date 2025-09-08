@@ -80,7 +80,7 @@ export class LoginComponent {
       },
       error: error => {
         error.innerText = '';
-        this.utils.showMessage(error.message, 'error');
+        this.utils.showMessage("Serviço fora do ar - Solicite ao Administrador", 'error', "Lumos™");
         this.loading = false;
       }
     });

@@ -23,6 +23,8 @@ import {
   PrimeConfirmDialogComponent
 } from '../../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
 import {ViewChild} from '@angular/core';
+import {IconField} from 'primeng/iconfield';
+import {InputIcon} from 'primeng/inputicon';
 
 
 @Component({
@@ -42,13 +44,16 @@ import {ViewChild} from '@angular/core';
     Toast,
     Breadcrumb,
     ContextMenu,
-    PrimeConfirmDialogComponent
+    PrimeConfirmDialogComponent,
+    IconField,
+    InputIcon
   ],
   templateUrl: './contract-list.component.html',
   styleUrl: './contract-list.component.scss'
 })
 export class ContractListComponent implements OnInit {
   contracts: ContractResponse[] = [];
+  contractsBackup: ContractResponse[] = [];
   contractItems: ContractItemsResponseWithExecutionsSteps[] = []
 
   loading: boolean = false;
@@ -69,10 +74,17 @@ export class ContractListComponent implements OnInit {
         this.openModal = true;
       }
     },
-    {label: 'Arquivar', icon: 'pi pi-folder-open'},
+    {
+      label: 'Arquivar', icon: 'pi pi-folder-open', command: () => {
+        this.archive = true
+        this.message = "Confirma o arquivamento do contrato " + this.selectedContract.contractor + "?"
+        this.openModal = true;
+      }
+    },
   ];
 
   home: MenuItem | undefined;
+  private archive: boolean = false;
 
   constructor(
     private contractService: ContractService,
@@ -98,6 +110,7 @@ export class ContractListComponent implements OnInit {
 
     this.contractService.getAllContracts().subscribe(c => {
       this.contracts = c;
+      this.contractsBackup = c;
       this.loading = false;
     });
 
@@ -276,7 +289,7 @@ export class ContractListComponent implements OnInit {
       const quantities = item.executedQuantity || [];
 
       // Garante que todos os steps estejam presentes com zero se ausentes
-      item.executedQuantity = Array.from({ length: maxSteps }, (_, i) => {
+      item.executedQuantity = Array.from({length: maxSteps}, (_, i) => {
         const step = i + 1;
         const found = quantities.find(q => q.step === step);
         return found ?? {
@@ -289,29 +302,47 @@ export class ContractListComponent implements OnInit {
   }
 
 
-
-
   handleAction(action: "accept" | "reject") {
     switch (action) {
       case 'accept':
         this.loading = true;
         this.openModal = false;
-        this.contractService.deleteById(this.selectedContract.contractId)
-          .subscribe({
-            next: () => {
-              this.contracts = this.contracts.filter(c => c.contractId !== this.selectedContract.contractId);
-              this.utils.showMessage("Contrato " + this.selectedContract.contractor + " excluido com sucesso!", "success", "Operação realizada")
-            },
-            error: (err) => {
-              this.utils.showMessage(err.error.message, "error", "Não foi possível excluir o contrato " + this.selectedContract.contractor);
-              this.loading = false;
-            },
-            complete: () => {
-              this.loading = false;
-            }
-          })
+
+        if (this.archive) {
+          this.contractService.archiveById(this.selectedContract.contractId)
+            .subscribe({
+              next: () => {
+                this.contracts = this.contracts.filter(c => c.contractId !== this.selectedContract.contractId);
+                this.utils.showMessage("Contrato " + this.selectedContract.contractor + " arquivado com sucesso!", "success", "Operação realizada")
+              },
+              error: (err) => {
+                this.utils.showMessage(err.error.message, "error", "Não foi possível arquivar o contrato " + this.selectedContract.contractor);
+                this.loading = false;
+              },
+              complete: () => {
+                this.loading = false;
+              }
+            });
+        } else {
+          this.contractService.deleteById(this.selectedContract.contractId)
+            .subscribe({
+              next: () => {
+                this.contracts = this.contracts.filter(c => c.contractId !== this.selectedContract.contractId);
+                this.utils.showMessage("Contrato " + this.selectedContract.contractor + " excluido com sucesso!", "success", "Operação realizada")
+              },
+              error: (err) => {
+                this.utils.showMessage(err.error.message, "error", "Não foi possível excluir o contrato " + this.selectedContract.contractor);
+                this.loading = false;
+              },
+              complete: () => {
+                this.loading = false;
+              }
+            });
+        }
         break;
       case 'reject':
+        this.openModal = false;
+        this.message = ''
         break;
     }
   }
@@ -321,7 +352,7 @@ export class ContractListComponent implements OnInit {
     this.selectedContract = contract;
   }
 
-    @ViewChild('menu') contextMenu: ContextMenu | undefined = undefined;
+  @ViewChild('menu') contextMenu: ContextMenu | undefined = undefined;
 
   openContextMenu(event: MouseEvent, contract: any): void {
     event.preventDefault(); // Evita scroll inesperado ou comportamento nativo
@@ -330,4 +361,13 @@ export class ContractListComponent implements OnInit {
     if (this.contextMenu) this.contextMenu.show(event); // Abre o menu na posição do clique
   }
 
+  filterData(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+
+    if (value === null || value === undefined || value === '') {
+      this.contracts = this.contractsBackup;
+    }
+
+    this.contracts = this.contractsBackup.filter(c => c.contractor.toLowerCase().includes(value.toLowerCase()));
+  }
 }

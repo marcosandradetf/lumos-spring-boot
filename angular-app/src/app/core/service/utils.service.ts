@@ -61,7 +61,7 @@ export class UtilsService {
   }
 
 
-  private capitalizeWithAcronyms(str: string): string {
+  public capitalizeWithAcronyms(str: string): string {
     const words = str.split(' ');
     const lastIndex = words.length - 1;
 

@@ -24,21 +24,33 @@ class JdbcInstallationRepository(
                   'step', de.description,
                   'description', de.description,
                   'type', 'direct_execution',
-                  'team', json_build_object(
-                    'electrician', json_build_object(
-                       'name', 'Campo temporariamente',
-                      'last_name', 'desativado'
-                    ),
-                    'driver', json_build_object(
-                       'name', 'Campo temporariamente',
-                      'last_name', 'desativado'
-                    )
-                  )
+                  'team', execs.executors
                 )
                 ORDER BY de.direct_execution_id
               ) AS steps
             FROM direct_execution de
             JOIN contract c ON c.contract_id = de.contract_id
+            LEFT JOIN LATERAL (
+            SELECT json_agg(
+                   json_build_object(
+                        'name', t.name,
+                        'last_name', t.last_name,
+                        'role', t.role_name
+                        )
+                   ) AS executors
+                FROM (
+                    SELECT DISTINCT ON (au.user_id)
+                           au.name,
+                           au.last_name,
+                           r.role_name
+                    FROM direct_execution_executor ex
+                    JOIN app_user au ON au.user_id = ex.user_id
+                    JOIN user_role ur ON ur.id_user = au.user_id
+                    JOIN role r ON r.role_id = ur.id_role
+                    WHERE de.direct_execution_id = ex.direct_execution_id
+                    ORDER BY au.user_id, r.role_name ASC
+                ) t
+            ) execs ON TRUE
             WHERE de.direct_execution_status = 'FINISHED'
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contract_id;            

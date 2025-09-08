@@ -39,6 +39,7 @@ import com.lumos.repository.PreMeasurementRepository
 import com.lumos.repository.StockRepository
 import com.lumos.repository.TeamRepository
 import com.lumos.utils.ConnectivityUtils
+import com.lumos.utils.SyncLoading
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.parseToAny
 
@@ -152,6 +153,7 @@ class SyncQueueWorker(
     override suspend fun doWork(): Result {
         setForeground(foregroundInfo())
 
+        SyncLoading.publish(true)
         val uuid = secureStorage.getUserUuid() ?: return Result.failure()
         val pendingItems = queueDao.getItemsToProcess()
 
@@ -178,16 +180,19 @@ class SyncQueueWorker(
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
                     queueDao.update(item.copy(status = SyncStatus.FAILED))
+                    SyncLoading.publish(false)
                     Result.failure()
                 }
             }
 
             if(result == Result.retry()) {
                 // Rede/servidor indisponível → retry global seguro
+                SyncLoading.publish(false)
                 return Result.retry()
             }
         }
 
+        SyncLoading.publish(false)
         return Result.success()
     }
 

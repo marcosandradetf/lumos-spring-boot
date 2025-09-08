@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -19,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -63,6 +65,7 @@ import com.lumos.ui.sync.SyncDetailsScreen
 import com.lumos.ui.sync.SyncScreen
 import com.lumos.ui.team.CheckTeamScreen
 import com.lumos.ui.updater.ApkUpdateDownloader
+import com.lumos.utils.NavEvents
 import com.lumos.viewmodel.AuthViewModel
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.DirectExecutionViewModel
@@ -97,6 +100,15 @@ fun AppNavigation(
     val notificationItem by FCMBus.notificationItem.collectAsState()
 
     val navController = rememberNavController()
+
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            NavEvents.publish(destination.route)
+        }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose { navController.removeOnDestinationChangedListener(listener) }
+    }
+
 
     // Usar viewModel para armazenar o ViewModel corretamente
     val authViewModel: AuthViewModel = viewModel {
@@ -424,20 +436,16 @@ fun AppNavigation(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MORE)
                         },
-                        onNavigateToPreMeasurement = {
-                            navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS + "/$it")
-                        },
                         context = LocalContext.current,
                         contractViewModel = contractViewModel,
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        roles = secureStorage.getRoles()
+                        roles = secureStorage.getRoles(),
+                        preMeasurementViewModel
                     )
                 }
 
-                composable(Routes.PRE_MEASUREMENT_PROGRESS + "/{preMeasurementId}") { backStackEntry ->
-                    val preMeasurementId =
-                        backStackEntry.arguments?.getString("preMeasurementId")
+                composable(Routes.PRE_MEASUREMENT_PROGRESS ) {
 
                     PreMeasurementProgressScreen(
                         onNavigateToHome = {
@@ -449,14 +457,9 @@ fun AppNavigation(
                         onNavigateToPreMeasurements = {
                             navController.navigate(Routes.PRE_MEASUREMENTS)
                         },
-                        onNavigateToStreet = {
-                            navController.navigate(Routes.PRE_MEASUREMENT_STREET + "/$it")
-                        },
                         context = LocalContext.current,
                         preMeasurementViewModel = preMeasurementViewModel,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString(),
-                        preMeasurementId = preMeasurementId!!,
                     )
                 }
 
@@ -468,36 +471,20 @@ fun AppNavigation(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MORE)
                         },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
-                        context = LocalContext.current,
-                        contractViewModel = contractViewModel,
+                        preMeasurementViewModel = preMeasurementViewModel,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString(),
                         roles = secureStorage.getRoles()
                     )
                 }
 
-                composable(Routes.PRE_MEASUREMENT_STREET_HOME) {
-//                    MeasurementHome(
-//                        onNavigateToHome = {
-//                            navController.navigate(Routes.HOME)
-//                        },
-//                        navController = navController
-//                    )
-                }
 
-                composable(Routes.PRE_MEASUREMENT_STREET + "/{contractId}") { backStackEntry ->
-                    val contractId =
-                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
+                composable(Routes.PRE_MEASUREMENT_STREET + "/{preMeasurementId}") { backStackEntry ->
+                    val preMeasurementId =
+                        backStackEntry.arguments?.getString("preMeasurementId") ?: ""
                     PreMeasurementStreetScreen(
                         context = LocalContext.current,
                         preMeasurementViewModel = preMeasurementViewModel,
-                        contractId = contractId,
+                        preMeasurementId = preMeasurementId,
                         contractViewModel = contractViewModel,
                         navController = navController
                     )
@@ -735,9 +722,7 @@ object Routes {
     const val CONTRACT_SCREEN = "contract-screen"
     const val PRE_MEASUREMENTS = "pre-measurements"
     const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
-    const val PRE_MEASUREMENT_STREET_HOME = "pre-measurement-home"
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
-    const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
 
     const val EXECUTION_SCREEN = "execution-screen"
     const val MAINTENANCE = "maintenance"

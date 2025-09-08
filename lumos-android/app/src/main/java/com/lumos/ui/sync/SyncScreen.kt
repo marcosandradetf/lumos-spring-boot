@@ -3,12 +3,16 @@ package com.lumos.ui.sync
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.SyncDisabled
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -21,8 +25,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.navigation.BottomBar
@@ -40,7 +46,7 @@ fun SyncScreen(
     currentNotifications: String,
     syncViewModel: SyncViewModel
 ) {
-    val syncItems by syncViewModel.syncItems.collectAsState()
+    val syncItems by syncViewModel.syncItemsTypes.collectAsState()
     val loading by syncViewModel.loading.collectAsState()
     val error by syncViewModel.message.collectAsState()
 
@@ -68,7 +74,7 @@ fun SyncScreenContent(
 ) {
 
     AppLayout(
-        title = "Sincronizações com falha",
+        title = "Fila de sincronização",
         selectedIcon = BottomBar.MORE.value,
         notificationsBadge = currentNotifications,
         navigateToMore = { navController.navigate(Routes.MORE) },
@@ -90,13 +96,36 @@ fun SyncScreenContent(
             LazyColumn(
                 modifier = modifier
             ) {
+                item {
+                    Text(
+                        text = "Selecione uma categoria abaixo",
+                        modifier = Modifier
+                            .padding(
+                                bottom = 20.dp,
+                                start = 10.dp
+                            )
+                            .fillMaxWidth(),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp
+
+                    )
+                }
+
                 items(syncItems) { syncType ->
                     val type = when (syncType) {
-                        SyncTypes.POST_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Registro em campo"
-                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Envio"
-                        SyncTypes.SYNC_STOCK -> "Sincronização de dados de estoque"
-                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+                        SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
                         SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
+
+                        SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
+
+                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
+                        SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
+
+                        SyncTypes.SYNC_STOCK -> "Dados de estoque"
+                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+
+                        SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
+
                         else -> syncType
                     }
 
@@ -120,7 +149,18 @@ fun SyncScreenContent(
                                 disabledLeadingIconColor = MaterialTheme.colorScheme.surface,
                                 disabledTrailingIconColor = MaterialTheme.colorScheme.surface
                             ),
-                            headlineContent = { Text(type) },
+                            headlineContent = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(type)
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                        contentDescription = type,
+                                    )
+                                }
+                            },
                             leadingContent = {
                                 Icon(
                                     Icons.Default.SyncDisabled,
@@ -132,17 +172,8 @@ fun SyncScreenContent(
                                 .padding(bottom = 10.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .clickable {
-                                    when (syncType) {
-                                        SyncTypes.POST_DIRECT_EXECUTION ->
-                                            navController
-                                                .navigate("${Routes.SYNC}/${SyncTypes.POST_DIRECT_EXECUTION}")
-
-                                        SyncTypes.POST_MAINTENANCE, SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER, SyncTypes.POST_PRE_MEASUREMENT,
-                                        SyncTypes.POST_GENERIC, SyncTypes.POST_MAINTENANCE_STREET, SyncTypes.FINISHED_DIRECT_EXECUTION
-                                            ->
-                                            navController
-                                                .navigate("${Routes.SYNC}/${SyncTypes.POST_MAINTENANCE}")
-                                    }
+                                    navController
+                                        .navigate("${Routes.SYNC}/${syncType}")
                                 }
                         )
 

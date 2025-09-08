@@ -35,8 +35,8 @@ export class PrimeConfirmDialogComponent implements OnChanges {
       header: 'Confirmação',
       icon: 'pi pi-exclamation-triangle',
 
-      closable: true,
-      closeOnEscape: true,
+      closable: false,
+      closeOnEscape: false,
       rejectButtonProps: {
         label: 'Não',
         severity: 'secondary',
@@ -49,4 +49,5 @@ export class PrimeConfirmDialogComponent implements OnChanges {
       reject: () => this.action.emit('reject'),
     });
   }
+
 }

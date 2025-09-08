@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -83,6 +84,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -109,12 +111,13 @@ import java.util.UUID
 fun PreMeasurementStreetScreen(
     context: Context,
     preMeasurementViewModel: PreMeasurementViewModel,
-    contractId: Long,
+    preMeasurementId: String,
     contractViewModel: ContractViewModel,
     navController: NavHostController,
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
+
     var currentAddress by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
@@ -126,25 +129,24 @@ fun PreMeasurementStreetScreen(
     }
 
     val items by contractViewModel.items.collectAsState()
+    val measurement = preMeasurementViewModel.measurement
 
 
-    LaunchedEffect(contractId) {
+    LaunchedEffect(Unit) {
         preMeasurementViewModel.loading = true
 
-        val contract = contractViewModel.getContract(contractId)
+        val contract = contractViewModel.getContract(measurement?.contractId!!)
 
         contract?.let { loadedContract ->
             val itemsIdsList = loadedContract.itemsIds
                 ?.split("#")
                 ?.mapNotNull { it.trim().toLongOrNull() } ?: emptyList()
 
-            Log.e("IDS", itemsIdsList.toString())
-
             contractViewModel.loadItemsFromContract(itemsIdsList)
 
             contractViewModel.syncContractItems()
 
-            preMeasurementViewModel.newPreMeasurement(contractId, loadedContract.contractor)
+            preMeasurementViewModel.newPreMeasurementStreet()
         }
 
         preMeasurementViewModel.loading = false
@@ -169,27 +171,30 @@ fun PreMeasurementStreetScreen(
                     address = currentAddress
                 )
             }
+            preMeasurementViewModel.locationLoading = false
         }
-        preMeasurementViewModel.locationLoading = false
+
     }
+
+
 
     if (preMeasurementViewModel.locationLoading) {
         CurrentScreenLoading(
             navController,
-            "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
             "Tentando carregar as coordenadas...",
             BottomBar.MORE.value
         )
-    } else if (preMeasurementViewModel.loading || items.isEmpty()) {
+    } else if (preMeasurementViewModel.loading) {
         CurrentScreenLoading(
             navController,
-            "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
             "Carregando...",
             BottomBar.MORE.value
         )
     } else if (preMeasurementViewModel.nextStep) {
         AppLayout(
-            title = "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            title = Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
             selectedIcon = BottomBar.MORE.value,
             navigateBack = {
                 navController.popBackStack()
@@ -210,8 +215,12 @@ fun PreMeasurementStreetScreen(
                 preMeasurementViewModel.clearViewModel()
                 navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
             }
-        ) { _, _ ->
+        ) { _, showSnackBar ->
             var triedToSubmit by remember { mutableStateOf(false) }
+
+            if(preMeasurementViewModel.message != null) {
+                showSnackBar(preMeasurementViewModel.message!!, null, null)
+            }
 
             if (preMeasurementViewModel.hasPosted) {
                 Column(
@@ -395,7 +404,7 @@ fun PreMeasurementStreetScreen(
         }
     } else
         StreetItemsContent(
-            description = "Pré-medição - " + Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
+            description = Utils.abbreviate(preMeasurementViewModel.measurement?.contractor.toString()),
             preMeasurementViewModel = preMeasurementViewModel,
             context = context,
             navController = navController,
@@ -452,28 +461,22 @@ fun StreetItemsContent(
         selectedIcon = BottomBar.MORE.value,
         navigateToMore = {
             action = Routes.MORE
-            Unit
         },
         navigateToHome = {
             action = Routes.HOME
-            Unit
         },
         navigateBack = {
-            action = Routes.DIRECT_EXECUTION_SCREEN
-            Unit
+            action = "back"
         },
 
         navigateToStock = {
             action = Routes.STOCK
-            Unit
         },
         navigateToExecutions = {
             action = Routes.DIRECT_EXECUTION_SCREEN
-            Unit
         },
         navigateToMaintenance = {
             action = Routes.MAINTENANCE
-            Unit
         }
 
     ) { _, showSnackBar ->
@@ -482,14 +485,13 @@ fun StreetItemsContent(
             preMeasurementViewModel.message = null
         }
 
-        if(action != null) {
+        if (action != null) {
             ConfirmNavigation(
                 action!!,
-                navController,
-                {
-                    action = null
-                }
-            )
+                navController
+            ) {
+                action = null
+            }
         }
 
         Box(
@@ -720,6 +722,14 @@ fun ContractItem(
             ) {
                 // Tag de disponibilidade
                 when {
+                    item.type?.lowercase() == "serviço" -> {
+                        Tag(
+                            text = "Serviço",
+                            color = Color(0xFFFF9800),
+                            icon = Icons.Default.Warning
+                        )
+                    }
+
                     item.itemDependency != null -> {
                         Tag(
                             text = "Possuí serviço vínculado",
@@ -728,13 +738,7 @@ fun ContractItem(
                         )
                     }
 
-                    item.type?.lowercase() == "serviço" -> {
-                        Tag(
-                            text = "Serviço",
-                            color = Color(0xFFFF9800),
-                            icon = Icons.Default.Warning
-                        )
-                    }
+
 
                     item.type?.lowercase() == "projeto" -> {
                         Tag(
@@ -847,7 +851,7 @@ fun PrevPMStreet() {
     val viewModel = PreMeasurementViewModel()
 
     StreetItemsContent(
-        description =  "Pré-mediçao",
+        description = "Pré-mediçao",
         preMeasurementViewModel = viewModel,
         context = fakeContext,
         navController = rememberNavController(),

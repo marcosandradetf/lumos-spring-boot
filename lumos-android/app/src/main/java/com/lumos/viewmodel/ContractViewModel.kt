@@ -108,15 +108,17 @@ class ContractViewModel(
     }
 
     fun loadFlowContracts(status: String) {
-        viewModelScope.launch {
-            try {
-                repository.getFlowContracts(status)
-                    .flowOn(Dispatchers.IO)
-                    .collectLatest { fetched ->
-                    _contracts.value = fetched
+        if(_contracts.value.isEmpty()) {
+            viewModelScope.launch {
+                try {
+                    repository.getFlowContracts(status)
+                        .flowOn(Dispatchers.IO)
+                        .collectLatest { fetched ->
+                            _contracts.value = fetched
+                        }
+                } catch (e: Exception) {
+                    Log.e("Error loadMaterials", e.message.toString())
                 }
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
             }
         }
     }
@@ -165,6 +167,5 @@ class ContractViewModel(
             }
         }
     }
-
 
 }

@@ -11,6 +11,9 @@ import {ContextMenu} from 'primeng/contextmenu';
 import {MenuItem} from 'primeng/api';
 import {Button} from 'primeng/button';
 import {Menu} from 'primeng/menu';
+import {IconField} from 'primeng/iconfield';
+import {InputIcon} from 'primeng/inputicon';
+import {InputText} from 'primeng/inputtext';
 
 @Component({
   selector: 'app-installation',
@@ -21,7 +24,10 @@ import {Menu} from 'primeng/menu';
     NgForOf,
     SafeUrlPipe,
     Toast,
-    Menu
+    Menu,
+    IconField,
+    InputIcon,
+    InputText
   ],
   templateUrl: './installation.component.html',
   styleUrl: './installation.component.scss'
@@ -41,9 +47,28 @@ export class InstallationComponent implements OnInit {
       description: string;
       type: string;
       team: {
-        electrician: { name: string; last_name: string };
-        driver: { name: string; last_name: string };
-      };
+        name: string;
+        last_name: string;
+        role: string;
+      }[];
+    }[];
+  }[] = [];
+
+  dataBackup: {
+    contract: {
+      contract_id: number;
+      contractor: string;
+    },
+    steps: {
+      direct_execution_id: number;
+      step: string;
+      description: string;
+      type: string;
+      team: {
+        name: string;
+        last_name: string;
+        role: string;
+      }[];
     }[];
   }[] = [];
 
@@ -94,7 +119,7 @@ export class InstallationComponent implements OnInit {
   }
 
 
-  constructor(private reportService: ReportService, private utilService: UtilsService, private title: Title) {
+  constructor(private reportService: ReportService, protected utilService: UtilsService, private title: Title) {
   }
 
   ngOnInit() {
@@ -106,7 +131,8 @@ export class InstallationComponent implements OnInit {
   public loadInstallations() {
     this.reportService.getFinishedInstallations().subscribe({
       next: (data) => {
-        this.data = data
+        this.data = data;
+        this.dataBackup = data;
       },
       error: (err) => {
         this.utilService.showMessage(err.error.message || err.error, 'error', 'Erro ao Manutenções finalizadas');
@@ -145,6 +171,14 @@ export class InstallationComponent implements OnInit {
   }
 
 
+  filterData(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
 
+    if (value === null || value === undefined || value === '') {
+      this.data = this.dataBackup;
+    }
+
+    this.data = this.dataBackup.filter(d => d.contract.contractor.toLowerCase().includes(value.toLowerCase()));
+  }
 
 }

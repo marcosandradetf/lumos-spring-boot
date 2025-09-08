@@ -8,30 +8,38 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +58,7 @@ import com.lumos.repository.ContractStatus
 import com.lumos.ui.components.AppLayout
 import com.lumos.utils.Utils
 import com.lumos.viewmodel.ContractViewModel
+import com.lumos.viewmodel.PreMeasurementViewModel
 import java.time.Instant
 
 
@@ -57,12 +66,12 @@ import java.time.Instant
 fun ContractsScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
-    onNavigateToPreMeasurement: (Long) -> Unit,
     context: Context,
     contractViewModel: ContractViewModel,
     navController: NavHostController,
     notificationsBadge: String,
     roles: Set<String>,
+    preMeasurementViewModel: PreMeasurementViewModel
 ) {
     val requiredRoles = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
 
@@ -81,15 +90,25 @@ fun ContractsScreen(
         contractViewModel.syncContracts()
     }
 
+    DisposableEffect(Unit) {
+        preMeasurementViewModel.preMeasurementId = null
+        onDispose { }
+    }
+
+    LaunchedEffect(preMeasurementViewModel.preMeasurementId) {
+        if (preMeasurementViewModel.preMeasurementId != null) {
+            navController.navigate(Routes.PRE_MEASUREMENT_PROGRESS)
+        }
+    }
+
     ContractsScreenContent(
         contracts = contracts,
         onNavigateToHome = onNavigateToHome,
         onNavigateToMenu = onNavigateToMenu,
         navController = navController,
         notificationsBadge = notificationsBadge,
-        start = {
-//            contractViewModel.startPreMeasurement(it)
-            onNavigateToPreMeasurement(it)
+        start = { contractId, contractor ->
+            preMeasurementViewModel.startPreMeasurement(contractId, contractor)
         },
         download = {
             contractViewModel.downloadContract(it)
@@ -112,19 +131,30 @@ fun ContractsScreenContent(
     onNavigateToMenu: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    start: (Long) -> Unit,
+    start: (Long, String) -> Unit,
     download: (Long) -> Unit,
     isLoading: Boolean,
     error: String?,
     refresh: () -> Unit,
 ) {
+    var searchQuery by remember { mutableStateOf("") }
+    val normalizedQuery = searchQuery.replace("\\s".toRegex(), "").lowercase()
+
+    val filteredContracts = contracts.filter { item ->
+        val name = item.contractor.replace("\\s".toRegex(), "").lowercase()
+        name.contains(normalizedQuery)
+
+    }.distinctBy { it.contractId }
+
     AppLayout(
         title = "Selecione um contrato",
         selectedIcon = BottomBar.MORE.value,
         notificationsBadge = notificationsBadge,
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
-        navigateBack = onNavigateToMenu,
+        navigateBack = {
+            navController.popBackStack()
+        },
         navigateToExecutions = {
             navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
         },
@@ -168,14 +198,50 @@ fun ContractsScreenContent(
                         }
                     }
                 }
-            else if(contracts.isNotEmpty() && !isLoading)
+            else if (contracts.isNotEmpty() && !isLoading)
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
+                    verticalArrangement = Arrangement.spacedBy(4.dp), // Espaço entre os cards
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    items(contracts) { contract -> // Iteração na lista
+                    item {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = {
+                                Text(
+                                    "Pesquisar...",
+                                    style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                        fontSize = 13.sp
+                                    )
+                                )
+                            },
+                            singleLine = true,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f) // ajusta a largura
+                                .height(48.dp),     // ajusta a altura
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                fontSize = 13.sp
+                            ),
+                        )
+                        Spacer(Modifier.height(20.dp))
+                    }
+
+                    items(filteredContracts) { contract -> // Iteração na lista
                         val createdAt = "Criado por ${contract.createdBy} há ${
                             Utils.timeSinceCreation(
                                 contract.createdAt
@@ -184,7 +250,7 @@ fun ContractsScreenContent(
                         val expand = remember { mutableStateOf(false) }
                         Card(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxWidth(0.95f)
                                 .padding(6.dp),
                             elevation = CardDefaults.cardElevation(4.dp),
                             colors = CardDefaults.cardColors(
@@ -210,7 +276,7 @@ fun ContractsScreenContent(
 
                                         ) {
                                         Text(
-                                            text = contract.contractor,
+                                            text = Utils.abbreviate(contract.contractor),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
@@ -278,7 +344,7 @@ fun ContractsScreenContent(
 
 
                                         TextButton(onClick = {
-                                            start(contract.contractId)
+                                            start(contract.contractId, contract.contractor)
                                         }) {
                                             Text(
                                                 text = "Iniciar Pré-Medição",
@@ -341,7 +407,7 @@ fun PrevContract() {
         onNavigateToMenu = { },
         navController = rememberNavController(),
         "12",
-        start = {},
+        start = { _, _ -> },
         download = {},
         isLoading = false,
         error = null,

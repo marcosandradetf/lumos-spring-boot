@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.SyncQueueEntity
+import com.lumos.navigation.Routes
+import com.lumos.utils.NavEvents
+import com.lumos.utils.SyncLoading
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +19,8 @@ import kotlinx.coroutines.withContext
 class SyncViewModel(
     private val db: AppDatabase
 ) : ViewModel() {
-    private val _syncItems = MutableStateFlow<List<String>>(emptyList())
-    val syncItems = _syncItems
+    private val _syncItemsTypes = MutableStateFlow<List<String>>(emptyList())
+    val syncItemsTypes = _syncItemsTypes
 
     private val _loading = MutableStateFlow(false)
     val loading = _loading
@@ -25,29 +28,55 @@ class SyncViewModel(
     private val _message = MutableStateFlow("")
     val message = _message
 
-    fun syncFlowItems() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                db.queueDao().getFlowItemsToProcess().collectLatest {
-                    _syncItems.value = it
-                }
-            } catch (e: Exception) {
-                _message.value = e.message ?: "Problema ao carregar os itens"
+    private val _syncItems = MutableStateFlow<List<SyncQueueEntity>>(emptyList())
+    val syncItems = _syncItems
+
+    init {
+        viewModelScope.launch {
+            SyncLoading.loading.collect { loading ->
+                _loading.value = loading
             }
         }
     }
 
-    suspend fun getItems(types: List<String>): List<SyncQueueEntity> {
-        return withContext(Dispatchers.IO) {
-            _loading.value = true
+    fun setMessage(message: String) {
+        _message.value = message
+        startClearTimer()
+    }
+
+    private fun startClearTimer() {
+        // Lança uma coroutine no escopo do ViewModel
+        viewModelScope.launch {
+            // 3. Aguarda 2 segundos (5000 milissegundos)
+            kotlinx.coroutines.delay(2000L)
+
+            // 4. Após o tempo, limpa a variável
+            _message.value = ""
+        }
+    }
+
+    fun syncFlowItems() {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                db.queueDao().getItem(types)
+                db.queueDao().getFlowItemsToProcess().collectLatest {
+                    _syncItemsTypes.value = it
+                }
             } catch (e: Exception) {
-                _loading.value = false
                 _message.value = e.message ?: "Problema ao carregar os itens"
-                emptyList()
-            } finally {
-                _loading.value = false
+                startClearTimer()
+            }
+        }
+    }
+
+    suspend fun getItems(types: List<String>) {
+        return withContext(Dispatchers.IO) {
+            try {
+                db.queueDao().getItem(types).collectLatest {
+                    _syncItems.value = it
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Problema ao carregar os itens"
+                startClearTimer()
             }
         }
     }
@@ -73,11 +102,12 @@ class SyncViewModel(
                 if (db.queueDao().exists(relatedId, type)) {
                     db.queueDao().retry(relatedId, type)
                     SyncManager.enqueueSync(context, true)
+                    _message.value = "Tarefa reagendada com sucesso."
+                    startClearTimer()
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Erro ao agendar envio"
-            } finally {
-                _message.value = "Tarefa reagendada com sucesso."
+                startClearTimer()
             }
         }
     }
@@ -89,11 +119,12 @@ class SyncViewModel(
                     db.queueDao().deleteByRelatedId(relatedId, type)
                     db.directExecutionDao().deleteStreet(relatedId)
                     SyncManager.enqueueSync(context, true)
+
+                    _message.value = "Envio cancelado com sucesso."
+                    startClearTimer()
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Erro ao cancelar envio"
-            } finally {
-                _message.value = "Envio cancelado com sucesso."
             }
         }
     }
@@ -104,32 +135,29 @@ class SyncViewModel(
                 if (db.queueDao().existsById(id)) {
                     db.queueDao().retryById(id)
                     SyncManager.enqueueSync(context, true)
+                    _message.value = "Tarefa reagendada com sucesso."
+                    startClearTimer()
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Erro ao agendar envio"
-            } finally {
-                _message.value = "Tarefa reagendada com sucesso."
             }
         }
     }
 
-    fun cancelById(id: Long,context: Context) {
+    fun cancelById(id: Long, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (db.queueDao().existsById(id)) {
                     db.queueDao().deleteById(id)
                     SyncManager.enqueueSync(context, true)
+                    _message.value = "Envio cancelado com sucesso."
+                    startClearTimer()
                 }
             } catch (e: Exception) {
                 _message.value = e.message ?: "Erro ao cancelar envio"
-            } finally {
-                _message.value = "Envio cancelado com sucesso."
             }
         }
     }
-
-
-
 
 
 }

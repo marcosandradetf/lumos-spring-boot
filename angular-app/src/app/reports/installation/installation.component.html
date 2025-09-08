@@ -8,7 +8,7 @@
 
   @if (loading) {
     <app-loading></app-loading>
-  } @else if (data.length === 0) {
+  } @else if (dataBackup.length === 0) {
     <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
       <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
            xmlns="http://www.w3.org/2000/svg">
@@ -21,6 +21,14 @@
   } @else if (pdfUrl) {
     <iframe [src]="pdfUrl | safeUrl" width="100%" height="100%"></iframe>
   } @else {
+    <div class="px-10 pb-5">
+      <p-iconfield iconPosition="left">
+        <p-inputicon class="pi pi-search"/>
+        <input (input)="filterData($event)" type="text" pInputText placeholder="Pesquisar"
+               class="w-full"/>
+      </p-iconfield>
+    </div>
+
     <div class="flex flex-col items-center w-full px-4">
       <!-- 1 único context menu -->
       <p-menu #menu [model]="contextItems" [popup]="true"></p-menu>
@@ -29,7 +37,8 @@
         <h2 class="text-center pb-4 text-3xl">{{ i.contract.contractor }}</h2>
 
         <ol class="flex flex-wrap justify-center gap-4 pb-4" aria-haspopup="true">
-          <li *ngFor="let s of i.steps; index as idx" class="relative w-full max-w-sm cursor-pointer transition-transform duration-300 hover:scale-105 hover:-translate-y-1">
+          <li *ngFor="let s of i.steps; index as idx"
+              class="relative w-full max-w-sm cursor-pointer transition-transform duration-300 hover:scale-105 hover:-translate-y-1">
 
             <!-- Botão do menu com position absolute -->
             <button
@@ -48,15 +57,21 @@
           </span>
               <p class="text-sm text-gray-600 dark:text-gray-300">{{ s.step }}</p>
 
+              <!-- Equipe -->
               <div class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                <div class="flex items-center">
-                  <span class="material-icons text-blue-500 text-base mr-1">verified</span>
-                  Eletricista: {{ s.team.electrician.name }} {{ s.team.electrician.last_name }}
-                </div>
-                <div class="flex items-center">
-                  <span class="material-icons text-blue-500 text-base mr-1">verified</span>
-                  Motorista: {{ s.team.driver.name }} {{ s.team.driver.last_name }}
-                </div>
+
+                @if(!s.team) {
+                  <div class="flex items-center">
+                    <span class="material-icons text-blue-500 text-base mr-2">info</span>
+                    Sem registro - Informe ao fabricante
+                  </div>
+                } @else {
+                  <div class="flex items-center" *ngFor="let team of s.team">
+                    <span class="material-icons text-blue-500 text-base mr-1">verified</span>
+                    {{ utilService.capitalizeWithAcronyms(team.role) }}: {{ team.name }} {{ team.last_name }}
+                  </div>
+                }
+
               </div>
 
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">

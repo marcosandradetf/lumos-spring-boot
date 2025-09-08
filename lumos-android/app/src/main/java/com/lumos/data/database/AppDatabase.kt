@@ -70,7 +70,7 @@ import java.util.concurrent.Executors
         (Team::class),
 
     ],
-    version = 15,
+    version = 16,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -638,6 +638,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("alter table pre_measurement add column status text not null")
+            }
+        }
+
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -659,7 +665,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_11_12,
                     MIGRATION_12_13,
                     MIGRATION_13_14,
-                    MIGRATION_14_15
+                    MIGRATION_14_15,
+                    MIGRATION_15_16,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

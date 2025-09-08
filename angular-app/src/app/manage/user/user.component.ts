@@ -12,6 +12,7 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {AuthService} from '../../core/auth/auth.service';
 import {Title} from '@angular/platform-browser';
 import {NgxMaskDirective, NgxMaskPipe, provideNgxMask} from 'ngx-mask';
+import {Toast} from 'primeng/toast';
 
 @Component({
   selector: 'app-user',
@@ -26,7 +27,8 @@ import {NgxMaskDirective, NgxMaskPipe, provideNgxMask} from 'ngx-mask';
     AlertMessageComponent,
     ModalComponent,
     NgxMaskDirective,
-    NgxMaskPipe
+    NgxMaskPipe,
+    Toast
   ],
   providers: [provideNgxMask()],
   templateUrl: './user.component.html',
@@ -241,19 +243,17 @@ export class UserComponent {
     }, timeout);
   }
 
-
+  currentPassword: string | null = null
   resetPassword() {
     this.loading = true;
     if (this.userId !== '') {
       this.userService.resetPassword(this.userId).pipe(
         tap(r => {
-          this.openConfirmationModal = false;
           this.loading = false;
           this.alertType = "alert-success";
-          this.serverMessage = (r as any).message
+          this.currentPassword = (r as any).message
         }),
         catchError(err => {
-          console.log(err)
           this.loading = false;
           return throwError(() => err);
         })
@@ -392,6 +392,16 @@ export class UserComponent {
       this.email = email;
     }
 
+  }
+
+  copyPassword() {
+    if (this.currentPassword) {
+      navigator.clipboard.writeText(this.currentPassword).then(() => {
+        this.openConfirmationModal = false;
+        this.currentPassword = null;
+        this.utils.showMessage("Senha copiada com sucesso", "success", "Lumos™");
+      });
+    }
   }
 
 }

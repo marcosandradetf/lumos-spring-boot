@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.FireTruck
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.SecurityUpdateGood
@@ -345,8 +346,37 @@ fun HomeScreen(
             }
 
 
-            Spacer(modifier = Modifier.height(16.dp))
-            AlertsCard()
+
+
+            Button(
+                onClick = {
+                    navController.navigate(Routes.SYNC)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CloudQueue,
+                    contentDescription = "Ícone de Nuvem",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    text = "Fila de Sincronização",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
         if (updateModal) {

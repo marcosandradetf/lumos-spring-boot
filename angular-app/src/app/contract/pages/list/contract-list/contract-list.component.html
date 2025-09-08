@@ -1,70 +1,78 @@
-<div class="flex" #top>
-  <div class="w-full">
-    <div class="pt-2 w-full pl-2 flex items-center justify-between">
-      <p-breadcrumb class="max-w-full" [model]="items" [home]="home"/>
-      <h3
-        class="text-medium pr-5 hidden lg:block font-medium  ">{{
-          reason === 'view' ? 'Selecione um contrato para ver os detalhes' :
-            reason === 'preMeasurement' ? 'Selecione um contrato para importar a pré-medição'
-              : 'Selecione um contrato para iniciar execução'
-        }}</h3>
+<div class="w-full h-full" #top>
+
+  <div class="pt-2 w-full pl-2 flex items-center justify-between">
+    <p-breadcrumb class="max-w-full" [model]="items" [home]="home"/>
+    <h3
+      class="text-medium pr-5 hidden lg:block font-medium  ">{{
+        reason === 'view' ? 'Selecione um contrato para ver os detalhes' :
+          reason === 'preMeasurement' ? 'Selecione um contrato para importar a pré-medição'
+            : 'Selecione um contrato para iniciar execução'
+      }}</h3>
+  </div>
+
+
+  <app-loading *ngIf="loading" text="Carregando"></app-loading>
+
+
+  <div class="w-full" *ngIf="!loading">
+    <div class="px-10 pb-5">
+      <p-iconfield iconPosition="left">
+        <p-inputicon class="pi pi-search"/>
+        <input (input)="filterData($event)" type="text" pInputText placeholder="Pesquisar"
+               class="w-full"/>
+      </p-iconfield>
     </div>
+    <ol class="flex flex-wrap justify-center pb-4" aria-haspopup="true" #card>
+      <p-contextmenu [target]="card" [model]="contextItems" #menu></p-contextmenu>
 
-
-    <app-loading *ngIf="loading" text="Carregando"></app-loading>
-
-
-    <div class="w-full pl-2 " *ngIf="!loading">
-      <ol class="flex flex-wrap" aria-haspopup="true" #card>
-        <p-contextmenu [target]="card" [model]="contextItems" #menu/>
-        <li *ngFor="let c of contracts; index as i; "
-            (contextmenu)="onRightClick($event, c)"
-            class=" cursor-pointer transform transition-transform duration-300 hover:scale-1  m-1 hover:shadow-lg"
-            (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ?
+      <li *ngFor="let c of contracts; index as i; "
+          (contextmenu)="onRightClick($event, c)"
+          (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ?
               router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])
                 : router.navigate(['/execucoes/iniciar-sem-pre-medicao/'],{queryParams: { codigo: c.contractId, nome: c.contractor }})">
-          <div class="flex border rounded px-4 py-2 card-execution min-h-60 h-full relative">
 
-            <div class="absolute top-4 right-4 z-10">
-              <button (click)="openContextMenu($event, c)"
-                      class="text-gray-500 hover:text-gray-800 focus:outline-none dark:hover:text-gray-200">
-                <i class="fa fa-ellipsis-v text-xl"></i>
-              </button>
+        <div
+          class="flex border mr-4 mb-4 min-h-64  border-gray-200 dark:border-gray-700 rounded-2xl shadow-md hover:shadow-lg bg-white dark:bg-gray-900 p-6 relative">
+
+          <div class="absolute top-4 right-4 z-10">
+            <button (click)="openContextMenu($event, c)"
+                    class="text-gray-500 hover:text-gray-800 focus:outline-none dark:hover:text-gray-200 p-2">
+              <i class="fa fa-ellipsis-v text-2xl"></i>
+            </button>
+          </div>
+
+          <div class="flex flex-col items-center justify-center mr-10">
+            <div class="h-full w-1 bg-neutral dark:bg-neutral-100 dark:text-neutral"></div>
+            <div class="rounded-full bg-neutral text-neutral-100 dark:bg-neutral-100 dark:text-neutral p-1">
+              <i class="fa-solid fa-gavel w-6 text-center text-lg"></i>
             </div>
+          </div>
 
-            <div class="flex flex-col items-center justify-center mr-10">
-              <div class="h-full w-1 bg-neutral dark:bg-neutral-100 dark:text-neutral"></div>
-              <div class="rounded-full bg-neutral text-neutral-100 dark:bg-neutral-100 dark:text-neutral p-1">
-                <i class="fa-solid fa-gavel w-6 text-center text-lg"></i>
-              </div>
-            </div>
-
-            <div class="flex flex-col mr-10 w-96">
-              <div class="flex items-center justify-between">
+          <div class="flex flex-col mr-10 w-96">
+            <div class="flex items-center justify-between">
                 <span class="badge rounded mb-4 mt-2">
                   {{ utils.getStatus(c.contractStatus) }}
                 </span>
-                <h2 class="text-xl   leading-[3rem] font-semibold">{{ c.itemQuantity }} itens</h2>
-              </div>
-              <div class="flex item-center justify-between leading-[3rem]">
-                <h3 class="text-xl   font-semibold">Contrato {{ c.number }}</h3>
-                <h3
-                  pButton
-                  class="text-lg font-normal badge rounded p-3">{{ c.contractValue | currency:'BRL':'symbol':'1.2-2' }}</h3>
-              </div>
-              <h3 class="text-lg   leading-[1.3rem] font-normal">{{ c.contractor }}</h3>
-              <h3 class="text-base   leading-[1.3rem] font-light">{{ c.address }}</h3>
-              <h3 class="text-base   leading-[1.3rem] font-light">{{ c.cnpj }}</h3>
-              <h3 class="text-base   leading-[3rem] font-light">{{ c.phone }}</h3>
-
-              <span class="text-sm   flex items-center">Criado por {{ c.createdBy }}<span
-                class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
-              <!--            <span class="text-xs">{{ p.createdAt }} em {{ c. }}</span>-->
+              <h2 class="text-xl   leading-[3rem] font-semibold">{{ c.itemQuantity }} itens</h2>
             </div>
+            <div class="flex item-center justify-between leading-[3rem]">
+              <h3 class="text-xl   font-semibold">Contrato {{ c.number }}</h3>
+              <h3
+                pButton
+                class="text-lg font-normal badge rounded p-3">{{ c.contractValue | currency:'BRL':'symbol':'1.2-2' }}</h3>
+            </div>
+            <h3 class="text-lg   leading-[1.3rem] font-normal py-2">{{ c.contractor }}</h3>
+            <h3 class="text-base   leading-[1.3rem] font-light">{{ c.address }}</h3>
+            <h3 class="text-base   leading-[1.3rem] font-light">{{ c.cnpj }}</h3>
+            <h3 class="text-base   leading-[3rem] font-light">{{ c.phone }}</h3>
+
+            <span class="text-sm   flex items-center">Criado por {{ c.createdBy }}<span
+              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
+            <!--            <span class="text-xs">{{ p.createdAt }} em {{ c. }}</span>-->
           </div>
-        </li>
-      </ol>
-    </div>
+        </div>
+      </li>
+    </ol>
   </div>
 
   <p-dialog
@@ -235,7 +243,7 @@
     </ng-template>
   </p-dialog>
 
-  <app-prime-confirm-dialog *ngIf="openModal" [message]="message" (action)="handleAction($event)" type="confirm">
+  <app-prime-confirm-dialog *ngIf="openModal" [message]="message" (action)="handleAction($event)"  type="confirm">
 
   </app-prime-confirm-dialog>
 

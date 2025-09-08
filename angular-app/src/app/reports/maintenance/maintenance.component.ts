@@ -10,6 +10,10 @@ import {Toast} from 'primeng/toast';
 import {Menu} from 'primeng/menu';
 import {MenuItem} from 'primeng/api';
 import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
+import {AuthService} from '../../core/auth/auth.service';
+import {IconField} from 'primeng/iconfield';
+import {InputIcon} from 'primeng/inputicon';
+import {InputText} from 'primeng/inputtext';
 
 @Component({
   selector: 'app-maintenance',
@@ -22,7 +26,10 @@ import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm
     DatePipe,
     Toast,
     Menu,
-    PrimeConfirmDialogComponent
+    PrimeConfirmDialogComponent,
+    IconField,
+    InputIcon,
+    InputText
   ],
   providers: [SafeUrlPipe],
   templateUrl: './maintenance.component.html',
@@ -39,18 +46,30 @@ export class MaintenanceComponent implements OnInit {
     },
     maintenances: {
       maintenance_id: string;
-      streets: [];
+      streets: string[];
       date_of_visit: string;
       team: {
-        electrician: {
-          name: string,
-          last_name: string
-        },
-        driver: {
-          name: string,
-          last_name: string
-        }
-      }
+        name: string;
+        last_name: string;
+        role: string;
+      }[];
+    }[];
+  }[] = [];
+
+  dataBackup: {
+    contract: {
+      contract_id: number;
+      contractor: string;
+    },
+    maintenances: {
+      maintenance_id: string;
+      streets: string[];
+      date_of_visit: string;
+      team: {
+        name: string;
+        last_name: string;
+        role: string;
+      }[];
     }[];
   }[] = [];
 
@@ -109,6 +128,16 @@ export class MaintenanceComponent implements OnInit {
 
   actionArchiveOrDelete() {
     this.loading = true;
+
+    if (!this.authService.user?.getRoles()?.some(
+      r => ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA'].includes(r)
+    )) {
+      this.action = null;
+      this.loading = false;
+      this.utilService.showMessage("Sua função atual no sistema não permite executar essa ação.", "info", "Lumos - Relatórios");
+      return;
+    }
+
     const message = this.action === "ARCHIVE" ? "Relatório arquivado com sucesso"
       : "Relatório excluido com sucesso";
 
@@ -125,10 +154,10 @@ export class MaintenanceComponent implements OnInit {
           }
         }
 
-        this.utilService.showMessage(message, "success", "Lumos - Relatórios")
+        this.utilService.showMessage(message, "success", "Lumos - Relatórios");
       },
       error: err => {
-        this.utilService.showMessage(err.error.error ?? err.error.message, "info", "Lumos - Relatórios")
+        this.utilService.showMessage(err.error.error ?? err.error.message, "info", "Lumos - Relatórios");
         this.loading = false;
         this.action = null;
       },
@@ -140,7 +169,9 @@ export class MaintenanceComponent implements OnInit {
   }
 
 
-  constructor(private reportService: ReportService, private utilService: UtilsService, private title: Title) {
+  constructor(private reportService: ReportService, protected utilService: UtilsService,
+              private authService: AuthService,
+              private title: Title) {
   }
 
   ngOnInit() {
@@ -152,7 +183,8 @@ export class MaintenanceComponent implements OnInit {
   public loadMaintenances() {
     this.reportService.getFinishedMaintenances().subscribe({
       next: (data) => {
-        this.data = data
+        this.data = data;
+        this.dataBackup = data;
       },
       error: (err) => {
         this.utilService.showMessage(err.error.message || err.error, 'error', 'Erro ao Manutenções finalizadas');
@@ -199,5 +231,15 @@ export class MaintenanceComponent implements OnInit {
     a.click();
   }
 
+
+  filterData(event: Event) {
+    let value = (event.target as HTMLInputElement).value;
+
+    if (value === null || value === undefined || value === '') {
+      this.data = this.dataBackup;
+    }
+
+    this.data = this.dataBackup.filter(d => d.contract.contractor.toLowerCase().includes(value.toLowerCase()));
+  }
 
 }

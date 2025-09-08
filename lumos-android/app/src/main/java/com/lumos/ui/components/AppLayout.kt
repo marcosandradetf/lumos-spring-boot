@@ -138,7 +138,7 @@ fun AppLayout(
                                 )
                             }
                         },
-                        label = { Text(text = item, fontSize = 10.sp) },
+                        label = { Text(text = item, fontSize = 8.sp) },
                         selected = selectedIcon == index,
                         onClick = {
                             handleNavigation(

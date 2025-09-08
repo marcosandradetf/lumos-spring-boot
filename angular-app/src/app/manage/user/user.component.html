@@ -141,17 +141,17 @@
               </div>
             </td>
             <td><input
-                       [readOnly]="!user.sel"
-                       [(ngModel)]="user.cpf"
-                       name="cpf{{i}}"
-                       type="text"
-                       placeholder="999.999.999-99"
-                       maxlength="14"
-                       class="input input-bordered input-xs"
-                       #cpf="ngModel"
-                       mask="000.000.000-00"
-                       [dropSpecialCharacters]="true"
-                       [pattern]="cpfPattern">
+              [readOnly]="!user.sel"
+              [(ngModel)]="user.cpf"
+              name="cpf{{i}}"
+              type="text"
+              placeholder="999.999.999-99"
+              maxlength="14"
+              class="input input-bordered input-xs"
+              #cpf="ngModel"
+              mask="000.000.000-00"
+              [dropSpecialCharacters]="true"
+              [pattern]="cpfPattern">
               <div *ngIf="cpf.invalid && cpf.touched">
                 <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF é obrigatório.</small>
                 <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
@@ -315,17 +315,17 @@
               </div>
             </td>
             <td><input
-                       [readOnly]="user.userId !== ''"
-                       [(ngModel)]="user.cpf"
-                       name="cpf{{i}}"
-                       type="text"
-                       placeholder="999.999.999-99"
-                       maxlength="14"
-                       class="input input-bordered input-xs"
-                       #cpf="ngModel"
-                       mask="000.000.000-00"
-                       [dropSpecialCharacters]="true"
-                       [pattern]="cpfPattern">
+              [readOnly]="user.userId !== ''"
+              [(ngModel)]="user.cpf"
+              name="cpf{{i}}"
+              type="text"
+              placeholder="999.999.999-99"
+              maxlength="14"
+              class="input input-bordered input-xs"
+              #cpf="ngModel"
+              mask="000.000.000-00"
+              [dropSpecialCharacters]="true"
+              [pattern]="cpfPattern">
               <div *ngIf="cpf.invalid && cpf.touched">
                 <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF é obrigatório.</small>
                 <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
@@ -462,15 +462,40 @@
   <!--    modal confirmation-->
   <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="openConfirmationModal = false">
     <div>
-      <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
-      <div class="flex justify-around">
-        <app-button (click)="openConfirmationModal = false; loading = false" title="Cancelar"
-                    classButton="btn bg-red-500 hover:bg-red-700"
-                    textColor="text-black"></app-button>
-        <app-button (click)="resetPassword()" title="Confirmar" [loading]="loading" classButton="btn btn-primary w-32 text-white"></app-button>
-      </div>
+      @if (currentPassword === null) {
+        <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
+        <div class="flex justify-around">
+          <app-button
+            (click)="openConfirmationModal = false; loading = false"
+            title="Cancelar"
+            classButton="btn bg-red-500 hover:bg-red-700"
+            textColor="text-black">
+          </app-button>
+
+          <app-button
+            (click)="resetPassword()"
+            title="Confirmar"
+            [loading]="loading"
+            classButton="btn btn-primary w-32 text-white">
+          </app-button>
+        </div>
+      } @else {
+        <h3 class="text-center mb-4">Senha Gerada! Copie a nova senha do usuário</h3>
+
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <p
+            class="border rounded px-3 py-2 w-56 text-center font-mono bg-gray-100 dark:bg-neutral-800 ">
+            {{currentPassword}}
+          </p>
+          <button (click)="copyPassword()"
+                  class="btn bg-blue-500 hover:bg-blue-700 text-white px-3 py-2 rounded">
+            <i class="fa-solid fa-copy"></i> Copiar
+          </button>
+        </div>
+      }
     </div>
   </app-modal>
 
+  <p-toast></p-toast>
 
 </div>

@@ -302,6 +302,7 @@ class ContractService(
                     c.status
                 FROM contract c
                 JOIN app_user u ON u.user_id = c.created_by_id_user
+                WHERE c.status = 'ACTIVE'
             """.trimIndent(),
             emptyMap<String, Any>() // Nenhum parâmetro necessário aqui
         ) { rs, _ ->
@@ -309,17 +310,17 @@ class ContractService(
 
             val itemsIds: String = namedJdbc.query(
                 """
-                        SELECT ci.contract_item_id, cri.description
+                        SELECT cri.contract_reference_item_id, cri.description
                         FROM contract_item ci
                         JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
                         WHERE contract_contract_id = :contractId
                     """.trimIndent(),
                 mapOf("contractId" to rs.getLong("contract_id"))
-            ) { rs, _ ->
-                if(rs.getString("description").contains("manuten", true)) {
+            ) { cRs, _ ->
+                if(cRs.getString("description").contains("manuten", true)) {
                     hasMaintenance = true
                 }
-                rs.getLong("contract_item_id")
+                cRs.getLong("contract_reference_item_id")
             }.joinToString("#")
 
             ContractForPreMeasurementDTO(
@@ -430,6 +431,12 @@ class ContractService(
                 quantity = (row["executed_quantity"] as Number).toDouble(),
             )
         }
+    }
+
+    fun archiveById(contractId: Long): ResponseEntity<Any> {
+        namedJdbc.update("update contract set status = 'ARCHIVED' where contract_id = :contract_id", mapOf("contract_id" to contractId))
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
 }

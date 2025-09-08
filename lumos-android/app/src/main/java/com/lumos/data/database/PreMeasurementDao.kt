@@ -42,4 +42,14 @@ interface PreMeasurementDao {
 
     @Query("UPDATE pre_measurement_street SET status = 'FINISHED' WHERE preMeasurementId = (:preMeasurementId)")
     suspend fun finishAll(preMeasurementId: String)
+
+    @Query("select * from pre_measurement where contractId = :contractId and status = 'IN_PROGRESS' limit 1")
+    suspend fun existsPreMeasurementByContractId(contractId: Long): PreMeasurement?
+
+    @Query("select * from pre_measurement where status = 'IN_PROGRESS'")
+    suspend fun getPreMeasurements(): List<PreMeasurement>
+
+    @Query("SELECT * from pre_measurement where preMeasurementId = :preMeasurementId")
+    suspend fun getPreMeasurementById(preMeasurementId: String): PreMeasurement
+
 }

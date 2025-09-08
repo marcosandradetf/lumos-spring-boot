@@ -16,8 +16,10 @@ import java.io.File
 import java.io.InputStream
 import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
 
@@ -43,15 +45,56 @@ object Utils {
             return date.toInstant()
         }
 
-    private fun parseTimestamptzToInstant(raw: String): Instant {
-        // PostgreSQL retorna algo como "2025-07-27 22:34:10.952689+00"
-        // Ajuste para ISO 8601: "2025-07-27T22:34:10.952689+00:00"
-        val formatted = raw
-            .replace(" ", "T")
-            .replace(Regex("""\+(\d{2})$"""), "+$1:00")  // transforma +00 → +00:00
+//    private fun parseTimestamptzToInstant(raw: String): Instant {
+//        // PostgreSQL retorna algo como "2025-07-27 22:34:10.952689+00"
+//        // Ajuste para ISO 8601: "2025-07-27T22:34:10.952689+00:00"
+//        val formatted = raw
+//            .replace(" ", "T")
+//            .replace(Regex("""\+(\d{2})$"""), "+$1:00")  // transforma +00 → +00:00
+//
+//        return Instant.parse(formatted)
+//    }
 
-        return Instant.parse(formatted)
+    private fun parseTimestamptzToInstant(raw: String): Instant {
+        // 1) tenta ISO 8601 direto (ex: "2025-08-28T10:03:07Z")
+        try {
+            return Instant.parse(raw)
+        } catch (_: Exception) { }
+
+        // 2) normaliza frações de segundo (se tiver .00749 → vira .007490)
+        val normalized = raw.replace(
+            Regex("""\.(\d{3,6})""")
+        ) { matchResult ->
+            val fraction = matchResult.groupValues[1]
+            "." + fraction.padEnd(6, '0') // sempre 6 dígitos
+        }
+
+        // 3) formatadores possíveis para timestamptz
+        val formatters = listOf(
+            "yyyy-MM-dd HH:mm:ss.SSSSSSX",   // ex: -03
+            "yyyy-MM-dd HH:mm:ss.SSSSSSXX",  // ex: -0300
+            "yyyy-MM-dd HH:mm:ss.SSSSSSXXX", // ex: -03:00
+            "yyyy-MM-dd HH:mm:ssX",          // sem fração, offset -03
+            "yyyy-MM-dd HH:mm:ssXX",         // sem fração, offset -0300
+            "yyyy-MM-dd HH:mm:ssXXX"         // sem fração, offset -03:00
+        ).map {
+            DateTimeFormatter.ofPattern(it)
+                .withLocale(Locale.US)
+                .withZone(ZoneId.of("UTC"))
+        }
+
+        for (formatter in formatters) {
+            try {
+                return OffsetDateTime.parse(normalized, formatter).toInstant()
+            } catch (_: Exception) { }
+        }
+
+        // 4) fallback → nunca crasha
+        return Instant.EPOCH
     }
+
+
+
 
 
     fun timeSinceCreation(createdAtRaw: String): String {
