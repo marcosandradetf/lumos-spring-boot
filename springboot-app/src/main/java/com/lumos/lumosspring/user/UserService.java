@@ -295,7 +295,9 @@ public class UserService {
             user.setName(u.name());
             user.setLastName(u.lastname());
             user.setEmail(u.email());
-            user.setCpf(u.cpf());
+            if (!u.cpf().startsWith("***") && !u.cpf().endsWith("**")) {
+                user.setCpf(u.cpf());
+            }
             user.setDateOfBirth(date);
             user.setStatus(u.status());
 
@@ -373,6 +375,8 @@ public class UserService {
             userRoles.add(role);
         }
 
+        user.setUserId(UUID.randomUUID());
+        user.setNewEntry(true);
         user.setUsername(u.username());
         user.setPassword(passwordEncoder.encode(password));
         user.setName(u.name());
@@ -385,7 +389,7 @@ public class UserService {
 
         for (Role role : userRoles) {
             var params = new MapSqlParameterSource()
-                    .addValue("userId", UUID.fromString(u.userId()))
+                    .addValue("userId", user.getId())
                     .addValue("roleId", role.getRoleId());
             namedParameterJdbcTemplate.update("""
                         INSERT INTO user_role (id_user, id_role)
@@ -393,7 +397,11 @@ public class UserService {
                     """, params);
         }
 
-        emailService.sendPasswordForEmail(u.name(), u.email(), password);
+        try {
+            emailService.sendPasswordForEmail(u.name(), u.email(), password);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -416,6 +424,10 @@ public class UserService {
     }
 
     public static boolean isValidCPF(String cpf) {
+        if (cpf.startsWith("***") && cpf.endsWith("**")) {
+            return true;
+        }
+
         cpf = cpf.replaceAll("\\D", "");
 
         if (cpf.length() != 11 || cpf.matches("(\\d)\\1{10}")) return false;

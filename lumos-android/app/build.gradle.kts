@@ -52,15 +52,16 @@ android {
     }
 
     buildTypes {
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("debug")
-            buildConfigField("boolean", "ROOM_LOGGING_ENABLED", "true")
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+//        getByName("debug") {
+//            signingConfig = signingConfigs.getByName("debug")
+//            buildConfigField("boolean", "ROOM_LOGGING_ENABLED", "true")
+//            isMinifyEnabled = true
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
+//        }
+
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true

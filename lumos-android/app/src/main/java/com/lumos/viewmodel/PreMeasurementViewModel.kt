@@ -3,10 +3,12 @@ package com.lumos.viewmodel
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
@@ -16,6 +18,7 @@ import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
 import java.util.UUID
 
 class PreMeasurementViewModel(
@@ -28,7 +31,7 @@ class PreMeasurementViewModel(
     var measurement by mutableStateOf<PreMeasurement?>(null)
     var street by mutableStateOf<PreMeasurementStreet?>(null)
 
-    val streetItems = mutableListOf<PreMeasurementStreetItem>()
+    var streetItems by mutableStateOf<List<PreMeasurementStreetItem>>(emptyList())
 
 
     var latitude by mutableStateOf<Double?>(null)
@@ -51,17 +54,18 @@ class PreMeasurementViewModel(
     init {
         viewModelScope.launch {
             NavEvents.route.collect { route ->
-                println(route)
                 when (route) {
                     Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS -> {
                         preMeasurementId = null
                         measurement = null
+                        nextStep = false
+                        hasPosted = false
                     }
 
                     Routes.PRE_MEASUREMENT_PROGRESS -> {
                         preMeasurementStreetId = null
                         street = null
-                        streetItems.clear()
+                        streetItems = emptyList()
                     }
                 }
             }
@@ -84,33 +88,123 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun addItem(itemContractId: Long) {
-        streetItems.add(
-            PreMeasurementStreetItem(
-                preMeasurementStreetId = preMeasurementStreetId.toString(),
-                preMeasurementId = preMeasurementId.toString(),
-                contractReferenceItemId = itemContractId,
-                measuredQuantity = "1"
-            )
+    fun addItem(item: Item, items: List<Item>) {
+        var measuredQuantity = "1"
+
+        when (item.type) {
+            "LED" -> {
+                val serviceId =
+                    items.find { it.type == "SERVIÇO" && it.itemDependency == item.type }?.contractReferenceItemId
+                val projectId =
+                    items.find { it.type == "PROJETO" && it.itemDependency == item.type }?.contractReferenceItemId
+
+                var pMessage = ""
+
+                if (!streetItems.any { it.contractReferenceItemId == serviceId }) {
+                    pMessage = "Este item pode precisar que adicione Serviço de LED"
+                }
+
+                if (!streetItems.any { it.contractReferenceItemId == projectId }) {
+                    if (pMessage.isBlank())
+                        pMessage += "Este item pode precisar que adicione Projeto"
+                    else
+                        pMessage += " e Projeto"
+                }
+
+                message = pMessage
+
+
+            }
+
+            "RELÉ" -> {
+                val ledsIds = items.filter { it.type == "LED" }.map { it.contractReferenceItemId }
+                measuredQuantity = streetItems
+                    .filter { ledsIds.contains(it.contractReferenceItemId) }
+                    .map { it.measuredQuantity }
+                    .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
+                    .toString()
+
+
+            }
+
+            "SERVIÇO" -> {
+                if (item.itemDependency == "LED") {
+                    val ledsIds =
+                        items.filter { it.type == "LED" }.map { it.contractReferenceItemId }
+                    measuredQuantity = streetItems
+                        .filter { ledsIds.contains(it.contractReferenceItemId) }
+                        .map { it.measuredQuantity }
+                        .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
+                        .toString()
+
+
+                } else {
+                    val armIds =
+                        items.filter { it.type == "BRAÇO" }.map { it.contractReferenceItemId }
+                    measuredQuantity = streetItems
+                        .filter { armIds.contains(it.contractReferenceItemId) }
+                        .map { it.measuredQuantity }
+                        .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
+                        .toString()
+                }
+            }
+
+            "PROJETO" -> {
+                val ledsIds = items.filter { it.type == "LED" }.map { it.contractReferenceItemId }
+                measuredQuantity = streetItems
+                    .filter { ledsIds.contains(it.contractReferenceItemId) }
+                    .map { it.measuredQuantity }
+                    .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
+                    .toString()
+            }
+
+            "CABO" -> {
+                val arms = items.filter {  it.type == "BRAÇO" }
+
+                val arm1Quantity = streetItems
+                    .filter {
+                        val x = arms.filter { it.linking?.startsWith("1") == true }.map { it.contractReferenceItemId }
+                        x.contains(it.contractReferenceItemId)
+                    }
+                    .map { it.measuredQuantity }
+                    .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
+                    .toString()
+                
+
+                val arm2 = arms.filter { it.linking?.startsWith("2") == true }
+                val arm3 = arms.filter { it.linking?.startsWith("3") == true }
+
+            }
+
+        }
+
+        streetItems = streetItems + PreMeasurementStreetItem(
+            preMeasurementStreetId = preMeasurementStreetId.toString(),
+            preMeasurementId = preMeasurementId.toString(),
+            contractReferenceItemId = item.contractReferenceItemId,
+            measuredQuantity = if (measuredQuantity == "0") "1" else measuredQuantity
         )
+
     }
 
-    fun removeItem(itemContractId: Long) {
-        streetItems.removeAll { it.contractReferenceItemId == itemContractId }
+    fun removeItem(item: Item) {
+        streetItems = streetItems.filterNot { it.contractReferenceItemId == item.contractReferenceItemId }
     }
 
     fun setQuantity(itemContractId: Long, measuredQuantity: String) {
-        streetItems.find { it.contractReferenceItemId == itemContractId }
-            ?.measuredQuantity = measuredQuantity
+        streetItems = streetItems.map { item ->
+            if (item.contractReferenceItemId == itemContractId) {
+                item.copy(measuredQuantity = measuredQuantity)
+            } else item
+        }
     }
-
 
     fun save() {
         viewModelScope.launch {
             loading = true
             try {
                 withContext(Dispatchers.IO) {
-                    repository?.save(measurement!!, street!!, streetItems)
+                    repository?.save( street!!, streetItems)
                 }
 
                 hasPosted = true
@@ -152,27 +246,17 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun clearViewModel() {
-        loading = true
-
-        street = null
-        streetItems.clear()
-        hasPosted = false
-        message = null
-        alertModal = false
-        confirmModal = false
-        nextStep = false
-
-        loading = false
-    }
-
-    fun startPreMeasurement(contractId: Long? = null, contractor: String? = null, currentPreMeasurementId: String? = null) {
+    fun startPreMeasurement(
+        contractId: Long? = null,
+        contractor: String? = null,
+        currentPreMeasurementId: String? = null
+    ) {
         viewModelScope.launch {
             val newPreMeasurementId = UUID.randomUUID()
 
             try {
                 loading = true
-                if(contractId != null && contractor != null) {
+                if (contractId != null && contractor != null) {
                     val exists = repository?.existsPreMeasurementByContractId(contractId)
                     if (exists != null) {
                         preMeasurementId = UUID.fromString(exists.preMeasurementId)
@@ -186,7 +270,7 @@ class PreMeasurementViewModel(
                         repository?.saveNewPreMeasurement(measurement!!)
                         preMeasurementId = newPreMeasurementId
                     }
-                } else if(currentPreMeasurementId != null) {
+                } else if (currentPreMeasurementId != null) {
                     measurement = repository?.getPreMeasurement(currentPreMeasurementId)
                     preMeasurementId = UUID.fromString(currentPreMeasurementId)
                 }

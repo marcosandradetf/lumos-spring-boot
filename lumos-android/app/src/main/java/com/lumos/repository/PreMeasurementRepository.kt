@@ -27,13 +27,11 @@ class PreMeasurementRepository(
 ) {
 
     suspend fun save(
-        preMeasurement: PreMeasurement,
         preMeasurementStreet: PreMeasurementStreet,
         items: List<PreMeasurementStreetItem>
     ) {
         try {
             db.withTransaction {
-                db.preMeasurementDao().insertMeasurement(preMeasurement)
                 db.preMeasurementDao().insertStreet(preMeasurementStreet)
                 db.preMeasurementDao().insertItems(items)
             }

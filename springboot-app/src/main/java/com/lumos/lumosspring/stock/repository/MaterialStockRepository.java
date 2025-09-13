@@ -39,12 +39,14 @@ public interface MaterialStockRepository extends CrudRepository<MaterialStock, L
     Optional<Integer> existsType(@Param("id") Long id);
 
     @Query("""
-        SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+    SELECT CASE WHEN EXISTS (
+        SELECT 1
         FROM material_stock ms
         WHERE ms.deposit_id = :id
+          AND ms.stock_quantity > 0
+    ) THEN 1 ELSE 0 END
     """)
     Optional<Integer> existsDeposit(@Param("id") Long id);
-
 
 }
 

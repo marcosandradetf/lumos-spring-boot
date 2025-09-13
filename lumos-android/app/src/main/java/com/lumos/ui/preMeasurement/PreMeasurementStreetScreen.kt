@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,9 +32,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
@@ -95,6 +100,7 @@ import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.ConfirmNavigation
 import com.lumos.ui.components.CurrentScreenLoading
 import com.lumos.ui.components.Tag
@@ -163,7 +169,7 @@ fun PreMeasurementStreetScreen(
                 val neighborhood = addr?.get(1).toString()
                 val city = addr?.get(2).toString()
 
-                currentAddress = "$street, - $neighborhood, $city"
+                currentAddress = "$street, $neighborhood, $city"
 
                 preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
                     latitude = latitude,
@@ -212,13 +218,12 @@ fun PreMeasurementStreetScreen(
                 navController.navigate(Routes.STOCK)
             },
             navigateToExecutions = {
-                preMeasurementViewModel.clearViewModel()
                 navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
             }
         ) { _, showSnackBar ->
             var triedToSubmit by remember { mutableStateOf(false) }
 
-            if(preMeasurementViewModel.message != null) {
+            if (preMeasurementViewModel.message != null) {
                 showSnackBar(preMeasurementViewModel.message!!, null, null)
             }
 
@@ -249,7 +254,7 @@ fun PreMeasurementStreetScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Rua adicionada!",
+                            text = "Ponto adicionado!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
@@ -267,8 +272,7 @@ fun PreMeasurementStreetScreen(
 
                     Button(
                         onClick = {
-                            preMeasurementViewModel.clearViewModel()
-                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                            navController.popBackStack()
                         },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -299,7 +303,7 @@ fun PreMeasurementStreetScreen(
                                     preMeasurementStreetId = preMeasurementViewModel.preMeasurementStreetId.toString(),
                                     address = currentAddress
                                 )
-                                preMeasurementViewModel.streetItems.clear()
+                                preMeasurementViewModel.streetItems = emptyList()
                                 preMeasurementViewModel.hasPosted = false
                                 preMeasurementViewModel.nextStep = false
                             }
@@ -316,7 +320,7 @@ fun PreMeasurementStreetScreen(
                         )
                     ) {
                         Text(
-                            "Continuar pré-medição nessa rua"
+                            "Adicionar ponto nessa rua"
                         )
                     }
                 }
@@ -396,7 +400,7 @@ fun PreMeasurementStreetScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            "Enviar",
+                            "Salvar",
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -453,8 +457,6 @@ fun StreetItemsContent(
         }
 
     var action by remember { mutableStateOf<String?>(null) }
-    var openModal by remember { mutableStateOf("") }
-
 
     AppLayout(
         title = description,
@@ -485,7 +487,42 @@ fun StreetItemsContent(
             preMeasurementViewModel.message = null
         }
 
-        if (action != null) {
+        if (action == "SEND") {
+            Confirm(
+                title = "Confirme a ação",
+                body = "Deseja finalizar o ponto atual?",
+                confirm = {
+                    val hasNumber = Regex("""\d+""").containsMatchIn(
+                        preMeasurementViewModel?.street?.address ?: ""
+                    )
+                    val hasSN =
+                        Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(
+                            preMeasurementViewModel?.street?.address ?: ""
+                        )
+
+                    if (preMeasurementViewModel?.street?.address?.isBlank() == true) {
+                        preMeasurementViewModel.message = "Você esqueceu de preencher o endereço! Por favor, informe a Rua, Nº - Bairro atual"
+                        action = null
+                        return@Confirm
+                    } else if (!hasNumber && !hasSN) {
+                        preMeasurementViewModel.message = "Número do endereço ausente! Por favor, informe o número do endereço ou indique que é 'S/N'."
+                        action = null
+                        return@Confirm
+                    } else if (preMeasurementViewModel.streetItems.isEmpty()) {
+                        preMeasurementViewModel.message =
+                            "Nenhum item selecionado! Por favor, selecione os itens."
+                        action = null
+                        return@Confirm
+                    }
+
+                    preMeasurementViewModel.nextStep = true
+                    action = null
+                },
+                cancel = {
+                    action = null
+                },
+            )
+        } else if (action != null) {
             ConfirmNavigation(
                 action!!,
                 navController
@@ -501,7 +538,7 @@ fun StreetItemsContent(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 90.dp)// deixa espaço pros botões
+                    .padding(bottom = 150.dp)// deixa espaço pros botões
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = {
                             focusManager.clearFocus() // ⌨️ Fecha o teclado
@@ -529,7 +566,7 @@ fun StreetItemsContent(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
                         placeholder = {
                             Text(
                                 text = "Qual o endereço atual?",
@@ -559,7 +596,7 @@ fun StreetItemsContent(
                         "Selecione os itens da Pré-medição",
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(5.dp))
                 }
                 items(
                     items = items,
@@ -567,10 +604,47 @@ fun StreetItemsContent(
                 ) {
                     ContractItem(
                         item = it,
-                        preMeasurementViewModel = preMeasurementViewModel
+                        preMeasurementViewModel = preMeasurementViewModel,
+                        items = items
                     )
                 }
             }
+            var searchQuery by remember { mutableStateOf("") }
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = {
+                    Text(
+                        "Pesquisar Item...",
+                        style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                            fontSize = 13.sp
+                        )
+                    )
+                },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter) // <-- Aqui dentro de um Box
+                    .padding(bottom = 90.dp)
+                    .fillMaxWidth(0.9f) // ajusta a largura
+                    .height(48.dp),     // ajusta a altura
+
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                ),
+                textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                    fontSize = 13.sp
+                ),
+            )
 
             FloatingActionButton(
                 onClick = {
@@ -580,7 +654,7 @@ fun StreetItemsContent(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
-                    .padding(16.dp)
+                    .padding(8.dp)
             ) {
                 AnimatedVisibility(visible = imageSaved.value) {
                     Image(
@@ -630,11 +704,10 @@ fun StreetItemsContent(
             FloatingActionButton(
                 onClick = {
                     action = "SEND"
-//                    openModal("SEND")
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
-                    .padding(20.dp),
+                    .padding(10.dp),
                 containerColor = MaterialTheme.colorScheme.inverseSurface,
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -681,9 +754,10 @@ fun StreetItemsContent(
 @Composable
 fun ContractItem(
     item: Item,
-    preMeasurementViewModel: PreMeasurementViewModel
+    preMeasurementViewModel: PreMeasurementViewModel,
+    items: List<Item>
 ) {
-    val quantity = remember(preMeasurementViewModel.streetItems, item) {
+    val quantity by remember(preMeasurementViewModel.streetItems, item) {
         derivedStateOf {
             preMeasurementViewModel.streetItems.find {
                 it.contractReferenceItemId == item.contractReferenceItemId
@@ -691,22 +765,21 @@ fun ContractItem(
         }
     }
 
-    var text by remember(item.contractReferenceItemId) {
-        mutableStateOf(
-            TextFieldValue(
-                quantity.value
-            )
-        )
-    }
+//    var text by remember(item.contractReferenceItemId) {
+//        mutableStateOf(
+//            TextFieldValue(
+//                quantity
+//            )
+//        )
+//    }
 
-    val selected = remember(preMeasurementViewModel.streetItems, item) {
+    val selected by remember(preMeasurementViewModel.streetItems, item) {
         derivedStateOf {
             preMeasurementViewModel.streetItems.any {
                 it.contractReferenceItemId == item.contractReferenceItemId
             }
         }
     }
-
 
     ListItem(
         headlineContent = {
@@ -725,26 +798,16 @@ fun ContractItem(
                     item.type?.lowercase() == "serviço" -> {
                         Tag(
                             text = "Serviço",
-                            color = Color(0xFFFF9800),
-                            icon = Icons.Default.Warning
+                            color = MaterialTheme.colorScheme.primary,
+                            icon = Icons.Default.Info
                         )
                     }
-
-                    item.itemDependency != null -> {
-                        Tag(
-                            text = "Possuí serviço vínculado",
-                            color = Color.Red,
-                            icon = Icons.Default.Close
-                        )
-                    }
-
-
 
                     item.type?.lowercase() == "projeto" -> {
                         Tag(
                             text = "Projeto",
-                            color = Color(0xFFFF9800),
-                            icon = Icons.Default.Warning
+                            color = MaterialTheme.colorScheme.primary,
+                            icon = Icons.Default.Info
                         )
                     }
 
@@ -753,15 +816,16 @@ fun ContractItem(
             }
         },
         supportingContent = {
-            AnimatedVisibility(visible = selected.value) {
+            AnimatedVisibility(visible = selected) {
                 OutlinedTextField(
-                    value = TextFieldValue(quantity.value, TextRange(quantity.value.length)),
+                    value = TextFieldValue(quantity, TextRange(quantity.length + 1)),
                     onValueChange = { newValue ->
                         val sanitized = sanitizeDecimalInput(newValue.text)
-                        text = TextFieldValue(sanitized, TextRange(sanitized.length))
 
-                        preMeasurementViewModel.setQuantity(item.contractReferenceItemId, text.text)
-
+                        preMeasurementViewModel.setQuantity(
+                            item.contractReferenceItemId,
+                            TextFieldValue(sanitized, TextRange(sanitized.length)).text
+                        )
                     },
                     label = { Text("Quantidade") },
                     placeholder = { Text("0.00") },
@@ -779,11 +843,13 @@ fun ContractItem(
                     ),
                     shape = RoundedCornerShape(10.dp)
                 )
+
+
             }
         },
         leadingContent = {
             Icon(
-                imageVector = Icons.Default.Inventory2,
+                imageVector = Icons.Default.Widgets,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
@@ -791,18 +857,23 @@ fun ContractItem(
         },
         trailingContent = {
             IconToggleButton(
-                checked = selected.value,
+                checked = selected,
                 onCheckedChange = { isChecked ->
                     if (isChecked) {
-                        preMeasurementViewModel.addItem(item.contractReferenceItemId)
+                        preMeasurementViewModel.addItem(
+                            item,
+                            items
+                        )
                     } else {
-                        preMeasurementViewModel.removeItem(item.contractReferenceItemId)
+                        preMeasurementViewModel.removeItem(
+                            item
+                        )
                     }
                 },
                 modifier = Modifier
                     .size(36.dp)
                     .background(
-                        if (selected.value)
+                        if (selected)
                             MaterialTheme.colorScheme.primary
                         else
                             MaterialTheme.colorScheme.surface,
@@ -811,7 +882,7 @@ fun ContractItem(
                     .border(
                         BorderStroke(
                             1.dp,
-                            if (selected.value)
+                            if (selected)
                                 MaterialTheme.colorScheme.primary
                             else
                                 MaterialTheme.colorScheme.onSurfaceVariant
@@ -822,7 +893,7 @@ fun ContractItem(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = "Selecionar",
-                    tint = if (selected.value)
+                    tint = if (selected)
                         MaterialTheme.colorScheme.onPrimary
                     else
                         MaterialTheme.colorScheme.onSurface

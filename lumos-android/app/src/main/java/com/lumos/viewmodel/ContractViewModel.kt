@@ -9,8 +9,11 @@ import com.lumos.repository.ContractRepository
 import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Item
+import com.lumos.navigation.Routes
+import com.lumos.utils.NavEvents
 import com.lumos.utils.Utils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -37,8 +40,20 @@ class ContractViewModel(
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
+    private var itemsJob: Job? = null
+
     init {
         loadFlowContractsForMaintenance()
+
+        viewModelScope.launch {
+            NavEvents.route.collect { route ->
+                when (route) {
+                    Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS -> {
+                       clearItems()
+                    }
+                }
+            }
+        }
     }
 
     fun syncContracts() {
@@ -49,15 +64,18 @@ class ContractViewModel(
                 when (val response = repository.syncContracts()) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
+
                     is RequestResult.NoInternet -> {
                         _syncError.value =
                             "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
                         _hasInternet.value = false
                     }
+
                     is ServerError -> _syncError.value = response.message
                     is RequestResult.SuccessEmptyBody -> {
                         ServerError(204, "Resposta 204 inesperada")
                     }
+
                     is RequestResult.Success -> null
                     is RequestResult.UnknownError -> null
                 }
@@ -77,12 +95,15 @@ class ContractViewModel(
                 when (val response = repository.syncContractItems()) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Tente novamente."
+
                     is RequestResult.NoInternet -> _syncError.value =
                         "Sem internet no momento. Os dados salvos continuam disponíveis e novos serão buscados automaticamente quando a conexão voltar."
+
                     is RequestResult.ServerError -> _syncError.value = response.message
                     is RequestResult.SuccessEmptyBody -> {
                         ServerError(204, "Resposta 204 inesperada")
                     }
+
                     is RequestResult.Success -> null
                     is RequestResult.UnknownError -> null
                 }
@@ -96,7 +117,9 @@ class ContractViewModel(
 
 
     fun loadItemsFromContract(itemsIds: List<Long>) {
-        viewModelScope.launch(Dispatchers.IO) {
+        if (_items.value.isNotEmpty()) return
+
+        itemsJob = viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.getItemsFromContract(itemsIds).collectLatest { entity ->
                     _items.value = entity
@@ -108,7 +131,7 @@ class ContractViewModel(
     }
 
     fun loadFlowContracts(status: String) {
-        if(_contracts.value.isEmpty()) {
+        if (_contracts.value.isEmpty()) {
             viewModelScope.launch {
                 try {
                     repository.getFlowContracts(status)
@@ -166,6 +189,12 @@ class ContractViewModel(
                 Log.e("Error loadMaterials", e.message.toString())
             }
         }
+    }
+
+    fun clearItems() {
+        itemsJob?.cancel() // cancela a coleta
+        itemsJob = null
+        _items.value = emptyList()
     }
 
 }

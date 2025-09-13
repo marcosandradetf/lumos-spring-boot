@@ -1337,6 +1337,7 @@ class ExecutionService(
 
             val date = Utils.convertToSaoPauloLocal(Instant.parse(line[3].asText()))
                 .format(DateTimeFormatter.ofPattern("dd/MM/yy"))
+
             val supplier = line[4].asText()
 
             if (index == 0) {

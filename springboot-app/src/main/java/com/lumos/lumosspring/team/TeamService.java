@@ -83,6 +83,7 @@ public class TeamService {
 
     @Caching(evict = {
             @CacheEvict(cacheNames = "getAllTeams", allEntries = true),
+            @CacheEvict(cacheNames = "getAllDeposits", allEntries = true),
     })
     @Transactional
     public void insertTeam(TeamCreate t) {
@@ -112,6 +113,40 @@ public class TeamService {
 
         try {
             deposit = depositRepository.save(deposit);
+
+            namedParameterJdbcTemplate.update(
+                    """
+                            insert into material_stock (
+                                buy_unit,
+                                cost_per_item,
+                                cost_price,
+                                inactive,
+                                request_unit,
+                                stock_available,
+                                stock_quantity,
+                                company_id,
+                                deposit_id,
+                                material_id
+                            )
+                            select
+                                'UN',
+                                null as cost_per_item,    \s
+                                null as cost_price,       \s
+                                false as inactive,       \s
+                                'UN',
+                                0 as stock_available,     \s
+                                0 as stock_quantity,      \s
+                                :companyId,
+                                :depositId,               \s
+                                m.id_material\s
+                            from material m;
+                            """,
+                    Map.of(
+                            "depositId", deposit.getIdDeposit(),
+                            "companyId", deposit.getCompanyId()
+                    )
+            );
+
             newTeam.setDepositId(deposit.getIdDeposit());
             newTeam = teamRepository.save(newTeam);
 
@@ -121,12 +156,13 @@ public class TeamService {
                             t.memberIds()
                     )
             );
-        } catch (DuplicateKeyException ex) {
-            throw new Utils.BusinessException(
-                    "Não é possível salvar: já existe uma equipe com esse nome e placa de veículo."
-            );
-        } catch (DataAccessException ex) {
-            // pega erros do JDBC sem ser duplicidade
+        } catch (Exception ex) {
+            if (ex.getCause().toString().contains("duplicate key")) {
+                throw new Utils.BusinessException(
+                        "Não é possível salvar: já existe uma equipe com esse nome ou placa de veículo."
+                );
+            }
+
             throw new Utils.BusinessException("Erro ao atualizar o depósito: " + ex.getMessage());
         }
 
@@ -137,6 +173,7 @@ public class TeamService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "getAllTeams", allEntries = true),
+            @CacheEvict(cacheNames = "getAllDeposits", allEntries = true),
     })
     public ResponseEntity<?> updateTeams(List<TeamCreate> teams) {
         boolean hasInvalidUser = teams.stream().noneMatch(TeamCreate::sel);

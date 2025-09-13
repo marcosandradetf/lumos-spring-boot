@@ -1,10 +1,8 @@
 import {Component} from '@angular/core';
 import {Router} from '@angular/router';
-import {UserService} from '../user/user-service.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {Title} from '@angular/platform-browser';
-import {ButtonComponent} from '../../shared/components/button/button.component';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {TableComponent} from '../../shared/components/table/table.component';
@@ -12,8 +10,6 @@ import {ufRequest} from '../../core/uf-request.dto';
 import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
 import {TeamService} from './team-service.service';
-import {catchError, tap} from 'rxjs';
-import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
 import {TeamsModel} from '../../models/teams.model';
 import {Toast} from 'primeng/toast';
 import {MultiSelect} from 'primeng/multiselect';
@@ -22,7 +18,6 @@ import {MultiSelect} from 'primeng/multiselect';
   selector: 'app-team',
   standalone: true,
   imports: [
-    ButtonComponent,
     FormsModule,
     NgForOf,
     NgIf,

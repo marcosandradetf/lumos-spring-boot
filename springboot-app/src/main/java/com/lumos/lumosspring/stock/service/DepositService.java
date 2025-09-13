@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Function;
@@ -115,17 +116,31 @@ public class DepositService {
         return ResponseEntity.ok(this.findAll());
     }
 
+    @Transactional
     public ResponseEntity<?> delete(Long id) {
         var deposit = depositRepository.findById(id).orElse(null);
         if (deposit == null) {
             return ResponseEntity.notFound().build();
         }
 
-        if (materialStockRepository.existsDeposit(id).isPresent()) {
-            return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais associados a este almoxarifado."));
+        if (depositRepository.hasTeam(id) != null) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: existe uma equipe vinculada a esse caminhão, remova o vínculo editando a equipe correspondente."));
         }
 
+        if (materialStockRepository.existsDeposit(id).isPresent()) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais com estoque associados a este almoxarifado, faça a transferência do estoque para excluir."));
+        }
+
+        namedJdbc.update(
+                """
+                        delete from material_stock
+                        where deposit_id = :deposit_id
+                """,
+                Map.of("deposit_id", id)
+        );
+
         depositRepository.delete(deposit);
+
         return ResponseEntity.ok(this.findAll());
     }
 

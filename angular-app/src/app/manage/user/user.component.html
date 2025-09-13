@@ -11,243 +11,245 @@
       </div>
     </div>
 
-
-    <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5 mt-5">
-      <input type="radio" class="tab" aria-label="Usuários" checked/>
-      <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
-      <input type="radio" class="tab" aria-label="Empresa" disabled
-             (click)="router.navigate(['/configuracoes/empresa'])"/>
-    </div>
-
-    <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)"
-          class="w-full pl-2">
-
-      <div class="flex items-center gap-3 pb-2">
-        <!-- Botão adicionar -->
-        <button
-          class="btn btn-primary btn-circle btn-sm tooltip tooltip-right"
-          (click)="newUser()"
-          type="button"
-          data-tip="Adicionar usuário">
-          <i class="pi pi-user-plus"></i>
-        </button>
-
-        <!-- Botão remover -->
-        <button
-          class="btn btn-error btn-circle btn-sm tooltip tooltip-right"
-          (click)="removeUser()"
-          type="button"
-          data-tip="Remover usuário">
-          <i class="pi pi-user-minus"></i>
-        </button>
+    @if (loading) {
+      <app-loading></app-loading>
+    } @else {
+      <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5 mt-5">
+        <input type="radio" class="tab" aria-label="Usuários" checked/>
+        <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
+        <input type="radio" class="tab" aria-label="Empresa" disabled
+               (click)="router.navigate(['/configuracoes/empresa'])"/>
       </div>
 
+      <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)"
+            class="w-full pl-2">
 
-      <app-table [large]="false">
-        <tr header>
-          <th></th>
-          <th hidden>Código</th>
-          <th>Usuário</th>
-          <th>Nome</th>
-          <th>Sobrenome</th>
-          <th>Email</th>
-          <th>CPF</th>
-          <th>Data de Nascimento</th>
-          <th>Funções</th>
-          <th>Status</th>
-          <th>Ação</th>
-        </tr>
+        <div class="flex items-center gap-3 pb-2">
+          <!-- Botão adicionar -->
+          <button
+            class="btn btn-primary btn-circle btn-sm tooltip tooltip-right"
+            (click)="newUser()"
+            type="button"
+            data-tip="Adicionar usuário">
+            <i class="pi pi-user-plus"></i>
+          </button>
 
-        <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
-
-          <!-- Ação principal (editar/cancelar) -->
-          <td [ngClass]="user.sel ? 'min-w-24' : ''">
-            <button
-              class="btn btn-info btn-circle btn-sm tooltip tooltip-right"
-              (click)="user.userId !== '' ? user.sel = !user.sel : removeUser()"
-              type="button"
-              [attr.data-tip]="user.sel ? 'Cancelar' : 'Editar Usuário'">
-              <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-user-edit'"></i>
-            </button>
-            <button
-              *ngIf="user.sel"
-              class="btn btn-info btn-circle btn-sm tooltip tooltip-right ml-2"
-              type="submit"
-              [attr.data-tip]="'Salvar'">
-              <i class="pi pi-save"></i>
-            </button>
-          </td>
-
-          <!-- ID -->
-          <td hidden>{{ user.userId }}</td>
-
-          <!-- Username -->
-          <td>
-            <ng-container *ngIf="user.sel; else showUsername">
-              <input required
-                     [(ngModel)]="user.username"
-                     name="username{{i}}"
-                     type="text"
-                     placeholder="Insira o username"
-                     class="input input-bordered input-sm"
-                     #username="ngModel"
-                     [pattern]="usernamePattern">
-              <div *ngIf="username.invalid && username.touched">
-                <small *ngIf="username.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                <small *ngIf="username.errors?.['pattern']" class="text-red-600">Username inválido.</small>
-              </div>
-            </ng-container>
-            <ng-template #showUsername>{{ user.username }}</ng-template>
-          </td>
-
-          <!-- Nome -->
-          <td>
-            <ng-container *ngIf="user.sel; else showName">
-              <input required
-                     [(ngModel)]="user.name"
-                     name="name{{i}}"
-                     type="text"
-                     placeholder="Insira o nome"
-                     class="input input-bordered input-sm"
-                     #name="ngModel">
-              <div *ngIf="name.invalid && name.touched">
-                <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-              </div>
-            </ng-container>
-            <ng-template #showName>{{ user.name }}</ng-template>
-          </td>
-
-          <!-- Sobrenome -->
-          <td>
-            <ng-container *ngIf="user.sel; else showLastname">
-              <input required
-                     [(ngModel)]="user.lastname"
-                     name="lastname{{i}}"
-                     type="text"
-                     placeholder="Insira o sobrenome"
-                     class="input input-bordered input-sm"
-                     #lastname="ngModel">
-              <div *ngIf="lastname.invalid && lastname.touched">
-                <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-              </div>
-            </ng-container>
-            <ng-template #showLastname>{{ user.lastname }}</ng-template>
-          </td>
-
-          <!-- Email -->
-          <td>
-            <ng-container *ngIf="user.sel; else showEmail">
-              <input required
-                     [(ngModel)]="user.email"
-                     name="email{{i}}"
-                     type="text"
-                     placeholder="nome@exemplo.com"
-                     class="input input-bordered input-sm"
-                     #email="ngModel"
-                     [pattern]="emailPattern">
-              <div *ngIf="email.invalid && email.touched">
-                <small *ngIf="email.errors?.['required']" class="text-red-600">Email obrigatório.</small>
-                <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
-              </div>
-            </ng-container>
-            <ng-template #showEmail>{{ user.email }}</ng-template>
-          </td>
-
-          <!-- CPF -->
-          <td>
-            <ng-container *ngIf="(!user.sel || !user.show) && user.userId !== ''; else editCpf">
-              <div class="flex items-center select-none justify-between min-w-28">
-                <p *ngIf="!user.show" class="py-2 bg-transparent select-none">{{ user.cpf }}</p>
-                <span class="pi pi-user-edit cursor-pointer"
-                      title="Editar CPF"
-                      *ngIf="user.sel"
-                      (click)="user.cpf = ''; user.show = !user.show"></span>
-              </div>
-            </ng-container>
-            <ng-template #editCpf>
-              <input required
-                     [(ngModel)]="user.cpf"
-                     name="cpf{{i}}"
-                     type="text"
-                     placeholder="999.999.999-99"
-                     maxlength="14"
-                     class="input input-bordered input-sm"
-                     mask="000.000.000-00"
-                     [dropSpecialCharacters]="true"
-                     #cpf="ngModel"
-                     [pattern]="cpfPattern">
-              <div *ngIf="cpf.invalid && cpf.touched">
-                <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF obrigatório.</small>
-                <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
-              </div>
-            </ng-template>
-          </td>
-
-          <!-- Data de nascimento -->
-          <td>
-            <ng-container *ngIf="user.sel; else showDate">
-              <div class="flex items-center space-x-2">
-                <input required [(ngModel)]="user.day" name="day{{i}}" type="number" placeholder="Dia" min="1"
-                       [max]="getMaxDay(user.month, user.year)"
-                       class="input input-bordered input-sm max-w-12"/>
-                <select [(ngModel)]="user.month" name="month{{i}}" class="select select-bordered select-sm">
-                  <option *ngFor="let m of months" [value]="m.number">{{ m.name }}</option>
-                </select>
-                <input required [(ngModel)]="user.year" name="year{{i}}" type="text" minlength="4" maxlength="4"
-                       placeholder="Ano" class="input input-bordered input-sm max-w-16"/>
-              </div>
-            </ng-container>
-            <ng-template #showDate>
-              {{ user.day + " de " + getMonth(user.month.toString())?.name + " de " + user.year }}
-            </ng-template>
-          </td>
-
-          <!-- Funções -->
-          <td>
-            <ng-container *ngIf="user.sel; else showRoles">
-              <p-multiselect
-                name="roles_{{user.userId}}"
-                [options]="roles"
-                optionLabel="roleName"
-                optionValue="roleName"
-                [defaultLabel]="'Selecionar funções'"
-                [(ngModel)]="user.role"
-                [maxSelectedLabels]="1"
-                class="min-w-44"
-              >
-              </p-multiselect>
-            </ng-container>
-            <ng-template #showRoles>
-              <div class="dropdown dropdown-hover">
-                <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
-                  class="material-icons">arrow_drop_down_icon</span></div>
-                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded z-[1] w-52 p-2 shadow">
-                  <li *ngFor="let role of user.role" class="p-2">{{ role }}</li>
-                </ul>
-              </div>
-            </ng-template>
-          </td>
-
-          <!-- Status -->
-          <td>
-            <input type="checkbox" [(ngModel)]="user.status" name="status{{i}}" class="toggle toggle-primary"
-                   [disabled]="!user.sel"/>
-          </td>
-
-          <!-- Reset senha -->
-          <td>
-            <app-button title="Resetar Senha"
-                        classButton="btn-sm"
-                        (click)="confirmResetPassword(user.userId, user.email)">
-            </app-button>
-          </td>
-
-        </tr>
-      </app-table>
-
-    </form>
+          <!-- Botão remover -->
+          <button
+            class="btn btn-error btn-circle btn-sm tooltip tooltip-right"
+            (click)="removeUser()"
+            type="button"
+            data-tip="Remover usuário">
+            <i class="pi pi-user-minus"></i>
+          </button>
+        </div>
 
 
+        <app-table [large]="false">
+          <tr header>
+            <th></th>
+            <th hidden>Código</th>
+            <th>Usuário</th>
+            <th>Nome</th>
+            <th>Sobrenome</th>
+            <th>Email</th>
+            <th>CPF</th>
+            <th>Data de Nascimento</th>
+            <th>Funções</th>
+            <th>Status</th>
+            <th>Ação</th>
+          </tr>
+
+          <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
+
+            <!-- Ação principal (editar/cancelar) -->
+            <td [ngClass]="user.sel ? 'min-w-24' : ''">
+              <button
+                class="btn btn-info btn-circle btn-sm tooltip tooltip-right"
+                (click)="user.userId !== '' ? user.sel = !user.sel : removeUser()"
+                type="button"
+                [attr.data-tip]="user.sel ? 'Cancelar' : 'Editar Usuário'">
+                <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-user-edit'"></i>
+              </button>
+              <button
+                *ngIf="user.sel"
+                class="btn btn-info btn-circle btn-sm tooltip tooltip-right ml-2"
+                type="submit"
+                [attr.data-tip]="'Salvar'">
+                <i class="pi pi-save"></i>
+              </button>
+            </td>
+
+            <!-- ID -->
+            <td hidden>{{ user.userId }}</td>
+
+            <!-- Username -->
+            <td>
+              <ng-container *ngIf="user.sel; else showUsername">
+                <input required
+                       [(ngModel)]="user.username"
+                       name="username{{i}}"
+                       type="text"
+                       placeholder="Insira o username"
+                       class="input input-bordered input-sm"
+                       #username="ngModel"
+                       [pattern]="usernamePattern">
+                <div *ngIf="username.invalid && username.touched">
+                  <small *ngIf="username.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                  <small *ngIf="username.errors?.['pattern']" class="text-red-600">Username inválido.</small>
+                </div>
+              </ng-container>
+              <ng-template #showUsername>{{ user.username }}</ng-template>
+            </td>
+
+            <!-- Nome -->
+            <td>
+              <ng-container *ngIf="user.sel; else showName">
+                <input required
+                       [(ngModel)]="user.name"
+                       name="name{{i}}"
+                       type="text"
+                       placeholder="Insira o nome"
+                       class="input input-bordered input-sm"
+                       #name="ngModel">
+                <div *ngIf="name.invalid && name.touched">
+                  <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
+              </ng-container>
+              <ng-template #showName>{{ user.name }}</ng-template>
+            </td>
+
+            <!-- Sobrenome -->
+            <td>
+              <ng-container *ngIf="user.sel; else showLastname">
+                <input required
+                       [(ngModel)]="user.lastname"
+                       name="lastname{{i}}"
+                       type="text"
+                       placeholder="Insira o sobrenome"
+                       class="input input-bordered input-sm"
+                       #lastname="ngModel">
+                <div *ngIf="lastname.invalid && lastname.touched">
+                  <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+                </div>
+              </ng-container>
+              <ng-template #showLastname>{{ user.lastname }}</ng-template>
+            </td>
+
+            <!-- Email -->
+            <td>
+              <ng-container *ngIf="user.sel; else showEmail">
+                <input required
+                       [(ngModel)]="user.email"
+                       name="email{{i}}"
+                       type="text"
+                       placeholder="nome@exemplo.com"
+                       class="input input-bordered input-sm"
+                       #email="ngModel"
+                       [pattern]="emailPattern">
+                <div *ngIf="email.invalid && email.touched">
+                  <small *ngIf="email.errors?.['required']" class="text-red-600">Email obrigatório.</small>
+                  <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
+                </div>
+              </ng-container>
+              <ng-template #showEmail>{{ user.email }}</ng-template>
+            </td>
+
+            <!-- CPF -->
+            <td>
+              <ng-container *ngIf="(!user.sel || !user.show) && user.userId !== ''; else editCpf">
+                <div class="flex items-center select-none justify-between min-w-28">
+                  <p *ngIf="!user.show" class="py-2 bg-transparent select-none">{{ user.cpf }}</p>
+                  <span class="pi pi-user-edit cursor-pointer"
+                        title="Editar CPF"
+                        *ngIf="user.sel"
+                        (click)="user.cpf = ''; user.show = !user.show"></span>
+                </div>
+              </ng-container>
+              <ng-template #editCpf>
+                <input required
+                       [(ngModel)]="user.cpf"
+                       name="cpf{{i}}"
+                       type="text"
+                       placeholder="999.999.999-99"
+                       maxlength="14"
+                       class="input input-bordered input-sm"
+                       mask="000.000.000-00"
+                       [dropSpecialCharacters]="true"
+                       #cpf="ngModel"
+                       [pattern]="cpfPattern">
+                <div *ngIf="cpf.invalid && cpf.touched">
+                  <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF obrigatório.</small>
+                  <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
+                </div>
+              </ng-template>
+            </td>
+
+            <!-- Data de nascimento -->
+            <td>
+              <ng-container *ngIf="user.sel; else showDate">
+                <div class="flex items-center space-x-2">
+                  <input required [(ngModel)]="user.day" name="day{{i}}" type="number" placeholder="Dia" min="1"
+                         [max]="getMaxDay(user.month, user.year)"
+                         class="input input-bordered input-sm max-w-12"/>
+                  <select [(ngModel)]="user.month" name="month{{i}}" class="select select-bordered select-sm">
+                    <option *ngFor="let m of months" [value]="m.number">{{ m.name }}</option>
+                  </select>
+                  <input required [(ngModel)]="user.year" name="year{{i}}" type="text" minlength="4" maxlength="4"
+                         placeholder="Ano" class="input input-bordered input-sm max-w-16"/>
+                </div>
+              </ng-container>
+              <ng-template #showDate>
+                {{ user.day + " de " + getMonth(user.month.toString())?.name + " de " + user.year }}
+              </ng-template>
+            </td>
+
+            <!-- Funções -->
+            <td>
+              <ng-container *ngIf="user.sel; else showRoles">
+                <p-multiselect
+                  name="roles_{{user.userId}}"
+                  [options]="roles"
+                  optionLabel="roleName"
+                  optionValue="roleName"
+                  [defaultLabel]="'Selecionar funções'"
+                  [(ngModel)]="user.role"
+                  [maxSelectedLabels]="1"
+                  class="min-w-44"
+                >
+                </p-multiselect>
+              </ng-container>
+              <ng-template #showRoles>
+                <div class="dropdown dropdown-hover">
+                  <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
+                    class="material-icons">arrow_drop_down_icon</span></div>
+                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded z-[1] w-52 p-2 shadow">
+                    <li *ngFor="let role of user.role" class="p-2">{{ role }}</li>
+                  </ul>
+                </div>
+              </ng-template>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <input type="checkbox" [(ngModel)]="user.status" name="status{{i}}" class="toggle toggle-primary"
+                     [disabled]="!user.sel"/>
+            </td>
+
+            <!-- Reset senha -->
+            <td>
+              <app-button title="Resetar Senha"
+                          classButton="btn-sm"
+                          (click)="confirmResetPassword(user.userId, user.email)">
+              </app-button>
+            </td>
+
+          </tr>
+        </app-table>
+
+      </form>
+
+    }
   </div>
 
   <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>

@@ -14,6 +14,7 @@ import {Title} from '@angular/platform-browser';
 import {NgxMaskDirective, NgxMaskPipe, provideNgxMask} from 'ngx-mask';
 import {Toast} from 'primeng/toast';
 import {MultiSelect} from 'primeng/multiselect';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-user',
@@ -31,7 +32,8 @@ import {MultiSelect} from 'primeng/multiselect';
     NgxMaskPipe,
     Toast,
     NgClass,
-    MultiSelect
+    MultiSelect,
+    LoadingComponent
   ],
   providers: [provideNgxMask()],
   templateUrl: './user.component.html',

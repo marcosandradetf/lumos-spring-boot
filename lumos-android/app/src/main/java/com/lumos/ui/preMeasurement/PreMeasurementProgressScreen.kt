@@ -244,7 +244,7 @@ fun PMPContent(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul
                         ) {
                             Text(
-                                text = "Adicionar rua",
+                                text = "Adicionar ponto",
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Spacer(Modifier.width(5.dp))

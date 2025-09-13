@@ -1,4 +1,4 @@
-<div class="h-full w-full">
+<div class="h-full w-full relative">
   <div class="flex justify-between items-center">
     <app-breadcrumb
       [currentTitle]="description"
@@ -9,6 +9,9 @@
     <p
       class="mr-5 font-medium text-neutral-700 dark:text-neutral-100">{{ reserve.streets[0].comment !== 'DIRECT_EXECUTION' ? 'Selecione uma rua' : '' }}</p>
   </div>
+
+  <!-- Overlay de Loading -->
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
 
   <div *ngIf="reserve.streets[0].comment !== 'DIRECT_EXECUTION'">
@@ -232,12 +235,12 @@
         <p-skeleton height="2.5rem"/>
       </button>
 
-      <button
-        pButton type="button"
-        label="Salvar tudo"
-        (click)="sendData()" class="w-1/5"
-        *ngIf="streetId !== null || directExecutionId !== null">
-      </button>
+      <p-button type="button"
+                label="Salvar tudo"
+                [loading]="loading"
+                (click)="sendData()"
+                *ngIf="streetId !== null || directExecutionId !== null">
+      </p-button>
     </div>
   </div>
 

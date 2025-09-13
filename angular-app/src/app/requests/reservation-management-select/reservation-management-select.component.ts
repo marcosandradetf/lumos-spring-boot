@@ -24,6 +24,8 @@ import {AuthService} from '../../core/auth/auth.service';
 import {Dialog} from 'primeng/dialog';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
+import {ProgressSpinner} from 'primeng/progressspinner';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-reservation-management-select',
@@ -46,6 +48,8 @@ import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
     NgForOf,
     LoadingComponent,
     NgxMaskPipe,
+    ProgressSpinner,
+    LoadingOverlayComponent,
   ],
   providers: [provideNgxMask()],
   templateUrl: './reservation-management-select.component.html',
@@ -246,7 +250,7 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    const newMaterial = material.deposit.includes("CAMINHÃO")
+    const newMaterial = material.isTruck
       ? {
         centralMaterialStockId: null,
         truckMaterialStockId: material.materialStockId,
@@ -260,7 +264,7 @@ export class ReservationManagementSelectComponent {
         materialId: material.materialId,
       };
 
-    const materialStockId = material.deposit.includes("CAMINHÃO") ? newMaterial.truckMaterialStockId : newMaterial.centralMaterialStockId;
+    const materialStockId = material.isTruck ? newMaterial.truckMaterialStockId : newMaterial.centralMaterialStockId;
     if (materialStockId == null) {
       this.utils.showMessage("Id do material não encontrado", "error", "Erro ao salvar referência")
       return;
@@ -272,7 +276,7 @@ export class ReservationManagementSelectComponent {
       this.street.items[currentItemIndex].materials.push(newMaterial);
       this.utils.showMessage(`QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Material alocado com sucesso');
     } else {
-      const propToCompare = material.deposit.includes("CAMINHÃO") ? 'truckMaterialStockId' : 'centralMaterialStockId';
+      const propToCompare = material.isTruck ? 'truckMaterialStockId' : 'centralMaterialStockId';
       const matIndex = this.street.items[currentItemIndex].materials
         .findIndex(i => i[propToCompare] === materialStockId);
 
@@ -348,7 +352,7 @@ export class ReservationManagementSelectComponent {
   Cancel(material: MaterialInStockDTO, rowElement: HTMLTableRowElement) {
     const index = this.street.items.findIndex(i => i.itemId === this.currentItemId)
     if (index !== -1 && this.existsMaterial(material.materialStockId, material.deposit)) {
-      if (material.deposit.includes("CAMINHÃO")) {
+      if (material.isTruck) {
         this.street.items[index].materials = this.street.items[index].materials
           .filter(m => m.truckMaterialStockId !== material.materialStockId);
       } else {

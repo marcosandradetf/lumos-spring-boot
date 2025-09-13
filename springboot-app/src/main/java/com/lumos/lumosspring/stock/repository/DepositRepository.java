@@ -4,6 +4,7 @@ import com.lumos.lumosspring.dto.stock.DepositResponse;
 import com.lumos.lumosspring.stock.entities.Deposit;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,4 +27,11 @@ public interface DepositRepository extends CrudRepository<Deposit, Long> {
 
     @Query("SELECT deposit_id_deposit from team where id_team = :teamId")
     Long getDepositIdByTeamId(long teamId);
+
+    @Query("""
+        select true
+        from team
+        where deposit_id_deposit = :id
+    """)
+    Boolean hasTeam(@Param("id") Long id);
 }

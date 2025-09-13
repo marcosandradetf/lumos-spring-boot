@@ -6,13 +6,18 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Table
-public class AppUser {
+public class AppUser implements Persistable<UUID> {
     @Id
     private UUID userId;
+
+    @Transient
+    private boolean isNewEntry = false;
 
     private String username;
 
@@ -140,5 +145,23 @@ public class AppUser {
 
     public void setTeamId(Long teamId) {
         this.teamId = teamId;
+    }
+
+    public boolean isNewEntry() {
+        return isNewEntry;
+    }
+
+    public void setNewEntry(boolean newEntry) {
+        isNewEntry = newEntry;
+    }
+
+    @Override
+    public UUID getId() {
+        return userId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNewEntry;
     }
 }
