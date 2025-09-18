@@ -891,6 +891,7 @@ fun ContractItem(
                         )
                     } else {
                         preMeasurementViewModel.removeItem(
+                            items,
                             item
                         )
                     }

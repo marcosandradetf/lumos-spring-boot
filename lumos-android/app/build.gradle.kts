@@ -43,7 +43,8 @@ android {
     // 2) Consolide buildTypes (um bloco só)
     signingConfigs {
         create("release") {
-            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
+//            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("/Users/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"
@@ -52,15 +53,15 @@ android {
     }
 
     buildTypes {
-//        getByName("debug") {
-//            signingConfig = signingConfigs.getByName("debug")
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("release")
 //            buildConfigField("boolean", "ROOM_LOGGING_ENABLED", "true")
 //            isMinifyEnabled = true
 //            proguardFiles(
 //                getDefaultProguardFile("proguard-android-optimize.txt"),
 //                "proguard-rules.pro"
 //            )
-//        }
+        }
 
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
