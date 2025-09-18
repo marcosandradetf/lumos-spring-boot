@@ -14,19 +14,13 @@ public class PreMeasurementStreet {
     @Id
     private Long preMeasurementStreetId;
 
-    private Long deviceStreetId;
-
-    private String deviceId;
+    private UUID devicePreMeasurementStreetId;
 
     private String description;
 
     private String lastPower;
 
-    private String street;
-    private String number;
-    private String neighborhood;
-    private String city;
-    private String state;
+    private String address;
 
     private Double latitude;
     private Double longitude;
@@ -69,21 +63,7 @@ public class PreMeasurementStreet {
         this.preMeasurementStreetId = preMeasurementStreetId;
     }
 
-    public Long getDeviceStreetId() {
-        return deviceStreetId;
-    }
 
-    public void setDeviceStreetId(Long deviceStreetId) {
-        this.deviceStreetId = deviceStreetId;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
 
     public String getDescription() {
         return description;
@@ -101,44 +81,21 @@ public class PreMeasurementStreet {
         this.lastPower = lastPower;
     }
 
-    public String getStreet() {
-        return street;
+
+    public UUID getDevicePreMeasurementStreetId() {
+        return devicePreMeasurementStreetId;
     }
 
-    public void setStreet(String street) {
-        this.street = street;
+    public void setDevicePreMeasurementStreetId(UUID devicePreMeasurementStreetId) {
+        this.devicePreMeasurementStreetId = devicePreMeasurementStreetId;
     }
 
-    public String getNumber() {
-        return number;
+    public String getAddress() {
+        return address;
     }
 
-    public void setNumber(String number) {
-        this.number = number;
-    }
-
-    public String getNeighborhood() {
-        return neighborhood;
-    }
-
-    public void setNeighborhood(String neighborhood) {
-        this.neighborhood = neighborhood;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public Double getLatitude() {

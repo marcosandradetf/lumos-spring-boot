@@ -527,7 +527,7 @@ class ExecutionService(
                         ?: throw IllegalStateException("Truck Material stock not found ${materialReserve.materialId} - deposit: $depositId")
 
                     MaterialReservation(
-                        description = preMeasurementStreet?.street,
+                        description = preMeasurementStreet?.address,
                         reservedQuantity = materialReserve.materialQuantity,
                         preMeasurementStreetId = executionReserve.preMeasurementStreetId,
                         directExecutionId = executionReserve.directExecutionId,
@@ -540,7 +540,7 @@ class ExecutionService(
 
                 } else {
                     MaterialReservation(
-                        description = preMeasurementStreet?.street,
+                        description = preMeasurementStreet?.address,
                         reservedQuantity = materialReserve.materialQuantity,
                         preMeasurementStreetId = executionReserve.preMeasurementStreetId,
                         directExecutionId = executionReserve.directExecutionId,

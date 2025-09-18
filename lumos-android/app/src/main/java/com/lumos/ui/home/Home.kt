@@ -468,7 +468,7 @@ fun MaintenanceStatusCard(
 
             if (executions.isNotEmpty())
                 Text(
-                    text = "Clique para saber mais",
+                    text = "Clique para iniciar",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center,
@@ -528,7 +528,7 @@ fun PreMeasurementCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Clique para saber mais",
+                text = "Clique para iniciar",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,

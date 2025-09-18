@@ -14,6 +14,7 @@ import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
+import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,7 +24,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class PreMeasurementRepository(
     private val db: AppDatabase,
     private val api: PreMeasurementApi,
-    private val app: Application
+    private val app: Application,
+
+    val secureStorage: SecureStorage = SecureStorage(app.applicationContext)
 ) {
 
     suspend fun save(
@@ -226,6 +229,9 @@ class PreMeasurementRepository(
         }
     }
 
+    fun getAutoCalculate(): Boolean = secureStorage.getAutoCalculate()
+
+    fun toggleAutoCalculate(value: Boolean) = secureStorage.toggleAutoCalculate(value)
 
 }
 

@@ -51,6 +51,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -549,6 +550,7 @@ fun StreetItemsContent(
 
             ) {
                 item {
+
                     TextField(
                         value = preMeasurementViewModel.street?.address ?: "",
                         onValueChange = {
@@ -592,10 +594,33 @@ fun StreetItemsContent(
                         )
                     )
                     Spacer(Modifier.height(5.dp))
-                    Text(
-                        "Selecione os itens da Pré-medição",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Selecione os itens da Pré-medição",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Switch(
+                                modifier = Modifier.size(40.dp),
+                                checked = preMeasurementViewModel.autoCalculate,
+                                onCheckedChange = {
+                                    preMeasurementViewModel.toggleAutoCalculate()
+                                }
+                            )
+                            Text(
+                                text =  "Auto-calcular",
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(5.dp))
                 }
                 items(

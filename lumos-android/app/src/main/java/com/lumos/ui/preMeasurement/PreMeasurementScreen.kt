@@ -86,7 +86,7 @@ fun PMContent(
     accessMeasurement: (String) -> Unit
 ) {
     AppLayout(
-        title = "Pré-mediçoes em andamento",
+        title = "Pré-medições em andamento",
         selectedIcon = BottomBar.MORE.value,
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
@@ -101,7 +101,7 @@ fun PMContent(
         },
         navigateToStock = {
             navController.navigate(Routes.STOCK)
-        }
+        },
     ) { modifier, snackBar ->
 
         LazyColumn(

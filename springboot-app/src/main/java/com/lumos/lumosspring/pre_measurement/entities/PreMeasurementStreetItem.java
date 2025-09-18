@@ -6,11 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Table
 public class PreMeasurementStreetItem {
     @Id
-
     private Long preMeasurementStreetItemId;
 
     private Long contractItemId;
@@ -19,7 +19,7 @@ public class PreMeasurementStreetItem {
 
     private Long preMeasurementId;
 
-    private double measuredItemQuantity;
+    private BigDecimal measuredItemQuantity;
 
     private String itemStatus = ItemStatus.PENDING;
 
@@ -62,11 +62,11 @@ public class PreMeasurementStreetItem {
         this.preMeasurementId = preMeasurementId;
     }
 
-    public double getMeasuredItemQuantity() {
+    public BigDecimal getMeasuredItemQuantity() {
         return measuredItemQuantity;
     }
 
-    public void setMeasuredItemQuantity(double measuredItemQuantity) {
+    public void setMeasuredItemQuantity(BigDecimal measuredItemQuantity) {
         this.measuredItemQuantity = measuredItemQuantity;
     }
 

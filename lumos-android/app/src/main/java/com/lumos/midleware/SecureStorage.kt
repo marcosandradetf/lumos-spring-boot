@@ -25,6 +25,8 @@ class SecureStorage(private val context: Context) {
         private const val KEY_TEAM_ID = "team_id"
         private const val KEY_LAST_UPDATE_CHECK = "last_update_check"
         private const val KEY_LAST_TEAM_CHECK = "last_team_check"
+
+        private const val KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT = "key_auto_calculate_items_pre_measurement"
     }
 
     // Cache de instâncias
@@ -232,5 +234,13 @@ class SecureStorage(private val context: Context) {
     fun clearAll() {
         getSecurePrefs().edit { clear() }
         getNormalPrefs().edit { clear() }
+    }
+
+    fun getAutoCalculate(): Boolean {
+        return getNormalPrefs().getBoolean(KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT, false)
+    }
+
+    fun toggleAutoCalculate(value: Boolean) {
+        getNormalPrefs().edit { putBoolean(KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT, value) }
     }
 }

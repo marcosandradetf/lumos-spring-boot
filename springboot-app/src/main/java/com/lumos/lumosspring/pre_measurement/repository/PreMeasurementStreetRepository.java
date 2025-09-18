@@ -5,6 +5,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface PreMeasurementStreetRepository extends CrudRepository<PreMeasurementStreet, Long> {
@@ -12,5 +13,5 @@ public interface PreMeasurementStreetRepository extends CrudRepository<PreMeasur
 
     List<PreMeasurementStreet> findByTeamId(Long teamId);
 
-    boolean existsByDeviceIdAndDeviceStreetId(String deviceId, long deviceStreetId);
+    boolean existsByDevicePreMeasurementStreetId(UUID deviceId);
 }

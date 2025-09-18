@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface PreMeasurementRepository extends CrudRepository<PreMeasurement, Long> {
     List<PreMeasurement> findByCity(String city);
@@ -16,4 +17,5 @@ public interface PreMeasurementRepository extends CrudRepository<PreMeasurement,
 
     Optional<PreMeasurement> findByContractId(Long contractId);
 
+    Optional<PreMeasurement> findByDevicePreMeasurementId(UUID id);
 }

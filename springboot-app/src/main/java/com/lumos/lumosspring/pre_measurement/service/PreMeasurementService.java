@@ -1,70 +1,74 @@
 package com.lumos.lumosspring.pre_measurement.service;
 
-//import com.lumos.lumosspring.contract.entities.Contract;
-//import com.lumos.lumosspring.contract.entities.ContractItem;
-//import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
-//import com.lumos.lumosspring.contract.repository.ContractRepository;
-//import com.lumos.lumosspring.fileserver.service.MinioService;
-//import com.lumos.lumosspring.pre_measurement.dto.*;
-//import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
-//import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
-//import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetResponseDTO;
-//import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
-//import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem;
-//import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
-//import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository;
-//import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
-//import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
-//import com.lumos.lumosspring.notifications.service.NotificationService;
-//import com.lumos.lumosspring.stock.repository.MaterialRepository;
-//import com.lumos.lumosspring.user.UserRepository;
-//import com.lumos.lumosspring.util.*;
-//import jakarta.transaction.Transactional;
-//import org.springframework.cache.annotation.CacheEvict;
-//import org.springframework.cache.annotation.Cacheable;
-//import org.springframework.cache.annotation.Caching;
-//import org.springframework.dao.EmptyResultDataAccessException;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.jdbc.core.JdbcTemplate;
-//import org.springframework.stereotype.Service;
-//import org.springframework.web.multipart.MultipartFile;
-//
-//import java.math.BigDecimal;
-//import java.util.*;
-//import java.util.concurrent.atomic.AtomicInteger;
-//import java.util.stream.Collectors;
-//
-//@Service
-//public class PreMeasurementService {
-//    private final PreMeasurementStreetRepository preMeasurementStreetRepository;
-//    private final PreMeasurementRepository preMeasurementRepository;
-//    private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
-//    private final UserRepository userRepository;
-//    private final Util util;
-//    private final ContractRepository contractRepository;
-//    private final NotificationService notificationService;
-//    private final MinioService minioService;
-//    private final JdbcTemplate jdbcTemplate;
-//
-//    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository,
-//                                 MaterialRepository materialRepository,
-//                                 PreMeasurementRepository preMeasurementRepository,
-//                                 PreMeasurementStreetItemRepository preMeasurementStreetItemRepository,
-//                                 UserRepository userRepository, Util util,
-//                                 ContractRepository contractRepository,
-//                                 NotificationService notificationService,
-//                                 MinioService minioService, JdbcTemplate jdbcTemplate) {
-//        this.preMeasurementStreetRepository = preMeasurementStreetRepository;
-//        this.preMeasurementRepository = preMeasurementRepository;
-//        this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
-//        this.userRepository = userRepository;
-//        this.util = util;
-//        this.contractRepository = contractRepository;
-//        this.notificationService = notificationService;
-//        this.minioService = minioService;
-//        this.jdbcTemplate = jdbcTemplate;
-//    }
-//
+import com.lumos.lumosspring.contract.entities.Contract;
+import com.lumos.lumosspring.contract.entities.ContractItem;
+import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
+import com.lumos.lumosspring.contract.repository.ContractRepository;
+import com.lumos.lumosspring.minio.service.MinioService;
+import com.lumos.lumosspring.pre_measurement.dto.*;
+import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
+import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
+import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetResponseDTO;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem;
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository;
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
+import com.lumos.lumosspring.notifications.service.NotificationService;
+import com.lumos.lumosspring.stock.repository.MaterialRepository;
+import com.lumos.lumosspring.user.UserRepository;
+import com.lumos.lumosspring.util.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+@Service
+public class PreMeasurementService {
+    private final PreMeasurementStreetRepository preMeasurementStreetRepository;
+    private final PreMeasurementRepository preMeasurementRepository;
+    private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
+    private final UserRepository userRepository;
+    private final Util util;
+    private final ContractRepository contractRepository;
+    private final NotificationService notificationService;
+    private final MinioService minioService;
+    private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository,
+                                 MaterialRepository materialRepository,
+                                 PreMeasurementRepository preMeasurementRepository,
+                                 PreMeasurementStreetItemRepository preMeasurementStreetItemRepository,
+                                 UserRepository userRepository, Util util,
+                                 ContractRepository contractRepository,
+                                 NotificationService notificationService,
+                                 MinioService minioService, JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.preMeasurementStreetRepository = preMeasurementStreetRepository;
+        this.preMeasurementRepository = preMeasurementRepository;
+        this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
+        this.userRepository = userRepository;
+        this.util = util;
+        this.contractRepository = contractRepository;
+        this.notificationService = notificationService;
+        this.minioService = minioService;
+        this.jdbcTemplate = jdbcTemplate;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+
 //    @Caching(evict = {
 //            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
 //            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true)
@@ -101,291 +105,158 @@ package com.lumos.lumosspring.pre_measurement.service;
 //
 //        return true;
 //    }
-//
-//    /**
-//     * TODO
-//     * SALVAMENTO DA PRÉ-MEDIÇÃO
-//     */
-//    @Transactional
-//    @Caching(evict = {
-//            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
-//            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true),
-//            @CacheEvict(cacheNames = "GetContractsForPreMeasurement", allEntries = true)
-//
-//    })
-//    public ResponseEntity<?> savePreMeasurement(PreMeasurementDTO preMeasurementDTO, String userUUID) {
-//        if (userUUID == null || userUUID.isBlank()) {
-//            return ResponseEntity.badRequest().body(new ErrorResponse("user UUID is required"));
-//        }
-//
-//        var contract = contractRepository.findContractByContractId(preMeasurementDTO.getContractId()).orElse(null);
-//        if (contract == null || !contract.getStatus().equals(ContractStatus.ACTIVE)) {
-//            return ResponseEntity.badRequest().body(new ErrorResponse("O Contrato selecionado não está ativo no sistema."));
-//        }
-//
-//        var user = userRepository.findByUserId(UUID.fromString(userUUID));
-//        if (user.isEmpty()) {
-//            return ResponseEntity.badRequest().body(new ErrorResponse("User not found"));
-//        }
-//
-//        var preMeasurement = preMeasurementRepository.findByContract_ContractId(contract.getContractId())
-//                .orElseGet(() -> {
-//                    PreMeasurement newPre = new PreMeasurement();
-//                    newPre.setContract(contract);
-//                    newPre.setTypePreMeasurement(ContractType.INSTALLATION);
-//                    newPre.setStatus(ExecutionStatus.PENDING);
-//                    newPre.setCity(contract.getContractor());
-//                    return preMeasurementRepository.save(newPre);
-//                });
-//
-//        var step = preMeasurement.getSteps();
-//
-//        var streets = preMeasurementDTO.getStreets();
-//
-//        for (var streetDTO : streets) {
-//            PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
-//            var street = streetDTO.getStreet();
-//
-//            if (street.getPreMeasurementStreetId() > 0) {
-//                var exists = preMeasurementStreetRepository.existsByDeviceIdAndDeviceStreetId(street.getDeviceId(), street.getPreMeasurementStreetId());
-//                if (exists) {
-//                    continue;
-//                }
-//                preMeasurementStreet.setDeviceStreetId(street.getPreMeasurementStreetId());
-//                preMeasurementStreet.setDeviceId(street.getDeviceId());
-//            }
-//
-//            preMeasurementStreet.setPreMeasurement(preMeasurement);
-//            preMeasurementStreet.setStreet(street.getStreet());
-//            preMeasurementStreet.setNumber(street.getNumber());
-//            preMeasurementStreet.setNeighborhood(street.getNeighborhood());
-//            preMeasurementStreet.setCity(street.getCity());
-//            preMeasurementStreet.setState(street.getState());
-//            preMeasurementStreet.setLatitude(street.getLatitude());
-//            preMeasurementStreet.setLongitude(street.getLongitude());
-//            preMeasurementStreet.setLastPower(street.getLastPower());
-//            preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
-//            preMeasurementStreet.setStep(step + 1);
-//            preMeasurementStreet.setCreatedBy(user.orElse(null));
-//            preMeasurementStreet.setCreatedAt(util.getDateTime());
-//
-//            preMeasurementStreetRepository.save(preMeasurementStreet);
-//            for (var itemDTO : streetDTO.getItems()) {
-//                for (var contractItem : contract.getContractItem()) {
-//                    if (contractItem.getContractItemId() == itemDTO.getItemContractId()) {
-//                        var continueLoop = false;
-//                        for (var type : List.of("SERVIÇO", "PROJETO", "CABO", "RELÉ")) {
-//                            if (contractItem.getReferenceItem().getType().equalsIgnoreCase(type))
-//                                continueLoop = true;
-//                        }
-//                        if (continueLoop) continue;
-//
-//                        var newItem = new PreMeasurementStreetItem();
-//                        newItem.setPreMeasurementStreet(preMeasurementStreet);
-//                        newItem.setPreMeasurement(preMeasurement);
-//                        newItem.setItemStatus(ItemStatus.PENDING);
-//                        newItem.setMeasuredItemQuantity(itemDTO.getItemContractQuantity());
-//                        newItem.setContractItem(contractItem);
-//                        preMeasurementStreetItemRepository.save(newItem);
-//
-//                        insertServices(contract, newItem, preMeasurementStreet);
-//                        insertProject(contract, newItem, preMeasurementStreet);
-//
-//                        // exemplo braco de 1,5
-//                        insertDependencyItems(
-//                                newItem,
-//                                preMeasurementStreet,
-//                                contract
-//                        );
-//                    }
-//                }
-//            }
-//        }
-//
-//        preMeasurement.newStep(); // <-- incrementa se já existia
+
+    /**
+     * TODO
+     * SALVAMENTO DA PRÉ-MEDIÇÃO
+     */
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
+            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true),
+            @CacheEvict(cacheNames = "GetContractsForPreMeasurement", allEntries = true)
+
+    })
+    public ResponseEntity<?> savePreMeasurement(PreMeasurementDTO preMeasurementDTO) {
+        var userId = Utils.INSTANCE.getCurrentUserId();
+
+        var contract = contractRepository.findContractByContractId(preMeasurementDTO.getContractId()).orElse(null);
+        if (contract == null || !contract.getStatus().equals(ContractStatus.ACTIVE)) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("O Contrato selecionado não está ativo no sistema."));
+        }
+
+        var step = contractRepository.getLastStep(preMeasurementDTO.getContractId());
+        var preMeasurement = preMeasurementRepository.findByDevicePreMeasurementId(preMeasurementDTO.getPreMeasurementId())
+                .orElseGet(() -> {
+                    PreMeasurement newPre = new PreMeasurement();
+                    newPre.setContractId(preMeasurementDTO.getContractId());
+                    newPre.setTypePreMeasurement(ContractType.INSTALLATION);
+                    newPre.setStatus(ExecutionStatus.PENDING);
+                    newPre.setCity(contract.getContractor());
+                    newPre.setStep(step + 1);
+                    return preMeasurementRepository.save(newPre);
+                });
+
+        var streets = preMeasurementDTO.getStreets();
+
+        for (var streetDTO : streets) {
+            PreMeasurementStreet preMeasurementStreet = new PreMeasurementStreet();
+            var street = streetDTO.getStreet();
+
+            var exists = preMeasurementStreetRepository.existsByDevicePreMeasurementStreetId(street.getPreMeasurementStreetId());
+            if (exists) {
+                continue;
+            }
+
+            preMeasurementStreet.setDevicePreMeasurementStreetId(street.getPreMeasurementStreetId());
+            preMeasurementStreet.setPreMeasurementId(preMeasurement.getPreMeasurementId());
+            preMeasurementStreet.setAddress(street.getAddress());
+            preMeasurementStreet.setLatitude(street.getLatitude());
+            preMeasurementStreet.setLongitude(street.getLongitude());
+            preMeasurementStreet.setLastPower(street.getLastPower());
+            preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
+            preMeasurementStreet.setCreatedById(userId);
+            preMeasurementStreet.setCreatedAt(Instant.now());
+
+            preMeasurementStreet = preMeasurementStreetRepository.save(preMeasurementStreet);
+            final var savedStreet = preMeasurementStreet; // agora é effectively final
+
+            for (var itemDTO : streetDTO.getItems()) {
+                namedParameterJdbcTemplate.query("""
+                            select ci.contract_item_id
+                            from contract_reference_item cri
+                            join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
+                            where cri.contract_reference_item_id = :contractReferenceItemId
+                        """,
+                        Map.of("contractReferenceItemId", itemDTO.getContractReferenceItemId()),
+                        (rs) -> {
+                            while (rs.next()) {
+                                var newItem = new PreMeasurementStreetItem();
+                                newItem.setPreMeasurementStreetId(savedStreet.getPreMeasurementStreetId());
+                                newItem.setPreMeasurementId(preMeasurement.getPreMeasurementId());
+                                newItem.setItemStatus(ItemStatus.PENDING);
+                                newItem.setMeasuredItemQuantity(itemDTO.getMeasuredQuantity());
+                                newItem.setContractItemId(rs.getLong("contract_item_id"));
+                                preMeasurementStreetItemRepository.save(newItem);
+                            }
+                        });
+            }
+        }
+
 //        preMeasurementRepository.save(preMeasurement);
-//
+
 //        var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurement(preMeasurement);
 //
 //        BigDecimal itemsPrices = allItems.stream()
 //                .map(PreMeasurementStreetItem::getTotalPrice)
 //                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//
-////        BigDecimal servicesPrices = allItems.stream()
-////                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
-////                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//
+
+//        BigDecimal servicesPrices = allItems.stream()
+//                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
 //        preMeasurement.setTotalPrice(itemsPrices);
 //        preMeasurementRepository.save(preMeasurement);
-//
-//        return ResponseEntity.ok().body(
-//                new DefaultResponse(
-//                        preMeasurement.getPreMeasurementId().toString()
-//                                .concat("/").concat(String.valueOf((step + 1)))
-//                )
-//        );
-//    }
-//
-//    /**
-//     * TODO
-//     * METODO PARA ADICIONAR SERVIÇOS RELACIONADOS NA PRÉ-MEDIÇÃO
-//     * EXEMPLO: PRIMEIRA CHAMADA LED DE 100W / BRAÇO DE 1,5
-//     * EXEMPLO: SEGUNDA CHAMADA LED DE 120W / BRAÇO DE 2,5
-//     */
-//    @Transactional
-//    protected void insertServices(Contract contract, PreMeasurementStreetItem currentStreetItem, PreMeasurementStreet preMeasurementStreet) {
-//        var currentContractItem = currentStreetItem.getContractItem().getReferenceItem();
-//        var currentContractItemType = currentContractItem.getType().toUpperCase();
-//
-//        for (var service : contract.getContractItem()) {
-//            var serviceType = service.getReferenceItem().getType();
-//            if (serviceType.equalsIgnoreCase("SERVIÇO")) {
-//                var serviceItemDependency = service.getReferenceItem().getItemDependency();
-//                if (serviceItemDependency != null && serviceItemDependency.equalsIgnoreCase(currentContractItemType)) {
-//                    var quantity = currentStreetItem.getMeasuredItemQuantity();
-//                    var existingService = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
-//                            .stream()
-//                            .filter(i -> i.getContractItem().equals(service))
-//                            .findFirst();
-//
-//                    if (existingService.isPresent()) {
-//                        existingService.get().addItemQuantity(quantity, true);
-//                        preMeasurementStreetItemRepository.save(existingService.get());
-//                    } else {
-//                        var newService = new PreMeasurementStreetItem();
-//                        newService.addItemQuantity(quantity);
-//                        preMeasurementStreet.addItem(newService);
-//                        newService.setContractItem(service);
-//                        preMeasurementStreetItemRepository.save(newService);
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    @Transactional
-//    protected void insertProject(Contract contract, PreMeasurementStreetItem currentStreetItem, PreMeasurementStreet preMeasurementStreet) {
-//        var currentContractItem = currentStreetItem.getContractItem().getReferenceItem();
-//        var currentContractItemType = currentContractItem.getType().toUpperCase();
-//
-//        for (var project : contract.getContractItem()) {
-//            var projectType = project.getReferenceItem().getType();
-//            if (projectType.equalsIgnoreCase("PROJETO")) {
-//                var projectItemDependency = project.getReferenceItem().getItemDependency();
-//                if (projectItemDependency != null && projectItemDependency.equalsIgnoreCase(currentContractItemType)) {
-//                    var quantity = currentStreetItem.getMeasuredItemQuantity();
-//                    var existingProject = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
-//                            .stream()
-//                            .filter(i -> i.getContractItem().equals(project))
-//                            .findFirst();
-//
-//                    if (existingProject.isPresent()) {
-//                        existingProject.get().addItemQuantity(quantity, true);
-//                        preMeasurementStreetItemRepository.save(existingProject.get());
-//                    } else {
-//                        var newProject = new PreMeasurementStreetItem();
-//                        newProject.addItemQuantity(quantity);
-//                        preMeasurementStreet.addItem(newProject);
-//                        newProject.setContractItem(project);
-//                        preMeasurementStreetItemRepository.save(newProject);
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    /**
-//     * ME TODO PARA ADICIONAR MATERIAIS DEPENDENTES NA PRÉ-MEDIÇÃO
-//     **/
-//    @Transactional
-//    protected void insertDependencyItems(PreMeasurementStreetItem currentStreetItem, PreMeasurementStreet preMeasurementStreet, Contract contract) {
-//        var currentContractItem = currentStreetItem.getContractItem().getReferenceItem();
-//        var currentContractItemType = currentContractItem.getType().toUpperCase();
-//
-//        for (var contractItem : contract.getContractItem()) {
-//            var reference = contractItem.getReferenceItem();
-//            if (reference.getItemDependency() != null && reference.getItemDependency().equalsIgnoreCase(currentContractItemType)) {
-//                insertOrUpdateItem(
-//                        currentContractItem, //braço
-//                        preMeasurementStreet,
-//                        contractItem, // CABO FLEXÍVEL 1,5MM
-//                        currentStreetItem.getMeasuredItemQuantity()
-//                );
-//            }
-//        }
-//    }
-//
-//    @Transactional
-//    protected void insertOrUpdateItem(ContractReferenceItem currentContractItem,
-//                                      PreMeasurementStreet preMeasurementStreet,
-//                                      ContractItem newContractItem,
-//                                      Double quantity) {
-//        //ex.: itemInsert = CABO FLEXÍVEL 1,5MM
-//        //ex.: referenceItem = BRAÇO
-//        var referenceInsert = newContractItem.getReferenceItem();
-//        var existingItem = preMeasurementStreetItemRepository.findAllByPreMeasurementStreet(preMeasurementStreet)
-//                .stream()
-//                .filter(i -> i.getContractItem().equals(newContractItem))
-//                .findFirst();
-//
-//        if (referenceInsert.getType().equalsIgnoreCase("RELÉ")) {
-//            if (existingItem.isPresent()) {
-//                existingItem.get().addItemQuantity(quantity, true);
-//                preMeasurementStreetItemRepository.save(existingItem.get());
-//            } else {
-//                var newRelay = new PreMeasurementStreetItem();
-//                newRelay.addItemQuantity(quantity);
-//                preMeasurementStreet.addItem(newRelay);
-//                newRelay.setContractItem(newContractItem);
-//                preMeasurementStreetItemRepository.save(newRelay);
-//            }
-//        } else if (referenceInsert.getType().equalsIgnoreCase("CABO"))
-//            if (existingItem.isPresent() && currentContractItem.getLinking() != null) {
-//                double multiplier = getCableMultiplier(currentContractItem.getLinking());
-//                existingItem.get().addItemQuantity(quantity * multiplier, true);
-//                preMeasurementStreetItemRepository.save(existingItem.get());
-//            } else {
-//                var newCable = new PreMeasurementStreetItem();
-//                preMeasurementStreet.addItem(newCable);
-//
-//                double multiplier = getCableMultiplier(Objects.requireNonNull(currentContractItem.getLinking()));
-//                newCable.addItemQuantity(quantity * multiplier);
-//                newCable.setContractItem(newContractItem);
-//                preMeasurementStreetItemRepository.save(newCable);
-//            }
-//    }
-//
-//    private double getCableMultiplier(String armLength) {
-//        return switch (armLength.charAt(0)) {
-//            case '1' -> 2.5;
-//            case '2' -> 8.5;
-//            case '3' -> 12.5;
-//            default -> throw new IllegalArgumentException("Comprimento do braço inválido: " + armLength);
-//        };
-//    }
-//
-////    @Cacheable("getPreMeasurements")
-////    public ResponseEntity<?> getAll(String status) {
-////        List<PreMeasurementResponseDTO> measurements = new ArrayList<>();
-////
-////        var streets = preMeasurementStreetRepository.findAllByStreetStatusOrderByCreatedAtAsc(status);
-////        if (streets.isEmpty()) {
-////            return ResponseEntity.ok().body(List.of());
-////        }
-////
-////        var preMeasurementId = -1L;
-////        for (var street : streets) {
-////            if(street.getPreMeasurement().getPreMeasurementId() != preMeasurementId) {
-////                preMeasurementId = street.getPreMeasurement().getPreMeasurementId();
-////                measurements.add(convertToPreMeasurementResponseDTO(street.getPreMeasurement()));
-////            }
-////        }
-////
-////        return ResponseEntity.ok().body(measurements);
-////
-////    }
-//
-////    @Cacheable("getPreMeasurements")
+
+        return ResponseEntity.ok().body(
+                new DefaultResponse(
+                        preMeasurement.getPreMeasurementId().toString()
+                                .concat("/").concat(String.valueOf((step + 1)))
+                )
+        );
+    }
+
+    public ResponseEntity<?> saveStreetPhotos(List<MultipartFile> photos) {
+        for (MultipartFile photo : photos) {
+            try {
+                var filename = photo.getOriginalFilename();
+                if (filename == null) continue;
+
+                UUID deviceStreetId;
+
+                try {
+                    deviceStreetId = UUID.fromString(filename);
+                } catch (Exception _) {
+                    continue;
+                }
+
+                // Verifica se já existe uma foto salva
+                String existingUri = null;
+                try {
+                    existingUri = namedParameterJdbcTemplate.queryForObject(
+                            """
+                                 SELECT pre_measurement_photo_uri
+                                 FROM pre_measurement_street
+                                 WHERE device_pre_measurement_street_id = :deviceStreetId
+                            """,
+                            Map.of("deviceStreetId", deviceStreetId),
+                            String.class
+                    );
+                } catch (EmptyResultDataAccessException _) {
+                    // nenhum registro encontrado → existingUri fica null
+                }
+
+
+                if(existingUri != null)  {
+                    continue;
+                }
+
+                // Salva a nova foto
+                String photoUri = minioService.uploadFile(photo, "scl-construtora", "photos/pre_measurement", "ponto");
+
+                String updateSql = "UPDATE pre_measurement_street SET pre_measurement_photo_uri = ? WHERE device_pre_measurement_street_id = ?";
+                jdbcTemplate.update(updateSql, photoUri, deviceStreetId);
+
+            } catch (Exception e) {
+                e.printStackTrace(); // ou log.warn("Erro ao processar foto", e);
+            }
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    //    @Cacheable("getPreMeasurements")
 //    public ResponseEntity<?> getAll(String status) {
 //        List<PreMeasurementStreet> streets = preMeasurementStreetRepository.getAllPreMeasurementsGroupByStep(status);
 //
@@ -696,42 +567,6 @@ package com.lumos.lumosspring.pre_measurement.service;
 //        preMeasurementRepository.save(preMeasurement);
 //    }
 //
-//    public ResponseEntity<?> saveStreetPhotos(List<MultipartFile> photos) {
-//        for (MultipartFile photo : photos) {
-//            try {
-//                var filename = photo.getOriginalFilename();
-//                if (filename == null || !filename.contains("#")) continue;
-//
-//                var parts = filename.split("#");
-//                if (parts.length < 2) continue;
-//
-//                String deviceId = parts[0];
-//                Long deviceStreetId = Long.parseLong(parts[1]);
-//
-//                // Verifica se já existe uma foto salva
-//                String checkSql = "SELECT pre_measurement_photo_uri FROM tb_pre_measurements_streets WHERE device_id = ? AND device_street_id = ?";
-//                try {
-//                    String existingUri = jdbcTemplate.queryForObject(checkSql, String.class, deviceId, deviceStreetId);
-//                    if (existingUri != null && !existingUri.isBlank()) {
-//                        // Já existe foto, pula essa
-//                        continue;
-//                    }
-//                } catch (EmptyResultDataAccessException e) {
-//                    // Não encontrou — segue para salvar
-//                }
-//
-//                // Salva a nova foto
-//                String photoUri = minioService.uploadFile(photo, "scl-construtora", "photos/pre_measurement", "rua");
-//
-//                String updateSql = "UPDATE tb_pre_measurements_streets SET pre_measurement_photo_uri = ? WHERE device_id = ? AND device_street_id = ?";
-//                jdbcTemplate.update(updateSql, photoUri, deviceId, deviceStreetId);
-//
-//            } catch (Exception e) {
-//                e.printStackTrace(); // ou log.warn("Erro ao processar foto", e);
-//            }
-//        }
-//
-//        return ResponseEntity.ok().build();
-//    }
-//
-//}
+
+
+}

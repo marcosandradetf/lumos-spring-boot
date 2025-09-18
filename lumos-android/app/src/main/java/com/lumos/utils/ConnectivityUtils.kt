@@ -10,7 +10,7 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 object ConnectivityUtils {
-    const val BASE_URL = "https://fb056345fde5.ngrok-free.app/"
+    const val BASE_URL = "https://d5f216aea599.ngrok-free.app/"
 //    const val BASE_URL = "https://api.thryon.com.br/spring/"
     private const val PING_URL = "https://api.thryon.com.br/spring/ping"
 

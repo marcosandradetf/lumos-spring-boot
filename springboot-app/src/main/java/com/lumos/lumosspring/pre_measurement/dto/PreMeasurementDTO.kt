@@ -1,6 +1,10 @@
 package com.lumos.lumosspring.pre_measurement.dto
 
+import java.math.BigDecimal
+import java.util.*
+
 data class PreMeasurementDTO(
+    val preMeasurementId: UUID,
     val contractId: Long,
     val streets: List<PreMeasurementStreetItemsDTO>,
 )
@@ -11,23 +15,20 @@ data class PreMeasurementStreetItemsDTO(
 )
 
 data class PreMeasurementStreetDTO(
-    val preMeasurementStreetId: Long,
+    val preMeasurementStreetId: UUID,
     val contractId: Long,
     var lastPower: String?,
     var latitude: Double?,
     var longitude: Double?,
-    var street: String?,
-    var number: String?,
-    var neighborhood: String?,
-    var city: String?,
-    var state: String?,
-    var deviceId: String?
+    var address: String?
 )
 
 data class PreMeasurementStreetItemDTO(
-    val preMeasurementItemId: Long = 0,
-    var preMeasurementStreetId: Long,
-    val itemContractId: Long,
-    val itemContractQuantity: Int,
+    val preMeasurementItemId: UUID,
+    var preMeasurementStreetId: UUID,
+
+    val contractReferenceItemId: Long,
+    val measuredQuantity: BigDecimal,
+
     val contractId: Long,
 )

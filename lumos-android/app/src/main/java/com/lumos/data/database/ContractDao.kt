@@ -38,6 +38,7 @@ interface ContractDao {
     @Query("""
         SELECT * FROM items 
         WHERE contractReferenceItemId IN (:itemsIds)
+        order by description
     """)
     fun getItemsFromContract(itemsIds: List<Long>): Flow<List<Item>>
 

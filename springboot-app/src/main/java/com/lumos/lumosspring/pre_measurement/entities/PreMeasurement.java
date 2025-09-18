@@ -5,11 +5,14 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Table
 public class PreMeasurement {
     @Id
     private Long preMeasurementId;
+
+    private UUID devicePreMeasurementId;
 
     private String city;
 
@@ -27,7 +30,7 @@ public class PreMeasurement {
 
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    private Integer steps = 0;
+    private Integer step = 0;
 
     public Long getPreMeasurementId() {
         return preMeasurementId;
@@ -93,12 +96,12 @@ public class PreMeasurement {
         this.totalPrice = totalPrice;
     }
 
-    public Integer getSteps() {
-        return steps;
+    public Integer getStep() {
+        return step;
     }
 
-    public void setSteps(Integer steps) {
-        this.steps = steps;
+    public void setStep(Integer steps) {
+        this.step = steps;
     }
 }
 
