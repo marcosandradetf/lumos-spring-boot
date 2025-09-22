@@ -114,19 +114,19 @@
         </dependency>
 
         <!-- Testes -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-test</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
 
         <!-- Gera um índice de beans em tempo de build, reduzindo drasticamente o tempo de inicialização -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework</groupId>-->
-<!--            <artifactId>spring-context-indexer</artifactId>-->
-<!--            <version>6.1.4</version> &lt;!&ndash; Compatível com Spring Boot 3.3.x &ndash;&gt;-->
-<!--            <optional>true</optional>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework</groupId>-->
+        <!--            <artifactId>spring-context-indexer</artifactId>-->
+        <!--            <version>6.1.4</version> &lt;!&ndash; Compatível com Spring Boot 3.3.x &ndash;&gt;-->
+        <!--            <optional>true</optional>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -135,7 +135,7 @@
     </dependencies>
 
     <build>
-<!--        <testSourceDirectory>target/generated-test-sources/test-annotations</testSourceDirectory>-->
+        <!--        <testSourceDirectory>target/generated-test-sources/test-annotations</testSourceDirectory>-->
         <plugins>
             <!-- Kotlin Compiler Plugin -->
             <plugin>

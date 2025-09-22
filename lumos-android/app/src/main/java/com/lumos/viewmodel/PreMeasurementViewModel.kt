@@ -76,12 +76,20 @@ class PreMeasurementViewModel(
         autoCalculate = repository?.getAutoCalculate() ?: false
     }
 
-    fun toggleAutoCalculate() {
+    fun toggleAutoCalculate(items: List<Item>) {
         autoCalculate = !autoCalculate
         repository?.toggleAutoCalculate(autoCalculate)
 
-        message =
-            if (autoCalculate) "Opção de cálculo automático ativado" else "Opção de cálculo automático desativado"
+        if(autoCalculate) {
+            message = "Opção de cálculo automático ativado"
+
+            calculateCable(items, null, "-1")
+            calculateRelay(items, null, "-1")
+            calculateArmService(items, null, "-1")
+            calculateLedServices(items, null, "-1")
+        } else message = "Opção de cálculo automático desativado"
+
+
     }
 
     fun newPreMeasurementStreet() {
@@ -104,7 +112,7 @@ class PreMeasurementViewModel(
         calculateQuantity(item, items)
     }
 
-    fun addUpdateOrRemoveItem(item: Item, measuredQuantity: String = "1") {
+    private fun addUpdateOrRemoveItem(items: List<Item>? = null, item: Item, measuredQuantity: String = "1") {
         when (measuredQuantity) {
             "1" -> {
                 streetItems = streetItems + PreMeasurementStreetItem(
@@ -116,7 +124,7 @@ class PreMeasurementViewModel(
             }
 
             "-1" -> {
-                removeItem(item)
+                streetItems = streetItems.filterNot { it.contractReferenceItemId == item.contractReferenceItemId }
             }
 
             else -> {
@@ -127,13 +135,24 @@ class PreMeasurementViewModel(
                 }
             }
         }
+
+        when (item.type) {
+            "LED" -> {
+                calculateRelay(items!!, null, "-1")
+                calculateLedServices(items, null, "-1")
+            }
+
+            "BRAÇO" -> {
+                calculateCable(items!!, null, "-1")
+                calculateArmService(items, null, "-1")
+            }
+        }
     }
 
     fun calculateQuantity(item: Item, items: List<Item>, measuredQuantity: String = "1") {
         when (item.type) {
             "LED" -> {
-                addUpdateOrRemoveItem(item, measuredQuantity)
-                calculateRelay(items, null, "-1")
+                addUpdateOrRemoveItem(null, item, measuredQuantity)
 
                 if (measuredQuantity == "1") {
                     val serviceId =
@@ -178,33 +197,15 @@ class PreMeasurementViewModel(
 
             "SERVIÇO" -> {
                 if (item.itemDependency == "LED") {
-                    val ledsIds =
-                        items.filter { it.type == "LED" }.map { it.contractReferenceItemId }
-                    streetItems
-                        .filter { ledsIds.contains(it.contractReferenceItemId) }
-                        .map { it.measuredQuantity }
-                        .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
-                        .toString()
-
-
+                    calculateLedServices(items, listOf(item.contractReferenceItemId), measuredQuantity
+                    )
                 } else {
-                    val armIds =
-                        items.filter { it.type == "BRAÇO" }.map { it.contractReferenceItemId }
-                    streetItems
-                        .filter { armIds.contains(it.contractReferenceItemId) }
-                        .map { it.measuredQuantity }
-                        .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
-                        .toString()
+                    calculateArmService(items, item.contractReferenceItemId, measuredQuantity)
                 }
             }
 
             "PROJETO" -> {
-                val ledsIds = items.filter { it.type == "LED" }.map { it.contractReferenceItemId }
-                streetItems
-                    .filter { ledsIds.contains(it.contractReferenceItemId) }
-                    .map { it.measuredQuantity }
-                    .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
-                    .toString()
+                calculateLedServices(items, listOf(item.contractReferenceItemId), measuredQuantity)
             }
 
             "CABO" -> {
@@ -212,8 +213,7 @@ class PreMeasurementViewModel(
             }
 
             "BRAÇO" -> {
-                addUpdateOrRemoveItem(item, measuredQuantity)
-                calculateCable(items, null, "-1")
+                addUpdateOrRemoveItem(items, item, measuredQuantity)
 
                 if (measuredQuantity != "1") return
 
@@ -228,22 +228,20 @@ class PreMeasurementViewModel(
                     if (message != null) delay(1000)
 
                     if (!streetItems.any { it.contractReferenceItemId == serviceId }) {
-                        message +=
-                            if (message == null) "Adicionar este item pode exigir a inclusão do Serviço Troca de Ponto"
-                            else if (!streetItems.any { cableIds.contains(it.contractReferenceItemId) }) ", Serviço Troca de Ponto"
-                            else " e Serviço Troca de Ponto"
+                        message =
+                            "Adicionar este item pode exigir a inclusão do Serviço Troca de Ponto"
                     }
 
                     if (!streetItems.any { cableIds.contains(it.contractReferenceItemId) }) {
-                        message +=
-                            if (message == null) "Adicionar este item pode exigir a inclusão de Cabo"
-                            else " e o item Cabo"
+                        if (message == null) message =
+                            "Adicionar este item pode exigir a inclusão de Cabo"
+                        else message += " e o item Cabo"
                     }
                 }
 
             }
 
-            else -> addUpdateOrRemoveItem(item, measuredQuantity)
+            else -> addUpdateOrRemoveItem(null, item, measuredQuantity)
         }
 
 
@@ -267,14 +265,20 @@ class PreMeasurementViewModel(
         }
 
         if (streetItems.any { it.contractReferenceItemId == relayId }) {
-            streetItems = streetItems.map { si ->
-                if (si.contractReferenceItemId == relayId) {
-                    si.copy(measuredQuantity = if (autoQuantity == "0") manuallyQuantity else autoQuantity)
-                } else si
-            }
 
-            if (autoCalculate) message =
-                "Quantidade de relé definido automaticamente para $autoQuantity"
+            if(autoQuantity == "0" && autoCalculate) {
+                streetItems = streetItems.filterNot { si -> relayId == si.contractReferenceItemId }
+
+                message = "Relé removido automaticamente"
+            } else {
+                streetItems = streetItems.map { si ->
+                    if (relayId == si.contractReferenceItemId) {
+                        si.copy(measuredQuantity = autoQuantity)
+                    } else si
+                }
+
+                if (autoCalculate) message = "Quantidade de relé definido automaticamente para $autoQuantity"
+            }
 
         } else if (manuallyQuantity != "-1") {
             streetItems = streetItems + PreMeasurementStreetItem(
@@ -344,14 +348,19 @@ class PreMeasurementViewModel(
         }
 
         if (streetItems.any { cablesIds.contains(it.contractReferenceItemId) }) {
-            streetItems = streetItems.map { si ->
-                if (cablesIds.contains(si.contractReferenceItemId)) {
-                    si.copy(measuredQuantity = if (autoQuantity == "0") manuallyQuantity else autoQuantity)
-                } else si
-            }
+            if(autoQuantity == "0" && autoCalculate) {
+                streetItems = streetItems.filterNot { si -> cablesIds.contains(si.contractReferenceItemId) }
 
-            if (autoCalculate) message =
-                "Quantidade de cabos definido automaticamente para $autoQuantity"
+                message = "Cabos removidos automaticamente"
+            } else {
+                streetItems = streetItems.map { si ->
+                    if (cablesIds.contains(si.contractReferenceItemId)) {
+                        si.copy(measuredQuantity = autoQuantity)
+                    } else si
+                }
+
+                if (autoCalculate) message = "Quantidade de cabos definido automaticamente para $autoQuantity"
+            }
 
         } else if (manuallyQuantity != "-1") {
             cablesIds
@@ -388,17 +397,23 @@ class PreMeasurementViewModel(
                 .map { it.measuredQuantity }
                 .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
                 .toString()
-
-            message = "Valor dos serviços de LED definido automaticamente para $autoQuantity"
         }
 
         if (streetItems.any { servicesIds.contains(it.contractReferenceItemId) }) {
-            streetItems = streetItems.map { si ->
-                if (servicesIds.contains(si.contractReferenceItemId)) {
-                    si.copy(measuredQuantity = if (autoQuantity == "0") manuallyQuantity else autoQuantity)
-                } else si
+            if(autoQuantity == "0" && autoCalculate) {
+                streetItems = streetItems.filterNot { si -> servicesIds.contains(si.contractReferenceItemId) }
+
+                message = "Serviço e Projeto de Leds removidos automaticamente"
+            } else {
+                streetItems = streetItems.map { si ->
+                    if (servicesIds.contains(si.contractReferenceItemId)) {
+                        si.copy(measuredQuantity = autoQuantity)
+                    } else si
+                }
+
+                if(autoCalculate) message = "Valor do serviço e projeto de LED definido automaticamente para $autoQuantity"
             }
-        } else {
+        } else if (manuallyQuantity != "-1")  {
             servicesIds.map {
                 streetItems + PreMeasurementStreetItem(
                     preMeasurementStreetId = preMeasurementStreetId.toString(),
@@ -407,13 +422,61 @@ class PreMeasurementViewModel(
                     measuredQuantity = if (autoQuantity == "0") manuallyQuantity else autoQuantity
                 )
             }
+            if(autoCalculate) message = "Valor do serviço e projeto de LED definido automaticamente para $autoQuantity"
         }
 
     }
 
-    fun removeItem(item: Item) {
-        streetItems =
-            streetItems.filterNot { it.contractReferenceItemId == item.contractReferenceItemId }
+    private fun calculateArmService(
+        items: List<Item>,
+        pServiceId: Long? = null,
+        manuallyQuantity: String = "1"
+    ) {
+        val serviceId = pServiceId
+            ?: items.find { (it.type == "SERVIÇO" && it.itemDependency == "BRAÇO") }?.contractReferenceItemId
+
+        var autoQuantity = manuallyQuantity
+
+        if (autoCalculate) {
+            val ledsIds = items.filter { it.type == "LED" }.map { it.contractReferenceItemId }
+            autoQuantity = streetItems
+                .filter { ledsIds.contains(it.contractReferenceItemId) }
+                .map { it.measuredQuantity }
+                .fold(BigDecimal.ZERO) { acc, value -> acc + BigDecimal(value) }
+                .toString()
+
+        }
+
+        if (streetItems.any { serviceId == it.contractReferenceItemId }) {
+            if(autoQuantity == "0" && autoCalculate) {
+                streetItems = streetItems.filterNot { si -> serviceId == si.contractReferenceItemId }
+
+                message = "Serviço de troca de ponto removido automaticamente"
+            } else {
+                streetItems = streetItems.map { si ->
+                    if (serviceId == si.contractReferenceItemId) {
+                        si.copy(measuredQuantity = autoQuantity)
+                    } else si
+                }
+
+                if (autoCalculate) message = "Valor do serviço de troca de ponto definido automaticamente para $autoQuantity"
+            }
+
+        } else if (manuallyQuantity != "-1")  {
+            streetItems + PreMeasurementStreetItem(
+                preMeasurementStreetId = preMeasurementStreetId.toString(),
+                preMeasurementId = preMeasurementId.toString(),
+                contractReferenceItemId = serviceId ?: 0,
+                measuredQuantity = if (autoQuantity == "0") manuallyQuantity else autoQuantity
+            )
+            if(autoCalculate)
+                message = "Valor do serviço de troca de ponto definido automaticamente para $autoQuantity"
+        }
+
+    }
+
+    fun removeItem(items: List<Item>, item: Item) {
+        addUpdateOrRemoveItem(items, item, "-1")
     }
 
     fun setQuantity(itemContractId: Long, measuredQuantity: String) {
