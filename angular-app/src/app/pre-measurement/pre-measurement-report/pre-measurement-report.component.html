@@ -118,7 +118,7 @@
               <tbody>
               <tr *ngFor="let s of preMeasurement.streets">
                 <td>{{ s.number }}</td>
-                <td>{{ s.street }}</td>
+                <td>{{ s.address }}</td>
                 <td>{{ s.lastPower }}</td>
                 <ng-container *ngFor="let h of getHeaders()">
                   <td>{{ getItem(h, s.preMeasurementStreetId)?.measuredQuantity || 0 }}</td>

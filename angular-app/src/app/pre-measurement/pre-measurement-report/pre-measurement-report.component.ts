@@ -34,17 +34,16 @@ import {Toast} from 'primeng/toast';
 })
 export class PreMeasurementReportComponent implements OnInit {
   preMeasurement: PreMeasurementResponseDTO = {
-    preMeasurementId: 0,
-    contractId: 0,
     city: '',
-    depositName: '',
+    contractId: 0,
+    preMeasurementId: 0,
     preMeasurementType: '',
-    preMeasurementStyle: '',
-    teamName: '',
-    totalPrice: '',
     status: '',
+    totalPrice: '',
     step: 0,
-    streets: []
+    completeName: '',
+    createdAt: '',
+    streets: [],
   };
 
   contract: ContractAndItemsResponse = {
@@ -94,7 +93,7 @@ export class PreMeasurementReportComponent implements OnInit {
     const uuid = authService.getUser().uuid;
 
     if (measurementId && step) {
-      this.preMeasurementService.getPreMeasurement(measurementId, Number(step)).subscribe(preMeasurement => {
+      this.preMeasurementService.getPreMeasurement(measurementId).subscribe(preMeasurement => {
         this.preMeasurement = preMeasurement;
         this.preMeasurementService.getContract(preMeasurement.contractId).subscribe(contract => {
           this.contract = contract;
@@ -148,7 +147,7 @@ export class PreMeasurementReportComponent implements OnInit {
       complete: () => {
         if (this.preMeasurement.streets[0].status === "PENDING") {
           // Possível mudança de status ou exibição de modal
-          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId, this.preMeasurement.step).subscribe({
+          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId).subscribe({
             error: (error: any) => {
               this.utils.showMessage("Erro ao atualizar o status:", error);
             },

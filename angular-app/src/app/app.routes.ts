@@ -149,7 +149,7 @@ export const routes: Routes = [
     data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
   {
-    path: 'pre-medicao/editar/:id/:step',
+    path: 'pre_medicao/editar',
     loadComponent: () => import('./pre-measurement/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},

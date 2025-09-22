@@ -14,8 +14,8 @@ export class PreMeasurementService {
   constructor(private http: HttpClient) {
   }
 
-  getPreMeasurement(preMeasurementId: string, step: number) {
-    return this.http.get<PreMeasurementResponseDTO>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}/${step}`}`);
+  getPreMeasurement(preMeasurementId: string) {
+    return this.http.get<PreMeasurementResponseDTO>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
   }
 
   getPreMeasurements(status: string): Observable<PreMeasurementResponseDTO[]> {
@@ -26,8 +26,8 @@ export class PreMeasurementService {
     return this.http.get<ContractAndItemsResponse>(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
   }
 
-  evolveStatus(preMeasurementId: number, step: number) {
-    return this.http.post(environment.springboot + `/api/pre-measurement/evolve-status/${preMeasurementId}/${step}`, null);
+  evolveStatus(preMeasurementId: number) {
+    return this.http.post(environment.springboot + `/api/pre-measurement/evolve-status/${preMeasurementId}`, null);
   }
 
   sendModifications(modifications: {

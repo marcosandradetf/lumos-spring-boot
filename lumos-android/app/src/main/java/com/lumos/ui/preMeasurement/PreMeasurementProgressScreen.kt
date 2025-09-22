@@ -33,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -67,7 +69,7 @@ fun PreMeasurementProgressScreen(
     preMeasurementViewModel: PreMeasurementViewModel,
     navController: NavHostController,
 ) {
-    val streets by preMeasurementViewModel.streets
+    val streets = preMeasurementViewModel.streets
     val measurement = preMeasurementViewModel.measurement
     var currentContractor = ""
 
@@ -76,7 +78,6 @@ fun PreMeasurementProgressScreen(
         currentContractor = measurement?.contractor ?: ""
         preMeasurementViewModel.loadStreets()
     }
-
 
     if (preMeasurementViewModel.loading) {
         CurrentScreenLoading(
@@ -240,7 +241,6 @@ fun PMPContent(
                             onClick = {
                                 onNavigateToStreet(measurement.preMeasurementId)
                             },
-                            modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul
                         ) {
                             Text(
@@ -360,29 +360,20 @@ fun Streets(
 
 @Composable
 fun FinishPreMeasurementButton(onClick: () -> Unit) {
-    Button(
+    TextButton (
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface) // Azul
-        ,
-        elevation = ButtonDefaults.elevatedButtonElevation(3.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = "Finalizar",
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onBackground,
                 text = "Finalizar Pré-Medição",
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                textDecoration = TextDecoration.Underline
             )
         }
     }

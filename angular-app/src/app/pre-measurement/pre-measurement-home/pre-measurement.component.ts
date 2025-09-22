@@ -31,8 +31,7 @@ export class PreMeasurementComponent implements OnInit {
   protected loading: boolean = false;
   protected status: string = "";
   openModal: boolean = false;
-  preMeasurementId: number = 0;
-  step: number = 0;
+  preMeasurement: PreMeasurementResponseDTO | undefined;
 
   constructor(
     private preMeasurementService: PreMeasurementService,
@@ -94,16 +93,15 @@ export class PreMeasurementComponent implements OnInit {
   }
 
 
-  navigateTo(preMeasurementId: number, step: number) {
-    this.preMeasurementId = preMeasurementId;
-    this.step = step;
+  navigateTo(preMeasurement: PreMeasurementResponseDTO) {
+    this.preMeasurement = preMeasurement;
     switch (this.status) {
       case 'pendente':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurementId, step], {queryParams: {reason: 'generate'}});
+        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurement.preMeasurementId, preMeasurement.step], {queryParams: {reason: 'generate'}});
         break;
       case 'aguardando-retorno':
         this.openModal = true;
-        break
+        break;
       case 'validando':
         break;
       case  'disponivel':
@@ -129,12 +127,8 @@ export class PreMeasurementComponent implements OnInit {
   hideContent = false;
   evolvePreMeasurement() {
     this.loading = true;
-    if(this.step === -1) {
-      this.utils.showMessage("Erro 01 ao confirmar", 'error');
-      return;
-    }
 
-    this.preMeasurementService.evolveStatus(this.preMeasurementId, this.step).subscribe({
+    this.preMeasurementService.evolveStatus(this.preMeasurement?.preMeasurementId!!).subscribe({
       error: (error: any) => {
         this.loading = false;
         this.utils.showMessage("Erro ao atualizar o status:", error);
@@ -160,7 +154,7 @@ export class PreMeasurementComponent implements OnInit {
 
   navigateToExecution(isMultiTeam: boolean) {
     void this.router.navigate(
-      ['execucao/pre-medicao', this.preMeasurementId, this.step],
+      ['execucao/pre-medicao', this.preMeasurement?.preMeasurementId!!],
       { queryParams: { multiTeam: isMultiTeam } }
     );
   }

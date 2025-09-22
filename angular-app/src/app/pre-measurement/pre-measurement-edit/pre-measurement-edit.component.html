@@ -57,7 +57,7 @@
                 {{ s.status === "PENDING" ? "NÃO MODIFICADO" : s.status === "EDITED" ? "MODIFICADO" : "CANCELADO" }}
             </span>
 
-            <h3 class="text-xl leading-[1.15rem] font-light">{{ s.street }}</h3>
+            <h3 class="text-xl leading-[1.15rem] font-light">{{ s.address }}</h3>
             <span class="text-sm  flex items-center">Essa rua contém {{ s.items.length }} itens<span
               class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
             <span class="text-sm flex items-center">{{ s.latitude + " , " + s.longitude }}<span

@@ -11,6 +11,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,13 +32,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
@@ -56,7 +53,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -71,6 +67,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -90,7 +88,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -300,10 +297,12 @@ fun PreMeasurementStreetScreen(
                         onClick = {
                             scope.launch {
                                 preMeasurementViewModel.preMeasurementStreetId = UUID.randomUUID()
-                                preMeasurementViewModel.street?.copy(
-                                    preMeasurementStreetId = preMeasurementViewModel.preMeasurementStreetId.toString(),
-                                    address = currentAddress
-                                )
+                                preMeasurementViewModel.street =
+                                    preMeasurementViewModel.street?.copy(
+                                        preMeasurementStreetId = preMeasurementViewModel.preMeasurementStreetId.toString(),
+                                        address = currentAddress,
+                                        photoUri = null
+                                    )
                                 preMeasurementViewModel.streetItems = emptyList()
                                 preMeasurementViewModel.hasPosted = false
                                 preMeasurementViewModel.nextStep = false
@@ -459,6 +458,8 @@ fun StreetItemsContent(
 
     var action by remember { mutableStateOf<String?>(null) }
 
+    val inputRequester = remember { FocusRequester() }
+
     AppLayout(
         title = description,
         selectedIcon = BottomBar.MORE.value,
@@ -484,7 +485,9 @@ fun StreetItemsContent(
 
     ) { _, showSnackBar ->
         if (preMeasurementViewModel.message != null) {
-            showSnackBar(preMeasurementViewModel.message!!, null, null)
+            showSnackBar(preMeasurementViewModel.message!!, null) {
+                preMeasurementViewModel.message = null
+            }
             preMeasurementViewModel.message = null
         }
 
@@ -494,24 +497,46 @@ fun StreetItemsContent(
                 body = "Deseja finalizar o ponto atual?",
                 confirm = {
                     val hasNumber = Regex("""\d+""").containsMatchIn(
-                        preMeasurementViewModel?.street?.address ?: ""
+                        preMeasurementViewModel.street?.address ?: ""
                     )
                     val hasSN =
                         Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(
-                            preMeasurementViewModel?.street?.address ?: ""
+                            preMeasurementViewModel.street?.address ?: ""
                         )
 
-                    if (preMeasurementViewModel?.street?.address?.isBlank() == true) {
-                        preMeasurementViewModel.message = "Você esqueceu de preencher o endereço! Por favor, informe a Rua, Nº - Bairro atual"
+                    val invalidItems = preMeasurementViewModel.streetItems
+                        .filter { listOf("0", "0.0").contains(it.measuredQuantity) }
+
+                    if (preMeasurementViewModel.street?.address?.isBlank() == true) {
+                        preMeasurementViewModel.message =
+                            "Você esqueceu de preencher o endereço! Por favor, informe a Rua, Nº - Bairro atual"
                         action = null
+                        inputRequester.requestFocus()
                         return@Confirm
                     } else if (!hasNumber && !hasSN) {
-                        preMeasurementViewModel.message = "Número do endereço ausente! Por favor, informe o número do endereço ou indique que é 'S/N'."
+                        preMeasurementViewModel.message =
+                            "Número do endereço ausente! Por favor, informe o número do endereço ou indique que é 'S/N'."
+                        inputRequester.requestFocus()
                         action = null
                         return@Confirm
                     } else if (preMeasurementViewModel.streetItems.isEmpty()) {
                         preMeasurementViewModel.message =
                             "Nenhum item selecionado! Por favor, selecione os itens."
+                        action = null
+                        return@Confirm
+                    } else if (invalidItems.isNotEmpty()) {
+                        val invalidContractReferenceItemId =
+                            invalidItems.first().contractReferenceItemId
+                        val invalidItemName =
+                            items.find { it.contractReferenceItemId == invalidContractReferenceItemId }?.description
+
+                        preMeasurementViewModel.message =
+                            "o item $invalidItemName está com o valor igual a zero, corrija para prosseguir"
+                        action = null
+                        return@Confirm
+                    } else if (preMeasurementViewModel.street?.photoUri == null) {
+                        preMeasurementViewModel.message =
+                            "Antes de continuar é necessário tirar uma foto"
                         action = null
                         return@Confirm
                     }
@@ -567,6 +592,8 @@ fun StreetItemsContent(
                             disabledIndicatorColor = Color.Transparent
                         ),
                         modifier = Modifier
+                            .focusRequester(inputRequester)
+                            .focusable()
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 4.dp),
                         placeholder = {
@@ -612,11 +639,11 @@ fun StreetItemsContent(
                                 modifier = Modifier.size(40.dp),
                                 checked = preMeasurementViewModel.autoCalculate,
                                 onCheckedChange = {
-                                    preMeasurementViewModel.toggleAutoCalculate()
+                                    preMeasurementViewModel.toggleAutoCalculate(items)
                                 }
                             )
                             Text(
-                                text =  "Auto-calcular",
+                                text = "Auto-calcular",
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }
@@ -742,7 +769,7 @@ fun StreetItemsContent(
                         .padding(20.dp)
                 ) {
                     Text(
-                        "CONFIRMAR",
+                        "CONTINUAR",
                         color = MaterialTheme.colorScheme.inverseOnSurface,
                         style = MaterialTheme.typography.titleMedium,
                     )
@@ -848,7 +875,8 @@ fun ContractItem(
                         val sanitized = sanitizeDecimalInput(newValue.text)
 
                         preMeasurementViewModel.setQuantity(
-                            item.contractReferenceItemId,
+                            items,
+                            item,
                             TextFieldValue(sanitized, TextRange(sanitized.length)).text
                         )
                     },

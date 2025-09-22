@@ -165,7 +165,7 @@
             <li>Medição</li>
           </ul>
         </div>
-        <h3 class="text-medium pr-5 hidden lg:block">{{ getStreet(streetId)?.street || 'Selecione uma rua' }}</h3>
+        <h3 class="text-medium pr-5 hidden lg:block">{{ getStreet(streetId)?.address || 'Selecione uma rua' }}</h3>
       </div>
 
       <div>
@@ -183,7 +183,7 @@
                 class="mb-4 border p-4 rounded min-w-96 w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2 card-execution select-none">
 
 
-                <h3 class="text-lg font-semibold mb-2">{{ street.street }}</h3>
+                <h3 class="text-lg font-semibold mb-2">{{ street.address }}</h3>
                 <p class="text-sm text-gray-600 dark:text-neutral-100">{{ street.items.length }} itens pendentes de
                   reserva</p>
               </div>

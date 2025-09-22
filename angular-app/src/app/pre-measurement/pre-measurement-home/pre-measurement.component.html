@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <div *ngIf="preMeasurements.length === 0 && !loading" >
+    <div *ngIf="preMeasurements.length === 0 && !loading">
       <div class="text-center text-gray-500 dark:text-gray-400 mt-10">
         <i class="fas fa-magnifying-glass-minus text-3xl mb-2"></i>
         <p>Nenhum resultado encontrado</p>
@@ -47,12 +47,12 @@
 
         <div class="mt-10 flex flex-col">
           <button class="btn btn-link"
-                  (click)="router.navigate(['/pre-medicao/relatorio',this.preMeasurementId, this.step], {queryParams: {reason: 'generate'}})">
+                  (click)="router.navigate(['/pre-medicao/relatorio',this.preMeasurement?.preMeasurementId, this.preMeasurement?.step], {queryParams: {reason: 'generate'}})">
             <span class="material-icons">report</span>
             Exibir relatório
           </button>
           <button class="btn btn-link"
-                  (click)="router.navigate(['execucao/pre-medicao/' + this.preMeasurementId])">
+                  (click)="router.navigate(['execucao/pre-medicao/' + this.preMeasurement?.preMeasurementId])">
             <span class="material-icons">open_in_new</span>
             Continuar para execução
           </button>
@@ -64,7 +64,7 @@
       <ol class="flex flex-wrap">
         <li *ngFor="let p of preMeasurements; index as i;"
             class="w-96 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:translate-x-2 hover:translate-y-2 m-2"
-            (click)="navigateTo(p.preMeasurementId, p.step)">
+            (click)="navigateTo(p)">
           <div class="flex flex-col border rounded px-4 py-2 card-execution">
             <span class="badge badge-primary dark:badge-accent rounded mb-4 mt-2">
                 {{ p.preMeasurementType === "INSTALLATION" ? "INSTALAÇÃO" : "MANUTENÇÃO" }}
@@ -72,16 +72,16 @@
 
             <h3 class="text-xl leading-[1.15rem] font-light">Pré-medicao de {{ p.streets.length }} ruas
               com {{ getItemsQuantity(p.preMeasurementId) }} Itens em {{ p.city }}</h3>
-            <span class="text-sm  flex items-center">Por {{ p.streets[0].createdBy }}<span
+            <span class="text-sm  flex items-center">Por {{ p.completeName }}<span
               class="material-icons text-sm ml-1 text-blue-500 dark:text-[#88f4ff]">verified</span></span>
-            <span class="text-xs">{{ p.streets[0].createdAt }} em {{ p.city }}</span>
+            <span class="text-xs">{{ p.createdAt }} em {{ p.city }}</span>
           </div>
         </li>
       </ol>
     </div>
   </div>
 
-  <p-toast />
+  <p-toast/>
 
   <app-modal [modalOpen]="openModal"
              (modalClose)="openModal=false; toggleSteps()"
@@ -95,14 +95,16 @@
         </div>
         <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
                 (click)="navigateToExecution(true)">
-          <div class="lg:tooltip" data-tip="Dividir a pré-medição por ruas, colocar equipes e almoxarifados por cada rua">
+          <div class="lg:tooltip"
+               data-tip="Dividir a pré-medição por ruas, colocar equipes e almoxarifados por cada rua">
             <span class="material-icons">info</span>
           </div>
           Multiplas equipes nessa pré-medicao!
         </button>
         <button class="btn bg-[#FF9900] hover:bg-[#FF8800]  text-black border-[#e17d00]"
                 (click)="navigateToExecution(false)">
-          <div class="lg:tooltip" data-tip="Alocar apenas uma equipe, todas as ruas serão executadas por apenas uma equipe">
+          <div class="lg:tooltip"
+               data-tip="Alocar apenas uma equipe, todas as ruas serão executadas por apenas uma equipe">
             <span class="material-icons">info</span>
           </div>
           Apenas uma equipe nessa pré-medicao!
@@ -117,9 +119,9 @@
 
 
         <p class="pb-5 text-center">Qual ação deverá ser executada a partir do retorno após envio de relatório da
-          pré-medição do contrato referente à  {{ getPreMeasurement(preMeasurementId)?.city }}?</p>
+          pré-medição do contrato referente à  {{ preMeasurement?.city }}?</p>
         <button class="btn bg-[#47698F] hover:bg-[#30698F] text-white border-[#35567b] mb-2"
-                (click)="router.navigate(['/pre-medicao/editar/' + preMeasurementId])">
+                (click)="router.navigate(['/pre_medicao/editar'], { state: { p: preMeasurement } } )">
           <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="white">
             <path
               d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"/>

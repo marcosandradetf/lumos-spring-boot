@@ -96,11 +96,11 @@ class SyncViewModel(
         }
     }
 
-    fun retry(relatedId: Long, type: String, context: Context) {
+    fun retryDirectExecution(relatedId: Long, type: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (db.queueDao().exists(relatedId, type)) {
-                    db.queueDao().retry(relatedId, type)
+                if (db.queueDao().existsDirectExecution(relatedId, type)) {
+                    db.queueDao().retryDirectExecution(relatedId, type)
                     SyncManager.enqueueSync(context, true)
                     _message.value = "Tarefa reagendada com sucesso."
                     startClearTimer()
@@ -112,11 +112,11 @@ class SyncViewModel(
         }
     }
 
-    fun cancel(relatedId: Long, type: String, context: Context) {
+    fun cancelDirectExecution(relatedId: Long, type: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (db.queueDao().exists(relatedId, type)) {
-                    db.queueDao().deleteByRelatedId(relatedId, type)
+                if (db.queueDao().existsDirectExecution(relatedId, type)) {
+                    db.queueDao().deleteDirectExecution(relatedId, type)
                     db.directExecutionDao().deleteStreet(relatedId)
                     SyncManager.enqueueSync(context, true)
 

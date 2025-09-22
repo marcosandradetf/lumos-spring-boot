@@ -89,7 +89,7 @@ fun AppLayout(
                 message = message,
                 actionLabel = label,
                 withDismissAction = action != null,
-                duration = SnackbarDuration.Short
+                duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) {
                 action?.invoke()

@@ -83,6 +83,7 @@ fun SyncDetailsScreen(
                 val streetIds = syncItems.map { it.relatedId!! }
                 streets = syncViewModel.getStreets(streetIds)
             }
+
             SyncTypes.POST_MAINTENANCE -> {
                 syncViewModel.getItems(
                     listOf(
@@ -96,6 +97,7 @@ fun SyncDetailsScreen(
                     )
                 )
             }
+
             else -> {
                 syncViewModel.getItems(
                     listOf(type)
@@ -115,7 +117,7 @@ fun SyncDetailsScreen(
             context,
             navController,
             retry = {
-                syncViewModel.retry(
+                syncViewModel.retryDirectExecution(
                     relatedId = it,
                     type = type,
                     context = applicationContext,
@@ -124,7 +126,7 @@ fun SyncDetailsScreen(
                 streets = streets.filter { s -> s.directStreetId != it }
             },
             cancel = {
-                syncViewModel.cancel(
+                syncViewModel.cancelDirectExecution(
                     relatedId = it,
                     type = type,
                     context = applicationContext,
@@ -143,9 +145,9 @@ fun SyncDetailsScreen(
             currentNotifications,
             navController,
             lastRoute = lastRoute,
-            retry = {
+            retry = { id ->
                 syncViewModel.retryById(
-                    id = it,
+                    id = id,
                     context = applicationContext,
                 )
 
@@ -186,6 +188,7 @@ fun SyncDetailsMaintenanceContent(
 
         SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
         SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
+        SyncTypes.POST_PRE_MEASUREMENT -> "Pré-medição"
 
         SyncTypes.SYNC_STOCK -> "Dados de estoque"
         SyncTypes.POST_ORDER -> "Requisição de materiais"
@@ -206,174 +209,174 @@ fun SyncDetailsMaintenanceContent(
             else -> BottomBar.MORE.value
         }
 
-
-    AppLayout(
-        title = "Fila de sincronização",
-        selectedIcon = selectedIcon,
-        notificationsBadge = currentNotifications,
-        navigateToMore = { navController.navigate(Routes.MORE) },
-        navigateToHome = { navController.navigate(Routes.HOME) },
-        navigateBack = {
-            navController.popBackStack()
-        },
-        navigateToStock = {
-            navController.navigate(Routes.STOCK)
-        },
-        navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
-        },
-        navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
-        }
-    ) { modifier, snackBar ->
-
-        if (message.isNotBlank()) {
-            snackBar(message, null, null)
-        }
-
-        if (loading) Loading("Reprocessando fila")
-        else if (syncItems.isEmpty()) {
-            FinishScreen(
-                screenTitle = "Fila de sincronização",
-                navigateBack = {
-                    navController.navigate(Routes.HOME)
-                },
-                messageTitle = "Nenhuma pendência",
-                messageBody = "Nenhuma sincronização pendente",
-                navController = navController,
-                clickBack = {
-                    navController.navigate(Routes.HOME)
-                }
-            )
-//            NothingData("Nenhuma pendência de sincronização")
-        }
-        else {
-            if (syncItem != null) {
-                Alert(
-                    title = "Motivo da falha",
-                    body = syncItem?.errorMessage
-                        ?: "Não houve uma falha identificada, no menu anterior clique em tentar novamente.",
-                    confirm = {
-                        syncItem = null
-                    }
-                )
+    if (syncItems.isEmpty()) {
+        FinishScreen(
+            screenTitle = "Fila de sincronização",
+            navigateBack = {
+                navController.navigate(Routes.HOME)
+            },
+            messageTitle = "Nenhuma pendência",
+            messageBody = "Nenhuma sincronização pendente",
+            navController = navController,
+            clickBack = {
+                navController.navigate(Routes.HOME)
             }
-            LazyColumn(
-                modifier = modifier,
-            ) {
-                item {
-                    Column {
+        )
+//            NothingData("Nenhuma pendência de sincronização")
+    } else
+        AppLayout(
+            title = "Fila de sincronização",
+            selectedIcon = selectedIcon,
+            notificationsBadge = currentNotifications,
+            navigateToMore = { navController.navigate(Routes.MORE) },
+            navigateToHome = { navController.navigate(Routes.HOME) },
+            navigateBack = {
+                navController.popBackStack()
+            },
+            navigateToStock = {
+                navController.navigate(Routes.STOCK)
+            },
+            navigateToMaintenance = {
+                navController.navigate(Routes.MAINTENANCE)
+            },
+            navigateToExecutions = {
+                navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            }
+        ) { modifier, snackBar ->
 
-                        Text(
-                            text = "Clique no menu para ver as opções",
-                            modifier = Modifier
-                                .padding(
-                                    bottom = 20.dp,
-                                    start = 10.dp
-                                )
-                                .fillMaxWidth(),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp
-                        )
-                    }
+            if (message.isNotBlank()) {
+                snackBar(message, null, null)
+            }
+
+            if (loading) Loading("Reprocessando fila")
+            else {
+                if (syncItem != null) {
+                    Alert(
+                        title = "Motivo da falha",
+                        body = syncItem?.errorMessage
+                            ?: "Não houve uma falha identificada, no menu anterior clique em tentar novamente.",
+                        confirm = {
+                            syncItem = null
+                        }
+                    )
                 }
+                LazyColumn(
+                    modifier = modifier,
+                ) {
+                    item {
+                        Column {
 
-                items(
-                    items = syncItems,
-                    key = { it.id }
-                ) { m ->
-
-                    val title = when (m.type) {
-                        SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
-                        SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
-
-                        SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
-
-                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
-                        SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
-
-                        SyncTypes.SYNC_STOCK -> "Dados de estoque"
-                        SyncTypes.POST_ORDER -> "Requisição de materiais"
-
-                        SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
-
-                        else -> m.type
+                            Text(
+                                text = "Clique no menu para ver as opções",
+                                modifier = Modifier
+                                    .padding(
+                                        bottom = 20.dp,
+                                        start = 10.dp
+                                    )
+                                    .fillMaxWidth(),
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 18.sp
+                            )
+                        }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .padding(bottom = 10.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.surface)
-                    ) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    "Enviar $title"
-                                )
-                            },
-                            leadingContent = {
-                                Icon(
-                                    Icons.Default.SyncProblem,
-                                    contentDescription = "Rua"
-                                )
-                            },
-                            trailingContent = {
-                                IconButton(onClick = {
-                                    expandedItemId =
-                                        if (expandedItemId == m.id) null else m.id
-                                }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                                }
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = Color.Transparent // importante se já tiver background no Box
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    items(
+                        items = syncItems,
+                        key = { it.id }
+                    ) { m ->
 
-                        DropdownMenu(
-                            expanded = expandedItemId == m.id,
-                            onDismissRequest = { expandedItemId = null }
+                        val title = when (m.type) {
+                            SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
+                            SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
+
+                            SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
+
+                            SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
+                            SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
+                            SyncTypes.POST_PRE_MEASUREMENT -> "Pré-medição"
+
+                            SyncTypes.SYNC_STOCK -> "Dados de estoque"
+                            SyncTypes.POST_ORDER -> "Requisição de materiais"
+
+                            SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
+
+                            else -> m.type
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .padding(bottom = 10.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surface)
                         ) {
-                            DropdownMenuItem(
-                                onClick = {
-                                    expandedItemId = null
-                                    retry(m.id)
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        "Enviar $title"
+                                    )
                                 },
-                                text = { Text("Tentar Novamente") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.CloudUpload, contentDescription = null)
-                                }
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    expandedItemId = null
-                                    syncItem =
-                                        syncItems.find { it.id == m.id }
+                                leadingContent = {
+                                    Icon(
+                                        Icons.Default.SyncProblem,
+                                        contentDescription = "Rua"
+                                    )
                                 },
-                                text = { Text("Exibir motivo da falha") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Error, contentDescription = null)
-                                }
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    expandedItemId = null
-                                    cancel(m.id, m.attemptCount)
+                                trailingContent = {
+                                    IconButton(onClick = {
+                                        expandedItemId =
+                                            if (expandedItemId == m.id) null else m.id
+                                    }) {
+                                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                                    }
                                 },
-                                text = { Text("Cancelar o envio") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Cancel, contentDescription = null)
-                                }
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent // importante se já tiver background no Box
+                                ),
+                                modifier = Modifier.fillMaxWidth()
                             )
+
+                            DropdownMenu(
+                                expanded = expandedItemId == m.id,
+                                onDismissRequest = { expandedItemId = null }
+                            ) {
+                                DropdownMenuItem(
+                                    onClick = {
+                                        expandedItemId = null
+                                        retry(m.id)
+                                    },
+                                    text = { Text("Tentar Novamente") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.CloudUpload, contentDescription = null)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    onClick = {
+                                        expandedItemId = null
+                                        syncItem =
+                                            syncItems.find { it.id == m.id }
+                                    },
+                                    text = { Text("Exibir motivo da falha") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Error, contentDescription = null)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    onClick = {
+                                        expandedItemId = null
+                                        cancel(m.id, m.attemptCount)
+                                    },
+                                    text = { Text("Cancelar o envio") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Cancel, contentDescription = null)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-    }
+        }
 }
 
 @Composable

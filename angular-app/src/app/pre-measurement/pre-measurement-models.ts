@@ -24,17 +24,17 @@ export interface PreMeasurementStreetItemDTO {
   itemContractQuantity: Number,
 }
 
+
 export interface PreMeasurementResponseDTO {
   preMeasurementId: number;
   contractId: number;
   city: string;
-  depositName: String;
   preMeasurementType: string;
-  preMeasurementStyle: string;
-  teamName: string;
   totalPrice: string;
   status: string;
   step: number;
+  completeName: string;
+  createdAt: string;
 
   streets: {
     number: number;
@@ -42,12 +42,8 @@ export interface PreMeasurementResponseDTO {
     lastPower: string;
     latitude: number;
     longitude: number;
-    street: string;
-    hood: string;
-    city: string;
+    address: string;
     status: string;
-    createdBy: string;
-    createdAt: string;
 
     items: {
       preMeasurementStreetItemId: number;

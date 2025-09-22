@@ -5,6 +5,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 @Table
@@ -31,6 +32,10 @@ public class PreMeasurement {
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
     private Integer step = 0;
+
+    private UUID createdByUserId;
+
+    private Instant createdAt;
 
     public Long getPreMeasurementId() {
         return preMeasurementId;
@@ -102,6 +107,30 @@ public class PreMeasurement {
 
     public void setStep(Integer steps) {
         this.step = steps;
+    }
+
+    public UUID getDevicePreMeasurementId() {
+        return devicePreMeasurementId;
+    }
+
+    public void setDevicePreMeasurementId(UUID devicePreMeasurementId) {
+        this.devicePreMeasurementId = devicePreMeasurementId;
+    }
+
+    public UUID getCreatedByUserId() {
+        return createdByUserId;
+    }
+
+    public void setCreatedByUserId(UUID createdByUserId) {
+        this.createdByUserId = createdByUserId;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }
 

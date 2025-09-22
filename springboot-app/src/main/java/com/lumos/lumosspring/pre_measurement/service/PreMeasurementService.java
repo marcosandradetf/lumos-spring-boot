@@ -12,6 +12,7 @@ import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetRe
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
+import com.lumos.lumosspring.pre_measurement.jdbc.PreMeasurementJdbc;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository;
@@ -48,6 +49,7 @@ public class PreMeasurementService {
     private final MinioService minioService;
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final PreMeasurementJdbc preMeasurementJdbc;
 
     public PreMeasurementService(PreMeasurementStreetRepository preMeasurementStreetRepository,
                                  MaterialRepository materialRepository,
@@ -56,7 +58,7 @@ public class PreMeasurementService {
                                  UserRepository userRepository, Util util,
                                  ContractRepository contractRepository,
                                  NotificationService notificationService,
-                                 MinioService minioService, JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                                 MinioService minioService, JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate, PreMeasurementJdbc preMeasurementJdbc) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.preMeasurementRepository = preMeasurementRepository;
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
@@ -67,6 +69,7 @@ public class PreMeasurementService {
         this.minioService = minioService;
         this.jdbcTemplate = jdbcTemplate;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+        this.preMeasurementJdbc = preMeasurementJdbc;
     }
 
 //    @Caching(evict = {
@@ -134,6 +137,9 @@ public class PreMeasurementService {
                     newPre.setStatus(ExecutionStatus.PENDING);
                     newPre.setCity(contract.getContractor());
                     newPre.setStep(step + 1);
+                    newPre.setDevicePreMeasurementId(preMeasurementDTO.getPreMeasurementId());
+                    newPre.setCreatedByUserId(userId);
+                    newPre.setCreatedAt(Instant.now());
                     return preMeasurementRepository.save(newPre);
                 });
 
@@ -155,55 +161,40 @@ public class PreMeasurementService {
             preMeasurementStreet.setLongitude(street.getLongitude());
             preMeasurementStreet.setLastPower(street.getLastPower());
             preMeasurementStreet.setStreetStatus(ItemStatus.PENDING);
-            preMeasurementStreet.setCreatedById(userId);
-            preMeasurementStreet.setCreatedAt(Instant.now());
 
             preMeasurementStreet = preMeasurementStreetRepository.save(preMeasurementStreet);
             final var savedStreet = preMeasurementStreet; // agora é effectively final
 
             for (var itemDTO : streetDTO.getItems()) {
                 namedParameterJdbcTemplate.query("""
-                            select ci.contract_item_id
-                            from contract_reference_item cri
-                            join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
-                            where cri.contract_reference_item_id = :contractReferenceItemId
-                        """,
-                        Map.of("contractReferenceItemId", itemDTO.getContractReferenceItemId()),
+                                    select ci.contract_item_id
+                                    from contract_reference_item cri
+                                    join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
+                                    where cri.contract_reference_item_id = :contractReferenceItemId and ci.contract_contract_id = :contractId
+                                """,
+                        Map.of("contractReferenceItemId", itemDTO.getContractReferenceItemId(),
+                                "contractId", preMeasurement.getContractId()),
                         (rs) -> {
-                            while (rs.next()) {
-                                var newItem = new PreMeasurementStreetItem();
-                                newItem.setPreMeasurementStreetId(savedStreet.getPreMeasurementStreetId());
-                                newItem.setPreMeasurementId(preMeasurement.getPreMeasurementId());
-                                newItem.setItemStatus(ItemStatus.PENDING);
-                                newItem.setMeasuredItemQuantity(itemDTO.getMeasuredQuantity());
-                                newItem.setContractItemId(rs.getLong("contract_item_id"));
-                                preMeasurementStreetItemRepository.save(newItem);
-                            }
+                            var newItem = new PreMeasurementStreetItem();
+                            newItem.setPreMeasurementStreetId(savedStreet.getPreMeasurementStreetId());
+                            newItem.setPreMeasurementId(preMeasurement.getPreMeasurementId());
+                            newItem.setItemStatus(ItemStatus.PENDING);
+                            newItem.setMeasuredItemQuantity(itemDTO.getMeasuredQuantity());
+                            newItem.setContractItemId(rs.getLong("contract_item_id"));
+                            preMeasurementStreetItemRepository.save(newItem);
                         });
             }
         }
 
-//        preMeasurementRepository.save(preMeasurement);
+        var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurementId(preMeasurement.getPreMeasurementId());
+        BigDecimal itemsPrices = allItems.stream()
+                .map(PreMeasurementStreetItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-//        var allItems = preMeasurementStreetItemRepository.findAllByPreMeasurement(preMeasurement);
-//
-//        BigDecimal itemsPrices = allItems.stream()
-//                .map(PreMeasurementStreetItem::getTotalPrice)
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        preMeasurement.setTotalPrice(itemsPrices);
+        preMeasurementRepository.save(preMeasurement);
 
-//        BigDecimal servicesPrices = allItems.stream()
-//                .map(PreMeasurementStreetItem::getContractServiceDividerPrices)
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-//        preMeasurement.setTotalPrice(itemsPrices);
-//        preMeasurementRepository.save(preMeasurement);
-
-        return ResponseEntity.ok().body(
-                new DefaultResponse(
-                        preMeasurement.getPreMeasurementId().toString()
-                                .concat("/").concat(String.valueOf((step + 1)))
-                )
-        );
+        return ResponseEntity.ok().build();
     }
 
     public ResponseEntity<?> saveStreetPhotos(List<MultipartFile> photos) {
@@ -212,10 +203,13 @@ public class PreMeasurementService {
                 var filename = photo.getOriginalFilename();
                 if (filename == null) continue;
 
+                var parts = filename.split("#");
+                if (parts.length < 1) continue;
+
                 UUID deviceStreetId;
 
                 try {
-                    deviceStreetId = UUID.fromString(filename);
+                    deviceStreetId = UUID.fromString(parts[0]);
                 } catch (Exception _) {
                     continue;
                 }
@@ -225,10 +219,10 @@ public class PreMeasurementService {
                 try {
                     existingUri = namedParameterJdbcTemplate.queryForObject(
                             """
-                                 SELECT pre_measurement_photo_uri
-                                 FROM pre_measurement_street
-                                 WHERE device_pre_measurement_street_id = :deviceStreetId
-                            """,
+                                         SELECT pre_measurement_photo_uri
+                                         FROM pre_measurement_street
+                                         WHERE device_pre_measurement_street_id = :deviceStreetId
+                                    """,
                             Map.of("deviceStreetId", deviceStreetId),
                             String.class
                     );
@@ -237,7 +231,7 @@ public class PreMeasurementService {
                 }
 
 
-                if(existingUri != null)  {
+                if (existingUri != null) {
                     continue;
                 }
 
@@ -256,39 +250,20 @@ public class PreMeasurementService {
     }
 
 
-    //    @Cacheable("getPreMeasurements")
-//    public ResponseEntity<?> getAll(String status) {
-//        List<PreMeasurementStreet> streets = preMeasurementStreetRepository.getAllPreMeasurementsGroupByStep(status);
-//
-//        // Agrupar por PreMeasurement e por Step
-//        Map<PreMeasurement, Map<Integer, List<PreMeasurementStreet>>> grouped =
-//                streets.stream().collect(
-//                        Collectors.groupingBy(
-//                                PreMeasurementStreet::getPreMeasurement,
-//                                Collectors.groupingBy(PreMeasurementStreet::getStep)
-//                        )
-//                );
-//
-//        List<PreMeasurementResponseDTO> dtos = new ArrayList<>();
-//
-//        grouped.forEach((preMeasurement, stepMap) -> {
-//            stepMap.forEach((step, streetList) -> {
-//                PreMeasurementResponseDTO dto = convertToPreMeasurementResponseDTO(preMeasurement, streetList, step);
-//                dtos.add(dto);
-//            });
-//        });
-//
-//        return ResponseEntity.ok(dtos);
-//    }
-//
-//
+    @Cacheable("getPreMeasurements")
+    public ResponseEntity<?> getAll(String status) {
+
+        return ResponseEntity.ok(preMeasurementJdbc.findAllByStatus(status));
+    }
+
+
 //    @Cacheable("getPreMeasurementById")
 //    public ResponseEntity<?> getPreMeasurementNotAssigned(long preMeasurementId, Integer step) {
 //        var streets = preMeasurementStreetRepository.getPreMeasurementNotAssignedById(preMeasurementId, step);
 //
 //        return ResponseEntity.ok().body(convertToPreMeasurementResponseDTO(streets.getFirst().getPreMeasurement(), streets, step));
 //    }
-//
+
 //    public PreMeasurementResponseDTO convertToPreMeasurementResponseDTO(PreMeasurement p, List<PreMeasurementStreet> streets, Integer step) {
 //        AtomicInteger number = new AtomicInteger(1);
 //

@@ -22,7 +22,7 @@ interface PreMeasurementDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertItems(preMeasurementStreetItems: List<PreMeasurementStreetItem>)
 
-    @Query("SELECT * FROM pre_measurement_street WHERE preMeasurementId = :preMeasurementId AND status = 'MEASURED'")
+    @Query("SELECT * FROM pre_measurement_street WHERE preMeasurementId = :preMeasurementId")
     suspend fun getStreets(preMeasurementId: String): List<PreMeasurementStreet>
 
     @Query("SELECT * FROM pre_measurement_street WHERE preMeasurementId = :preMeasurementId")
@@ -40,7 +40,7 @@ interface PreMeasurementDao {
     @Query("SELECT COUNT(*) from pre_measurement_street WHERE preMeasurementId = :preMeasurementId")
     suspend fun countPhotos(preMeasurementId: String): Int
 
-    @Query("UPDATE pre_measurement_street SET status = 'FINISHED' WHERE preMeasurementId = (:preMeasurementId)")
+    @Query("UPDATE pre_measurement SET status = 'FINISHED' WHERE preMeasurementId = (:preMeasurementId)")
     suspend fun finishAll(preMeasurementId: String)
 
     @Query("select * from pre_measurement where contractId = :contractId and status = 'IN_PROGRESS' limit 1")

@@ -2,6 +2,7 @@ package com.lumos.lumosspring.pre_measurement.controller;
 
 import com.lumos.lumosspring.pre_measurement.dto.ModificationsDTO;
 import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.pre_measurement.service.PreMeasurementService;
 import com.lumos.lumosspring.util.ExecutionStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,44 +15,46 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class PreMeasurementController {
-//    private final PreMeasurementService preMeasurementService;
+    private final PreMeasurementService preMeasurementService;
 
-//    public PreMeasurementController(PreMeasurementService preMeasurementService) {
-//        this.preMeasurementService = preMeasurementService;
+    public PreMeasurementController(PreMeasurementService preMeasurementService) {
+        this.preMeasurementService = preMeasurementService;
+    }
+
+    @PostMapping("/mobile/execution/insert-pre-measurement")
+    public ResponseEntity<?> saveMeasurement(
+            @RequestBody PreMeasurementDTO measurementDTO
+    ) {
+        return preMeasurementService.savePreMeasurement(measurementDTO);
+    }
+
+    @PostMapping("/mobile/pre-measurement-street/upload-photos")
+    public ResponseEntity<?> savePhotoPreMeasurement(
+            @RequestPart("photos") List<MultipartFile> photos
+    ) {
+        return preMeasurementService.saveStreetPhotos(photos);
+    }
+
+
+    @GetMapping("/execution/get-pre-measurements/pending")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getMeasurements() {
+        return preMeasurementService.getAll(ExecutionStatus.PENDING);
+    }
+
+    @GetMapping("/execution/get-pre-measurements/waiting")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getWaitingMeasurements() {
+        return preMeasurementService.getAll(ExecutionStatus.PENDING);
+    }
+
+
+//    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}")
+//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+//    public ResponseEntity<?> getPreMeasurementNotAssigned(@PathVariable long preMeasurementId) {
+//        return preMeasurementService.getPreMeasurementNotAssigned(preMeasurementId);
 //    }
 
-//    @PostMapping("/mobile/execution/insert-pre-measurement")
-//    public ResponseEntity<?> saveMeasurement(
-//            @RequestBody PreMeasurementDTO measurementDTO,
-//            @RequestHeader("UUID") String userUUID
-//    ) {
-//        return preMeasurementService.savePreMeasurement(measurementDTO, userUUID);
-//    }
-//
-//    @PostMapping("/mobile/pre-measurement-street/upload-photos")
-//    public ResponseEntity<?> savePhotoPreMeasurement(
-//            @RequestPart("photos") List<MultipartFile> photos
-//    ) {
-//        return preMeasurementService.saveStreetPhotos(photos);
-//    }
-//
-//    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}/{step}")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getPreMeasurementNotAssigned(@PathVariable long preMeasurementId, @PathVariable Integer step) {
-//        return preMeasurementService.getPreMeasurementNotAssigned(preMeasurementId, step);
-//    }
-//
-//    @GetMapping("/execution/get-pre-measurements/pending")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getMeasurements() {
-//        return preMeasurementService.getAll(ExecutionStatus.PENDING);
-//    }
-//
-//    @GetMapping("/execution/get-pre-measurements/waiting")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getWaitingMeasurements() {
-//        return preMeasurementService.getAll(ExecutionStatus.WAITING_CONTRACTOR);
-//    }
 //
 //    @GetMapping("/execution/get-pre-measurements/validating")
 //    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")

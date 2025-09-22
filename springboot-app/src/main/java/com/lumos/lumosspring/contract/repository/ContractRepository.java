@@ -23,8 +23,17 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
     Boolean contractIsActive(long contractId);
 
     @Query("""
-        select coalesce(max(step), 0) as step from direct_execution
-        where contract_id  = :contractId\s
-   \s""")
+                 with cte as (
+                 	select coalesce(max(step), 0) as step\s
+                 	from direct_execution
+                 	where contract_id  = :contractId
+                 	union\s
+                 	select coalesce(max(step), 0) as step\s
+                 	from pre_measurement\s
+                 	where contract_contract_id  = :contractId
+                 )
+                 select coalesce(max(step), 0) as step\s
+                 from cte
+            \s""")
     Integer getLastStep(long contractId);
 }

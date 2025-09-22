@@ -6,13 +6,12 @@ public record PreMeasurementResponseDTO(
         long preMeasurementId,
         long contractId,
         String city,
-        String depositName,
         String preMeasurementType,
-        String preMeasurementStyle,
-        String teamName,
         String totalPrice,
         String status,
         Integer step,
+        String completeName,
+        String createdAt,
         List<PreMeasurementStreetResponseDTO> streets
 ) {
 }

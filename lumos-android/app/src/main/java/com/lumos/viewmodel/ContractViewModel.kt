@@ -49,6 +49,7 @@ class ContractViewModel(
             NavEvents.route.collect { route ->
                 when (route) {
                     Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS -> {
+                        Log.e("log", "limpando items")
                        clearItems()
                     }
                 }

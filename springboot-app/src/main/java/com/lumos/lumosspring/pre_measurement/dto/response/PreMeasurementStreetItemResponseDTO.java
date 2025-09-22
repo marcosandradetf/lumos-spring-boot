@@ -1,5 +1,7 @@
 package com.lumos.lumosspring.pre_measurement.dto.response;
 
+import java.math.BigDecimal;
+
 public record PreMeasurementStreetItemResponseDTO(
         long preMeasurementStreetItemId,
         long contractItemId,
@@ -8,7 +10,7 @@ public record PreMeasurementStreetItemResponseDTO(
         String contractReferenceItemType,
         String contractReferenceLinking,
         String contractReferenceItemDependency,
-        double measuredQuantity,
+        BigDecimal measuredQuantity,
         String itemStatus
 ) {
 }

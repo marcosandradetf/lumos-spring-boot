@@ -154,7 +154,6 @@ class SyncQueueWorker(
         setForeground(foregroundInfo())
 
         SyncLoading.publish(true)
-        val uuid = secureStorage.getUserUuid() ?: return Result.failure()
         val pendingItems = queueDao.getItemsToProcess()
 
         for (item in pendingItems) {
@@ -166,7 +165,7 @@ class SyncQueueWorker(
                 SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.SYNC_STOCK -> syncStock(item)
 
-                SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item, uuid)
+                SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
                 SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
                 SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
@@ -263,7 +262,7 @@ class SyncQueueWorker(
 
 
 
-    private suspend fun postPreMeasurement(item: SyncQueueEntity, uuid: String): Result {
+    private suspend fun postPreMeasurement(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
             attemptCount = item.attemptCount + 1
@@ -274,7 +273,7 @@ class SyncQueueWorker(
                 return Result.retry()
             }
 
-            if (item.relatedId == null) {
+            if (item.relatedUuid == null) {
                 return Result.failure()
             }
 
@@ -283,14 +282,14 @@ class SyncQueueWorker(
             }
 
             queueDao.update(inProgressItem)
-            val streets = preMeasurementRepository.getAllStreets(item.relatedUuid!!)
+            val preMeasurement = preMeasurementRepository.getPreMeasurement(item.relatedUuid)
+            val streets = preMeasurementRepository.getAllStreets(item.relatedUuid)
             val items = preMeasurementRepository.getItems(item.relatedUuid)
 
             val response = preMeasurementRepository.sendMeasurementToBackend(
-                item.relatedId,
+                preMeasurement,
                 streets,
-                items,
-                uuid
+                items
             )
 
             checkResponse(
@@ -791,17 +790,23 @@ class SyncQueueWorker(
         return when (response) {
             is RequestResult.Success -> {
                 if (inProgressItem.type == SyncTypes.POST_PRE_MEASUREMENT) {
-                    val data = response.data as? String
-                    Log.e("data", data.toString())
-                    if (data != "0") return Result.retry()
+                    val data = response.data
+                    Log.e("response", response.data.toString())
+                    if (data.toString() != "0") return Result.retry()
+
+                    preMeasurementRepository.finishPreMeasurement(inProgressItem.relatedUuid!!)
                 }
 
-                queueDao.deleteById(inProgressItem.id)
+                queueDao.deleteById(
+                    id = inProgressItem.id
+                )
                 Result.success()
             }
 
             is RequestResult.SuccessEmptyBody -> {
-                queueDao.deleteById(inProgressItem.id)
+                queueDao.deleteById(
+                    id = inProgressItem.id
+                )
                 Result.success()
             }
 

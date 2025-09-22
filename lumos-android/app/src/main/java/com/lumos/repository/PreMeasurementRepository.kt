@@ -52,13 +52,12 @@ class PreMeasurementRepository(
     }
 
     suspend fun sendMeasurementToBackend(
-        contractId: Long,
+        preMeasurement: PreMeasurement,
         preMeasurementStreet: List<PreMeasurementStreet>,
-        preMeasurementStreetItems: List<PreMeasurementStreetItem>,
-        userUuid: String,
+        preMeasurementStreetItems: List<PreMeasurementStreetItem>
     ): RequestResult<*> {
         if (preMeasurementStreetItems.isEmpty()) {
-            return uploadStreetPhotos(TODO(), preMeasurementStreet)
+            return uploadStreetPhotos(preMeasurement.preMeasurementId, preMeasurementStreet)
         }
 
         val streets: MutableList<PreMeasurementStreetDto> = mutableListOf()
@@ -75,19 +74,21 @@ class PreMeasurementRepository(
         }
 
         val dto = PreMeasurementDto(
-            contractId = contractId,
-            streets = streets
+            preMeasurementId = preMeasurement.preMeasurementId,
+            contractId = preMeasurement.contractId,
+            streets = streets,
+
         )
 
         Log.e("d", dto.toString())
-        val response = ApiExecutor.execute { api.sendPreMeasurement(dto, userUuid) }
+        val response = ApiExecutor.execute { api.sendPreMeasurement(dto) }
         return when (response) {
             is RequestResult.Success -> {
-                uploadStreetPhotos(TODO(), preMeasurementStreet)
+                uploadStreetPhotos(preMeasurement.preMeasurementId, preMeasurementStreet)
             }
 
             is RequestResult.SuccessEmptyBody -> {
-                uploadStreetPhotos(TODO(), preMeasurementStreet)
+                uploadStreetPhotos(preMeasurement.preMeasurementId, preMeasurementStreet)
             }
 
             is RequestResult.NoInternet -> {
@@ -109,9 +110,9 @@ class PreMeasurementRepository(
 
     }
 
-    private suspend fun finishPreMeasurement(preMeasurementId: String) {
-        db.preMeasurementDao().deletePreMeasurement(preMeasurementId)
-        db.preMeasurementDao().deleteItems(preMeasurementId)
+    suspend fun finishPreMeasurement(preMeasurementId: String, option: String? = null) {
+        if(option == null) db.preMeasurementDao().deletePreMeasurement(preMeasurementId)
+        else db.preMeasurementDao().deleteItems(preMeasurementId)
     }
 
     suspend fun getItems(preMeasurementId: String): List<PreMeasurementStreetItem> {
@@ -140,7 +141,7 @@ class PreMeasurementRepository(
         streets: List<PreMeasurementStreet>
     ): RequestResult<*> {
         return try {
-            finishPreMeasurement(preMeasurementId)
+            finishPreMeasurement(preMeasurementId, "items")
 
             Log.e("Enviando fotos", "Enviando fotos")
 
@@ -159,7 +160,7 @@ class PreMeasurementRepository(
                             images.add(
                                 MultipartBody.Part.createFormData(
                                     "photos",
-                                    "${street.preMeasurementStreetId}#${street.preMeasurementStreetId}#file.jpg",
+                                    "${street.preMeasurementStreetId}#file.jpg",
                                     requestFile
                                 )
                             )
@@ -199,7 +200,7 @@ class PreMeasurementRepository(
                 }
 
                 is RequestResult.UnknownError -> {
-                    Log.e("Upload", "Erro desconhecido: ${response.error?.message}", response.error)
+                    Log.e("Upload", "Erro desconhecido: ${response.error.message}", response.error)
                     response
                 }
             }

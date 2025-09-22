@@ -6,9 +6,7 @@ import {PreMeasurementService} from '../../pre-measurement/pre-measurement-home/
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {TeamsModel} from '../../models/teams.model';
 import {TeamService} from '../../manage/team/team-service.service';
-import {TableComponent} from '../../shared/components/table/table.component';
 import {UtilsService} from '../../core/service/utils.service';
-
 import {animate, style, transition, trigger} from '@angular/animations';
 import {FormsModule} from '@angular/forms';
 import {StockService} from '../../stock/services/stock.service';
@@ -17,8 +15,6 @@ import {Toast} from 'primeng/toast';
 import {StockistModel} from '../executions.model';
 import {Skeleton} from 'primeng/skeleton';
 import {TableModule} from 'primeng/table';
-import {Button} from 'primeng/button';
-import {Avatar} from 'primeng/avatar';
 import {MessageService} from 'primeng/api';
 import {Tooltip} from 'primeng/tooltip';
 import {AuthService} from '../../core/auth/auth.service';
@@ -30,15 +26,12 @@ import {LoadingComponent} from '../../shared/components/loading/loading.componen
   imports: [
     NgForOf,
     ModalComponent,
-    TableComponent,
     NgIf,
     NgClass,
     FormsModule,
     Toast,
     Skeleton,
     TableModule,
-    Button,
-    Avatar,
     Tooltip,
     LoadingComponent
   ],
@@ -71,13 +64,12 @@ export class MeasurementDetailsComponent implements OnInit {
     city: '',
     contractId: 0,
     preMeasurementId: 0,
-    preMeasurementStyle: '',
     preMeasurementType: '',
     status: '',
-    teamName: '',
     totalPrice: '',
-    depositName: '',
     step: 0,
+    completeName: '',
+    createdAt: '',
     streets: [],
   }
   private map!: L.Map;
@@ -160,7 +152,7 @@ export class MeasurementDetailsComponent implements OnInit {
     this.delegateDTO.preMeasurementStep = Number(step);
     this.delegateDTO.currentUserUUID = this.authService.getUser().uuid;
 
-    this.loadPreMeasurement(preMeasurementId, Number(step));
+    this.loadPreMeasurement(preMeasurementId);
 
     if (!this.isMultiTeam) {
       this.openModal = true;
@@ -168,8 +160,8 @@ export class MeasurementDetailsComponent implements OnInit {
 
   }
 
-  loadPreMeasurement(id: string, step: number) {
-    this.preMeasurementService.getPreMeasurement(id, step).subscribe(preMeasurement => {
+  loadPreMeasurement(id: string) {
+    this.preMeasurementService.getPreMeasurement(id).subscribe(preMeasurement => {
       this.preMeasurement = preMeasurement;
     });
 
@@ -323,7 +315,7 @@ export class MeasurementDetailsComponent implements OnInit {
       return;
     }
 
-    this.preMeasurement.streets[streetIndex].status = 'VALIDATED';
+    this.preMeasurement.status = 'VALIDATED';
     this.streetId = this.preMeasurement.streets[streetIndex + 1]?.preMeasurementStreetId || 0;
     this.utils.showMessage("Rua pendente salva com sucesso", 'success');
     this.utils.playSound("pop");

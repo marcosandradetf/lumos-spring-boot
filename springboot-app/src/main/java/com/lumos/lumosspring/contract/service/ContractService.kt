@@ -143,7 +143,7 @@ class ContractService(
                     description = item["description"] as String,
                     unitPrice = item["unit_price"] as BigDecimal,
                     contractedQuantity = (item["contracted_quantity"] as Number).toDouble(),
-                    linking = item["linking"] as String,
+                    linking = item["linking"] as String?,
                 )
             }
 

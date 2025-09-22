@@ -45,6 +45,7 @@ interface QueueDao {
     @Query("DELETE FROM sync_queue_entity WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+
     @Query("SELECT COUNT(type) FROM sync_queue_entity WHERE type = :type")
     suspend fun countPendingItemsByType(type: String): Int
 
@@ -83,7 +84,7 @@ interface QueueDao {
         where relatedId = :relatedId and type = :type
     """
     )
-    suspend fun retry(
+    suspend fun retryDirectExecution(
         relatedId: Long,
         type: String,
         status: String = SyncStatus.PENDING
@@ -98,13 +99,13 @@ interface QueueDao {
             )
         """
     )
-    suspend fun exists(
+    suspend fun existsDirectExecution(
         relatedId: Long,
         type: String,
     ): Boolean
 
     @Query("DELETE FROM sync_queue_entity WHERE relatedId = :id and type = :type")
-    suspend fun deleteByRelatedId(id: Long, type: String)
+    suspend fun deleteDirectExecution(id: Long,  type: String)
 
     @Query(
         """
@@ -122,7 +123,7 @@ interface QueueDao {
         """
         update sync_queue_entity
         set status = :status
-        where relatedId = :id
+        where id = :id
     """
     )
     suspend fun retryById(
@@ -140,7 +141,7 @@ interface QueueDao {
         """
     )
     suspend fun existsById(
-        id: Long,
+        id: Long
     ): Boolean
 
 

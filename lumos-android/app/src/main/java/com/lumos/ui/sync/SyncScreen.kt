@@ -113,18 +113,17 @@ fun SyncScreenContent(
 
                 items(syncItems) { syncType ->
                     val type = when (syncType) {
-                        SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
-                        SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
+                        SyncTypes.POST_DIRECT_EXECUTION,
+                        SyncTypes.FINISHED_DIRECT_EXECUTION,
+                        SyncTypes.POST_INDIRECT_EXECUTION -> "Sincronização - Instalação de Led"
 
-                        SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
+                        SyncTypes.POST_MAINTENANCE, SyncTypes.POST_MAINTENANCE_STREET -> "Sincronização de Manutenção"
 
-                        SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
-                        SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
+                        SyncTypes.POST_PRE_MEASUREMENT -> "Sincronização de Pré-medição"
 
-                        SyncTypes.SYNC_STOCK -> "Dados de estoque"
-                        SyncTypes.POST_ORDER -> "Requisição de materiais"
+                        SyncTypes.SYNC_STOCK, SyncTypes.POST_ORDER -> "Sincronização de Estoque"
 
-                        SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
+                        SyncTypes.UPDATE_TEAM -> "Sincronização de Equipe"
 
                         else -> syncType
                     }

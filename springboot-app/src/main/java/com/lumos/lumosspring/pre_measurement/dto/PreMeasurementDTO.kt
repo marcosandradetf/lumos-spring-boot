@@ -14,21 +14,18 @@ data class PreMeasurementStreetItemsDTO(
     val items: List<PreMeasurementStreetItemDTO>
 )
 
+
 data class PreMeasurementStreetDTO(
     val preMeasurementStreetId: UUID,
-    val contractId: Long,
-    var lastPower: String?,
-    var latitude: Double?,
-    var longitude: Double?,
-    var address: String?
+    val lastPower: String?,
+    val latitude: Double?,
+    val longitude: Double?,
+    val address: String?,
 )
 
 data class PreMeasurementStreetItemDTO(
-    val preMeasurementItemId: UUID,
-    var preMeasurementStreetId: UUID,
-
+    val preMeasurementId: String,
+    val preMeasurementStreetId: UUID,
     val contractReferenceItemId: Long,
     val measuredQuantity: BigDecimal,
-
-    val contractId: Long,
 )

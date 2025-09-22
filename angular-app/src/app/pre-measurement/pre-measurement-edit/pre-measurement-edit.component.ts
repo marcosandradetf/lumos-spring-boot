@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {UtilsService} from '../../core/service/utils.service';
 import {Title} from '@angular/platform-browser';
@@ -18,6 +18,7 @@ import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
 import {InputText} from 'primeng/inputtext';
 import {ContractService} from '../../contract/services/contract.service';
+import {ReserveDTOResponse} from '../../executions/executions.model';
 
 @Component({
   selector: 'app-pre-measurement-edit',
@@ -36,33 +37,31 @@ import {ContractService} from '../../contract/services/contract.service';
   templateUrl: './pre-measurement-edit.component.html',
   styleUrl: './pre-measurement-edit.component.scss'
 })
-export class PreMeasurementEditComponent {
+export class PreMeasurementEditComponent implements OnInit {
   alert: boolean = false;
   preMeasurement: PreMeasurementResponseDTO = {
-    preMeasurementId: 0,
-    contractId: 0,
     city: '',
+    contractId: 0,
+    preMeasurementId: 0,
     preMeasurementType: '',
-    preMeasurementStyle: '',
-    teamName: '',
-    totalPrice: '',
     status: '',
-    depositName: '',
+    totalPrice: '',
     step: 0,
+    completeName: '',
+    createdAt: '',
     streets: [],
   };
 
   preMeasurementCopy: PreMeasurementResponseDTO = {
-    preMeasurementId: 0,
-    contractId: 0,
     city: '',
+    contractId: 0,
+    preMeasurementId: 0,
     preMeasurementType: '',
-    preMeasurementStyle: '',
-    teamName: '',
-    totalPrice: '',
     status: '',
-    depositName: '',
+    totalPrice: '',
     step: 0,
+    completeName: '',
+    createdAt: '',
     streets: [],
   };
 
@@ -106,32 +105,42 @@ export class PreMeasurementEditComponent {
   private referenceItems: ContractReferenceItemsDTO[] = [];
 
   constructor(protected router: Router, protected utils: UtilsService, private titleService: Title,
-              private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, authService: AuthService,
+              private preMeasurementService: PreMeasurementService, private route: ActivatedRoute, private authService: AuthService,
               private userService: UserService, private contractService: ContractService) {
+  }
 
-    const measurementId = this.route.snapshot.paramMap.get('id');
-    const step = this.route.snapshot.paramMap.get('step');
+  ngOnInit() {
     this.titleService.setTitle("Editar Pré-medição");
 
-    const uuid = authService.getUser().uuid;
+    const uuid = this.authService.getUser().uuid;
 
-    if (measurementId && step) {
-      this.preMeasurementService.getPreMeasurement(measurementId, Number(step)).subscribe(preMeasurement => {
-        this.preMeasurement = preMeasurement;
-        this.preMeasurementCopy = JSON.parse(JSON.stringify(preMeasurement));
-        this.preMeasurementService.getContract(preMeasurement.contractId).subscribe(contract => {
-          this.contract = contract;
-          this.userService.getUser(uuid).subscribe(
-            user => {
-              this.user = user;
-              this.contractService.getContractReferenceItems().subscribe(contractReferenceItems => {
-                this.referenceItems = contractReferenceItems;
-                this.loading = false;
-              });
+    const state = window.history.state as { p: PreMeasurementResponseDTO };
+
+    console.log(state);
+
+    if (state?.p) {
+
+      this.preMeasurement = state.p;
+      this.preMeasurementCopy = JSON.parse(JSON.stringify(state.p));
+
+      this.preMeasurementService.getContract(this.preMeasurement.contractId).subscribe(contract => {
+        this.contract = contract;
+        this.userService.getUser(uuid).subscribe(
+          user => {
+            this.user = user;
+            this.contractService.getContractReferenceItems().subscribe(contractReferenceItems => {
+              this.referenceItems = contractReferenceItems;
+              this.loading = false;
             });
-        });
+          });
       });
+
+    } else {
+      void this.router.navigate(['/pre-medicao/aguardando-retorno']);
     }
+
+
+
   }
 
   streetId: number = 0;
@@ -207,7 +216,7 @@ export class PreMeasurementEditComponent {
         this.preMeasurement.streets[streetIndex] = street;
         this.cancelledStreets.push({streetId: id});
         this.openModal = false;
-        this.utils.showMessage("Todos os itens da rua " + street.street + " foram cancelados", 'info');
+        this.utils.showMessage("Todos os itens da rua " + street.address + " foram cancelados", 'info');
         break;
       case false:
         street.items.forEach((item) => {
@@ -238,7 +247,7 @@ export class PreMeasurementEditComponent {
         street.status = this.streetItems.some(i => i.itemStatus === 'EDITED') ? 'EDITED' : 'PENDING';
         this.preMeasurement.streets[streetIndex] = street;
         this.openModal = false;
-        this.utils.showMessage("Todos os itens da rua " + street.street + " foram reativados", "info");
+        this.utils.showMessage("Todos os itens da rua " + street.address + " foram reativados", "info");
         break;
     }
 
@@ -356,7 +365,7 @@ export class PreMeasurementEditComponent {
   }
 
   getStreetName(streetId: number) {
-    return this.preMeasurement.streets.find(s => s.preMeasurementStreetId == streetId)?.street;
+    return this.preMeasurement.streets.find(s => s.preMeasurementStreetId == streetId)?.address;
   }
 
   finish: boolean = false;

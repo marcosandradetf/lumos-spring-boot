@@ -7,8 +7,8 @@ import {
   ReserveStreetDTOResponse
 } from '../../executions/executions.model';
 import {BreadcrumbComponent} from '../../shared/components/breadcrumb/breadcrumb.component';
-import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
-import {Button, ButtonDirective} from 'primeng/button';
+import {NgForOf, NgIf} from '@angular/common';
+import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Carousel, CarouselResponsiveOptions} from 'primeng/carousel';
 import {Table, TableModule} from 'primeng/table';
@@ -24,7 +24,6 @@ import {AuthService} from '../../core/auth/auth.service';
 import {Dialog} from 'primeng/dialog';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
-import {ProgressSpinner} from 'primeng/progressspinner';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
@@ -40,7 +39,6 @@ import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/l
     Tag,
     Ripple,
     FormsModule,
-    ButtonDirective,
     Toast,
     Skeleton,
     Tooltip,
@@ -48,7 +46,6 @@ import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/l
     NgForOf,
     LoadingComponent,
     NgxMaskPipe,
-    ProgressSpinner,
     LoadingOverlayComponent,
   ],
   providers: [provideNgxMask()],
@@ -102,7 +99,6 @@ export class ReservationManagementSelectComponent {
     truckDepositName: '',
     items: []
   }
-
 
   materials: MaterialInStockDTO[] = [];
   filteredMaterials: MaterialInStockDTO[] = [];
