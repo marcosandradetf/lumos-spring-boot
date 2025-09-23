@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.pre_measurement.dto.response;
+package com.lumos.lumosspring.dto.pre_measurement;
 
 import java.math.BigDecimal;
 

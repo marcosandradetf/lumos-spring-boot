@@ -116,8 +116,6 @@ export class PreMeasurementEditComponent implements OnInit {
 
     const state = window.history.state as { p: PreMeasurementResponseDTO };
 
-    console.log(state);
-
     if (state?.p) {
 
       this.preMeasurement = state.p;

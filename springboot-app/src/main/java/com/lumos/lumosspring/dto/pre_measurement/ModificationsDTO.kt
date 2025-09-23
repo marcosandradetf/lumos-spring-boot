@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.pre_measurement.dto
+package com.lumos.lumosspring.dto.pre_measurement
 
 data class ModificationsDTO(
     val cancelledStreets: List<CancelledStreets>,

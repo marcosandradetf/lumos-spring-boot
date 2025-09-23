@@ -160,6 +160,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
   },
+  {
+    path: 'pre_medicao/visualizar',
+    loadComponent: () => import('./pre-measurement/pre-measurement-view/pre-measurement-view.component').then(p => p.PreMeasurementViewComponent),
+    canActivate: [AuthGuard],
+    data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+  },
   //
 
   // start executions/executions path

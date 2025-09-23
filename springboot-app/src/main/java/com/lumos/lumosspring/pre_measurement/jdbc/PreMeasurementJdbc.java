@@ -1,8 +1,9 @@
 package com.lumos.lumosspring.pre_measurement.jdbc;
 
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetResponseDTO;
+import com.lumos.lumosspring.dto.pre_measurement.CheckBalanceResponse;
+import com.lumos.lumosspring.dto.pre_measurement.PreMeasurementResponseDTO;
+import com.lumos.lumosspring.dto.pre_measurement.PreMeasurementStreetItemResponseDTO;
+import com.lumos.lumosspring.dto.pre_measurement.PreMeasurementStreetResponseDTO;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ public class PreMeasurementJdbc {
                                                    cri.linking ,
                                                    cri.item_dependency,
                                                    si.measured_item_quantity,
+                                                   ci.contracted_quantity - ci.quantity_executed as balance,
                                                    si.item_status
                                             from pre_measurement_street_item si
                                             join contract_item ci on si.contract_item_id = ci.contract_item_id
@@ -112,6 +114,35 @@ public class PreMeasurementJdbc {
                             rs.getString("complete_name"),
                             rs.getTimestamp("created_at").toString(),
                             streets
+                    );
+                }
+        );
+    }
+
+    public List<CheckBalanceResponse> checkBalance(Long preMeasurementId) {
+        return namedJdbc.query(
+                """
+                        select cri.description,\s
+                        sum(pmsi.measured_item_quantity) total_measured,\s
+                        sum(ci.contracted_quantity - ci.quantity_executed) - sum(pmsi.measured_item_quantity)  as total_balance,
+                        sum(ci.contracted_quantity) as total_contracted_quantity,\s
+                        sum(ci.quantity_executed) as total_quantity_executed,\s
+                        sum(ci.contracted_quantity - ci.quantity_executed) as total_current_balance
+                        from pre_measurement_street_item pmsi\s
+                        join contract_item ci on ci.contract_item_id = pmsi.contract_item_id\s
+                        join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id\s
+                        where pmsi.pre_measurement_id = :preMeasurementId
+                        group by ci.contracted_quantity, ci.quantity_executed, cri.description, cri.contract_reference_item_id\s
+                       \s""",
+                Map.of("preMeasurementId", preMeasurementId),
+                (rs, _) -> {
+                    return new CheckBalanceResponse(
+                            rs.getString("description"),
+                            rs.getBigDecimal("total_measured"),
+                            rs.getBigDecimal("total_balance"),
+                            rs.getBigDecimal("total_contracted_quantity"),
+                            rs.getBigDecimal("total_quantity_executed"),
+                            rs.getBigDecimal("total_current_balance")
                     );
                 }
         );

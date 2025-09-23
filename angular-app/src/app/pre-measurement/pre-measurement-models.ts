@@ -54,8 +54,19 @@ export interface PreMeasurementResponseDTO {
       contractReferenceLinking: string;
       contractReferenceItemDependency: string;
       measuredQuantity: number;
+      balanceQuantity: number;
+      differenceQuantity: number;
       itemStatus: string;
     }[]
 
   }[];
+}
+
+export interface CheckBalanceRequest {
+  description: string;
+  totalMeasured: string;
+  totalBalance: string;
+  totalContractedQuantity: string;
+  totalQuantityExecuted: string;
+  totalCurrentBalance: string;
 }

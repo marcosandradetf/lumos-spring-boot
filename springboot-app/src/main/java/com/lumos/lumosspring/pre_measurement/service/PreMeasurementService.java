@@ -1,14 +1,8 @@
 package com.lumos.lumosspring.pre_measurement.service;
 
-import com.lumos.lumosspring.contract.entities.Contract;
-import com.lumos.lumosspring.contract.entities.ContractItem;
-import com.lumos.lumosspring.contract.entities.ContractReferenceItem;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
+import com.lumos.lumosspring.dto.pre_measurement.PreMeasurementDTO;
 import com.lumos.lumosspring.minio.service.MinioService;
-import com.lumos.lumosspring.pre_measurement.dto.*;
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetItemResponseDTO;
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementStreetResponseDTO;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreetItem;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet;
@@ -34,8 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Service
 public class PreMeasurementService {
@@ -256,6 +248,9 @@ public class PreMeasurementService {
         return ResponseEntity.ok(preMeasurementJdbc.findAllByStatus(status));
     }
 
+    public ResponseEntity<?> checkBalance(Long preMeasurementId){
+        return ResponseEntity.ok(preMeasurementJdbc.checkBalance(preMeasurementId));
+    }
 
 //    @Cacheable("getPreMeasurementById")
 //    public ResponseEntity<?> getPreMeasurementNotAssigned(long preMeasurementId, Integer step) {

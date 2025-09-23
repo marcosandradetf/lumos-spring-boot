@@ -1,9 +1,7 @@
 package com.lumos.lumosspring.pre_measurement.repository;
 
 
-import com.lumos.lumosspring.pre_measurement.dto.response.PreMeasurementResponseDTO;
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement;
-import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;

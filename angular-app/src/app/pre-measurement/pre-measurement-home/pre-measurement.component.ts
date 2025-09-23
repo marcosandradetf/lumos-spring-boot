@@ -97,7 +97,14 @@ export class PreMeasurementComponent implements OnInit {
     this.preMeasurement = preMeasurement;
     switch (this.status) {
       case 'pendente':
-        void this.router.navigate(['pre-medicao/relatorio/' + preMeasurement.preMeasurementId, preMeasurement.step], {queryParams: {reason: 'generate'}});
+        void this.router.navigate(['pre_medicao/visualizar'], {
+          queryParams: {
+            id: preMeasurement.preMeasurementId,
+            description: preMeasurement.city,
+            step: preMeasurement.step,
+            streets: preMeasurement.streets.length,
+          }
+        });
         break;
       case 'aguardando-retorno':
         this.openModal = true;
@@ -125,6 +132,7 @@ export class PreMeasurementComponent implements OnInit {
   }
 
   hideContent = false;
+
   evolvePreMeasurement() {
     this.loading = true;
 
@@ -143,6 +151,7 @@ export class PreMeasurementComponent implements OnInit {
 
   @ViewChild('step1') step1Ref!: ElementRef<HTMLDivElement>;
   @ViewChild('step2') step2Ref!: ElementRef<HTMLDivElement>;
+
   toggleSteps() {
     const step1 = this.step1Ref.nativeElement;
     const step2 = this.step2Ref.nativeElement;
@@ -155,7 +164,7 @@ export class PreMeasurementComponent implements OnInit {
   navigateToExecution(isMultiTeam: boolean) {
     void this.router.navigate(
       ['execucao/pre-medicao', this.preMeasurement?.preMeasurementId!!],
-      { queryParams: { multiTeam: isMultiTeam } }
+      {queryParams: {multiTeam: isMultiTeam}}
     );
   }
 

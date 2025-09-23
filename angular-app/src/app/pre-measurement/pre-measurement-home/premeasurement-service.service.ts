@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {PreMeasurementDTO, PreMeasurementResponseDTO} from '../pre-measurement-models';
+import {CheckBalanceRequest, PreMeasurementDTO, PreMeasurementResponseDTO} from '../pre-measurement-models';
 import {ContractAndItemsResponse} from '../../contract/contract-models';
 
 @Injectable({
@@ -101,5 +101,9 @@ export class PreMeasurementService {
                     }
   ) {
     return this.http.post(environment.springboot + "/api/execution/delegate", delegateDTO);
+  }
+
+  checkBalance(preMeasurementId: number) {
+    return this.http.get<CheckBalanceRequest[]>(environment.springboot +'/api/execution/check-balance-pre-measurement/' + preMeasurementId);
   }
 }

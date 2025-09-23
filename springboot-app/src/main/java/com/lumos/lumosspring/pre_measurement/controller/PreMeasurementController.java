@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.pre_measurement.controller;
 
-import com.lumos.lumosspring.pre_measurement.dto.ModificationsDTO;
-import com.lumos.lumosspring.pre_measurement.dto.PreMeasurementDTO;
+import com.lumos.lumosspring.dto.pre_measurement.PreMeasurementDTO;
 import com.lumos.lumosspring.pre_measurement.service.PreMeasurementService;
 import com.lumos.lumosspring.util.ExecutionStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +45,12 @@ public class PreMeasurementController {
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
     public ResponseEntity<?> getWaitingMeasurements() {
         return preMeasurementService.getAll(ExecutionStatus.PENDING);
+    }
+
+    @GetMapping("/execution/check-balance-pre-measurement/{preMeasurementId}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> checkBalance(@PathVariable Long preMeasurementId) {
+        return preMeasurementService.checkBalance(preMeasurementId);
     }
 
 
