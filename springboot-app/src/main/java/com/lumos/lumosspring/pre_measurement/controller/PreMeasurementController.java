@@ -54,46 +54,29 @@ public class PreMeasurementController {
     }
 
 
-//    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getPreMeasurementNotAssigned(@PathVariable long preMeasurementId) {
-//        return preMeasurementService.getPreMeasurementNotAssigned(preMeasurementId);
-//    }
+    @GetMapping("/execution/get-pre-measurement/{preMeasurementId}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getPreMeasurementNotAssigned(@PathVariable long preMeasurementId) {
+        return preMeasurementService.findById(preMeasurementId);
+    }
 
-//
-//    @GetMapping("/execution/get-pre-measurements/validating")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getValidatingMeasurements() {
-//        return preMeasurementService.getAll(ExecutionStatus.VALIDATING);
-//    }
-//
-//    @GetMapping("/execution/get-pre-measurements/available")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getValidatedMeasurements() {
-//        return preMeasurementService.getAll(ExecutionStatus.AVAILABLE);
-//    }
-//
-//    @GetMapping("/execution/get-pre-measurements/in-progress")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
-//    public ResponseEntity<?> getInProgressMeasurements() {
-//        return preMeasurementService.getAll(ExecutionStatus.IN_PROGRESS);
-//    }
-//
-//    @PostMapping("/pre-measurement/evolve-status/{id}/{step}")
-//    public ResponseEntity<?> evolveStatus(@PathVariable Long id, @PathVariable Integer step) {
-//        var state = preMeasurementService.setStatus(id, step);
-//        if (state) {
-//            return ResponseEntity.ok().build();
-//        } else {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
-//
+    @GetMapping("/execution/get-pre-measurements/available")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_RESPONSAVEL_TECNICO') ")
+    public ResponseEntity<?> getValidatedMeasurements() {
+        return preMeasurementService.getAll(ExecutionStatus.AVAILABLE);
+    }
+
+
+    @PostMapping("/pre-measurement/mark-as-available/{id}")
+    public ResponseEntity<?> markAsAvailable(@PathVariable Long id) {
+        return preMeasurementService.markAsAvailable(id);
+    }
+
 //    @PostMapping("/pre-measurement/send-modifications")
 //    public ResponseEntity<?> saveModifications(@RequestBody ModificationsDTO modificationsDTO) {
 //        return this.preMeasurementService.saveModifications(modificationsDTO);
 //    }
-//
+
 //    @PostMapping("/pre-measurement/import")
 //    public ResponseEntity<?> importPreMeasurements(@RequestBody PreMeasurementDTO preMeasurementDTO, @RequestHeader("UUID") String userUUID) {
 //        return this.preMeasurementService.importPreMeasurements(preMeasurementDTO, userUUID);

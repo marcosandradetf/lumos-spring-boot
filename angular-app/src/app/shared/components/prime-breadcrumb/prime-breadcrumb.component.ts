@@ -16,17 +16,21 @@ export class PrimeBreadcrumbComponent implements OnChanges {
   @Input() path: string[] | null = null;
 
   home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
-  items: MenuItem[] | undefined = undefined
+  items: MenuItem[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['path'] && this.path) {
-      const label1 = this.path[0] || 'Padrão 1';
-      const label2 = this.path[1] || 'Padrão 2';
+      for (const item of this.path) {
+        this.items.push({label: item});
+      }
 
-      this.items = [
-        {label: label1},
-        {label: label2}
-      ];
+      // const label1 = this.path[0] || 'Padrão 1';
+      // const label2 = this.path[1] || 'Padrão 2';
+      //
+      // this.items = [
+      //   {label: label1},
+      //   {label: label2}
+      // ];
     } else {
       // fallback se path for null
       this.items = [

@@ -79,10 +79,6 @@ export class UtilsService {
     return words.join(' ');
   }
 
-
-
-
-
   formatNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
   }
@@ -224,6 +220,17 @@ export class UtilsService {
     return this.http.post(environment.springboot + '/api/util/generic/set-object', body);
   }
 
+
+  formatCity(city: string) {
+    let formatedCity = city
+      .toLowerCase()
+      .replace('de', '') // só remove "de" isolado
+      .replace(/prefeitura/g, '') // só remove "de" isolado
+      .replace(/municipal/g, '') // só remove "de" isolado
+      .replace(/\s+/g, ' '); // limpa espaços duplos
+
+    return this.capitalizeWithAcronyms(formatedCity.trim());
+  }
 
 }
 

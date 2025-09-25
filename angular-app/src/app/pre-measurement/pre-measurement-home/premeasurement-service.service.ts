@@ -2,7 +2,12 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {CheckBalanceRequest, PreMeasurementDTO, PreMeasurementResponseDTO} from '../pre-measurement-models';
+import {
+  CheckBalanceRequest,
+  ListPreMeasurementRequest,
+  PreMeasurementDTO,
+  PreMeasurementResponseDTO
+} from '../pre-measurement-models';
 import {ContractAndItemsResponse} from '../../contract/contract-models';
 
 @Injectable({
@@ -18,16 +23,16 @@ export class PreMeasurementService {
     return this.http.get<PreMeasurementResponseDTO>(`${this.endpoint + `/get-pre-measurement/${preMeasurementId}`}`);
   }
 
-  getPreMeasurements(status: string): Observable<PreMeasurementResponseDTO[]> {
-    return this.http.get<PreMeasurementResponseDTO[]>(`${this.endpoint + `/get-pre-measurements/${status}`}`);
+  getPreMeasurements(status: string): Observable<ListPreMeasurementRequest[]> {
+    return this.http.get<ListPreMeasurementRequest[]>(`${this.endpoint + `/get-pre-measurements/${status}`}`);
   }
 
   getContract(contractId: number) {
     return this.http.get<ContractAndItemsResponse>(`${environment.springboot + `/api/contracts/get-contract/${contractId}`}`);
   }
 
-  evolveStatus(preMeasurementId: number) {
-    return this.http.post(environment.springboot + `/api/pre-measurement/evolve-status/${preMeasurementId}`, null);
+  markAsAvailable(preMeasurementId: number) {
+    return this.http.post(environment.springboot + `/api/pre-measurement/mark-as-available/${preMeasurementId}`, null);
   }
 
   sendModifications(modifications: {

@@ -64,42 +64,21 @@ public class PreMeasurementService {
         this.preMeasurementJdbc = preMeasurementJdbc;
     }
 
-//    @Caching(evict = {
-//            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
-//            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true)
-//    })
-//    public boolean setStatus(Long preMeasurementId, Integer step) {
-//        var preMeasurement = preMeasurementRepository.findById(preMeasurementId);
-//
-//        if (preMeasurement.isEmpty()) {
-//            return false;
-//        }
-//
-//        boolean updated = false;
-//        for (var street : preMeasurement.get().getStreets()) {
-//            if (street.getStep().equals(step)) {
-//                var status = switch (street.getStreetStatus()) {
-//                    case (ExecutionStatus.PENDING) -> ExecutionStatus.WAITING_CONTRACTOR;
-//                    case (ExecutionStatus.WAITING_CONTRACTOR) -> ExecutionStatus.AVAILABLE;
-////            case (ContractStatus.VALIDATING):
-////                preMeasurement.get().setStatus(ContractStatus.AVAILABLE);
-////                break;
-//                    case (ExecutionStatus.AVAILABLE) -> ExecutionStatus.IN_PROGRESS;
-//                    case (ExecutionStatus.IN_PROGRESS) -> ExecutionStatus.FINISHED;
-//                    default -> null;
-//                };
-//                if (status == null) return false;
-//                street.setStreetStatus(status);
-//                updated = true;
-//            }
-//        }
-//
-//        if (updated) {
-//            preMeasurementRepository.save(preMeasurement.get());
-//        }
-//
-//        return true;
-//    }
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getPreMeasurements", allEntries = true),
+            @CacheEvict(cacheNames = "getPreMeasurementById", allEntries = true)
+    })
+    public ResponseEntity<?> markAsAvailable(Long preMeasurementId) {
+        var status = preMeasurementRepository.getStatus(preMeasurementId);
+
+        if(!Objects.equals(status, ExecutionStatus.PENDING)) {
+            throw new Utils.BusinessException("Sua solicitação não pôde ser concluída, pois esta pré-medição não está mais disponível para análise. É possível que outro usuário já esteja trabalhando nela.");
+        }
+
+        preMeasurementJdbc.markAsAvailable(preMeasurementId);
+
+        return ResponseEntity.noContent().build();
+    }
 
     /**
      * TODO
@@ -248,67 +227,15 @@ public class PreMeasurementService {
         return ResponseEntity.ok(preMeasurementJdbc.findAllByStatus(status));
     }
 
-    public ResponseEntity<?> checkBalance(Long preMeasurementId){
+    public ResponseEntity<?> checkBalance(Long preMeasurementId) {
         return ResponseEntity.ok(preMeasurementJdbc.checkBalance(preMeasurementId));
     }
 
-//    @Cacheable("getPreMeasurementById")
-//    public ResponseEntity<?> getPreMeasurementNotAssigned(long preMeasurementId, Integer step) {
-//        var streets = preMeasurementStreetRepository.getPreMeasurementNotAssignedById(preMeasurementId, step);
-//
-//        return ResponseEntity.ok().body(convertToPreMeasurementResponseDTO(streets.getFirst().getPreMeasurement(), streets, step));
-//    }
+    @Cacheable("getPreMeasurementById")
+    public ResponseEntity<?> findById(long preMeasurementID) {
+        return ResponseEntity.ok(preMeasurementJdbc.findById(preMeasurementID));
+    }
 
-//    public PreMeasurementResponseDTO convertToPreMeasurementResponseDTO(PreMeasurement p, List<PreMeasurementStreet> streets, Integer step) {
-//        AtomicInteger number = new AtomicInteger(1);
-//
-//        return new PreMeasurementResponseDTO(
-//                p.getPreMeasurementId(),
-//                p.getContract().getContractId(),
-//                p.getCity(),
-//                "",
-//                p.getTypePreMeasurement(),
-//                Objects.equals(p.getTypePreMeasurement(), ContractType.INSTALLATION) ? "badge-primary" : "badge-neutral",
-//                p.getTypePreMeasurement(),
-//                p.getTotalPrice() != null ? p.getTotalPrice().toString() : "0,00",
-//                p.getStatus(),
-//                step,
-//                streets.stream()
-//                        .filter(s -> !ItemStatus.CANCELLED.equals(s.getStreetStatus()))
-//                        .sorted(Comparator.comparing(PreMeasurementStreet::getPreMeasurementStreetId))
-//                        .map(s -> new PreMeasurementStreetResponseDTO(
-//                                number.getAndIncrement(),
-//                                s.getPreMeasurementStreetId(),
-//                                s.getLastPower(),
-//                                s.getLatitude(),
-//                                s.getLongitude(),
-//                                s.getStreet(),
-//                                s.getNeighborhood(),
-//                                s.getCity(),
-//                                s.getStreetStatus(),
-//                                s.getCreatedBy() != null ? s.getCreatedBy().getCompletedName() : "Desconhecido",
-//                                util.normalizeDate(s.getCreatedAt()),
-//                                s.getItems() != null
-//                                        ? s.getItems().stream()
-//                                        .filter(i -> !ItemStatus.CANCELLED.equals(i.getItemStatus()))
-//                                        .sorted(Comparator.comparing(PreMeasurementStreetItem::getPreMeasurementStreetItemId))
-//                                        .map(i -> new PreMeasurementStreetItemResponseDTO(
-//                                                i.getPreMeasurementStreetItemId(),
-//                                                i.getContractItem().getContractItemId(),
-//                                                i.getContractItem().getReferenceItem().getDescription(),
-//                                                i.getContractItem().getReferenceItem().getNameForImport(),
-//                                                i.getContractItem().getReferenceItem().getType(),
-//                                                i.getContractItem().getReferenceItem().getLinking(),
-//                                                i.getContractItem().getReferenceItem().getItemDependency(),
-//                                                i.getMeasuredItemQuantity(),
-//                                                i.getItemStatus()
-//                                        )).toList()
-//                                        : List.of()
-//                        )).toList()
-//        );
-//    }
-//
-//
 //    /**
 //     * MÉTODO PARA SALVAR AS MODIFICAÇOES NA PRÉ-MEDIÇÃO
 //     */

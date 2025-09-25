@@ -1,14 +1,9 @@
 import {Component, EventEmitter, Input, model, OnInit, Output} from '@angular/core';
-import {NgClass, NgForOf, NgIf} from '@angular/common';
-import {Router, RouterLink, RouterLinkActive} from '@angular/router';
-import {Menubar} from 'primeng/menubar';
-import {Toast} from 'primeng/toast';
+import {NgIf} from '@angular/common';
+import {Router} from '@angular/router';
 import {PanelMenu} from 'primeng/panelmenu';
-import {MenuItem, MenuItemCommandEvent} from 'primeng/api';
+import {MenuItem} from 'primeng/api';
 import {UtilsService} from '../../../core/service/utils.service';
-import {Menu} from 'primeng/menu';
-import {Badge} from 'primeng/badge';
-import {Ripple} from 'primeng/ripple';
 
 @Component({
   selector: 'app-sidebar',
@@ -16,9 +11,6 @@ import {Ripple} from 'primeng/ripple';
   imports: [
     PanelMenu,
     NgIf,
-    NgForOf,
-    RouterLinkActive,
-    RouterLink
   ],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
@@ -37,8 +29,6 @@ export class SidebarComponent implements OnInit {
   bToggleContracts: boolean = true;
   bToggleReports: boolean = true;
   items: MenuItem[] | undefined;
-  itemsOnlyIcons: MenuItem[] | undefined;
-
   constructor(private utils: UtilsService, private router: Router) {
   }
 
@@ -93,9 +83,9 @@ export class SidebarComponent implements OnInit {
         },
         items: [
           {
-            label: 'Aguardando Confirmação',
+            label: 'Aguardando Análise',
             icon: 'pi pi-inbox text-neutral-800 dark:text-neutral-200',
-            routerLink: 'pre-medicao/aguardando-retorno',
+            routerLink: 'pre-medicao/pendente',
           },
           {
             label: 'Disponível para execução',

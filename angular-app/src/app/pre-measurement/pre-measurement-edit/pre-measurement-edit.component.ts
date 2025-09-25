@@ -5,7 +5,6 @@ import {Title} from '@angular/platform-browser';
 import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {UserService} from '../../manage/user/user-service.service';
-import {ReportService} from '../../core/service/report-service';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {ContractAndItemsResponse, ContractReferenceItemsDTO} from '../../contract/contract-models';
@@ -14,11 +13,11 @@ import {InputNumber} from 'primeng/inputnumber';
 import {FormsModule} from '@angular/forms';
 import {PrimeTemplate} from 'primeng/api';
 import {Toast} from 'primeng/toast';
-import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
-import {InputText} from 'primeng/inputtext';
 import {ContractService} from '../../contract/services/contract.service';
-import {ReserveDTOResponse} from '../../executions/executions.model';
+import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+
 
 @Component({
   selector: 'app-pre-measurement-edit',
@@ -32,7 +31,9 @@ import {ReserveDTOResponse} from '../../executions/executions.model';
     FormsModule,
     PrimeTemplate,
     Toast,
-    Dialog
+    Dialog,
+    PrimeBreadcrumbComponent,
+    LoadingOverlayComponent
   ],
   templateUrl: './pre-measurement-edit.component.html',
   styleUrl: './pre-measurement-edit.component.scss'
@@ -114,30 +115,60 @@ export class PreMeasurementEditComponent implements OnInit {
 
     const uuid = this.authService.getUser().uuid;
 
-    const state = window.history.state as { p: PreMeasurementResponseDTO };
+    this.route.queryParams.subscribe(param => {
+      const preMeasurementId = param["preMeasurementId"];
 
-    if (state?.p) {
-
-      this.preMeasurement = state.p;
-      this.preMeasurementCopy = JSON.parse(JSON.stringify(state.p));
-
-      this.preMeasurementService.getContract(this.preMeasurement.contractId).subscribe(contract => {
-        this.contract = contract;
-        this.userService.getUser(uuid).subscribe(
-          user => {
-            this.user = user;
-            this.contractService.getContractReferenceItems().subscribe(contractReferenceItems => {
-              this.referenceItems = contractReferenceItems;
-              this.loading = false;
+      if (preMeasurementId) {
+        this.preMeasurementService.getPreMeasurement(preMeasurementId).subscribe({
+          next: (result) => {
+            this.preMeasurement = result;
+            this.preMeasurementCopy = JSON.parse(JSON.stringify(result));
+          },
+          error: (e) => {
+            this.loading = false;
+            this.utils.showMessage(e.error.error ?? e.error.message, 'error', "Ops");
+          },
+          complete: () => {
+            this.preMeasurementService.getContract(this.preMeasurement.contractId).subscribe({
+              next: (result) => {
+                this.contract = result;
+              },
+              error: (e) => {
+                this.loading = false;
+                this.utils.showMessage(e.error.error ?? e.error.message, 'error', "Ops");
+              },
+              complete: () => {
+                this.userService.getUser(uuid).subscribe({
+                  next: (result) => {
+                    this.user = result;
+                  },
+                  error: (e) => {
+                    this.loading = false;
+                    this.utils.showMessage(e.error.error ?? e.error.message, 'error', "Ops");
+                  },
+                  complete: () => {
+                    this.contractService.getContractReferenceItems().subscribe({
+                      next: (result) => {
+                        this.referenceItems = result;
+                      },
+                      error: (e) => {
+                        this.loading = false;
+                        this.utils.showMessage(e.error.error ?? e.error.message, 'error', "Ops");
+                      },
+                      complete: () => {
+                        this.loading = false;
+                      }
+                    });
+                  }
+                });
+              }
             });
-          });
-      });
-
-    } else {
-      void this.router.navigate(['/pre-medicao/aguardando-retorno']);
-    }
-
-
+          }
+        });
+      } else {
+        void this.router.navigate(['/pre-medicao/aguardando-retorno']);
+      }
+    });
 
   }
 

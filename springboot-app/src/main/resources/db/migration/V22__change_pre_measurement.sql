@@ -56,3 +56,19 @@ alter table pre_measurement
 
 alter table pre_measurement
     add column if not exists created_at timestamptz not null default now();
+
+alter table pre_measurement
+    add column if not exists reservation_management_id bigint,
+    add column if not exists team_id bigint,
+    add column if not exists assign_by_user_id uuid;
+
+alter table pre_measurement
+ADD CONSTRAINT pre_measurement_team_id_fkey
+        FOREIGN KEY (team_id)
+            REFERENCES team (id_team),
+ADD CONSTRAINT pre_measurement_assign_by_user_id_fkey
+    FOREIGN KEY (assign_by_user_id)
+        REFERENCES app_user (user_id),
+ADD CONSTRAINT pre_measurement_reservation_management_id_fkey
+    FOREIGN KEY (reservation_management_id)
+        REFERENCES reservation_management (reservation_management_id);

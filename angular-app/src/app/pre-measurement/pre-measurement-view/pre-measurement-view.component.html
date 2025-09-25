@@ -1,15 +1,19 @@
 <div class="relative w-full h-full">
-  <app-prime-breadcrumb [title]="getDescription() ?? 'Visualizar'" [path]="['Pré-medição', 'Visualizar']" ></app-prime-breadcrumb>
+  <app-prime-breadcrumb [title]="getDescription() ?? 'Visualizar'" [path]="['Pré-medição', 'Aguardando Análise', 'Detalhes']" ></app-prime-breadcrumb>
 
   <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
-  <div>
+  <div *ngIf="message !== 'Operação realizada com sucesso!'">
     <div class="flex justify-between mx-5 mb-5">
       <h2 class="text-3xl font-semibold">Itens</h2>
       <div class="flex gap-2">
-        <p-button severity="secondary" rounded icon="pi pi-file-edit" label="Editar Itens"></p-button>
-        <p-button severity="secondary" rounded icon="pi pi-file-pdf" label="Gerar relatório"></p-button>
-        <p-button severity="contrast" rounded icon="pi pi-check" label="Continuar"></p-button>
+        <p-button severity="secondary" rounded icon="pi pi-plus" label="Aditivar Contrato"
+          (click)="utils.showMessage('Recurso em desenvolvimento! Por favor, aguarde enquanto trabalhamos.', 'info', 'Lumos SaaS')"></p-button>
+        <p-button severity="secondary" rounded icon="pi pi-file-edit" label="Editar Itens"
+          (click)="router.navigate(['/pre_medicao/editar'], {queryParams: {preMeasurementId: preMeasurement?.preMeasurementId}})"></p-button>
+        <p-button severity="secondary" rounded icon="pi pi-file-pdf" label="Gerar relatório"
+                  (click)="utils.showMessage('Recurso em desenvolvimento! Por favor, aguarde enquanto trabalhamos.', 'info', 'Lumos SaaS')"></p-button>
+        <p-button severity="contrast" rounded icon="pi pi-check" label="Continuar" (click)="openConfirmation()"></p-button>
       </div>
     </div>
     <p-table [value]="items" [tableStyle]="{ 'min-width': '50rem' }">
@@ -45,6 +49,18 @@
     </p-table>
   </div>
 
+  <div *ngIf="message === 'Operação realizada com sucesso!'" class="h-full flex flex-col justify-center items-center">
+    <h2 class="text-3xl font-semibold pb-8">{{message}}</h2>
+    <p class="text-sm">
+      A Pré-mediçao foi movida para tela
+      <a routerLink="/pre-medicao/disponivel" pButton severity="contrast" rounded class="mx-2">
+        <span pButtonLabel>Disponivel para execuçao</span>
+      </a>
+      clique para iniciar o gerenciamento.
+    </p>
+  </div>
+
+  <app-prime-confirm-dialog *ngIf="message !== null && message !== 'Operação realizada com sucesso!'" [message]="message" (action)="$event === 'accept' ? confirmExecution() : message = null;" />
 
   <p-toast position="bottom-center"></p-toast>
 

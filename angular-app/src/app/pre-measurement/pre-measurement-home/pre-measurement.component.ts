@@ -7,9 +7,11 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ScreenMessageComponent} from '../../shared/components/screen-message/screen-message.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {PreMeasurementResponseDTO} from '../pre-measurement-models';
+import {ListPreMeasurementRequest, PreMeasurementResponseDTO} from '../pre-measurement-models';
 import {Toast} from 'primeng/toast';
 import {Title} from '@angular/platform-browser';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 
 @Component({
   selector: 'app-pre-measurement-home',
@@ -19,19 +21,21 @@ import {Title} from '@angular/platform-browser';
     FormsModule,
     NgIf,
     ModalComponent,
-    LoadingComponent,
-    Toast
+    Toast,
+    LoadingOverlayComponent,
+    PrimeBreadcrumbComponent
   ],
   templateUrl: './pre-measurement.component.html',
   styleUrl: './pre-measurement.component.scss'
 })
 export class PreMeasurementComponent implements OnInit {
-  preMeasurements: PreMeasurementResponseDTO[] = [];
+  preMeasurements: ListPreMeasurementRequest[] = [];
 
   protected loading: boolean = false;
   protected status: string = "";
   openModal: boolean = false;
-  preMeasurement: PreMeasurementResponseDTO | undefined;
+  preMeasurement: ListPreMeasurementRequest | undefined;
+  currentPath = "";
 
   constructor(
     private preMeasurementService: PreMeasurementService,
@@ -63,6 +67,7 @@ export class PreMeasurementComponent implements OnInit {
     switch (this.status) {
       case 'pendente':
         statusParam = 'pending';
+        this.currentPath = "Aguardando Análise";
         break;
       case 'aguardando-retorno':
         statusParam = 'waiting';
@@ -71,6 +76,7 @@ export class PreMeasurementComponent implements OnInit {
         statusParam = 'validating';
         break;
       case 'disponivel':
+        this.currentPath = "Disponivel";
         statusParam = 'available';
         break;
       default:
@@ -93,7 +99,7 @@ export class PreMeasurementComponent implements OnInit {
   }
 
 
-  navigateTo(preMeasurement: PreMeasurementResponseDTO) {
+  navigateTo(preMeasurement: ListPreMeasurementRequest) {
     this.preMeasurement = preMeasurement;
     switch (this.status) {
       case 'pendente':
@@ -102,7 +108,8 @@ export class PreMeasurementComponent implements OnInit {
             id: preMeasurement.preMeasurementId,
             description: preMeasurement.city,
             step: preMeasurement.step,
-            streets: preMeasurement.streets.length,
+            streets: preMeasurement.streetsSize,
+            contractId: preMeasurement.contractId,
           }
         });
         break;
@@ -117,26 +124,13 @@ export class PreMeasurementComponent implements OnInit {
     }
   }
 
-  getItemsQuantity(preMeasurementId: number) {
-    let quantity: number = 0;
-    this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId)
-      ?.streets.forEach((street) => {
-      quantity += street.items.length;
-    });
-
-    return quantity;
-  }
-
-  getPreMeasurement(preMeasurementId: number) {
-    return this.preMeasurements.find(p => p.preMeasurementId === preMeasurementId);
-  }
 
   hideContent = false;
 
   evolvePreMeasurement() {
     this.loading = true;
 
-    this.preMeasurementService.evolveStatus(this.preMeasurement?.preMeasurementId!!).subscribe({
+    this.preMeasurementService.markAsAvailable(this.preMeasurement?.preMeasurementId!!).subscribe({
       error: (error: any) => {
         this.loading = false;
         this.utils.showMessage("Erro ao atualizar o status:", error);

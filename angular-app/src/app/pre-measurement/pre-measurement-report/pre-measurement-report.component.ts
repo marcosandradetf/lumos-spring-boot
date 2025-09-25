@@ -147,7 +147,7 @@ export class PreMeasurementReportComponent implements OnInit {
       complete: () => {
         if (this.preMeasurement.streets[0].status === "PENDING") {
           // Possível mudança de status ou exibição de modal
-          this.preMeasurementService.evolveStatus(this.preMeasurement.preMeasurementId).subscribe({
+          this.preMeasurementService.markAsAvailable(this.preMeasurement.preMeasurementId).subscribe({
             error: (error: any) => {
               this.utils.showMessage("Erro ao atualizar o status:", error);
             },

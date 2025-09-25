@@ -287,5 +287,9 @@ class JdbcInstallationRepository(
         }
     }
 
+    fun assignPreMeasurementToStockistAndTeam(preMeasurementID: Long, teamID: Long, managementID: Long) {
+
+    }
+
 
 }

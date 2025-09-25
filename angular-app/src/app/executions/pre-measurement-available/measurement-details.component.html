@@ -75,12 +75,12 @@
             <div class="flex justify-end gap-4">
               <button
                 (click)="dialog.close()"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition">
                 <span class="material-icons">close</span> Cancelar
               </button>
               <button
                 (click)="sendData()"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#044686] text-white hover:bg-indigo-700 transition dark:btn-accent dark:hover:bg-accent-dark">
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#044686] text-white hover:bg-indigo-700 transition dark:btn-accent dark:hover:bg-accent-dark">
                 <span class="material-icons">save</span> Concluir
               </button>
             </div>
@@ -94,7 +94,6 @@
               <th>Rua</th>
               <th>Equipe</th>
               <th>Almox. Prioritário</th>
-              <th>Comentário</th>
             </tr>
           </ng-template>
           <ng-template #body let-street>
@@ -104,10 +103,9 @@
                   pTooltip="Clique para alterar prioridade" tooltipPosition="left">
                 <i class="fa-solid fa-triangle-exclamation text-amber-500" *ngIf="reserve.prioritized"></i>
               </td>
-              <td>{{ street.street }}</td>
+              <td>{{ street.address }}</td>
               <td>{{ reserve.teamName }}</td>
               <td>{{ reserve.truckDepositName }}</td>
-              <td>{{ reserve.comment }}</td>
             </tr>
           </ng-template>
         </p-table>

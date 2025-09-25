@@ -144,12 +144,10 @@ export class MeasurementDetailsComponent implements OnInit {
       this.isMultiTeam = params['multiTeam'] === 'true';
     });
     const preMeasurementId = this.route.snapshot.paramMap.get('id');
-    const step = this.route.snapshot.paramMap.get('step');
-    if (preMeasurementId == null || step == null) {
+    if (preMeasurementId == null ) {
       return
     }
     this.delegateDTO.preMeasurementId = Number(preMeasurementId);
-    this.delegateDTO.preMeasurementStep = Number(step);
     this.delegateDTO.currentUserUUID = this.authService.getUser().uuid;
 
     this.loadPreMeasurement(preMeasurementId);
@@ -405,7 +403,7 @@ export class MeasurementDetailsComponent implements OnInit {
     } else {
       message = "Prioridade removida para essa rua";
     }
-    this.utils.showMessage(message, 'info');
+    this.utils.showMessage(message, 'info', 'Açao rea');
   }
 
   insertComment($event: Event) {
@@ -439,8 +437,8 @@ export class MeasurementDetailsComponent implements OnInit {
     this.utils.playSound("select");
     this.messageService.add({
       key: 'confirm',
-      severity: 'info',
-      summary: 'Responsável pelo Almoxarifado',
+      severity: 'Lumos',
+      summary: 'Estoquista Responsável pelo Gerenciamento',
       detail: '',
       data: {
         responsible: this.delegateDTO.stockistName,

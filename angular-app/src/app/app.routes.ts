@@ -170,7 +170,7 @@ export const routes: Routes = [
 
   // start executions/executions path
   {
-    path: 'execucao/pre-medicao/:id/:step',
+    path: 'execucao/pre-medicao/:id',
     loadComponent: () => import('./executions/pre-measurement-available/measurement-details.component').then(m => m.MeasurementDetailsComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},

@@ -13,6 +13,7 @@ import com.lumos.lumosspring.execution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
+import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
 import com.lumos.lumosspring.stock.entities.ReservationManagement
 import com.lumos.lumosspring.stock.repository.*
@@ -63,6 +64,7 @@ class ExecutionService(
     private val jdbcInstallationRepository: JdbcInstallationRepository,
     private val directExecutionExecutorRepository: DirectExecutionExecutorRepository,
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
+    private val preMeasurementRepository: PreMeasurementRepository,
 ) {
 
 //    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
@@ -117,6 +119,54 @@ class ExecutionService(
 //
 //        return ResponseEntity.ok().build()
 //    }
+
+    @Transactional
+    fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
+
+        val existingManagement = preMeasurementRepository
+            .hasManagement(
+                delegateDTO.preMeasurementId
+            )
+
+        if (existingManagement) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(DefaultResponse("Já existe uma gestão de reserva para esse estoquista e essas ruas."))
+        }
+
+        val management = ReservationManagement(
+            description = delegateDTO.description,
+            stockistId = UUID.fromString(delegateDTO.stockistId),
+        )
+
+        reservationManagementRepository.save(management)
+
+        val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
+
+        jdbcInstallationRepository.assignPreMeasurementToStockistAndTeam(
+            delegateDTO.preMeasurementId,
+            delegateDTO.teamId,
+            management.reservationManagementId!!
+        )
+
+//
+//        for (delegateStreet in delegateDTO.street) {
+//            val team = teamRepository.findById(delegateStreet.teamId)
+//                .orElse(null) ?: throw IllegalStateException()
+//            val assignBy = userRepository.findByUserId(currentUserUUID)
+//                .orElse(null) ?: throw IllegalStateException()
+//            val prioritized = delegateStreet.prioritized
+//            val comment = delegateStreet.comment
+//
+//            streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
+//                ?.assignToStockistAndTeam(team, assignBy, util.dateTime, prioritized, comment, management)
+//                ?: throw IllegalStateException("A rua ${delegateStreet.preMeasurementStreetId} enviada não foi encontrada")
+//
+//        }
+//
+//        preMeasurementStreetRepository.saveAll(streets)
+
+        return ResponseEntity.ok().build()
+    }
 
     @Transactional
     fun delegateDirectExecution(execution: DirectExecutionDTO): ResponseEntity<Any> {

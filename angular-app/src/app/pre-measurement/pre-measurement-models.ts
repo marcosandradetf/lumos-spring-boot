@@ -70,3 +70,15 @@ export interface CheckBalanceRequest {
   totalQuantityExecuted: string;
   totalCurrentBalance: string;
 }
+
+export interface ListPreMeasurementRequest {
+   preMeasurementId: number;
+   contractId: number;
+   city: string;
+   preMeasurementType: string;
+   step: number;
+   completeName: string;
+   createdAt: string;
+   streetsSize: number;
+   itemsSize: number;
+}
