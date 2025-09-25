@@ -1,0 +1,12 @@
+{
+  "name": "My Project with Postgres",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/postgres:1": {
+      "version": "17",
+      "postgresqlUser": "sa",
+      "postgresqlPassword": "24dedezembro@L",
+      "postgresqlDatabase": "001SCLCONST"
+    }
+  }
+}
