@@ -37,6 +37,8 @@ public class PreMeasurement {
 
     private Instant createdAt;
 
+    private Long reservationManagementId;
+
     public Long getPreMeasurementId() {
         return preMeasurementId;
     }
@@ -131,6 +133,14 @@ public class PreMeasurement {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getReservationManagementId() {
+        return reservationManagementId;
+    }
+
+    public void setReservationManagementId(Long reservationManagementId) {
+        this.reservationManagementId = reservationManagementId;
     }
 }
 

@@ -1,24 +1,25 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {NgClass, NgForOf, NgIf} from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgClass, NgForOf, NgIf } from '@angular/common';
 import * as L from 'leaflet';
-import {PreMeasurementService} from '../../pre-measurement/pre-measurement-home/premeasurement-service.service';
-import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {TeamsModel} from '../../models/teams.model';
-import {TeamService} from '../../manage/team/team-service.service';
-import {UtilsService} from '../../core/service/utils.service';
-import {animate, style, transition, trigger} from '@angular/animations';
-import {FormsModule} from '@angular/forms';
-import {StockService} from '../../stock/services/stock.service';
-import {PreMeasurementResponseDTO} from '../../pre-measurement/pre-measurement-models';
-import {Toast} from 'primeng/toast';
-import {StockistModel} from '../executions.model';
-import {Skeleton} from 'primeng/skeleton';
-import {TableModule} from 'primeng/table';
-import {MessageService} from 'primeng/api';
-import {Tooltip} from 'primeng/tooltip';
-import {AuthService} from '../../core/auth/auth.service';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import { PreMeasurementService } from '../../pre-measurement/pre-measurement-home/premeasurement-service.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { TeamsModel } from '../../models/teams.model';
+import { TeamService } from '../../manage/team/team-service.service';
+import { UtilsService } from '../../core/service/utils.service';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { FormsModule } from '@angular/forms';
+import { StockService } from '../../stock/services/stock.service';
+import { PreMeasurementResponseDTO } from '../../pre-measurement/pre-measurement-models';
+import { Toast } from 'primeng/toast';
+import { StockistModel } from '../executions.model';
+import { Skeleton } from 'primeng/skeleton';
+import { TableModule } from 'primeng/table';
+import { MessageService } from 'primeng/api';
+import { Tooltip } from 'primeng/tooltip';
+import { AuthService } from '../../core/auth/auth.service';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
+import { Button } from "primeng/button";
 
 @Component({
   selector: 'app-pre-measurement-available',
@@ -33,18 +34,19 @@ import {LoadingComponent} from '../../shared/components/loading/loading.componen
     Skeleton,
     TableModule,
     Tooltip,
-    LoadingComponent
+    LoadingComponent,
+    Button
   ],
   templateUrl: './measurement-details.component.html',
   styleUrl: './measurement-details.component.scss',
   animations: [
     trigger('fadeSlide', [
       transition(':enter', [ // Aparecendo
-        style({opacity: 0, transform: 'translateY(-10px)'}),
-        animate('500ms ease-out', style({opacity: 1, transform: 'translateY(0)'}))
+        style({ opacity: 0, transform: 'translateY(-10px)' }),
+        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
       ]),
       transition(':leave', [ // Sumindo
-        animate('500ms ease-in', style({opacity: 0, transform: 'translateY(-10px)'}))
+        animate('500ms ease-in', style({ opacity: 0, transform: 'translateY(-10px)' }))
       ])
     ])
   ]
@@ -53,11 +55,11 @@ export class MeasurementDetailsComponent implements OnInit {
   isMultiTeam: boolean = false;
 
   scrollLeft(slider: HTMLElement) {
-    slider.scrollBy({left: -300, behavior: 'smooth'});
+    slider.scrollBy({ left: -300, behavior: 'smooth' });
   }
 
   scrollRight(slider: HTMLElement) {
-    slider.scrollBy({left: 300, behavior: 'smooth'});
+    slider.scrollBy({ left: 300, behavior: 'smooth' });
   }
 
   preMeasurement: PreMeasurementResponseDTO = {
@@ -110,33 +112,33 @@ export class MeasurementDetailsComponent implements OnInit {
     stockistDepositName: string,
     stockistDepositAddress: string,
     preMeasurementStep: number,
-    currentUserUUID: string,
+    teamId: number;
+    comment: string;
 
     street: {
       preMeasurementStreetId: number;
-      teamId: number;
       teamName: string,
       truckDepositName: string;
       prioritized: boolean;
-      comment: string;
     }[]
   } = {
-    preMeasurementId: 0,
-    description: '',
-    stockistId: '',
-    stockistName: '',
-    stockistPhone: '',
-    stockistDepositName: '',
-    stockistDepositAddress: '',
-    preMeasurementStep: 0,
-    currentUserUUID: '',
-    street: []
-  };
+      preMeasurementId: 0,
+      description: '',
+      stockistId: '',
+      stockistName: '',
+      stockistPhone: '',
+      stockistDepositName: '',
+      stockistDepositAddress: '',
+      preMeasurementStep: 0,
+      teamId: 0,
+      comment: '',
+      street: []
+    };
 
 
   constructor(private route: ActivatedRoute, protected router: Router, private preMeasurementService: PreMeasurementService,
-              private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,
-              private stockService: StockService, private messageService: MessageService, private authService: AuthService,) {
+    private teamService: TeamService, private executionService: PreMeasurementService, protected utils: UtilsService,
+    private stockService: StockService, protected messageService: MessageService, private authService: AuthService,) {
   }
 
   ngOnInit() {
@@ -144,11 +146,10 @@ export class MeasurementDetailsComponent implements OnInit {
       this.isMultiTeam = params['multiTeam'] === 'true';
     });
     const preMeasurementId = this.route.snapshot.paramMap.get('id');
-    if (preMeasurementId == null ) {
+    if (preMeasurementId == null) {
       return
     }
     this.delegateDTO.preMeasurementId = Number(preMeasurementId);
-    this.delegateDTO.currentUserUUID = this.authService.getUser().uuid;
 
     this.loadPreMeasurement(preMeasurementId);
 
@@ -159,8 +160,25 @@ export class MeasurementDetailsComponent implements OnInit {
   }
 
   loadPreMeasurement(id: string) {
-    this.preMeasurementService.getPreMeasurement(id).subscribe(preMeasurement => {
-      this.preMeasurement = preMeasurement;
+    this.loading = true;
+    this.preMeasurementService.getPreMeasurement(id).subscribe({
+      next: (preMeasurement) => {
+        if(preMeasurement.status !== 'AVAILABLE') {
+          this.utils.showMessage("Essa pré-medição não está mais disponível para delegação - verifique o status ou selecione outra Pré-medição", 'warn', 'Status Inválido',true);
+          this.utils.showMessage("Você será redirecionado para tela anterior.", 'info', 'Redirecionamento Automático', true);
+          setTimeout(() => {
+            void this.router.navigate(['/pre-medicao/disponivel']);
+          }, 7000);
+          return;
+        }
+        this.preMeasurement = preMeasurement;
+        this.loading = false;
+      },
+      error: (error: { error: { message: string } }) => {
+        this.utils.showMessage("Erro ao carregar Equipe", 'error');
+        this.utils.showMessage(error.error.message, 'error');
+        this.loading = false;
+      }
     });
 
     this.teamService.getTeams().subscribe({
@@ -203,18 +221,16 @@ export class MeasurementDetailsComponent implements OnInit {
     if (!reserve) {
       reserve = {
         preMeasurementStreetId: street.preMeasurementStreetId,
-        teamId: 0,
         teamName: '',
         truckDepositName: '',
         prioritized: false,
-        comment: ''
       };
       this.delegateDTO.street.push(reserve);
     }
 
-    const team = this.getTeam(reserve.teamId);
+    const team = this.getTeam(0);
     this.teamName = team ? "EQUIPE " + team.teamName.toUpperCase() : 'Nenhuma equipe selecionada'.toUpperCase();
-    this.truckDepositName = this.getTeam(reserve.teamId)?.depositName || '';
+    this.truckDepositName = this.getTeam(0)?.depositName || '';
 
 
     setTimeout(() => {
@@ -236,7 +252,7 @@ export class MeasurementDetailsComponent implements OnInit {
 
       // Adicionar o marcador com o ícone SVG
       const label = (latitude !== 0 && longitude !== 0) ? "Localização da pré-medição" : "Coordenadas não informadas";
-      L.marker([latitude, longitude], {icon: defaultIcon}).addTo(this.map)
+      L.marker([latitude, longitude], { icon: defaultIcon }).addTo(this.map)
         .bindPopup(label)
         .openPopup();
 
@@ -257,38 +273,41 @@ export class MeasurementDetailsComponent implements OnInit {
         return;
       }
 
-      this.delegateDTO.street[streetIndex].teamId = Number(team.idTeam);
       this.delegateDTO.street[streetIndex].teamName = team.teamName;
       this.delegateDTO.street[streetIndex].truckDepositName = team.depositName;
       this.teamName = "EQUIPE " + team.teamName.toUpperCase();
       this.openModal = false;
     } else {
+      this.delegateDTO.teamId = Number(team.idTeam);
+
 
       this.preMeasurement.streets.forEach(street => {
         this.delegateDTO.street.push({
           preMeasurementStreetId: street.preMeasurementStreetId,
-          teamId: Number(team.idTeam),
           teamName: team.teamName,
           truckDepositName: team.depositName,
           prioritized: false,
-          comment: ''
         });
       });
       this.openModal = false;
-      this.toggleSideBar();
+
+      if(this.delegateDTO.stockistId === '') {
+        this.toggleSideBar();
+      } else {
+        this.showToastStockist();
+      }
+    
     }
   }
 
   getReserve() {
     return this.delegateDTO.street.find(r => r.preMeasurementStreetId === this.streetId) ||
-      {
-        preMeasurementStreetId: this.streetId,
-        teamId: 0,
-        teamName: '',
-        truckDepositName: '',
-        prioritized: false,
-        comment: ''
-      };
+    {
+      preMeasurementStreetId: this.streetId,
+      teamName: '',
+      truckDepositName: '',
+      comment: ''
+    };
   }
 
   getTeam(teamId: number) {
@@ -305,11 +324,6 @@ export class MeasurementDetailsComponent implements OnInit {
   finishStreet() {
     const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
     if (streetIndex === -1) {
-      return;
-    }
-
-    if (this.delegateDTO.street[streetIndex].teamId === 0) {
-      this.utils.showMessage('Selecione uma equipe para continuar', 'warn');
       return;
     }
 
@@ -336,14 +350,14 @@ export class MeasurementDetailsComponent implements OnInit {
 
   getReserveByStreetId(preMeasurementStreetId: number) {
     return this.delegateDTO.street.find(r => r.preMeasurementStreetId === preMeasurementStreetId) ||
-      {
-        preMeasurementStreetId: this.streetId,
-        teamId: 0,
-        teamName: '',
-        truckDepositName: '',
-        prioritized: false,
-        comment: ''
-      }
+    {
+      preMeasurementStreetId: this.streetId,
+      teamId: 0,
+      teamName: '',
+      truckDepositName: '',
+      prioritized: false,
+      comment: ''
+    }
   }
 
 
@@ -354,7 +368,7 @@ export class MeasurementDetailsComponent implements OnInit {
   toggleSideBar() {
     this.openStockistModal = !this.openStockistModal;
 
-    const audio = new Audio('sci.mp3');
+    const audio = new Audio('/public/sci.mp3');
     audio.play().catch(err => {
       console.warn('Erro ao tentar tocar o som:', err);
     });
@@ -375,13 +389,13 @@ export class MeasurementDetailsComponent implements OnInit {
     this.delegateDTO.stockistDepositName = stockist?.depositName || '';
     this.delegateDTO.stockistDepositAddress = stockist?.depositAddress || '';
     this.delegateDTO.stockistPhone = stockist?.depositPhone || '';
-    this.delegateDTO.description = this.preMeasurement.step + "º etapa da execução da " + this.preMeasurement.city + " com " + this.preMeasurement.streets.length + " ruas";
+    this.delegateDTO.description = "Etapa " + this.preMeasurement.step + " - " + this.preMeasurement.city;
 
     if (!isMultiTeam) {
       this.finish = true;
     }
 
-    this.utils.showMessage("Estoquista responsável pelo gerenciamento definido com sucesso", 'info');
+    this.utils.showMessage("Estoquista responsável pelo gerenciamento definido com sucesso", 'info', 'Informação salva');
     this.openStockistModal = false;
 
     this.showToastStockist();
@@ -403,26 +417,9 @@ export class MeasurementDetailsComponent implements OnInit {
     } else {
       message = "Prioridade removida para essa rua";
     }
-    this.utils.showMessage(message, 'info', 'Açao rea');
+    this.utils.showMessage(message, 'info', 'Ação realizada com sucesso');
   }
 
-  insertComment($event: Event) {
-    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
-    if (streetIndex === -1) {
-      return;
-    }
-
-    this.delegateDTO.street[streetIndex].comment = ($event.target as HTMLInputElement).value;
-  }
-
-  getComment() {
-    const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
-    if (streetIndex === -1) {
-      return;
-    }
-
-    return this.delegateDTO.street[streetIndex].comment;
-  }
 
   isPriority() {
     const streetIndex = this.delegateDTO.street.findIndex(r => r.preMeasurementStreetId === this.streetId);
@@ -433,21 +430,24 @@ export class MeasurementDetailsComponent implements OnInit {
     return this.delegateDTO.street[streetIndex].prioritized;
   }
 
+  closedToast = false;
   showToastStockist() {
-    this.utils.playSound("select");
-    this.messageService.add({
-      key: 'confirm',
-      severity: 'Lumos',
-      summary: 'Estoquista Responsável pelo Gerenciamento',
-      detail: '',
-      data: {
-        responsible: this.delegateDTO.stockistName,
-        depositName: this.delegateDTO.stockistDepositName,
-        phone: this.delegateDTO.stockistPhone,
-        address: this.delegateDTO.stockistDepositAddress
-      },
-      sticky: true
-    });
+      this.closedToast = false;
+      this.utils.playSound("select");
+
+      this.messageService.add({
+        key: 'confirm',
+        severity: 'info',
+        summary: 'Estoquista Responsável pelo Gerenciamento',
+        detail: '',
+        data: {
+          responsible: this.delegateDTO.stockistName,
+          depositName: this.delegateDTO.stockistDepositName,
+          phone: this.delegateDTO.stockistPhone,
+          address: this.delegateDTO.stockistDepositAddress
+        },
+        sticky: true
+      });
   }
 
   loading: boolean = false;
@@ -461,15 +461,18 @@ export class MeasurementDetailsComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         console.log(error)
-        this.utils.showMessage('Erro ao delegar execução: ' + error.error.message, 'error');
+        this.utils.showMessage(error.error.error ?? error.error.message, 'error', 'Erro ao delegar execução');
       },
       complete: () => {
         this.loading = false;
         this.showMessage = true;
-        this.showToastStockist();
       }
     });
   }
 
+
+  insertComment($event: Event) {
+    this.delegateDTO.comment = ($event.target as HTMLInputElement).value;
+  }
 
 }

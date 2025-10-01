@@ -119,7 +119,7 @@ export class PreMeasurementComponent implements OnInit {
       case 'validando':
         break;
       case  'disponivel':
-        this.openModal = true;
+        this.navigateToExecution(false);
         break;
     }
   }

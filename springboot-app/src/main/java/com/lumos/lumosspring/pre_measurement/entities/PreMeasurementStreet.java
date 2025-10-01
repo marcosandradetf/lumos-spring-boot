@@ -23,13 +23,12 @@ public class PreMeasurementStreet {
     private String address;
 
     private Double latitude;
+
     private Double longitude;
 
     private String streetStatus = ExecutionStatus.PENDING;
 
     private Integer step;
-
-    private Long teamId;
 
     private Long preMeasurementId;
 
@@ -50,8 +49,8 @@ public class PreMeasurementStreet {
 
     private Boolean prioritized;
 
-    private String comment;
     private String preMeasurementPhotoUri;
+
     private String executionPhotoUri;
 
 
@@ -62,8 +61,6 @@ public class PreMeasurementStreet {
     public void setPreMeasurementStreetId(long preMeasurementStreetId) {
         this.preMeasurementStreetId = preMeasurementStreetId;
     }
-
-
 
     public String getDescription() {
         return description;
@@ -128,14 +125,6 @@ public class PreMeasurementStreet {
 
     public void setStep(Integer step) {
         this.step = step;
-    }
-
-    public Long getTeamId() {
-        return teamId;
-    }
-
-    public void setTeamId(Long teamId) {
-        this.teamId = teamId;
     }
 
     public Long getPreMeasurementId() {
@@ -208,14 +197,6 @@ public class PreMeasurementStreet {
 
     public void setPrioritized(Boolean prioritized) {
         this.prioritized = prioritized;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
     }
 
     public String getPreMeasurementPhotoUri() {

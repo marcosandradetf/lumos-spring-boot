@@ -2,21 +2,21 @@ package com.lumos.lumosspring.dto.indirect_execution
 
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.UUID
 
 data class DelegateDTO(
     val preMeasurementId: Long,
     val description: String,
-    val stockistId: String,
+    val stockistId: UUID,
     val preMeasurementStep: Int,
     val street: List<DelegateStreetDTO>,
-    val currentUserUUID: String,
+    val teamId: Long,
+    val comment: String,
 )
 
 data class DelegateStreetDTO(
     val preMeasurementStreetId: Long,
-    val teamId: Long,
     val prioritized: Boolean,
-    val comment: String,
 )
 
 
@@ -35,17 +35,9 @@ data class MaterialInStockDTO(
 )
 
 data class ReserveDTOResponse(
-    val description: String,
-    val streets: List<ReserveStreetDTOResponse>
-)
-
-data class ReserveStreetDTOResponse(
-    val preMeasurementStreetId: Long?,
+    val preMeasurementId: Long?,
     val directExecutionId: Long?,
-    val streetName: String,
-    val latitude: Double?,
-    val longitude: Double?,
-    val prioritized: Boolean,
+    val description: String,
     val comment: String?,
     val assignedBy: String,
     val teamId: Long,
@@ -55,23 +47,24 @@ data class ReserveStreetDTOResponse(
 )
 
 data class ItemResponseDTO(
-    val itemId: Long,
+    val contractItemId: Long,
     val description: String,
     val quantity: BigDecimal,
     val type: String,
     val linking: String?,
+    val currentBalance: BigDecimal
 )
 
 //////
 data class ReserveDTOCreate(
-    val preMeasurementStreetId: Long?,
+    val preMeasurementId: Long?,
     val directExecutionId: Long?,
     val teamId: Long,
     val items: List<ReserveItemDTO>
 )
 
 data class ReserveItemDTO(
-    val itemId: Long,
+    val contractItemId: Long,
     val materials: List<ReserveMaterialDTO>
 )
 

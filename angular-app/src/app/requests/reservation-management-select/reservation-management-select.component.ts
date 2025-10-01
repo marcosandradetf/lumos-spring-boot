@@ -1,40 +1,39 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import {
-  ItemResponseDTO,
+  ReserveItemRequest,
   MaterialInStockDTO,
-  ReserveDTOResponse,
-  ReserveStreetDTOResponse
+  ReserveRequest
 } from '../../executions/executions.model';
-import {BreadcrumbComponent} from '../../shared/components/breadcrumb/breadcrumb.component';
-import {NgForOf, NgIf} from '@angular/common';
-import {Button} from 'primeng/button';
-import {InputText} from 'primeng/inputtext';
-import {Carousel, CarouselResponsiveOptions} from 'primeng/carousel';
-import {Table, TableModule} from 'primeng/table';
-import {Tag} from 'primeng/tag';
-import {Ripple} from 'primeng/ripple';
-import {FormsModule} from '@angular/forms';
-import {UtilsService} from '../../core/service/utils.service';
-import {Toast} from 'primeng/toast';
-import {Skeleton} from 'primeng/skeleton';
-import {Tooltip} from 'primeng/tooltip';
-import {ExecutionService} from '../../executions/execution.service';
-import {AuthService} from '../../core/auth/auth.service';
-import {Dialog} from 'primeng/dialog';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
-import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+import { NgForOf, NgIf } from '@angular/common';
+import { Button } from 'primeng/button';
+import { InputText } from 'primeng/inputtext';
+import {  CarouselResponsiveOptions } from 'primeng/carousel';
+import { Table, TableModule } from 'primeng/table';
+import { Tag } from 'primeng/tag';
+import { Ripple } from 'primeng/ripple';
+import { FormsModule } from '@angular/forms';
+import { UtilsService } from '../../core/service/utils.service';
+import { Toast } from 'primeng/toast';
+import { Skeleton } from 'primeng/skeleton';
+import { Tooltip } from 'primeng/tooltip';
+import { ExecutionService } from '../../executions/execution.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { Dialog } from 'primeng/dialog';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
+import { NgxMaskPipe, provideNgxMask } from 'ngx-mask';
+import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
+import { PrimeBreadcrumbComponent } from "../../shared/components/prime-breadcrumb/prime-breadcrumb.component";
+import { Title } from '@angular/platform-browser';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-reservation-management-select',
   standalone: true,
   imports: [
-    BreadcrumbComponent,
     NgIf,
     Button,
     InputText,
-    Carousel,
     TableModule,
     Tag,
     Ripple,
@@ -47,12 +46,31 @@ import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/l
     LoadingComponent,
     NgxMaskPipe,
     LoadingOverlayComponent,
+    PrimeBreadcrumbComponent,
+    RouterLink
   ],
   providers: [provideNgxMask()],
   templateUrl: './reservation-management-select.component.html',
   styleUrl: './reservation-management-select.component.scss'
 })
 export class ReservationManagementSelectComponent {
+  
+  message: string | null = null;
+  description: string = "";
+  preMeasurementId: number | null = null;
+  directExecutionId: number | null = null;
+  currentItemId: number = 0;
+  materials: MaterialInStockDTO[] = [];
+  filteredMaterials: MaterialInStockDTO[] = [];
+
+  selectedMaterial!: MaterialInStockDTO | null;
+  currentMaterialId: number = 0;
+  private userUUID: string = '';
+  
+  @ViewChild('table_parent') table!: Table;
+  @ViewChild('table_collapse') tableCollapse: Table | undefined;
+  @ViewChild('qtyInput') qtyInput!: ElementRef;
+
   responsiveOptions: CarouselResponsiveOptions[] = [
     {
       breakpoint: '1400px',
@@ -75,61 +93,41 @@ export class ReservationManagementSelectComponent {
       numScroll: 1
     }
   ];
-  reserve: ReserveDTOResponse = {
+
+  reserve: ReserveRequest = {
     description: '',
-    streets: []
-  };
-  description: string = "";
-
-  streetId: number | null = null;
-  directExecutionId: number | null = null;
-  currentItemId: number = 0;
-
-  street: ReserveStreetDTOResponse = {
-    preMeasurementStreetId: null,
+    preMeasurementId: null,
     directExecutionId: null,
-    streetName: '',
-    latitude: 0,
-    longitude: 0,
-    prioritized: false,
     comment: '',
     assignedBy: '',
     teamId: 0,
     teamName: '',
     truckDepositName: '',
     items: []
-  }
-
-  materials: MaterialInStockDTO[] = [];
-  filteredMaterials: MaterialInStockDTO[] = [];
-
-  @ViewChild('table_parent') table!: Table;
-
-  @ViewChild('table_collapse') tableCollapse: Table | undefined;
-  @ViewChild('qtyInput') qtyInput!: ElementRef;
-
-  selectedMaterial!: MaterialInStockDTO | null;
-  currentMaterialId: number = 0;
-  private userUUID: string = '';
+  };
 
   constructor(private router: Router,
-              protected utils: UtilsService,
-              private authService: AuthService,
-              private executionService: ExecutionService) {
+    protected utils: UtilsService,
+    private authService: AuthService,
+    private title: Title,
+    private executionService: ExecutionService) {
+
+    this.title.setTitle('Gerenciamento de Estoque - Pré-instalação');
 
 
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras.state as { reserve: ReserveDTOResponse };
+    const state = navigation?.extras.state as { reserve: ReserveRequest };
 
     if (state?.reserve) {
       this.reserve = state.reserve;
       this.description = this.reserve.description;
-      if (this.reserve.streets[0].comment === 'DIRECT_EXECUTION') {
-        this.streetId = null;
-        this.street = this.reserve.streets[0];
-        this.directExecutionId = this.street.directExecutionId;
-        this.currentTeamId = this.street.teamId;
+
+      if (this.reserve.preMeasurementId !== null) {
+        this.preMeasurementId = this.reserve.preMeasurementId;
+      } else {
+        this.directExecutionId = this.reserve.directExecutionId;
       }
+      this.currentTeamId = this.reserve.teamId;
     } else {
       void this.router.navigate(['/requisicoes/instalacoes/gerenciamento-estoque']);
     }
@@ -138,37 +136,33 @@ export class ReservationManagementSelectComponent {
 
   }
 
-  startReservation(street: ReserveStreetDTOResponse) {
-    this.streetId = street.preMeasurementStreetId;
-    this.description = "Execução na " + street.streetName;
-    this.street = street;
-    this.currentTeamId = street.teamId;
-  }
-
 
   quantity: string | null = null;
   loading: boolean = false;
 
-  onRowExpand(item: ItemResponseDTO) {
+  onRowExpand(item: ReserveItemRequest) {
     let linking = item.linking ? item.linking : item.type;
     linking = linking?.toLowerCase();
-
-    let type = item.type.toLowerCase();
 
     this.filteredMaterials = [];
     this.loading = true;
     this.expandedRows = {}; // fecha tudo
-    this.expandedRows[item.itemId] = true; // abre apenas o item atual
+    this.expandedRows[item.contractItemId] = true; // abre apenas o item atual
 
-    this.currentItemId = item.itemId;
+    this.currentItemId = item.contractItemId;
 
     const alreadyLoaded = this.materials.some(m =>
-      m.deposit === this.street.truckDepositName &&
+      m.deposit === this.reserve.truckDepositName &&
       (m.materialLength?.toLowerCase() === linking ||
         m.materialPower?.toLowerCase() === linking ||
         m.materialType?.toLowerCase() === linking)
     );
+
+    console.log(this.materials);
+    console.log(this.reserve);
+
     if (alreadyLoaded) {
+      console.log('Já carregado, filtrando localmente');
       this.filteredMaterials = this.materials.filter(m =>
         (m.materialLength?.toLowerCase() === linking ||
           m.materialPower?.toLowerCase() === linking ||
@@ -177,16 +171,16 @@ export class ReservationManagementSelectComponent {
 
       this.filteredMaterials =
         [...this.filteredMaterials,
-          ...this.materials.filter(m =>
-            m.deposit === this.street.truckDepositName &&
-            (m.materialLength?.toLowerCase() === linking ||
-              m.materialType?.toLowerCase() === linking ||
-              m.materialPower?.toLowerCase() === linking))]
+        ...this.materials.filter(m =>
+          m.deposit === this.reserve.truckDepositName &&
+          (m.materialLength?.toLowerCase() === linking ||
+            m.materialType?.toLowerCase() === linking ||
+            m.materialPower?.toLowerCase() === linking))]
           .sort((a, b) => {
-          const depositOrder = a.deposit.localeCompare(b.deposit);
-          if (depositOrder !== 0) return depositOrder;
-          return Number(b.isTruck) - Number(a.isTruck);
-        });
+            const depositOrder = a.deposit.localeCompare(b.deposit);
+            if (depositOrder !== 0) return depositOrder;
+            return Number(b.isTruck) - Number(a.isTruck);
+          });
 
       this.loading = false;
     } else {
@@ -212,7 +206,8 @@ export class ReservationManagementSelectComponent {
   }
 
   expandedRows: { [key: number]: boolean } = {};
-  tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
+  tableSk: any[] = Array.from({ length: 5 }).map((_, i) => `Item #${i}`);
+  allowMeasuredMessage: boolean = true;
 
   Confirm(
     material: MaterialInStockDTO, rowElement: HTMLTableRowElement) {
@@ -221,8 +216,8 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    const currentItemIndex = this.street.items.findIndex(i =>
-      i.itemId === this.currentItemId
+    const currentItemIndex = this.reserve.items.findIndex(i =>
+      i.contractItemId === this.currentItemId
     );
     if (currentItemIndex === -1) {
       this.utils.showMessage("2 - Erro ao reservar material, tente novamente", 'error');
@@ -240,10 +235,23 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    const truckMaterialStockId = this.filteredMaterials.find(m => m.materialId === material.materialId && m.deposit === this.street.truckDepositName)?.materialStockId
+    const truckMaterialStockId = this.filteredMaterials.find(m => m.materialId === material.materialId && m.deposit === this.reserve.truckDepositName)?.materialStockId
     if (!truckMaterialStockId) {
       this.utils.showMessage("Referência do material do caminhão não encontrada", "error", "Erro ao salvar referência")
       return;
+    }
+
+    const currentBalance = this.reserve.items[currentItemIndex].currentBalance ?? 0;
+
+    if (quantity > Number(currentBalance)) {
+      this.utils.showMessage("A quantidade solicitada é maior que o saldo contratual, verifique.", 'error', 'Saldo Contratual Excedido');
+      return;
+    }
+
+    const measuredQuanitity = this.reserve.items[currentItemIndex].quantity ?? 0;
+    if (quantity < Number(measuredQuanitity) && this.allowMeasuredMessage) {
+      const itemName = this.reserve.items[currentItemIndex].description ?? '';
+      this.utils.showMessage("A quantidade solicitada é maior que a quantidade alocada, tem certeza que está correto?", 'info', `VERIFIQUE O ${itemName}`, true, 'quantityAlert');
     }
 
     const newMaterial = material.isTruck
@@ -266,20 +274,20 @@ export class ReservationManagementSelectComponent {
       return;
     }
 
-    if (!this.existsMaterial(materialStockId, material.deposit)) {
-      const materials = this.street.items[currentItemIndex].materials;
-      if (!materials) this.street.items[currentItemIndex].materials = [];
-      this.street.items[currentItemIndex].materials.push(newMaterial);
+    if (!this.existsMaterial(material)) {
+      const materials = this.reserve.items[currentItemIndex].materials;
+      if (!materials) this.reserve.items[currentItemIndex].materials = [];
+      this.reserve.items[currentItemIndex].materials.push(newMaterial);
       this.utils.showMessage(`QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Material alocado com sucesso');
     } else {
       const propToCompare = material.isTruck ? 'truckMaterialStockId' : 'centralMaterialStockId';
-      const matIndex = this.street.items[currentItemIndex].materials
+      const matIndex = this.reserve.items[currentItemIndex].materials
         .findIndex(i => i[propToCompare] === materialStockId);
 
       if (matIndex === -1) {
         this.utils.showMessage("Erro ao editar item, tente novamente", 'error');
       }
-      this.street.items[currentItemIndex].materials[matIndex].materialQuantity = newMaterial.materialQuantity!!;
+      this.reserve.items[currentItemIndex].materials[matIndex].materialQuantity = newMaterial.materialQuantity!!;
       this.utils.showMessage(`NOVA QUANTIDADE: ${this.quantity}\nDESCRIÇÃO: ${material.materialName} ${material.materialPower ?? material.materialLength ?? ''}`, 'success', 'Material alterado com sucesso');
     }
 
@@ -290,30 +298,22 @@ export class ReservationManagementSelectComponent {
   }
 
   sendData() {
-    const hasUndefinedItems = this.street.items.some(i => i.materials === undefined);
+    const hasUndefinedItems = this.reserve.items.some(i => i.materials === undefined);
     if (hasUndefinedItems) {
       this.utils.showMessage("Existem itens pendentes", 'warn', 'Não foi possível salvar');
       return;
     }
 
-    const hasPendingItems = this.street.items.some(i => i.materials.length === 0);
+    const hasPendingItems = this.reserve.items.some(i => i.materials.length === 0);
     if (hasPendingItems) {
       this.utils.showMessage("Existem itens pendentes", 'warn', 'Não foi possível salvar');
       return;
     }
 
     this.loading = true;
-    this.executionService.reserveMaterialsForExecution(this.street, this.userUUID).subscribe({
+    this.executionService.reserveMaterialsForExecution(this.reserve, this.userUUID).subscribe({
       next: (response: any) => {
-        if (this.reserve.streets[0].comment === 'DIRECT_EXECUTION') {
-          this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
-          this.directExecutionId = null;
-        } else {
-          this.reserve.streets = this.reserve.streets.filter(s => s.preMeasurementStreetId !== this.streetId);
-          this.streetId = null;
-        }
-
-        this.utils.showMessage(response.message, 'success', 'Gerenciamento finalizado com sucesso', true);
+        this.message = response.message;
       },
       error: (error) => {
         this.utils.showMessage(error.error.error ?? error.message ?? error, 'info', 'Não foi possível salvar', true);
@@ -325,34 +325,34 @@ export class ReservationManagementSelectComponent {
 
   }
 
-  getQuantity(materialStockId: number, deposit: string) {
-    if (deposit.toUpperCase().includes("CAMINH")) {
-      return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.find(m => m.truckMaterialStockId == materialStockId)?.materialQuantity || null;
+  getQuantity(material: MaterialInStockDTO): string | null {
+    if (material.isTruck) {
+      return this.reserve.items.find(i => i.contractItemId === this.currentItemId)
+        ?.materials?.find(m => m.truckMaterialStockId == material.materialStockId)?.materialQuantity || null;
     } else {
-      return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.find(m => m.centralMaterialStockId == materialStockId)?.materialQuantity || null;
+      return this.reserve.items.find(i => i.contractItemId === this.currentItemId)
+        ?.materials?.find(m => m.centralMaterialStockId == material.materialStockId)?.materialQuantity || null;
     }
   }
 
-  existsMaterial(materialStockId: number, deposit: any): boolean {
-    if (deposit.toUpperCase().includes("CAMINH")) {
-      return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.some(m => m.truckMaterialStockId == materialStockId) || false;
+  existsMaterial(material: MaterialInStockDTO): boolean {
+    if (material.isTruck) {
+      return this.reserve.items.find(i => i.contractItemId === this.currentItemId)
+        ?.materials?.some(m => m.truckMaterialStockId == material.materialStockId) || false;
     } else {
-      return this.street.items.find(i => i.itemId === this.currentItemId)
-        ?.materials?.some(m => m.centralMaterialStockId == materialStockId) || false;
+      return this.reserve.items.find(i => i.contractItemId === this.currentItemId)
+        ?.materials?.some(m => m.centralMaterialStockId == material.materialStockId) || false;
     }
   }
 
   Cancel(material: MaterialInStockDTO, rowElement: HTMLTableRowElement) {
-    const index = this.street.items.findIndex(i => i.itemId === this.currentItemId)
-    if (index !== -1 && this.existsMaterial(material.materialStockId, material.deposit)) {
+    const index = this.reserve.items.findIndex(i => i.contractItemId === this.currentItemId)
+    if (index !== -1 && this.existsMaterial(material)) {
       if (material.isTruck) {
-        this.street.items[index].materials = this.street.items[index].materials
+        this.reserve.items[index].materials = this.reserve.items[index].materials
           .filter(m => m.truckMaterialStockId !== material.materialStockId);
       } else {
-        this.street.items[index].materials = this.street.items[index].materials
+        this.reserve.items[index].materials = this.reserve.items[index].materials
           .filter(m => m.centralMaterialStockId !== material.materialStockId);
       }
 
@@ -379,7 +379,7 @@ export class ReservationManagementSelectComponent {
 
     if (this.tableCollapse) {
       this.currentMaterialId = material.materialStockId;
-      this.quantity = this.getQuantity(material.materialStockId, material.deposit);
+      this.quantity = this.getQuantity(material);
       this.tableCollapse.initRowEdit(material);
       setTimeout(() => {
         this.qtyInput?.nativeElement?.focus();
@@ -476,6 +476,16 @@ export class ReservationManagementSelectComponent {
     if (materials) {
       return materials.reduce((total, m) => total + Number(m.materialQuantity), 0);
     } else return 0;
+  }
+
+  showComment() {
+    if(this.reserve.comment && this.reserve.comment.trim() !== '') {
+      this.utils.clearToast('comment');
+      this.utils.showMessage(this.reserve.comment, 'info', 'Adicionado por ' + this.reserve.assignedBy, true, 'comment');
+    } else {
+      this.utils.showMessage('Nenhum comentário adicionado.', 'info', 'Adicionado por ' + this.reserve.assignedBy);
+    }
+
   }
 
 }

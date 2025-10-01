@@ -1,8 +1,7 @@
 import {Injectable} from '@angular/core';
 import {environment} from '../../environments/environment';
 import {HttpClient} from '@angular/common/http';
-import * as http from 'node:http';
-import {DirectExecutionDTO, MaterialInStockDTO, ReserveDTOResponse, ReserveStreetDTOResponse} from './executions.model';
+import {DirectExecutionDTO, MaterialInStockDTO, ReserveRequest} from './executions.model';
 
 @Injectable({
   providedIn: 'root'
@@ -54,14 +53,14 @@ export class ExecutionService {
   }
 
   public getPendingReservesForStockist(userUUID: string) {
-    return this.http.get<ReserveDTOResponse[]>(this.baseUrl + `/execution/get-reservations/${userUUID}`);
+    return this.http.get<ReserveRequest[]>(this.baseUrl + `/execution/get-reservations/${userUUID}`);
   }
 
   public getStockMaterialForLinking(linking: string, type: string, teamId: number) {
     return this.http.get<MaterialInStockDTO[]>(this.baseUrl + `/execution/get-stock-materials/${linking}/${type}/${teamId}`);
   }
 
-  reserveMaterialsForExecution(currentStreet: ReserveStreetDTOResponse, userUUID: string) {
+  reserveMaterialsForExecution(currentStreet: ReserveRequest, userUUID: string) {
     return this.http.post(this.baseUrl + `/execution/reserve-materials-for-execution/${userUUID}`, currentStreet);
   }
 

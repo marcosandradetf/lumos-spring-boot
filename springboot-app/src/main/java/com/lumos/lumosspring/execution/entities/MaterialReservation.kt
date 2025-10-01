@@ -12,14 +12,14 @@ data class MaterialReservation(
     var description: String? = null,
     var centralMaterialStockId: Long? = null,
     var truckMaterialStockId: Long,
-    var preMeasurementStreetId: Long? = null,
+    var preMeasurementId: Long? = null,
     var directExecutionId: Long? = null,
     var contractItemId: Long,
     var reservedQuantity: BigDecimal,
     var quantityCompleted: BigDecimal = BigDecimal.ZERO,
     var status: String = ReservationStatus.PENDING,
     var teamId: Long,
-    )
+)
 
 //fun confirmReservation() {
 //    materialStock.removeStockAvailable(reservedQuantity)

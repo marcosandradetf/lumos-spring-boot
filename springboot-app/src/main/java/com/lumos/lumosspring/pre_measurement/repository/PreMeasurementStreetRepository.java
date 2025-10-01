@@ -11,7 +11,5 @@ import java.util.UUID;
 public interface PreMeasurementStreetRepository extends CrudRepository<PreMeasurementStreet, Long> {
     List<PreMeasurementStreet> findAllByStreetStatus(String status);
 
-    List<PreMeasurementStreet> findByTeamId(Long teamId);
-
     boolean existsByDevicePreMeasurementStreetId(UUID deviceId);
 }

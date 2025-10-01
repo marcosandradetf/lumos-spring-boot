@@ -36,7 +36,9 @@ public class PreMeasurementJdbc {
                             left join app_user au on au.user_id = p.created_by_user_id
                             where p.pre_measurement_id = :preMeasurementID
                         """,
-                Map.of("preMeasurementID", preMeasurementID),
+                Map.of(
+                        "preMeasurementID", preMeasurementID
+                ),
                 (rs, rowNum) -> {
 
                     List<PreMeasurementStreetResponseDTO> streets = namedJdbc.query(

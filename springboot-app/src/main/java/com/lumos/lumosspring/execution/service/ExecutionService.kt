@@ -12,6 +12,7 @@ import com.lumos.lumosspring.execution.entities.*
 import com.lumos.lumosspring.execution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.notifications.service.NotificationService
+import com.lumos.lumosspring.pre_measurement.entities.PreMeasurement
 import com.lumos.lumosspring.pre_measurement.entities.PreMeasurementStreet
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementRepository
 import com.lumos.lumosspring.pre_measurement.repository.PreMeasurementStreetRepository
@@ -67,59 +68,6 @@ class ExecutionService(
     private val preMeasurementRepository: PreMeasurementRepository,
 ) {
 
-//    // delegar ao estoquista a função de GERENCIAR A RESERVA DE MATERIAIS
-//    @Transactional
-//    fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
-//        val stockist =
-//            userRepository.findByUserId(UUID.fromString(delegateDTO.stockistId))
-//                .orElse(null) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                .body(DefaultResponse("Estoquista não encontrado"))
-//
-//        val streets = preMeasurementStreetRepository.getAllByPreMeasurement_PreMeasurementIdAndStep(
-//            delegateDTO.preMeasurementId,
-//            delegateDTO.preMeasurementStep
-//        )
-//
-//        if (streets.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//            .body(DefaultResponse("Nenhuma rua foi Encontrada"))
-//
-//        val existingManagement = reservationManagementRepository
-//            .existsByStreetsPreMeasurementPreMeasurementIdAndStreetsStep(
-//                delegateDTO.preMeasurementId,
-//                delegateDTO.preMeasurementStep
-//            )
-//
-//        if (existingManagement) {
-//            return ResponseEntity.status(HttpStatus.CONFLICT)
-//                .body(DefaultResponse("Já existe uma gestão de reserva para esse estoquista e essas ruas."))
-//        }
-//
-//        val management = ReservationManagement()
-//        management.description = delegateDTO.description
-//        management.stockist = stockist
-//
-//        reservationManagementRepository.save(management)
-//
-//        val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
-//        for (delegateStreet in delegateDTO.street) {
-//            val team = teamRepository.findById(delegateStreet.teamId)
-//                .orElse(null) ?: throw IllegalStateException()
-//            val assignBy = userRepository.findByUserId(currentUserUUID)
-//                .orElse(null) ?: throw IllegalStateException()
-//            val prioritized = delegateStreet.prioritized
-//            val comment = delegateStreet.comment
-//
-//            streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
-//                ?.assignToStockistAndTeam(team, assignBy, util.dateTime, prioritized, comment, management)
-//                ?: throw IllegalStateException("A rua ${delegateStreet.preMeasurementStreetId} enviada não foi encontrada")
-//
-//        }
-//
-//        preMeasurementStreetRepository.saveAll(streets)
-//
-//        return ResponseEntity.ok().build()
-//    }
-
     @Transactional
     fun delegate(delegateDTO: DelegateDTO): ResponseEntity<Any> {
 
@@ -133,37 +81,21 @@ class ExecutionService(
                 .body(DefaultResponse("Já existe uma gestão de reserva para esse estoquista e essas ruas."))
         }
 
-        val management = ReservationManagement(
+        var management = ReservationManagement(
             description = delegateDTO.description,
-            stockistId = UUID.fromString(delegateDTO.stockistId),
+            stockistId = delegateDTO.stockistId,
         )
 
-        reservationManagementRepository.save(management)
+        management = reservationManagementRepository.save(management)
 
-        val currentUserUUID = UUID.fromString(delegateDTO.currentUserUUID)
-
-        jdbcInstallationRepository.assignPreMeasurementToStockistAndTeam(
+        jdbcInstallationRepository.delegatePreMeasurementToExecution(
             delegateDTO.preMeasurementId,
             delegateDTO.teamId,
-            management.reservationManagementId!!
+            management.reservationManagementId
+                ?: throw Utils.BusinessException("Erro ao buscar código de gerenciamento"),
+            delegateDTO.comment,
+            delegateDTO.street.filter { it.prioritized }.map { it.preMeasurementStreetId }
         )
-
-//
-//        for (delegateStreet in delegateDTO.street) {
-//            val team = teamRepository.findById(delegateStreet.teamId)
-//                .orElse(null) ?: throw IllegalStateException()
-//            val assignBy = userRepository.findByUserId(currentUserUUID)
-//                .orElse(null) ?: throw IllegalStateException()
-//            val prioritized = delegateStreet.prioritized
-//            val comment = delegateStreet.comment
-//
-//            streets.find { it.preMeasurementStreetId == delegateStreet.preMeasurementStreetId }
-//                ?.assignToStockistAndTeam(team, assignBy, util.dateTime, prioritized, comment, management)
-//                ?: throw IllegalStateException("A rua ${delegateStreet.preMeasurementStreetId} enviada não foi encontrada")
-//
-//        }
-//
-//        preMeasurementStreetRepository.saveAll(streets)
 
         return ResponseEntity.ok().build()
     }
@@ -204,14 +136,7 @@ class ExecutionService(
 //            )
 //        }
 
-        val step: Int = namedJdbc.queryForObject(
-            """
-                    select count(direct_execution_id) + 1 as step from direct_execution
-                    where contract_id = :contractId
-                """.trimIndent(),
-            mapOf("contractId" to execution.contractId),
-            Int::class.java
-        )!!
+        val step = contractRepository.getLastStep(execution.contractId) + 1
 
         var management = ReservationManagement(
             description = "Etapa $step - ${contract.contractor}",
@@ -308,23 +233,82 @@ class ExecutionService(
         for (pRow in pendingManagement) {
             val reservationManagementId = (pRow["reservation_management_id"] as? Number)?.toLong() ?: 0L
             val description = pRow["description"] as? String ?: ""
-            val directExecutionWaiting = getRawData(
-                namedJdbc,
-                "select de.direct_execution_id, au.name || ' ' || au.last_name as completedName ,  t.id_team, t.team_name, d.deposit_name from direct_execution de \n" +
-                        "inner join team t on t.id_team = de.team_id \n" +
-                        "inner join deposit d on d.id_deposit = t.deposit_id_deposit \n" +
-                        "inner join app_user au on au.user_id = de.assigned_user_id \n" +
-                        "where de.reservation_management_id = :reservation_management_id \n",
+
+            namedJdbc.query(
+                """
+                select p.pre_measurement_id, null as direct_execution_id, p.comment, au.name || ' ' || au.last_name as completedName , t.id_team, t.team_name, d.deposit_name  
+                from pre_measurement p  
+                inner join team t on t.id_team = p.team_id  
+                inner join deposit d on d.id_deposit = t.deposit_id_deposit  
+                inner join app_user au on au.user_id = p.assign_by_user_id  
+                where p.reservation_management_id = :reservation_management_id
+                
+                union all
+                
+                select null as pre_measurement_id, de.direct_execution_id, de.instructions as comment, au.name || ' ' || au.last_name as completedName ,  t.id_team, t.team_name, d.deposit_name 
+                from direct_execution de 
+                inner join team t on t.id_team = de.team_id 
+                inner join deposit d on d.id_deposit = t.deposit_id_deposit 
+                inner join app_user au on au.user_id = de.assigned_user_id 
+                where de.reservation_management_id = :reservation_management_id 
+            """.trimIndent(),
                 mapOf("reservation_management_id" to reservationManagementId)
-            )
+            ) { rs, _ ->
+                val preMeasurementID = rs.getLong("pre_measurement_id")
+                val directExecutionID = rs.getLong("direct_execution_id")
 
-            val directExecutions: List<ReserveStreetDTOResponse> = directExecutionWaiting.map { row ->
-                val directExecutionId = (row["direct_execution_id"] as? Number)?.toLong() ?: 0L
+                val reserveResponse = if(preMeasurementID != 0L) {
+                    val items = namedJdbc.query(
+                        """
+                         select 
+                         ci.contract_item_id,
+                         coalesce(cri.name_for_import, cri.description) as description,
+                         sum(pmsi.measured_item_quantity) quantity,
+                         sum(ci.contracted_quantity - ci.quantity_executed) as total_current_balance,
+                         cri.type,
+                         cri.linking
+                         from pre_measurement_street_item pmsi
+                         join contract_item ci on ci.contract_item_id = pmsi.contract_item_id
+                         join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+                         where pmsi.pre_measurement_id = :preMeasurementID
+                             AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS')
+                         group by ci.contracted_quantity, ci.quantity_executed, cri.description, cri.contract_reference_item_id, ci.contract_item_id
+                        """.trimIndent(),
+                        MapSqlParameterSource(
+                            mapOf(
+                                "preMeasurementID" to preMeasurementID,
+                                "itemStatus" to ReservationStatus.PENDING
+                            )
+                        )
+                    ) { rs2, _ ->
+                        ItemResponseDTO(
+                            contractItemId = rs2.getLong("contract_item_id"),
+                            description = rs2.getString("description"),
+                            quantity = rs2.getBigDecimal("quantity"),
+                            type = rs2.getString("type"),
+                            linking = rs2.getString("linking"),
+                            currentBalance = rs2.getBigDecimal("total_current_balance")
+                        )
+                    }
 
-                val items = namedJdbc.query(
-                    """
-                            SELECT dei.direct_execution_item_id as itemId, cri.name_for_import as description,
-                            dei.measured_item_quantity as quantity, cri.type, cri.linking
+                    ReserveDTOResponse(
+                        preMeasurementId = preMeasurementID,
+                        directExecutionId = null,
+                        description = description,
+                        comment = rs.getString("comment"),
+                        assignedBy = rs.getString("completedName"),
+                        teamId = rs.getLong("id_team"),
+                        teamName = rs.getString("team_name"),
+                        truckDepositName = rs.getString("deposit_name"),
+                        items = items
+                    )
+
+                } else  {
+                    val items = namedJdbc.query(
+                        """
+                            SELECT ci.contract_item_id, cri.name_for_import as description,
+                            dei.measured_item_quantity as quantity, cri.type, cri.linking,
+                            ci.contracted_quantity - ci.quantity_executed as total_current_balance
                             FROM direct_execution_item dei
                             INNER JOIN contract_item ci ON ci.contract_item_id = dei.contract_item_id
                             INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
@@ -332,98 +316,38 @@ class ExecutionService(
                                 AND dei.item_status = :itemStatus AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS')
                             ORDER BY cri.name_for_import
                         """.trimIndent(),
-                    MapSqlParameterSource(
-                        mapOf(
-                            "direct_execution_id" to directExecutionId,
-                            "itemStatus" to ReservationStatus.PENDING
+                        MapSqlParameterSource(
+                            mapOf(
+                                "direct_execution_id" to directExecutionID,
+                                "itemStatus" to ReservationStatus.PENDING
+                            )
+                        ),
+                    ) { rs2, _ ->
+                        ItemResponseDTO(
+                            contractItemId = rs2.getLong("contract_item_id"),
+                            description = rs2.getString("description"),
+                            quantity = rs2.getBigDecimal("quantity"),
+                            type = rs2.getString("type"),
+                            linking = rs2.getString("linking"),
+                            currentBalance = rs2.getBigDecimal("total_current_balance")
                         )
-                    ),
-                ) { rs, _ ->
-                    ItemResponseDTO(
-                        itemId = rs.getLong("itemId"),
-                        description = rs.getString("description"),
-                        quantity = rs.getBigDecimal("quantity"),
-                        type = rs.getString("type"),
-                        linking = rs.getString("linking")
+                    }
+
+                    ReserveDTOResponse(
+                        preMeasurementId = null,
+                        directExecutionId = directExecutionID,
+                        description = description,
+                        comment = rs.getString("comment"),
+                        assignedBy = rs.getString("completedName"),
+                        teamId = rs.getLong("id_team"),
+                        teamName = rs.getString("team_name"),
+                        truckDepositName = rs.getString("deposit_name"),
+                        items = items
                     )
                 }
 
-                ReserveStreetDTOResponse(
-                    preMeasurementStreetId = null,
-                    directExecutionId = directExecutionId,
-                    streetName = "",
-                    latitude = null,
-                    longitude = null,
-                    prioritized = false,
-                    comment = "DIRECT_EXECUTION",
-                    assignedBy = row["completedName"]?.toString() ?: "",
-                    teamId = (row["id_team"] as? Number)?.toLong() ?: 0L,
-                    teamName = row["team_name"]?.toString() ?: "",
-                    truckDepositName = row["deposit_name"]?.toString() ?: "",
-                    items = items
-                )
+                response.add(reserveResponse)
             }
-
-            val inDirectExecutionWaiting = getRawData(
-                namedJdbc,
-                "select pms.pre_measurement_street_id, pms.street, pms.latitude, pms.longitude, pms.prioritized, rm.description, \n" +
-                        "pms.comment, au.name || ' ' || au.last_name as completedName , t.id_team, t.team_name, d.deposit_name \n" +
-                        "from pre_measurement_street pms \n" +
-                        "inner join team t on t.id_team = pms.team_id \n" +
-                        "inner join deposit d on d.id_deposit = t.deposit_id_deposit \n" +
-                        "inner join app_user au on au.user_id = pms.assigned_by_user_id \n" +
-                        "inner join reservation_management rm on rm.reservation_management_id = pms.reservation_management_id \n" +
-                        "where pms.reservation_management_id = :reservation_management_id",
-                mapOf("reservation_management_id" to reservationManagementId)
-            )
-
-            val indirectExecutions: List<ReserveStreetDTOResponse> = inDirectExecutionWaiting.map { row ->
-                val preMeasurementStreetId = (row["pre_measurement_street_id"] as? Number)?.toLong() ?: 0L
-
-                val items = namedJdbc.query(
-                    """
-                            SELECT pmsi.pre_measurement_street_item_id as itemId, cri.name_for_import as description,
-                            pmsi.measured_item_quantity as quantity, cri.type, cri.linking
-                            FROM pre_measurement_street_item pmsi
-                            INNER JOIN contract_item ci ON ci.contract_item_id = pmsi.contract_item_id
-                            INNER JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                            WHERE pmsi.pre_measurement_street_id = :pre_measurement_street_id and pmsi.item_status = :itemStatus
-                            AND cri.type NOT IN ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS')
-                        """.trimIndent(),
-                    MapSqlParameterSource(
-                        mapOf(
-                            "pre_measurement_street_id" to preMeasurementStreetId,
-                            "itemStatus" to ReservationStatus.PENDING
-                        )
-                    )
-                ) { rs, _ ->
-                    ItemResponseDTO(
-                        itemId = rs.getLong("itemId"),
-                        description = rs.getString("description"),
-                        quantity = rs.getBigDecimal("quantity"),
-                        type = rs.getString("type"),
-                        linking = rs.getString("linking")
-                    )
-                }
-
-                ReserveStreetDTOResponse(
-                    preMeasurementStreetId = preMeasurementStreetId,
-                    directExecutionId = null,
-                    streetName = row["street"]?.toString() ?: "",
-                    latitude = (row["latitude"] as? Number)?.toDouble() ?: 0.0,
-                    longitude = (row["longitude"] as? Number)?.toDouble() ?: 0.0,
-                    prioritized = (row["prioritized"] as? Boolean) ?: false,
-                    comment = (row["comment"] as? String) ?: "",
-                    assignedBy = (row["completedName"] as? String) ?: "",
-                    teamId = (row["id_team"] as? Number)?.toLong() ?: 0L,
-                    teamName = row["team_name"]?.toString() ?: "",
-                    truckDepositName = (row["deposit_name"] as? String) ?: "",
-                    items = items
-                )
-            }
-
-            val executions = directExecutions.ifEmpty { indirectExecutions }
-            response.add(ReserveDTOResponse(description, executions))
         }
 
         return ResponseEntity.ok(response)
@@ -445,17 +369,18 @@ class ExecutionService(
 
     @Transactional
     fun reserveMaterialsForExecution(executionReserve: ReserveDTOCreate, strUserUUID: String): ResponseEntity<Any> {
-        val preMeasurementStreetId = executionReserve.preMeasurementStreetId
-        val preMeasurementStreet = if (preMeasurementStreetId != null) {
-            preMeasurementStreetRepository.findById(preMeasurementStreetId)
-                .orElseThrow { IllegalStateException("Street not found for id: $preMeasurementStreetId") }
+        val preMeasurementID = executionReserve.preMeasurementId
+        val preMeasurement = if (preMeasurementID != null) {
+            preMeasurementRepository.findById(preMeasurementID)
+                .orElseThrow { IllegalStateException("Street not found for id: $preMeasurementID") }
         } else null
 
-        if (preMeasurementStreet != null)
-            if (preMeasurementStreet.streetStatus != ExecutionStatus.WAITING_STOCKIST) {
+        if (preMeasurement != null) {
+            if (preMeasurement.status != ExecutionStatus.WAITING_STOCKIST) {
                 return ResponseEntity.status(500)
                     .body(DefaultResponse("Os itens dessa execução já foram todos reservados, inicie a próxima etapa."))
             }
+        }
 
         val directExecution = executionReserve.directExecutionId?.let {
             directExecutionRepository.findById(it)
@@ -481,27 +406,7 @@ class ExecutionService(
         for (item in executionReserve.items) {
             for (materialReserve in item.materials) {
 
-                val contractItemId =
-                    if (preMeasurementStreetId != null)
-                        JdbcUtil.getSingleRow(
-                            namedJdbc,
-                            """
-                                select contract_item_id from pre_measurement_street_item
-                                where pre_measurement_street_item_id = :streetItemId
-                            """.trimIndent(),
-                            mapOf("streetItemId" to item.itemId)
-                        )?.get("contract_item_id") as? Long
-                            ?: throw IllegalStateException("Contrato do item ${item.itemId} enviado não foi encontrado")
-                    else
-                        JdbcUtil.getSingleRow(
-                            namedJdbc,
-                            """
-                                select contract_item_id from direct_execution_item
-                                where direct_execution_item_id = :directItemId
-                            """.trimIndent(),
-                            mapOf("directItemId" to item.itemId)
-                        )?.get("contract_item_id") as? Long
-                            ?: throw IllegalStateException("Contrato do item ${item.itemId} enviado não foi encontrado")
+                val contractItemId = item.contractItemId
 
                 val available = contractItemsQuantitativeRepository.getTotalBalance(contractItemId)
 
@@ -577,9 +482,9 @@ class ExecutionService(
                         ?: throw IllegalStateException("Truck Material stock not found ${materialReserve.materialId} - deposit: $depositId")
 
                     MaterialReservation(
-                        description = preMeasurementStreet?.address,
+                        description = "${preMeasurement?.step} etapa - ${preMeasurement?.city}",
                         reservedQuantity = materialReserve.materialQuantity,
-                        preMeasurementStreetId = executionReserve.preMeasurementStreetId,
+                        preMeasurementId = executionReserve.preMeasurementId,
                         directExecutionId = executionReserve.directExecutionId,
                         contractItemId = contractItemId,
                         teamId = executionReserve.teamId,
@@ -590,9 +495,9 @@ class ExecutionService(
 
                 } else {
                     MaterialReservation(
-                        description = preMeasurementStreet?.address,
+                        description = "${preMeasurement?.step} etapa - ${preMeasurement?.city}",
                         reservedQuantity = materialReserve.materialQuantity,
-                        preMeasurementStreetId = executionReserve.preMeasurementStreetId,
+                        preMeasurementId = executionReserve.preMeasurementId,
                         directExecutionId = executionReserve.directExecutionId,
                         contractItemId = contractItemId,
                         teamId = executionReserve.teamId,
@@ -609,7 +514,7 @@ class ExecutionService(
         materialReservationRepository.saveAll(reservations)
 
         val responseMessage =
-            if (preMeasurementStreet != null) verifyStreetReservations(reservations, preMeasurementStreet)
+            if (preMeasurement != null) verifyStreetReservations(reservations, preMeasurement)
             else if (directExecution != null) verifyDirectExecutionReservations(reservations, directExecution) else ""
 
         return ResponseEntity.ok().body(DefaultResponse(responseMessage))
@@ -617,51 +522,50 @@ class ExecutionService(
 
     private fun verifyStreetReservations(
         reservation: List<MaterialReservation>,
-        preMeasurementStreet: PreMeasurementStreet
+        preMeasurement: PreMeasurement
     ): String {
         var responseMessage = ""
         if (reservation.all { it.status == ReservationStatus.IN_STOCK }) {
-            preMeasurementStreet.streetStatus = ExecutionStatus.AVAILABLE_EXECUTION
+            preMeasurement.status = ExecutionStatus.AVAILABLE_EXECUTION
             responseMessage =
                 "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. A equipe pode iniciar a execução."
 
         } else if (!reservation.any { it.status == ReservationStatus.PENDING }) {
-            preMeasurementStreet.streetStatus = ExecutionStatus.WAITING_COLLECT
+            preMeasurement.status = ExecutionStatus.WAITING_COLLECT
             responseMessage =
                 "Como nenhum material foi reservado em almoxarifado de terceiros. Não será necessário aprovação. " +
                         "Mas os materiais estão pendentes de coleta pela equipe."
 
         } else if (reservation.any { it.status == ReservationStatus.PENDING }) {
-            preMeasurementStreet.streetStatus = ExecutionStatus.WAITING_RESERVE_CONFIRMATION
+            preMeasurement.status = ExecutionStatus.WAITING_RESERVE_CONFIRMATION
 
             responseMessage =
                 "Como alguns itens foram reservadas em almoxarifados de terceiros. Será necessária aprovação. " +
                         "Após isso estes materiais estarão disponíveis para coleta."
         }
 
-        notify(reservation, preMeasurementStreet.preMeasurementStreetId.toString())
+        //notify(reservation, preMeasurementStreet.preMeasurementStreetId.toString())
 
-        preMeasurementStreetRepository.save(preMeasurementStreet)
+        preMeasurementRepository.save(preMeasurement)
 
-        TODO("CORRIGIR")
-//        if (
-//            preMeasurementStreet.reservationManagement.streets
-//                .none { it.streetStatus == ExecutionStatus.WAITING_STOCKIST }
-//        ) {
-//            preMeasurementStreet.reservationManagement.status = ReservationStatus.FINISHED
-//            namedJdbc.update(
-//                """
-//                    update pre_measurement_street_item set item_status = :status
-//                    where pre_measurement_street_id = :preMeasurementStreetId
-//                """.trimIndent(),
-//                mapOf(
-//                    "status" to ReservationStatus.FINISHED,
-//                    "preMeasurementStreetId" to preMeasurementStreet.preMeasurementStreetId
-//                )
-//            )
-//        }
+        jdbcTemplate.update(
+            """
+            UPDATE reservation_management set status = ?
+            where reservation_management_id = ?
+        """.trimIndent(),
+            ReservationStatus.FINISHED, preMeasurement.reservationManagementId
+        )
 
-        preMeasurementStreetRepository.save(preMeasurementStreet)
+        namedJdbc.update(
+            """
+                    update pre_measurement_street_item set item_status = :status
+                    where pre_measurement_id = :preMeasurementID
+                """.trimIndent(),
+            mapOf(
+                "status" to ReservationStatus.FINISHED,
+                "preMeasurementID" to preMeasurement.preMeasurementId
+            )
+        )
 
         return responseMessage
     }
@@ -1481,7 +1385,7 @@ class ExecutionService(
 
                     <!-- Coordenadas -->
                 ${
-                    if (line["latitude"].asText() != "null")
+                if (line["latitude"].asText() != "null")
                     """
                                 <p style="
                                     margin: 0;
@@ -1494,8 +1398,8 @@ class ExecutionService(
                                     Coordenadas - Latitude: ${line["latitude"].asText()}, Longitude: ${line["longitude"].asText()}
                                 </p>
                             """.trimIndent()
-                    else ""
-                }
+                else ""
+            }
 
                     <!-- Foto -->
                     <img

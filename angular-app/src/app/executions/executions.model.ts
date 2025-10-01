@@ -15,32 +15,25 @@ export interface DepositByStockist {
   depositPhone: string | null,
 }
 
-export interface ReserveDTOResponse {
-  description: string,
-  streets: ReserveStreetDTOResponse[]
-}
-
-export interface ReserveStreetDTOResponse {
-  preMeasurementStreetId: number | null,
+export interface ReserveRequest {
+  preMeasurementId: number | null,
   directExecutionId: number | null,
-  streetName: string,
-  latitude: number,
-  longitude: number,
-  prioritized: Boolean,
+  description: string,
   comment: string,
   assignedBy: string,
   teamId: number;
   teamName: string,
   truckDepositName: string,
-  items: ItemResponseDTO[]
+  items: ReserveItemRequest[]
 }
 
-export interface ItemResponseDTO {
-  itemId: number,
+export interface ReserveItemRequest {
+  contractItemId: number,
   description: string,
   quantity: string,
   type: string,
   linking: string,
+  currentBalance: string,
 
   materials: {
     centralMaterialStockId: number | null,

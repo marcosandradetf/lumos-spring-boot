@@ -1,14 +1,14 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {environment} from '../../../environments/environment';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import {
   CheckBalanceRequest,
   ListPreMeasurementRequest,
   PreMeasurementDTO,
   PreMeasurementResponseDTO
 } from '../pre-measurement-models';
-import {ContractAndItemsResponse} from '../../contract/contract-models';
+import { ContractAndItemsResponse } from '../../contract/contract-models';
 
 @Injectable({
   providedIn: 'root'
@@ -73,42 +73,41 @@ export class PreMeasurementService {
           itemQuantity: number;
           availableQuantity: number
         }[];
-      }[]>(environment.springboot + "/api/execution/get-available-stock", {params});
+      }[]>(environment.springboot + "/api/execution/get-available-stock", { params });
   }
 
   importData(preMeasurement: PreMeasurementDTO, userUUID: string) {
-    const header = new HttpHeaders({'UUID': userUUID});
+    const header = new HttpHeaders({ 'UUID': userUUID });
     return this.http.post<{ message: string }>(environment.springboot + "/api/pre-measurement/import",
       preMeasurement,
-      {headers: header}
+      { headers: header }
     );
   }
 
   delegateExecution(delegateDTO: {
-                      preMeasurementId: number;
-                      description: string,
-                      stockistId: string,
-                      stockistName: string,
-                      stockistPhone: string,
-                      stockistDepositName: string,
-                      stockistDepositAddress: string,
-                      preMeasurementStep: number,
-                      currentUserUUID: string,
+    preMeasurementId: number;
+    description: string,
+    stockistId: string,
+    stockistName: string,
+    stockistPhone: string,
+    stockistDepositName: string,
+    stockistDepositAddress: string,
+    preMeasurementStep: number,
+    teamId: number;
+    comment: string;
 
-                      street: {
-                        preMeasurementStreetId: number;
-                        teamId: number;
-                        teamName: string,
-                        truckDepositName: string;
-                        prioritized: boolean;
-                        comment: string;
-                      }[]
-                    }
+    street: {
+      preMeasurementStreetId: number;
+      teamName: string,
+      truckDepositName: string;
+      prioritized: boolean;
+    }[]
+  }
   ) {
     return this.http.post(environment.springboot + "/api/execution/delegate", delegateDTO);
   }
 
   checkBalance(preMeasurementId: number) {
-    return this.http.get<CheckBalanceRequest[]>(environment.springboot +'/api/execution/check-balance-pre-measurement/' + preMeasurementId);
+    return this.http.get<CheckBalanceRequest[]>(environment.springboot + '/api/execution/check-balance-pre-measurement/' + preMeasurementId);
   }
 }

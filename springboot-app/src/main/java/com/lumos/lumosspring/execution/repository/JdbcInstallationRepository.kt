@@ -3,8 +3,12 @@ package com.lumos.lumosspring.execution.repository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.lumos.lumosspring.dto.indirect_execution.DelegateStreetDTO
+import com.lumos.lumosspring.util.ExecutionStatus
+import com.lumos.lumosspring.util.Utils.getCurrentUserId
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import java.util.*
 
 @Repository
 class JdbcInstallationRepository(
@@ -287,8 +291,44 @@ class JdbcInstallationRepository(
         }
     }
 
-    fun assignPreMeasurementToStockistAndTeam(preMeasurementID: Long, teamID: Long, managementID: Long) {
+    fun delegatePreMeasurementToExecution(
+        preMeasurementID: Long,
+        teamID: Long,
+        managementID: Long,
+        comment: String,
+        priorityStreets: List<Long>
+    ) {
+        val userID = getCurrentUserId()
 
+        namedJdbc.update(
+            """
+                update pre_measurement
+                set team_id = :teamID, comment = :comment, reservation_management_id = :managementID, status = :status,
+                assign_by_user_id = :userID
+                where pre_measurement_id = :preMeasurementID
+            """.trimIndent(),
+            mapOf(
+                "preMeasurementID" to preMeasurementID,
+                "teamID" to teamID,
+                "managementID" to managementID,
+                "comment" to comment,
+                "status" to ExecutionStatus.WAITING_STOCKIST,
+                "userID" to userID,
+            )
+        )
+
+        if(priorityStreets.isNotEmpty()) {
+            namedJdbc.update(
+                """
+                update pre_measurement_street
+                set prioritized = true
+                where pre_measurement_street_id in (:priorityStreets)
+            """.trimIndent(),
+                mapOf(
+                    "priorityStreets" to priorityStreets,
+                )
+            )
+        }
     }
 
 

@@ -19,8 +19,8 @@ class ExecutionController(
     private val executionService: ExecutionService,
 ) {
 
-//    @PostMapping("/execution/delegate")
-//    fun delegate(@RequestBody delegateDTO: DelegateDTO): ResponseEntity<Any> = executionService.delegate(delegateDTO)
+    @PostMapping("/execution/delegate")
+    fun delegate(@RequestBody delegateDTO: DelegateDTO): ResponseEntity<Any> = executionService.delegate(delegateDTO)
 
     @PostMapping("/execution/delegate-direct-execution")
     fun delegateDirectExecution(@RequestBody execution: DirectExecutionDTO): ResponseEntity<Any> =

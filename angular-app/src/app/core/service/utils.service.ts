@@ -154,26 +154,27 @@ export class UtilsService {
   showMessage(messageContent: string,
               typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary',
               summary: string = typeMessage,
-              stick: boolean = false,) {
+              stick: boolean = false,
+              key: string | null = null,) {
     switch (typeMessage) {
 
       case 'success':
-        this.messageService.add({severity: 'success', summary: summary, detail: messageContent, sticky: stick});
+        this.messageService.add({severity: 'success', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
         break;
       case 'info':
-        this.messageService.add({severity: 'info', summary: summary, detail: messageContent, sticky: stick});
+        this.messageService.add({severity: 'info', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
         break;
       case 'warn':
-        this.messageService.add({severity: 'warn', summary: summary, detail: messageContent, sticky: stick});
+        this.messageService.add({severity: 'warn', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
         break;
       case 'error':
-        this.messageService.add({severity: 'error', summary: summary, detail: messageContent, sticky: stick});
+        this.messageService.add({severity: 'error', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
         break;
       case 'contrast':
-        this.messageService.add({severity: 'contrast', summary: summary, detail: messageContent, sticky: stick});
+        this.messageService.add({severity: 'contrast', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
         break;
       case 'secondary':
-        this.messageService.add({severity: 'secondary', summary: summary, detail: messageContent, sticky: stick});
+        this.messageService.add({severity: 'secondary', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
         break;
     }
 
@@ -182,15 +183,15 @@ export class UtilsService {
 
   playSound(type: 'pop' | 'select' | 'open') {
     if (type === 'open') {
-      const audio = new Audio('sci.mp3');
+      const audio = new Audio('/public/sci.mp3');
       audio.play().catch(err => {
       });
     } else if (type === 'select') {
-      const audio = new Audio('select.mp3');
+      const audio = new Audio('/public/select.mp3');
       audio.play().catch(err => {
       });
     } else if (type === 'pop') {
-      const audio = new Audio('pop.mp3');
+      const audio = new Audio('/public/pop.mp3');
       audio.play().catch(err => {
       });
     }
@@ -230,6 +231,10 @@ export class UtilsService {
       .replace(/\s+/g, ' '); // limpa espaços duplos
 
     return this.capitalizeWithAcronyms(formatedCity.trim());
+  }
+
+  clearToast(key: string) {
+    this.messageService.clear(key);
   }
 
 }

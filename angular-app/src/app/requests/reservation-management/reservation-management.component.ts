@@ -1,15 +1,15 @@
-import {Component, ViewChild} from '@angular/core';
-import {Title} from '@angular/platform-browser';
-import {ExecutionService} from '../../executions/execution.service';
-import {AuthService} from '../../core/auth/auth.service';
-import {GetObjectRequest, SetObjectRequest, UtilsService} from '../../core/service/utils.service';
-import {ReserveDTOResponse, ReserveStreetDTOResponse} from '../../executions/executions.model';
-import {NgForOf, NgIf} from '@angular/common';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {Router} from '@angular/router';
-import {Menu} from 'primeng/menu';
-import {MenuItem} from 'primeng/api';
-import {Toast} from 'primeng/toast';
+import { Component, ViewChild } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { ExecutionService } from '../../executions/execution.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { UtilsService } from '../../core/service/utils.service';
+import { ReserveRequest } from '../../executions/executions.model';
+import { NgForOf, NgIf } from '@angular/common';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
+import { Router } from '@angular/router';
+import { Menu } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
+import { Toast } from 'primeng/toast';
 
 @Component({
   selector: 'app-reservation-management',
@@ -26,13 +26,13 @@ import {Toast} from 'primeng/toast';
 })
 export class ReservationManagementComponent {
   loading = true;
-  reservations: ReserveDTOResponse[] = [];
+  reservations: ReserveRequest[] = [];
 
   constructor(private titleService: Title,
-              private authService: AuthService,
-              private utils: UtilsService,
-              protected router: Router,
-              private executionService: ExecutionService) {
+    private authService: AuthService,
+    private utils: UtilsService,
+    protected router: Router,
+    private executionService: ExecutionService) {
     this.titleService.setTitle("Gerenciamento de Estoque – Pré-instalação");
 
     this.executionService.getPendingReservesForStockist(this.authService.getUser().uuid).subscribe({
@@ -50,9 +50,9 @@ export class ReservationManagementComponent {
 
   }
 
-  getItemsQuantity(reserve: ReserveDTOResponse) {
+  getItemsQuantity(reserve: ReserveRequest) {
     let quantity = 0;
-    reserve.streets.forEach(s => quantity += s.items.length);
+    reserve.items.map(_ => quantity += 1);
 
     return quantity;
   }
@@ -70,13 +70,15 @@ export class ReservationManagementComponent {
   currentIds: number[] = [];
   type: string | null = null;
 
-  openContextMenu(event: MouseEvent, management: ReserveDTOResponse) {
+  openContextMenu(event: MouseEvent, management: ReserveRequest) {
     event.preventDefault();
     this.description = management ? management.description : null;
-    this.type = management.streets[0].comment;
-    this.currentIds = management.streets
-      .map(u => u.directExecutionId ?? u.preMeasurementStreetId)
-      .filter((id): id is number => id !== null && id !== undefined);
+    this.type = management.comment;
+    if (management.directExecutionId !== null) {
+      this.currentIds = [management.directExecutionId];
+    } else if (management.preMeasurementId !== null) {
+      this.currentIds = [management.preMeasurementId];
+    }
 
     // Abre o menu popup alinhado ao botão clicado
     this.menu?.show(event);
@@ -92,7 +94,7 @@ export class ReservationManagementComponent {
         this.utils.showMessage(this.description + " foi excluida.", "success", "Operação realizda com sucesso");
       },
       error: (error) => {
-        this.utils.showMessage(error.error.error ?? error.error.message , 'info', "Não foi possível excluir a etapa");
+        this.utils.showMessage(error.error.error ?? error.error.message, 'info', "Não foi possível excluir a etapa");
         this.loading = false;
       },
       complete: () => {
