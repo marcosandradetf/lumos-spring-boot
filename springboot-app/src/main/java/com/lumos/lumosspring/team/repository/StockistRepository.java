@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.team.repository;
 
-import com.lumos.lumosspring.team.entities.Stockist;
+import com.lumos.lumosspring.team.model.Stockist;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

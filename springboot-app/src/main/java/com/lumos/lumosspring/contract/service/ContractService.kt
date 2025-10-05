@@ -10,8 +10,8 @@ import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.notifications.service.Routes
-import com.lumos.lumosspring.user.Role
-import com.lumos.lumosspring.user.UserRepository
+import com.lumos.lumosspring.user.model.Role
+import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.JdbcUtil

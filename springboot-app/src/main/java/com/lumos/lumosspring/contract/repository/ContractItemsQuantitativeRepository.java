@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.contract.repository;
 
 import com.lumos.lumosspring.contract.entities.ContractItem;
-import com.lumos.lumosspring.dto.reservation.ResponseItemReserve;
+import com.lumos.lumosspring.stock.order.dto.ResponseItemReserve;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 
@@ -34,14 +34,14 @@ public interface ContractItemsQuantitativeRepository extends CrudRepository<Cont
     BigDecimal getTotalBalance(long contractItemId);
 
     @Query("""
-        select mr.material_id_reservation, coalesce(de.description, pms.description) as description, mr.reserved_quantity,\s
-        	mr.quantity_completed, de.direct_execution_id, pms.pre_measurement_street_id,\s
+        select mr.material_id_reservation, coalesce(de.description, p.city) as description, mr.reserved_quantity,\s
+        	mr.quantity_completed, de.direct_execution_id, p.pre_measurement_id,\s
         	cri.description as item_name
         from material_reservation mr\s
         join contract_item ci on ci.contract_item_id = mr.contract_item_id\s
         join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
         left join direct_execution de on de.direct_execution_id  = mr.direct_execution_id\s
-        left join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id\s
+        left join pre_measurement p on p.pre_measurement_id = mr.pre_measurement_id\s
         where mr.status <> 'FINISHED' and mr.quantity_completed < mr.reserved_quantity and mr.contract_item_id  = :contractItemId
    \s""")
     List<ResponseItemReserve> getInProgressReservations(long contractItemId);

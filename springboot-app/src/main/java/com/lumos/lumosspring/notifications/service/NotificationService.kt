@@ -4,7 +4,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.AndroidConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
-import com.lumos.lumosspring.user.Role.Values
+import com.lumos.lumosspring.user.model.Role.Values
 import com.lumos.lumosspring.util.NotificationType
 import org.springframework.stereotype.Service
 import java.time.Duration

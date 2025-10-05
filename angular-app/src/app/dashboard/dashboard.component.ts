@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import {Title} from '@angular/platform-browser';
+import { PrimeBreadcrumbComponent } from "../shared/components/prime-breadcrumb/prime-breadcrumb.component";
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [],
+  imports: [PrimeBreadcrumbComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })

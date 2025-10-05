@@ -1,9 +1,8 @@
 package com.lumos.lumosspring.team.repository;
 
-import com.lumos.lumosspring.dto.team.MemberTeamResponse;
-import com.lumos.lumosspring.dto.team.TeamResponse;
-import com.lumos.lumosspring.dto.team.TeamResponseForConfirmation;
-import com.lumos.lumosspring.team.entities.Team;
+import com.lumos.lumosspring.team.dto.MemberTeamResponse;
+import com.lumos.lumosspring.team.dto.TeamResponseForConfirmation;
+import com.lumos.lumosspring.team.model.Team;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;

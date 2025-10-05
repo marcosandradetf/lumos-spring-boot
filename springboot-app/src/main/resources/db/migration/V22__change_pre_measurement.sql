@@ -100,3 +100,14 @@ alter table pre_measurement_street
 
 alter table material_reservation
     drop column if exists pre_measurement_street_id;
+
+-- add index for device_pre_measurement_street_id
+CREATE INDEX IF NOT EXISTS idx_device_pre_measurement_street_id ON pre_measurement_street (device_pre_measurement_street_id);
+
+-- add unique for device_pre_measurement_street_id
+CREATE UNIQUE INDEX IF NOT EXISTS idx_device_pre_measurement_street_id_unique
+    ON pre_measurement_street (device_pre_measurement_street_id);
+
+-- add unique for device_pre_measurement_id
+CREATE UNIQUE INDEX IF NOT EXISTS idx_device_pre_measurement_id_unique
+    ON pre_measurement (device_pre_measurement_id);

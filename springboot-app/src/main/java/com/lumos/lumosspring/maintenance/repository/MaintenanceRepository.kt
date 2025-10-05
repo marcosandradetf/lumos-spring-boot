@@ -1,9 +1,9 @@
 package com.lumos.lumosspring.maintenance.repository
 
-import com.lumos.lumosspring.maintenance.entities.Maintenance
-import com.lumos.lumosspring.maintenance.entities.MaintenanceExecutor
-import com.lumos.lumosspring.maintenance.entities.MaintenanceStreet
-import com.lumos.lumosspring.maintenance.entities.MaintenanceStreetItem
+import com.lumos.lumosspring.maintenance.model.Maintenance
+import com.lumos.lumosspring.maintenance.model.MaintenanceExecutor
+import com.lumos.lumosspring.maintenance.model.MaintenanceStreet
+import com.lumos.lumosspring.maintenance.model.MaintenanceStreetItem
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

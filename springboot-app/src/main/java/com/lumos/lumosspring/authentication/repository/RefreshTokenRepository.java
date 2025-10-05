@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import org.springframework.data.repository.CrudRepository;
 
-import com.lumos.lumosspring.authentication.entities.RefreshToken;
+import com.lumos.lumosspring.authentication.model.RefreshToken;
 import org.springframework.stereotype.Repository;
 
 @Repository
