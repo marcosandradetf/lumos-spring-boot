@@ -1,12 +1,37 @@
 {
-  "name": "My Project with Postgres",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "name": "Java + Node Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu", 
+
   "features": {
-    "ghcr.io/devcontainers/features/postgres:1": {
-      "version": "17",
-      "postgresqlUser": "sa",
-      "postgresqlPassword": "24dedezembro@L",
-      "postgresqlDatabase": "001SCLCONST"
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": true
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
     }
-  }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "redhat.java",
+        "vscjava.vscode-java-debug",
+        "vscjava.vscode-java-test",
+        "vscjava.vscode-maven",
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+
+  "postCreateCommand": "mvn --version && node -v && npm -v",
+  "remoteUser": "vscode",
+
+  "forwardPorts": [8080, 3000],
+
+  "mounts": [
+    "source=${localWorkspaceFolder}/.m2,target=/home/vscode/.m2,type=bind,consistency=cached"
+  ]
 }
