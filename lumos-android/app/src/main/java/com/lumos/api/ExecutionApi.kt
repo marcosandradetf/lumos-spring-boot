@@ -1,7 +1,6 @@
 package com.lumos.api
 
-import com.lumos.domain.model.DirectExecutionDTOResponse
-import com.lumos.domain.model.ExecutionDTO
+import com.lumos.domain.model.PreMeasurementInstallation
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -12,35 +11,15 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface ExecutionApi {
-    @GET("api/mobile/execution/get-executions")
-    suspend fun getExecutions(
-        @Query("uuid") uuid: String
-    ): Response<List<ExecutionDTO>>
-
-    @GET("api/mobile/execution/get-direct-executions")
-    suspend fun getDirectExecutions(
-        @Query("uuid") uuid: String
-    ): Response<List<DirectExecutionDTOResponse>>
+interface PreMeasurementInstallationApi {
+    @GET("api/mobile//v1/pre-measurement/installation/get-all/{status}")
+    suspend fun getExecutions(@Path("status") status: String): Response<List<PreMeasurementInstallation>>
 
     @Multipart
-    @POST("api/mobile/execution/upload")
+    @POST("api/mobile/v1/pre-measurement/installation/save-street")
     suspend fun uploadData(
         @Part photo: MultipartBody.Part,
         @Part("execution") execution: RequestBody
-    ): Response<Void>
-
-    @Multipart
-    @POST("api/mobile/execution/upload-direct-execution")
-    suspend fun uploadDirectExecutionData(
-        @Part photo: MultipartBody.Part,
-        @Part("execution") execution: RequestBody
-    ): Response<Void>
-
-    @POST("api/mobile/execution/finish-direct-execution/{directExecutionId}")
-    suspend fun finishDirectExecution(
-        @Path("directExecutionId") directExecutionId: Long,
-        @Query("operationalUsers") operationalUsers: Set<String>
     ): Response<Void>
 
 

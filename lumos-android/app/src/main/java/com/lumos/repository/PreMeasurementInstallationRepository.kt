@@ -22,8 +22,11 @@ import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.lumos.domain.model.PreMeasurementInstallation
+import com.lumos.domain.model.PreMeasurementInstallationItem
+import com.lumos.domain.model.PreMeasurementInstallationStreet
 
-class IndirectExecutionRepository(
+class PreMeasurementInstallationRepository(
     private val db: AppDatabase,
     private val api: ExecutionApi,
     private val secureStorage: SecureStorage,
@@ -31,10 +34,7 @@ class IndirectExecutionRepository(
 ) {
 
     suspend fun syncExecutions(): RequestResult<Unit> {
-        val uuid = secureStorage.getUserUuid()
-            ?: return ServerError(-1, "UUID Não encontrado")
-
-        val response = ApiExecutor.execute { api.getExecutions(uuid) }
+        val response = ApiExecutor.execute { api.getExecutions() }
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data)
@@ -62,52 +62,64 @@ class IndirectExecutionRepository(
         }
     }
 
-    private suspend fun saveExecutionsToDb(fetchedExecutions: List<ExecutionDTO>) {
-        fetchedExecutions.forEach { executionDto ->
-            val execution = IndirectExecution(
-                streetId = executionDto.streetId,
-                streetName = executionDto.streetName,
-                streetNumber = executionDto.streetNumber,
-                streetHood = executionDto.streetHood,
-                city = executionDto.city,
-                state = executionDto.state,
-                executionStatus = "PENDING",
-                priority = executionDto.priority,
-                type = executionDto.type,
-                itemsQuantity = executionDto.itemsQuantity,
-                creationDate = executionDto.creationDate,
-                latitude = executionDto.latitude,
-                longitude = executionDto.longitude,
-                contractId = executionDto.contractId,
-                contractor = executionDto.contractor
+    private suspend fun saveExecutionsToDb(fetchedExecutions: List<PreMeasurementInstallation>) {
+        val installations = fetchedExecutions.map { installation ->
+            PreMeasurementInstallation(
+                preMeasurementId = installation.preMeasurementId,
+                contractor = installation.contractor,
+                instructions = installation.instructions,
+                streets = emptyList()
             )
+        }
 
-            db.indirectExecutionDao().insertIndirectExecution(execution)
-            db.indirectExecutionDao().setIndirectExecutionStatus(execution.streetId, execution.executionStatus)
-
-            executionDto.reserves.forEach { r ->
-                val reserve = IndirectReserve(
-                    reserveId = r.reserveId,
-                    materialName = r.materialName,
-                    materialQuantity = r.materialQuantity,
-                    streetId = executionDto.streetId,
-                    requestUnit = r.requestUnit,
-                    contractId = executionDto.contractId,
-                    contractItemId = r.contractItemId,
+        val streets = fetchedExecutions.flatMap { installation ->
+            installation.streets.map { street ->
+                PreMeasurementInstallationStreet(
+                    preMeasurementStreetId = street.preMeasurementStreetId,
+                    preMeasurementId = installation.preMeasurementId,
+                    address = street.address,
+                    priority = street.priority,
+                    latitude = street.latitude,
+                    longitude = street.longitude,
+                    lastPower = street.lastPower,
+                    items = emptyList()
                 )
-                db.indirectExecutionDao().insertIndirectReserve(reserve)
             }
         }
+
+        val items = fetchedExecutions.flatMap { installation ->
+            installation.streets.flatMap { street ->
+                street.items.map { item ->
+                    PreMeasurementInstallationItem(
+                        preMeasurementStreetId = street.preMeasurementStreetId,
+                        materialStockId = item.materialStockId,
+                        contractItemId = item.contractItemId,
+                        materialName = item.materialName,
+                        materialQuantity = item.materialQuantity,
+                        requestUnit = item.requestUnit,
+                        specs = item.specs
+                    )
+                }
+            }
+        }
+
+        db.preMeasurementInstallationDao().insertInstallations(installations)
+        db.preMeasurementInstallationDao().insertStreets(streets)
+        db.preMeasurementInstallationDao().insertItems(items)
     }
 
     fun getFlowExecutions(): Flow<List<ExecutionHolder>> =
-        db.indirectExecutionDao().getFlowIndirectExecution()
+        db.preMeasurementInstallationDao().getInstallationsHolder()
 
     fun getFlowReserves(streetId: Long): Flow<List<IndirectReserve>> =
-        db.indirectExecutionDao().getFlowIndirectReserve(streetId)
+        db.preMeasurementInstallationDao().getFlowIndirectReserve(streetId)
 
-    suspend fun setExecutionStatus(streetId: Long, status: String = ExecutionStatus.IN_PROGRESS) {
-        db.indirectExecutionDao().setIndirectExecutionStatus(streetId, status)
+    suspend fun setInstallationStatus(id: String, status: String = ExecutionStatus.IN_PROGRESS) {
+        db.preMeasurementInstallationDao().setInstallationStatus(id, status)
+    }
+
+    suspend fun setExecutionStatus(streetId: String, status: String = ExecutionStatus.IN_PROGRESS) {
+        db.preMeasurementInstallationDao().setStreetStatus(streetId, status)
     }
 
     suspend fun queueSyncFetchReservationStatus(streetId: Long, status: String) {
@@ -122,9 +134,6 @@ class IndirectExecutionRepository(
         )
     }
 
-    suspend fun getExecution(lng: Long): IndirectExecution? {
-        return db.indirectExecutionDao().getExecution(lng)
-    }
 
     suspend fun queueSyncStartExecution(streetId: Long) {
         SyncManager.queueSyncPostGeneric(
@@ -139,15 +148,9 @@ class IndirectExecutionRepository(
     }
 
     suspend fun setPhotoUri(photoUri: String, streetId: Long) {
-        db.indirectExecutionDao().setIndirectExecutionPhotoUri(photoUri, streetId)
+        db.preMeasurementInstallationDao().setIndirectExecutionPhotoUri(photoUri, streetId)
     }
 
-    suspend fun finishMaterial(reserveId: Long, quantityExecuted: Double) {
-        db.indirectExecutionDao().finishMaterial(
-            reserveId = reserveId,
-            quantityExecuted = quantityExecuted
-        )
-    }
 
     suspend fun queuePostExecution(streetId: Long) {
         SyncManager.queuePostIndirectExecution(
@@ -160,11 +163,11 @@ class IndirectExecutionRepository(
     suspend fun postExecution(streetId: Long ): RequestResult<Unit> {
         val gson = Gson()
 
-        val photoUri = db.indirectExecutionDao().getPhotoUri(streetId)
+        val photoUri = db.preMeasurementInstallationDao().getPhotoUri(streetId)
         if(photoUri == null) {
             return ServerError(-1, "Foto da pré-medição não encontrada")
         }
-        val reserves = db.indirectExecutionDao().getReservesPartial(streetId)
+        val reserves = db.preMeasurementInstallationDao().getReservesPartial(streetId)
         val dto = SendExecutionDto(
             streetId = streetId,
             reserves = reserves
@@ -186,14 +189,14 @@ class IndirectExecutionRepository(
 
             return when (response) {
                 is RequestResult.Success -> {
-                    db.indirectExecutionDao().deleteExecution(streetId)
-                    db.indirectExecutionDao().deleteReserves(streetId)
+                    db.preMeasurementInstallationDao().deleteExecution(streetId)
+                    db.preMeasurementInstallationDao().deleteReserves(streetId)
 
                     RequestResult.Success(Unit)
                 }
                 is SuccessEmptyBody -> {
-                    db.indirectExecutionDao().deleteExecution(streetId)
-                    db.indirectExecutionDao().deleteReserves(streetId)
+                    db.preMeasurementInstallationDao().deleteExecution(streetId)
+                    db.preMeasurementInstallationDao().deleteReserves(streetId)
 
                     SuccessEmptyBody
                 }
@@ -210,14 +213,6 @@ class IndirectExecutionRepository(
         }
 
         return ServerError(-1, "Erro na criacao da foto da execucao")
-    }
-
-    suspend fun getReservesOnce(streetId: Long): List<IndirectReserve> {
-        return db.indirectExecutionDao().getIndirectReserveOnce(streetId)
-    }
-
-    suspend fun getExecutionsByContract(lng: Long): List<IndirectExecution> {
-        return db.indirectExecutionDao().getExecutionsByContract(lng)
     }
 
 }

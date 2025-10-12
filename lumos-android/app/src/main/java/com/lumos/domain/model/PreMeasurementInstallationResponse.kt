@@ -3,6 +3,7 @@ package com.lumos.domain.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Ignore
+import java.time.Instant
 
 // delete: indirect_execution, indirect_reserve
 
@@ -12,6 +13,8 @@ data class PreMeasurementInstallation(
     val preMeasurementId: String,
     val contractor: String,
     val instructions: String,
+    val creationDate: String? = Instant.now().toString(),
+    val status: String? = "PENDING",
 
     @Ignore
     val streets: List<PreMeasurementInstallationStreet>
@@ -27,7 +30,7 @@ data class PreMeasurementInstallationStreet(
     val latitude: Double?,
     val longitude: Double?,
     val lastPower: String,
-
+    val status: String? = "PENDING",
 
     @Ignore
     val items: List<PreMeasurementInstallationItem>,
@@ -70,21 +73,12 @@ data class SendExecutionDto(
 )
 
 data class ExecutionHolder(
-    val streetId: Long? = null,
-    val contractId: Long,
-    val streetName: String? = null,
-    val streetNumber: String? = null,
-    val streetHood: String? = null,
-    val city: String? = null,
-    val state: String? = null,
-    val executionStatus: String,
-    val priority: Boolean? = null,
+    val id: String,
     val type: String,
-    val itemsQuantity: Int,
-    val creationDate: String,
-    val latitude: Double? = null,
-    val longitude: Double? = null,
-    var photoUri: String? = null,
+    val contractId: Long,
     var contractor: String,
-    var instructions: String? = null,
+    val executionStatus: String,
+    val creationDate: String,
+    val streetsQuantity: Int,
+    val itemsQuantity: Int,
 )
