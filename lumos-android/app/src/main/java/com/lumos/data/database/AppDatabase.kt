@@ -33,6 +33,9 @@ import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.domain.model.Team
 import com.lumos.notifications.NotificationItem
 import java.util.concurrent.Executors
+import com.lumos.domain.model.PreMeasurementInstallation
+import com.lumos.domain.model.PreMeasurementInstallationStreet
+import com.lumos.domain.model.PreMeasurementInstallationItem
 
 @Database(
     entities = [
@@ -68,9 +71,12 @@ import java.util.concurrent.Executors
 
         (OperationalUser::class),
         (Team::class),
+        (PreMeasurementInstallation::class),
+        (PreMeasurementInstallationStreet::class),
+        (PreMeasurementInstallationItem::class)
 
     ],
-    version = 16,
+    version = 17,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -83,6 +89,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun maintenanceDao(): MaintenanceDao
     abstract fun stockDao(): StockDao
     abstract fun teamDao(): TeamDao
+    abstract fun installationDao(): InstallationDao
 
     companion object {
         @Volatile
@@ -640,7 +647,53 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                // pre measurement
                 db.execSQL("alter table pre_measurement add column status text not null")
+
+                // installation
+                db.execSQL("DROP TABLE IF EXISTS indirect_execution")
+                db.execSQL("DROP TABLE IF EXISTS indirect_reserve")
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS pre_measurement_installation (
+                            preMeasurementId TEXT NOT NULL PRIMARY KEY,
+                            contractor TEXT NOT NULL,
+                            instructions TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS pre_measurement_installation_street (
+                            preMeasurementStreetId TEXT NOT NULL PRIMARY KEY,
+                            preMeasurementId TEXT NOT NULL,
+                            address TEXT NOT NULL,
+                            priority INTEGER NOT NULL,
+                            latitude REAL,
+                            longitude REAL,
+                            lastPower TEXT
+                        );
+                """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS pre_measurement_installation_item (
+                            preMeasurementStreetId TEXT NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            contractItemId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            materialQuantity TEXT NOT NULL,
+                            requestUnit TEXT NOT NULL,
+                            specs TEXT,
+                            PRIMARY KEY (preMeasurementStreetId, materialStockId, contractItemId)
+                        );
+                """.trimIndent()
+                )
+
+
             }
         }
 

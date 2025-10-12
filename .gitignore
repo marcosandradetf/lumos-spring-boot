@@ -120,3 +120,4 @@ golang-services/keys/
 # Inclui todos os arquivos dentro de src/main/resources (deve ser mais específico)
 !springboot-app/src/main/resources/
 !springboot-app/src/main/resources/**/*.properties
+springboot-app/.env

@@ -1,17 +1,16 @@
 {
-  "name": "Java + Node Dev Environment",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu", 
-
+  "name": "Java + Node + Angular + Android Dev Environment",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
-    "ghcr.io/devcontainers/features/java:1": {
-      "version": "21",
-      "installMaven": true
-    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
+    },
+    "ghcr.io/nordcominc/devcontainer-features/android-sdk:1": {
+      "androidHome": "/opt/android-sdk"
     }
   },
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -21,16 +20,16 @@
         "vscjava.vscode-maven",
         "ms-azuretools.vscode-docker",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "angular.ng-template",
+        "mathiasfrohlich.kotlin",
+        "esafirm.kotlin-formatter"
       ]
     }
   },
-
-  "postCreateCommand": "mvn --version && node -v && npm -v",
+  "postCreateCommand": "/bin/bash .devcontainer/setup-android.sh && npm install -g @angular/cli && ng version && mvn --version && java -version && node -v && npm -v",
   "remoteUser": "vscode",
-
-  "forwardPorts": [8080, 3000],
-
+  "forwardPorts": [8080, 4200, 3000],
   "mounts": [
     "source=${localWorkspaceFolder}/.m2,target=/home/vscode/.m2,type=bind,consistency=cached"
   ]

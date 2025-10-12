@@ -1,10 +1,7 @@
-package com.lumos.lumosspring.premeasurement.dto.installation
-
-import java.math.BigDecimal
-import java.util.UUID
+package com.lumos.domain.model
 
 data class InstallationRequest(
-    val streetId: UUID,
+    val streetId: String,
     val items: List<InstallationItemRequest>
 )
 
