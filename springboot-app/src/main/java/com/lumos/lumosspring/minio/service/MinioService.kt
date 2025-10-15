@@ -49,13 +49,13 @@ class MinioService(private val minioClient: MinioClient) {
         )
     }
 
-    fun getPresignedObjectUrl(bucketName: String, objectName: String): String {
+    fun getPresignedObjectUrl(bucketName: String, objectName: String, expiryAt: Long = 5 * 60): String {
         val url = minioClient.getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.GET)
                 .bucket(bucketName)
                 .`object`(objectName)
-                .expiry(5 * 60) // em segundos (5 minutos)
+                .expiry(expiryAt) // em segundos (5 minutos)
                 .build()
         )
         return url

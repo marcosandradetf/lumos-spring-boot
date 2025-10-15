@@ -6,6 +6,7 @@ import com.lumos.lumosspring.premeasurement.dto.installation.InstallationRespons
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import com.lumos.lumosspring.storage.service.MinioService;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,10 +17,12 @@ import java.util.UUID;
 public class InstallationViewRepository {
     private final NamedParameterJdbcTemplate namedJDBC;
     private final TeamRepository teamRepository;
+    private final MinioService minioService;
 
-    public InstallationViewRepository(NamedParameterJdbcTemplate namedJDBC, TeamRepository teamRepository) {
+    public InstallationViewRepository(NamedParameterJdbcTemplate namedJDBC, TeamRepository teamRepository, MinioService minioService) {
         this.namedJDBC = namedJDBC;
         this.teamRepository = teamRepository;
+        this.minioService = minioService;
     }
 
     public List<InstallationResponse> getInstallations(UUID operatorUUID, String status) {
@@ -48,7 +51,8 @@ public class InstallationViewRepository {
                                    s.prioritized,
                                    s.latitude,
                                    s.longitude,
-                                   s.last_power
+                                   s.last_power,
+                                   s.photo_uri
                             FROM pre_measurement_street s
                             WHERE s.pre_measurement_id = :preMeasurementId
                             """,
@@ -86,6 +90,7 @@ public class InstallationViewRepository {
                                         )
                                 );
 
+                                String photoUrl = minioService.generatePresignedUrl("sclconstrutora", rs2.getString("photo_uri"), 2 * 24 * 60 * 60); // 2 dias
                                 return new StreetsInstallationResponse(
                                         rs.getObject("device_pre_measurement_id", UUID.class),
                                         rs2.getObject("device_pre_measurement_street_id", UUID.class),
@@ -94,6 +99,7 @@ public class InstallationViewRepository {
                                         rs2.getObject("latitude") != null ? rs2.getDouble("latitude") : null,
                                         rs2.getObject("longitude") != null ? rs2.getDouble("longitude") : null,
                                         rs2.getString("last_power"),
+                                        photoUrl,
                                         reserves
                                 );
                             }

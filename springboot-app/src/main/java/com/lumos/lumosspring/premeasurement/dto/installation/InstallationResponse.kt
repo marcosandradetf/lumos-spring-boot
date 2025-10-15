@@ -18,6 +18,7 @@ data class StreetsInstallationResponse(
     val latitude: Double?,
     val longitude: Double?,
     val lastPower: String,
+    val photoUrl: String?,
     val items: List<ItemsInstallationResponse>,
 )
 

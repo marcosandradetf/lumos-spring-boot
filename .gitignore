@@ -121,3 +121,10 @@ golang-services/keys/
 !springboot-app/src/main/resources/
 !springboot-app/src/main/resources/**/*.properties
 springboot-app/.env
+lumos-android/.gradle/8.14/gc.properties
+lumos-android/.gradle/8.14/checksums/md5-checksums.bin
+lumos-android/.gradle/8.14/checksums/sha1-checksums.bin
+lumos-android/.gradle/8.14/fileChanges/last-build.bin
+lumos-android/.gradle/buildOutputCleanup/cache.properties
+lumos-android/.gradle/buildOutputCleanup/cache.properties
+lumos-android/.gradle/buildOutputCleanup/cache.properties
