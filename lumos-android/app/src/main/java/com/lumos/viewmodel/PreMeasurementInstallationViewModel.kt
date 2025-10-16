@@ -6,26 +6,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
-import com.lumos.repository.IndirectExecutionRepository
-import com.lumos.domain.model.ExecutionHolder
-import com.lumos.domain.model.IndirectExecution
-import com.lumos.domain.model.IndirectReserve
+import com.lumos.domain.model.PreMeasurementInstallation
+import com.lumos.repository.PreMeasurementInstallationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class IndirectExecutionViewModel(
-    private val repository: IndirectExecutionRepository,
+class PreMeasurementInstallationViewModel(
+    private val repository: PreMeasurementInstallationRepository,
 
     ) : ViewModel() {
-    val executions: StateFlow<List<ExecutionHolder>> = repository.getFlowExecutions()
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isLoadingReserves = MutableStateFlow(false)
     val isLoadingReserves: StateFlow<Boolean> = _isLoadingReserves
@@ -65,7 +57,7 @@ class IndirectExecutionViewModel(
     }
 
 
-    fun setExecutionStatus(streetId: Long, status: String) {
+    fun setExecutionStatus(streetId: String, status: String) {
         viewModelScope.launch {
             try {
                 repository.setExecutionStatus(streetId, status)
@@ -86,7 +78,7 @@ class IndirectExecutionViewModel(
     }
 
 
-    suspend fun getExecution(streetId: Long): IndirectExecution? {
+    suspend fun getInstallation(streetId: Long): PreMeasurementInstallation? {
         return withContext(Dispatchers.IO) {
             try {
                 repository.getExecution(streetId)

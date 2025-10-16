@@ -7,7 +7,7 @@ import java.time.Instant
 
 // delete: indirect_execution, indirect_reserve
 
-@Entity(tableName = "pre_measurement_installation")
+@Entity
 data class PreMeasurementInstallation(
     @PrimaryKey
     val preMeasurementId: String,
@@ -20,7 +20,7 @@ data class PreMeasurementInstallation(
     val streets: List<PreMeasurementInstallationStreet>
 )
 
-@Entity(tableName = "pre_measurement_installation_street")
+@Entity
 data class PreMeasurementInstallationStreet(
     @PrimaryKey
     val preMeasurementStreetId: String,
@@ -30,15 +30,16 @@ data class PreMeasurementInstallationStreet(
     val latitude: Double?,
     val longitude: Double?,
     val lastPower: String,
-    val status: String? = "PENDING",
+    val photoUrl: String?,
+
+    val status: String = "PENDING",
+    val installationPhotoUri: String = "",
 
     @Ignore
     val items: List<PreMeasurementInstallationItem>,
 )
 
-@Entity(tableName = "pre_measurement_installation_item"
-, primaryKeys = ["preMeasurementStreetId", "materialStockId", "contractItemId"]
-)
+@Entity(primaryKeys = ["preMeasurementStreetId", "materialStockId", "contractItemId"])
 data class PreMeasurementInstallationItem(
     val preMeasurementStreetId: String,
     val materialStockId: Long,
@@ -47,6 +48,7 @@ data class PreMeasurementInstallationItem(
     val materialQuantity: String,
     val requestUnit: String,
     val specs: String?,
+    val executedQuantity: String = "0",
 )
 
 data class ExecutionDTO(
@@ -72,7 +74,8 @@ data class SendExecutionDto(
     val reserves: List<ReservePartial>
 )
 
-data class ExecutionHolder(
+@Entity
+data class InstallationView(
     val id: String,
     val type: String,
     val contractId: Long,

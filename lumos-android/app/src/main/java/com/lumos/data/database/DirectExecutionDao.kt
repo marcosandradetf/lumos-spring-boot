@@ -4,15 +4,12 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
-import androidx.room.Transaction
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
-import com.lumos.domain.model.ExecutionHolder
 import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.ReservePartial
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DirectExecutionDao {
@@ -40,12 +37,6 @@ interface DirectExecutionDao {
 
     @Query("DELETE FROM direct_reserve WHERE directExecutionId = :directExecutionId")
     suspend fun deleteDirectReserves(directExecutionId: Long)
-
-    @Query(
-        "SELECT null, directExecutionId as contractId, null, null, null, null, null, executionStatus, null, type, itemsQuantity, creationDate, null, null, null, description as contractor, instructions" +
-                " FROM direct_execution WHERE executionStatus <> 'FINISHED'"
-    )
-    fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>>
 
     @Query("select * from direct_execution where directExecutionId = :directExecutionId")
     suspend fun getExecution(directExecutionId: Long): DirectExecution?

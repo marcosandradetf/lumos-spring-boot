@@ -13,7 +13,7 @@ import com.lumos.repository.DirectExecutionRepository
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
-import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.InstallationView
 import com.lumos.domain.model.ReserveMaterialJoin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository,
 
     ) : ViewModel() {
-    val directExecutions: StateFlow<List<ExecutionHolder>> = repository.getFlowDirectExecutions()
+    val directExecutions: StateFlow<List<InstallationView>> = repository.getFlowDirectExecutions()
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

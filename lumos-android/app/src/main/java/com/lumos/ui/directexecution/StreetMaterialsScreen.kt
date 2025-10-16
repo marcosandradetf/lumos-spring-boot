@@ -1,4 +1,4 @@
-package com.lumos.ui.directExecutions
+package com.lumos.ui.directexecution
 
 import android.content.Context
 import android.net.Uri

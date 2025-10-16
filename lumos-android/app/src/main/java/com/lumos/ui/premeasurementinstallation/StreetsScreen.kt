@@ -1,4 +1,4 @@
-package com.lumos.ui.indirectExecutions
+package com.lumos.ui.premeasurementinstallation
 
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,7 +56,7 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
-import com.lumos.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -65,7 +64,7 @@ import kotlinx.coroutines.withContext
 fun StreetsScreen(
     contractId: Long,
     contractor: String,
-    indirectExecutionViewModel: IndirectExecutionViewModel,
+    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -77,12 +76,12 @@ fun StreetsScreen(
     onNavigateToExecution: (Long) -> Unit,
 ) {
     var executions by remember { mutableStateOf<List<IndirectExecution>>(emptyList()) }
-    val isSyncing by indirectExecutionViewModel.isSyncing.collectAsState()
-    val responseError by indirectExecutionViewModel.syncError.collectAsState()
+    val isSyncing by preMeasurementInstallationViewModel.isSyncing.collectAsState()
+    val responseError by preMeasurementInstallationViewModel.syncError.collectAsState()
 
     LaunchedEffect(Unit) {
-        indirectExecutionViewModel.syncExecutions()
-        val fetched = indirectExecutionViewModel.getExecutionsByContract(contractId)
+        preMeasurementInstallationViewModel.syncExecutions()
+        val fetched = preMeasurementInstallationViewModel.getExecutionsByContract(contractId)
 
         withContext(Dispatchers.Main) {
             executions = fetched
@@ -115,7 +114,7 @@ fun StreetsScreen(
         },
         error = responseError,
         refresh = {
-            indirectExecutionViewModel.syncExecutions()
+            preMeasurementInstallationViewModel.syncExecutions()
         }
     )
 }

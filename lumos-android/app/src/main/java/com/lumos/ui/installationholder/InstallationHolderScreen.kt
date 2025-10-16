@@ -1,4 +1,4 @@
-package com.lumos.ui.indirectExecutions
+package com.lumos.ui.installationholder
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -54,50 +54,37 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.InstallationView
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.repository.ViewRepository
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.NothingData
 import com.lumos.viewmodel.DirectExecutionViewModel
-import com.lumos.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.PreMeasurementInstallationViewModel
+import java.util.UUID
 
 @Composable
-fun CitiesScreen(
-    lastRoute: String? = null,
-    indirectExecutionViewModel: IndirectExecutionViewModel,
+fun InstallationHolderScreen(
     directExecutionViewModel: DirectExecutionViewModel,
-    context: Context,
-    onNavigateToHome: () -> Unit,
-    onNavigateToMenu: () -> Unit,
+    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
+    viewRepository: ViewRepository,
     navController: NavHostController,
-    notificationsBadge: String,
-    onNavigateToStreetScreen: (Long, String) -> Unit,
     roles: Set<String>,
-    directExecution: Boolean,
     secureStorage: SecureStorage
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
-    val title = if (directExecution) "Execuções sem pré-medição" else "Execuções com pré-medição"
 
-//    val allExecutions by executionViewModel.executions.collectAsState()
-    val allExecutions by if (directExecution) {
-        directExecutionViewModel.directExecutions.collectAsState()
-    } else {
-        indirectExecutionViewModel.executions.collectAsState()
-    }
+    val executions by viewRepository.getFlowInstallations().collectAsState(emptyList())
 
     val isSyncing = directExecutionViewModel.isLoading
 
-    val responseError by if (directExecution) {
-        directExecutionViewModel.syncError.collectAsState()
-    } else {
-        indirectExecutionViewModel.syncError.collectAsState()
-    }
+    val error1 by directExecutionViewModel.syncError.collectAsState()
+    val error2 by preMeasurementInstallationViewModel.syncError.collectAsState()
 
-    var executions by remember { mutableStateOf<List<ExecutionHolder>>(emptyList()) }
+    val responseError = if (error1.isNullOrBlank()) error2 else error1
 
     LaunchedEffect(Unit) {
         val TWELVE_HOURS = 12 * 60 * 60 * 1000L
@@ -108,47 +95,33 @@ fun CitiesScreen(
         val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
 
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/${if (directExecution) Routes.DIRECT_EXECUTION_SCREEN else Routes.EXECUTION_SCREEN}")
+            navController.navigate(Routes.NO_ACCESS + "/Instalações")
         }
 
-        if(isStaleCheckTeam)
+        if (isStaleCheckTeam)
             navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.EXECUTIONS.value}")
-        else if (directExecution)
+        else {
             directExecutionViewModel.syncExecutions()
-        else
-            indirectExecutionViewModel.syncExecutions()
+            preMeasurementInstallationViewModel.syncExecutions()
+        }
 
         directExecutionViewModel.countStock()
     }
 
-    LaunchedEffect(allExecutions) {
-        executions = allExecutions
-            .groupBy { it.contractId }
-            .map { (_, list) -> list.first() } // ou .last() se quiser o último
-    }
-
     ContentCitiesScreen(
-        lastRoute = lastRoute,
-        title = title,
+        title = "Instalações Pendentes",
         executions = executions,
-        onNavigateToHome = onNavigateToHome,
-        onNavigateToMenu = onNavigateToMenu,
-        context = context,
         navController = navController,
-        notificationsBadge = notificationsBadge,
         isSyncing = isSyncing,
-        select = { contractId, contractor ->
-            if (directExecution) onNavigateToStreetScreen(contractId, contractor)
-            else onNavigateToStreetScreen(contractId, contractor)
+        select = { id, type, contractor ->
+            if(type == "") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
+            else navController.navigate("")
         },
         error = responseError,
         refresh = {
-            if (directExecution)
-                directExecutionViewModel.syncExecutions()
-            else
-                indirectExecutionViewModel.syncExecutions()
+            directExecutionViewModel.syncExecutions()
+            preMeasurementInstallationViewModel.syncExecutions()
         },
-        directExecution = directExecution,
         markAsFinished = { contractId ->
             directExecutionViewModel.markAsFinished(contractId)
         },
@@ -160,19 +133,13 @@ fun CitiesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentCitiesScreen(
-    lastRoute: String? = null,
     title: String,
-    executions: List<ExecutionHolder>,
-    onNavigateToHome: () -> Unit,
-    onNavigateToMenu: () -> Unit,
-    context: Context,
+    executions: List<InstallationView>,
     navController: NavHostController,
-    notificationsBadge: String,
     isSyncing: Boolean,
-    select: (Long, String) -> Unit,
+    select: (String, String, String) -> Unit,
     error: String?,
     refresh: () -> Unit,
-    directExecution: Boolean = false,
     markAsFinished: (Long) -> Unit = {},
     stockDataSize: Int
 ) {
@@ -180,20 +147,12 @@ fun ContentCitiesScreen(
     var showModal by remember { mutableStateOf(false) }
     var contractId by remember { mutableLongStateOf(0) }
 
-    val navigateBack: (() -> Unit)? =
-        if (lastRoute == Routes.MORE || lastRoute == Routes.HOME) {
-            { navController.popBackStack() }
-        } else {
-            null
-        }
-
     AppLayout(
         title = title,
         selectedIcon = BottomBar.EXECUTIONS.value,
-        notificationsBadge = notificationsBadge,
-        navigateToMore = onNavigateToMenu,
-        navigateToHome = onNavigateToHome,
-        navigateBack = navigateBack,
+        navigateToMore = { navController.navigate(Routes.MORE) },
+        navigateToHome = { navController.navigate(Routes.HOME) },
+        navigateBack = { navController.popBackStack() },
         navigateToMaintenance = {
             navController.navigate(Routes.MAINTENANCE)
         },
@@ -266,7 +225,11 @@ fun ContentCitiesScreen(
                             .fillMaxWidth(0.9f)
                             .padding(3.dp)
                             .clickable {
-                                if(stockDataSize > 0) select(execution.contractId, execution.contractor)
+                                if (stockDataSize > 0) select(
+                                    execution.id,
+                                    execution.type,
+                                    execution.contractor
+                                )
                                 else showModal = true
                             },
                         elevation = CardDefaults.cardElevation(1.dp),
@@ -363,8 +326,12 @@ fun ContentCitiesScreen(
                                                 fontSize = 12.sp
                                             )
                                         }
-                                        if (directExecution) {
-                                            var expanded by remember(execution.contractId) { mutableStateOf(false) }
+                                        if (execution.type != "PreMeasurementInstallation") {
+                                            var expanded by remember(execution.contractId) {
+                                                mutableStateOf(
+                                                    false
+                                                )
+                                            }
                                             IconButton(onClick = { expanded = true }) {
                                                 Icon(
                                                     Icons.Default.MoreVert,
@@ -426,45 +393,46 @@ fun PrevContentCitiesScreen() {
     val fakeContext = LocalContext.current
     val values =
         listOf(
-            ExecutionHolder(
+            InstallationView(
+                id = UUID.randomUUID().toString(),
                 contractId = 1,
                 contractor = "Contagem",
                 executionStatus = "PENDING",
-                type = "",
+                type = "PreMeasurementInstallation",
                 itemsQuantity = 12,
                 creationDate = "",
+                streetsQuantity = 3,
             ),
-            ExecutionHolder(
+            InstallationView(
                 contractId = 1,
                 contractor = "Ibrite",
                 executionStatus = "PENDING",
                 type = "",
                 itemsQuantity = 12,
-                creationDate = "",
+                creationDate = "PreMeasurementInstallation",
+                id = UUID.randomUUID().toString(),
+                streetsQuantity = 2,
             ),
-            ExecutionHolder(
+            InstallationView(
                 contractId = 1,
                 contractor = "Belo Horizonte",
                 executionStatus = "PENDING",
                 type = "",
                 itemsQuantity = 12,
                 creationDate = "",
+                id = UUID.randomUUID().toString(),
+                streetsQuantity = 3,
             ),
         )
 
     ContentCitiesScreen(
         title = "Execuções sem pré-medição",
         executions = values,
-        onNavigateToHome = { },
-        onNavigateToMenu = { },
-        context = fakeContext,
         navController = rememberNavController(),
-        notificationsBadge = "12",
         isSyncing = false,
-        select = { _, _ -> },
+        select = { _, _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {},
-        directExecution = true,
         stockDataSize = 0
     )
 }

@@ -15,8 +15,7 @@ import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
-import com.lumos.domain.model.IndirectExecution
-import com.lumos.domain.model.IndirectReserve
+import com.lumos.domain.model.InstallationView
 import com.lumos.domain.model.Item
 import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceStreet
@@ -50,9 +49,6 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
 
         (SyncQueueEntity::class),
 
-        (IndirectExecution::class),
-        (IndirectReserve::class),
-
         (DirectExecution::class),
         (DirectReserve::class),
         (DirectExecutionStreet::class),
@@ -73,7 +69,8 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
         (Team::class),
         (PreMeasurementInstallation::class),
         (PreMeasurementInstallationStreet::class),
-        (PreMeasurementInstallationItem::class)
+        (PreMeasurementInstallationItem::class),
+        (InstallationView::class)
 
     ],
     version = 17,
@@ -84,12 +81,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun contractDao(): ContractDao
     abstract fun notificationDao(): NotificationDao
     abstract fun queueDao(): QueueDao
-    abstract fun indirectExecutionDao(): IndirectExecutionDao
     abstract fun directExecutionDao(): DirectExecutionDao
     abstract fun maintenanceDao(): MaintenanceDao
     abstract fun stockDao(): StockDao
     abstract fun teamDao(): TeamDao
-    abstract fun installationDao(): InstallationDao
+    abstract fun preMeasurementInstallationDao(): PreMeasurementInstallationDao
+    abstract fun viewDao(): ViewDao
 
     companion object {
         @Volatile
@@ -656,7 +653,7 @@ abstract class AppDatabase : RoomDatabase() {
 
                 db.execSQL(
                     """
-                        CREATE TABLE IF NOT EXISTS pre_measurement_installation (
+                        CREATE TABLE IF NOT EXISTS PreMeasurementInstallation (
                             preMeasurementId TEXT NOT NULL PRIMARY KEY,
                             contractor TEXT NOT NULL,
                             instructions TEXT NOT NULL
@@ -666,7 +663,7 @@ abstract class AppDatabase : RoomDatabase() {
 
                 db.execSQL(
                     """
-                        CREATE TABLE IF NOT EXISTS pre_measurement_installation_street (
+                        CREATE TABLE IF NOT EXISTS PreMeasurementInstallationStreet (
                             preMeasurementStreetId TEXT NOT NULL PRIMARY KEY,
                             preMeasurementId TEXT NOT NULL,
                             address TEXT NOT NULL,
@@ -680,17 +677,76 @@ abstract class AppDatabase : RoomDatabase() {
 
                 db.execSQL(
                     """
-                        CREATE TABLE IF NOT EXISTS pre_measurement_installation_item (
+                        CREATE TABLE IF NOT EXISTS PreMeasurementInstallationItem (
                             preMeasurementStreetId TEXT NOT NULL,
                             materialStockId INTEGER NOT NULL,
                             contractItemId INTEGER NOT NULL,
                             materialName TEXT NOT NULL,
                             materialQuantity TEXT NOT NULL,
+                            executedQuantity TEXT NOT NULL,
                             requestUnit TEXT NOT NULL,
                             specs TEXT,
                             PRIMARY KEY (preMeasurementStreetId, materialStockId, contractItemId)
                         );
                 """.trimIndent()
+                )
+
+                data class InstallationHolder(
+                    val id: String,
+                    val type: String,
+                    val contractId: Long,
+                    var contractor: String,
+                    val executionStatus: String,
+                    val creationDate: String,
+                    val streetsQuantity: Int,
+                    val itemsQuantity: Int,
+                )
+
+                db.execSQL(
+                    """
+                        CREATE VIEW InstallationView AS
+                        SELECT 
+                            preMeasurementId as id, 
+                            'PreMeasurementInstallation' as type,
+                            0 as contractId,
+                            contractor as contractor,
+                            status as executionStatus,
+                            creationDate as creationDate,
+                            (
+                                SELECT COUNT(*) 
+                                FROM PreMeasurementInstallationStreet 
+                                WHERE preMeasurementId = p.preMeasurementId
+                            ) as streetsQuantity,
+                            (
+                                SELECT COUNT(*) 
+                                FROM PreMeasurementInstallationStreet AS street
+                                JOIN PreMeasurementInstallationItem AS item
+                                    ON street.preMeasurementStreetId = item.preMeasurementStreetId
+                                WHERE street.preMeasurementId = p.preMeasurementId
+                            ) as itemsQuantity
+                        FROM PreMeasurementInstallation p
+                        UNION
+                        SELECT 
+                            cast(directExecutionId as text) as id, 
+                            'direct_execution' as type,
+                            0 as contractId,
+                            description as contractor,
+                            executionStatus as executionStatus,
+                            creationDate as creationDate,
+                            (
+                                SELECT COUNT(*) 
+                                FROM direct_execution_street 
+                                WHERE directExecutionId = d.directExecutionId
+                            ) as streetsQuantity,
+                            (
+                                SELECT COUNT(*) 
+                                FROM direct_execution_street AS street
+                                JOIN direct_execution_street_item AS item
+                                    ON street.directStreetId = item.directStreetId
+                                WHERE street.directExecutionId = d.directExecutionId
+                            ) as itemsQuantity
+                        FROM direct_execution d;
+                    """.trimIndent()
                 )
 
 

@@ -5,15 +5,15 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ExecutionApi
+import com.lumos.api.PreMeasurementInstallationApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.ExecutionDTO
-import com.lumos.domain.model.ExecutionHolder
-import com.lumos.domain.model.IndirectExecution
-import com.lumos.domain.model.IndirectReserve
+import com.lumos.domain.model.InstallationView
+import com.lumos.domain.model.PreMeasurementInstallation
+import com.lumos.domain.model.PreMeasurementInstallationItem
+import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.domain.model.SendExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
@@ -22,19 +22,16 @@ import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import com.lumos.domain.model.PreMeasurementInstallation
-import com.lumos.domain.model.PreMeasurementInstallationItem
-import com.lumos.domain.model.PreMeasurementInstallationStreet
 
 class PreMeasurementInstallationRepository(
     private val db: AppDatabase,
-    private val api: ExecutionApi,
+    private val api: PreMeasurementInstallationApi,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
 
     suspend fun syncExecutions(): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.getExecutions() }
+        val response = ApiExecutor.execute { api.getExecutions("PENDING") }
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data)
@@ -82,6 +79,7 @@ class PreMeasurementInstallationRepository(
                     latitude = street.latitude,
                     longitude = street.longitude,
                     lastPower = street.lastPower,
+                    photoUrl = street.photoUrl,
                     items = emptyList()
                 )
             }
@@ -108,11 +106,7 @@ class PreMeasurementInstallationRepository(
         db.preMeasurementInstallationDao().insertItems(items)
     }
 
-    fun getFlowExecutions(): Flow<List<ExecutionHolder>> =
-        db.preMeasurementInstallationDao().getInstallationsHolder()
 
-    fun getFlowReserves(streetId: Long): Flow<List<IndirectReserve>> =
-        db.preMeasurementInstallationDao().getFlowIndirectReserve(streetId)
 
     suspend fun setInstallationStatus(id: String, status: String = ExecutionStatus.IN_PROGRESS) {
         db.preMeasurementInstallationDao().setInstallationStatus(id, status)
@@ -120,18 +114,6 @@ class PreMeasurementInstallationRepository(
 
     suspend fun setExecutionStatus(streetId: String, status: String = ExecutionStatus.IN_PROGRESS) {
         db.preMeasurementInstallationDao().setStreetStatus(streetId, status)
-    }
-
-    suspend fun queueSyncFetchReservationStatus(streetId: Long, status: String) {
-        SyncManager.queueSyncPostGeneric(
-            context = app.applicationContext,
-            db = db,
-            table = "tb_material_reservation",
-            field = "status",
-            set = status,
-            where = "pre_measurement_street_id",
-            equal = streetId.toString(),
-        )
     }
 
 
@@ -147,8 +129,8 @@ class PreMeasurementInstallationRepository(
         )
     }
 
-    suspend fun setPhotoUri(photoUri: String, streetId: Long) {
-        db.preMeasurementInstallationDao().setIndirectExecutionPhotoUri(photoUri, streetId)
+    suspend fun setPhotoUri(photoUri: String, streetId: String) {
+        db.preMeasurementInstallationDao().setPhotoInstallationUri(photoUri, streetId)
     }
 
 

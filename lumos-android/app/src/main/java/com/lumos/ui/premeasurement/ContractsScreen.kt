@@ -1,4 +1,4 @@
-package com.lumos.ui.preMeasurement
+package com.lumos.ui.premeasurement
 
 import android.content.Context
 import android.widget.Toast

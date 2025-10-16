@@ -1,4 +1,4 @@
-package com.lumos.ui.indirectExecutions
+package com.lumos.ui.premeasurementinstallation
 
 import android.content.Context
 import android.content.Intent
@@ -73,7 +73,7 @@ import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
-import com.lumos.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import com.lumos.utils.Utils.buildAddress
 import java.io.File
 import java.math.BigDecimal
@@ -81,7 +81,7 @@ import java.math.BigDecimal
 @Composable
 fun MaterialScreen(
     streetId: Long,
-    indirectExecutionViewModel: IndirectExecutionViewModel,
+    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
     context: Context,
     onNavigateToHome: () -> Unit,
     onNavigateToMenu: () -> Unit,
@@ -97,11 +97,11 @@ fun MaterialScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var execution by remember { mutableStateOf<IndirectExecution?>(null) }
     var alertModal by remember { mutableStateOf(false) }
-    val isLoading by indirectExecutionViewModel.isLoadingReserves.collectAsState()
+    val isLoading by preMeasurementInstallationViewModel.isLoadingReserves.collectAsState()
 
     LaunchedEffect(streetId) {
-        execution = indirectExecutionViewModel.getExecution(streetId)
-        reserves = indirectExecutionViewModel.getReservesOnce(streetId)
+        execution = preMeasurementInstallationViewModel.getInstallation(streetId)
+        reserves = preMeasurementInstallationViewModel.getReservesOnce(streetId)
     }
 
     execution?.let {
@@ -119,7 +119,7 @@ fun MaterialScreen(
             notificationsBadge = notificationsBadge,
             takePhoto = { uri ->
                 it.photoUri = uri.toString()
-                indirectExecutionViewModel.setPhotoUri(
+                preMeasurementInstallationViewModel.setPhotoUri(
                     photoUri = uri.toString(),
                     streetId = it.streetId
                 )
@@ -128,7 +128,7 @@ fun MaterialScreen(
                 if (reserves.size == 1 && execution?.photoUri == null) {
                     alertModal = true
                 } else {
-                    indirectExecutionViewModel.finishAndCheckPostExecution(
+                    preMeasurementInstallationViewModel.finishAndCheckPostExecution(
                         reserveId = reserveId,
                         quantityExecuted = quantityExecuted,
                         streetId = streetId,

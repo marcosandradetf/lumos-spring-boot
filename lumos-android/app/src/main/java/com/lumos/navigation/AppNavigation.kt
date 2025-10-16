@@ -29,12 +29,12 @@ import com.lumos.MyApp
 import com.lumos.R
 import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
-import com.lumos.api.ExecutionApi
+import com.lumos.api.DirectExecutionApi
 import com.lumos.api.PreMeasurementApi
+import com.lumos.api.PreMeasurementInstallationApi
 import com.lumos.repository.AuthRepository
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
-import com.lumos.repository.IndirectExecutionRepository
 import com.lumos.repository.MaintenanceRepository
 import com.lumos.repository.StockRepository
 import com.lumos.repository.NotificationRepository
@@ -44,21 +44,23 @@ import com.lumos.notifications.FCMService
 import com.lumos.notifications.FCMService.FCMBus
 import com.lumos.notifications.NotificationManager
 import com.lumos.notifications.NotificationsBadge
+import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.TeamRepository
+import com.lumos.repository.ViewRepository
 import com.lumos.ui.auth.Login
-import com.lumos.ui.directExecutions.StreetMaterialScreen
-import com.lumos.ui.indirectExecutions.CitiesScreen
-import com.lumos.ui.indirectExecutions.MaterialScreen
-import com.lumos.ui.indirectExecutions.StreetsScreen
+import com.lumos.ui.directexecution.StreetMaterialScreen
+import com.lumos.ui.installationholder.InstallationHolderScreen
+import com.lumos.ui.premeasurementinstallation.MaterialScreen
+import com.lumos.ui.premeasurementinstallation.StreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.maintenance.MaintenanceScreen
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.noAccess.NoAccessScreen
 import com.lumos.ui.notifications.NotificationsScreen
-import com.lumos.ui.preMeasurement.ContractsScreen
-import com.lumos.ui.preMeasurement.PreMeasurementProgressScreen
-import com.lumos.ui.preMeasurement.PreMeasurementScreen
-import com.lumos.ui.preMeasurement.PreMeasurementStreetScreen
+import com.lumos.ui.premeasurement.ContractsScreen
+import com.lumos.ui.premeasurement.PreMeasurementProgressScreen
+import com.lumos.ui.premeasurement.PreMeasurementScreen
+import com.lumos.ui.premeasurement.PreMeasurementStreetScreen
 import com.lumos.ui.profile.ProfileScreen
 import com.lumos.ui.stock.CheckStockScreen
 import com.lumos.ui.sync.SyncDetailsScreen
@@ -69,7 +71,7 @@ import com.lumos.utils.NavEvents
 import com.lumos.viewmodel.AuthViewModel
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.DirectExecutionViewModel
-import com.lumos.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import com.lumos.viewmodel.MaintenanceViewModel
 import com.lumos.viewmodel.StockViewModel
 import com.lumos.viewmodel.NotificationViewModel
@@ -136,31 +138,29 @@ fun AppNavigation(
         )
     }
 
-    val indirectExecutionViewModel: IndirectExecutionViewModel = viewModel {
-        val api = app.retrofit.create(ExecutionApi::class.java)
+    val preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel = viewModel {
+        val api = app.retrofit.create(PreMeasurementInstallationApi::class.java)
 
-        val contractRepository = IndirectExecutionRepository(
-            db = app.database,
-            api = api,
-            secureStorage = secureStorage,
-            app = app
-        )
-        IndirectExecutionViewModel(
-            repository = contractRepository
+        PreMeasurementInstallationViewModel(
+            repository = PreMeasurementInstallationRepository(
+                db = app.database,
+                api = api,
+                secureStorage = secureStorage,
+                app = app
+            )
         )
     }
 
     val directExecutionViewModel: DirectExecutionViewModel = viewModel {
-        val api = app.retrofit.create(ExecutionApi::class.java)
+        val api = app.retrofit.create(DirectExecutionApi::class.java)
 
-        val repository = DirectExecutionRepository(
-            db = app.database,
-            api = api,
-            secureStorage = secureStorage,
-            app = app
-        )
         DirectExecutionViewModel(
-            repository = repository
+            repository = DirectExecutionRepository(
+                db = app.database,
+                api = api,
+                secureStorage = secureStorage,
+                app = app
+            )
         )
     }
 
@@ -345,7 +345,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        indirectExecutionViewModel = indirectExecutionViewModel,
+                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
                         directExecutionViewModel = directExecutionViewModel,
                         contractViewModel = contractViewModel,
                         roles = secureStorage.getRoles(),
@@ -492,28 +492,13 @@ fun AppNavigation(
 
                 //
 
-                composable(Routes.EXECUTION_SCREEN+ "?lastRoute={lastRoute}") { backStackEntry ->
-                    val lastRoute =
-                        backStackEntry.arguments?.getString("lastRoute")
-
-                    CitiesScreen(
-                        lastRoute = lastRoute,
-                        indirectExecutionViewModel = indirectExecutionViewModel,
+                composable(Routes.EXECUTION_SCREEN) {
+                    InstallationHolderScreen(
                         directExecutionViewModel = directExecutionViewModel,
-                        context = LocalContext.current,
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
-                        },
+                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
+                        viewRepository = ViewRepository(app.database),
                         navController = navController,
-                        notificationsBadge = notifications.size.toString(),
-                        onNavigateToStreetScreen = { contractId, contractor ->
-                            navController.navigate(Routes.EXECUTION_SCREEN_STREETS + "/$contractId/$contractor")
-                        },
                         roles = secureStorage.getRoles(),
-                        directExecution = false,
                         secureStorage = secureStorage
                     )
                 }
@@ -526,7 +511,7 @@ fun AppNavigation(
                     StreetsScreen(
                         contractId = contractId,
                         contractor = contractor,
-                        indirectExecutionViewModel = indirectExecutionViewModel,
+                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
                         context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -554,7 +539,7 @@ fun AppNavigation(
                         backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
                     MaterialScreen(
                         streetId = streetId,
-                        indirectExecutionViewModel = indirectExecutionViewModel,
+                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
                         context = LocalContext.current,
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME)
@@ -574,33 +559,6 @@ fun AppNavigation(
                         onNavigateToExecutions = {
                             navController.navigate(Routes.EXECUTION_SCREEN)
                         }
-                    )
-                }
-
-                // direct executions
-                composable(Routes.DIRECT_EXECUTION_SCREEN+ "?lastRoute={lastRoute}") { backStackEntry ->
-                    val lastRoute =
-                        backStackEntry.arguments?.getString("lastRoute")
-
-                    CitiesScreen(
-                        lastRoute = lastRoute,
-                        indirectExecutionViewModel = indirectExecutionViewModel,
-                        directExecutionViewModel = directExecutionViewModel,
-                        context = LocalContext.current,
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
-                        },
-                        navController = navController,
-                        notificationsBadge = notifications.size.toString(),
-                        onNavigateToStreetScreen = { contractId, contractor ->
-                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/$contractId/$contractor")
-                        },
-                        roles = secureStorage.getRoles(),
-                        directExecution = true,
-                        secureStorage = secureStorage
                     )
                 }
 

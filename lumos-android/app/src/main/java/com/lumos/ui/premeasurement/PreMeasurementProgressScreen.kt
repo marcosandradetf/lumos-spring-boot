@@ -1,7 +1,6 @@
-package com.lumos.ui.preMeasurement
+package com.lumos.ui.premeasurement
 
 import android.content.Context
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -19,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -28,14 +26,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,8 +44,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.lumos.domain.model.Contract
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.navigation.BottomBar

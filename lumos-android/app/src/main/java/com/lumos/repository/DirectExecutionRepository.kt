@@ -17,7 +17,7 @@ import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
-import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.InstallationView
 import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.SendDirectExecutionDto
 import com.lumos.midleware.SecureStorage
@@ -131,7 +131,7 @@ class DirectExecutionRepository(
     }
 
 
-    fun getFlowDirectExecutions(): Flow<List<ExecutionHolder>> =
+    fun getFlowDirectExecutions(): Flow<List<InstallationView>> =
         db.directExecutionDao().getFlowDirectExecutions()
 
     suspend fun getExecution(contractId: Long): DirectExecution? =

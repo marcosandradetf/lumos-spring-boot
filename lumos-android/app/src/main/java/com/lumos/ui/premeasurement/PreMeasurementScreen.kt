@@ -1,4 +1,4 @@
-package com.lumos.ui.preMeasurement
+package com.lumos.ui.premeasurement
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable

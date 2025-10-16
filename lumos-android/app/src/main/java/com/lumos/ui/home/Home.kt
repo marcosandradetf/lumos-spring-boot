@@ -54,7 +54,7 @@ import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.lumos.domain.model.Contract
-import com.lumos.domain.model.ExecutionHolder
+import com.lumos.domain.model.InstallationView
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
@@ -65,7 +65,7 @@ import com.lumos.ui.components.UpdateModal
 import com.lumos.utils.Utils.findActivity
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.DirectExecutionViewModel
-import com.lumos.viewmodel.IndirectExecutionViewModel
+import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.system.exitProcess
@@ -77,7 +77,7 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    indirectExecutionViewModel: IndirectExecutionViewModel,
+    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
     directExecutionViewModel: DirectExecutionViewModel,
     contractViewModel: ContractViewModel,
     roles: Set<String>,
@@ -419,7 +419,7 @@ fun HomeScreen(
 
 @Composable
 fun MaintenanceStatusCard(
-    executions: List<ExecutionHolder>,
+    executions: List<InstallationView>,
     navController: NavHostController
 ) {
     val text = if (executions.size > 1) "Sua equipe possui ${executions.size} execuções alocadas"
