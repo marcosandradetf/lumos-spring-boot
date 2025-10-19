@@ -1,12 +1,12 @@
 package com.lumos.lumosspring.premeasurement.repository.installation;
 
+import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.dto.installation.StreetsInstallationResponse;
 import com.lumos.lumosspring.premeasurement.dto.installation.ItemsInstallationResponse;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationResponse;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import com.lumos.lumosspring.storage.service.MinioService;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +90,7 @@ public class InstallationViewRepository {
                                         )
                                 );
 
-                                String photoUrl = minioService.generatePresignedUrl("sclconstrutora", rs2.getString("photo_uri"), 2 * 24 * 60 * 60); // 2 dias
+                                String photoUrl = minioService.getPresignedObjectUrl("sclconstrutora", rs2.getString("photo_uri"), 2 * 24 * 60 * 60); // 2 dias
                                 return new StreetsInstallationResponse(
                                         rs.getObject("device_pre_measurement_id", UUID.class),
                                         rs2.getObject("device_pre_measurement_street_id", UUID.class),

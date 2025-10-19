@@ -1,4 +1,4 @@
-rpackage com.lumos.lumosspring.premeasurement.dto.premeasurement
+package com.lumos.lumosspring.premeasurement.dto.premeasurement
 
 import java.util.*
 
