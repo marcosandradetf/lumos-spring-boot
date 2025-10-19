@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,7 +52,7 @@ fun NoAccessScreen(
             Routes.CONTRACT_SCREEN -> "Nova pré-medição"
             Routes.MAINTENANCE -> "Nova Manutenção"
             Routes.DIRECT_EXECUTION_SCREEN -> "Execução sem pré-medição"
-            Routes.EXECUTION_SCREEN -> "Execução com pré-medição"
+            Routes.INSTALLATION_HOLDER -> "Execução com pré-medição"
             else -> ""
         }
 

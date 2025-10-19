@@ -43,10 +43,17 @@ interface PreMeasurementInstallationDao {
     @Query("UPDATE PreMeasurementInstallationStreet SET status = :status WHERE preMeasurementStreetId = :id")
     suspend fun setStreetStatus(id: String, status: String = ExecutionStatus.IN_PROGRESS)
 
-    @Query("update premeasurementinstallationstreet set ph")
+    @Query("""
+        update premeasurementinstallationstreet 
+        set installationPhotoUri = :photoUri 
+        where preMeasurementStreetId = :streetId
+    """)
     suspend fun setPhotoInstallationUri(photoUri: String, streetId: String)
 
-    
+    @Query("SELECT * from premeasurementinstallationstreet where preMeasurementId = :installationID")
+    suspend fun getStreetsByInstallationId(installationID: String?): List<PreMeasurementInstallationStreet>
+
+
 }
 
 

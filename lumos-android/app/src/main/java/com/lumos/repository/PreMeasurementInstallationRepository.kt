@@ -197,4 +197,8 @@ class PreMeasurementInstallationRepository(
         return ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
+    suspend fun getStreets(installationID: String?): List<PreMeasurementInstallationStreet> {
+        return db.preMeasurementInstallationDao().getStreetsByInstallationId(installationID)
+    }
+
 }

@@ -1,6 +1,5 @@
 package com.lumos.ui.installationholder
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,7 +81,7 @@ fun InstallationHolderScreen(
     val isSyncing = directExecutionViewModel.isLoading
 
     val error1 by directExecutionViewModel.syncError.collectAsState()
-    val error2 by preMeasurementInstallationViewModel.syncError.collectAsState()
+    val error2 by preMeasurementInstallationViewModel.errorMessage.collectAsState()
 
     val responseError = if (error1.isNullOrBlank()) error2 else error1
 
@@ -114,8 +113,12 @@ fun InstallationHolderScreen(
         navController = navController,
         isSyncing = isSyncing,
         select = { id, type, contractor ->
-            if(type == "") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
-            else navController.navigate("")
+            if(type != "PreMeasurementInstallation") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
+            else {
+                preMeasurementInstallationViewModel.installationID = id
+                preMeasurementInstallationViewModel.setStreets()
+                navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_STREETS)
+            }
         },
         error = responseError,
         refresh = {

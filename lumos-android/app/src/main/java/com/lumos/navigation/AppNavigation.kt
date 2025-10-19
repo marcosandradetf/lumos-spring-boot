@@ -51,7 +51,7 @@ import com.lumos.ui.auth.Login
 import com.lumos.ui.directexecution.StreetMaterialScreen
 import com.lumos.ui.installationholder.InstallationHolderScreen
 import com.lumos.ui.premeasurementinstallation.MaterialScreen
-import com.lumos.ui.premeasurementinstallation.StreetsScreen
+import com.lumos.ui.premeasurementinstallation.PreMeasurementInstallationStreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.maintenance.MaintenanceScreen
 import com.lumos.ui.menu.MenuScreen
@@ -248,7 +248,7 @@ fun AppNavigation(
                     Routes.CONTRACT_SCREEN -> navController.navigate(Routes.CONTRACT_SCREEN)
                     Routes.NOTIFICATIONS -> navController.navigate(Routes.NOTIFICATIONS)
                     Routes.PROFILE -> navController.navigate(Routes.PROFILE)
-                    Routes.EXECUTION_SCREEN -> navController.navigate(Routes.EXECUTION_SCREEN)
+                    Routes.INSTALLATION_HOLDER -> navController.navigate(Routes.INSTALLATION_HOLDER)
                     Routes.DIRECT_EXECUTION_SCREEN -> navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
                     // Adicione mais cases conforme necessário
 
@@ -492,7 +492,7 @@ fun AppNavigation(
 
                 //
 
-                composable(Routes.EXECUTION_SCREEN) {
+                composable(Routes.INSTALLATION_HOLDER) {
                     InstallationHolderScreen(
                         directExecutionViewModel = directExecutionViewModel,
                         preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
@@ -503,38 +503,14 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.EXECUTION_SCREEN_STREETS + "/{contractId}/{contractor}") { backStackEntry ->
-                    val contractId =
-                        backStackEntry.arguments?.getString("contractId")?.toLongOrNull() ?: 0
-                    val contractor =
-                        backStackEntry.arguments?.getString("contractor") ?: ""
-                    StreetsScreen(
-                        contractId = contractId,
-                        contractor = contractor,
-                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
-                        context = LocalContext.current,
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
+                composable(Routes.PRE_MEASUREMENT_INSTALLATION_STREETS) {
+                    PreMeasurementInstallationStreetsScreen(
+                        viewModel = preMeasurementInstallationViewModel,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString(),
-                        pSelected = BottomBar.MORE.value,
-                        onNavigateToExecution = {
-                            navController.navigate(Routes.EXECUTION_SCREEN_MATERIALS + "/$it")
-                        }
                     )
                 }
 
-                composable(Routes.EXECUTION_SCREEN_MATERIALS + "/{streetId}") { backStackEntry ->
+                composable(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS + "/{streetId}") { backStackEntry ->
                     val streetId =
                         backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
                     MaterialScreen(
@@ -557,7 +533,7 @@ fun AppNavigation(
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
                         onNavigateToExecutions = {
-                            navController.navigate(Routes.EXECUTION_SCREEN)
+                            navController.navigate(Routes.INSTALLATION_HOLDER)
                         }
                     )
                 }
@@ -682,14 +658,16 @@ object Routes {
     const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
 
-    const val EXECUTION_SCREEN = "execution-screen"
+    const val INSTALLATION_HOLDER = "installation-holder-screen"
     const val MAINTENANCE = "maintenance"
     const val STOCK = "stock"
     const val ORDER = "order"
 
-    const val EXECUTION_SCREEN_STREETS = "execution-screen-streets"
-    const val EXECUTION_SCREEN_MATERIALS = "execution-screen-materials"
+    // -> pre-measurement-installations
+    const val PRE_MEASUREMENT_INSTALLATION_STREETS = "pre-measurement-installation-streets"
+    const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
 
+    // -> direct-installations
     const val DIRECT_EXECUTION_SCREEN = "direct-execution-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
     const val UPDATE = "update"
