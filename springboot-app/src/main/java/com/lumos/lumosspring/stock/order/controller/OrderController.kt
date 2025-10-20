@@ -1,32 +1,32 @@
 package com.lumos.lumosspring.stock.order.controller
 
 import com.lumos.lumosspring.stock.order.dto.Replies
-import com.lumos.lumosspring.stock.order.service.ReservationService
+import com.lumos.lumosspring.stock.order.service.OrderService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api")
-class ReservationController(
-    private val reservationService: ReservationService
+class OrderController(
+    private val orderService: OrderService
 ) {
 
 
-    @PostMapping("/reservation/reply")
+    @PostMapping("/order/reply")
     fun reply(@RequestBody replies: Replies): ResponseEntity<Void> {
-        return reservationService.reply(replies)
+        return orderService.reply(replies)
     }
 
 
-    @PostMapping("/reservation/mark-as-collected")
+    @PostMapping("/order/mark-as-collected")
     fun markAsCollected(@RequestBody reservationIds: List<Long>): ResponseEntity<Void> {
-        return reservationService.markAsCollected(reservationIds)
+        return orderService.markAsCollected(reservationIds)
     }
 
-    @GetMapping("/execution/get-reservations-by-status-and-stockist")
+    @GetMapping("/order/get-orders-by-status-and-stockist")
     fun getReservationsByStatusAndStockist(
         @RequestParam depositId: Long,
         @RequestParam status: String,
-    ) = reservationService.getReservationsByStatusAndStockist(depositId, status)
+    ) = orderService.getReservationsByStatusAndStockist(depositId, status)
 
 }

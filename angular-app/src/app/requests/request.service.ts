@@ -16,19 +16,21 @@ export class RequestService {
     const params = new HttpParams()
       .set('depositId', depositId)
       .set('status', status);
-    return this.http.get<ReservationsByCaseDtoResponse[]>(this.baseUrl + "/execution/get-reservations-by-status-and-stockist", {params});
+    return this.http.get<ReservationsByCaseDtoResponse[]>(
+      this.baseUrl + "/order/get-orders-by-status-and-stockist", {params}
+    );
   }
 
   reply(replies: {
     approved: { reserveId: number }[],
     rejected: { reserveId: number }[],
   }) {
-    return this.http.post(this.baseUrl + "/reservation/reply", replies);
+    return this.http.post(this.baseUrl + "/order/reply", replies);
   }
 
   markAsCollected(reservationIds: number[]) {
     return this.http.post<void>(
-      this.baseUrl + "/reservation/mark-as-collected",
+      this.baseUrl + "/order/mark-as-collected",
       reservationIds
     );
   }

@@ -17,14 +17,14 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Service
-class ReservationService(
+class OrderService(
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val notificationService: NotificationService,
     private val orderMaterialRepository: OrderMaterialRepository
 ) {
 
     fun getReservationsByStatusAndStockist(depositId: Long, status: String): ResponseEntity<Any> {
-        data class ReservationDto(
+        data class OrderDto(
             val reserveId: Long?,
             val materialId: Long?,
             val orderId: String?,
@@ -36,47 +36,48 @@ class ReservationService(
             val status: String,
         )
 
-        data class ReservationsByCaseDtoResponse(
+        data class OrdersByCaseResponse(
             val description: String,
             val teamName: String?,
-            val reservations: List<ReservationDto>
+            val reservations: List<OrderDto>
         )
 
-        val response: MutableList<ReservationsByCaseDtoResponse> = mutableListOf()
+        val response: MutableList<OrdersByCaseResponse> = mutableListOf()
 
         val rawReservations = getRawData(
             namedJdbc,
             """
-                    -- Reservas para execucoes
-                    select pms.city, c.contractor, mr.material_id_reservation, cast(null as uuid) as order_id,
-                    mr.reserved_quantity as request_quantity, mr.description, m.id_material,
-                    m.material_name, m.material_power, m.material_length, t.team_name,
-                    ms.stock_quantity, mr.status, cast(null as timestamp) as created_at
-                    from material_reservation mr
-                    inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
-                    inner join material m on m.id_material = ms.material_id
-                    left join direct_execution de on mr.direct_execution_id = de.direct_execution_id
-                    left join pre_measurement_street pms on pms.pre_measurement_street_id = mr.pre_measurement_street_id
-                    inner join team t on t.id_team = mr.team_id
-                    left join contract c on de.contract_id = c.contract_id
-                    where ms.deposit_id = :deposit_id and mr.status = :status
+                -- Reservas para instalações
+                select pms.city, c.contractor, mr.material_id_reservation, 
+                cast(null as uuid) as order_id, mr.reserved_quantity as request_quantity, 
+                mr.description, m.id_material, m.material_name, 
+                m.material_power, m.material_length, t.team_name,
+                ms.stock_quantity, mr.status, cast(null as timestamp) as created_at
+                from material_reservation mr
+                inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
+                inner join material m on m.id_material = ms.material_id
+                left join direct_execution de on mr.direct_execution_id = de.direct_execution_id
+                left join pre_measurement pm on pm.pre_measurement_id = mr.pre_measurement_id
+                inner join team t on t.id_team = mr.team_id
+                left join contract c on de.contract_id = c.contract_id
+                where ms.deposit_id = :deposit_id and mr.status = :status
 
-                    UNION ALL
+                UNION ALL
 
-                    -- Pedidos da equipe
-                    select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id,
-                    cast(null as bigint) as request_quantity, om.order_code as description, m.id_material,
-                    m.material_name, m.material_power, m.material_length, t.team_name,
-                    ms.stock_quantity, om.status, om.created_at
-                    from order_material om
-                    inner join order_material_item omi on omi.order_id = om.order_id
-                    inner join material_stock ms on ms.material_id = omi.material_id
-                    inner join material m on m.id_material = ms.material_id
-                    inner join team t on t.id_team = om.team_id
-                    where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
+                -- Pedidos da equipe
+                select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id,
+                cast(null as bigint) as request_quantity, om.order_code as description, m.id_material,
+                m.material_name, m.material_power, m.material_length, t.team_name,
+                ms.stock_quantity, om.status, om.created_at
+                from order_material om
+                inner join order_material_item omi on omi.order_id = om.order_id
+                inner join material_stock ms on ms.material_id = omi.material_id
+                inner join material m on m.id_material = ms.material_id
+                inner join team t on t.id_team = om.team_id
+                where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
 
-                    order by created_at nulls last, material_id_reservation nulls last;
-                    """.trimIndent(),
+                order by created_at nulls last, material_id_reservation nulls last;
+            """.trimIndent(),
             mapOf("deposit_id" to depositId, "status" to status)
         )
 
@@ -87,7 +88,7 @@ class ReservationService(
             }
 
         for ((preMeasurementName, reservations) in reservationsGroup) {
-            val list = mutableListOf<ReservationDto>()
+            val list = mutableListOf<OrderDto>()
             for (reserve in reservations) {
                 var materialName = (reserve["material_name"] as String)
                 val power: String? = (reserve["material_power"] as? String)
@@ -96,7 +97,7 @@ class ReservationService(
                 else if (length != null) materialName += " $length"
 
                 list.add(
-                    ReservationDto(
+                    OrderDto(
                         reserveId = (reserve["material_id_reservation"] as Number?)?.toLong(),
                         orderId = (reserve["order_id"] as? UUID)?.toString(),
 
@@ -111,7 +112,7 @@ class ReservationService(
             }
 
             response.add(
-                ReservationsByCaseDtoResponse(
+                OrdersByCaseResponse(
                     description = preMeasurementName,
                     teamName = reservations.first()["team_name"] as? String,
                     reservations = list
