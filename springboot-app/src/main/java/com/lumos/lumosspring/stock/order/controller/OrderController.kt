@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.order.controller
 
+import com.lumos.lumosspring.stock.order.dto.OrderRequest
 import com.lumos.lumosspring.stock.order.dto.Replies
 import com.lumos.lumosspring.stock.order.service.OrderService
 import org.springframework.http.ResponseEntity
@@ -19,8 +20,8 @@ class OrderController(
 
 
     @PostMapping("/order/mark-as-collected")
-    fun markAsCollected(@RequestBody reservationIds: List<Long>): ResponseEntity<Void> {
-        return orderService.markAsCollected(reservationIds)
+    fun markAsCollected(@RequestBody orders:  List<OrderRequest>): ResponseEntity<Void> {
+        return orderService.markAsCollected(orders)
     }
 
     @GetMapping("/order/get-orders-by-status-and-stockist")

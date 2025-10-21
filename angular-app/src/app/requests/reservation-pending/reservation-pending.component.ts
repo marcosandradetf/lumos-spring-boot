@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {ReservationsByCaseDtoResponse} from '../reservation.models';
+import {OrderDto, OrdersByCaseResponse} from '../reservation.models';
 import {RequestService} from '../request.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthService} from '../../core/auth/auth.service';
@@ -23,6 +23,7 @@ import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm
 import {Title} from '@angular/platform-browser';
 import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
+import {isEqual} from 'lodash';
 
 @Component({
   selector: 'app-reservation-pending',
@@ -54,8 +55,10 @@ export class ReservationPendingComponent implements OnInit {
   loading = false;
 
   deposits: DepositByStockist[] = [];
-  reservations: ReservationsByCaseDtoResponse[] = [];
-  reservationsBackup: ReservationsByCaseDtoResponse[] = [];
+
+  orders: OrdersByCaseResponse[] = [];
+  ordersBackup: OrdersByCaseResponse[] = [];
+
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
   showTeamModal: boolean = false;
   depositName: string | null = null;
@@ -102,15 +105,15 @@ export class ReservationPendingComponent implements OnInit {
             this.depositName = response[0].depositName
             this.requestService.getReservation(response[0].depositId, this.status).subscribe({
               next: (response) => {
-                this.reservations = response.map(group => ({
+                this.orders = response.map(group => ({
                   ...group,
-                  reservations: group.reservations.map(item => ({
+                  reservations: group.orders.map(item => ({
                     ...item,
                     uniqueId: item.reserveId ?? item.materialId
                   }))
                 }));
 
-                this.reservationsBackup = this.reservations;
+                this.ordersBackup = this.orders;
 
               },
               error: (error) => {
@@ -137,15 +140,15 @@ export class ReservationPendingComponent implements OnInit {
     this.depositName = this.deposits.find(d => d.depositId = depositId)?.depositName || null;
     this.requestService.getReservation(depositId, "PENDING").subscribe({
       next: (response) => {
-        this.reservations = response.map(group => ({
+        this.orders = response.map(group => ({
           ...group,
-          reservations: group.reservations.map(item => ({
+          reservations: group.orders.map(item => ({
             ...item,
             uniqueId: item.reserveId ?? item.materialId
           }))
         }));
 
-        this.reservationsBackup = this.reservations;
+        this.ordersBackup = this.orders;
 
       },
       error: (error) => {
@@ -160,34 +163,49 @@ export class ReservationPendingComponent implements OnInit {
 
 
   replies: {
-    approved: { reserveId: number }[],
-    rejected: { reserveId: number }[],
+    approved: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
+    rejected: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
   } = {
     approved: [],
     rejected: [],
   };
 
-  collected: number[] = [];
+  collected: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[] = [];
 
-  reply(reserveId: number, action: 'APPROVE' | 'REJECT' | 'COLLECT') {
+  reply(order: OrderDto, action: 'APPROVE' | 'REJECT' | 'COLLECT') {
+    const target = {
+      reserveId: order.reserveId,
+      order: {
+        orderId: order.orderId,
+        materialId: order.materialId
+      }
+    };
+
     switch (action) {
       case 'APPROVE':
-        this.replies.rejected = this.replies.rejected.filter(reply => reply.reserveId !== reserveId);
-        const approvedIndex = this.replies.approved.findIndex(approved => approved.reserveId === reserveId);
+        this.replies.rejected = this.replies.rejected.filter(obj => !isEqual(obj, target));
+        const approvedIndex = this.replies.approved.findIndex(obj => isEqual(obj, target));
         if (approvedIndex === -1) {
-          this.replies.approved.push({reserveId});
+          this.replies.approved.push(
+            {reserveId: order.reserveId, order: {orderId: order.orderId, materialId: order.materialId}}
+          );
         }
+
         break;
       case 'REJECT':
-        this.replies.approved = this.replies.approved.filter(reply => reply.reserveId !== reserveId);
-        const rejectedIndex = this.replies.rejected.findIndex(approved => approved.reserveId === reserveId);
+        this.replies.approved = this.replies.approved.filter(obj => !isEqual(obj, target));
+        const rejectedIndex = this.replies.rejected.findIndex(obj => isEqual(obj, target));
         if (rejectedIndex === -1) {
-          this.replies.rejected.push({reserveId});
+          this.replies.rejected.push(
+            {reserveId: order.reserveId, order: {orderId: order.orderId, materialId: order.materialId}}
+          );
         }
         break;
       case 'COLLECT':
-        this.collected.filter(n => n !== reserveId);
-        this.collected.push(reserveId);
+        this.collected = this.collected.filter(obj => !isEqual(obj, target));
+        this.collected.push(
+          {reserveId: order.reserveId, order: {orderId: order.orderId, materialId: order.materialId}}
+        );
         break;
     }
 
@@ -196,8 +214,8 @@ export class ReservationPendingComponent implements OnInit {
   modalSendData = false;
 
   sendData() {
-    const hasAtLeastOneResponse = this.reservations.some(group =>
-      group.reservations.some(r => r.internStatus !== null && r.internStatus !== undefined)
+    const hasAtLeastOneResponse = this.orders.some(group =>
+      group.orders.some(r => r.internStatus !== null && r.internStatus !== undefined)
     );
 
     if (!hasAtLeastOneResponse) {
@@ -205,15 +223,15 @@ export class ReservationPendingComponent implements OnInit {
       return;
     }
 
-    for (const group of this.reservations) {
-      const allFilled = group.reservations.every(r => r.internStatus !== null && r.internStatus !== undefined);
-      const noneFilled = group.reservations.every(r => r.internStatus === null || r.internStatus === undefined);
+    for (const group of this.orders) {
+      const allFilled = group.orders.every(r => r.internStatus !== null && r.internStatus !== undefined);
+      const noneFilled = group.orders.every(r => r.internStatus === null || r.internStatus === undefined);
 
-      const allWithout = group.reservations.every(r => r.reserveQuantity !== null && r.internStatus !== 'APROVADO');
-      const noneWithout = group.reservations.every(r => r.reserveQuantity === null && r.internStatus !== 'APROVADO');
+      const allWithout = group.orders.every(r => r.requestQuantity !== null && r.internStatus !== 'APROVADO');
+      const noneWithout = group.orders.every(r => r.requestQuantity === null && r.internStatus !== 'APROVADO');
 
       // Se tiver apenas alguns preenchidos (nem todos, nem nenhum), erro.
-      if (!allFilled && !noneFilled ) {
+      if (!allFilled && !noneFilled) {
         this.utils.showMessage(`Responda todas as reservas pendentes da ${group.description}.`, 'warn', 'Atenção');
         return;
       } else if (!allWithout && !noneWithout) {
@@ -238,17 +256,26 @@ export class ReservationPendingComponent implements OnInit {
         if (this.status === "PENDING") {
           this.requestService.reply(this.replies).subscribe({
             next: () => {
-              const repliedIds = [
-                ...this.replies.approved.map(r => r.reserveId),
-                ...this.replies.rejected.map(r => r.reserveId),
+              const replies = [
+                ...this.replies.approved,
+                ...this.replies.rejected,
               ];
 
-              this.reservations = this.reservations.map(group => ({
+              this.orders = this.orders.map(group => ({
                 ...group,
-                reservations: group.reservations.filter(reservation =>
-                  !repliedIds.includes(reservation.reserveId)
+                reservations: group.orders.filter(orderObj =>
+                  !replies.some(reply =>
+                    isEqual(
+                      {
+                        reserveId: orderObj.reserveId,
+                        order: {orderId: orderObj.orderId, materialId: orderObj.materialId}
+                      },
+                      reply
+                    )
+                  )
                 )
               })).filter(group => group.reservations.length > 0);
+
               this.utils.showMessage(
                 "Acesse a tela (Materiais disponíveis para Coleta) para notificar a equipe responsável e marcar como coletado.",
                 "success", "Dados Salvos - Os materiais estão pendentes de coleta", true
@@ -265,12 +292,21 @@ export class ReservationPendingComponent implements OnInit {
         } else {
           this.requestService.markAsCollected(this.collected).subscribe({
             next: () => {
-              this.reservations = this.reservations.map(group => ({
+              this.orders = this.orders.map(group => ({
                 ...group,
-                reservations: group.reservations.filter(reservation =>
-                  !this.collected.includes(reservation.reserveId)
+                reservations: group.orders.filter(orderObj =>
+                  !this.collected.some(reply =>
+                    isEqual(
+                      {
+                        reserveId: orderObj.reserveId,
+                        order: {orderId: orderObj.orderId, materialId: orderObj.materialId}
+                      },
+                      reply
+                    )
+                  )
                 )
               })).filter(group => group.reservations.length > 0);
+
               this.utils.showMessage("A Equipe já pode iniciar a execução com esses materiais", "success", "Dados enviados com sucesso");
             },
             error: (err) => {
@@ -290,11 +326,11 @@ export class ReservationPendingComponent implements OnInit {
   filterOrders(event: Event) {
     let value = (event.target as HTMLInputElement).value;
 
-    if(value === null || value === undefined || value === '') {
-      this.reservations = this.reservationsBackup;
+    if (value === null || value === undefined || value === '') {
+      this.orders = this.ordersBackup;
     }
 
-    this.reservations = this.reservationsBackup.filter(r => r.description.toLowerCase().includes(value.toLowerCase()));
+    this.orders = this.ordersBackup.filter(r => r.description.toLowerCase().includes(value.toLowerCase()));
   }
 
 

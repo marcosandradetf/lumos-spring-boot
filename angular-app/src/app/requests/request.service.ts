@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {ReservationsByCaseDtoResponse} from './reservation.models';
+import {OrdersByCaseResponse} from './reservation.models';
 import {environment} from '../../environments/environment';
 
 @Injectable({
@@ -16,22 +16,24 @@ export class RequestService {
     const params = new HttpParams()
       .set('depositId', depositId)
       .set('status', status);
-    return this.http.get<ReservationsByCaseDtoResponse[]>(
+    return this.http.get<OrdersByCaseResponse[]>(
       this.baseUrl + "/order/get-orders-by-status-and-stockist", {params}
     );
   }
 
-  reply(replies: {
-    approved: { reserveId: number }[],
-    rejected: { reserveId: number }[],
-  }) {
+  reply(
+    replies: {
+      approved: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
+      rejected: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
+    }
+  ) {
     return this.http.post(this.baseUrl + "/order/reply", replies);
   }
 
-  markAsCollected(reservationIds: number[]) {
+  markAsCollected(orders:  { reserveId: number | null, order: { orderId: string | null, materialId: number } }[]) {
     return this.http.post<void>(
       this.baseUrl + "/order/mark-as-collected",
-      reservationIds
+      orders
     );
   }
 

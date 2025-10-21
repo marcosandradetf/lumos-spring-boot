@@ -1,14 +1,16 @@
-export interface ReservationsByCaseDtoResponse {
+export interface OrdersByCaseResponse {
   description: string,
   teamName: string | null,
-  reservations: ReservationDtoResponse[]
+  orders: OrderDto[]
 }
 
-export interface ReservationDtoResponse {
-  reserveId: number,
+export interface OrderDto {
+  reserveId: number | null,
+  orderId: string | null,
+
   materialId: number,
-  orderId: string,
-  reserveQuantity: number,
+
+  requestQuantity: number,
   stockQuantity: number | null,
   materialName: string,
   description: string | null,

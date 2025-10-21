@@ -10,7 +10,7 @@
       <app-loading></app-loading>
     </div>
 
-  } @else if (reservationsBackup.length === 0 && depositName !== null) {
+  } @else if (ordersBackup.length === 0 && depositName !== null) {
     <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
       <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
            xmlns="http://www.w3.org/2000/svg">
@@ -38,7 +38,7 @@
         class="p-fluid w-full mx-auto mb-4"
       ></p-select>
 
-      <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="reservations.length === 0" [value]="tableSk">
+      <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="orders.length === 0" [value]="tableSk">
         <ng-template pTemplate="header">
           <tr>
             <th pSortableColumn="materialName">Material
@@ -97,7 +97,7 @@
     </div>
 
 
-    <div *ngFor="let group of reservations" class="px-10">
+    <div *ngFor="let group of orders" class="px-10">
       <h3 class="text-xl flex items-center mt-8 justify-between mb-2">{{ group.description }}
         <p-tag severity="info" styleClass="cursor-pointer"
                (click)="showTeamModal = true"
@@ -107,7 +107,7 @@
       </h3>
       <p-table
         #table_parent
-        [value]="group.reservations" [tableStyle]="{ 'min-width': '60rem' }"
+        [value]="group.orders" [tableStyle]="{ 'min-width': '60rem' }"
         editMode="row"
         selectionMode="single"
         dataKey="uniqueId">
@@ -164,14 +164,14 @@
             @if (status === 'PENDING') {
               <td class="space-x-2">
                 <p-button label="Rejeitar" size="small" variant="text" severity="contrast"
-                          (click)="reply(reserve.reserveId, 'REJECT'); reserve.internStatus = 'REJEITADO'"/>
+                          (click)="reply(reserve, 'REJECT'); reserve.internStatus = 'REJEITADO'"/>
                 <p-button label="Aprovar" size="small" severity="info"
-                          (click)="reply(reserve.reserveId, 'APPROVE'); reserve.internStatus = 'APROVADO'; "/>
+                          (click)="reply(reserve, 'APPROVE'); reserve.internStatus = 'APROVADO'; "/>
               </td>
             } @else {
               <td>
                 <p-button label="Confirmar Coleta" size="small" severity="success"
-                          (click)="reply(reserve.reserveId, 'COLLECT'); reserve.internStatus = 'COLETADO'; "/>
+                          (click)="reply(reserve, 'COLLECT'); reserve.internStatus = 'COLETADO'; "/>
               </td>
             }
           </tr>
@@ -180,7 +180,7 @@
     </div>
 
     <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
-         *ngIf="reservations.length > 0">
+         *ngIf="orders.length > 0">
       <p-button label="Finalizar" size="large" (click)="sendData()" severity="info"/>
     </div>
 

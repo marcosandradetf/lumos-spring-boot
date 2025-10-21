@@ -1,9 +1,10 @@
 package com.lumos.lumosspring.stock.order.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.stock.order.dto.Replies
-import com.lumos.lumosspring.stock.order.dto.RepliesReserves
-import com.lumos.lumosspring.stock.order.dto.ReserveItem
+import com.lumos.lumosspring.stock.order.dto.OrderRequest
 import com.lumos.lumosspring.stock.order.repository.OrderMaterialRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
@@ -21,7 +22,8 @@ import java.util.*
 class OrderService(
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val notificationService: NotificationService,
-    private val orderMaterialRepository: OrderMaterialRepository
+    private val orderMaterialRepository: OrderMaterialRepository,
+    private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
 
     fun getReservationsByStatusAndStockist(depositId: Long, status: String): ResponseEntity<Any> {
@@ -29,7 +31,7 @@ class OrderService(
             val reserveId: Long?,
             val orderId: UUID?,
 
-            val materialId: Long?,
+            val materialId: Long,
 
             val requestQuantity: BigDecimal?,
             val stockQuantity: BigDecimal,
@@ -140,17 +142,11 @@ class OrderService(
 
     @Transactional
     fun reply(replies: Replies): ResponseEntity<Void> {
-        replyReservations(RepliesReserves(replies.approvedReserves, replies.rejectedReserves))
-//        replyOrders(RepliesOrders(replies.approvedOrders, replies.rejectedOrders))
 
-        return ResponseEntity(HttpStatus.NO_CONTENT)
-    }
-
-    @Transactional
-    fun replyReservations(replies: RepliesReserves) {
         val reservationIds = replies.approved.map { it.reserveId } + replies.rejected.map { it.reserveId }
+        val orders = replies.approved.map { it.order } + replies.rejected.map { it.order }
 
-        val reservations = JdbcUtil.getRawData(
+        val reservations = getRawData(
             namedJdbc,
             """
                     SELECT mr.material_id_reservation, mr.status, mr.reserved_quantity, mr.central_material_stock_id,
@@ -176,7 +172,7 @@ class OrderService(
 
             if (status != ReservationStatus.PENDING) continue
 
-            if (replies.approved.contains(ReserveItem(reservationId))) {
+            if (replies.approved.contains(OrderRequest(reservationId))) {
                 namedJdbc.update(
                     """
                             UPDATE material_reservation set status = :status
@@ -189,7 +185,7 @@ class OrderService(
                 )
 
 //                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
-            } else if (replies.rejected.contains(ReserveItem(reservationId))) {
+            } else if (replies.rejected.contains(OrderRequest(reservationId))) {
 
                 namedJdbc.update(
                     """
@@ -250,6 +246,9 @@ class OrderService(
                 }
             }
         }
+
+
+        return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 
 //    @Transactional fun replyOrders(replies:  RepliesOrders) {
@@ -341,8 +340,8 @@ class OrderService(
 //    }
 
     @Transactional
-    fun markAsCollected(reservationIds: List<Long>): ResponseEntity<Void> {
-        if (reservationIds.isEmpty()) throw IllegalStateException("Nenhuma reserva foi enviada")
+    fun markAsCollected(orders: List<OrderRequest>): ResponseEntity<Void> {
+        if (orders.isEmpty()) throw IllegalStateException("Nenhuma reserva foi enviada")
 
         data class Quadruple<A, B, C, D>(
             val first: A,
@@ -351,30 +350,74 @@ class OrderService(
             val fourth: D
         )
 
-        var destination: Quadruple<String, String, String, Long> = Quadruple("", "", "", 0)
-
-        val reservations = JdbcUtil.getRawData(
-            namedJdbc,
-            """
-                    SELECT material_id_reservation, central_material_stock_id, reserved_quantity,
-                    direct_execution_id, pre_measurement_street_id, status, truck_material_stock_id
-                    FROM material_reservation
-                    WHERE material_id_reservation in (:reservationIds)
-                """.trimIndent(),
-            mapOf("reservationIds" to reservationIds)
+        var destination = Quadruple("", "", "", 0L)
+        val ordersJson = objectMapper.writeValueAsString(
+            orders.map { mapOf("order_id" to it.order.orderId, "material_id" to it.order.materialId) }
         )
 
-        for (r in reservations) {
+        val orders = getRawData(
+            namedJdbc,
+            """
+                    SELECT 
+                        material_id_reservation,
+                        cast(null as uuid) as order_id, 
+                        cast(null as bigint) as material_id, 
+                        central_material_stock_id,
+                        reserved_quantity,
+                        direct_execution_id,
+                        pre_measurement_id,
+                        status,
+                        truck_material_stock_id
+                    FROM material_reservation
+                    WHERE material_id_reservation in (:reservationIds)
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        cast(null as bigint) as material_id_reservation, 
+                        om.order_id,
+                        omi.material_id,
+                        ms.material_id_stock as central_material_stock_id, 
+                        cast(null as numeric) as reserved_quantity, 
+                        cast(null as bigint) as direct_execution_id, 
+                        cast(null as bigint) as pre_measurement_id, 
+                        om.status, 
+                        tms.material_id_stock as truck_material_stock_id
+                    FROM order_material om
+                    JOIN order_material_item omi on omi.order_id = om.order_id
+                    JOIN material_stock ms 
+                        ON ms.material_id = omi.material_id and ms.deposit_id = om.deposit_id
+                    JOIN team t on t.id_team = om.team_id
+                    JOIN material_stock tms -- truck_material_stock
+                        ON ms.material_id = omi.material_id and ms.deposit_id = t.deposit_id_deposit
+                    WHERE EXISTS (
+                      SELECT 1
+                      FROM jsonb_to_recordset(:ordersJson::jsonb)
+                           AS x(order_id uuid, material_id bigint)
+                      WHERE x.order_id = omi.order_id
+                        AND x.material_id = omi.material_id
+                    )
+                """.trimIndent(),
+            mapOf(
+                "reservationIds" to orders.map { it.reserveId ?: -1L },
+                "ordersJson" to ordersJson
+            )
+        )
+
+        for (o in orders) {
             val (tableName, statusName, keyName, keyId) = destination
 
-            val reservationId = r["material_id_reservation"] as Long
-            val centralMaterialId = r["central_material_stock_id"] as Long
-            val truckMaterialId = r["truck_material_stock_id"] as Long
-            val reserveQuantity = r["reserved_quantity"] as Long
-            val directExecutionId = r["direct_execution_id"] as? Long
-            val streetId = r["pre_measurement_street_id"] as? Long
+            val reservationId = o["material_id_reservation"] as? Long
+            val centralMaterialId = o["central_material_stock_id"] as Long
+            val truckMaterialId = o["truck_material_stock_id"] as Long
+            val reserveQuantity = o["reserved_quantity"] as? Long
+            val directExecutionId = o["direct_execution_id"] as? Long
+            val streetId = o["pre_measurement_street_id"] as? Long
 
-            if (r["status"] == ReservationStatus.COLLECTED) continue
+            val orderId = o["order_id"] as? UUID
+            val materialId = o["material_id"] as? Long
+
+            if (o["status"] == ReservationStatus.COLLECTED) continue
 
             if (
                 (tableName == "direct_execution" && keyId != directExecutionId) ||
@@ -404,17 +447,36 @@ class OrderService(
                 )
             )
 
-            namedJdbc.update(
+            val (sql, param) = if (reservationId != null) {
                 """
-                        UPDATE material_reservation set status = :status
-                        where material_id_reservation in (:reservationId)
-                    """.trimIndent(),
-                mapOf(
+                    UPDATE material_reservation 
+                    SET status = :status
+                    WHERE material_id_reservation = :reservationId
+                """.trimIndent() to mapOf(
                     "reservationId" to reservationId,
                     "status" to ReservationStatus.COLLECTED
                 )
+            } else {
+                """
+                    UPDATE order_material_item 
+                    SET status = :status
+                    WHERE material_id = :materialId
+                        AND order_id = :orderId
+                """.trimIndent() to mapOf(
+                    "materialId" to materialId,
+                    "orderId" to orderId,
+                    "status" to ReservationStatus.COLLECTED
+                )
+            }
+
+            namedJdbc.update(
+                sql,
+                param
             )
 
+            // ->
+            // corrigir quantidade, status
+            // <-
             namedJdbc.update(
                 """
                         UPDATE material_stock 
