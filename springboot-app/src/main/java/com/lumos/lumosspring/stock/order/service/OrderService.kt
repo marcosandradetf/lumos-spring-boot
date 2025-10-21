@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.util.*
 
 @Service
@@ -26,11 +27,12 @@ class OrderService(
     fun getReservationsByStatusAndStockist(depositId: Long, status: String): ResponseEntity<Any> {
         data class OrderDto(
             val reserveId: Long?,
-            val materialId: Long?,
-            val orderId: String?,
+            val orderId: UUID?,
 
-            val reserveQuantity: Double?,
-            val stockQuantity: Double,
+            val materialId: Long?,
+
+            val requestQuantity: BigDecimal?,
+            val stockQuantity: BigDecimal,
             val materialName: String,
             val description: String?,
             val status: String,
@@ -39,7 +41,7 @@ class OrderService(
         data class OrdersByCaseResponse(
             val description: String,
             val teamName: String?,
-            val reservations: List<OrderDto>
+            val orders: List<OrderDto>
         )
 
         val response: MutableList<OrdersByCaseResponse> = mutableListOf()
@@ -48,34 +50,49 @@ class OrderService(
             namedJdbc,
             """
                 -- Reservas para instalações
-                select pms.city, c.contractor, mr.material_id_reservation, 
-                cast(null as uuid) as order_id, mr.reserved_quantity as request_quantity, 
-                mr.description, m.id_material, m.material_name, 
-                m.material_power, m.material_length, t.team_name,
-                ms.stock_quantity, mr.status, cast(null as timestamp) as created_at
+                select 
+                    coalesce(cd.contractor, pm.city) as contractor, 
+                    mr.material_id_reservation, 
+                    cast(null as uuid) as order_id, 
+                    mr.reserved_quantity as request_quantity, 
+                    mr.description, 
+                    m.id_material, 
+                    m.material_name || ' ' || coalesce(m.material_power, m.material_length) as material_name, 
+                    t.team_name,
+                    ms.stock_quantity, 
+                    mr.status, 
+                    cast(null as timestamp) as created_at
                 from material_reservation mr
-                inner join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
-                inner join material m on m.id_material = ms.material_id
+                join material_stock ms on ms.material_id_stock = mr.central_material_stock_id
+                join material m on m.id_material = ms.material_id
                 left join direct_execution de on mr.direct_execution_id = de.direct_execution_id
                 left join pre_measurement pm on pm.pre_measurement_id = mr.pre_measurement_id
-                inner join team t on t.id_team = mr.team_id
-                left join contract c on de.contract_id = c.contract_id
+                join team t on t.id_team = mr.team_id
+                left join contract cd on de.contract_id = cd.contract_id
                 where ms.deposit_id = :deposit_id and mr.status = :status
 
                 UNION ALL
 
                 -- Pedidos da equipe
-                select cast(null as text) as city, cast(null as text) as contractor, cast(null as bigint) as material_id_reservation, om.order_id,
-                cast(null as bigint) as request_quantity, om.order_code as description, m.id_material,
-                m.material_name, m.material_power, m.material_length, t.team_name,
-                ms.stock_quantity, om.status, om.created_at
+                select 
+                    cast(null as text) as contractor, 
+                    cast(null as bigint) as material_id_reservation, 
+                    om.order_id,
+                    cast(null as bigint) as request_quantity, 
+                    om.order_code as description, 
+                    m.id_material,
+                    m.material_name || ' ' || coalesce(m.material_power, m.material_length) as material_name,
+                    t.team_name,
+                    ms.stock_quantity, 
+                    om.status, 
+                    om.created_at
                 from order_material om
-                inner join order_material_item omi on omi.order_id = om.order_id
-                inner join material_stock ms on ms.material_id = omi.material_id
-                inner join material m on m.id_material = ms.material_id
-                inner join team t on t.id_team = om.team_id
+                join order_material_item omi on omi.order_id = om.order_id
+                join material_stock ms on ms.material_id = omi.material_id
+                join material m on m.id_material = ms.material_id
+                join team t on t.id_team = om.team_id
                 where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
-
+                
                 order by created_at nulls last, material_id_reservation nulls last;
             """.trimIndent(),
             mapOf("deposit_id" to depositId, "status" to status)
@@ -83,28 +100,24 @@ class OrderService(
 
         val reservationsGroup = rawReservations
             .groupBy {
-                (it["city"] as? String) ?: (it["contractor"] as? String) ?: (it["description"] as? String)
-                ?: "Desconhecido"
+                (it["contractor"] as? String)
+                    ?: (it["description"] as? String)
+                    ?: "Desconhecido"
             }
 
         for ((preMeasurementName, reservations) in reservationsGroup) {
             val list = mutableListOf<OrderDto>()
             for (reserve in reservations) {
-                var materialName = (reserve["material_name"] as String)
-                val power: String? = (reserve["material_power"] as? String)
-                val length: String? = (reserve["material_length"] as? String)
-                if (power != null) materialName += " $power"
-                else if (length != null) materialName += " $length"
-
                 list.add(
                     OrderDto(
                         reserveId = (reserve["material_id_reservation"] as Number?)?.toLong(),
-                        orderId = (reserve["order_id"] as? UUID)?.toString(),
+                        orderId = (reserve["order_id"] as? UUID),
 
-                        reserveQuantity = (reserve["request_quantity"] as? Number)?.toDouble(),
-                        stockQuantity = (reserve["stock_quantity"] as Number).toDouble(),
                         materialId = reserve["id_material"] as Long,
-                        materialName = materialName,
+
+                        requestQuantity = (reserve["request_quantity"] as? BigDecimal),
+                        stockQuantity = (reserve["stock_quantity"] as BigDecimal),
+                        materialName = (reserve["material_name"] as String),
                         description = (reserve["description"] as? String),
                         status = reserve["status"] as String,
                     )
@@ -115,7 +128,7 @@ class OrderService(
                 OrdersByCaseResponse(
                     description = preMeasurementName,
                     teamName = reservations.first()["team_name"] as? String,
-                    reservations = list
+                    orders = list
                 )
             )
         }
@@ -133,7 +146,8 @@ class OrderService(
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 
-    @Transactional fun replyReservations(replies: RepliesReserves) {
+    @Transactional
+    fun replyReservations(replies: RepliesReserves) {
         val reservationIds = replies.approved.map { it.reserveId } + replies.rejected.map { it.reserveId }
 
         val reservations = JdbcUtil.getRawData(

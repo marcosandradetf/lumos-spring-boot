@@ -69,12 +69,12 @@ public class InstallationViewRepository {
                                                ms.request_unit,
                                                COALESCE(m.material_power, m.material_length) AS specs
                                         FROM pre_measurement_street_item i
-                                        JOIN material_reservation r 
-                                            ON r.contract_item_id = i.contract_item_id 
+                                        JOIN material_reservation r
+                                            ON r.contract_item_id = i.contract_item_id
                                            AND r.pre_measurement_id = i.pre_measurement_id
-                                        JOIN material_stock ms 
+                                        JOIN material_stock ms
                                             ON ms.material_id_stock = r.truck_material_stock_id
-                                        JOIN material m 
+                                        JOIN material m
                                             ON m.id_material = ms.material_id
                                         WHERE i.pre_measurement_street_id = :streetId
                                         """,
