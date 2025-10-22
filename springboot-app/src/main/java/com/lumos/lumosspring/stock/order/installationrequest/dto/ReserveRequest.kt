@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.order.dto
+package com.lumos.lumosspring.stock.order.installationrequest.dto
 
 import java.math.BigDecimal
 

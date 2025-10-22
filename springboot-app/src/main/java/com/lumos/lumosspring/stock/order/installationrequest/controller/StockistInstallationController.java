@@ -1,8 +1,8 @@
-package com.lumos.lumosspring.stock.order.controller;
+package com.lumos.lumosspring.stock.order.installationrequest.controller;
 
 
-import com.lumos.lumosspring.stock.order.dto.ReserveDTOCreate;
-import com.lumos.lumosspring.stock.order.service.StockistInstallationService;
+import com.lumos.lumosspring.stock.order.installationrequest.dto.ReserveDTOCreate;
+import com.lumos.lumosspring.stock.order.installationrequest.service.StockistInstallationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

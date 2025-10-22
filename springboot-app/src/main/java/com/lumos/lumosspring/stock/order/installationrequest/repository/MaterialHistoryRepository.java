@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.stock.order.repository;
+package com.lumos.lumosspring.stock.order.installationrequest.repository;
 
-import com.lumos.lumosspring.stock.order.model.MaterialHistory;
+import com.lumos.lumosspring.stock.order.installationrequest.model.MaterialHistory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

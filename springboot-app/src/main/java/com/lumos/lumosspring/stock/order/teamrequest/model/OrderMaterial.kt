@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.order.model
+package com.lumos.lumosspring.stock.order.teamrequest.model
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.domain.Persistable
@@ -6,24 +6,21 @@ import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.annotation.Transient
-import java.math.BigDecimal
 
 
 @Table
-data class MaterialHistory(
+data class OrderMaterial(
     @Id
-    val materialHistoryId: UUID,
-    val materialStockId: Long,
-
-    val maintenanceStreetId: UUID? = null,
-    val executionStreetId: Long? = null,
-
-    val usedQuantity: BigDecimal,
-    val usedDate: Instant,
+    val orderId: UUID,
+    val orderCode: String,
+    val createdAt: Instant,
+    val depositId: Long,
+    val status: String,
+    val teamId: Long,
 
     @Transient
     private var isNewEntry: Boolean = true
 ): Persistable<UUID> {
-    override fun getId(): UUID = materialHistoryId
+    override fun getId(): UUID = orderId
     override fun isNew(): Boolean = isNewEntry
 }

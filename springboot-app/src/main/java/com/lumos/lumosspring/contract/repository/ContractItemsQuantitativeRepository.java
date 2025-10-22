@@ -1,7 +1,7 @@
 package com.lumos.lumosspring.contract.repository;
 
 import com.lumos.lumosspring.contract.entities.ContractItem;
-import com.lumos.lumosspring.stock.order.dto.ResponseItemReserve;
+import com.lumos.lumosspring.stock.order.installationrequest.dto.ResponseItemReserve;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 

@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.order.model
+package com.lumos.lumosspring.stock.order.installationrequest.model
 
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.data.annotation.Id

@@ -10,8 +10,8 @@ import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositor
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryItem;
 import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.notifications.service.NotificationService;
-import com.lumos.lumosspring.stock.order.model.ReservationManagement;
-import com.lumos.lumosspring.stock.order.repository.ReservationManagementRepository;
+import com.lumos.lumosspring.stock.order.installationrequest.model.ReservationManagement;
+import com.lumos.lumosspring.stock.order.installationrequest.repository.ReservationManagementRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.util.*;
 import org.springframework.dao.DataIntegrityViolationException;
