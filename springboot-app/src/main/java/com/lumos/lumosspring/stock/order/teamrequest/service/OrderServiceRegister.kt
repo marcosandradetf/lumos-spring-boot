@@ -7,7 +7,6 @@ import com.lumos.lumosspring.stock.order.teamrequest.dto.ReplyRequest
 import com.lumos.lumosspring.stock.order.teamrequest.dto.OrderRequest
 import com.lumos.lumosspring.stock.order.teamrequest.repository.OrderMaterialRepository
 import com.lumos.lumosspring.util.ExecutionStatus
-import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.http.HttpStatus
@@ -15,8 +14,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.math.BigDecimal
-import java.util.*
 
 @Service
 class OrderServiceRegister(
@@ -146,7 +143,7 @@ class OrderServiceRegister(
             val fourth: D
         )
 
-        val destination = mutableSetOf(Quadruple("", "", "", 0L))
+        val destinations = mutableSetOf(Quadruple("", "", "", 0L))
         val ordersJson = objectMapper.writeValueAsString(
             orders.map { mapOf("order_id" to it.order.orderId, "material_id" to it.order.materialId) }
         )
@@ -160,11 +157,11 @@ class OrderServiceRegister(
             if (o.status == ReservationStatus.COLLECTED) continue
 
             if (o.directExecutionId != null) {
-                destination.add(
+                destinations.add(
                     Quadruple("direct_execution", "direct_execution_status", "direct_execution_id", o.directExecutionId)
                 )
             } else if (o.preMeasurementId != null) {
-                destination.add(
+                destinations.add(
                     Quadruple("pre_measurement", "status", "pre_measurement_id", o.preMeasurementId)
                 )
             }
@@ -226,36 +223,39 @@ class OrderServiceRegister(
             )
         }
 
-        val (tableName, statusName, keyName, keyId) = destination
-        val statusReservationsData = getRawData(
-            namedJdbc,
-            """
-                    SELECT 1
-                    FROM material_reservation
-                    WHERE :keyName = :keyId AND status <> :status
-                """.trimIndent(),
-            mapOf(
-                "keyName" to keyName,
-                "keyId" to keyId,
-                "status" to ReservationStatus.COLLECTED,
-            )
-        )
+        for (destination in destinations) {
+            val (tableName, statusName, keyName, keyId) = destination
 
-        if (statusReservationsData.isEmpty()) {
-            namedJdbc.update(
+            val statusReservationsData = getRawData(
+                namedJdbc,
                 """
-                update :tableName
-                set :statusName = :status
-                where :keyName = :keyId
-            """.trimIndent(),
-                mapOf(
-                    "tableName" to tableName,
-                    "statusName" to statusName,
-                    "keyName" to keyName,
-                    "keyId" to keyId,
-                    "status" to ExecutionStatus.AVAILABLE_EXECUTION
-                )
+                        SELECT 1
+                        FROM material_reservation
+                        WHERE :keyName = :keyId AND status <> :status
+                    """.trimIndent(),
+                    mapOf(
+                        "keyName" to keyName,
+                        "keyId" to keyId,
+                        "status" to ReservationStatus.COLLECTED,
+                    )
             )
+
+            if (statusReservationsData.isEmpty()) {
+                namedJdbc.update(
+                    """
+                            update :tableName
+                            set :statusName = :status
+                            where :keyName = :keyId
+                        """.trimIndent(),
+                    mapOf(
+                        "tableName" to tableName,
+                        "statusName" to statusName,
+                        "keyName" to keyName,
+                        "keyId" to keyId,
+                        "status" to ExecutionStatus.AVAILABLE_EXECUTION
+                    )
+                )
+            }
         }
 
         return ResponseEntity(HttpStatus.NO_CONTENT)

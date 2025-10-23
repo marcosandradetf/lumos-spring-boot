@@ -1,5 +1,7 @@
 package com.lumos.lumosspring.directexecution.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.lumos.lumosspring.common.service.InstallationReportService
 import com.lumos.lumosspring.directexecution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
@@ -19,6 +21,7 @@ import java.time.format.DateTimeFormatter
 class DirectExecutionReportService(
     private val minioService: MinioService,
     private val directExecutionReportRepository: DirectExecutionReportRepository,
+    private val objectMapper: ObjectMapper,
 ) : InstallationReportService {
 
     override fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
@@ -39,6 +42,28 @@ class DirectExecutionReportService(
             company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
         val companyLogoUrl = minioService.getPresignedObjectUrl(companyBucket, logoUri)
+
+        val team = jsonData["team"]!!
+        val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
+        val teamRows = teamArray.joinToString("\n") { member ->
+            val role = when (member["role"]?.asText()?.lowercase()) {
+                "electrician" -> "Eletricista"
+                "driver" -> "Motorista"
+                "eletricista" -> "Eletricista"
+                "motorista" -> "Motorista"
+                else -> "Executor"
+            }
+            val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
+
+            """
+                <tr>
+                    <td>
+                        <p class="label">$role:</p>
+                        <p class="cell-text">$fullName</p>
+                    </td>
+                </tr>
+            """.trimIndent()
+        }
 
         val replacements = mapOf(
             "TITLE" to "RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText(),
@@ -122,7 +147,8 @@ class DirectExecutionReportService(
             .replace("{{STREET_LINES}}", streetLinesHtml)
             .replace("{{STREET_FOOTER}}", streetFooterHtml)
             .replace("{{COLUMN_LENGTH}}", (columnsList.size + 1).toString())
-            .replace("{{EXECUTION_DATE}}", if (dates != null) dates!! else "")
+            .replace("{{EXECUTION_DATE}}", dates ?: "")
+            .replace("{{TEAM_ROWS}}", teamRows)
 
         try {
             val response = sendHtmlToPuppeteer(templateHtml)
@@ -140,6 +166,7 @@ class DirectExecutionReportService(
             throw RuntimeException(e.message, e.cause)
         }
     }
+
     override fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
         var templateHtml = this::class.java.getResource("/templates/installation/photos.html")!!.readText()
 
@@ -168,14 +195,14 @@ class DirectExecutionReportService(
 
                     <!-- Endereço -->
                     <p style="
-                    margin: 0;
-                    padding: 8px 12px;
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 12px;
-                    color: #054686;
-                    border-bottom: 1px solid #054686;
-                  ">
+                        margin: 0;
+                        padding: 8px 12px;
+                        text-align: center;
+                        font-weight: bold;
+                        font-size: 12px;
+                        color: #054686;
+                        border-bottom: 1px solid #054686;
+                      ">
                         ${line["address"].asText()}
                     </p>
 
@@ -183,16 +210,16 @@ class DirectExecutionReportService(
                 ${
                 if (line["latitude"].asText() != "null")
                     """
-                    <p style="
-            margin: 0;
-            padding: 6px 12px;
-            text-align: center;
-            font-size: 11px;
-            color: #333;
-            border-bottom: 1px solid #ccc;
-            ">
-            Coordenadas - Latitude: ${line["latitude"].asText()}, Longitude: ${line["longitude"].asText()}
-                                </p>
+                        <p style="
+                            margin: 0;
+                            padding: 6px 12px;
+                            text-align: center;
+                            font-size: 11px;
+                            color: #333;
+                            border-bottom: 1px solid #ccc;
+                            ">
+                            Coordenadas - Latitude: ${line["latitude"].asText()}, Longitude: ${line["longitude"].asText()}
+                        </p>
                     """.trimIndent()
                 else ""
             }

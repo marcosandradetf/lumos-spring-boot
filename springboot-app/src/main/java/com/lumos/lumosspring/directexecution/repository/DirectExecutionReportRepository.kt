@@ -91,8 +91,9 @@ class DirectExecutionReportRepository(
                         ]
                   )
              ) AS columns,
+             
+             execs.executors AS team,
         
-                    
              (
 				  SELECT json_agg(street_row)
 				  FROM (
@@ -148,7 +149,27 @@ class DirectExecutionReportRepository(
         FROM direct_execution de
         JOIN contract c ON c.contract_id = de.contract_id
         JOIN company com ON com.id_company = 1
-        JOIN team t ON t.id_team = de.team_id
+        LEFT JOIN LATERAL (
+            SELECT json_agg(
+                   json_build_object(
+                        'name', t.name,
+                        'last_name', t.last_name,
+                        'role', t.role_name
+                        )
+                   ) AS executors
+                FROM (
+                    SELECT DISTINCT ON (au.user_id)
+                           au.name,
+                           au.last_name,
+                           r.role_name
+                    FROM direct_execution_executor dee
+                    JOIN app_user au ON au.user_id = me.user_id
+                    JOIN user_role ur ON ur.id_user = au.user_id
+                    JOIN role r ON r.role_id = ur.id_role
+                    WHERE dee.direct_execution_id = de.direct_execution_id
+                    ORDER BY au.user_id, r.role_name ASC
+                ) t
+            ) execs ON TRUE
         WHERE de.direct_execution_id = :directExecutionId;
         """.trimIndent()
 
@@ -160,6 +181,7 @@ class DirectExecutionReportRepository(
             val streets = objectMapper.readTree(rs.getString("streets"))
             val streetSums = objectMapper.readTree(rs.getString("street_sums"))
             val total = objectMapper.readTree(rs.getString("total"))
+            val team = objectMapper.readTree(rs.getString("team"))
 
             mapOf(
                 "company" to company,
@@ -168,7 +190,8 @@ class DirectExecutionReportRepository(
                 "columns" to columns,
                 "streets" to streets,
                 "street_sums" to streetSums,
-                "total" to total
+                "total" to total,
+                "team" to team,
             )
         }
     }

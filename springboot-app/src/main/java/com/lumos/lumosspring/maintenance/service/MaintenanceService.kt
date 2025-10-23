@@ -11,7 +11,6 @@ import com.lumos.lumosspring.maintenance.model.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreetItem
 import com.lumos.lumosspring.maintenance.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
-import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
@@ -31,7 +30,6 @@ class MaintenanceService(
     private val maintenanceStreetRepository: MaintenanceStreetRepository,
     private val maintenanceStreetItemRepository: MaintenanceStreetItemRepository,
     private val maintenanceQueryRepository: MaintenanceQueryRepository,
-    private val teamQueryRepository: TeamQueryRepository,
     private val minioService: MinioService,
     private val objectMapper: ObjectMapper,
     private val maintenanceExecutorRepository: MaintenanceExecutorRepository,
@@ -360,9 +358,6 @@ class MaintenanceService(
                 </tr>
             """.trimIndent()
         }
-
-        templateHtml = templateHtml.replace("{{TEAM_ROWS}}", teamRows)
-
 
         val total_by_item = jsonData["total_by_item"]!!
 

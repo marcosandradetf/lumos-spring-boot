@@ -13,7 +13,6 @@ services:
     restart: always
     mem_limit: 64m
 
-
     #  certbot:
     #   image: certbot/certbot
     #   container_name: certbot
@@ -44,6 +43,7 @@ services:
     restart: always
     depends_on:
       - minio
+      - puppeteer-service
 
   puppeteer-service:
     build:
@@ -55,8 +55,6 @@ services:
       - NODE_ENV=production
     mem_limit: 250m
     restart: always
-    depends_on:
-      - minio
 
   minio:
     image: minio/minio
@@ -71,6 +69,7 @@ services:
     volumes:
       - ./minio-data:/data
     mem_limit: 512m
+    restart: always
 
 networks:
   default:
