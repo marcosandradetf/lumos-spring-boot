@@ -84,7 +84,7 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
                 om.order_id as orderId,
                 omi.material_id as materialId,
                 ms.material_id_stock as centralMaterialStockId, 
-                cast(null as numeric) as requestQuantity, 
+                omi.quantity_released as requestQuantity, 
                 cast(null as bigint) as directExecutionId, 
                 cast(null as bigint) as preMeasurementId, 
                 omi.status, 

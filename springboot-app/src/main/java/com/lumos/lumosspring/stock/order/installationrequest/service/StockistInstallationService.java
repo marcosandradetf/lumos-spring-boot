@@ -329,18 +329,6 @@ public class StockistInstallationService {
 
                     String status;
                     if (stockistMatch) {
-                        // Abate do estoque central imediatamente
-                        namedJdbc.update(
-                                """
-                                        UPDATE material_stock
-                                        SET stock_available = stock_available - :materialQuantity
-                                        WHERE material_id_stock = :centralMaterialStockId
-                                        """,
-                                Map.of(
-                                        "materialQuantity", requested,
-                                        "centralMaterialStockId", materialReserve.getCentralMaterialStockId()
-                                )
-                        );
                         status = ReservationStatus.APPROVED;
                     } else {
                         status = ReservationStatus.PENDING;

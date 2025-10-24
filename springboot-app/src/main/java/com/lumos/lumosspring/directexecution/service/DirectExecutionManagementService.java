@@ -172,7 +172,7 @@ public class DirectExecutionManagementService {
         }
 
         // 8) Notifica o estoquista responsável
-        notificationService.sendNotificationForUserId(
+        notificationService.sendNotificationForTopic(
                 "Nova Ordem Disponível",
                 "Uma nova ordem foi atribuída a você. Acesse a tela de Gerenciamento de Reservas para iniciar o processo.",
                 null,

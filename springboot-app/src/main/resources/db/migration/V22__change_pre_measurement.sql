@@ -83,6 +83,32 @@ $$
                     FOREIGN KEY (pre_measurement_id)
                         REFERENCES pre_measurement (pre_measurement_id);
         end if;
+
+        if not exists (select 1 from information_schema.columns where column_name = 'notification_code' and table_name = 'team') then
+            CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+            alter table team
+            add column notification_code uuid;
+
+            UPDATE team
+            SET notification_code = gen_random_uuid()
+            WHERE notification_code IS NULL;
+
+            ALTER TABLE team
+            ALTER COLUMN notification_code SET NOT NULL;
+        end if;
+
+        if not exists (select 1 from information_schema.columns where column_name = 'notification_code' and table_name = 'stockist') then
+            alter table stockist
+            add column notification_code uuid;
+
+            UPDATE stockist
+            SET notification_code = gen_random_uuid()
+            WHERE notification_code IS NULL;
+
+            ALTER TABLE stockist
+            ALTER COLUMN notification_code SET NOT NULL;
+        end if;
     END
 $$;
 
@@ -114,3 +140,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_device_pre_measurement_id_unique
 
 alter table order_material_item
     add column if not exists status text not null default 'PENDING';
+
+alter table order_material_item
+    add column if not exists quantity_released numeric null;

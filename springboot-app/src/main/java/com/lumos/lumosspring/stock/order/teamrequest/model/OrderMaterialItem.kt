@@ -6,7 +6,7 @@ import org.springframework.data.annotation.Id
 import java.util.UUID
 import org.springframework.data.annotation.Transient
 import org.springframework.data.domain.Persistable
-
+import java.math.BigDecimal
 
 @Table
 data class OrderMaterialItem(
@@ -14,6 +14,7 @@ data class OrderMaterialItem(
     val orderId: UUID,
     val materialId: Long,
     val status: String = ReservationStatus.PENDING,
+    val quantityReleased: BigDecimal? = null,
 
     @Transient
     private var isNewEntry: Boolean = true
@@ -21,4 +22,3 @@ data class OrderMaterialItem(
     override fun getId(): UUID = orderId
     override fun isNew(): Boolean = isNewEntry
 }
-

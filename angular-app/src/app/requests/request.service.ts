@@ -23,8 +23,8 @@ export class RequestService {
 
   reply(
     replies: {
-      approved: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
-      rejected: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
+      approved: { reserveId: number | null, order: { orderId: string | null, materialId: number, quantity: string | null } }[],
+      rejected: { reserveId: number | null, order: { orderId: string | null, materialId: number, quantity: string | null } }[],
     }
   ) {
     return this.http.post(this.baseUrl + "/order/reply", replies);

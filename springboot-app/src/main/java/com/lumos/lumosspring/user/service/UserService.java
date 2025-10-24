@@ -388,6 +388,7 @@ public class UserService {
         user.setCpf(u.cpf());
         user.setDateOfBirth(date);
         user.setStatus(u.status());
+        user.setNotificationCode(UUID.randomUUID());
         user = userRepository.save(user);
 
         for (Role role : userRoles) {

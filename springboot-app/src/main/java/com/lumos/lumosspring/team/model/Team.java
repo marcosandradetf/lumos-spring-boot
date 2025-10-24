@@ -4,6 +4,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.util.UUID;
+
 
 @Table
 public class Team {
@@ -26,6 +28,8 @@ public class Team {
 
     @Column("deposit_id_deposit")
     private Long depositId;
+
+    private UUID notificationCode;
 
     public long getIdTeam() {
         return idTeam;
@@ -105,4 +109,11 @@ public class Team {
         this.depositId = depositId;
     }
 
+    public UUID getNotificationCode() {
+        return notificationCode;
+    }
+
+    public void setNotificationCode(UUID notificationCode) {
+        this.notificationCode = notificationCode;
+    }
 }

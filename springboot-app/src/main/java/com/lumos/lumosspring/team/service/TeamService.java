@@ -102,6 +102,7 @@ public class TeamService {
         newTeam.setUFName(t.UFName());
         newTeam.setCityName(t.cityName());
         newTeam.setRegion(region.getRegionId());
+        newTeam.setNotificationCode(UUID.randomUUID());
 
         var deposit = new Deposit();
 

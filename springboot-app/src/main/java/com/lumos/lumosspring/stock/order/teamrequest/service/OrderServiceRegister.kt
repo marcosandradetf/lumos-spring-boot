@@ -23,111 +23,134 @@ class OrderServiceRegister(
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
     @Transactional
-    fun reply(replyRequest: ReplyRequest): ResponseEntity<Void> {
-        val reservationIds = replyRequest.approved.map { it.reserveId } + replyRequest.rejected.map { it.reserveId }
-        val orders = replyRequest.approved.map { it.order } + replyRequest.rejected.map { it.order }
-
-        val reservations = getRawData(
-            namedJdbc,
-            """
-                    SELECT mr.material_id_reservation, mr.status, mr.reserved_quantity, mr.central_material_stock_id,
-                    COALESCE(de.reservation_management_id, pm.reservation_management_id) AS reservation_management_id,
-                    mr.direct_execution_id, mr.direct_execution_id, mr.contract_item_id
-                    FROM material_reservation mr
-                    LEFT JOIN pre_measurement pm on pm.pre_measurement_id = mr.pre_measurement_id
-                    LEFT JOIN direct_execution de ON de.direct_execution_id = mr.direct_execution_id
-                    WHERE material_id_reservation in (:reservationIds)
-                """.trimIndent(),
-            mapOf("reservationIds" to reservationIds)
+    fun reply(orders: ReplyRequest): ResponseEntity<Void> {
+        val reservationsJson = objectMapper.writeValueAsString(
+            orders.approved.map {
+                mapOf(
+                    "reservation_id" to it.reserveId,
+                    "status" to "APPROVED"
+                )
+            } + orders.rejected.map {
+                mapOf(
+                    "reservation_id" to it.reserveId,
+                    "status" to "REJECTED"
+                )
+            }
         )
 
-        for (reservation in reservations) {
-            val reservationId = reservation["material_id_reservation"] as Long
-            val reservationManagementId = reservation["reservation_management_id"] as? Long
-            val status = reservation["status"] as String
-            val reserveQuantity = reservation["reserved_quantity"] as Double
-            val centralMaterialId = reservation["central_material_stock_id"] as Long
-
-            val directExecutionId = reservation["direct_execution_id"] as? Long
-            val contractItemId = reservation["contract_item_id"] as Long
-
-            if (status != ReservationStatus.PENDING) continue
-
-            if (replyRequest.approved.contains(OrderRequest(reservationId))) {
-                namedJdbc.update(
-                    """
-                            UPDATE material_reservation set status = :status
-                            WHERE material_id_reservation in (:reservationId)
-                        """.trimIndent(),
-                    mapOf(
-                        "reservationId" to reservationId,
-                        "status" to ReservationStatus.APPROVED
-                    )
+        val ordersJson = objectMapper.writeValueAsString(
+            orders.approved.map {
+                mapOf(
+                    "order_id" to it.order.orderId,
+                    "material_id" to it.order.materialId,
+                    "quantity" to it.order.quantity,
+                    "status" to "APPROVED"
                 )
-
-//                TODO("IMPLEMENTAR ENVIO DE NOTIFICAÇÃO")
-            } else if (replyRequest.rejected.contains(OrderRequest(reservationId))) {
-
-                namedJdbc.update(
-                    """
-                            UPDATE material_reservation set status = :status
-                            WHERE material_id_reservation in (:reservationId)
-                        """.trimIndent(),
-                    mapOf(
-                        "reservationId" to reservationId,
-                        "status" to ReservationStatus.REJECTED
-                    )
+            } + orders.rejected.map {
+                mapOf(
+                    "order_id" to it.order.orderId,
+                    "material_id" to it.order.materialId,
+                    "quantity" to null,
+                    "status" to "REJECTED"
                 )
+            }
+        )
 
-                namedJdbc.update(
-                    """
-                            UPDATE material_stock 
-                            set stock_available = stock_available + :reserveQuantity
-                            WHERE material_id_stock = :centralMaterialId
-                        """.trimIndent(),
-                    mapOf(
-                        "centralMaterialId" to centralMaterialId,
-                        "reserveQuantity" to reserveQuantity
-                    )
-                )
-
-                namedJdbc.update(
-                    """
-                            UPDATE reservation_management set status = :status
-                            WHERE reservation_management_id = :reservationManagementId
-                        """.trimIndent(),
-                    mapOf(
-                        "reservationManagementId" to reservationManagementId,
-                        "status" to ReservationStatus.PENDING
-                    )
-                )
-
-                if (directExecutionId != null) {
-                    namedJdbc.update(
-                        """
-                                UPDATE direct_execution_item set item_status = :status
-                                WHERE contract_item_id = :contractItemId
-                            """.trimIndent(),
-                        mapOf(
-                            "contractItemId" to contractItemId,
-                            "status" to ReservationStatus.PENDING
+        if (ordersJson.trim() != "[]") {
+            namedJdbc.update(
+                """
+                        UPDATE order_material_item omi
+                        SET status = data.status,
+                            quantity_released = data.quantity
+                        FROM jsonb_to_recordset(:ordersJson::jsonb) AS data(
+                            order_id uuid,
+                            material_id bigint,
+                            quantity numeric,
+                            status text
                         )
+                        WHERE omi.order_id = data.order_id
+                          AND omi.material_id = data.material_id
+                    """.trimIndent(),
+                mapOf("ordersJson" to ordersJson)
+            )
+        }
+
+        if (reservationsJson.trim() != "[]") {
+            namedJdbc.query(
+                """
+                        UPDATE material_reservation mr
+                        SET status = data.status
+                        FROM jsonb_to_recordset(:reservationsJson::jsonb) AS data(
+                            reservation_id bigint,
+                            status text
+                        ), team t
+                        WHERE mr.material_id_reservation = data.reservation_id
+                            AND t.id_team = mr.team_id
+                        RETURNING mr.direct_execution_id, mr.pre_measurement_id, mr.contract_item_id, data.status, t.notification_code
+                    """.trimIndent(),
+                mapOf("reservationsJson" to reservationsJson)
+            ) { rs, _ ->
+                val status = rs.getString("status")
+                val directExecutionId = rs.getLong("direct_execution_id").let { if (rs.wasNull()) null else it }
+                val preMeasurementId = rs.getLong("pre_measurement_id").let { if (rs.wasNull()) null else it }
+                val contractItemId = rs.getLong("contract_item_id")
+                val notificationCode = rs.getString("notification_code")
+
+                if (status == "APPROVED") {
+                    notificationService.sendNotificationForTopic(
+                        title = TODO(),
+                        body = TODO(),
+                        action = TODO(),
+                        notificationCode = notificationCode,
+                        time = TODO(),
+                        type = TODO()
                     )
                 } else {
-                    namedJdbc.update(
-                        """
-                                UPDATE pre_measurement_street_item set item_status = :status
-                                WHERE contract_item_id = :contractItemId
-                            """.trimIndent(),
-                        mapOf(
-                            "contractItemId" to contractItemId,
-                            "status" to ReservationStatus.PENDING
+                    if (directExecutionId != null) {
+                        namedJdbc.update(
+                            """
+                            WITH updated AS (
+                                UPDATE direct_execution_item dei
+                                SET item_status = :status
+                                FROM direct_execution de
+                                WHERE dei.contract_item_id = :contractItemId and de.direct_execution_id = dei.direct_execution_id
+                                RETURNING de.reservation_management_id
+                            )
+                            UPDATE reservation_management 
+                            SET status = :status
+                            WHERE reservation_management_id IN (SELECT reservation_management_id FROM updated);
+                        """.trimIndent(),
+                            mapOf(
+                                "contractItemId" to contractItemId,
+                                "status" to ReservationStatus.PENDING
+                            )
                         )
-                    )
+                    } else {
+                        namedJdbc.update(
+                            """
+                            WITH updated AS (
+                                UPDATE pre_measurement_street_item psi
+                                SET item_status = :status
+                                FROM pre_measurement p
+                                WHERE psi.contract_item_id = :contractItemId
+                                    AND psi.pre_measurement_id = :preMeasurementId
+                                    AND p.pre_measurement_id = psi.pre_measurement_id
+                                RETURNING p.reservation_management_id
+                            )
+                            UPDATE reservation_management 
+                            SET status = :status
+                            WHERE reservation_management_id IN (SELECT reservation_management_id FROM updated);
+                        """.trimIndent(),
+                            mapOf(
+                                "contractItemId" to contractItemId,
+                                "preMeasurementId" to preMeasurementId,
+                                "status" to ReservationStatus.PENDING
+                            )
+                        )
+                    }
                 }
             }
         }
-
 
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
@@ -233,11 +256,11 @@ class OrderServiceRegister(
                         FROM material_reservation
                         WHERE :keyName = :keyId AND status <> :status
                     """.trimIndent(),
-                    mapOf(
-                        "keyName" to keyName,
-                        "keyId" to keyId,
-                        "status" to ReservationStatus.COLLECTED,
-                    )
+                mapOf(
+                    "keyName" to keyName,
+                    "keyId" to keyId,
+                    "status" to ReservationStatus.COLLECTED,
+                )
             )
 
             if (statusReservationsData.isEmpty()) {

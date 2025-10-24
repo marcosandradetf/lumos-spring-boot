@@ -12,9 +12,7 @@ data class Stockist(
     @Column("deposit_id_deposit")
     val depositId: Long,
     @Column("user_id_user")
-    val userId: UUID
-) {
-    fun getStockistCode(): String {
-        return "${stockistId}_$userId"
-    }
-}
+    val userId: UUID,
+
+    val notificationCode: UUID = UUID.randomUUID()
+)
