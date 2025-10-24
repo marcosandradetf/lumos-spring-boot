@@ -195,7 +195,7 @@ class OrderServiceRegister(
             // corrigir quantidade, status
             // <-
 
-            val (sql, param) = if (o.materialIdReservation != null) {
+            val (sql, param) = if (o.materialIdReservation != null || o.directExecutionId != null) {
                 """
                     UPDATE material_reservation 
                     SET status = :status

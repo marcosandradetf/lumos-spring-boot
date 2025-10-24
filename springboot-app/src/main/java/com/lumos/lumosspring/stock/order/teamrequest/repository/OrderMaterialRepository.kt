@@ -49,14 +49,14 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
             m.material_name || ' ' || coalesce(m.material_power, m.material_length) as materialName,
             t.team_name as teamName,
             ms.stock_quantity as stockQuantity, 
-            om.status, 
+            omi.status, 
             om.created_at as createdAt
         from order_material om
         join order_material_item omi on omi.order_id = om.order_id
         join material_stock ms on ms.material_id = omi.material_id
         join material m on m.id_material = ms.material_id
         join team t on t.id_team = om.team_id
-        where ms.deposit_id = :deposit_id and om.status = :status and ms.deposit_id = om.deposit_id
+        where ms.deposit_id = :deposit_id and omi.status = :status and ms.deposit_id = om.deposit_id
         
         order by createdAt nulls last, materialIdReservation nulls last;
     """)

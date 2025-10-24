@@ -111,3 +111,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_device_pre_measurement_street_id_unique
 -- add unique for device_pre_measurement_id
 CREATE UNIQUE INDEX IF NOT EXISTS idx_device_pre_measurement_id_unique
     ON pre_measurement (device_pre_measurement_id);
+
+alter table order_material_item
+    add column if not exists status text not null default 'PENDING';

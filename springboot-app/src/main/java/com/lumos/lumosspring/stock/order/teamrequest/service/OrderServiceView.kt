@@ -27,7 +27,7 @@ class OrderServiceView(
                         reserveId = order.materialIdReservation,
                         orderId = order.orderId,
 
-                        materialId = order.materialId,
+                        materialId = order.materialId!!,
 
                         requestQuantity = order.requestQuantity,
                         stockQuantity = order.stockQuantity,
@@ -40,7 +40,7 @@ class OrderServiceView(
 
             response.add(
                 OrdersByCaseResponse(
-                    description = description,
+                    description = description ?: "Desconhecido",
                     teamName = orders.first().teamName,
                     orders = list
                 )

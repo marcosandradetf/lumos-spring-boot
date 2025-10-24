@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.order.teamrequest.model
 
+import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.annotation.Id
 import java.util.UUID
@@ -12,6 +13,7 @@ data class OrderMaterialItem(
     @Id
     val orderId: UUID,
     val materialId: Long,
+    val status: String = ReservationStatus.PENDING,
 
     @Transient
     private var isNewEntry: Boolean = true
