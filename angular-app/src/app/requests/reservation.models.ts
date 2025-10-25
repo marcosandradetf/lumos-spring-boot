@@ -10,8 +10,8 @@ export interface OrderDto {
 
   materialId: number,
 
-  requestQuantity: number,
-  stockQuantity: number | null,
+  requestQuantity: string | null,
+  stockQuantity: number,
   materialName: string,
   description: string | null,
   status: string,

@@ -142,20 +142,21 @@
               <td>
                 <p-cellEditor>
                   <ng-template
-                    pTemplate="output">{{ reserve.reserveQuantity ?? 'A definir' }}
+                    pTemplate="output">{{ reserve.requestQuantity ?? 'A definir' }}
                   </ng-template>
                   <ng-template pTemplate="input">
                     <input pInputText
                            #qtyInput
                            placeholder="Informe a quantidade"
-                           [(ngModel)]="reserve.reserveQuantity"/>
+                           (change)="debitStockQuantity(reserve.orderId, reserve.materialId, reserve.requestQuantity)"
+                           [(ngModel)]="reserve.requestQuantity"/>
                   </ng-template>
                 </p-cellEditor>
               </td>
             } @else {
               <td>{{ reserve.reserveQuantity ?? 'A definir' }}</td>
             }
-            <td>{{ reserve.stockQuantity }}</td>
+            <td>{{ getStockQuantity(reserve.materialId) }}</td>
             <td>
               <p-tag
                 [severity]="['APROVADO', 'COLETADO'].includes(reserve.internStatus) ? 'success' : reserve.internStatus === 'REJEITADO' ?  'danger' : 'contrast'">{{ reserve.internStatus || 'PENDENTE' }}

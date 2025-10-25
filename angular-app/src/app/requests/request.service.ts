@@ -30,7 +30,7 @@ export class RequestService {
     return this.http.post(this.baseUrl + "/order/reply", replies);
   }
 
-  markAsCollected(orders:  { reserveId: number | null, order: { orderId: string | null, materialId: number } }[]) {
+  markAsCollected(orders:  { reserveId: number | null, order: { orderId: string | null, materialId: number, quantity: string | null } }[]) {
     return this.http.post<void>(
       this.baseUrl + "/order/mark-as-collected",
       orders

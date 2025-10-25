@@ -53,24 +53,44 @@ import {isEqual} from 'lodash';
 })
 export class ReservationPendingComponent implements OnInit {
   loading = false;
-
   deposits: DepositByStockist[] = [];
-
   orders: OrdersByCaseResponse[] = [];
   ordersBackup: OrdersByCaseResponse[] = [];
-
   tableSk: any[] = Array.from({length: 5}).map((_, i) => `Item #${i}`);
   showTeamModal: boolean = false;
   depositName: string | null = null;
   status = "";
+  currentStock: {
+    materialId: number,
+    stockQuantity: number
+  }[] = [];
 
   home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
   items: MenuItem[] | undefined = undefined;
 
+  replies: {
+    approved: {
+      reserveId: number | null,
+      order: { orderId: string | null, materialId: number, quantity: string | null }
+    }[],
+    rejected: {
+      reserveId: number | null,
+      order: { orderId: string | null, materialId: number, quantity: string | null }
+    }[],
+  } = {
+    approved: [],
+    rejected: [],
+  };
+
+  collected: {
+    reserveId: number | null,
+    order: { orderId: string | null, materialId: number, quantity: string | null }
+  }[] = [];
+
+  lastQuantity = 0;
 
   constructor(
     private requestService: RequestService,
-    private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
     private utils: UtilsService,
@@ -102,18 +122,36 @@ export class ReservationPendingComponent implements OnInit {
         next: (response) => {
           this.deposits = response;
           if (response.length === 1) {
-            this.depositName = response[0].depositName
+            this.depositName = response[0].depositName;
             this.requestService.getReservation(response[0].depositId, this.status).subscribe({
               next: (response) => {
                 this.orders = response.map(group => ({
                   ...group,
                   reservations: group.orders.map(item => ({
                     ...item,
-                    uniqueId: item.reserveId ?? item.materialId
+                    uniqueId: item.reserveId ?? item.orderId ?? item.materialId
                   }))
                 }));
 
                 this.ordersBackup = this.orders;
+
+                this.currentStock = Object.values(
+                  this.orders
+                    .flatMap(orderGroup =>
+                      orderGroup.orders.map(order => ({
+                        materialId: order.materialId,
+                        stockQuantity: order.stockQuantity
+                      }))
+                    )
+                    .reduce((acc, curr) => {
+                      if (!acc[curr.materialId]) {
+                        acc[curr.materialId] = {...curr};
+                      } else {
+                        acc[curr.materialId].stockQuantity += curr.stockQuantity;
+                      }
+                      return acc;
+                    }, {} as Record<string, { materialId: number; stockQuantity: number }>)
+                );
 
               },
               error: (error) => {
@@ -135,7 +173,56 @@ export class ReservationPendingComponent implements OnInit {
     });
   }
 
-  getReservations(depositId: number) {
+  getStockQuantity(materialId: number) {
+    return this.currentStock
+      .find(s => s.materialId === materialId)
+      ?.stockQuantity || 0;
+  }
+
+  resetQuantity(orderId: string, materialId: number) {
+    this.orders = this.orders.map(group => ({
+      ...group,
+      orders: group.orders.map(orderObj =>
+        orderObj.orderId === orderId && orderObj.materialId === materialId
+          ? {...orderObj, requestQuantity: null}
+          : orderObj
+      )
+    }));
+  }
+
+  debitStockQuantity(orderId: string, materialId: number, quantity: number) {
+    const stockIndex = this.currentStock
+      .findIndex(s => s.materialId === materialId);
+
+    if (stockIndex === -1) {
+      this.utils.showMessage("Stock Index doesn't exist", 'error');
+      this.resetQuantity(orderId, materialId);
+      return;
+    }
+
+    const stockQuantity = this.currentStock[stockIndex].stockQuantity || 0;
+    if (stockQuantity < quantity) {
+      this.utils.showMessage(
+        "Não há estoque disponível para esse material, a quatidade atual é " + stockQuantity,
+        'warn',
+        "Operação não concluída");
+      this.resetQuantity(orderId, materialId);
+      return;
+    }
+
+    this.currentStock[stockIndex].stockQuantity = stockQuantity + this.lastQuantity;
+    this.currentStock[stockIndex].stockQuantity = stockQuantity - quantity;
+    this.lastQuantity = quantity;
+    this.utils.showMessage(
+      "Quantidade atribuida com sucesso",
+      'info',
+      "Operação realizada");
+  }
+
+  getReservations(depositId
+                  :
+                  number
+  ) {
     this.loading = true;
     this.depositName = this.deposits.find(d => d.depositId = depositId)?.depositName || null;
     this.requestService.getReservation(depositId, "PENDING").subscribe({
@@ -161,18 +248,12 @@ export class ReservationPendingComponent implements OnInit {
     });
   }
 
-
-  replies: {
-    approved: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
-    rejected: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[],
-  } = {
-    approved: [],
-    rejected: [],
-  };
-
-  collected: { reserveId: number | null, order: { orderId: string | null, materialId: number } }[] = [];
-
-  reply(order: OrderDto, action: 'APPROVE' | 'REJECT' | 'COLLECT') {
+  reply(order
+        :
+        OrderDto, action
+        :
+          'APPROVE' | 'REJECT' | 'COLLECT'
+  ) {
     const target = {
       reserveId: order.reserveId,
       order: {
@@ -187,7 +268,10 @@ export class ReservationPendingComponent implements OnInit {
         const approvedIndex = this.replies.approved.findIndex(obj => isEqual(obj, target));
         if (approvedIndex === -1) {
           this.replies.approved.push(
-            {reserveId: order.reserveId, order: {orderId: order.orderId, materialId: order.materialId}}
+            {
+              reserveId: order.reserveId,
+              order: {orderId: order.orderId, materialId: order.materialId, quantity: order.requestQuantity}
+            }
           );
         }
 
@@ -197,14 +281,24 @@ export class ReservationPendingComponent implements OnInit {
         const rejectedIndex = this.replies.rejected.findIndex(obj => isEqual(obj, target));
         if (rejectedIndex === -1) {
           this.replies.rejected.push(
-            {reserveId: order.reserveId, order: {orderId: order.orderId, materialId: order.materialId}}
+            {
+              reserveId: order.reserveId,
+              order: {orderId: order.orderId, materialId: order.materialId, quantity: order.requestQuantity}
+            }
           );
         }
         break;
       case 'COLLECT':
         this.collected = this.collected.filter(obj => !isEqual(obj, target));
         this.collected.push(
-          {reserveId: order.reserveId, order: {orderId: order.orderId, materialId: order.materialId}}
+          {
+            reserveId: order.reserveId,
+            order: {
+              orderId: order.orderId,
+              materialId: order.materialId,
+              quantity: null
+            }
+          }
         );
         break;
     }
@@ -244,7 +338,10 @@ export class ReservationPendingComponent implements OnInit {
   }
 
 
-  handleAction($event: "accept" | "reject") {
+  handleAction($event
+               :
+                 "accept" | "reject"
+  ) {
     switch ($event) {
       case 'reject':
         this.modalSendData = false;
@@ -323,7 +420,10 @@ export class ReservationPendingComponent implements OnInit {
 
   }
 
-  filterOrders(event: Event) {
+  filterOrders(event
+               :
+               Event
+  ) {
     let value = (event.target as HTMLInputElement).value;
 
     if (value === null || value === undefined || value === '') {
