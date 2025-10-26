@@ -98,14 +98,15 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
-        notificationService.sendNotificationForRole(
-            title = "Novo contrato pendente para Pré-Medição",
-            body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
-            action = Routes.CONTRACT_SCREEN,
-            role = Role.Values.RESPONSAVEL_TECNICO,
-            time = Instant.now(),
-            type = NotificationType.CONTRACT
-        )
+        for(notificationCode in userRepository.getResponsibleTechUsers()) {
+            notificationService.sendNotificationForTopic(
+                title = "Novo contrato pendente para Pré-Medição",
+                body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
+                action = Routes.CONTRACT_SCREEN,
+                notificationCode = notificationCode.toString(),
+                type = NotificationType.CONTRACT
+            )
+        }
 
         return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
     }

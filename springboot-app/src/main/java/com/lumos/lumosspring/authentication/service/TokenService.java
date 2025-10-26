@@ -3,10 +3,10 @@ package com.lumos.lumosspring.authentication.service;
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
+import com.lumos.lumosspring.authentication.dto.NewLoginResponseMobile;
 import com.lumos.lumosspring.authentication.model.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.team.repository.TeamQueryRepository;
-import com.lumos.lumosspring.team.model.Stockist;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.model.AppUser;
 import com.lumos.lumosspring.user.model.Role;
@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,7 +74,8 @@ public class TokenService {
         return userService.resetPassword(user.get().getUserId().toString());
     }
 
-    public ResponseEntity<?> refreshToken(String refreshToken,  HttpServletResponse response, boolean isMobile) {
+    // -> depreciated
+    public ResponseEntity<?> refreshToken(String refreshToken, HttpServletResponse response, boolean isMobile) {
         var now = Instant.now();
         var expiresIn = 1800L; // 30 minutos para access token expirar
         var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
@@ -86,20 +88,20 @@ public class TokenService {
         var existingToken = tokenFromDb.get();
 
         var user = userRepository.findByUserId(existingToken.getUser()).orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
-        var scope = getScope(user);
+        var scope = getRoles(user);
 
         existingToken.setRevoked(true);
         refreshTokenRepository.save(existingToken);
 
         // Cria novo token de acesso com as mesmas informações do refresh token
-        var accessTokenClaims = getAccessClaims(
+        var accessTokenClaims = getTokenClaims(
                 user,
                 now,
                 expiresIn,
                 scope
         );
 
-        var refreshTokenClaims = getAccessClaims(
+        var refreshTokenClaims = getTokenClaims(
                 user,
                 now,
                 refreshExpiresIn,
@@ -126,12 +128,72 @@ public class TokenService {
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             // Não enviar refresh token no body para web
-            return ResponseEntity.ok(new LoginResponse(newAccessToken, expiresIn, getRoles(user), getTeams(user)));
+            return ResponseEntity.ok(new LoginResponse(newAccessToken));
         } else {
             return ResponseEntity.ok(new LoginResponseMobile(newAccessToken, expiresIn, getRoles(user), getTeams(user), newRefreshTokenValue, ""));
         }
     }
 
+    public ResponseEntity<?> newRefreshToken(String refreshToken, HttpServletResponse response, boolean isMobile) {
+        var now = Instant.now();
+        var expiresIn = 1800L; // 30 minutos para access token expirar
+        var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
+
+        var tokenFromDb = refreshTokenRepository.findByToken(refreshToken);
+        if (tokenFromDb.isEmpty() || tokenFromDb.get().isRevoked() || tokenFromDb.get().getExpiryDate().isBefore(now)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        var existingToken = tokenFromDb.get();
+
+        var user = userRepository.findByUserId(existingToken.getUser()).orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
+        var scope = getRoles(user);
+
+        existingToken.setRevoked(true);
+        refreshTokenRepository.save(existingToken);
+
+        // Cria novo token de acesso com as mesmas informações do refresh token
+        var accessTokenClaims = getTokenClaims(
+                user,
+                now,
+                expiresIn,
+                scope
+        );
+
+        var refreshTokenClaims = getTokenClaims(
+                user,
+                now,
+                refreshExpiresIn,
+                scope
+        );
+
+        var newAccessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
+        var newRefreshTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(refreshTokenClaims)).getTokenValue();
+
+        var newRefreshToken = new RefreshToken();
+        newRefreshToken.setToken(newRefreshTokenValue);
+        newRefreshToken.setExpiryDate(now.plusSeconds(refreshExpiresIn));
+        newRefreshToken.setUser(user.getUserId());
+        newRefreshToken.setRevoked(false);
+        refreshTokenRepository.save(newRefreshToken);
+
+        // Configura o refreshToken como um cookie HTTP-Only
+        if (!isMobile) {
+            // Spring não suporta SameSite diretamente via Cookie API — definimos manualmente o header:
+            String cookieValue = "refreshToken=" + newRefreshTokenValue +
+                    "; Max-Age=" + refreshExpiresIn +
+                    "; Path=/" +
+                    "; HttpOnly; Secure; SameSite=Strict";
+            response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
+
+            // Não enviar refresh token no body para web
+            return ResponseEntity.ok(new LoginResponse(newAccessToken));
+        } else {
+            return ResponseEntity.ok(new NewLoginResponseMobile(newAccessToken, newRefreshTokenValue));
+        }
+    }
+
+    // -> depreciated
     public ResponseEntity<?> login(LoginRequest loginRequest, HttpServletResponse response, boolean isMobile) {
         var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
@@ -167,22 +229,21 @@ public class TokenService {
         var expiresIn = 1800L; // 30 Minutos
         var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
 
-        var scopes = getScope(user.get());
+        var scopes = getRoles(user.get());
 
-        var accessTokenClaims = getAccessClaims(
+        var accessTokenClaims = getTokenClaims(
                 user.get(),
                 now,
                 expiresIn,
                 scopes
         );
 
-        var refreshTokenClaims = JwtClaimsSet.builder()
-                .issuer("LumosSoftware")
-                .subject(user.get().getUserId().toString())
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(refreshExpiresIn))
-                .claim("jti", UUID.randomUUID().toString())
-                .build();
+        var refreshTokenClaims = getTokenClaims(
+                user.get(),
+                now,
+                refreshExpiresIn,
+                scopes
+        );
 
         var accessTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
         var refreshTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(refreshTokenClaims)).getTokenValue();
@@ -202,9 +263,87 @@ public class TokenService {
                     "; HttpOnly; Secure; SameSite=Strict";
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
-            return ResponseEntity.ok(new LoginResponse(accessTokenValue, expiresIn, getRoles(user.get()), getTeams(user.get())));
+            return ResponseEntity.ok(new LoginResponse(accessTokenValue));
         } else {
             var responseBody = new LoginResponseMobile(accessTokenValue, expiresIn, getRoles(user.get()), getTeams(user.get()), refreshTokenValue, user.get().getUserId().toString());
+
+            return ResponseEntity.ok(responseBody);
+        }
+
+    }
+
+    public ResponseEntity<?> newLogin(LoginRequest loginRequest, HttpServletResponse response, boolean isMobile) {
+        var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
+        if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário/CPF ou senha incorretos"));
+        }
+
+        if (!user.get().getStatus()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possuí permissão de acesso."));
+        }
+
+        if (isMobile) {
+            var allowedRoles = new HashSet<>(Set.of(
+                    Role.Values.MOTORISTA.name(),
+                    Role.Values.ELETRICISTA.name(),
+                    Role.Values.ANALISTA.name(),
+                    Role.Values.ADMIN.name(),
+                    Role.Values.RESPONSAVEL_TECNICO.name()
+            ));
+
+            // Busca direto as roles do usuário sem precisar buscar UserRole e Role separadamente
+            var rolesNames = roleRepository.findRolesByUserId(user.get().getUserId());
+
+            // Verificar se o usuário tem acesso
+            boolean hasAccess = rolesNames.stream().anyMatch(allowedRoles::contains);
+
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário sem acesso ao aplicativo"));
+            }
+        }
+
+
+        var now = Instant.now();
+        var expiresIn = 1800L; // 30 Minutos
+        var refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
+
+        var scopes = getRoles(user.get());
+
+        var accessTokenClaims = getTokenClaims(
+                user.get(),
+                now,
+                expiresIn,
+                scopes
+        );
+
+        var refreshTokenClaims = getTokenClaims(
+                user.get(),
+                now,
+                refreshExpiresIn,
+                scopes
+        );
+
+        var accessTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
+        var refreshTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(refreshTokenClaims)).getTokenValue();
+
+        var refreshToken = new RefreshToken();
+        refreshToken.setToken(refreshTokenValue);
+        refreshToken.setExpiryDate(now.plusSeconds(refreshExpiresIn));
+        refreshToken.setUser(user.get().getUserId());
+        refreshToken.setRevoked(false);
+        refreshTokenRepository.save(refreshToken);
+
+        // Configura o refreshToken como um cookie HTTP-Only
+        if (!isMobile) {
+            String cookieValue = "refreshToken=" + refreshTokenValue +
+                    "; Max-Age=" + refreshExpiresIn +
+                    "; Path=/" +
+                    "; HttpOnly; Secure; SameSite=Strict";
+            response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
+
+            return ResponseEntity.ok(new LoginResponse(accessTokenValue));
+        } else {
+            var responseBody = new NewLoginResponseMobile(accessTokenValue,refreshTokenValue);
 
             return ResponseEntity.ok(responseBody);
         }
@@ -233,15 +372,6 @@ public class TokenService {
         return ResponseEntity.noContent().build();
     }
 
-    private String getScope(AppUser appUser) {
-        var roles = getRoles(appUser);
-        var teams = getTeams(appUser);
-
-        if (roles.isBlank()) return teams;
-        if (teams.isBlank()) return roles;
-        return roles + " " + teams;
-    }
-
     private String getRoles(AppUser appUser) {
         var rolesNames = roleRepository.findRolesByUserId(appUser.getUserId());
         return String.join(" ", rolesNames);
@@ -251,28 +381,32 @@ public class TokenService {
         Long numberTeamId = teamQueryRepository.getTeamIdByUserId(appUser.getUserId());
         String teamId = "";
         if (numberTeamId != null) {
-            teamId =  numberTeamId.toString();
+            teamId = numberTeamId.toString();
         }
 
         // Obter códigos dos stockists diretamente e juntar com espaço
         var sTeams = stockistRepository.findAllByUserId(appUser.getUserId()).stream()
-                .map(Stockist::getStockistCode)
+                .map(s -> s.getNotificationCode().toString())
                 .collect(Collectors.joining(" "));
 
         // Junta teamId e sTeams, ignorando valores nulos ou vazios
         return Stream.of(teamId, sTeams)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.joining(" "));
-
     }
 
-    private JwtClaimsSet getAccessClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
+    private JwtClaimsSet getTokenClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
         return JwtClaimsSet.builder()
                 .issuer("LumosSoftware")
                 .subject(appUser.getUserId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiresIn))
                 .claim("scope", scope)
+                .claim("jti", UUID.randomUUID().toString())
+                .claim("username", appUser.getUsername())
+                .claim("email", appUser.getEmail())
+                .claim("fullname", appUser.getCompletedName())
+                .claim("tenant", appUser.getTenantId())
                 .build();
     }
 

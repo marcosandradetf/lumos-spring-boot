@@ -26,4 +26,13 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
         where r.role_name = 'ELETRICISTA' or r.role_name = 'MOTORISTA'
     """)
     List<OperationalUserResponse> getOperationalUsers();
+
+    @Query("""
+        select distinct au.user_id
+        from app_user au
+        join user_role ur on ur.id_user = au.user_id
+        join role r on r.role_id = ur.id_role
+        where r.role_name = 'RESPONSAVEL_TECNICO'
+    """)
+    List<UUID> getResponsibleTechUsers();
 }

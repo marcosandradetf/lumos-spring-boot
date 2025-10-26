@@ -21,6 +21,12 @@ public class TokenControllerMobile {
         return tokenService.login(loginRequest, null, true);
     }
 
+
+    @PostMapping("/v2/login")
+    public ResponseEntity<?> newLoginMobile(@RequestBody LoginRequest loginRequest) {
+        return tokenService.newLogin(loginRequest, null, true);
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader("Authorization") String refreshToken) {
         return tokenService.logout(refreshToken, null, true);
@@ -29,6 +35,11 @@ public class TokenControllerMobile {
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String refreshToken) {
         return tokenService.refreshToken(refreshToken, null, true);
+    }
+
+    @PostMapping("/v2/refresh-token")
+    public ResponseEntity<?> newRefreshToken(@RequestHeader("Authorization") String refreshToken) {
+        return tokenService.newRefreshToken(refreshToken, null, true);
     }
 
     @PostMapping("/forgot-password")

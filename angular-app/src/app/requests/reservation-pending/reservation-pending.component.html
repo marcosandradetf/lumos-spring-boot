@@ -148,7 +148,6 @@
                     <input pInputText
                            #qtyInput
                            placeholder="Informe a quantidade"
-                           (change)="debitStockQuantity(reserve.orderId, reserve.materialId, reserve.requestQuantity)"
                            [(ngModel)]="reserve.requestQuantity"/>
                   </ng-template>
                 </p-cellEditor>
@@ -167,12 +166,12 @@
                 <p-button label="Rejeitar" size="small" variant="text" severity="contrast"
                           (click)="reply(reserve, 'REJECT'); reserve.internStatus = 'REJEITADO'"/>
                 <p-button label="Aprovar" size="small" severity="info"
-                          (click)="reply(reserve, 'APPROVE'); reserve.internStatus = 'APROVADO'; "/>
+                          (click)="reply(reserve, 'APPROVE');"/>
               </td>
             } @else {
               <td>
                 <p-button label="Confirmar Coleta" size="small" severity="success"
-                          (click)="reply(reserve, 'COLLECT'); reserve.internStatus = 'COLETADO'; "/>
+                          (click)="reply(reserve, 'COLLECT');"/>
               </td>
             }
           </tr>

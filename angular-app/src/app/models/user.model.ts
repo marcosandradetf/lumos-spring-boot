@@ -1,31 +1,39 @@
 import {Injectable} from '@angular/core';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class User {
   public uuid!: string;
   public username!: string;
+  public email!: string;
+  public fullName!: string;
+  public tenant!: string;
   public accessToken!: string;
   public birthDate!: Date; // Data de nascimento do usuário
-  public roles!: string[]; // Perfis de acesso do usuário
-  public teams!: string[]; // Equipes do usuário
 
-  // constructor(username: string, accessToken: string, roles: string) {
-  //   this.username = username;
-  //   this.accessToken = accessToken;
-  //   this.birthDate = new Date();
-  //   this.roles = roles;
-  // }
+  public roles!: string[]; // Perfis de acesso do usuário
+  public relatedNotificationTopics!: string[]; // Equipes do usuário
 
   constructor() {
   }
 
-  initialize(uuid:string, username: string, accessToken: string, roles: string[], teams: string[]) {
+  initialize(
+    uuid: string,
+    username: string,
+    accessToken: string,
+    roles: string[],
+    fullName: string,
+    tenant: string,
+    relatedNotificationTopics: string[],
+    email: string) {
     this.uuid = uuid;
     this.username = username;
     this.accessToken = accessToken;
     this.birthDate = new Date();
     this.roles = roles;
-    this.teams = teams;
+    this.fullName = fullName;
+    this.tenant = tenant;
+    this.relatedNotificationTopics = relatedNotificationTopics;
+    this.email = email;
   }
 
 
@@ -63,8 +71,8 @@ export class User {
     return this.roles;
   }
 
-  getTeams(): string[] {
-    return this.teams;
+  getRelatedNotificationTopics(): string[] {
+    return this.relatedNotificationTopics;
   }
 
 }

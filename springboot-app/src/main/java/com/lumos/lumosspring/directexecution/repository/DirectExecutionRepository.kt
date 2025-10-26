@@ -10,6 +10,7 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
 
     fun findByContractId(contractId: Long): DirectExecution?
 }
+
 @Repository
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
 }

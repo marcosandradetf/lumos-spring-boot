@@ -2,6 +2,7 @@ package com.lumos.lumosspring.util
 
 import org.springframework.http.*
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -18,6 +19,17 @@ object Utils {
     fun getCurrentUserId(): UUID {
         val authentication = SecurityContextHolder.getContext().authentication
         return UUID.fromString(authentication.name)
+    }
+
+    fun getCurrentTenantId(): UUID {
+        val authentication = SecurityContextHolder.getContext().authentication
+
+        if (authentication is JwtAuthenticationToken) {
+            val jwt = authentication.token
+            return UUID.fromString(jwt.getClaimAsString("tenant"))
+        }
+
+        throw IllegalStateException("Usuário não autenticado ou token inválido")
     }
 
     fun String.replacePlaceholders(values: Map<String, String>): String {

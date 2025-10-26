@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.order.teamrequest.dto
 
+import org.springframework.data.relational.core.mapping.Column
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -29,12 +30,12 @@ data class OrdersByStatusView(
     val orderId: UUID?,
     val requestQuantity: BigDecimal?,
     val description: String?,
-    val materialId: Long?,
+    val materialId: Long,
     val materialName: String,
     val teamName: String,
     val stockQuantity: BigDecimal,
     val status: String,
-    val createdAt: Instant,
+    val createdAt: Instant?,
 )
 
 data class OrdersByKeysView(

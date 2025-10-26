@@ -27,7 +27,7 @@ class OrderServiceView(
                         reserveId = order.materialIdReservation,
                         orderId = order.orderId,
 
-                        materialId = order.materialId!!,
+                        materialId = order.materialId,
 
                         requestQuantity = order.requestQuantity,
                         stockQuantity = order.stockQuantity,

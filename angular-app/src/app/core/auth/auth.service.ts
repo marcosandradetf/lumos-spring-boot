@@ -7,6 +7,20 @@ import {routes} from '../../app.routes';
 import {environment} from '../../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
 
+export interface DecodedToken {
+  iss: string;
+  sub: string;
+  scope: string;
+  jti: string;
+  username: string;
+  email: string;
+  fullname: string;
+  tenant: string;
+  iat: number;
+  exp: number;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -21,9 +35,18 @@ export class AuthService {
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         const roles: string[] = userData.roles;
-        const teams: string[] = userData.teams;
+        const relatedNotificationTopics: string[] = userData.relatedNotificationTopics;
 
-        this.user.initialize(userData.uuid, userData.username, userData.accessToken, roles, teams); // Converte para uma instância de User
+        this.user.initialize(
+          userData.uuid,
+          userData.username,
+          userData.accessToken,
+          roles,
+          userData.fullName,
+          userData.tenant,
+          relatedNotificationTopics,
+          userData.email
+        ); // Converte para uma instância de User
       }
       this.initializeAuthStatus();
     }
@@ -49,9 +72,25 @@ export class AuthService {
   login(username: string, password: string) { // Retorna um Observable
     return this.http.post<any>(`${this.apiUrl}/login`, {username, password}, {withCredentials: true}).pipe(
       tap(response => {
-        const decodedToken = jwtDecode(response.accessToken);
-        const userId = decodedToken.sub ? decodedToken.sub : '';  // Aqui você tem o ID do usuário
-        this.user.initialize(userId, username, response.accessToken, response.roles.split(' '), response.teams.split(' '));
+        const decodedToken = jwtDecode<DecodedToken>(response.accessToken);
+
+        const userId = decodedToken.sub;
+        const roles = decodedToken.scope.split(' ');
+        const fullName = decodedToken.fullname;
+        const email = decodedToken.email;
+        const tenant = decodedToken.tenant;
+        const usernameDecoded = decodedToken.username;
+
+        this.user.initialize(
+          userId,
+          usernameDecoded,
+          response.accessToken,
+          roles,
+          fullName,
+          tenant,
+          [],
+          email
+        );
         if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
         this.isLoggedInSubject.next(true);
       }),

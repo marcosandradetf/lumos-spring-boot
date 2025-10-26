@@ -16,7 +16,7 @@ class NotificationService(
         body: String,
         action: String? = null,
         notificationCode: String,
-        time: Instant,
+        time: Instant = Instant.now(),
         type: String
     ) {
         // Criar a mensagem para o tópico

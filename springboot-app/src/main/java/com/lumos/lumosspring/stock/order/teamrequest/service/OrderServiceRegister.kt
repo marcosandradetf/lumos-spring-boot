@@ -8,6 +8,7 @@ import com.lumos.lumosspring.stock.order.teamrequest.dto.OrderRequest
 import com.lumos.lumosspring.stock.order.teamrequest.repository.OrderMaterialRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
+import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -98,12 +99,11 @@ class OrderServiceRegister(
 
                 if (status == "APPROVED") {
                     notificationService.sendNotificationForTopic(
-                        title = TODO(),
-                        body = TODO(),
-                        action = TODO(),
+                        title = "Materiais pendentes de retidada no Almoxarifado",
+                        body = "Sua equipe possuí materiais pendentes de retidada no Almoxarifado, toque para visualizar mais informações",
+                        action = "APPROVATED_ORDERS",
                         notificationCode = notificationCode,
-                        time = TODO(),
-                        type = TODO()
+                        type = NotificationType.ALERT
                     )
                 } else {
                     if (directExecutionId != null) {

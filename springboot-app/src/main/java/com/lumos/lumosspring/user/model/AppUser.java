@@ -5,6 +5,7 @@ import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
@@ -12,7 +13,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Table
-public class AppUser implements Persistable<UUID> {
+public class AppUser extends TenantEntity implements Persistable<UUID> {
     @Id
     private UUID userId;
 
@@ -129,7 +130,6 @@ public class AppUser implements Persistable<UUID> {
     public void setCpf(String cpf) {
         this.cpf = cpf;
     }
-    
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -141,10 +141,6 @@ public class AppUser implements Persistable<UUID> {
 
     public Long getTeamId() {
         return teamId;
-    }
-
-    public void setTeamId(Long teamId) {
-        this.teamId = teamId;
     }
 
     public boolean isNewEntry() {
