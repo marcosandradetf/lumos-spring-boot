@@ -163,11 +163,11 @@ class DirectExecutionReportRepository(
                            au.last_name,
                            r.role_name
                     FROM direct_execution_executor dee
-                    JOIN app_user au ON au.user_id = me.user_id
+                    JOIN app_user au ON au.user_id = dee.user_id
                     JOIN user_role ur ON ur.id_user = au.user_id
                     JOIN role r ON r.role_id = ur.id_role
                     WHERE dee.direct_execution_id = de.direct_execution_id
-                    ORDER BY au.user_id, r.role_name ASC
+                    ORDER BY au.user_id, r.role_name
                 ) t
             ) execs ON TRUE
         WHERE de.direct_execution_id = :directExecutionId;

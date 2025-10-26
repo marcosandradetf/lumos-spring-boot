@@ -1,5 +1,5 @@
 # Etapa 1: Build com Maven e JDK completo
-FROM maven:3.9.8-eclipse-temurin-25 AS builder
+FROM maven:3.9.8-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 # Copia só o pom para aproveitar cache de dependências
@@ -11,7 +11,7 @@ COPY ./src ./src
 RUN mvn clean package -DskipTests --no-transfer-progress
 
 # Etapa 2: Runtime leve com JRE Alpine
-FROM eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Segurança: cria usuário sem privilégios
