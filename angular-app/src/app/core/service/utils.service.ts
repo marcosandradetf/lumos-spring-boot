@@ -3,6 +3,7 @@ import {MessageService} from 'primeng/api';
 import {BehaviorSubject, Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
+import {NgModel} from '@angular/forms';
 
 @Injectable({
   providedIn: 'root',
@@ -83,7 +84,7 @@ export class UtilsService {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/\D/g, ''); // Exibe o valor formatado no campo de input
   }
 
-  formatFloatNumber(event: Event) {
+  formatFloatNumber(event: Event, model: NgModel | null = null) {
     const input = event.target as HTMLInputElement;
     let value = input.value;
 
@@ -102,8 +103,8 @@ export class UtilsService {
     }
 
     input.value = value;
+    if (model) model.viewToModelUpdate(value); // atualiza o ngModel sem evento recursivo
   }
-
 
   formatContractNumber(event: Event) {
     (event.target as HTMLInputElement).value = (event.target as HTMLInputElement).value.replace(/[^0-9,./-]/g, '');
@@ -159,22 +160,58 @@ export class UtilsService {
     switch (typeMessage) {
 
       case 'success':
-        this.messageService.add({severity: 'success', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
+        this.messageService.add({
+          severity: 'success',
+          summary: summary,
+          detail: messageContent,
+          sticky: stick,
+          key: key ?? undefined
+        });
         break;
       case 'info':
-        this.messageService.add({severity: 'info', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
+        this.messageService.add({
+          severity: 'info',
+          summary: summary,
+          detail: messageContent,
+          sticky: stick,
+          key: key ?? undefined
+        });
         break;
       case 'warn':
-        this.messageService.add({severity: 'warn', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
+        this.messageService.add({
+          severity: 'warn',
+          summary: summary,
+          detail: messageContent,
+          sticky: stick,
+          key: key ?? undefined
+        });
         break;
       case 'error':
-        this.messageService.add({severity: 'error', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
+        this.messageService.add({
+          severity: 'error',
+          summary: summary,
+          detail: messageContent,
+          sticky: stick,
+          key: key ?? undefined
+        });
         break;
       case 'contrast':
-        this.messageService.add({severity: 'contrast', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
+        this.messageService.add({
+          severity: 'contrast',
+          summary: summary,
+          detail: messageContent,
+          sticky: stick,
+          key: key ?? undefined
+        });
         break;
       case 'secondary':
-        this.messageService.add({severity: 'secondary', summary: summary, detail: messageContent, sticky: stick, key: key ?? undefined});
+        this.messageService.add({
+          severity: 'secondary',
+          summary: summary,
+          detail: messageContent,
+          sticky: stick,
+          key: key ?? undefined
+        });
         break;
     }
 
@@ -198,8 +235,8 @@ export class UtilsService {
   }
 
   getStatus(status
-              :
-              string
+            :
+            string
   ):
     string {
     if (status === 'ACTIVE') {

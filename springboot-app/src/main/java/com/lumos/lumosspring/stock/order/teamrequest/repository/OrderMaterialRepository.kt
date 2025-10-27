@@ -17,7 +17,7 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
         """
             -- Installation requests
             select 
-                coalesce(cd.contractor, pm.city) as contractor,
+                'INSTALAÇÃO - ' || upper(coalesce(cd.contractor, pm.city)) as contractor,
                 mr.material_id_reservation,
                 cast(null as uuid) as order_id,
                 mr.reserved_quantity as request_quantity,

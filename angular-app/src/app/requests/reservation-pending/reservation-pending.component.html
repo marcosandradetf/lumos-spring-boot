@@ -135,7 +135,8 @@
 
         <ng-template pTemplate="body" let-reserve>
           <tr #rowElement [pEditableRow]="reserve"
-              [pSelectableRow]="reserve" (click)="table_parent.initRowEdit(reserve)">
+              [pSelectableRow]="reserve"
+              (click)="currentQuantity = Number(reserve.requestQuantity); table_parent.initRowEdit(reserve)">
             <td>{{ reserve.materialName }}</td>
 
             @if (reserve.orderId !== null) {
@@ -146,14 +147,15 @@
                   </ng-template>
                   <ng-template pTemplate="input">
                     <input pInputText
-                           #qtyInput
                            placeholder="Informe a quantidade"
+                           (input)="utils.formatFloatNumber($event, reserveQuantityModel)"
+                           #reserveQuantityModel="ngModel"
                            [(ngModel)]="reserve.requestQuantity"/>
                   </ng-template>
                 </p-cellEditor>
               </td>
             } @else {
-              <td>{{ reserve.reserveQuantity ?? 'A definir' }}</td>
+              <td>{{ reserve.requestQuantity ?? 'A definir' }}</td>
             }
             <td>{{ getStockQuantity(reserve.materialId) }}</td>
             <td>
@@ -161,18 +163,20 @@
                 [severity]="['APROVADO', 'COLETADO'].includes(reserve.internStatus) ? 'success' : reserve.internStatus === 'REJEITADO' ?  'danger' : 'contrast'">{{ reserve.internStatus || 'PENDENTE' }}
               </p-tag>
             </td>
-            @if (status === 'PENDING') {
-              <td class="space-x-2">
-                <p-button label="Rejeitar" size="small" variant="text" severity="contrast"
-                          (click)="reply(reserve, 'REJECT'); reserve.internStatus = 'REJEITADO'"/>
-                <p-button label="Aprovar" size="small" severity="info"
-                          (click)="reply(reserve, 'APPROVE');"/>
-              </td>
-            } @else {
-              <td>
-                <p-button label="Confirmar Coleta" size="small" severity="success"
-                          (click)="reply(reserve, 'COLLECT');"/>
-              </td>
+            @if (currentQuantity || 0 > 0) {
+              @if (status === 'PENDING') {
+                <td class="space-x-2">
+                  <p-button label="Rejeitar" size="small" variant="text" severity="contrast"
+                            (click)="reply(reserve, 'REJECT');"/>
+                  <p-button label="Aprovar" size="small" severity="info"
+                            (click)="reply(reserve, 'APPROVE');"/>
+                </td>
+              } @else {
+                <td>
+                  <p-button label="Confirmar Coleta" size="small" severity="success"
+                            (click)="reply(reserve, 'COLLECT');"/>
+                </td>
+              }
             }
           </tr>
         </ng-template>
