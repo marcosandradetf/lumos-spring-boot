@@ -166,11 +166,12 @@ class OrderServiceRegister(
             val fourth: D
         )
 
-        val destinations = mutableSetOf(Quadruple("", "", "", 0L))
+        val destinations = mutableSetOf<Quadruple<String, String, String, Long>>()
         val ordersJson = objectMapper.writeValueAsString(
             orders.map { mapOf("order_id" to it.order.orderId, "material_id" to it.order.materialId) }
         )
 
+        // o erro esta aqui, a query nao retorna nada
         val ordersByKeys = orderMaterialRepository.getOrdersByKeys(
             orders.map { it.reserveId ?: -1L },
             ordersJson
@@ -249,37 +250,39 @@ class OrderServiceRegister(
         for (destination in destinations) {
             val (tableName, statusName, keyName, keyId) = destination
 
+            // Monta dinamicamente o SQL com os nomes de coluna e tabela
+            val sqlSelect = """
+                SELECT 1
+                FROM material_reservation
+                WHERE $keyName = :keyId AND status <> :status
+            """.trimIndent()
+
             val statusReservationsData = getRawData(
                 namedJdbc,
-                """
-                        SELECT 1
-                        FROM material_reservation
-                        WHERE :keyName = :keyId AND status <> :status
-                    """.trimIndent(),
+                sqlSelect,
                 mapOf(
-                    "keyName" to keyName,
                     "keyId" to keyId,
                     "status" to ReservationStatus.COLLECTED,
                 )
             )
 
             if (statusReservationsData.isEmpty()) {
+                val sqlUpdate = """
+                    UPDATE $tableName
+                    SET $statusName = :status
+                    WHERE $keyName = :keyId
+                """.trimIndent()
+
                 namedJdbc.update(
-                    """
-                            update :tableName
-                            set :statusName = :status
-                            where :keyName = :keyId
-                        """.trimIndent(),
+                    sqlUpdate,
                     mapOf(
-                        "tableName" to tableName,
-                        "statusName" to statusName,
-                        "keyName" to keyName,
                         "keyId" to keyId,
                         "status" to ExecutionStatus.AVAILABLE_EXECUTION
                     )
                 )
             }
         }
+
 
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }

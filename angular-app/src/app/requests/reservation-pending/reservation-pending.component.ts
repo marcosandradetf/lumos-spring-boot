@@ -13,7 +13,7 @@ import {MenuItem, PrimeTemplate} from 'primeng/api';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Select} from 'primeng/select';
 import {Skeleton} from 'primeng/skeleton';
-import {TableModule} from 'primeng/table';
+import {Table, TableModule} from 'primeng/table';
 import {Tag} from 'primeng/tag';
 import {Toast} from 'primeng/toast';
 import {Tooltip} from 'primeng/tooltip';
@@ -87,7 +87,14 @@ export class ReservationPendingComponent implements OnInit {
     order: { orderId: string | null, materialId: number, quantity: string | null }
   }[] = [];
 
-  currentQuantity: number | null = 0;
+  selectedOrder: any | null = null;
+
+  lastStock: {
+    reserveId: number | null,
+    orderId: string | null,
+    materialId: number,
+    quantity: number
+  }[] = [];
 
   constructor(
     private requestService: RequestService,
@@ -163,6 +170,12 @@ export class ReservationPendingComponent implements OnInit {
     });
   }
 
+  selectAndEdit(reserve: any, table: Table) {
+    if (this.selectedOrder !== null) table.cancelRowEdit(this.selectedOrder);
+    this.selectedOrder = reserve;
+    table.initRowEdit(reserve);
+  }
+
   getStockQuantity(materialId: number) {
     return this.currentStock
       .find(s => s.materialId === materialId)
@@ -180,14 +193,20 @@ export class ReservationPendingComponent implements OnInit {
     }));
   }
 
-  setStatus(reserveId: number | null, orderId: string | null, materialId: number | null, status: string) {
+  setStatus(reserveId: number | null, orderId: string | null, materialId: number, status: string) {
     this.orders = this.orders.map(group => ({
       ...group,
-      orders: group.orders.map(orderObj =>
-        (orderObj.orderId === orderId && orderObj.materialId === materialId) || orderObj.reserveId === reserveId
-          ? {...orderObj, internStatus: status}
-          : orderObj
-      )
+      orders: group.orders.map(orderObj => {
+        const matchesOrder =
+          orderId !== null && orderObj.orderId === orderId && orderObj.materialId === materialId;
+
+        const matchesReserve =
+          reserveId !== null && orderObj.reserveId === reserveId;
+
+        return (matchesOrder || matchesReserve)
+          ? { ...orderObj, internStatus: status }
+          : orderObj;
+      })
     }));
   }
 
@@ -201,40 +220,61 @@ export class ReservationPendingComponent implements OnInit {
       }
     }
   ) {
-    const stockIndex = this.currentStock
-      .findIndex(s => s.materialId === order.order.materialId);
+    const materialId = order.order.materialId;
+    const orderId = order.order.orderId;
+    const reserveId = order.reserveId;
+    const quantity = Number(order.order.quantity || 0);
+
+    const stockIndex = this.currentStock.findIndex(s => s.materialId === materialId);
+    let lastStockIndex = this.lastStock
+      .findIndex(s => s.materialId === materialId && (s.orderId === orderId || s.reserveId === reserveId));
 
     if (stockIndex === -1) {
       this.utils.showMessage("Stock Index doesn't exist", 'error');
-      if (order.order.orderId !== null) this.resetQuantity(order.order.orderId, order.order.materialId);
+      if (order.order.orderId !== null)
+        this.resetQuantity(order.order.orderId, materialId);
       return;
+    }
+
+    if (lastStockIndex === -1) {
+      this.lastStock.push({
+        reserveId: order.reserveId,
+        orderId: order.order.orderId,
+        materialId: order.order.materialId,
+        quantity: 0,
+      });
+      lastStockIndex = this.lastStock
+        .findIndex(s => s.materialId === materialId && (s.orderId === orderId || s.reserveId === reserveId));
     }
 
     const currentStockQuantity = this.currentStock[stockIndex].stockQuantity || 0;
+    const previousQuantity = this.lastStock[lastStockIndex].quantity || 0;
 
-    if ((currentStockQuantity + (this.currentQuantity ?? 0)) < Number(order.order.quantity || 0)) {
+    // Primeiro, devolve o que já estava reservado (se houver)
+    const availableStock = currentStockQuantity + previousQuantity;
+
+    if (availableStock < quantity) {
       this.utils.showMessage(
-        "Não há estoque disponível para esse material, a quantidade atual é " + currentStockQuantity,
+        `Não há estoque disponível para esse material, a quantidade atual é ${currentStockQuantity}`,
         'warn',
-        "Operação não concluída");
-      if (order.order.orderId !== null) this.resetQuantity(order.order.orderId, order.order.materialId);
+        'Operação não concluída'
+      );
+      if (order.order.orderId !== null)
+        this.resetQuantity(order.order.orderId, materialId);
       return;
     }
 
-    this.currentStock[stockIndex].stockQuantity =
-      currentStockQuantity + (this.currentQuantity ?? 0) - Number(order.order.quantity || 0);
-
-
-    console.log(currentStockQuantity)
-    console.log(this.currentQuantity )
-    console.log(order.order.quantity)
-
+    // Atualiza o estoque e a quantidade usada
+    this.currentStock[stockIndex].stockQuantity = availableStock - quantity;
+    this.lastStock[lastStockIndex].quantity = quantity;
 
     this.utils.showMessage(
-      "Quantidade atribuida com sucesso",
+      'Quantidade atribuída com sucesso',
       'info',
-      "Operação realizada");
+      'Operação realizada'
+    );
   }
+
 
   returnStockQuantity(
     order: {
@@ -246,8 +286,14 @@ export class ReservationPendingComponent implements OnInit {
       }
     }
   ) {
+    const materialId = order.order.materialId;
+    const orderId = order.order.orderId;
+    const reserveId = order.reserveId;
+
     const stockIndex = this.currentStock
       .findIndex(s => s.materialId === order.order.materialId);
+    const lastStockIndex = this.lastStock
+      .findIndex(s => s.materialId === materialId && (s.orderId === orderId || s.reserveId === reserveId));
 
     if (stockIndex === -1) {
       this.utils.showMessage("Stock Index doesn't exist", 'error');
@@ -256,8 +302,10 @@ export class ReservationPendingComponent implements OnInit {
     }
 
     const currentStockQuantity = this.currentStock[stockIndex].stockQuantity || 0;
-    this.currentStock[stockIndex].stockQuantity = currentStockQuantity + (this.currentQuantity ?? 0);
-
+    if (lastStockIndex !== -1) {
+      this.currentStock[stockIndex].stockQuantity = currentStockQuantity + this.lastStock[lastStockIndex].quantity;
+      this.lastStock[lastStockIndex].quantity = 0;
+    }
   }
 
   getReservations(depositId
@@ -272,7 +320,7 @@ export class ReservationPendingComponent implements OnInit {
           ...group,
           reservations: group.orders.map(item => ({
             ...item,
-            uniqueId: item.reserveId ?? item.materialId
+            uniqueId: item.reserveId ?? item.orderId ?? item.materialId
           }))
         }));
 
@@ -338,6 +386,7 @@ export class ReservationPendingComponent implements OnInit {
         break;
       case 'COLLECT':
         this.collected = this.collected.filter(obj => !isEqual(obj, target));
+        this.debitStockQuantity(target);
         this.collected.push(
           {
             reserveId: order.reserveId,
@@ -370,14 +419,13 @@ export class ReservationPendingComponent implements OnInit {
       const allFilled = group.orders.every(r => r.internStatus !== null && r.internStatus !== undefined);
       const noneFilled = group.orders.every(r => r.internStatus === null || r.internStatus === undefined);
 
-      const allWithout = group.orders.every(r => r.requestQuantity !== null && r.internStatus !== 'APROVADO');
-      const noneWithout = group.orders.every(r => r.requestQuantity === null && r.internStatus !== 'APROVADO');
+      const anyWithout = group.orders.some(r => r.requestQuantity === null && r.internStatus === 'APROVADO');
 
       // Se tiver apenas alguns preenchidos (nem todos, nem nenhum), erro.
       if (!allFilled && !noneFilled) {
         this.utils.showMessage(`Responda todas as reservas pendentes da ${group.description}.`, 'warn', 'Atenção');
         return;
-      } else if (!allWithout && !noneWithout) {
+      } else if (anyWithout) {
         this.utils.showMessage(`Informe a quantidade a ser aprovada dos materiais para ${group.description}.`, 'warn', 'Atenção');
         return;
       }
@@ -414,7 +462,7 @@ export class ReservationPendingComponent implements OnInit {
                     isEqual(
                       {
                         reserveId: orderObj.reserveId,
-                        order: {orderId: orderObj.orderId, materialId: orderObj.materialId}
+                        order: {orderId: orderObj.orderId, materialId: orderObj.materialId, quantity: orderObj.requestQuantity}
                       },
                       reply
                     )
@@ -422,9 +470,10 @@ export class ReservationPendingComponent implements OnInit {
                 )
               })).filter(group => group.reservations.length > 0);
 
+
               this.utils.showMessage(
-                "Acesse a tela (Materiais disponíveis para Coleta) para notificar a equipe responsável e marcar como coletado.",
-                "success", "Dados Salvos - Os materiais estão pendentes de coleta", true
+                "Para materiais aprovados: Acesse o menu (Materiais disponíveis para Coleta) pois é necessário marcar como coletado e atualizar o estoque.",
+                "success", "Dados Salvos", true
               );
             },
             error: (err) => {
@@ -445,7 +494,7 @@ export class ReservationPendingComponent implements OnInit {
                     isEqual(
                       {
                         reserveId: orderObj.reserveId,
-                        order: {orderId: orderObj.orderId, materialId: orderObj.materialId}
+                        order: {orderId: orderObj.orderId, materialId: orderObj.materialId, quantity: orderObj.requestQuantity}
                       },
                       reply
                     )

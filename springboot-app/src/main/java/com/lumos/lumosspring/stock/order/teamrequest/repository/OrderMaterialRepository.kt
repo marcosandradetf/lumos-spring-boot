@@ -44,7 +44,7 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
                 cast(null as text) as contractor,
                 cast(null as bigint) as material_id_reservation,
                 om.order_id,
-                cast(null as numeric) as request_quantity,
+                omi.quantity_released as request_quantity,
                 om.order_code as description,
                 m.id_material as material_id,
                 m.material_name || ' ' || coalesce(coalesce(m.material_power, m.material_length), '') as material_name,
