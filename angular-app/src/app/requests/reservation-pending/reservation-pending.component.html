@@ -5,12 +5,9 @@
       class="text-medium pr-5 hidden lg:block font-medium">{{ depositName }}</h3>
   </div>
 
-  @if (loading) {
-    <div class="absolute top-1/2 right-1/2">
-      <app-loading></app-loading>
-    </div>
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
-  } @else if (ordersBackup.length === 0 && depositName !== null) {
+  @if (ordersBackup.length === 0 && depositName !== null) {
     <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
       <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
            xmlns="http://www.w3.org/2000/svg">
@@ -186,12 +183,10 @@
 
     <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
          *ngIf="orders.length > 0">
-      <p-button label="Finalizar" size="large" (click)="sendData()" severity="info"/>
+      <p-button label="Finalizar" [disabled]="loading" size="large" (click)="sendData()" severity="info"/>
     </div>
 
   }
-
-
 
   <app-prime-confirm-dialog
     *ngIf="modalSendData"

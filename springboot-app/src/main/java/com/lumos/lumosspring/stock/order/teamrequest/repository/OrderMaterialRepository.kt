@@ -98,7 +98,7 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
                 ON ms.material_id = omi.material_id and ms.deposit_id = om.deposit_id
             JOIN team t on t.id_team = om.team_id
             JOIN material_stock tms -- truck_material_stock
-                ON ms.material_id = omi.material_id and ms.deposit_id = t.deposit_id_deposit
+                ON tms.material_id = omi.material_id and tms.deposit_id = t.deposit_id_deposit
             WHERE EXISTS (
               SELECT 1
               FROM jsonb_to_recordset(:ordersJson::jsonb)

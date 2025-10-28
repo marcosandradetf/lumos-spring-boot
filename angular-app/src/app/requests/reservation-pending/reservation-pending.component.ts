@@ -7,7 +7,6 @@ import {UtilsService} from '../../core/service/utils.service';
 import {Breadcrumb} from 'primeng/breadcrumb';
 import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {NgForOf, NgIf} from '@angular/common';
 import {MenuItem, PrimeTemplate} from 'primeng/api';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -24,6 +23,7 @@ import {Title} from '@angular/platform-browser';
 import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {isEqual} from 'lodash';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-reservation-pending',
@@ -41,12 +41,12 @@ import {isEqual} from 'lodash';
     Toast,
     Tooltip,
     NgForOf,
-    LoadingComponent,
     FormsModule,
     PrimeConfirmDialogComponent,
     IconField,
     InputIcon,
-    InputText
+    InputText,
+    LoadingOverlayComponent
   ],
   templateUrl: './reservation-pending.component.html',
   styleUrl: './reservation-pending.component.scss'
@@ -375,28 +375,14 @@ export class ReservationPendingComponent implements OnInit {
         const rejectedIndex = this.replies.rejected.findIndex(obj => isEqual(obj, target));
         if (rejectedIndex === -1) {
           this.returnStockQuantity(target);
-          this.replies.rejected.push(
-            {
-              reserveId: order.reserveId,
-              order: {orderId: order.orderId, materialId: order.materialId, quantity: order.requestQuantity}
-            }
-          );
+          this.replies.rejected.push(target);
           this.setStatus(target.reserveId, target.order.orderId, target.order.materialId, "REJEITADO");
         }
         break;
       case 'COLLECT':
         this.collected = this.collected.filter(obj => !isEqual(obj, target));
         this.debitStockQuantity(target);
-        this.collected.push(
-          {
-            reserveId: order.reserveId,
-            order: {
-              orderId: order.orderId,
-              materialId: order.materialId,
-              quantity: null
-            }
-          }
-        );
+        this.collected.push(target);
         this.setStatus(target.reserveId, target.order.orderId, target.order.materialId, "COLETADO");
         break;
     }
