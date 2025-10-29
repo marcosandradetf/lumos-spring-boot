@@ -68,17 +68,20 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
     @Query(
         """
             SELECT 
-                material_id_reservation,
+                mr.material_id_reservation,
                 cast(null as uuid) as order_id, 
                 cast(null as bigint) as "material_id", 
-                central_material_stock_id,
-                reserved_quantity as request_quantity,
-                direct_execution_id,
-                pre_measurement_id,
-                status,
-                truck_material_stock_id
-            FROM material_reservation
-            WHERE material_id_reservation in (:reservationIds)
+                mr.central_material_stock_id,
+                mr.reserved_quantity as request_quantity,
+                mr.direct_execution_id,
+                mr.pre_measurement_id,
+                mr.status,
+                mr.truck_material_stock_id,
+                m.material_name || ' ' || coalesce(coalesce(m.material_power, m.material_length), '') as material_name
+            FROM material_reservation mr
+            JOIN material_stock ms ON mr.central_material_stock_id = ms.material_id_stock
+            JOIN material m ON ms.material_id = m.id_material
+            WHERE mr.material_id_reservation in (:reservationIds)
             
             UNION ALL
             
@@ -91,12 +94,14 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
                 cast(null as bigint) as direct_execution_id, 
                 cast(null as bigint) as pre_measurement_id, 
                 omi.status, 
-                tms.material_id_stock as truck_material_stock_id
+                tms.material_id_stock as truck_material_stock_id,
+                m.material_name || ' ' || coalesce(coalesce(m.material_power, m.material_length), '') as material_name
             FROM order_material om
             JOIN order_material_item omi on omi.order_id = om.order_id
+            JOIN material m on m.id_material = omi.material_id
+            JOIN team t on t.id_team = om.team_id
             JOIN material_stock ms 
                 ON ms.material_id = omi.material_id and ms.deposit_id = om.deposit_id
-            JOIN team t on t.id_team = om.team_id
             JOIN material_stock tms -- truck_material_stock
                 ON tms.material_id = omi.material_id and tms.deposit_id = t.deposit_id_deposit
             WHERE EXISTS (

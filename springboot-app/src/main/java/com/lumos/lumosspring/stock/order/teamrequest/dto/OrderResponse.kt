@@ -48,4 +48,5 @@ data class OrdersByKeysView(
     val preMeasurementId: Long?,
     val status: String,
     val truckMaterialStockId: Long,
+    val materialName: String
 )

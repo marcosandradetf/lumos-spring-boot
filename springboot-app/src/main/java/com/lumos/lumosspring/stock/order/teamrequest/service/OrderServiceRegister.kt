@@ -10,11 +10,13 @@ import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.ReservationStatus
+import com.lumos.lumosspring.util.Utils
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Service
 class OrderServiceRegister(
@@ -74,26 +76,28 @@ class OrderServiceRegister(
                           AND omi.material_id = data.material_id
                           AND o.order_id = data.order_id
                           AND t.id_team = o.team_id
-                        RETURNING t.notification_code, data.status, o.order_code
+                        RETURNING t.notification_code, o.order_code
                     """.trimIndent(),
                 mapOf("ordersJson" to ordersJson)
             ) { rs, _ ->
-
                 val notificationCode = rs.getString("notification_code")
                 val orderCode = rs.getString("order_code")
-                updatedOrders.add(notificationCode, orderCode)
+                updatedOrders.add(Pair(notificationCode, orderCode))
             }
 
-            notificationService.sendNotificationForTopic(
-                title = "Atualização na sua solicitação",
-                body = "O status da sua requisição de materiais ${rs.getString("order_code")} foi atualizado. Toque para ver os detalhes.",
-                action = "APPROVATED_ORDERS",
-                notificationCode = rs.getString("notification_code"),
-                type = NotificationType.ALERT
-            )
+            updatedOrders.forEach {
+                notificationService.sendNotificationForTopic(
+                    title = "Atualização na sua solicitação",
+                    body = "O status da sua requisição de materiais ${it.second} foi atualizado. Toque para ver os detalhes.",
+                    action = "APPROVATED_ORDERS",
+                    notificationCode = it.first,
+                    type = NotificationType.ALERT
+                )
+            }
         }
 
         if (reservationsJson.trim() != "[]") {
+            val notificationCodes = mutableSetOf<Triple<String, String, String>>()
             namedJdbc.query(
                 """
                         UPDATE material_reservation mr
@@ -104,48 +108,50 @@ class OrderServiceRegister(
                         ), team t
                         WHERE mr.material_id_reservation = data.reservation_id
                             AND t.id_team = mr.team_id
-                        RETURNING mr.direct_execution_id, mr.pre_measurement_id, mr.contract_item_id, data.status, t.notification_code
+                        RETURNING mr.direct_execution_id, mr.pre_measurement_id, mr.contract_item_id, data.status, t.notification_code, mr.description
                     """.trimIndent(),
                 mapOf("reservationsJson" to reservationsJson)
             ) { rs, _ ->
                 val status = rs.getString("status")
+                val description = rs.getString("description")
+                val teamNotificationCode = rs.getString("notification_code")
                 val directExecutionId = rs.getLong("direct_execution_id").let { if (rs.wasNull()) null else it }
                 val preMeasurementId = rs.getLong("pre_measurement_id").let { if (rs.wasNull()) null else it }
                 val contractItemId = rs.getLong("contract_item_id")
 
-                var notificationTitle = "Materiais prontos para retirada"
-                var notificationBody = "Materiais da instalação de LED prontos para retirada no almoxarifado."
-                var notificationAction = "APPROVATED_ORDERS"
-                var notificationCode = rs.getString("notification_code")
-
                 if (status != "APPROVED") {
-                    notificationTitle = "Revisão de gerenciamento de estoque necessária"
-                    notificationBody =
-                        "Materiais pendentes foram negados. Clique para revisar a instalação de LED e atualizar o gerenciamento."
-                    notificationAction = "/requisicoes/instalacoes/gerenciamento-estoque"
-
                     if (directExecutionId != null) {
-
                         namedJdbc.query(
                             """
                             WITH updated AS (
                                 UPDATE direct_execution_item dei
                                 SET item_status = :status
                                 FROM direct_execution de
-                                WHERE dei.contract_item_id = :contractItemId and de.direct_execution_id = dei.direct_execution_id
+                                WHERE dei.contract_item_id = :contractItemId 
+                                    AND dei.direct_execution_id = :directExecutionId
+                                    AND de.direct_execution_id = :directExecutionId
                                 RETURNING de.reservation_management_id
                             )
                             UPDATE reservation_management
                             SET status = :status
                             WHERE reservation_management_id IN (SELECT reservation_management_id FROM updated)
-                            RETURNING stockist_id;
+                                AND status <> :status
+                            RETURNING stockist_id, description;
                         """.trimIndent(),
                             mapOf(
                                 "contractItemId" to contractItemId,
+                                "directExecutionId" to directExecutionId,
                                 "status" to ReservationStatus.PENDING
                             )
                         ) { rs, _ ->
-                            notificationCode = rs.getString("stockist_id")
+                            notificationCodes
+                                .add(
+                                    Triple(
+                                        "REJECTED",
+                                        rs.getString("stockist_id"),
+                                        rs.getString("description"),
+                                    )
+                                )
                         }
                     } else {
                         namedJdbc.query(
@@ -156,13 +162,14 @@ class OrderServiceRegister(
                                 FROM pre_measurement p
                                 WHERE psi.contract_item_id = :contractItemId
                                     AND psi.pre_measurement_id = :preMeasurementId
-                                    AND p.pre_measurement_id = psi.pre_measurement_id
+                                    AND p.pre_measurement_id = :preMeasurementId
                                 RETURNING p.reservation_management_id
                             )
                             UPDATE reservation_management 
                             SET status = :status
                             WHERE reservation_management_id IN (SELECT reservation_management_id FROM updated)
-                            RETURNING stockist_id;;
+                                AND status <> :status
+                            RETURNING stockist_id, description;
                         """.trimIndent(),
                             mapOf(
                                 "contractItemId" to contractItemId,
@@ -170,19 +177,47 @@ class OrderServiceRegister(
                                 "status" to ReservationStatus.PENDING
                             )
                         ) { rs, _ ->
-                            notificationCode = rs.getString("stockist_id")
+                            notificationCodes
+                                .add(
+                                    Triple(
+                                        "REJECTED",
+                                        rs.getString("stockist_id"),
+                                        rs.getString("description"),
+                                    )
+                                )
                         }
                     }
+                } else {
+                    notificationCodes
+                        .add(
+                            Triple(
+                                "APPROVED",
+                                teamNotificationCode,
+                                description,
+                            )
+                        )
+
                 }
 
-                notificationService.sendNotificationForTopic(
-                    title = notificationTitle,
-                    body = notificationBody,
-                    action = notificationAction,
-                    notificationCode = notificationCode,
-                    type = NotificationType.ALERT
-                )
-
+                notificationCodes.forEach {
+                    if (it.first === "APPROVED") {
+                        notificationService.sendNotificationForTopic(
+                            title = "Materiais prontos para instalação",
+                            body = "Os materiais para **${it.third}** estão disponíveis no almoxarifado. Toque para ver os detalhes.",
+                            action = "APPROVATED_ORDERS",
+                            notificationCode = it.second,
+                            type = NotificationType.ALERT
+                        )
+                    } else {
+                        notificationService.sendNotificationForTopic(
+                            title = "Gerenciamento pendente de materiais",
+                            body = "Alguns materiais da instalação **${it.third}** foram recusados pelo estoquista. Refaça o gerenciamento para prosseguir com a instalação.",
+                            action = "/requisicoes/instalacoes/gerenciamento-estoque",
+                            notificationCode = it.second,
+                            type = NotificationType.ALERT
+                        )
+                    }
+                }
             }
         }
 
@@ -224,26 +259,36 @@ class OrderServiceRegister(
                 )
             }
 
-            namedJdbc.update(
+            val updated: Int? = namedJdbc.queryForObject(
                 """
-                        WITH truck_material AS (
-                            UPDATE material_stock 
-                            SET stock_quantity = stock_quantity + :reserveQuantity,
-                                stock_available = stock_available + :reserveQuantity
-                            WHERE material_id_stock = :truckMaterialId 
+                        WITH current_stock AS (
+                            UPDATE material_stock ms
+                            SET stock_quantity = ms.stock_quantity - :requestQuantity,
+                                stock_available = ms.stock_available - :requestQuantity
+                            WHERE ms.material_id_stock = :centralMaterialStockId
+                              AND ms.stock_quantity >= :requestQuantity
+                            RETURNING 1
+                        ),
+                        updated_truck AS (
+                            UPDATE material_stock tms
+                            SET stock_quantity = tms.stock_quantity + :requestQuantity,
+                                stock_available = tms.stock_available + :requestQuantity
+                            WHERE tms.material_id_stock = :truckMaterialStockId
+                              AND EXISTS (SELECT 1 FROM current_stock)
                             RETURNING 1
                         )
-                        UPDATE material_stock 
-                        SET stock_quantity = stock_quantity - :reserveQuantity,
-                            stock_available = stock_available - :reserveQuantity
-                        WHERE material_id_stock = :centralMaterialId
+                        SELECT * FROM updated_truck;
                     """.trimIndent(),
                 mapOf(
-                    "reserveQuantity" to o.requestQuantity,
+                    "requestQuantity" to o.requestQuantity,
                     "truckMaterialId" to o.truckMaterialStockId,
                     "centralMaterialId" to o.centralMaterialStockId,
-                )
+                ), Int::class.java
             )
+
+            if(updated == null) {
+                throw Utils.BusinessException("O material ${o.materialName} não possui estoque suficiente.")
+            }
 
             val (sql, param) = if (o.materialIdReservation != null || o.directExecutionId != null) {
                 """
