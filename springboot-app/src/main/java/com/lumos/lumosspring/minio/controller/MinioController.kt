@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.minio.controller
 
 import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.util.Utils
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -17,14 +18,14 @@ class MinioController(private val minioService: MinioService) {
 
     @PostMapping("/upload")
     fun uploadFile(@RequestParam("file") file: MultipartFile): ResponseEntity<String> {
-        val response = minioService.uploadFile(file, "scl-construtora","documents", "document")
+        val response = minioService.uploadFile(file, Utils.getCurrentBucket(),"documents", "document")
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/upload-files")
     fun uploadFiles(@RequestParam("files") files: List<MultipartFile>): ResponseEntity<Any> {
         val responses = files.map { file ->
-            minioService.uploadFile(file, "scl-construtora", "documents", "document")
+            minioService.uploadFile(file, Utils.getCurrentBucket(), "documents", "document")
         }
 
 
@@ -34,7 +35,7 @@ class MinioController(private val minioService: MinioService) {
 
     @GetMapping("/download/{fileName}")
     fun downloadFile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> {
-        val inputStream: InputStream = minioService.downloadFile(fileName, "scl-construtora")
+        val inputStream: InputStream = minioService.downloadFile(fileName, Utils.getCurrentBucket())
         val resource = InputStreamResource(inputStream)
 
         // Detecta o MIME type automaticamente

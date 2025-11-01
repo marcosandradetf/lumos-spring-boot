@@ -8,7 +8,7 @@ import {StockMovementResponse} from '../../models/stock-movement-response.dto';
 import {AuthService} from '../../core/auth/auth.service';
 import {Type} from '../../models/tipo.model';
 import {Group} from '../../models/grupo.model';
-import {Company} from '../../models/empresa.model';
+import {CompanyResponse} from '../../company/dto/company.dto';
 import {Deposit} from '../../models/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 import {DepositByStockist, StockistModel} from '../../executions/executions.model';
@@ -31,10 +31,6 @@ export class StockService {
 
   getGroups() {
     return this.http.get<Group[]>(`${this.endpoint}/group`);
-  }
-
-  getCompanies() {
-    return this.http.get<Company[]>(`${this.endpoint}/company`);
   }
 
   getDeposits() {

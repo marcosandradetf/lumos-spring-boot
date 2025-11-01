@@ -3,13 +3,7 @@ import {FormsModule} from '@angular/forms';
 import {CurrencyPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {ContractService} from '../../services/contract.service';
 import {UtilsService} from '../../../core/service/utils.service';
-import {ScreenMessageComponent} from '../../../shared/components/screen-message/screen-message.component';
-import {ModalComponent} from '../../../shared/components/modal/modal.component';
-import {TableComponent} from '../../../shared/components/table/table.component';
-import {DomUtil} from 'leaflet';
 import {FileService} from '../../../core/service/file-service.service';
-import {forkJoin} from 'rxjs';
-import {AuthService} from '../../../core/auth/auth.service';
 import {Router} from '@angular/router';
 import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-models';
 import {Toast} from 'primeng/toast';
@@ -20,7 +14,12 @@ import {InputText} from 'primeng/inputtext';
 import {
   PrimeConfirmDialogComponent
 } from '../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
-import {LoadingComponent} from '../../../shared/components/loading/loading.component';
+import {Select} from 'primeng/select';
+import {StockService} from '../../../stock/services/stock.service';
+import {Dialog} from 'primeng/dialog';
+import {LoadingOverlayComponent} from '../../../shared/components/loading-overlay/loading-overlay.component';
+import {CompanyService} from '../../../company/service/company.service';
+import {CompanyResponse} from '../../../company/dto/company.dto';
 
 
 @Component({
@@ -30,8 +29,6 @@ import {LoadingComponent} from '../../../shared/components/loading/loading.compo
     FormsModule,
     NgIf,
     NgForOf,
-    ModalComponent,
-    TableComponent,
     Toast,
     StepPanel,
     Button,
@@ -43,7 +40,9 @@ import {LoadingComponent} from '../../../shared/components/loading/loading.compo
     NgClass,
     CurrencyPipe,
     PrimeConfirmDialogComponent,
-    LoadingComponent
+    Select,
+    Dialog,
+    LoadingOverlayComponent
   ],
   templateUrl: './create.component.html',
   styleUrl: './create.component.scss'
@@ -60,12 +59,13 @@ export class CreateComponent {
     unifyServices: false,
     noticeFile: null,
     contractFile: null,
-    userUUID: '',
     items: [],
+    companyId: null,
   }
 
   noticeFile: File | null = null;
   contractFile: File | null = null;
+  logoFile: File | null = null;
 
   items: ContractReferenceItemsDTO[] = [];
 
@@ -73,20 +73,33 @@ export class CreateComponent {
   totalItems: number = 0;
   removingIndex: number | null = null;
   openModal: boolean = false;
+  companies: CompanyResponse[] = [];
+  company = {
+    companyId: 0,
+    socialReason: '',
+    fantasyName: '',
+    companyCnpj: '',
+    companyContact: '',
+    companyPhone: '',
+    companyEmail: '',
+    companyAddress: ''
+  };
 
   constructor(protected contractService: ContractService,
               protected utils: UtilsService,
               private fileService: FileService,
-              private auth: AuthService,
               protected router: Router,
+              private companyService: CompanyService,
               private title: Title) {
     this.title.setTitle('Cadastrar Contrato');
-    this.contract.userUUID = this.auth.getUser().uuid;
     this.contractService.getContractReferenceItems().subscribe(
       items => {
         this.items = items;
       }
-    )
+    );
+
+    this.companyService.getCompanies().subscribe(companies => this.companies = companies);
+
   }
 
 
@@ -146,19 +159,32 @@ export class CreateComponent {
   resetForm() {
     this.openModal = false;
     this.contract = {
-      number: '',
-      contractor: '',
-      address: '',
-      phone: '',
-      cnpj: '',
+      number: null,
+      contractor: null,
+      address: null,
+      phone: null,
+      cnpj: null,
       unifyServices: false,
-      noticeFile: '',
-      contractFile: '',
-      userUUID: '',
+      noticeFile: null,
+      contractFile: null,
       items: [],
+      companyId: null
     };
     this.loading = false;
     this.finish = true;
+  }
+
+  resetCompanyForm() {
+   this.company = {
+     companyId: 0,
+     socialReason: '',
+     fantasyName: '',
+     companyCnpj: '',
+     companyContact: '',
+     companyPhone: '',
+     companyEmail: '',
+     companyAddress: ''
+   };
   }
 
   loading: boolean = false;
@@ -219,6 +245,8 @@ export class CreateComponent {
   removingIndexContract: number | null = null;
   textContent: string = 'Clique para selecionar';
   typeSelect: string = '';
+  visible = false;
+  companyFormSubmit = false;
 
   removeItem(item: ContractReferenceItemsDTO, index: number) {
 
@@ -327,6 +355,8 @@ export class CreateComponent {
       this.noticeFile = file;
     } else if (fileType === 'contract') {
       this.contractFile = file;
+    } else if (fileType === 'logo') {
+      this.logoFile = file;
     }
   }
 
@@ -344,6 +374,7 @@ export class CreateComponent {
 
   openConfirmModal() {
     if (!this.validateContractItems()) return;
+    if (!this.validateContractFields()) return;
 
     this.openModal = true;
   }
@@ -361,7 +392,7 @@ export class CreateComponent {
   }
 
   validateContractFields(): boolean {
-    const {number, contractor, address, phone, cnpj, userUUID} = this.contract;
+    const {number, contractor, address, phone, cnpj, companyId} = this.contract;
 
     if (!number && !contractor && !address && !phone && !cnpj) {
       this.utils.showMessage(
@@ -399,8 +430,8 @@ export class CreateComponent {
       return false;
     }
 
-    if (!userUUID) {
-      this.utils.showMessage('Usuário responsável é obrigatório.', 'warn', 'Atenção');
+    if (!companyId) {
+      this.utils.showMessage('Empresa prestadora é obrigatório.', 'warn', 'Atenção');
       return false;
     }
 
@@ -426,5 +457,49 @@ export class CreateComponent {
   }
 
 
+  protected saveCompany() {
+    this.companyFormSubmit = true;
+    if (!this.validateNewCompanyFields()) return;
 
+    this.visible = false;
+    this.loading = true;
+    this.companyService.create(this.company, this.logoFile!!).subscribe({
+      next: companyId => this.company.companyId = companyId,
+      error: err => this.utils.showMessage(err.error.error || err.error.message || err.error, "error"),
+      complete: () => {
+        this.companies.push(this.company);
+        this.resetCompanyForm();
+        this.loading = false;
+        this.utils.showMessage(
+          "A nova empresa foi cadastrada e já pode ser vinculada a este contrato.",
+          "success",
+          "Cadastro realizado com sucesso"
+        );
+      }
+    });
+  }
+
+  validateNewCompanyFields(): boolean {
+    const {
+      socialReason,
+      fantasyName,
+      companyCnpj,
+      companyContact,
+      companyPhone,
+      companyEmail,
+      companyAddress
+    } = this.company;
+
+    if (socialReason === '' || fantasyName === '' || companyCnpj === '' || companyContact === '' || companyPhone === ''
+      || companyEmail === '' || companyAddress === '' || !this.logoFile) {
+      this.utils.showMessage(
+        'Para salvar, preencha todos os campos obrigatórios(*).',
+        'warn',
+        'Atenção',
+      );
+      return false;
+    }
+
+    return true;
+  }
 }

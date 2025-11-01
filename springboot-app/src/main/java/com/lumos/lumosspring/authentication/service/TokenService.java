@@ -6,6 +6,7 @@ import com.lumos.lumosspring.authentication.dto.LoginResponseMobile;
 import com.lumos.lumosspring.authentication.dto.NewLoginResponseMobile;
 import com.lumos.lumosspring.authentication.model.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
+import com.lumos.lumosspring.authentication.repository.TenantRepository;
 import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.model.AppUser;
@@ -38,6 +39,7 @@ public class TokenService {
     private final StockistRepository stockistRepository;
     private final RoleRepository roleRepository;
     private final TeamQueryRepository teamQueryRepository;
+    private final TenantRepository tenantRepository;
 
     public TokenService(UserService userService,
                         JwtEncoder jwtEncoder,
@@ -46,8 +48,8 @@ public class TokenService {
                         RefreshTokenRepository refreshTokenRepository,
                         StockistRepository stockistRepository,
                         RoleRepository roleRepository,
-                        TeamQueryRepository teamQueryRepository
-    ) {
+                        TeamQueryRepository teamQueryRepository,
+                        TenantRepository tenantRepository) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
@@ -56,6 +58,7 @@ public class TokenService {
         this.stockistRepository = stockistRepository;
         this.roleRepository = roleRepository;
         this.teamQueryRepository = teamQueryRepository;
+        this.tenantRepository = tenantRepository;
     }
 
 //    @Scheduled(cron = "0 0 3 * * *") // Roda todo dia às 3 da manhã
@@ -93,19 +96,23 @@ public class TokenService {
         existingToken.setRevoked(true);
         refreshTokenRepository.save(existingToken);
 
+        var bucket = tenantRepository.findById(user.tenantId).orElseThrow().getBucket();
+
         // Cria novo token de acesso com as mesmas informações do refresh token
         var accessTokenClaims = getTokenClaims(
                 user,
                 now,
                 expiresIn,
-                scope
+                scope,
+                bucket
         );
 
         var refreshTokenClaims = getTokenClaims(
                 user,
                 now,
                 refreshExpiresIn,
-                scope
+                scope,
+                bucket
         );
 
         var newAccessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
@@ -152,19 +159,23 @@ public class TokenService {
         existingToken.setRevoked(true);
         refreshTokenRepository.save(existingToken);
 
+        var bucket = tenantRepository.findById(user.tenantId).orElseThrow().getBucket();
+
         // Cria novo token de acesso com as mesmas informações do refresh token
         var accessTokenClaims = getTokenClaims(
                 user,
                 now,
                 expiresIn,
-                scope
+                scope,
+                bucket
         );
 
         var refreshTokenClaims = getTokenClaims(
                 user,
                 now,
                 refreshExpiresIn,
-                scope
+                scope,
+                bucket
         );
 
         var newAccessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
@@ -231,18 +242,22 @@ public class TokenService {
 
         var scopes = getRoles(user.get());
 
+        var bucket = tenantRepository.findById(user.get().tenantId).orElseThrow().getBucket();
+
         var accessTokenClaims = getTokenClaims(
                 user.get(),
                 now,
                 expiresIn,
-                scopes
+                scopes,
+                bucket
         );
 
         var refreshTokenClaims = getTokenClaims(
                 user.get(),
                 now,
                 refreshExpiresIn,
-                scopes
+                scopes,
+                bucket
         );
 
         var accessTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
@@ -309,18 +324,22 @@ public class TokenService {
 
         var scopes = getRoles(user.get());
 
+        var bucket = tenantRepository.findById(user.get().tenantId).orElseThrow().getBucket();
+
         var accessTokenClaims = getTokenClaims(
                 user.get(),
                 now,
                 expiresIn,
-                scopes
+                scopes,
+                bucket
         );
 
         var refreshTokenClaims = getTokenClaims(
                 user.get(),
                 now,
                 refreshExpiresIn,
-                scopes
+                scopes,
+                bucket
         );
 
         var accessTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
@@ -395,7 +414,7 @@ public class TokenService {
                 .collect(Collectors.joining(" "));
     }
 
-    private JwtClaimsSet getTokenClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
+    private JwtClaimsSet getTokenClaims(AppUser appUser, Instant now, Long expiresIn, String scope, String bucket) {
         return JwtClaimsSet.builder()
                 .issuer("LumosSoftware")
                 .subject(appUser.getUserId().toString())
@@ -407,7 +426,9 @@ public class TokenService {
                 .claim("email", appUser.getEmail())
                 .claim("fullname", appUser.getCompletedName())
                 .claim("tenant", appUser.getTenantId())
+                .claim("bucket", bucket)
                 .build();
+
     }
 
 

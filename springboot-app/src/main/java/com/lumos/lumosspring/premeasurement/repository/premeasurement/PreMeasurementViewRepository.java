@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.premeasurement.repository.premeasurement;
 
 import com.lumos.lumosspring.premeasurement.dto.premeasurement.*;
+import com.lumos.lumosspring.util.Utils;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -133,9 +134,10 @@ public class PreMeasurementViewRepository {
                                (select count(*) from pre_measurement_street_item where pre_measurement_id = p.pre_measurement_id) as item_size
                             from pre_measurement p
                             left join app_user au on au.user_id = p.created_by_user_id
-                            where p.status = :status
+                            where p.status = :status and p.tenant_id = :tenantId
                         """,
-                Map.of("status", status),
+                Map.of("status", status,
+                        "tenantId", Utils.INSTANCE.getCurrentTenantId()),
                 (rs, _) -> {
                     Instant time = rs.getTimestamp("created_at").toInstant();
                     var timezone = time.atZone(ZoneId.of("America/Sao_Paulo"));

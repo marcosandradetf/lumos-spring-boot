@@ -10,6 +10,6 @@ data class ContractDTO(
     var unifyServices : Boolean,
     var noticeFile : String?,
     var contractFile : String?,
-    var userUUID : String,
-    var items : List<ContractReferenceItemDTO>
+    var items : List<ContractReferenceItemDTO>,
+    val companyId: Long
 )

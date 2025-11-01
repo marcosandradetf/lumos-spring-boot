@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.contract.entities
 
+import com.lumos.lumosspring.authentication.model.TenantEntity
 import com.lumos.lumosspring.util.ContractStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
@@ -9,7 +10,7 @@ import java.time.Instant
 import java.util.*
 
 @Table("contract")
-class Contract {
+class Contract : TenantEntity() {
     @Id
     var contractId: Long? = null
     var contractNumber: String? = null
@@ -27,6 +28,7 @@ class Contract {
     var noticeFile : String? = null
     var contractFile : String? = null
     var status : String = ContractStatus.ACTIVE
+    var companyId: Long = -1L
 
     fun sumTotalPrice(totalPrice: BigDecimal?) {
         if (totalPrice != null) {

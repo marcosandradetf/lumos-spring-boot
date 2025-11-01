@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.maintenance.model
 
+import com.lumos.lumosspring.authentication.model.TenantEntity
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
@@ -24,7 +25,7 @@ data class Maintenance(
 
     @Transient
     private var isNewEntry: Boolean = true
-) : Persistable<UUID> {
+) : Persistable<UUID>, TenantEntity() {
     override fun getId(): UUID = maintenanceId
     override fun isNew(): Boolean = isNewEntry
 }

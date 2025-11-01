@@ -152,7 +152,7 @@ public class InstallationRegisterService {
         String folder = "photos";
         if (city != null) folder = "photos/$city";
 
-        String fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution");
+        String fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder, "execution");
 
         sql = """
                     UPDATE pre_measurement_street

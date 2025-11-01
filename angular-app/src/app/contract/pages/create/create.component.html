@@ -12,7 +12,7 @@
     </div>
 
 
-    <app-loading *ngIf="loading"></app-loading>
+    <app-loading-overlay *ngIf="loading"></app-loading-overlay>
 
 
     <p-stepper [value]="1" class="basis-[50rem]" *ngIf="!finish && !loading">
@@ -24,87 +24,157 @@
       <p-step-panels>
         <p-step-panel [value]="1">
           <ng-template #content let-activateCallback="activateCallback">
-            <div class="flex flex-col gap-2 mx-auto space-y-2" style="min-height: 16rem; max-width: 50rem">
-              <div class="text-center mt-4 mb-4 text-xl font-semibold">Digite os dados do contrato</div>
-              <div class="field">
+            <div class="flex flex-col gap-4 mx-auto px-4 sm:px-8" style="min-height: 16rem; max-width: 54rem">
+
+              <!-- Título -->
+              <div class="text-center mt-4 mb-2 text-lg sm:text-xl font-semibold">
+                Digite os dados do contrato
+              </div>
+
+              <!-- Número do contrato -->
+              <div class="flex flex-col gap-1">
                 <label for="number">N.º Contrato*</label>
                 <input [(ngModel)]="contract.number"
+                       id="number"
+                       type="text"
+                       pInputText
                        autocomplete="off"
-                       pInputText id="number" type="text"
+                       placeholder="Digite o número"
                        (input)="utils.formatContractNumber($event)"
-                       placeholder="Digite o número" fluid/>
+                       required/>
               </div>
-              <div class="field">
+
+              <!-- Contratante -->
+              <div class="flex flex-col gap-1">
                 <label for="contractor">Contratante*</label>
                 <input [(ngModel)]="contract.contractor"
+                       id="contractor"
+                       type="text"
+                       pInputText
                        autocomplete="off"
-                       pInputText id="contractor" type="text"
-                       placeholder="Ex. Prefeitura de Belo Horizonte" fluid/>
+                       placeholder="Ex. Prefeitura de Belo Horizonte"
+                       required/>
               </div>
-              <div class="field">
+
+              <!-- Endereço -->
+              <div class="flex flex-col gap-1">
                 <label for="address">Endereço do contratante*</label>
                 <input [(ngModel)]="contract.address"
+                       id="address"
+                       type="text"
+                       pInputText
                        autocomplete="off"
-                       pInputText id="address" type="text"
-                       placeholder="Digite o endereço" fluid/>
-              </div>
-              <div class="field">
-                <label for="number">Telefone do Contratante*</label>
-                <input [(ngModel)]="contract.phone"
-                       autocomplete="off"
-                       pInputText id="input" type="text"
-                       (input)="utils.formatPhone($event)"
-                       minlength="14"
-                       maxlength="15"
-                       placeholder="Ex. (31) 99999-9999" fluid/>
-              </div>
-              <div class="field">
-                <label for="number">CNPJ do Contratante*</label>
-                <input [(ngModel)]="contract.cnpj"
-                       autocomplete="off"
-                       pInputText id="input" type="text"
-                       minlength="18"
-                       maxlength="18"
-                       (input)="utils.formatCNPJ($event)"
-                       placeholder="Ex. 99.997.090/0001-99" fluid/>
+                       placeholder="Digite o endereço"
+                       required/>
               </div>
 
-              <div class="w-full sm:flex">
-                <input type="file" class="file-input file-input-sm hidden" accept=".pdf" #inputFile
+              <!-- Telefone e CNPJ - lado a lado no desktop -->
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col gap-1 w-full">
+                  <label for="phone">Telefone do Contratante*</label>
+                  <input [(ngModel)]="contract.phone"
+                         id="phone"
+                         type="text"
+                         pInputText
+                         autocomplete="off"
+                         (input)="utils.formatPhone($event)"
+                         minlength="14"
+                         maxlength="15"
+                         placeholder="Ex. (31) 99999-9999"
+                         required/>
+                </div>
+
+                <div class="flex flex-col gap-1 w-full">
+                  <label for="cnpj">CNPJ do Contratante*</label>
+                  <input [(ngModel)]="contract.cnpj"
+                         id="cnpj"
+                         type="text"
+                         pInputText
+                         autocomplete="off"
+                         minlength="18"
+                         maxlength="18"
+                         (input)="utils.formatCNPJ($event)"
+                         placeholder="Ex. 99.997.090/0001-99"
+                         required/>
+                </div>
+              </div>
+
+              <!-- Empresa contratada -->
+              <div class="flex flex-col gap-1">
+                <label for="companyId">Empresa contratada*</label>
+                <p-select id="companyId"
+                          [options]="companies"
+                          [(ngModel)]="contract.companyId"
+                          optionLabel="socialReason"
+                          placeholder="Selecione a Empresa Prestadora"
+                          class="w-full">
+                  <ng-template #footer>
+                    <div class="p-3">
+                      <p-button label="Adicionar Nova Empresa"
+                                icon="pi pi-plus"
+                                text
+                                size="small"
+                                fluid
+                                severity="secondary"
+                                (click)="utils.playSound('pop');visible = true"/>
+                    </div>
+                  </ng-template>
+                </p-select>
+              </div>
+
+              <!-- Arquivos e botão unificado -->
+              <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                <input type="file"
+                       class="file-input file-input-sm hidden"
+                       accept=".pdf"
+                       #inputFile
                        (change)="onFileSelected($event, typeSelect)"/>
 
-                <div class="field mt-5 mr-4">
-                  <label for="number">Edital</label>
-                  <span type="button" [class.btn-outline]="!noticeFile" class="btn btn-accent btn-sm text-xs w-64 h-12"
-                        (click)="typeSelect = 'notice'; inputFile.click()"><span class="material-icons"
-                                                                                 *ngIf="noticeFile === null">cloud_upload</span>{{ noticeFile?.name || 'Clique para selecionar' }}</span>
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                  <label for="noticeFile">Edital</label>
+                  <span type="button"
+                        [class.btn-outline]="!noticeFile"
+                        class="btn btn-accent btn-sm text-xs w-full sm:w-64 h-12 flex items-center justify-center gap-2"
+                        (click)="typeSelect = 'notice'; inputFile.click()">
+                    <span class="material-icons" *ngIf="!noticeFile">cloud_upload</span>
+                    {{ noticeFile?.name || 'Clique para selecionar' }}
+                  </span>
                 </div>
 
-
-                <div class="field mt-5 mr-4">
-                  <label for="number">Contrato</label>
-                  <span type="button" [class.btn-outline]="!contractFile"
-                        class="btn btn-accent btn-sm text-xs w-64 h-12"
-                        (click)="typeSelect = 'contract'; inputFile.click()"><span class="material-icons"
-                                                                                   *ngIf="contractFile === null">cloud_upload</span>{{ contractFile?.name || 'Clique para selecionar' }}</span>
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                  <label for="contractFile">Contrato</label>
+                  <span type="button"
+                        [class.btn-outline]="!contractFile"
+                        class="btn btn-accent btn-sm text-xs w-full sm:w-64 h-12 flex items-center justify-center gap-2"
+                        (click)="typeSelect = 'contract'; inputFile.click()">
+                    <span class="material-icons" *ngIf="!contractFile">cloud_upload</span>
+                    {{ contractFile?.name || 'Clique para selecionar' }}
+                  </span>
                 </div>
 
-                <div class="field mt-5">
-                  <label for="number">Serviço Unificado</label>
-                  <span type="button" class="btn btn-sm text-xs btn-outline btn-primary h-12 w-64" #unify
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                  <label>Serviço Unificado</label>
+                  <span type="button"
+                        class="btn btn-outline btn-primary btn-sm text-xs h-12 w-full sm:w-64 flex items-center justify-center"
+                        #unify
                         (click)="styleField(unify)">
-              Clique para ativar serviço unificado</span>
+                    Clique para ativar serviço unificado
+                  </span>
                 </div>
 
               </div>
 
-              <div class="flex pt-6 justify-end">
-                <p-button (onClick)="activateCallback(2)" label="Continuar" icon="pi pi-arrow-right" iconPos="right"/>
+              <!-- Botão continuar -->
+              <div class="flex justify-end pt-6">
+                <p-button label="Continuar"
+                          icon="pi pi-arrow-right"
+                          iconPos="right"
+                          (onClick)="activateCallback(2)"/>
               </div>
-
             </div>
           </ng-template>
         </p-step-panel>
+
 
         <p-step-panel [value]="2">
           <ng-template #content let-activateCallback="activateCallback">
@@ -175,17 +245,17 @@
 
             @if (contract.items.length > 0) {
               <div>
-                  <div class="flex justify-between mx-10">
-                    <div class="text-xl font-semibold">Revise os itens adicionados</div>
-                    <div class="flex flex-col">
+                <div class="flex justify-between mx-10">
+                  <div class="text-xl font-semibold">Revise os itens adicionados</div>
+                  <div class="flex flex-col">
                       <span class="uppercase tracking-wide text-sm font-semibold opacity-80">
                       Valor Total
                     </span>
-                      <h2 class="text-3xl sm:text-3xl font-extrabold leading-tight drop-shadow-md">
-                        {{ totalValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
-                      </h2>
-                    </div>
+                    <h2 class="text-3xl sm:text-3xl font-extrabold leading-tight drop-shadow-md">
+                      {{ totalValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                    </h2>
                   </div>
+                </div>
 
                 <table class="table table-auto table-xs w-full rounded mt-2">
                   <thead>
@@ -297,6 +367,152 @@
 
     <p-toast/>
 
+    <!--    Cadastrar empresa-->
+    <p-dialog [(visible)]="visible" [modal]="false" [style]="{ width: '35rem' }" position="left">
+      <ng-template #header>
+        <div class="inline-flex items-center justify-center gap-2">
+          <span class="font-bold whitespace-nowrap">Cadastrar Empresa</span>
+        </div>
+      </ng-template>
+
+      <span class="text-surface-500 dark:text-surface-400 block mb-8">Preencha as informações abaixo</span>
+
+      <div class="flex flex-col gap-4 mx-auto" style="min-height: 16rem; max-width: 50rem;">
+
+        <!-- Razão Social -->
+        <div class="flex flex-col gap-1">
+          <label for="socialReason" [class.text-red-500]="companyFormSubmit && socialReasonCtrl.invalid">Razão
+            Social*</label>
+          <input [(ngModel)]="company.socialReason"
+                 #socialReasonCtrl="ngModel"
+                 id="socialReason"
+                 type="text"
+                 pInputText
+                 autocomplete="off"
+                 placeholder="Digite a razão social"
+                 required
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && socialReasonCtrl.invalid}"/>
+        </div>
+
+        <!-- Nome Fantasia -->
+        <div class="flex flex-col gap-1">
+          <label for="fantasyName" [class.text-red-500]="companyFormSubmit && fantasyNameCtrl.invalid">Nome
+            Fantasia*</label>
+          <input [(ngModel)]="company.fantasyName"
+                 #fantasyNameCtrl="ngModel"
+                 id="fantasyName"
+                 type="text"
+                 pInputText
+                 autocomplete="off"
+                 placeholder="Digite o nome fantasia"
+                 required
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && fantasyNameCtrl.invalid}"/>
+        </div>
+
+        <!-- CNPJ -->
+        <div class="flex flex-col gap-1">
+          <label for="companyCnpj" [class.text-red-500]="companyFormSubmit && cnpjCtrl.invalid">CNPJ*</label>
+          <input [(ngModel)]="company.companyCnpj"
+                 #cnpjCtrl="ngModel"
+                 id="companyCnpj"
+                 type="text"
+                 pInputText
+                 autocomplete="off"
+                 placeholder="Digite o CNPJ"
+                 minlength="18"
+                 maxlength="18"
+                 (input)="utils.formatCNPJ($event)"
+                 required
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && cnpjCtrl.invalid}"/>
+        </div>
+
+        <!-- Telefone -->
+        <div class="flex flex-col gap-1">
+          <label for="companyPhone" [class.text-red-500]="companyFormSubmit && phoneCtrl.invalid">Telefone*</label>
+          <input [(ngModel)]="company.companyPhone"
+                 #phoneCtrl="ngModel"
+                 id="companyPhone"
+                 type="text"
+                 pInputText
+                 autocomplete="off"
+                 minlength="14"
+                 maxlength="15"
+                 placeholder="(00) 00000-0000"
+                 (input)="utils.formatPhone($event)"
+                 required
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && phoneCtrl.invalid}"/>
+        </div>
+
+        <!-- Contato -->
+        <div class="flex flex-col gap-1">
+          <label for="companyContact" [class.text-red-500]="companyFormSubmit && contactCtrl.invalid">Contato*</label>
+          <input [(ngModel)]="company.companyContact"
+                 #contactCtrl="ngModel"
+                 id="companyContact"
+                 type="text"
+                 pInputText
+                 autocomplete="off"
+                 placeholder="Nome do responsável"
+                 required
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && contactCtrl.invalid}"/>
+        </div>
+
+        <!-- E-mail -->
+        <div class="flex flex-col gap-1">
+          <label for="companyEmail" [class.text-red-500]="companyFormSubmit && emailCtrl.invalid">E-mail*</label>
+          <input [(ngModel)]="company.companyEmail"
+                 #emailCtrl="ngModel"
+                 required
+                 id="companyEmail"
+                 type="email"
+                 pInputText
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && emailCtrl.invalid}"
+                 autocomplete="off"
+                 placeholder="exemplo@empresa.com"/>
+        </div>
+
+        <!-- Endereço -->
+        <div class="flex flex-col gap-1">
+          <label for="companyAddress" [class.text-red-500]="companyFormSubmit && addressCtrl.invalid">Endereço*</label>
+          <input [(ngModel)]="company.companyAddress"
+                 #addressCtrl="ngModel"
+                 id="companyAddress"
+                 type="text"
+                 pInputText
+                 autocomplete="off"
+                 placeholder="Rua, número, bairro, cidade"
+                 required
+                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && addressCtrl.invalid}"/>
+        </div>
+
+        <!-- Logo da Empresa -->
+        <div class="flex flex-col gap-1 mt-5 mr-4">
+          <input type="file"
+                 class="file-input file-input-sm hidden"
+                 accept=".png,.jpg"
+                 #inputLogo
+                 (change)="onFileSelected($event, 'logo')"/>
+
+          <label for="contractFile" [class.text-red-500]="companyFormSubmit && !logoFile">Logo da Empresa*</label>
+          <span
+            (click)="inputLogo.click()"
+            type="button"
+            [class.btn-outline]="!logoFile"
+            [ngClass]="{'ng-invalid ng-dirty border border-red-500': companyFormSubmit && !logoFile}"
+            class="btn btn-accent btn-sm text-xs w-full h-12 flex items-center justify-center gap-2">
+      <span class="material-icons" *ngIf="logoFile === null">cloud_upload</span>
+            {{ logoFile?.name || 'Clique para selecionar' }}
+    </span>
+        </div>
+
+      </div>
+
+
+      <ng-template #footer>
+        <p-button label="Cancelar" [text]="true" severity="secondary" (click)="visible = false; resetCompanyForm();"/>
+        <p-button label="Salvar" [outlined]="true" severity="secondary" (click)="saveCompany()"/>
+      </ng-template>
+    </p-dialog>
 
   </div>
 </div>

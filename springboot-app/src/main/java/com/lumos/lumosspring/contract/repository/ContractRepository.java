@@ -7,13 +7,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface ContractRepository extends CrudRepository<Contract, Long> {
 
     Optional<Contract> findContractByContractId(long contractId);
 
-    List<Contract> findAllByStatus(String status);
+    List<Contract> findAllByTenantIdAndStatus(UUID tenantId, String status);
 
     @Query("""
         select true from contract

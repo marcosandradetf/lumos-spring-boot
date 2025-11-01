@@ -5,7 +5,7 @@ import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {FormsModule, NgForm} from '@angular/forms';
 import {NgClass, NgIf} from '@angular/common';
-import {Company} from '../../models/empresa.model';
+import {CompanyResponse} from '../../company/dto/company.dto';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {Deposit} from '../../models/almoxarifado.model';
 import {catchError, tap, throwError} from 'rxjs';
@@ -52,7 +52,7 @@ export class DepositsComponent {
     depositPhone: "",
   }
   formSubmitted: null | boolean = false;
-  companies: Company[] = []
+  companies: CompanyResponse[] = []
   deposits: Deposit[] = [];
   ufs: ufRequest[] = [];
   cities: citiesRequest[] = [];

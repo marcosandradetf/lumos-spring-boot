@@ -66,7 +66,7 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = minioService.uploadFile(photo, "scl-construtora", folder, "execution")
+        val fileUri = minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "execution")
         installationStreet.executionPhotoUri = fileUri
 
         try {

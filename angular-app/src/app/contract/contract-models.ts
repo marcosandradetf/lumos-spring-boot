@@ -55,8 +55,8 @@ export interface CreateContractDTO {
   unifyServices: boolean;
   noticeFile: string | null;
   contractFile: string | null;
-  userUUID: string;
-  items: ContractReferenceItemsDTO[]
+  items: ContractReferenceItemsDTO[];
+  companyId: number | null
 }
 
 export interface ContractReferenceItemsDTO {

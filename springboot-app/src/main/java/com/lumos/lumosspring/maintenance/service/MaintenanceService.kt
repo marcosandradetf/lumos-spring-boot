@@ -56,7 +56,7 @@ class MaintenanceService(
 
         val fileUri = signature?.let {
             val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
-            minioService.uploadFile(it, "scl-construtora", folder, "execution")
+            minioService.uploadFile(it, Utils.getCurrentBucket(), folder, "execution")
         }
 
         val newMaintenance = Maintenance(
@@ -211,7 +211,7 @@ class MaintenanceService(
         }.joinToString("\n")
 
         val companyLink = minioService.getPresignedObjectUrl(
-            company["bucket"]?.asText() ?: throw IllegalArgumentException("Bucket ausente"),
+            Utils.getCurrentBucket(),
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
@@ -260,7 +260,7 @@ class MaintenanceService(
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = minioService.getPresignedObjectUrl(
-                company["bucket"]?.asText() ?: throw IllegalArgumentException("Bucket ausente"),
+                Utils.getCurrentBucket(),
                 maintenance["signature_uri"]?.asText() ?: ""
             )
 
@@ -383,7 +383,7 @@ class MaintenanceService(
         }.joinToString("\n")
 
         val companyLink = minioService.getPresignedObjectUrl(
-            company["bucket"]?.asText() ?: throw IllegalArgumentException("Bucket ausente"),
+            Utils.getCurrentBucket(),
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
@@ -431,7 +431,7 @@ class MaintenanceService(
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = minioService.getPresignedObjectUrl(
-                company["bucket"]?.asText() ?: throw IllegalArgumentException("Bucket ausente"),
+                Utils.getCurrentBucket(),
                 maintenance["signature_uri"]?.asText() ?: ""
             )
 

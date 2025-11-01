@@ -17,6 +17,7 @@ import com.lumos.lumosspring.util.DefaultResponse
 import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.Util
+import com.lumos.lumosspring.util.Utils
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -73,8 +74,8 @@ class ContractService(
     }
 
     fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
-        val contract = Contract()
-        val user = userRepository.findByUserId(UUID.fromString(contractDTO.userUUID))
+        var contract = Contract()
+        val user = userRepository.findByUserId(Utils.getCurrentUserId())
             ?: throw IllegalStateException("Usuário não encontrado")
 
         contract.contractNumber = contractDTO.number
@@ -85,9 +86,9 @@ class ContractService(
         contract.unifyServices = contractDTO.unifyServices
         contract.noticeFile = if ((contractDTO.noticeFile?.length ?: 0) > 0) contractDTO.noticeFile else null
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
+        contract.companyId = contractDTO.companyId
 
-        contractRepository.save(contract)
-
+        contract = contractRepository.save(contract)
 
         contractDTO.items.forEach { item ->
             val ci = ContractItem()
@@ -98,7 +99,7 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
-        for(notificationCode in userRepository.getResponsibleTechUsers()) {
+        for (notificationCode in userRepository.getResponsibleTechUsers()) {
             notificationService.sendNotificationForTopic(
                 title = "Novo contrato pendente para Pré-Medição",
                 body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
@@ -166,7 +167,7 @@ class ContractService(
         )
     }
 
-     fun queryContractItems(contractId: Long): List<Map<String, Any>> {
+    fun queryContractItems(contractId: Long): List<Map<String, Any>> {
         return JdbcUtil.getRawData(
             namedJdbc = namedJdbc,
             """
@@ -197,35 +198,36 @@ class ContractService(
             val additiveFile: String,
         )
 
-        return ResponseEntity.ok().body(contractRepository.findAllByStatus(ContractStatus.ACTIVE).map {
-            val user = userRepository.findByUserId(it.createdBy)
-                ?: throw IllegalStateException("Usuário não encontrado")
+        return ResponseEntity.ok()
+            .body(contractRepository.findAllByTenantIdAndStatus(Utils.getCurrentTenantId(), ContractStatus.ACTIVE).map {
+                val user = userRepository.findByUserId(it.createdBy)
+                    ?: throw IllegalStateException("Usuário não encontrado")
 
-            val rs = JdbcUtil.getSingleRow(
-                namedJdbc = namedJdbc,
-                sql = """
+                val rs = JdbcUtil.getSingleRow(
+                    namedJdbc = namedJdbc,
+                    sql = """
                     select count(*) as quantity from contract_item
                     where contract_contract_id = :contractId
                 """.trimIndent(),
-                params = mapOf("contractId" to it.contractId),
-            )
+                    params = mapOf("contractId" to it.contractId),
+                )
 
-            ContractResponseDTO(
-                contractId = it.contractId!!,
-                number = it.contractNumber ?: "",
-                contractor = it.contractor ?: "",
-                address = it.address ?: "",
-                phone = it.phone ?: "",
-                cnpj = it.cnpj ?: "",
-                noticeFile = it.noticeFile ?: "",
-                contractFile = it.contractFile ?: "",
-                itemQuantity = (rs?.get("quantity") as Number).toInt(),
-                createdBy = user.get().completedName,
-                contractStatus = it.status,
-                contractValue = it.contractValue.toString(),
-                additiveFile = ""
-            )
-        })
+                ContractResponseDTO(
+                    contractId = it.contractId!!,
+                    number = it.contractNumber ?: "",
+                    contractor = it.contractor ?: "",
+                    address = it.address ?: "",
+                    phone = it.phone ?: "",
+                    cnpj = it.cnpj ?: "",
+                    noticeFile = it.noticeFile ?: "",
+                    contractFile = it.contractFile ?: "",
+                    itemQuantity = (rs?.get("quantity") as Number).toInt(),
+                    createdBy = user.get().completedName,
+                    contractStatus = it.status,
+                    contractValue = it.contractValue.toString(),
+                    additiveFile = ""
+                )
+            })
     }
 
     fun getContractItems(contractId: Long): ResponseEntity<Any> {
@@ -304,8 +306,9 @@ class ContractService(
                 FROM contract c
                 JOIN app_user u ON u.user_id = c.created_by_id_user
                 WHERE c.status = 'ACTIVE'
+                    AND c.tenant_id = :tenantId
             """.trimIndent(),
-            emptyMap<String, Any>() // Nenhum parâmetro necessário aqui
+            mapOf("tenantId" to Utils.getCurrentTenantId()) // Nenhum parâmetro necessário aqui
         ) { rs, _ ->
             var hasMaintenance = false
 
@@ -318,7 +321,7 @@ class ContractService(
                     """.trimIndent(),
                 mapOf("contractId" to rs.getLong("contract_id"))
             ) { cRs, _ ->
-                if(cRs.getString("description").contains("manuten", true)) {
+                if (cRs.getString("description").contains("manuten", true)) {
                     hasMaintenance = true
                 }
                 cRs.getLong("contract_reference_item_id")
@@ -390,9 +393,9 @@ class ContractService(
                         contractItemId = it["contract_item_id"] as Long,
                         description = it["description"] as String,
                         unitPrice = (it["unit_price"] as BigDecimal).toPlainString(),
-                        contractedQuantity =  (it["contracted_quantity"] as Number).toDouble(),
+                        contractedQuantity = (it["contracted_quantity"] as Number).toDouble(),
                         executedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long),
-                        totalExecuted =  (it["quantity_executed"] as Number).toDouble(),
+                        totalExecuted = (it["quantity_executed"] as Number).toDouble(),
                         linking = it["linking"] as? String,
                         nameForImport = it["name_for_import"] as? String,
                         type = it["type"] as String
@@ -407,7 +410,7 @@ class ContractService(
         val quantity: Double,
     )
 
-    fun getExecutedQuantityByContract(contractItemId: Long): List<ExecutedQuantity> {
+    private fun getExecutedQuantityByContract(contractItemId: Long): List<ExecutedQuantity> {
         val directExecutions = JdbcUtil.getRawData(
             namedJdbc,
             """
@@ -435,7 +438,10 @@ class ContractService(
     }
 
     fun archiveById(contractId: Long): ResponseEntity<Any> {
-        namedJdbc.update("update contract set status = 'ARCHIVED' where contract_id = :contract_id", mapOf("contract_id" to contractId))
+        namedJdbc.update(
+            "update contract set status = 'ARCHIVED' where contract_id = :contract_id",
+            mapOf("contract_id" to contractId)
+        )
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }

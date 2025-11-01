@@ -33,13 +33,15 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const isMobile = window.innerWidth <= 768;
+
     this.utils.menuState$.subscribe((isOpen: boolean) => {
       this.menuOpen = isOpen;
     });
 
     // Verifica se existe algum valor salvo no localStorage
     let savedMenuState = localStorage.getItem('menuOpen');
-    if (savedMenuState !== null) {
+    if (savedMenuState !== null && !isMobile) {
       this.menuOpen = JSON.parse(savedMenuState); // Converte de volta para booleano
     }
 

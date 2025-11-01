@@ -1,15 +1,15 @@
 package com.lumos.lumosspring.company.model;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table
-public class Company {
+public class Company extends TenantEntity {
     @Id
     private Long idCompany;
 
     private String socialReason;
-    private String bucketFileName;
     private String companyCnpj;
     private String companyContact;
     private String companyPhone;
@@ -20,10 +20,8 @@ public class Company {
 
     public Company() {}
 
-    public Company(Long idCompany, String socialReason, String bucketFileName, String companyCnpj, String companyContact, String companyPhone, String companyEmail, String companyAddress, String companyLogo, String fantasyName) {
-        this.idCompany = idCompany;
+    public Company(String socialReason,  String companyCnpj, String companyContact, String companyPhone, String companyEmail, String companyAddress, String companyLogo, String fantasyName) {
         this.socialReason = socialReason;
-        this.bucketFileName = bucketFileName;
         this.companyCnpj = companyCnpj;
         this.companyContact = companyContact;
         this.companyPhone = companyPhone;
@@ -47,14 +45,6 @@ public class Company {
 
     public void setSocialReason(String socialReason) {
         this.socialReason = socialReason;
-    }
-
-    public String getBucketFileName() {
-        return bucketFileName;
-    }
-
-    public void setBucketFileName(String bucketFileName) {
-        this.bucketFileName = bucketFileName;
     }
 
     public String getCompanyCnpj() {

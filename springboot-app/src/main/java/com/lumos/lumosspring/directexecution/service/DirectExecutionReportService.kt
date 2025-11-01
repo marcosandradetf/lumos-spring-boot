@@ -38,10 +38,8 @@ class DirectExecutionReportService(
         val streetSums = jsonData["street_sums"]!!
         val total = jsonData["total"]!!
 
-        val companyBucket =
-            company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = minioService.getPresignedObjectUrl(companyBucket, logoUri)
+        val companyLogoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
 
         val team = jsonData["team"]!!
         val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
@@ -177,13 +175,11 @@ class DirectExecutionReportService(
         val contract = jsonData["contract"]!!
         val streets = jsonData["streets"]!!
 
-        val companyBucket =
-            company["bucket"]?.asText() ?: throw IllegalArgumentException("Company bucket does not exist")
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = minioService.getPresignedObjectUrl(companyBucket, logoUri)
+        val companyLogoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
 
         val streetLinesHtml = streets.joinToString("\n") { line ->
-            val photoUrl = minioService.getPresignedObjectUrl(companyBucket, line["execution_photo_uri"].asText())
+            val photoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), line["execution_photo_uri"].asText())
             """
                 <div style="
                       page-break-inside: avoid;

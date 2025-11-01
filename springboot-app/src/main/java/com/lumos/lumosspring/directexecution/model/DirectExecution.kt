@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.directexecution.model
 
+import com.lumos.lumosspring.authentication.model.TenantEntity
 import com.lumos.lumosspring.util.ExecutionStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
@@ -21,4 +22,4 @@ data class DirectExecution(
     var assignedAt: Instant,
     var reservationManagementId: Long,
     var step: Int
-)
+): TenantEntity()

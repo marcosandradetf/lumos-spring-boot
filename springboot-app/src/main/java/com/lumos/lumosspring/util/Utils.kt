@@ -26,10 +26,21 @@ object Utils {
 
         if (authentication is JwtAuthenticationToken) {
             val jwt = authentication.token
-            return UUID.fromString(jwt.getClaimAsString("tenant"))
+            return UUID.fromString(jwt.getClaimAsString("tenant") ?: "f0dc9ab8-cb2c-4f21-a75f-05b122614862")
         }
 
         throw IllegalStateException("Usuário não autenticado ou token inválido")
+    }
+
+    fun getCurrentBucket(): String {
+        val authentication = SecurityContextHolder.getContext().authentication
+
+        if (authentication is JwtAuthenticationToken) {
+            val jwt = authentication.token
+            return jwt.getClaimAsString("bucket") ?: "scl-construtora"
+        }
+
+        throw IllegalStateException("Usuário não autenticado ou bucket inválido")
     }
 
     fun String.replacePlaceholders(values: Map<String, String>): String {

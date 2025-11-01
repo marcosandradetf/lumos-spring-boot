@@ -206,7 +206,7 @@ public class PreMeasurementRegisterService {
                 }
 
                 // Salva a nova foto
-                String photoUri = minioService.uploadFile(photo, "scl-construtora", "photos/pre_measurement", "ponto");
+                String photoUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), "photos/pre_measurement", "ponto");
 
                 String updateSql = "UPDATE pre_measurement_street SET pre_measurement_photo_uri = ? WHERE device_pre_measurement_street_id = ?";
                 jdbcTemplate.update(updateSql, photoUri, deviceStreetId);

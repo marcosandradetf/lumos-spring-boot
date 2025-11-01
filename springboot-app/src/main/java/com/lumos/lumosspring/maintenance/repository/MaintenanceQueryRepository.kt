@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lumos.lumosspring.maintenance.dto.MaintenanceStreetItemDTO
 import com.lumos.lumosspring.stock.order.installationrequest.model.MaterialHistory
 import com.lumos.lumosspring.stock.order.installationrequest.repository.MaterialHistoryRepository
+import com.lumos.lumosspring.util.Utils
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.time.Instant
@@ -46,7 +47,7 @@ class MaintenanceQueryRepository(
         }
     }
 
-    fun  getGroupedMaintenances(): List<Map<String, JsonNode>> {
+    fun getGroupedMaintenances(): List<Map<String, JsonNode>> {
         val sql = """
             SELECT
               json_build_object(
@@ -92,11 +93,12 @@ class MaintenanceQueryRepository(
                 ) t
             ) execs ON TRUE
             WHERE m.status = 'FINISHED'
+                AND m.tenant_id = :tenantId
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contract_id;
         """.trimIndent()
 
-        return jdbcTemplate.query(sql) { rs, _ ->
+        return jdbcTemplate.query(sql, mapOf("tenantId" to Utils.getCurrentTenantId())) { rs, _ ->
             val contractorJson = rs.getString("contract")
             val maintenanceJson = rs.getString("maintenances")
 
@@ -131,8 +133,7 @@ class MaintenanceQueryRepository(
                 'company_cnpj', com.company_cnpj,
                 'company_address', com.company_address,
                 'company_phone', coalesce(com.company_phone, ''),
-                'company_logo', com.company_logo,
-                'bucket', com.bucket_file_name
+                'company_logo', com.company_logo
               ) AS company,
 
               json_build_object(
@@ -261,7 +262,7 @@ class MaintenanceQueryRepository(
 
             FROM maintenance m
             JOIN contract c ON c.contract_id = m.contract_id
-            JOIN company com ON com.id_company = 1
+            JOIN company com ON com.id_company = c.company_id
             LEFT JOIN LATERAL (
             SELECT json_agg(
                    json_build_object(
@@ -326,8 +327,7 @@ class MaintenanceQueryRepository(
             'company_cnpj', com.company_cnpj,
             'company_address', com.company_address,
             'company_phone', com.company_phone,
-            'company_logo', com.company_logo,
-            'bucket', com.bucket_file_name
+            'company_logo', com.company_logo
           ) AS company,
 
           json_build_object(
@@ -396,7 +396,7 @@ class MaintenanceQueryRepository(
 
         FROM maintenance m
         JOIN contract c ON c.contract_id = m.contract_id
-        JOIN company com ON com.id_company = 1
+        JOIN company com ON com.id_company = c.company_id
         LEFT JOIN LATERAL (
             SELECT json_agg(
                    json_build_object(

@@ -324,7 +324,7 @@ public class DirectExecutionManagementService {
                     Map.of("direct_execution_id", directExecutionId)
             );
 
-            minioService.deleteFiles("scl-construtora", uriObject);
+            minioService.deleteFiles(Utils.INSTANCE.getCurrentBucket(), uriObject);
 
             namedJdbc.update(
                     """

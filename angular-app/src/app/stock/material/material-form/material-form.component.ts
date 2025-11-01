@@ -5,7 +5,7 @@ import {catchError, of, Subject, takeUntil, tap} from 'rxjs';
 
 import {NgClass, NgIf} from '@angular/common';
 import {Group} from '../../../models/grupo.model';
-import {Company} from '../../../models/empresa.model';
+import {CompanyResponse} from '../../../company/dto/company.dto';
 import {Deposit} from '../../../models/almoxarifado.model';
 import {CreateMaterialRequest} from '../../../models/create-material-request.dto';
 import {Type} from '../../../models/tipo.model';
@@ -31,7 +31,7 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   types: Type[] = [];
   filterTypes: Type[] = []; // Tipos filtrados com base no grupo selecionado
   groups: Group[] = [];
-  companies: Company[] = [];
+  companies: CompanyResponse[] = [];
   deposits: Deposit[] = [];
   material: CreateMaterialRequest = {
     buyUnit: '',

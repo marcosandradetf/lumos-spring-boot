@@ -45,8 +45,7 @@ class DirectExecutionReportRepository(
                 'company_cnpj', com.company_cnpj,
                 'company_address', com.company_address,
                 'company_phone', coalesce(com.company_phone, ''),
-                'company_logo', com.company_logo,
-                'bucket', com.bucket_file_name
+                'company_logo', com.company_logo
               ) AS company,
             
               json_build_object(
@@ -148,7 +147,7 @@ class DirectExecutionReportRepository(
         
         FROM direct_execution de
         JOIN contract c ON c.contract_id = de.contract_id
-        JOIN company com ON com.id_company = 1
+        JOIN company com ON com.id_company = c.company_id
         LEFT JOIN LATERAL (
             SELECT json_agg(
                    json_build_object(
@@ -204,8 +203,7 @@ class DirectExecutionReportRepository(
                 'company_cnpj', com.company_cnpj,
                 'company_address', com.company_address,
                 'company_phone', coalesce(com.company_phone, ''),
-                'company_logo', com.company_logo,
-                'bucket', com.bucket_file_name
+                'company_logo', com.company_logo
               ) AS company,
 
               json_build_object(
@@ -236,7 +234,7 @@ class DirectExecutionReportRepository(
 
             FROM direct_execution de
             JOIN contract c ON c.contract_id = de.contract_id
-            JOIN company com ON com.id_company = 1
+            JOIN company com ON com.id_company = c.company_id
             WHERE de.direct_execution_id = :directExecutionId;
         """.trimIndent()
 

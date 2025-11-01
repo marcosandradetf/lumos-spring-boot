@@ -8,6 +8,7 @@ import com.lumos.lumosspring.directexecution.dto.DirectReserve
 import com.lumos.lumosspring.team.repository.TeamRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
+import com.lumos.lumosspring.util.Utils
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
@@ -143,11 +144,12 @@ class DirectExecutionViewRepository(
                 ) t
             ) execs ON TRUE
             WHERE de.direct_execution_status = 'FINISHED'
+                AND de.tenant_id = :tenantId
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contract_id;            
         """.trimIndent()
 
-        return namedJdbc.query(sql) { rs, _ ->
+        return namedJdbc.query(sql, mapOf("tenantId" to Utils.getCurrentTenantId())) { rs, _ ->
             val contractorJson = rs.getString("contract")
             val stepsJson = rs.getString("steps")
 
