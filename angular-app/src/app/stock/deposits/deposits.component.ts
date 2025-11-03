@@ -1,11 +1,9 @@
 import {Component, ElementRef, ViewChild} from '@angular/core';
-import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {FormsModule, NgForm} from '@angular/forms';
 import {NgClass, NgIf} from '@angular/common';
-import {CompanyResponse} from '../../company/dto/company.dto';
 import {TableComponent} from '../../shared/components/table/table.component';
 import {Deposit} from '../../models/almoxarifado.model';
 import {catchError, tap, throwError} from 'rxjs';
@@ -33,17 +31,9 @@ import {citiesRequest} from '../../core/cities-request.dto';
   styleUrl: './deposits.component.scss'
 })
 export class DepositsComponent {
-  sidebarLinks = [
-    {title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1'},
-    {title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2'},
-    {title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3'},
-    {title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4'},
-    {title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5'}
-  ];
   formOpen: boolean = false;
   deposit = {
     depositName: "",
-    companyId: "",
     depositAddress: "",
     depositDistrict: "",
     depositCity: "",
@@ -52,7 +42,6 @@ export class DepositsComponent {
     depositPhone: "",
   }
   formSubmitted: null | boolean = false;
-  companies: CompanyResponse[] = []
   deposits: Deposit[] = [];
   ufs: ufRequest[] = [];
   cities: citiesRequest[] = [];
@@ -69,9 +58,6 @@ export class DepositsComponent {
               private ibgeService: IbgeService) {
     this.title.setTitle('Gerenciar - Almoxarifados');
 
-    this.stockService.getCompanies().subscribe(
-      c => this.companies = c
-    );
     this.stockService.getDeposits().subscribe(
       d => this.deposits = d.filter(d => !d.isTruck)
     );
@@ -87,7 +73,6 @@ export class DepositsComponent {
       this.state = State.create;
       this.deposit = {
         depositName: "",
-        companyId: "",
         depositAddress: "",
         depositDistrict: "",
         depositCity: "",
@@ -116,7 +101,6 @@ export class DepositsComponent {
         tap(response => {
           this.deposit = {
             depositName: "",
-            companyId: "",
             depositAddress: "",
             depositDistrict: "",
             depositCity: "",
@@ -138,7 +122,6 @@ export class DepositsComponent {
         tap(response => {
           this.deposit = {
             depositName: "",
-            companyId: "",
             depositAddress: "",
             depositDistrict: "",
             depositCity: "",
@@ -171,7 +154,6 @@ export class DepositsComponent {
       this.getCities(d.depositState);
 
       this.deposit.depositName = d.depositName;
-      this.deposit.companyId = '';
       this.deposit.depositState = d.depositState;
       this.deposit.depositCity = d.depositCity;
       this.deposit.depositRegion = d.depositRegion;

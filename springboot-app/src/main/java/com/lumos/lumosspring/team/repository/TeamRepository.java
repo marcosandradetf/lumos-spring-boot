@@ -16,8 +16,6 @@ import java.util.UUID;
     @Query("SELECT team_id from app_user where user_id = :userId")
     Optional<Long> getCurrentTeamId(UUID userId);
 
-    Optional<Team> findByTeamName(String teamName);
-
     @Query("""
         select t.id_team as team_id,
                d.deposit_name as deposit_name,
@@ -25,8 +23,9 @@ import java.util.UUID;
                t.plate_vehicle as plate_vehicle
         from team t
         join deposit d on d.id_deposit = t.deposit_id_deposit
+        WHERE t.tenant_id = :tenantId
    \s""")
-    List<TeamResponseForConfirmation> getTeams();
+    List<TeamResponseForConfirmation> getTeams(UUID tenantId);
 
     @Query("Select name || ' ' || last_name as member_name, user_id from app_user where team_id = :teamId")
     List<MemberTeamResponse> getMembers(long teamId);

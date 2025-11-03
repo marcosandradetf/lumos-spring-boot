@@ -7,7 +7,6 @@ export interface StockMovementResponse {
   requestUnit: string;
   pricePerItem: string;
   supplierName: string;
-  company: string;
   deposit: string;
   employee: string;
 }

@@ -452,7 +452,7 @@ public class UserService {
 
     public ResponseEntity<?> getOperationalUsers() {
         var operationalUsers = userRepository.getOperationalUsers();
-        var teams = teamRepository.getTeams();
+        var teams = teamRepository.getTeams(Utils.INSTANCE.getCurrentTenantId());
 
         return ResponseEntity.ok().body(
                 new OperationalAndTeamsResponse(

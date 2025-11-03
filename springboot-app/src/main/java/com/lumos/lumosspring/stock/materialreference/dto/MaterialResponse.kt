@@ -15,6 +15,5 @@ data class MaterialResponse(
     val inactive: Boolean,
     val materialType: String,
     val materialGroup: String,
-    val deposit: String,
-    val company: String
+    val deposit: String
 )

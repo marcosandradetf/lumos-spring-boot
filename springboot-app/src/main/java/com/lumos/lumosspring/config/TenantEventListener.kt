@@ -10,9 +10,10 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent
 class TenantEventListener {
 
     @EventListener
-    fun handleBeforeSave(event: BeforeSaveEvent<TenantEntity>) {
+    fun handleBeforeSave(event: BeforeSaveEvent<*>) {
         val entity = event.entity
-        // Set o tenantId before to save
-        entity.tenantId = Utils.getCurrentTenantId()
+        if (entity is TenantEntity) {
+            entity.tenantId = Utils.getCurrentTenantId()
+        }
     }
 }

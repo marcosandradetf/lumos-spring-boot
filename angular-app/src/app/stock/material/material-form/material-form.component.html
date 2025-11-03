@@ -161,25 +161,6 @@
 
     <label class="form-control w-full max-w-xs" *ngIf="materialService.getState() === State.create">
       <div class="label">
-        <span class="label-text">Empresa*</span>
-      </div>
-      <select
-        class="select select-bordered"
-        [(ngModel)]="material.company"
-        name="company"
-        required
-        #empresaModel="ngModel">
-        @for (empresa of companies; track empresa.idCompany) {
-          <option [value]="empresa.idCompany">{{ empresa.companyName }}</option>
-        }
-      </select>
-      <div *ngIf="empresaModel.invalid && formSubmitted">
-        <small *ngIf="empresaModel.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
-      </div>
-    </label>
-
-    <label class="form-control w-full max-w-xs" *ngIf="materialService.getState() === State.create">
-      <div class="label">
         <span class="label-text">Almoxarifado*</span>
       </div>
       <select

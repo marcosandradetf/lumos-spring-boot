@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.materialstock.repository
 
+import com.lumos.lumosspring.util.Utils
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
@@ -68,8 +69,10 @@ class StockQueryRepository(
             """
                 select distinct d.id_deposit, d.deposit_name, d.deposit_address, d.deposit_phone 
                 from stockist s 
-                join deposit d ON d.id_deposit = s.deposit_id_deposit 
-            """.trimIndent()
+                join deposit d ON d.id_deposit = s.deposit_id_deposit
+                WHERE d.tenant_id = :tenantId
+            """.trimIndent(),
+            mapOf("tenantId" to Utils.getCurrentTenantId())
         ) { rs, _ ->
             DepositResponse(
                 depositId = rs.getLong("id_deposit"),
@@ -81,9 +84,12 @@ class StockQueryRepository(
 
         val stockists = jdbcTemplate.query(
             """
-                select s.stockist_id, au.name, au.phone_number, s.deposit_id_deposit from stockist s 
-                join app_user au on au.user_id = s.user_id_user 
-            """.trimIndent()
+                select s.stockist_id, au.name, au.phone_number, s.deposit_id_deposit 
+                from stockist s 
+                join app_user au on au.user_id = s.user_id_user
+                where au.tenant_id = :tenantId
+            """.trimIndent(),
+            mapOf("tenantId" to Utils.getCurrentTenantId())
         ) { rs, _ ->
             StockistResponse(
                 stockistId = rs.getLong("stockist_id"),

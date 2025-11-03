@@ -52,7 +52,6 @@
         <th>Tamanho</th>
         <th>UN Compra</th>
         <th>Estoque</th>
-        <th>Empresa</th>
         <th>Almoxarifado</th>
       </tr>
       <ng-container *ngIf="!loading && currentDeposit" body>
@@ -74,7 +73,6 @@
           <td>{{ row.materialLength }}</td>
           <td>{{ row.buyUnit }}</td>
           <td>{{ row.stockQt }}</td>
-          <td>{{ row.company }}</td>
           <td>{{ row.deposit }}</td>
         </tr>
       </ng-container>
@@ -97,7 +95,6 @@
           <th>Tamanho</th>
           <th>UN Compra</th>
           <th>Estoque</th>
-          <th>Empresa</th>
           <th>Almoxarifado</th>
         </tr>
       </ng-template>

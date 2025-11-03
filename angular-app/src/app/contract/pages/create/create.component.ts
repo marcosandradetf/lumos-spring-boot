@@ -15,7 +15,6 @@ import {
   PrimeConfirmDialogComponent
 } from '../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
 import {Select} from 'primeng/select';
-import {StockService} from '../../../stock/services/stock.service';
 import {Dialog} from 'primeng/dialog';
 import {LoadingOverlayComponent} from '../../../shared/components/loading-overlay/loading-overlay.component';
 import {CompanyService} from '../../../company/service/company.service';
@@ -75,7 +74,7 @@ export class CreateComponent {
   openModal: boolean = false;
   companies: CompanyResponse[] = [];
   company = {
-    companyId: 0,
+    idCompany: 0,
     socialReason: '',
     fantasyName: '',
     companyCnpj: '',
@@ -176,7 +175,7 @@ export class CreateComponent {
 
   resetCompanyForm() {
    this.company = {
-     companyId: 0,
+     idCompany: 0,
      socialReason: '',
      fantasyName: '',
      companyCnpj: '',
@@ -188,8 +187,8 @@ export class CreateComponent {
   }
 
   loading: boolean = false;
+  btnLoading: boolean = false;
   finish: boolean = false;
-
 
   formatValue(event: Event, itemId: number) {
     // Obtém o valor diretamente do evento e remove todos os caracteres não numéricos
@@ -461,15 +460,18 @@ export class CreateComponent {
     this.companyFormSubmit = true;
     if (!this.validateNewCompanyFields()) return;
 
-    this.visible = false;
-    this.loading = true;
+    this.btnLoading = true;
     this.companyService.create(this.company, this.logoFile!!).subscribe({
-      next: companyId => this.company.companyId = companyId,
-      error: err => this.utils.showMessage(err.error.error || err.error.message || err.error, "error"),
+      next: companyId => this.company.idCompany = companyId,
+      error: err => {
+        this.btnLoading = false;
+        this.utils.showMessage(err.error.error || err.error.message || err.error, "error");
+      },
       complete: () => {
         this.companies.push(this.company);
+        this.visible = false;
         this.resetCompanyForm();
-        this.loading = false;
+        this.btnLoading = false;
         this.utils.showMessage(
           "A nova empresa foi cadastrada e já pode ser vinculada a este contrato.",
           "success",

@@ -2,6 +2,7 @@ package com.lumos.lumosspring.team.service;
 
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository;
 import com.lumos.lumosspring.team.dto.MemberTeamResponse;
 import com.lumos.lumosspring.team.dto.TeamCreate;
 import com.lumos.lumosspring.team.dto.TeamEdit;
@@ -32,17 +33,19 @@ public class TeamService {
     private final DepositRepository depositRepository;
     private final TeamQueryRepository teamQueryRepository;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final MaterialStockJdbcRepository materialStockJdbcRepository;
 
     public TeamService(TeamRepository teamRepository,
                        RegionRepository regionRepository,
                        DepositRepository depositRepository,
-                       TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                       TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate, MaterialStockJdbcRepository materialStockJdbcRepository) {
 
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.depositRepository = depositRepository;
         this.teamQueryRepository = teamQueryRepository;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+        this.materialStockJdbcRepository = materialStockJdbcRepository;
     }
 
     @Cacheable("getAllTeams")
@@ -114,39 +117,7 @@ public class TeamService {
 
         try {
             deposit = depositRepository.save(deposit);
-
-            namedParameterJdbcTemplate.update(
-                    """
-                            insert into material_stock (
-                                buy_unit,
-                                cost_per_item,
-                                cost_price,
-                                inactive,
-                                request_unit,
-                                stock_available,
-                                stock_quantity,
-                                company_id,
-                                deposit_id,
-                                material_id
-                            )
-                            select
-                                'UN',
-                                null as cost_per_item,    \s
-                                null as cost_price,       \s
-                                false as inactive,       \s
-                                'UN',
-                                0 as stock_available,     \s
-                                0 as stock_quantity,      \s
-                                :companyId,
-                                :depositId,               \s
-                                m.id_material\s
-                            from material m;
-                            """,
-                    Map.of(
-                            "depositId", deposit.getIdDeposit(),
-                            "companyId", deposit.getCompanyId()
-                    )
-            );
+            materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit());
 
             newTeam.setDepositId(deposit.getIdDeposit());
             newTeam = teamRepository.save(newTeam);

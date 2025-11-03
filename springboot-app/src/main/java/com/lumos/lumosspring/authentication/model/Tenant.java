@@ -9,8 +9,8 @@ import java.util.UUID;
 public class Tenant {
     @Id
     UUID tenantId;
-    Long tenant_number;
-    String tenantName;
+    Long tenantNumber;
+    String description;
     String bucket;
 
     public UUID getTenantId() {
@@ -21,20 +21,20 @@ public class Tenant {
         this.tenantId = tenantId;
     }
 
-    public Long getTenant_number() {
-        return tenant_number;
+    public Long getTenantNumber() {
+        return tenantNumber;
     }
 
-    public void setTenant_number(Long tenant_number) {
-        this.tenant_number = tenant_number;
+    public void setTenantNumber(Long tenantNumber) {
+        this.tenantNumber = tenantNumber;
     }
 
-    public String getTenantName() {
-        return tenantName;
+    public String getDescription() {
+        return description;
     }
 
-    public void setTenantName(String tenantName) {
-        this.tenantName = tenantName;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getBucket() {

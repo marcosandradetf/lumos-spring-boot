@@ -27,7 +27,6 @@ export class MaterialService {
 
   materialSubject: BehaviorSubject<CreateMaterialRequest> = new BehaviorSubject<CreateMaterialRequest>({
     buyUnit: '',
-    company: '',
     deposit: '',
     inactive: false,
     allDeposits: false,
@@ -154,7 +153,6 @@ export class MaterialService {
   setMaterial(_material: MaterialResponse) {
     const material: CreateMaterialRequest = {
       buyUnit: _material.buyUnit,
-      company: '',
       deposit: '',
       inactive: _material.inactive,
       allDeposits: false,
@@ -182,7 +180,6 @@ export class MaterialService {
   resetObject() {
     const material: CreateMaterialRequest = {
       buyUnit: '',
-      company: '',
       deposit: '',
       inactive: false,
       allDeposits: false,

@@ -62,28 +62,6 @@
 
             <label class="form-control w-full max-w-xs">
               <div class="label">
-                <span class="label-text">Empresa</span>
-              </div>
-              <select
-                class="select select-bordered"
-                [(ngModel)]="deposit.companyId"
-                name="companyId"
-                required
-                #companyModel="ngModel">
-                <option selected disabled>Selecione a empresa...</option>
-                @for (company of companies; track company.idCompany) {
-                  <option [value]="company.idCompany">{{ company.companyName }}</option>
-                }
-              </select>
-              @if (companyModel.invalid && formSubmitted) {
-                @if (companyModel.errors?.['required']) {
-                  <small class="text-red-600">Preenchimento obrigatório.</small>
-                }
-              }
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
                 <span class="label-text">Estado</span>
               </div>
               <select
@@ -200,7 +178,6 @@
           <th>Placa</th>
           <th>Cidade</th>
           <th>Estado</th>
-          <th>Empresa</th>
           <th colspan="2" ></th>
         </tr>
 
@@ -212,7 +189,6 @@
             <td>{{ deposit.plateVehicle }}</td>
             <td>{{ deposit.depositCity }}</td>
             <td>{{ deposit.depositState }}</td>
-            <td>{{ deposit.companyName }}</td>
             <td class="material-icons cursor-pointer" (click)="updateDeposit(deposit)">edit</td>
             <td class="material-icons cursor-pointer text-red-600" (click)="depositId = deposit.idDeposit; showConfirmation = true;">delete</td>
           </tr>

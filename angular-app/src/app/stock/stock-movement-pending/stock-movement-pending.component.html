@@ -26,7 +26,6 @@
           <th>Preço total</th>
           <th>Preço por Item</th>
           <th>Fornecedor</th>
-          <th>Empresa</th>
           <th>Almoxarifado</th>
           <th>Responsável</th>
         </tr>
@@ -40,7 +39,6 @@
           <td>{{ Number(row.pricePerItem) * row.inputQuantity | currency }}</td>
           <td>{{ row.pricePerItem | currency }}</td>
           <td>{{ row.supplierName }}</td>
-          <td>{{ row.company }}</td>
           <td>{{ row.deposit }}</td>
           <td>{{ row.employee }}</td>
         </tr>
@@ -108,6 +106,6 @@
     }
 
     <p-toast/>
-    
+
   </div>
 </div>

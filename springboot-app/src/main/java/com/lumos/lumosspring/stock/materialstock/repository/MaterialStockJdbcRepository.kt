@@ -2,9 +2,11 @@ package com.lumos.lumosspring.stock.materialstock.repository
 
 import com.lumos.lumosspring.stock.materialreference.dto.MaterialResponse
 import com.lumos.lumosspring.stock.materialstock.dto.MaterialInStockDTO
+import com.lumos.lumosspring.util.Utils
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 data class PagedResponse<T>(
     val content: List<T>,
@@ -35,8 +37,7 @@ class MaterialStockJdbcRepository(
             inactive = rs.getBoolean("inactive"),
             materialType = rs.getString("materialType"),
             materialGroup = rs.getString("materialGroup"),
-            deposit = rs.getString("deposit"),
-            company = rs.getString("company")
+            deposit = rs.getString("deposit")
         )
     }
 
@@ -55,18 +56,17 @@ class MaterialStockJdbcRepository(
             ms.inactive          AS inactive,
             mt.type_name         AS materialType,
             mg.group_name        AS materialGroup,
-            d.deposit_name       AS deposit,
-            c.fantasy_name       AS company
+            d.deposit_name       AS deposit
         FROM material_stock ms
         JOIN material m ON ms.material_id = m.id_material
         JOIN material_type mt ON m.id_material_type = mt.id_type
         JOIN material_group mg ON mt.id_group = mg.id_group
         JOIN deposit d ON ms.deposit_id = d.id_deposit
-        JOIN company c ON ms.company_id = c.id_company
-        WHERE m.material_name_unaccent LIKE :likeName
+        WHERE (m.material_name_unaccent LIKE :likeName
            OR LOWER(mt.type_name) LIKE :likeName
            OR LOWER(m.material_power) LIKE :likeName
-           OR LOWER(m.material_length) LIKE :likeName
+           OR LOWER(m.material_length) LIKE :likeName)
+           AND ms.tenant_id = :tenantId
         ORDER BY ms.material_id_stock
         LIMIT :limit OFFSET :offset
     """.trimIndent()
@@ -77,10 +77,11 @@ class MaterialStockJdbcRepository(
         val params = mapOf(
             "likeName" to likeName,
             "limit" to size + 1, // Busca um a mais para saber se tem próxima página
-            "offset" to offset
+            "offset" to offset,
+            "tenantId" to Utils.getCurrentTenantId()
         )
 
-        val content = jdbc.query(sql, params, rowMapper)
+        val content = jdbc.query(sql, params, materialResponseRowMapper)
 
         val hasNext = content.size > size
         val pagedContent = if (hasNext) content.take(size) else content
@@ -101,7 +102,12 @@ class MaterialStockJdbcRepository(
     }
 
 
-    fun searchMaterialWithDeposit(name: String, depositId: Long, page: Int, size: Int): PagedResponse<MaterialResponse> {
+    fun searchMaterialWithDeposit(
+        name: String,
+        depositId: Long,
+        page: Int,
+        size: Int
+    ): PagedResponse<MaterialResponse> {
         val sql = """
         SELECT
             ms.material_id_stock AS idMaterial,
@@ -116,14 +122,12 @@ class MaterialStockJdbcRepository(
             ms.inactive          AS inactive,
             mt.type_name         AS materialType,
             mg.group_name        AS materialGroup,
-            d.deposit_name       AS deposit,
-            c.fantasy_name       AS company
+            d.deposit_name       AS deposit
         FROM material_stock ms
         JOIN material m ON ms.material_id = m.id_material
         JOIN material_type mt ON m.id_material_type = mt.id_type
         JOIN material_group mg ON mt.id_group = mg.id_group
         JOIN deposit d ON ms.deposit_id = d.id_deposit
-        JOIN company c ON ms.company_id = c.id_company
         WHERE ms.deposit_id = :depositId
           AND (
             m.material_name_unaccent LIKE :likeName
@@ -200,9 +204,14 @@ class MaterialStockJdbcRepository(
                 t.id_team = :teamId
                 OR d.is_truck = false
               )
+              AND ms.tenant_id = :tenantId
             ORDER BY  (d.is_truck::int) DESC, d.deposit_name;
         """
-        val params = mapOf("type" to type.lowercase(), "teamId" to teamId)
+        val params = mapOf(
+            "type" to type.lowercase(),
+            "teamId" to teamId,
+            "tenantId" to Utils.getCurrentTenantId()
+        )
         return jdbc.query(sql, params) { rs, _ ->
             MaterialInStockDTO(
                 materialStockId = rs.getLong("materialIdStock"),
@@ -249,12 +258,14 @@ class MaterialStockJdbcRepository(
                 t.id_team = :teamId
                 OR d.is_truck = false
               )
+              AND ms.tenant_id = :tenantId
             ORDER BY  (d.is_truck::int) DESC, d.deposit_name;
         """
         val params = mapOf(
             "linking" to linking.lowercase(),
             "type" to type.lowercase(),
-            "teamId" to teamId
+            "teamId" to teamId,
+            "tenantId" to Utils.getCurrentTenantId()
         )
         return jdbc.query(sql, params) { rs, _ ->
             MaterialInStockDTO(
@@ -273,25 +284,6 @@ class MaterialStockJdbcRepository(
         }
     }
 
-    private val rowMapper = RowMapper { rs, _ ->
-        MaterialResponse(
-            idMaterial       = rs.getLong("idMaterial"),
-            materialName     = rs.getString("materialName"),
-            materialBrand    = rs.getString("materialBrand"),
-            materialPower    = rs.getString("materialPower"),
-            materialAmps     = rs.getString("materialAmps"),
-            materialLength   = rs.getString("materialLength"),
-            buyUnit          = rs.getString("buyUnit"),
-            requestUnit      = rs.getString("requestUnit"),
-            stockQt          = rs.getBigDecimal("stockQt"),
-            inactive         = rs.getBoolean("inactive"),
-            materialType     = rs.getString("materialType"),
-            materialGroup    = rs.getString("materialGroup"),
-            deposit          = rs.getString("deposit"),
-            company          = rs.getString("company")
-        )
-    }
-
     fun findAllMaterialsStock(page: Int, size: Int): PagedResponse<MaterialResponse> {
         val sql = """
             SELECT
@@ -307,14 +299,13 @@ class MaterialStockJdbcRepository(
                 ms.inactive            AS inactive,
                 mt.type_name           AS materialType,
                 mg.group_name          AS materialGroup,
-                d.deposit_name         AS deposit,
-                c.fantasy_name         AS company
+                d.deposit_name         AS deposit
             FROM material_stock ms
             JOIN material m ON ms.material_id = m.id_material
             JOIN material_type mt ON m.id_material_type = mt.id_type
             JOIN material_group mg ON mt.id_group = mg.id_group
             JOIN deposit d ON ms.deposit_id = d.id_deposit
-            JOIN company c ON ms.company_id = c.id_company
+            WHERE ms.tenant_id = :tenantId
             ORDER BY ms.material_id_stock
             LIMIT :limit OFFSET :offset
         """.trimIndent()
@@ -322,7 +313,10 @@ class MaterialStockJdbcRepository(
         val countSql = "SELECT COUNT(*) FROM material_stock"
 
         val offset = page * size
-        val params = mapOf("limit" to size, "offset" to offset)
+        val params = mapOf(
+            "limit" to size, "offset" to offset,
+            "tenantId" to Utils.getCurrentTenantId()
+        )
 
         val content = jdbc.query(sql, params, materialResponseRowMapper)
         val total = jdbc.queryForObject(countSql, emptyMap<String, Any>(), Long::class.java) ?: 0L
@@ -355,14 +349,12 @@ class MaterialStockJdbcRepository(
             ms.inactive            AS inactive,
             mt.type_name           AS materialType,
             mg.group_name          AS materialGroup,
-            d.deposit_name         AS deposit,
-            c.fantasy_name         AS company
+            d.deposit_name         AS deposit
         FROM material_stock ms
         JOIN material m ON ms.material_id = m.id_material
         JOIN material_type mt ON m.id_material_type = mt.id_type
         JOIN material_group mg ON mt.id_group = mg.id_group
         JOIN deposit d ON ms.deposit_id = d.id_deposit
-        JOIN company c ON ms.company_id = c.id_company
         WHERE ms.deposit_id = :depositId
         ORDER BY ms.material_id_stock
         LIMIT :limit OFFSET :offset
@@ -381,26 +373,7 @@ class MaterialStockJdbcRepository(
             "depositId" to depositIdParam
         )
 
-        val rowMapper = RowMapper { rs, _ ->
-            MaterialResponse(
-                idMaterial = rs.getLong("idMaterial"),
-                materialName = rs.getString("materialName"),
-                materialBrand = rs.getString("materialBrand"),
-                materialPower = rs.getString("materialPower"),
-                materialAmps = rs.getString("materialAmps"),
-                materialLength = rs.getString("materialLength"),
-                buyUnit = rs.getString("buyUnit"),
-                requestUnit = rs.getString("requestUnit"),
-                stockQt = rs.getBigDecimal("stockQt"),
-                inactive = rs.getBoolean("inactive"),
-                materialType = rs.getString("materialType"),
-                materialGroup = rs.getString("materialGroup"),
-                deposit = rs.getString("deposit"),
-                company = rs.getString("company")
-            )
-        }
-
-        val content = jdbc.query(sql, params, rowMapper)
+        val content = jdbc.query(sql, params, materialResponseRowMapper)
         val total = jdbc.queryForObject(countSql, mapOf("depositId" to depositIdParam), Long::class.java) ?: 0L
 
         val totalPages = if (total == 0L) 1 else ((total + size - 1) / size).toInt()
@@ -417,6 +390,40 @@ class MaterialStockJdbcRepository(
     }
 
 
+    fun insertMaterials(depositId: Long) {
+        jdbc.update(
+            """
+                insert into material_stock (
+                    buy_unit,
+                    cost_per_item,
+                    cost_price,
+                    inactive,
+                    request_unit,
+                    stock_available,
+                    stock_quantity,
+                    deposit_id,
+                    material_id,
+                    tenant_id
+                )
+                select
+                    'UN',
+                    null as cost_per_item,
+                    null as cost_price,
+                    false as inactive,
+                    'UN',
+                    0 as stock_available,
+                    0 as stock_quantity,
+                    :depositId,
+                    m.id_material,
+                    :tenantId
+                from material m;
+            """,
+            mapOf(
+                "depositId" to depositId,
+                "tenantId" to Utils.getCurrentTenantId()
+            )
+        );
+    }
 
 
 }

@@ -15,6 +15,5 @@ export interface MaterialResponse {
   materialGroup: string;
   stockQt: number | null;
   inactive: boolean;
-  company: string;
   deposit: string;
 }

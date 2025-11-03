@@ -190,3 +190,6 @@ $$;
 
 ALTER TABLE company
 DROP COLUMN IF EXISTS bucket_file_name;
+
+ALTER TABLE material_stock
+    DROP COLUMN IF EXISTS company_id;

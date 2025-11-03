@@ -1,5 +1,5 @@
 export interface CompanyResponse {
-  companyId: number,
+  idCompany: number,
   socialReason: string,
   fantasyName: string,
   companyCnpj: string,
@@ -10,7 +10,7 @@ export interface CompanyResponse {
 }
 
 export interface CompanyRequest {
-  companyId: number,
+  idCompany: number,
   socialReason: string,
   fantasyName: string,
   companyCnpj: string,

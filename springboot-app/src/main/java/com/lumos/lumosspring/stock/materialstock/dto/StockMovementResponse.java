@@ -11,7 +11,6 @@ public record StockMovementResponse(
         String requestUnit,
         String pricePerItem,
         String supplierName,
-        String company,
         String deposit,
         String employee
 ) { }

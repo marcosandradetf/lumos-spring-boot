@@ -56,7 +56,6 @@ public class StockMovementService {
             var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
             var material = materialReferenceRepository.findById(materialStock.getMaterialId()).orElseThrow();
             var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
-            var company = companyRepository.findById(materialStock.getCompanyId()).orElseThrow();
             var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
 
             // Formatação de preço para substituir ponto por vírgula
@@ -91,7 +90,6 @@ public class StockMovementService {
                     movement.getRequestUnit(),
                     movement.getPricePerItem().toString(),
                     supplier.getSupplierName(),
-                    company.getSocialReason(),
                     deposit.getDepositName(),
                     employee
             ));
@@ -239,7 +237,6 @@ public class StockMovementService {
             var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
             var material = materialReferenceRepository.findById(materialStock.getMaterialId()).orElseThrow();
             var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
-            var company = companyRepository.findById(materialStock.getCompanyId()).orElseThrow();
             var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
 
             // Formatação de preço para substituir ponto por vírgula
@@ -273,7 +270,6 @@ public class StockMovementService {
                     movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
                     movement.getPricePerItem().toString(),
                     supplier.getSupplierName(),
-                    company.getSocialReason(),
                     deposit.getDepositName(),
                     employee
             ));

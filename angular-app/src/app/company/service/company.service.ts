@@ -25,7 +25,7 @@ export class CompanyService {
       { type: 'application/json' }
     ));
 
-    return this.http.post<number>(`${this.endpoint}/company/create`, formData);
+    return this.http.post<number>(`${this.endpoint}/company/v1/create`, formData);
   }
 
 }

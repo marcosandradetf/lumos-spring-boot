@@ -31,11 +31,9 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   types: Type[] = [];
   filterTypes: Type[] = []; // Tipos filtrados com base no grupo selecionado
   groups: Group[] = [];
-  companies: CompanyResponse[] = [];
   deposits: Deposit[] = [];
   material: CreateMaterialRequest = {
     buyUnit: '',
-    company: '',
     deposit: '',
     inactive: false,
     allDeposits: false,
@@ -65,8 +63,10 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
   ];
 
   constructor(protected materialService: MaterialService,
-              private estoqueService: StockService, private authService: AuthService,
+              private stockService: StockService,
+              private authService: AuthService,
               protected utils: UtilsService) {
+
     this.materialService.getMaterialObservable().subscribe(material => {
       this.material = material;
     });
@@ -77,33 +77,26 @@ export class MaterialFormComponent implements OnInit, OnDestroy {
     if (this.authService.isLoggedIn$) {
       this.loadTypes();
       this.loadGroups();
-      this.loadCompanies();
       this.loadDeposits();
     }
 
   }
 
   private loadTypes() {
-    this.estoqueService.getTypes()
+    this.stockService.getTypes()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(tipos => this.types = tipos);
   }
 
 
   private loadGroups() {
-    this.estoqueService.getGroups()
+    this.stockService.getGroups()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(grupos => this.groups = grupos);
   }
 
-  private loadCompanies() {
-    this.estoqueService.getCompanies()
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe(empresas => this.companies = empresas);
-  }
-
   private loadDeposits() {
-    this.estoqueService.getDeposits()
+    this.stockService.getDeposits()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(almoxarifados => this.deposits = almoxarifados);
   }

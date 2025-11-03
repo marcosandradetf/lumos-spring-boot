@@ -7,6 +7,7 @@ import com.lumos.lumosspring.stock.deposit.dto.DepositResponse;
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
 import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.team.model.Region;
 import com.lumos.lumosspring.team.model.Stockist;
@@ -14,6 +15,7 @@ import com.lumos.lumosspring.team.repository.RegionRepository;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.util.JdbcUtil;
+import com.lumos.lumosspring.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
@@ -32,8 +34,6 @@ public class DepositService {
     @Autowired
     private DepositRepository depositRepository;
     @Autowired
-    private CompanyRepository companyRepository;
-    @Autowired
     private MaterialStockRepository materialStockRepository;
     @Autowired
     private RegionRepository regionRepository;
@@ -43,10 +43,12 @@ public class DepositService {
     private UserRepository userRepository;
     @Autowired
     private NamedParameterJdbcTemplate namedJdbc;
+    @Autowired
+    private MaterialStockJdbcRepository materialStockJdbcRepository;
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
-        return depositRepository.findAllByOrderByIdDeposit();
+        return depositRepository.findAllByOrderByIdDeposit(Utils.INSTANCE.getCurrentTenantId());
     }
 
     public Deposit findById(Long id) {
@@ -79,7 +81,9 @@ public class DepositService {
             deposit.setRegion(region.getRegionId());
         }
 
-        depositRepository.save(deposit);
+        deposit = depositRepository.save(deposit);
+
+        materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit());
 
         return ResponseEntity.ok(this.findAll());
     }

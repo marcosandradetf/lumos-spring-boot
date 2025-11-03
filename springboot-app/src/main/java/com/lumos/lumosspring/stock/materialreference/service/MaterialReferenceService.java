@@ -17,7 +17,6 @@ import com.lumos.lumosspring.stock.materialreference.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.materialreference.dto.MaterialResponse;
 import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
-import com.lumos.lumosspring.util.Util;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,25 +33,21 @@ public class MaterialReferenceService {
     private final MaterialStockRepository materialStockRepository;
     private final UserRepository userRepository;
     private final LogRepository logRepository;
-    private final TypeRepository tipoRepository;
+    private final TypeRepository typeRepository;
     private final DepositRepository depositRepository;
     private final CompanyRepository companyRepository;
-    private final TypeRepository typeRepository;
     private final MaterialReferenceRepository materialReferenceRepository;
-    private final Util util;
     private final MaterialStockJdbcRepository materialStockJdbcRepository;
 
-    public MaterialReferenceService(MaterialStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, TypeRepository typeRepository, MaterialReferenceRepository materialReferenceRepository, Util util, MaterialStockJdbcRepository materialStockJdbcRepository) {
+    public MaterialReferenceService(MaterialStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository,  MaterialReferenceRepository materialReferenceRepository,  MaterialStockJdbcRepository materialStockJdbcRepository) {
 
         this.materialStockRepository = materialStockRepository;
         this.userRepository = userRepository;
         this.logRepository = logRepository;
-        this.tipoRepository = tipoRepository;
+        this.typeRepository = tipoRepository;
         this.depositRepository = depositRepository;
         this.companyRepository = companyRepository;
-        this.typeRepository = typeRepository;
         this.materialReferenceRepository = materialReferenceRepository;
-        this.util = util;
         this.materialStockJdbcRepository = materialStockJdbcRepository;
     }
 
@@ -77,17 +72,6 @@ public class MaterialReferenceService {
         return ResponseEntity.ok(materials);  // Retorna os materiais no formato de resposta
     }
 
-//    @Transactional
-//    public ResponseEntity<?> save(MaterialRequest material) {
-//        // Validação do material
-//        ResponseEntity<String> validationError = validateMaterialRequest(material);
-//        if (validationError != null) {
-//            return validationError;
-//        }
-//
-//        return ResponseEntity.ok(convertToMaterialResponse(convertToMaterial(material)));
-//    }
-
     private ResponseEntity<String> validateMaterialRequest(MaterialRequest material) {
         if (materialStockRepository.existsMaterial(
                 material.materialName(), material.deposit(), material.materialBrand())) {
@@ -95,7 +79,7 @@ public class MaterialReferenceService {
                     .body("Este material já existe no almoxarifado informado.");
         }
 
-        if (!tipoRepository.existsById(material.materialType())) {
+        if (!typeRepository.existsById(material.materialType())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Tipo de material não encontrado.");
         }
@@ -115,7 +99,7 @@ public class MaterialReferenceService {
     private List<MaterialStock> convertToMaterial(MaterialRequest material) {
         List<MaterialStock> materialList = new ArrayList<>();
 
-        MaterialType materialType = tipoRepository.findById(material.materialType())
+        MaterialType materialType = typeRepository.findById(material.materialType())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tipo informado não encontrado."));
 
         Company company = companyRepository.findById(material.company())
@@ -126,7 +110,6 @@ public class MaterialReferenceService {
             for (Deposit deposit : deposits) {
                 MaterialStock materialStock = new MaterialStock();
                 materialStock.setMaterialId(createMaterial(material, materialType).getIdMaterial());
-                materialStock.setCompanyId(company.getIdCompany());
                 materialStock.setDepositId(deposit.getIdDeposit());
                 materialStock.setBuyUnit(material.buyUnit());
                 materialStock.setRequestUnit(material.requestUnit());
@@ -135,7 +118,6 @@ public class MaterialReferenceService {
         } else {
             MaterialStock materialStock = new MaterialStock();
             materialStock.setMaterialId(createMaterial(material, materialType).getIdMaterial());
-            materialStock.setCompanyId(company.getIdCompany());
             Deposit deposit = depositRepository.findById(material.deposit())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Almoxarifado não encontrado."));
             materialStock.setDepositId(deposit.getIdDeposit());
@@ -160,30 +142,6 @@ public class MaterialReferenceService {
         newMaterial.setIdMaterialType(materialType.getIdType());
         return newMaterial;
     }
-
-
-//    private List<MaterialResponse> convertToMaterialResponse(List<MaterialStock> materialList) {
-//        return materialList.stream()
-//                .map(ms -> new MaterialResponse(
-//                        ms.getMaterialIdStock(),
-//                        ms.getMaterial().getMaterialName(),
-//                        ms.getMaterial().getMaterialBrand(),
-//                        ms.getMaterial().getMaterialPower(),
-//                        ms.getMaterial().getMaterialAmps(),
-//                        ms.getMaterial().getMaterialLength(),
-//                        ms.getBuyUnit(),
-//                        ms.getRequestUnit(),
-//                        ms.getStockQuantity(),
-//                        ms.isInactive(),
-//                        ms.getMaterial().getMaterialType() != null ? ms.getMaterial().getMaterialType().getTypeName() : null,
-//                        ms.getMaterial().getMaterialType() != null && ms.getMaterial().getMaterialType().getGroup() != null
-//                                ? ms.getMaterial().getMaterialType().getGroup().getGroupName()
-//                                : null,
-//                        ms.getDeposit() != null ? ms.getDeposit().getDepositName() : null,
-//                        ms.getCompany() != null ? ms.getCompany().getSocialReason() : null
-//                ))
-//                .toList();
-//    }
 
 
     @Transactional

@@ -12,6 +12,5 @@ export interface CreateMaterialRequest {
   materialType: string;
   inactive: boolean;
   allDeposits: boolean;
-  company: string;
   deposit: string;
 }

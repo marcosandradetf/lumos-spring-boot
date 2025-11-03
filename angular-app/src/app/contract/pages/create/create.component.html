@@ -1,4 +1,4 @@
-<div class="flex" #top xmlns="http://www.w3.org/1999/html">
+<div class="flex relative" #top xmlns="http://www.w3.org/1999/html">
   <div class="w-full">
     <div class="pt-2 w-full pl-2 flex items-center justify-between">
       <div class="breadcrumbs text-sm">
@@ -12,10 +12,10 @@
     </div>
 
 
-    <app-loading-overlay *ngIf="loading"></app-loading-overlay>
+    <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
 
-    <p-stepper [value]="1" class="basis-[50rem]" *ngIf="!finish && !loading">
+    <p-stepper [value]="1" class="basis-[50rem]" *ngIf="!finish">
       <p-step-list class="px-10">
         <p-step [value]="1">Inserir dados</p-step>
         <p-step [value]="2" (click)="selectedIndex = null;">Selecionar Itens</p-step>
@@ -106,6 +106,7 @@
                           [options]="companies"
                           [(ngModel)]="contract.companyId"
                           optionLabel="socialReason"
+                          optionValue="idCompany"
                           placeholder="Selecione a Empresa Prestadora"
                           class="w-full">
                   <ng-template #footer>
@@ -116,7 +117,7 @@
                                 size="small"
                                 fluid
                                 severity="secondary"
-                                (click)="utils.playSound('pop');visible = true"/>
+                                (click)="visible = true; utils.playSound('pop')"/>
                     </div>
                   </ng-template>
                 </p-select>
@@ -384,6 +385,7 @@
           <label for="socialReason" [class.text-red-500]="companyFormSubmit && socialReasonCtrl.invalid">Razão
             Social*</label>
           <input [(ngModel)]="company.socialReason"
+                 (input)="company.socialReason = company.socialReason.toUpperCase()"
                  #socialReasonCtrl="ngModel"
                  id="socialReason"
                  type="text"
@@ -399,6 +401,7 @@
           <label for="fantasyName" [class.text-red-500]="companyFormSubmit && fantasyNameCtrl.invalid">Nome
             Fantasia*</label>
           <input [(ngModel)]="company.fantasyName"
+                 (input)="company.fantasyName = company.fantasyName.toUpperCase()"
                  #fantasyNameCtrl="ngModel"
                  id="fantasyName"
                  type="text"
@@ -510,7 +513,7 @@
 
       <ng-template #footer>
         <p-button label="Cancelar" [text]="true" severity="secondary" (click)="visible = false; resetCompanyForm();"/>
-        <p-button label="Salvar" [outlined]="true" severity="secondary" (click)="saveCompany()"/>
+        <p-button label="Salvar" [outlined]="true" severity="secondary" [loading]="btnLoading" (click)="saveCompany()"/>
       </ng-template>
     </p-dialog>
 

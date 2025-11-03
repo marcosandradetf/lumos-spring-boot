@@ -15,8 +15,6 @@ public class MaterialStock {
 
     private Long depositId;
 
-    private Long companyId;
-
     private String buyUnit;
 
     private String requestUnit;
@@ -33,11 +31,10 @@ public class MaterialStock {
 
     public  MaterialStock() {}
 
-    public MaterialStock(Long materialIdStock, Long materialId, Long depositId, Long companyId, String buyUnit, String requestUnit, BigDecimal stockQuantity, BigDecimal stockAvailable, BigDecimal costPerItem, BigDecimal costPrice, boolean inactive) {
+    public MaterialStock(Long materialIdStock, Long materialId, Long depositId, String buyUnit, String requestUnit, BigDecimal stockQuantity, BigDecimal stockAvailable, BigDecimal costPerItem, BigDecimal costPrice, boolean inactive) {
         this.materialIdStock = materialIdStock;
         this.materialId = materialId;
         this.depositId = depositId;
-        this.companyId = companyId;
         this.buyUnit = buyUnit;
         this.requestUnit = requestUnit;
         this.stockQuantity = stockQuantity;
@@ -69,14 +66,6 @@ public class MaterialStock {
 
     public void setDepositId(Long depositId) {
         this.depositId = depositId;
-    }
-
-    public Long getCompanyId() {
-        return companyId;
-    }
-
-    public void setCompanyId(Long companyId) {
-        this.companyId = companyId;
     }
 
     public String getBuyUnit() {
