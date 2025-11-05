@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.order.installationrequest.model
 
+import com.lumos.lumosspring.authentication.model.TenantEntity
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
@@ -19,7 +20,7 @@ data class MaterialReservation(
     var quantityCompleted: BigDecimal = BigDecimal.ZERO,
     var status: String = ReservationStatus.PENDING,
     var teamId: Long,
-)
+) : TenantEntity()
 
 //fun confirmReservation() {
 //    materialStock.removeStockAvailable(reservedQuantity)

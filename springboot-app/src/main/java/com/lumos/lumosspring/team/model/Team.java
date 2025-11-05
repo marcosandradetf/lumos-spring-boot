@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.team.model;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -8,7 +9,7 @@ import java.util.UUID;
 
 
 @Table
-public class Team {
+public class Team extends TenantEntity {
     @Id
     private Long idTeam;
 

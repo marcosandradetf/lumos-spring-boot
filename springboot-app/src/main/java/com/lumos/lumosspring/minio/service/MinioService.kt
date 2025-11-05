@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import io.minio.http.Method
 import io.minio.messages.DeleteObject
+import java.time.Instant
 
 
 @Service
@@ -60,6 +61,22 @@ class MinioService(private val minioClient: MinioClient) {
         )
         return url
     }
+
+    data class PublicUrlResponse(
+        val url: String,
+        val expiresAt: Long // epoch seconds ou millis
+    )
+    fun getPublicUrl(bucketName: String, objectName: String, expiryAt: Int = 5 * 60): PublicUrlResponse {
+
+        val presigned = getPresignedObjectUrl(bucketName, objectName, expiryAt)
+        val expiresAtTimestamp = Instant.now().plusSeconds(expiryAt.toLong()).epochSecond
+
+        return PublicUrlResponse(
+            url = presigned.replace("http://minio:9000", "https://api.thryon.com.br/minio"),
+            expiresAt = expiresAtTimestamp
+        )
+    }
+
 
     fun deleteFiles(bucketName: String, objectNames: Set<String>) {
         val objects = objectNames.map { DeleteObject(it) }

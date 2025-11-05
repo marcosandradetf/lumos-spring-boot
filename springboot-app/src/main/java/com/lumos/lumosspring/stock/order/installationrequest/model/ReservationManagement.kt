@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.order.installationrequest.model
 
+import com.lumos.lumosspring.authentication.model.TenantEntity
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
@@ -13,4 +14,4 @@ data class ReservationManagement (
     var stockistId: UUID,
     var status: String = ReservationStatus.PENDING,
 
-)
+) : TenantEntity()

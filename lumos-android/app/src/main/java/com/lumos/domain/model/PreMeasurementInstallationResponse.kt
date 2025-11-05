@@ -12,10 +12,14 @@ data class PreMeasurementInstallation(
     @PrimaryKey
     val preMeasurementId: String,
     val contractor: String,
-    val instructions: String,
-    val creationDate: String? = Instant.now().toString(),
-    val status: String? = "PENDING",
+    val instructions: String?,
+    val creationDate: String = Instant.now().toString(),
+    val status: String = "PENDING",
 
+    val responsible: String? = null,
+    val signPath: String? = null,
+    val signDate: String? = null,
+    val executorsIds: List<String>? = null,
     @Ignore
     val streets: List<PreMeasurementInstallationStreet>
 )
@@ -31,9 +35,11 @@ data class PreMeasurementInstallationStreet(
     val longitude: Double?,
     val lastPower: String,
     val photoUrl: String?,
+    val photoExpiration: Long?,
+    val objectUri: String?,
 
     val status: String = "PENDING",
-    val installationPhotoUri: String = "",
+    val installationPhotoUri: String? = null,
 
     @Ignore
     val items: List<PreMeasurementInstallationItem>,

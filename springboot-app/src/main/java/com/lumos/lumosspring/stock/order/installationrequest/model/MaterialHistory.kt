@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.order.installationrequest.model
 
+import com.lumos.lumosspring.authentication.model.TenantEntity
 import org.springframework.data.annotation.Id
 import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Table
@@ -23,7 +24,7 @@ data class MaterialHistory(
 
     @Transient
     private var isNewEntry: Boolean = true
-): Persistable<UUID> {
+): Persistable<UUID>, TenantEntity() {
     override fun getId(): UUID = materialHistoryId
     override fun isNew(): Boolean = isNewEntry
 }

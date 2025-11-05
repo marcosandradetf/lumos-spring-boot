@@ -91,7 +91,7 @@ public class InstallationViewRepository {
                                         )
                                 );
 
-                                String photoUrl = minioService.getPresignedObjectUrl(Utils.INSTANCE.getCurrentBucket(), rs2.getString("photo_uri"), 2 * 24 * 60 * 60); // 2 dias
+                                var publicUrl = minioService.getPublicUrl(Utils.INSTANCE.getCurrentBucket(), rs2.getString("photo_uri"), 2 * 24 * 60 * 60); // 2 dias
                                 return new StreetsInstallationResponse(
                                         rs.getObject("device_pre_measurement_id", UUID.class),
                                         rs2.getObject("device_pre_measurement_street_id", UUID.class),
@@ -100,7 +100,9 @@ public class InstallationViewRepository {
                                         rs2.getObject("latitude") != null ? rs2.getDouble("latitude") : null,
                                         rs2.getObject("longitude") != null ? rs2.getDouble("longitude") : null,
                                         rs2.getString("last_power"),
-                                        photoUrl,
+                                        publicUrl.getUrl(),
+                                        publicUrl.getExpiresAt(),
+                                        rs2.getString("photo_uri"),
                                         reserves
                                 );
                             }

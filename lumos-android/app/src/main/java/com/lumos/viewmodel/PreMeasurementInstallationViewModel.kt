@@ -27,6 +27,9 @@ class PreMeasurementInstallationViewModel(
     val contractor: String? = null
     val installationStreets = mutableStateOf(mockStreets)
 
+    val currentStreetId: String? = null
+    val currentStreet: PreMeasurementInstallationStreet? = null
+
     // -> Bellow Properties to UI State
     private val _loading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _loading
@@ -47,6 +50,11 @@ class PreMeasurementInstallationViewModel(
                 _loading.value = false
             }
         }
+    }
+
+    fun setStreet(paramCurrentStreetId: String) {
+        currentStreetId = paramCurrentStreetId
+        currentStreet = installationStreets.find { it.preMeasurementStreetId == paramCurrentStreetId }
     }
 
     fun syncExecutions() {
@@ -101,6 +109,15 @@ class PreMeasurementInstallationViewModel(
         }
     }
 
+    fun hasPhotoUrl(): Boolean {
+        return currentStreet?.photoExpiration != null
+    }
+
+    fun isPhotoUrlExpired(): Boolean {
+        val now = System.currentTimeMillis() / 1000
+        return now >= currentStreet?.photoExpiration ?: 0L
+    }
+
 
 //    fun finishAndCheckPostExecution(
 //        reserveId: Long,
@@ -142,7 +159,6 @@ class PreMeasurementInstallationViewModel(
 //            }
 //        }
 //    }
-
 
 
 }

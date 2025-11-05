@@ -15,7 +15,6 @@ public class InstallationViewService {
         this.viewRepository = viewRepository;
     }
 
-
     public ResponseEntity<?> getInstallations(String status) {
         UUID userID = Utils.INSTANCE.getCurrentUserId();
 

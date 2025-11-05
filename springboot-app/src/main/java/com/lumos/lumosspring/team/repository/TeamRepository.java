@@ -30,4 +30,5 @@ import java.util.UUID;
     @Query("Select name || ' ' || last_name as member_name, user_id from app_user where team_id = :teamId")
     List<MemberTeamResponse> getMembers(long teamId);
 
+    List<Team> findAllByTenantId(UUID tenantId);
 }

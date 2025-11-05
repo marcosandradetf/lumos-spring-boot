@@ -110,6 +110,7 @@ class DirectExecutionRepository(
                 creationDate = executionDto.creationDate,
                 description = executionDto.description,
                 instructions = executionDto.instructions,
+                executorsIds = secureStorage.getOperationalUsers().toList()
             )
 
             db.directExecutionDao().insertExecution(execution)
@@ -268,11 +269,16 @@ class DirectExecutionRepository(
     }
 
     suspend fun finishedDirectExecution(directExecutionId: Long): RequestResult<Unit> {
+        val executorsIds = dao.directExecutionDao().getExecutorsIds(directExecutionId)
+            .let { json -> Converters().toList(json) }
+            .takeIf { it.isNotEmpty() } // só mantém se não estiver vazia
+            ?: secureStorage.getOperationalUsers() // fallback
+
         val response =
             ApiExecutor.execute {
                 api.finishDirectExecution(
                     directExecutionId = directExecutionId,
-                    operationalUsers = secureStorage.getOperationalUsers()
+                    operationalUsers = executorsIds
                 )
             }
 

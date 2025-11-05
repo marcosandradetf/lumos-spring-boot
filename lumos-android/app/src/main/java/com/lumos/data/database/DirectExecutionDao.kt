@@ -102,4 +102,11 @@ interface DirectExecutionDao {
         WHERE directStreetId in (:streetIds)
     """)
     suspend fun getStreets(streetIds: List<Long>): List<DirectExecutionStreet>
+
+    @Query("""
+        SELECT executorsIds
+        FROM direct_execution
+        WHERE directExecutionId = :directExecutionId
+    """)
+    suspend fun getExecutorsIds(directExecutionId: Long): String?
 }

@@ -50,9 +50,9 @@ public class TeamService {
 
     @Cacheable("getAllTeams")
     public ResponseEntity<?> getAll() {
-        var teamsIterable = teamRepository.findAll();
+        var teamsIterable = teamRepository.findAllByTenantId(Utils.INSTANCE.getCurrentTenantId());
 
-        List<TeamResponse> teamsResponses = StreamSupport.stream(teamsIterable.spliterator(), false)
+        List<TeamResponse> teamsResponses = teamsIterable.stream()
                 .map(team -> {
 
                     // Buscar o depósito usando o depositId
@@ -113,7 +113,6 @@ public class TeamService {
         deposit.setDepositCity(t.cityName());
         deposit.setDepositName(t.teamName());
         deposit.setTruck(true);
-        deposit.setCompanyId(1L);
 
         try {
             deposit = depositRepository.save(deposit);

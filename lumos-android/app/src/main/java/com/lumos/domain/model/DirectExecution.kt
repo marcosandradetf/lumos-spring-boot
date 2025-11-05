@@ -25,6 +25,11 @@ data class DirectExecution( //tabela nova
     val type: String,
     val itemsQuantity: Int,
     val creationDate: String,
+
+    val responsible: String? = null,
+    val signPath: String? = null,
+    val signDate: String? = null,
+    val executorsIds: List<String>? = null,
 )
 
 @Entity(tableName = "direct_execution_street")

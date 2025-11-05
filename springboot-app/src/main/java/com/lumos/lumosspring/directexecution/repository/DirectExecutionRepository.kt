@@ -6,9 +6,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
-    fun findAllByDirectExecutionStatus(status: String): List<DirectExecution>
-
-    fun findByContractId(contractId: Long): DirectExecution?
 }
 
 @Repository

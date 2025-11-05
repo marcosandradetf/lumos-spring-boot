@@ -25,10 +25,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 
 class PreMeasurementInstallationRepository(
     private val db: AppDatabase,
-    private val api: PreMeasurementInstallationApi,
+    private val apiService: ApiService,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
+    private val api = api.createApi(PreMeasurementInstallationApi::class.java)
+    private val minioApi = api.createApi(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
         val response = ApiExecutor.execute { api.getExecutions("PENDING") }
@@ -65,7 +67,8 @@ class PreMeasurementInstallationRepository(
                 preMeasurementId = installation.preMeasurementId,
                 contractor = installation.contractor,
                 instructions = installation.instructions,
-                streets = emptyList()
+                streets = emptyList(),
+                executorsIds = secureStorage.getOperationalUsers().toList()
             )
         }
 
@@ -199,6 +202,30 @@ class PreMeasurementInstallationRepository(
 
     suspend fun getStreets(installationID: String?): List<PreMeasurementInstallationStreet> {
         return db.preMeasurementInstallationDao().getStreetsByInstallationId(installationID)
+    }
+
+    suspend fun updateObjectPublicUrl(streetInstallationID: String, objectName: String) {
+        val response = ApiExecutor.execute { minioApi.updateObjectPublicUrl(objectName) }
+
+        return when (response) {
+            is RequestResult.Success -> {
+                db.preMeasurementInstallationDao().updateObjectPublicUrl(streetInstallationID, response.data.newUrl, respose.data.expiryAt)
+                RequestResult.Success(Unit)
+            }
+            is SuccessEmptyBody -> {
+                SuccessEmptyBody
+            }
+            is RequestResult.NoInternet -> {
+                RequestResult.NoInternet
+            }
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
+        }
+
     }
 
 }

@@ -183,6 +183,60 @@ $$
 
             ALTER TABLE deposit
                 ALTER COLUMN tenant_id SET NOT NULL;
+
+            ALTER TABLE deposit
+                ALTER COLUMN company_id DROP NOT NULL;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1
+                       FROM information_schema.columns
+                       WHERE table_name = 'reservation_management'
+                         AND column_name = 'tenant_id') THEN
+            ALTER TABLE reservation_management
+                ADD COLUMN tenant_id UUID,
+                ADD CONSTRAINT reservation_management_tenant_f_key
+                    FOREIGN KEY (tenant_id)
+                        REFERENCES tenant (tenant_id);
+
+            UPDATE reservation_management
+            SET tenant_id = (SELECT tenant_id from tenant limit 1);
+
+            ALTER TABLE reservation_management
+                ALTER COLUMN tenant_id SET NOT NULL;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1
+                       FROM information_schema.columns
+                       WHERE table_name = 'material_reservation'
+                         AND column_name = 'tenant_id') THEN
+            ALTER TABLE material_reservation
+                ADD COLUMN tenant_id UUID,
+                ADD CONSTRAINT material_reservation_tenant_f_key
+                    FOREIGN KEY (tenant_id)
+                        REFERENCES tenant (tenant_id);
+
+            UPDATE material_reservation
+            SET tenant_id = (SELECT tenant_id from tenant limit 1);
+
+            ALTER TABLE material_reservation
+                ALTER COLUMN tenant_id SET NOT NULL;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1
+                       FROM information_schema.columns
+                       WHERE table_name = 'material_history'
+                         AND column_name = 'tenant_id') THEN
+            ALTER TABLE material_history
+                ADD COLUMN tenant_id UUID,
+                ADD CONSTRAINT material_history_tenant_f_key
+                    FOREIGN KEY (tenant_id)
+                        REFERENCES tenant (tenant_id);
+
+            UPDATE material_history
+            SET tenant_id = (SELECT tenant_id from tenant limit 1);
+
+            ALTER TABLE material_history
+                ALTER COLUMN tenant_id SET NOT NULL;
         END IF;
 
     END

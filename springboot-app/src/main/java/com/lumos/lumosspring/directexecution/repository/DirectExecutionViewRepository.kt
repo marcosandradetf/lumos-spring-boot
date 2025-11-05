@@ -45,8 +45,6 @@ class DirectExecutionViewRepository(
         }
     }
 
-
-
     private fun getDirectExecutionsByTeam(teamId: Long): List<Map<String, Any>> {
         return JdbcUtil.getRawData(
             namedJdbc,
@@ -58,8 +56,6 @@ class DirectExecutionViewRepository(
             mapOf("teamId" to teamId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
         )
     }
-
-
 
     private fun getReservesGroupedByDirectExecution(directExecutionIds: List<Long>): Map<Long, List<DirectReserve>> {
         val raw = JdbcUtil.getRawData(

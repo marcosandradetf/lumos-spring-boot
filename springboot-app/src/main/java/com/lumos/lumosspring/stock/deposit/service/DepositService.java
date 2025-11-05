@@ -62,7 +62,6 @@ public class DepositService {
 
         var deposit = new Deposit();
         deposit.setDepositName(depositDTO.depositName());
-        deposit.setCompanyId(depositDTO.companyId());
         deposit.setDepositAddress(depositDTO.depositAddress());
         deposit.setDepositDistrict(depositDTO.depositDistrict());
         deposit.setDepositCity(depositDTO.depositCity());
@@ -96,7 +95,6 @@ public class DepositService {
         }
 
         deposit.setDepositName(depositDTO.depositName());
-        deposit.setCompanyId(depositDTO.companyId());
         deposit.setDepositAddress(depositDTO.depositAddress());
         deposit.setDepositDistrict(depositDTO.depositDistrict());
         deposit.setDepositCity(depositDTO.depositCity());

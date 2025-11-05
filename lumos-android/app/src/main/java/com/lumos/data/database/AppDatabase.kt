@@ -647,6 +647,12 @@ abstract class AppDatabase : RoomDatabase() {
                 // pre measurement
                 db.execSQL("alter table pre_measurement add column status text not null")
 
+                // direct execution
+                db.execSQL("ALTER TABLE direct_execution ADD COLUMN responsible TEXT")
+                db.execSQL("ALTER TABLE direct_execution ADD COLUMN signPath TEXT")
+                db.execSQL("ALTER TABLE direct_execution ADD COLUMN signDate TEXT")
+                db.execSQL("alter table direct_execution ADD COLUMN executorsIds TEXT")
+
                 // installation
                 db.execSQL("DROP TABLE IF EXISTS indirect_execution")
                 db.execSQL("DROP TABLE IF EXISTS indirect_reserve")
@@ -656,7 +662,13 @@ abstract class AppDatabase : RoomDatabase() {
                         CREATE TABLE IF NOT EXISTS PreMeasurementInstallation (
                             preMeasurementId TEXT NOT NULL PRIMARY KEY,
                             contractor TEXT NOT NULL,
-                            instructions TEXT NOT NULL
+                            instructions TEXT,
+                            creationDate TEXT NOT NULL,
+                            status TEXT NOT NULL,
+                            responsible TEXT,
+                            signPath TEXT,
+                            signDate TEXT,
+                            executorsIds TEXT
                         );
                 """.trimIndent()
                 )
@@ -670,7 +682,13 @@ abstract class AppDatabase : RoomDatabase() {
                             priority INTEGER NOT NULL,
                             latitude REAL,
                             longitude REAL,
-                            lastPower TEXT
+                            lastPower TEXT,
+                            photoUrl TEXT,
+                            photoExpiration INTEGER,
+                            objectUri TEXT,
+                            
+                            status TEXT NOT NULL,
+                            installationPhotoUri TEXT,
                         );
                 """.trimIndent()
                 )
@@ -694,7 +712,6 @@ abstract class AppDatabase : RoomDatabase() {
                 data class InstallationHolder(
                     val id: String,
                     val type: String,
-                    val contractId: Long,
                     var contractor: String,
                     val executionStatus: String,
                     val creationDate: String,
@@ -708,7 +725,6 @@ abstract class AppDatabase : RoomDatabase() {
                         SELECT 
                             preMeasurementId as id, 
                             'PreMeasurementInstallation' as type,
-                            0 as contractId,
                             contractor as contractor,
                             status as executionStatus,
                             creationDate as creationDate,
@@ -729,7 +745,6 @@ abstract class AppDatabase : RoomDatabase() {
                         SELECT 
                             cast(directExecutionId as text) as id, 
                             'direct_execution' as type,
-                            0 as contractId,
                             description as contractor,
                             executionStatus as executionStatus,
                             creationDate as creationDate,

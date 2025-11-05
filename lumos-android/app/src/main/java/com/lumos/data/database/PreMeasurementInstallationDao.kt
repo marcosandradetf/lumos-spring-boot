@@ -53,6 +53,23 @@ interface PreMeasurementInstallationDao {
     @Query("SELECT * from premeasurementinstallationstreet where preMeasurementId = :installationID")
     suspend fun getStreetsByInstallationId(installationID: String?): List<PreMeasurementInstallationStreet>
 
+    @Query("""
+        SELECT executorsIds
+        FROM PreMeasurementInstallation
+        WHERE preMeasurementId = :preMeasurementId
+    """)
+    suspend fun getExecutorsIds(preMeasurementId: String): String?
+
+    @Query("""
+        UPDATE PreMeasurementInstallationStreet
+        SET photoUrl = :newUrl, photoExpiration = :newExpiration
+        WHERE preMeasurementStreetId = :preMeasurementStreetId
+    """)
+    suspend fun updateObjectPublicUrl(
+        preMeasurementStreetId: String,
+        newUrl: String,
+        newExpiration: Long
+    )
 
 }
 
