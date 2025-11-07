@@ -5,12 +5,14 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.lumos.api.ApiExecutor
+import com.lumos.api.ApiService
+import com.lumos.api.MinioApi
 import com.lumos.api.PreMeasurementInstallationApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.InstallationView
+import com.lumos.domain.model.InstallationRequest
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
@@ -18,19 +20,18 @@ import com.lumos.domain.model.SendExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
-import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class PreMeasurementInstallationRepository(
     private val db: AppDatabase,
-    private val apiService: ApiService,
+    apiService: ApiService,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
-    private val api = api.createApi(PreMeasurementInstallationApi::class.java)
-    private val minioApi = api.createApi(MinioApi::class.java)
+    private val api = apiService.createApi(PreMeasurementInstallationApi::class.java)
+    private val minioApi = apiService.createApi(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
         val response = ApiExecutor.execute { api.getExecutions("PENDING") }
@@ -83,7 +84,11 @@ class PreMeasurementInstallationRepository(
                     longitude = street.longitude,
                     lastPower = street.lastPower,
                     photoUrl = street.photoUrl,
-                    items = emptyList()
+                    photoExpiration = street.photoExpiration,
+                    objectUri = street.objectUri,
+                    status = street.status,
+                    installationPhotoUri = street.installationPhotoUri,
+                    items = emptyList(),
                 )
             }
         }
@@ -145,17 +150,17 @@ class PreMeasurementInstallationRepository(
         )
     }
 
-    suspend fun postExecution(streetId: Long ): RequestResult<Unit> {
+    suspend fun postExecution(streetId: String): RequestResult<Unit> {
         val gson = Gson()
 
         val photoUri = db.preMeasurementInstallationDao().getPhotoUri(streetId)
         if(photoUri == null) {
             return ServerError(-1, "Foto da pré-medição não encontrada")
         }
-        val reserves = db.preMeasurementInstallationDao().getReservesPartial(streetId)
-        val dto = SendExecutionDto(
+        val items = db.preMeasurementInstallationDao().getStreetItemsPayload(streetId)
+        val dto = InstallationRequest(
             streetId = streetId,
-            reserves = reserves
+            items = items
         )
 
         val json = gson.toJson(dto)

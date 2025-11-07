@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.lumos.domain.model.InstallationItemRequest
 import com.lumos.repository.ExecutionStatus
 import com.lumos.domain.model.InstallationView
 import kotlinx.coroutines.flow.Flow
@@ -43,33 +44,62 @@ interface PreMeasurementInstallationDao {
     @Query("UPDATE PreMeasurementInstallationStreet SET status = :status WHERE preMeasurementStreetId = :id")
     suspend fun setStreetStatus(id: String, status: String = ExecutionStatus.IN_PROGRESS)
 
-    @Query("""
+    @Query(
+        """
         update premeasurementinstallationstreet 
         set installationPhotoUri = :photoUri 
         where preMeasurementStreetId = :streetId
-    """)
+    """
+    )
     suspend fun setPhotoInstallationUri(photoUri: String, streetId: String)
 
     @Query("SELECT * from premeasurementinstallationstreet where preMeasurementId = :installationID")
     suspend fun getStreetsByInstallationId(installationID: String?): List<PreMeasurementInstallationStreet>
 
-    @Query("""
+    @Query(
+        """
         SELECT executorsIds
         FROM PreMeasurementInstallation
         WHERE preMeasurementId = :preMeasurementId
-    """)
+    """
+    )
     suspend fun getExecutorsIds(preMeasurementId: String): String?
 
-    @Query("""
+    @Query(
+        """
         UPDATE PreMeasurementInstallationStreet
         SET photoUrl = :newUrl, photoExpiration = :newExpiration
         WHERE preMeasurementStreetId = :preMeasurementStreetId
-    """)
+    """
+    )
     suspend fun updateObjectPublicUrl(
         preMeasurementStreetId: String,
         newUrl: String,
         newExpiration: Long
     )
+
+    @Query(
+        """
+        select installationPhotoUri
+        from PreMeasurementInstallationStreet
+        where preMeasurementStreetId = :streetID
+    """
+    )
+    suspend fun getPhotoUri(streetID: String): String
+
+    @Query(
+        """
+            select 
+                i.contractItemId as contractItemId,
+                i.materialStockId as truckMaterialStockId,
+                i.executedQuantity as executedQuantity,
+                i.materialName as materialName
+            from premeasurementinstallationitem i
+            join premeasurementinstallationstreet s on s.preMeasurementStreetId = i.preMeasurementStreetId
+            where s.preMeasurementStreetId = :streetId
+        """
+    )
+    suspend fun getStreetItemsPayload(streetId: String): List<InstallationItemRequest>
 
 }
 

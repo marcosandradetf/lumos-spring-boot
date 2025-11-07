@@ -8,6 +8,6 @@ data class InstallationRequest(
 data class InstallationItemRequest(
     val contractItemId: Long,
     val truckMaterialStockId: Long,
-    val quantityExecuted: BigDecimal,
+    val quantityExecuted: String,
     val materialName: String
 )
