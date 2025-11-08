@@ -6,24 +6,22 @@ import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ExecutionApi
+import com.lumos.api.DirectExecutionApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
-import com.lumos.api.Update
+import com.lumos.data.converter.Converters
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
-import com.lumos.domain.model.InstallationView
 import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.SendDirectExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
-import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -31,40 +29,40 @@ import kotlin.collections.forEach
 
 class DirectExecutionRepository(
     private val db: AppDatabase,
-    private val api: ExecutionApi,
+    private val api: DirectExecutionApi,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
 
-    suspend fun checkUpdate(currentVersion: Long): RequestResult<Update> {
-
-        val response = ApiExecutor.execute { api.checkUpdate(currentVersion) }
-        return when (response) {
-            is RequestResult.Success -> {
-                RequestResult.Success(response.data)
-            }
-
-            is SuccessEmptyBody -> {
-                ServerError(204, "Resposta 204 inesperada")
-            }
-
-            is RequestResult.NoInternet -> {
-                SyncManager.queueSyncExecutions(app.applicationContext, db)
-                RequestResult.NoInternet
-            }
-
-            is RequestResult.Timeout -> RequestResult.Timeout
-            is ServerError -> ServerError(
-                response.code,
-                response.message
-            )
-
-            is RequestResult.UnknownError -> {
-                Log.e("Sync", "Erro desconhecido", response.error)
-                RequestResult.UnknownError(response.error)
-            }
-        }
-    }
+//    suspend fun checkUpdate(currentVersion: Long): RequestResult<Update> {
+//
+//        val response = ApiExecutor.execute { api.checkUpdate(currentVersion) }
+//        return when (response) {
+//            is RequestResult.Success -> {
+//                RequestResult.Success(response.data)
+//            }
+//
+//            is SuccessEmptyBody -> {
+//                ServerError(204, "Resposta 204 inesperada")
+//            }
+//
+//            is RequestResult.NoInternet -> {
+//                SyncManager.queueSyncExecutions(app.applicationContext, db)
+//                RequestResult.NoInternet
+//            }
+//
+//            is RequestResult.Timeout -> RequestResult.Timeout
+//            is ServerError -> ServerError(
+//                response.code,
+//                response.message
+//            )
+//
+//            is RequestResult.UnknownError -> {
+//                Log.e("Sync", "Erro desconhecido", response.error)
+//                RequestResult.UnknownError(response.error)
+//            }
+//        }
+//    }
 
     suspend fun syncDirectExecutions(): RequestResult<Unit> {
         val uuid = secureStorage.getUserUuid()
@@ -130,10 +128,6 @@ class DirectExecutionRepository(
             db.directExecutionDao().insertReservations(reservations)
         }
     }
-
-
-    fun getFlowDirectExecutions(): Flow<List<InstallationView>> =
-        db.directExecutionDao().getFlowDirectExecutions()
 
     suspend fun getExecution(contractId: Long): DirectExecution? =
         db.directExecutionDao().getExecution(contractId)
@@ -269,10 +263,10 @@ class DirectExecutionRepository(
     }
 
     suspend fun finishedDirectExecution(directExecutionId: Long): RequestResult<Unit> {
-        val executorsIds = dao.directExecutionDao().getExecutorsIds(directExecutionId)
+        val executorsIds = db.directExecutionDao().getExecutorsIds(directExecutionId)
             .let { json -> Converters().toList(json) }
-            .takeIf { it.isNotEmpty() } // só mantém se não estiver vazia
-            ?: secureStorage.getOperationalUsers() // fallback
+            .takeIf { it?.isNotEmpty() == true } // só mantém se não estiver vazia
+            ?: secureStorage.getOperationalUsers().toList() // fallback
 
         val response =
             ApiExecutor.execute {
@@ -311,8 +305,12 @@ class DirectExecutionRepository(
     }
 
 
+    suspend fun setStatus(directExecutionId: Long, status: String = "FINISHED") {
+        db.directExecutionDao().setStatus(directExecutionId, status)
+    }
+
     suspend fun markAsFinished(directExecutionId: Long) {
-        db.directExecutionDao().markAsFinished(directExecutionId)
+        setStatus(directExecutionId, "FINISHED")
         SyncManager.markAsDirectExecutionAsFinished(
             context = app.applicationContext,
             db = db,

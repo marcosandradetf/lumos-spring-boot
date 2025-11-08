@@ -94,9 +94,6 @@ object Utils {
     }
 
 
-
-
-
     fun timeSinceCreation(createdAtRaw: String): String {
         val createdAt = parseTimestamptzToInstant(createdAtRaw)
         val zoneId = ZoneId.of("America/Sao_Paulo")
@@ -335,6 +332,14 @@ object Utils {
         }
     }
 
+    fun translateStatus(executionStatus: String): String {
+        return when (executionStatus) {
+            "PENDING" -> "PENDENTE"
+            "IN_PROGRESS" -> "EM ANDAMENTO"
+            "FINISHED", "FINISH" -> "FINALIZADO"
+            else -> "DESCONHECIDO"
+        }
+    }
 
 
 }

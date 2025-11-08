@@ -70,8 +70,6 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
         (PreMeasurementInstallation::class),
         (PreMeasurementInstallationStreet::class),
         (PreMeasurementInstallationItem::class),
-        (InstallationView::class)
-
     ],
     version = 17,
 )
@@ -708,63 +706,6 @@ abstract class AppDatabase : RoomDatabase() {
                         );
                 """.trimIndent()
                 )
-
-                data class InstallationHolder(
-                    val id: String,
-                    val type: String,
-                    var contractor: String,
-                    val executionStatus: String,
-                    val creationDate: String,
-                    val streetsQuantity: Int,
-                    val itemsQuantity: Int,
-                )
-
-                db.execSQL(
-                    """
-                        CREATE VIEW InstallationView AS
-                        SELECT 
-                            preMeasurementId as id, 
-                            'PreMeasurementInstallation' as type,
-                            contractor as contractor,
-                            status as executionStatus,
-                            creationDate as creationDate,
-                            (
-                                SELECT COUNT(*) 
-                                FROM PreMeasurementInstallationStreet 
-                                WHERE preMeasurementId = p.preMeasurementId
-                            ) as streetsQuantity,
-                            (
-                                SELECT COUNT(*) 
-                                FROM PreMeasurementInstallationStreet AS street
-                                JOIN PreMeasurementInstallationItem AS item
-                                    ON street.preMeasurementStreetId = item.preMeasurementStreetId
-                                WHERE street.preMeasurementId = p.preMeasurementId
-                            ) as itemsQuantity
-                        FROM PreMeasurementInstallation p
-                        UNION
-                        SELECT 
-                            cast(directExecutionId as text) as id, 
-                            'direct_execution' as type,
-                            description as contractor,
-                            executionStatus as executionStatus,
-                            creationDate as creationDate,
-                            (
-                                SELECT COUNT(*) 
-                                FROM direct_execution_street 
-                                WHERE directExecutionId = d.directExecutionId
-                            ) as streetsQuantity,
-                            (
-                                SELECT COUNT(*) 
-                                FROM direct_execution_street AS street
-                                JOIN direct_execution_street_item AS item
-                                    ON street.directStreetId = item.directStreetId
-                                WHERE street.directExecutionId = d.directExecutionId
-                            ) as itemsQuantity
-                        FROM direct_execution d;
-                    """.trimIndent()
-                )
-
-
             }
         }
 

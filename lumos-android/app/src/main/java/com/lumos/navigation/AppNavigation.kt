@@ -31,7 +31,6 @@ import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
 import com.lumos.api.DirectExecutionApi
 import com.lumos.api.PreMeasurementApi
-import com.lumos.api.PreMeasurementInstallationApi
 import com.lumos.repository.AuthRepository
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
@@ -50,7 +49,7 @@ import com.lumos.repository.ViewRepository
 import com.lumos.ui.auth.Login
 import com.lumos.ui.directexecution.StreetMaterialScreen
 import com.lumos.ui.installationholder.InstallationHolderScreen
-import com.lumos.ui.premeasurementinstallation.MaterialScreen
+import com.lumos.ui.premeasurementinstallation.onstreet.MaterialScreen
 import com.lumos.ui.premeasurementinstallation.PreMeasurementInstallationStreetsScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.maintenance.MaintenanceScreen
@@ -71,6 +70,7 @@ import com.lumos.utils.NavEvents
 import com.lumos.viewmodel.AuthViewModel
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.DirectExecutionViewModel
+import com.lumos.viewmodel.HomeViewModel
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import com.lumos.viewmodel.MaintenanceViewModel
 import com.lumos.viewmodel.StockViewModel
@@ -125,42 +125,39 @@ fun AppNavigation(
         PreMeasurementViewModel(preMeasurementRepository)
     }
 
-    val contractViewModel: ContractViewModel = viewModel {
-        val api = app.retrofit.create(ContractApi::class.java)
+    val contractRepository = ContractRepository(
+        db = app.database,
+        api = app.retrofit.create(ContractApi::class.java),
+        app = app
+    )
 
-        val contractRepository = ContractRepository(
-            db = app.database,
-            api = api,
-            app = app
-        )
+    val contractViewModel: ContractViewModel = viewModel {
         ContractViewModel(
             repository = contractRepository
         )
     }
 
-    val preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel = viewModel {
-        val api = app.retrofit.create(PreMeasurementInstallationApi::class.java)
+    val preMeasurementInstallationRepository = PreMeasurementInstallationRepository(
+        db = app.database,
+        apiService = app.retrofit.create(ApiService::class.java),
+        secureStorage = secureStorage,
+        app = app
+    )
 
-        PreMeasurementInstallationViewModel(
-            repository = PreMeasurementInstallationRepository(
-                db = app.database,
-                api = api,
-                secureStorage = secureStorage,
-                app = app
-            )
-        )
+    val preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel = viewModel {
+        PreMeasurementInstallationViewModel(repository = preMeasurementInstallationRepository)
     }
 
-    val directExecutionViewModel: DirectExecutionViewModel = viewModel {
-        val api = app.retrofit.create(DirectExecutionApi::class.java)
+    val directExecutionRepository = DirectExecutionRepository(
+        db = app.database,
+        api = app.retrofit.create(DirectExecutionApi::class.java),
+        secureStorage = secureStorage,
+        app = app
+    )
 
+    val directExecutionViewModel: DirectExecutionViewModel = viewModel {
         DirectExecutionViewModel(
-            repository = DirectExecutionRepository(
-                db = app.database,
-                api = api,
-                secureStorage = secureStorage,
-                app = app
-            )
+            repository = directExecutionRepository
         )
     }
 
@@ -221,6 +218,8 @@ fun AppNavigation(
             repository = teamRepository
         )
     }
+
+    val viewRepository = ViewRepository(app.database)
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated == true) {
@@ -332,6 +331,15 @@ fun AppNavigation(
                 }
 
                 composable(Routes.HOME) {
+                    val homeViewModel: HomeViewModel = viewModel {
+                        HomeViewModel(
+                            repository = contractRepository,
+                            directExecutionRepository = directExecutionRepository,
+                            preMeasurementInstallationRepository = preMeasurementInstallationRepository,
+                            viewRepository = viewRepository
+                        )
+                    }
+
                     HomeScreen(
                         onNavigateToMenu = {
                             navController.navigate(Routes.MORE) {
@@ -345,9 +353,7 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
-                        directExecutionViewModel = directExecutionViewModel,
-                        contractViewModel = contractViewModel,
+                        homeViewModel = homeViewModel,
                         roles = secureStorage.getRoles(),
                         secureStorage = secureStorage
                     )
@@ -445,7 +451,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.PRE_MEASUREMENT_PROGRESS ) {
+                composable(Routes.PRE_MEASUREMENT_PROGRESS) {
 
                     PreMeasurementProgressScreen(
                         onNavigateToHome = {
@@ -492,11 +498,12 @@ fun AppNavigation(
 
                 //
 
+
                 composable(Routes.INSTALLATION_HOLDER) {
                     InstallationHolderScreen(
                         directExecutionViewModel = directExecutionViewModel,
                         preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
-                        viewRepository = ViewRepository(app.database),
+                        viewRepository = viewRepository,
                         navController = navController,
                         roles = secureStorage.getRoles(),
                         secureStorage = secureStorage
@@ -510,31 +517,11 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS + "/{streetId}") { backStackEntry ->
-                    val streetId =
-                        backStackEntry.arguments?.getString("streetId")?.toLongOrNull() ?: 0
+                composable(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) {
                     MaterialScreen(
-                        streetId = streetId,
                         preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
                         context = LocalContext.current,
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
-                        },
-                        onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE)
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS)
-                        },
-                        pSelected = BottomBar.MORE.value,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString(),
-                        onNavigateToExecutions = {
-                            navController.navigate(Routes.INSTALLATION_HOLDER)
-                        }
                     )
                 }
 
@@ -633,7 +620,7 @@ fun AppNavigation(
                         viewModel = teamViewModel,
                         navController = navController,
                         currentScreen = currentScreen!!,
-                        secureStorage= secureStorage
+                        secureStorage = secureStorage
                     )
 
                 }

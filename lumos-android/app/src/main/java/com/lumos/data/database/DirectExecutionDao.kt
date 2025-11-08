@@ -93,8 +93,12 @@ interface DirectExecutionDao {
     @Query("DELETE FROM direct_execution_street_item WHERE directStreetId = :streetId")
     suspend fun deleteItems(streetId: Long)
 
-    @Query("UPDATE direct_execution set executionStatus = 'FINISHED' WHERE directExecutionId = :directExecutionId")
-    suspend fun markAsFinished(directExecutionId: Long)
+    @Query("""
+        UPDATE direct_execution 
+        SET executionStatus = :status 
+        WHERE directExecutionId = :directExecutionId and executionStatus <> :status
+    """)
+    suspend fun setStatus(directExecutionId: Long, status: String = "FINISHED")
 
     @Query("""
         SELECT *

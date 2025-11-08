@@ -63,9 +63,7 @@ import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.UpdateModal
 import com.lumos.utils.Utils.findActivity
-import com.lumos.viewmodel.ContractViewModel
-import com.lumos.viewmodel.DirectExecutionViewModel
-import com.lumos.viewmodel.PreMeasurementInstallationViewModel
+import com.lumos.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.system.exitProcess
@@ -77,17 +75,15 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
-    directExecutionViewModel: DirectExecutionViewModel,
-    contractViewModel: ContractViewModel,
+    homeViewModel: HomeViewModel,
     roles: Set<String>,
     secureStorage: SecureStorage
 ) {
     val TWELVE_HOURS = 12 * 60 * 60 * 1000L
 
     val context = LocalContext.current
-    val executions = directExecutionViewModel.directExecutions.collectAsState()
-    val contracts = contractViewModel.contracts.collectAsState()
+    val installations = homeViewModel.installations.collectAsState()
+    val contracts = homeViewModel.contracts.collectAsState()
 
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
@@ -212,12 +208,13 @@ fun HomeScreen(
             if (isStaleCheck) {
                 secureStorage.setLastUpdateCheck()
                 checkUpdate()
-                directExecutionViewModel.syncExecutions()
-                contractViewModel.syncContracts()
+                homeViewModel.syncContracts()
             }
 
             if (isStaleCheckTeam) {
                 navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.HOME.value}")
+            } else {
+                homeViewModel.syncInstallations()
             }
         }
 
@@ -276,7 +273,7 @@ fun HomeScreen(
 
             // Cards Minimalistas
             if (roles.any { it in operators }) {
-                MaintenanceStatusCard(executions.value, navController)
+                MaintenanceStatusCard(installations.value, navController)
             }
             if (roles.any { it in others }) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -422,14 +419,14 @@ fun MaintenanceStatusCard(
     executions: List<InstallationView>,
     navController: NavHostController
 ) {
-    val text = if (executions.size > 1) "Sua equipe possui ${executions.size} execuções alocadas"
-    else if (executions.size == 1) "Sua equipe possui ${executions.size} execução alocada"
-    else "Sua equipe não possui nenhuma execução alocada"
+    val text = if (executions.size > 1) "Sua equipe possui ${executions.size} instalações alocadas"
+    else if (executions.size == 1) "Sua equipe possui ${executions.size} instalação alocada"
+    else "Sua equipe não possui nenhuma instalação alocada"
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) },
+            .clickable { navController.navigate(Routes.INSTALLATION_HOLDER) },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {

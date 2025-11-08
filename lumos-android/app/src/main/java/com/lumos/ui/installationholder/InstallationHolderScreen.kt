@@ -38,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,6 +60,7 @@ import com.lumos.repository.ViewRepository
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.NothingData
+import com.lumos.utils.Utils
 import com.lumos.viewmodel.DirectExecutionViewModel
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import java.util.UUID
@@ -76,12 +76,12 @@ fun InstallationHolderScreen(
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
 
-    val executions by viewRepository.getFlowInstallations().collectAsState(emptyList())
+    val executions by viewRepository.getFlowInstallations("PENDING").collectAsState(emptyList())
 
     val isSyncing = directExecutionViewModel.isLoading
 
     val error1 by directExecutionViewModel.syncError.collectAsState()
-    val error2 by preMeasurementInstallationViewModel.errorMessage.collectAsState()
+    val error2 = preMeasurementInstallationViewModel.message
 
     val responseError = if (error1.isNullOrBlank()) error2 else error1
 
@@ -108,14 +108,14 @@ fun InstallationHolderScreen(
     }
 
     ContentCitiesScreen(
-        title = "Instalações Pendentes",
         executions = executions,
         navController = navController,
         isSyncing = isSyncing,
         select = { id, type, contractor ->
-            if(type != "PreMeasurementInstallation") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
+            if (type != "PreMeasurementInstallation") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
             else {
                 preMeasurementInstallationViewModel.installationID = id
+                preMeasurementInstallationViewModel.contractor = contractor
                 preMeasurementInstallationViewModel.setStreets()
                 navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_STREETS)
             }
@@ -125,8 +125,13 @@ fun InstallationHolderScreen(
             directExecutionViewModel.syncExecutions()
             preMeasurementInstallationViewModel.syncExecutions()
         },
-        markAsFinished = { contractId ->
-            directExecutionViewModel.markAsFinished(contractId)
+        markAsFinished = { id ->
+            try {
+                val directExecutionId = id.toLong()
+                directExecutionViewModel.markAsFinished(directExecutionId)
+            } catch (_: Exception) {
+                preMeasurementInstallationViewModel.markAsFinished(id)
+            }
         },
         stockDataSize = directExecutionViewModel.stockCount
     )
@@ -136,22 +141,21 @@ fun InstallationHolderScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentCitiesScreen(
-    title: String,
     executions: List<InstallationView>,
     navController: NavHostController,
     isSyncing: Boolean,
     select: (String, String, String) -> Unit,
     error: String?,
     refresh: () -> Unit,
-    markAsFinished: (Long) -> Unit = {},
+    markAsFinished: (String) -> Unit = {},
     stockDataSize: Int
 ) {
     var openModal by remember { mutableStateOf(false) }
     var showModal by remember { mutableStateOf(false) }
-    var contractId by remember { mutableLongStateOf(0) }
+    var id by remember { mutableStateOf("") }
 
     AppLayout(
-        title = title,
+        title = "Instalações disponíveis",
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateToMore = { navController.navigate(Routes.MORE) },
         navigateToHome = { navController.navigate(Routes.HOME) },
@@ -228,11 +232,12 @@ fun ContentCitiesScreen(
                             .fillMaxWidth(0.9f)
                             .padding(3.dp)
                             .clickable {
-                                if (stockDataSize > 0) select(
-                                    execution.id,
-                                    execution.type,
-                                    execution.contractor
-                                )
+                                if (stockDataSize > 0)
+                                    select(
+                                        execution.id,
+                                        execution.type,
+                                        execution.contractor
+                                    )
                                 else showModal = true
                             },
                         elevation = CardDefaults.cardElevation(1.dp),
@@ -322,7 +327,7 @@ fun ContentCitiesScreen(
                                                 .padding(5.dp)
                                         ) {
                                             Text(
-                                                text = "ATIVO",
+                                                text = Utils.translateStatus(execution.executionStatus),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 fontWeight = FontWeight.Medium,
                                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -330,7 +335,7 @@ fun ContentCitiesScreen(
                                             )
                                         }
                                         if (execution.type != "PreMeasurementInstallation") {
-                                            var expanded by remember(execution.contractId) {
+                                            var expanded by remember(execution.id) {
                                                 mutableStateOf(
                                                     false
                                                 )
@@ -346,12 +351,13 @@ fun ContentCitiesScreen(
                                                 ) {
                                                     DropdownMenuItem(
                                                         onClick = {
-                                                            contractId = execution.contractId
+                                                            id = execution.id
                                                             expanded = false
                                                             openModal = true
                                                         },
                                                         text = { Text("Marcar como finalizado") },
                                                         leadingIcon = {
+                                                            id
                                                             Icon(
                                                                 contentDescription = null,
                                                                 imageVector = Icons.Default.CloudUpload
@@ -375,7 +381,7 @@ fun ContentCitiesScreen(
                 Confirm(
                     body = "Essa ação finaliza a execução e envia ao sistema, deseja continuar?",
                     confirm = {
-                        markAsFinished(contractId)
+                        markAsFinished(id)
                         openModal = false
                     },
                     cancel = {
@@ -398,7 +404,6 @@ fun PrevContentCitiesScreen() {
         listOf(
             InstallationView(
                 id = UUID.randomUUID().toString(),
-                contractId = 1,
                 contractor = "Contagem",
                 executionStatus = "PENDING",
                 type = "PreMeasurementInstallation",
@@ -407,7 +412,6 @@ fun PrevContentCitiesScreen() {
                 streetsQuantity = 3,
             ),
             InstallationView(
-                contractId = 1,
                 contractor = "Ibrite",
                 executionStatus = "PENDING",
                 type = "",
@@ -417,7 +421,6 @@ fun PrevContentCitiesScreen() {
                 streetsQuantity = 2,
             ),
             InstallationView(
-                contractId = 1,
                 contractor = "Belo Horizonte",
                 executionStatus = "PENDING",
                 type = "",
@@ -429,7 +432,6 @@ fun PrevContentCitiesScreen() {
         )
 
     ContentCitiesScreen(
-        title = "Execuções sem pré-medição",
         executions = values,
         navController = rememberNavController(),
         isSyncing = false,

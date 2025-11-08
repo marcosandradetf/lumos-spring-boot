@@ -1,11 +1,10 @@
 package com.lumos.domain.model
 
+import androidx.room.DatabaseView
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Ignore
 import java.time.Instant
-
-// delete: indirect_execution, indirect_reserve
 
 @Entity
 data class PreMeasurementInstallation(
@@ -20,9 +19,10 @@ data class PreMeasurementInstallation(
     val signPath: String? = null,
     val signDate: String? = null,
     val executorsIds: List<String>? = null,
+) {
     @Ignore
-    val streets: List<PreMeasurementInstallationStreet>
-)
+    val streets: List<PreMeasurementInstallationStreet> = emptyList()
+}
 
 @Entity
 data class PreMeasurementInstallationStreet(
@@ -40,10 +40,10 @@ data class PreMeasurementInstallationStreet(
 
     val status: String = "PENDING",
     val installationPhotoUri: String? = null,
-
+) {
     @Ignore
-    val items: List<PreMeasurementInstallationItem>,
-)
+    val items: List<PreMeasurementInstallationItem> = emptyList()
+}
 
 @Entity(primaryKeys = ["preMeasurementStreetId", "materialStockId", "contractItemId"])
 data class PreMeasurementInstallationItem(
@@ -57,11 +57,9 @@ data class PreMeasurementInstallationItem(
     val executedQuantity: String = "0",
 )
 
-@Entity
 data class InstallationView(
     val id: String,
     val type: String,
-    val contractId: Long,
     var contractor: String,
     val executionStatus: String,
     val creationDate: String,

@@ -19,7 +19,7 @@ import com.lumos.MainActivity
 import com.lumos.R
 import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
-import com.lumos.api.ExecutionApi
+import com.lumos.api.DirectExecutionApi
 import com.lumos.api.NotificationType
 import com.lumos.api.PreMeasurementApi
 import com.lumos.api.RequestResult
@@ -33,7 +33,6 @@ import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
 import com.lumos.repository.GenericRepository
-import com.lumos.repository.IndirectExecutionRepository
 import com.lumos.repository.MaintenanceRepository
 import com.lumos.repository.PreMeasurementRepository
 import com.lumos.repository.StockRepository
@@ -67,6 +66,9 @@ object SyncTypes {
     const val UPDATE_TEAM = "UPDATE_TEAM"
     const val FINISHED_DIRECT_EXECUTION = "FINISHED_DIRECT_EXECUTION"
 
+    // PreMeasurementInstallation
+    const val FINISH_PRE_MEASUREMENT_INSTALLATION = "FINISH_PRE_MEASUREMENT_INSTALLATION"
+
 }
 
 
@@ -81,7 +83,6 @@ class SyncQueueWorker(
     private val secureStorage: SecureStorage = SecureStorage(app.applicationContext)
     private val preMeasurementRepository: PreMeasurementRepository
     private val contractRepository: ContractRepository
-    private val indirectExecutionRepository: IndirectExecutionRepository
     private val directExecutionRepository: DirectExecutionRepository
     private val genericRepository: GenericRepository
     private val stockRepository: StockRepository
@@ -96,7 +97,7 @@ class SyncQueueWorker(
 
         val preMeasurementApi = api.createApi(PreMeasurementApi::class.java)
         val contractApi = api.createApi(ContractApi::class.java)
-        val executionApi = api.createApi(ExecutionApi::class.java)
+        val executionApi = api.createApi(DirectExecutionApi::class.java)
 
         preMeasurementRepository = PreMeasurementRepository(
             db,
@@ -107,13 +108,6 @@ class SyncQueueWorker(
         contractRepository = ContractRepository(
             db = db,
             api = contractApi,
-            app = app
-        )
-
-        indirectExecutionRepository = IndirectExecutionRepository(
-            db = db,
-            api = executionApi,
-            secureStorage = secureStorage,
             app = app
         )
 
@@ -162,12 +156,12 @@ class SyncQueueWorker(
             val result = when (item.type) {
                 SyncTypes.SYNC_CONTRACT_ITEMS -> syncContractItems(item)
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
-                SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
+//                SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.SYNC_STOCK -> syncStock(item)
 
                 SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
-                SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
+//                SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
                 SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
                 SyncTypes.POST_ORDER -> postOrder(item)
                 SyncTypes.POST_MAINTENANCE_STREET -> postMaintenanceStreet(item)
@@ -388,41 +382,41 @@ class SyncQueueWorker(
         }
     }
 
-    private suspend fun syncExecutions(item: SyncQueueEntity): Result {
-        val inProgressItem = item.copy(
-            status = SyncStatus.IN_PROGRESS,
-            attemptCount = item.attemptCount + 1
-        )
-
-        return try {
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
-
-            queueDao.update(inProgressItem)
-            // Atualiza o item com novo status e tentativa
-
-            // Checa limite de tentativas antes de continuar
-            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
-                return Result.success() // não tenta mais esse
-            }
-
-            val response = indirectExecutionRepository.syncExecutions()
-            checkResponse(response, item)
-
-        } catch (e: Exception) {
-            queueDao.update(
-                inProgressItem.copy(
-                    status = SyncStatus.FAILED,
-                    errorMessage = e.message
-                )
-            )
-            UserExperience.sendNotification(
-                context = applicationContext,
-                title = "Erro ao enviar pré-mediçao",
-                body = "Verifique o erro em Perfil - Sincronizações",
-            )
-            Result.failure()
-        }
-    }
+//    private suspend fun syncExecutions(item: SyncQueueEntity): Result {
+//        val inProgressItem = item.copy(
+//            status = SyncStatus.IN_PROGRESS,
+//            attemptCount = item.attemptCount + 1
+//        )
+//
+//        return try {
+//            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+//
+//            queueDao.update(inProgressItem)
+//            // Atualiza o item com novo status e tentativa
+//
+//            // Checa limite de tentativas antes de continuar
+//            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+//                return Result.success() // não tenta mais esse
+//            }
+//
+//            val response = indirectExecutionRepository.syncExecutions()
+//            checkResponse(response, item)
+//
+//        } catch (e: Exception) {
+//            queueDao.update(
+//                inProgressItem.copy(
+//                    status = SyncStatus.FAILED,
+//                    errorMessage = e.message
+//                )
+//            )
+//            UserExperience.sendNotification(
+//                context = applicationContext,
+//                title = "Erro ao enviar pré-mediçao",
+//                body = "Verifique o erro em Perfil - Sincronizações",
+//            )
+//            Result.failure()
+//        }
+//    }
 
     private suspend fun syncStock(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
@@ -463,46 +457,46 @@ class SyncQueueWorker(
         }
     }
 
-    private suspend fun postIndirectExecution(item: SyncQueueEntity): Result {
-        val inProgressItem = item.copy(
-            status = SyncStatus.IN_PROGRESS,
-            attemptCount = item.attemptCount + 1
-        )
-
-        return try {
-            if (item.relatedId == null) {
-                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-                return Result.success()
-            }
-
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
-
-            queueDao.update(inProgressItem)
-            // Atualiza o item com novo status e tentativa
-
-            // Checa limite de tentativas antes de continuar
-            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
-                return Result.success() // não tenta mais esse
-            }
-
-            val response = indirectExecutionRepository.postExecution(item.relatedId)
-            checkResponse(response, item)
-
-        } catch (e: Exception) {
-            queueDao.update(
-                inProgressItem.copy(
-                    status = SyncStatus.FAILED,
-                    errorMessage = e.message
-                )
-            )
-            UserExperience.sendNotification(
-                context = applicationContext,
-                title = "Erro ao enviar pré-mediçao",
-                body = "Verifique o erro em Perfil - Sincronizações",
-            )
-            Result.failure()
-        }
-    }
+//    private suspend fun postIndirectExecution(item: SyncQueueEntity): Result {
+//        val inProgressItem = item.copy(
+//            status = SyncStatus.IN_PROGRESS,
+//            attemptCount = item.attemptCount + 1
+//        )
+//
+//        return try {
+//            if (item.relatedId == null) {
+//                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+//                return Result.success()
+//            }
+//
+//            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+//
+//            queueDao.update(inProgressItem)
+//            // Atualiza o item com novo status e tentativa
+//
+//            // Checa limite de tentativas antes de continuar
+//            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+//                return Result.success() // não tenta mais esse
+//            }
+//
+//            val response = indirectExecutionRepository.postExecution(item.relatedId)
+//            checkResponse(response, item)
+//
+//        } catch (e: Exception) {
+//            queueDao.update(
+//                inProgressItem.copy(
+//                    status = SyncStatus.FAILED,
+//                    errorMessage = e.message
+//                )
+//            )
+//            UserExperience.sendNotification(
+//                context = applicationContext,
+//                title = "Erro ao enviar pré-mediçao",
+//                body = "Verifique o erro em Perfil - Sincronizações",
+//            )
+//            Result.failure()
+//        }
+//    }
 
     private suspend fun postDirectExecution(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(

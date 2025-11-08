@@ -49,7 +49,8 @@ interface MaintenanceDao {
             m.dateOfVisit AS dateOfVisit,
             m.type AS type,
             m.status AS status,
-            c.contractor AS contractor
+            c.contractor AS contractor,
+            m.executorsIds as executorsIds
         FROM maintenance m
         JOIN contracts c ON c.contractId = m.contractId
         WHERE m.status = :status
@@ -66,6 +67,7 @@ interface MaintenanceDao {
     @Query("select * from maintenance where maintenanceId = :maintenanceId")
     suspend fun getMaintenance(maintenanceId: String): Maintenance
 
+    @Transaction
     @Query("select * from maintenancestreet where maintenanceStreetId = :maintenanceStreetId")
     suspend fun getMaintenanceStreetWithItems(maintenanceStreetId: String): MaintenanceStreetWithItems
 

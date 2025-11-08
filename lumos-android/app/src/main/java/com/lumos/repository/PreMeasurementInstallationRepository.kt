@@ -16,7 +16,6 @@ import com.lumos.domain.model.InstallationRequest
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
-import com.lumos.domain.model.SendExecutionDto
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
@@ -40,6 +39,7 @@ class PreMeasurementInstallationRepository(
                 saveExecutionsToDb(response.data)
                 RequestResult.Success(Unit)
             }
+
             is SuccessEmptyBody -> {
                 ServerError(204, "Resposta 204 inesperada")
             }
@@ -68,7 +68,6 @@ class PreMeasurementInstallationRepository(
                 preMeasurementId = installation.preMeasurementId,
                 contractor = installation.contractor,
                 instructions = installation.instructions,
-                streets = emptyList(),
                 executorsIds = secureStorage.getOperationalUsers().toList()
             )
         }
@@ -88,7 +87,6 @@ class PreMeasurementInstallationRepository(
                     objectUri = street.objectUri,
                     status = street.status,
                     installationPhotoUri = street.installationPhotoUri,
-                    items = emptyList(),
                 )
             }
         }
@@ -115,12 +113,11 @@ class PreMeasurementInstallationRepository(
     }
 
 
-
     suspend fun setInstallationStatus(id: String, status: String = ExecutionStatus.IN_PROGRESS) {
         db.preMeasurementInstallationDao().setInstallationStatus(id, status)
     }
 
-    suspend fun setExecutionStatus(streetId: String, status: String = ExecutionStatus.IN_PROGRESS) {
+    suspend fun setStreetStatus(streetId: String, status: String = ExecutionStatus.IN_PROGRESS) {
         db.preMeasurementInstallationDao().setStreetStatus(streetId, status)
     }
 
@@ -154,7 +151,7 @@ class PreMeasurementInstallationRepository(
         val gson = Gson()
 
         val photoUri = db.preMeasurementInstallationDao().getPhotoUri(streetId)
-        if(photoUri == null) {
+        if (photoUri == null) {
             return ServerError(-1, "Foto da pré-medição não encontrada")
         }
         val items = db.preMeasurementInstallationDao().getStreetItemsPayload(streetId)
@@ -175,24 +172,28 @@ class PreMeasurementInstallationRepository(
                 requestFile
             )
 
-            val response = ApiExecutor.execute { api.uploadData(photo = imagePart, execution = jsonBody) }
+            val response =
+                ApiExecutor.execute { api.uploadData(photo = imagePart, execution = jsonBody) }
 
             return when (response) {
                 is RequestResult.Success -> {
-                    db.preMeasurementInstallationDao().deleteExecution(streetId)
-                    db.preMeasurementInstallationDao().deleteReserves(streetId)
+                    db.preMeasurementInstallationDao().deleteInstallation(streetId)
+                    db.preMeasurementInstallationDao().deleteItems(streetId)
 
                     RequestResult.Success(Unit)
                 }
+
                 is SuccessEmptyBody -> {
-                    db.preMeasurementInstallationDao().deleteExecution(streetId)
-                    db.preMeasurementInstallationDao().deleteReserves(streetId)
+                    db.preMeasurementInstallationDao().deleteInstallation(streetId)
+                    db.preMeasurementInstallationDao().deleteItems(streetId)
 
                     SuccessEmptyBody
                 }
+
                 is RequestResult.NoInternet -> {
                     RequestResult.NoInternet
                 }
+
                 is RequestResult.Timeout -> RequestResult.Timeout
                 is ServerError -> ServerError(response.code, response.message)
                 is RequestResult.UnknownError -> {
@@ -209,20 +210,30 @@ class PreMeasurementInstallationRepository(
         return db.preMeasurementInstallationDao().getStreetsByInstallationId(installationID)
     }
 
-    suspend fun updateObjectPublicUrl(streetInstallationID: String, objectName: String) {
+    suspend fun updateObjectPublicUrl(
+        streetInstallationID: String,
+        objectName: String
+    ): RequestResult<Unit> {
         val response = ApiExecutor.execute { minioApi.updateObjectPublicUrl(objectName) }
 
         return when (response) {
             is RequestResult.Success -> {
-                db.preMeasurementInstallationDao().updateObjectPublicUrl(streetInstallationID, response.data.newUrl, respose.data.expiryAt)
+                db.preMeasurementInstallationDao().updateObjectPublicUrl(
+                    streetInstallationID,
+                    response.data.newUrl,
+                    response.data.expiryAt
+                )
                 RequestResult.Success(Unit)
             }
+
             is SuccessEmptyBody -> {
                 SuccessEmptyBody
             }
+
             is RequestResult.NoInternet -> {
                 RequestResult.NoInternet
             }
+
             is RequestResult.Timeout -> RequestResult.Timeout
             is ServerError -> ServerError(response.code, response.message)
             is RequestResult.UnknownError -> {
@@ -231,6 +242,27 @@ class PreMeasurementInstallationRepository(
             }
         }
 
+    }
+
+    suspend fun markAsFinished(preMeasurementInstallationId: String) {
+        db.preMeasurementInstallationDao().markAsFinished(preMeasurementInstallationId)
+        SyncManager.markPreMeasurementInstallationAsFinished(
+            context = app.applicationContext,
+            db = db,
+            preMeasurementInstallationId = preMeasurementInstallationId
+        )
+    }
+
+    suspend fun getItems(preMeasurementStreetID: String): List<PreMeasurementInstallationItem> {
+        return db.preMeasurementInstallationDao().getItems(preMeasurementStreetID)
+    }
+
+    suspend fun setInstallationItemQuantity(
+        currentStreetId: String?,
+        materialStockId: Long,
+        quantityExecuted: String
+    ) {
+        db.preMeasurementInstallationDao().setInstallationItemQuantity(currentStreetId, materialStockId, quantityExecuted)
     }
 
 }

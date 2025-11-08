@@ -1,5 +1,6 @@
 package com.lumos.ui.premeasurementinstallation
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,12 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Power
-import androidx.compose.material.icons.filled.SentimentVerySatisfied
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,42 +30,39 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.lumos.domain.model.PreMeasurementInstallationItem
+import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.repository.ExecutionStatus
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.NothingData
+import com.lumos.utils.Utils
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
+import java.time.Instant
+import java.util.UUID
 
 @Composable
 fun PreMeasurementInstallationStreetsScreen(
     viewModel: PreMeasurementInstallationViewModel,
     navController: NavHostController
 ) {
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
 
     Content(
         viewModel = viewModel,
         navController = navController,
-        isLoading = isLoading,
-        error = errorMessage,
     )
 }
 
@@ -75,15 +72,18 @@ fun PreMeasurementInstallationStreetsScreen(
 fun Content(
     viewModel: PreMeasurementInstallationViewModel,
     navController: NavHostController,
-    isLoading: Boolean,
-    error: String?
 ) {
-    val streets by viewModel.installationStreets
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val loading by viewModel.isLoading.collectAsState()
+    val currentStreets = viewModel.currentInstallationStreets
+    val currentItems = viewModel.currentInstallationItems
+    val errorMessage = viewModel.message
+    val loading = viewModel.loading
+
+    LaunchedEffect(currentItems) {
+        if(currentItems.isNotEmpty()) navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS)
+    }
 
     AppLayout(
-        title = viewModel.contractor ?: "",
+        title = Utils.abbreviate(viewModel.contractor ?: "PREFEITURA DE BELO HORIZONTE"),
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateBack = {
             navController.popBackStack()
@@ -105,17 +105,17 @@ fun Content(
         }
     ) { _, showSnackBar ->
 
-        AnimatedVisibility(visible = !isLoading) {
+        AnimatedVisibility(visible = !loading) {
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = if (error != null) 60.dp else 0.dp),
+                    .padding(top = if (errorMessage != null) 60.dp else 0.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp) // Espaço entre os cards
             ) {
 
-                if (executions.isEmpty()) {
+                if (currentStreets.isEmpty()) {
                     item {
                         NothingData(
                             "Nenhuma execução disponível no momento, volte mais tarde!"
@@ -123,10 +123,8 @@ fun Content(
                     }
                 }
 
-                items(executions) { execution -> // Iteração na lista
-                    val objective =
-                        if (execution.type == "INSTALLATION") "Instalação" else "Manutenção"
-                    val status = when (execution.executionStatus) {
+                items(currentStreets) { installation -> // Iteração na lista
+                    val status = when (installation.status) {
                         ExecutionStatus.PENDING -> "PENDENTE"
                         ExecutionStatus.IN_PROGRESS -> "EM PROGRESSO"
                         ExecutionStatus.FINISHED -> "FINALIZADO"
@@ -139,7 +137,7 @@ fun Content(
                             .fillMaxWidth(0.9f)
                             .padding(3.dp)
                             .clickable {
-                                select(execution.streetId)
+                                viewModel.setStreetAndItems(installation.preMeasurementStreetId)
                             },
                         elevation = CardDefaults.cardElevation(1.dp),
                         colors = CardDefaults.cardColors(
@@ -165,8 +163,7 @@ fun Content(
                                         .padding(start = 20.dp)
                                         .width(4.dp)
                                         .background(
-                                            color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.tertiary
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                 )
 
@@ -177,20 +174,16 @@ fun Content(
                                         .size(24.dp) // tamanho do círculo
                                         .clip(CircleShape)
                                         .background(
-                                            color = if (execution.type == "INSTALLATION") MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.tertiary
+                                            color = MaterialTheme.colorScheme.primary
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector =
-                                            if (execution.type == "INSTALLATION") Icons.Default.Power
-                                            else Icons.Default.Build,
+                                        imageVector =Icons.Default.Power,
                                         contentDescription = "Local",
                                         tint = Color.White,
                                         modifier = Modifier.size(
-                                            if (execution.type == "INSTALLATION") 18.dp
-                                            else 14.dp
+                                            18.dp
                                         )
                                     )
                                 }
@@ -215,7 +208,7 @@ fun Content(
                                         ) {
                                         Row {
                                             Text(
-                                                text = execution.streetName,
+                                                text = installation.address,
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = MaterialTheme.colorScheme.onSurface,
@@ -230,7 +223,7 @@ fun Content(
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
-                                            text = "$objective de ${execution.itemsQuantity} Itens",
+                                            text = "Status",
                                             style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.Normal,
                                             color = MaterialTheme.colorScheme.onSurface
@@ -254,13 +247,15 @@ fun Content(
 
 
                                     // Informação extra
-                                    if (execution.priority)
+                                    if (installation.priority)
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(top = 10.dp),
-                                            horizontalArrangement = Arrangement.End
+                                            horizontalArrangement = Arrangement.End,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            Text("Solicitado Prioridade", modifier = Modifier.padding(horizontal = 5.dp))
                                             Column(
                                                 verticalArrangement = Arrangement.Center,
                                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -287,76 +282,131 @@ fun Content(
 }
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview()
 @Composable
 fun PrevStreetsScreen() {
-    // Criando um contexto fake para a preview
-    val fakeContext = LocalContext.current
-    val values =
-        listOf(
-            IndirectExecution(
-                streetId = 1,
-                streetName = "Rua Dona Tina, 251",
-                executionStatus = "PENDING",
-                priority = true,
-                type = "INSTALLATION",
-                itemsQuantity = 7,
-                creationDate = "",
-                latitude = 0.0,
-                longitude = 0.0,
-                photoUri = "",
-                contractId = 1,
-                contractor = ""
-            ),
-            IndirectExecution(
-                streetId = 2,
-                streetName = "Rua Marcos Coelho Neto, 960",
-                executionStatus = ExecutionStatus.IN_PROGRESS,
-                priority = false,
-                type = "MAINTENANCE",
-                itemsQuantity = 5,
-                creationDate = "",
-                latitude = 0.0,
-                longitude = 0.0,
-                photoUri = "",
-                contractId = 1,
-                contractor = ""
-            ),
-            IndirectExecution(
-                streetId = 3,
-                streetName = "Rua Chopin, 35",
-                executionStatus = ExecutionStatus.FINISHED,
-                priority = false,
-                type = "INSTALLATION",
-                itemsQuantity = 12,
-                creationDate = "",
-                latitude = 0.0,
-                longitude = 0.0,
-                photoUri = "",
-                contractId = 1,
-                contractor = ""
-
-            ),
+    val mockInstallationStreets = listOf(
+        PreMeasurementInstallationStreet(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            preMeasurementId = UUID.randomUUID().toString(),
+            address = "RUA DAS ACÁCIAS, 123 - CENTRO",
+            priority = true,
+            latitude = -23.550520,
+            longitude = -46.633308,
+            lastPower = "220V",
+            photoUrl = "https://example.com/fotos/rua_acacias.jpg",
+            photoExpiration = Instant.now().plusSeconds(86400).epochSecond,
+            objectUri = "content://photos/rua_acacias",
+            status = "PENDING",
+            installationPhotoUri = "content://photos/rua_acacias_instalacao"
+        ),
+        PreMeasurementInstallationStreet(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            preMeasurementId = UUID.randomUUID().toString(),
+            address = "AVENIDA BRASIL, 450 - JARDIM DAS FLORES",
+            priority = false,
+            latitude = -23.555000,
+            longitude = -46.640000,
+            lastPower = "110V",
+            photoUrl = "https://example.com/fotos/av_brasil.jpg",
+            photoExpiration = Instant.now().plusSeconds(172800).epochSecond,
+            objectUri = "content://photos/av_brasil",
+            status = "PENDING",
+            installationPhotoUri = "content://photos/av_brasil_instalacao"
+        ),
+        PreMeasurementInstallationStreet(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            preMeasurementId = UUID.randomUUID().toString(),
+            address = "RUA DAS PALMEIRAS, 789 - PARQUE VERDE",
+            priority = true,
+            latitude = -23.560000,
+            longitude = -46.650000,
+            lastPower = "127V",
+            photoUrl = "https://example.com/fotos/rua_palmeiras.jpg",
+            photoExpiration = Instant.now().plusSeconds(259200).epochSecond,
+            objectUri = "content://photos/rua_palmeiras",
+            status = "PENDING",
+            installationPhotoUri = "content://photos/rua_palmeiras_instalacao"
         )
+    )
+
+
+
+    val mockInstallationItems = listOf(
+        PreMeasurementInstallationItem(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            materialStockId = 1001L,
+            contractItemId = 2001L,
+            materialName = "CABO DE ENERGIA",
+            materialQuantity = "50",
+            requestUnit = "M",
+            specs = "10MM",
+            executedQuantity = "0"
+        ),
+        PreMeasurementInstallationItem(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            materialStockId = 1002L,
+            contractItemId = 2002L,
+            materialName = "POSTE DE CONCRETO",
+            materialQuantity = "3",
+            requestUnit = "UN",
+            specs = "9M",
+            executedQuantity = "0"
+        ),
+        PreMeasurementInstallationItem(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            materialStockId = 1003L,
+            contractItemId = 2003L,
+            materialName = "LUMINÁRIA LED",
+            materialQuantity = "5",
+            requestUnit = "UN",
+            specs = "150W",
+            executedQuantity = "0"
+        ),
+        PreMeasurementInstallationItem(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            materialStockId = 1004L,
+            contractItemId = 2004L,
+            materialName = "PARAFUSO E ARRUELA",
+            materialQuantity = "100",
+            requestUnit = "UN",
+            specs = "M8",
+            executedQuantity = "0"
+        ),
+        PreMeasurementInstallationItem(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            materialStockId = 1005L,
+            contractItemId = 2005L,
+            materialName = "DISJUNTOR",
+            materialQuantity = "2",
+            requestUnit = "UN",
+            specs = "40A",
+            executedQuantity = "0"
+        ),
+        PreMeasurementInstallationItem(
+            preMeasurementStreetId = UUID.randomUUID().toString(),
+            materialStockId = 1006L,
+            contractItemId = 2006L,
+            materialName = "TERMINAL DE CABO",
+            materialQuantity = "200",
+            requestUnit = "UN",
+            specs = "10MM",
+            executedQuantity = "0"
+        )
+    )
+
 
 
 
 
     Content(
-        executions = values,
-        onNavigateToHome = { },
-        onNavigateToMenu = { },
-        onNavigateToProfile = { },
-        onNavigateToNotifications = { },
-        context = fakeContext,
-        navController = rememberNavController(),
-        notificationsBadge = "12",
-        isLoading = false,
-        pSelected = BottomBar.HOME.value,
-        select = {},
-        error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
-        refresh = {},
-        contractor = "contractor"
+        viewModel = PreMeasurementInstallationViewModel(
+            repository = null,
+            mockStreets = mockInstallationStreets,
+            mockItems = mockInstallationItems
+        ),
+        navController =  rememberNavController()
     )
 }
 

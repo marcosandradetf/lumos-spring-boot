@@ -1,86 +1,136 @@
 package com.lumos.viewmodel
 
-import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
+import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
+import com.lumos.navigation.Routes
 import com.lumos.repository.PreMeasurementInstallationRepository
+import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PreMeasurementInstallationViewModel(
-    private val repository: PreMeasurementInstallationRepository,
+    private val repository: PreMeasurementInstallationRepository?,
 
     // -> Param to utilize preview
-    mockStreets: List<PreMeasurementInstallationStreet> = emptyList()
+    mockStreets: List<PreMeasurementInstallationStreet> = emptyList(),
+    mockItems: List<PreMeasurementInstallationItem> = emptyList(),
+    mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
-) : ViewModel() {
+    ) : ViewModel() {
     // -> Bellow Properties to control installations
     var installationID: String? = null
-    val contractor: String? = null
-    val installationStreets = mutableStateOf(mockStreets)
+    var contractor: String? = null
+    var currentInstallationStreets by mutableStateOf(mockStreets)
+    var currentInstallationItems by mutableStateOf(mockItems)
 
-    val currentStreetId: String? = null
-    val currentStreet: PreMeasurementInstallationStreet? = null
+    var currentStreetId: String? = null
+    var currentStreet by mutableStateOf<PreMeasurementInstallationStreet?>(mockCurrentStreet)
 
     // -> Bellow Properties to UI State
-    private val _loading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _loading
+    var loading by mutableStateOf(false)
+    var alertModal by mutableStateOf(false)
+    var showExpanded by mutableStateOf(false)
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
+    var message by mutableStateOf<String?>(null)
+    var hasPosted by mutableStateOf(false)
 
-    // -> Bellow properties to actions or get/sets
-    fun setStreets() {
+    // -> control viewModel
+
+    init {
         viewModelScope.launch {
-            _loading.value = true
-            _errorMessage.value = null
-            try {
-                installationStreets.value = repository.getStreets(installationID)
-            } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Erro ao carregar as ruas da pré-medição"
-            } finally {
-                _loading.value = false
+            NavEvents.route.collect { route ->
+                when (route) {
+                    Routes.INSTALLATION_HOLDER -> {
+                        installationID = null
+                        contractor = null
+                        currentStreetId = null
+                        currentStreet = null
+                        currentInstallationStreets = emptyList()
+                        currentInstallationItems = emptyList()
+                    }
+
+                    Routes.PRE_MEASUREMENT_INSTALLATION_STREETS -> {
+                        currentStreetId = null
+                        currentStreet = null
+                        currentInstallationItems = emptyList()
+                    }
+                }
             }
         }
     }
 
-    fun setStreet(paramCurrentStreetId: String) {
-        currentStreetId = paramCurrentStreetId
-        currentStreet = installationStreets.find { it.preMeasurementStreetId == paramCurrentStreetId }
+    // -> Bellow properties to actions or get/sets
+    fun setStreets() {
+        viewModelScope.launch {
+            loading = true
+            message = null
+            try {
+                withContext(Dispatchers.IO) {
+                    repository?.setInstallationStatus(installationID ?: "")
+                    currentInstallationStreets = repository?.getStreets(installationID)!!
+                }
+            } catch (e: Exception) {
+                message = e.message ?: "Erro ao carregar as ruas da pré-medição"
+            } finally {
+                loading = false
+            }
+        }
+    }
+
+    fun setStreetAndItems(paramCurrentStreetId: String) {
+        viewModelScope.launch {
+            loading = true
+            message = null
+            try {
+                currentStreetId = paramCurrentStreetId
+                currentStreet = currentInstallationStreets.find { it.preMeasurementStreetId == paramCurrentStreetId }
+
+                withContext(Dispatchers.IO) {
+                    repository?.setStreetStatus(paramCurrentStreetId, "IN_PROGRESS")
+                    currentInstallationItems = repository?.getItems(paramCurrentStreetId)!!
+                }
+            } catch (e: Exception) {
+                message = e.message ?: "Erro ao carregar as ruas da pré-medição"
+            } finally {
+                loading = false
+
+            }
+        }
     }
 
     fun syncExecutions() {
         viewModelScope.launch(Dispatchers.IO) {
-            _loading.value = true
-            _errorMessage.value = null
+            loading = true
+            message = null
             try {
-                val response = repository.syncExecutions()
+                val response = repository?.syncExecutions()!!
                 when (response) {
-                    is RequestResult.Timeout -> _errorMessage.value =
+                    is RequestResult.Timeout -> message =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui - ou puxe para atualizar agora mesmo."
 
-                    is RequestResult.NoInternet -> _errorMessage.value =
+                    is RequestResult.NoInternet -> message =
                         "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
 
-                    is ServerError -> _errorMessage.value = response.message
-                    is RequestResult.Success -> _errorMessage.value = null
-                    is RequestResult.UnknownError -> _errorMessage.value = null
+                    is ServerError -> message = response.message
+                    is RequestResult.Success -> message = null
+                    is RequestResult.UnknownError -> message = null
                     is RequestResult.SuccessEmptyBody -> {
                         ServerError(204, "Resposta 204 inesperada")
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Erro inesperado."
+                message = e.message ?: "Erro inesperado."
             } finally {
-                _loading.value = false
+                loading = false
             }
         }
     }
@@ -89,7 +139,7 @@ class PreMeasurementInstallationViewModel(
     fun setExecutionStatus(streetId: String, status: String) {
         viewModelScope.launch {
             try {
-                repository.setExecutionStatus(streetId, status)
+                repository?.setStreetStatus(streetId, status)
             } catch (e: Exception) {
                 Log.e("Error setExecutionStatus", e.message.toString())
             }
@@ -101,7 +151,7 @@ class PreMeasurementInstallationViewModel(
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    repository.setPhotoUri(photoUri, streetId)
+                    repository?.setPhotoUri(photoUri, streetId)
                 }
             } catch (e: Exception) {
                 Log.e("Error setPhotoUri", e.message.toString())
@@ -115,8 +165,42 @@ class PreMeasurementInstallationViewModel(
 
     fun isPhotoUrlExpired(): Boolean {
         val now = System.currentTimeMillis() / 1000
-        return now >= currentStreet?.photoExpiration ?: 0L
+        return now >= (currentStreet?.photoExpiration ?: 0L)
     }
+
+    fun markAsFinished(preMeasurementInstallationId: String) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    repository?.markAsFinished(preMeasurementInstallationId)
+                    currentStreet = null
+                }
+            } catch (e: IllegalStateException) {
+                null
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    fun setInstallationItemQuantity(quantityExecuted: String, materialStockId: Long) {
+        viewModelScope.launch {
+            loading = true
+            try {
+                currentInstallationItems = currentInstallationItems.filter { it.materialStockId != materialStockId }
+                withContext(Dispatchers.IO) {
+                    repository?.setInstallationItemQuantity(currentStreetId, materialStockId, quantityExecuted)
+                }
+                message = "Item concluído com sucesso"
+            } catch (e: Exception) {
+                message = e.message ?: ""
+            } finally {
+                loading = false
+            }
+        }
+    }
+
+}
 
 
 //    fun finishAndCheckPostExecution(
@@ -161,4 +245,4 @@ class PreMeasurementInstallationViewModel(
 //    }
 
 
-}
+

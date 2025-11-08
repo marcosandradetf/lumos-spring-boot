@@ -9,18 +9,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
-import com.lumos.repository.DirectExecutionRepository
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
-import com.lumos.domain.model.InstallationView
 import com.lumos.domain.model.ReserveMaterialJoin
+import com.lumos.repository.DirectExecutionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -30,10 +26,6 @@ class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository,
 
     ) : ViewModel() {
-    val directExecutions: StateFlow<List<InstallationView>> = repository.getFlowDirectExecutions()
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
@@ -89,31 +81,31 @@ class DirectExecutionViewModel(
         isLoading = false
     }
 
-    fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _syncError.value = null
-            try {
-                isLoading = true
-                val response = repository.checkUpdate(currentVersion)
-                val result = when (response) {
-                    is RequestResult.Timeout -> null to null
-                    is RequestResult.NoInternet -> null to null
-                    is ServerError -> null to null
-                    is RequestResult.UnknownError -> null to null
-                    is RequestResult.SuccessEmptyBody -> null to null
-                    is RequestResult.Success -> response.data.latestVersionCode to response.data.apkUrl
-                }
-
-                withContext(Dispatchers.Main) {
-                    callback(result.first, result.second)
-                }
-            } catch (e: Exception) {
-                isLoading = false
-            } finally {
-                isLoading = false
-            }
-        }
-    }
+//    fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            _syncError.value = null
+//            try {
+//                isLoading = true
+//                val response = repository.checkUpdate(currentVersion)
+//                val result = when (response) {
+//                    is RequestResult.Timeout -> null to null
+//                    is RequestResult.NoInternet -> null to null
+//                    is ServerError -> null to null
+//                    is RequestResult.UnknownError -> null to null
+//                    is RequestResult.SuccessEmptyBody -> null to null
+//                    is RequestResult.Success -> response.data.latestVersionCode to response.data.apkUrl
+//                }
+//
+//                withContext(Dispatchers.Main) {
+//                    callback(result.first, result.second)
+//                }
+//            } catch (e: Exception) {
+//                isLoading = false
+//            } finally {
+//                isLoading = false
+//            }
+//        }
+//    }
 
     fun syncExecutions() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -230,6 +222,7 @@ class DirectExecutionViewModel(
             try {
                 isLoading = true
                 initializeExecution(directExecutionId, description)
+                repository.setStatus(directExecutionId, "IN_PROGRESS")
                 reserves = getReservesOnce(directExecutionId)
                 if(reserves.isEmpty()) {
                     markAsFinished(directExecutionId)

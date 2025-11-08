@@ -245,4 +245,22 @@ object SyncManager {
         }
     }
 
+    suspend fun markPreMeasurementInstallationAsFinished(
+        context: Context,
+        db: AppDatabase,
+        preMeasurementInstallationId: String
+    ) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.FINISH_PRE_MEASUREMENT_INSTALLATION, null, preMeasurementInstallationId)
+        if (count == 0) {
+
+            val syncItem = SyncQueueEntity(
+                relatedUuid = preMeasurementInstallationId,
+                type = SyncTypes.FINISH_PRE_MEASUREMENT_INSTALLATION,
+                priority = 20
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
 }
