@@ -41,7 +41,7 @@ class PreMeasurementInstallationViewModel(
     var showExpanded by mutableStateOf(false)
 
     var message by mutableStateOf<String?>(null)
-    var hasPosted by mutableStateOf(false)
+    var hasPosted by mutableStateOf(true)
 
     // -> control viewModel
 
@@ -200,49 +200,27 @@ class PreMeasurementInstallationViewModel(
         }
     }
 
+    fun submitStreet() {
+        viewModelScope.launch {
+            loading = true
+            try {
+                withContext(Dispatchers.IO) {
+                    repository?.queueSubmitStreet(currentStreet)
+                }
+                currentInstallationStreets = currentInstallationStreets.filter { it.preMeasurementStreetId != currentStreetId }
+                hasPosted = true
+                currentStreetId = null
+                currentStreet = null
+            } catch (e: Exception) {
+                message = e.message ?: ""
+            } finally {
+                loading = false
+            }
+        }
+    }
+
+    fun submitInstallation() {
+        TODO()
+    }
+
 }
-
-
-//    fun finishAndCheckPostExecution(
-//        reserveId: Long,
-//        quantityExecuted: Double,
-//        streetId: Long,
-//        context: Context,
-//        hasPosted: Boolean,
-//        onReservesUpdated: (List<IndirectReserve>) -> Unit,
-//        onPostExecuted: () -> Unit,
-//        onError: (String) -> Unit = {}
-//    ) {
-//        viewModelScope.launch {
-//            _isLoadingReserves.value = true
-//            try {
-//                val reserves = withContext(Dispatchers.IO) {
-//                    repository.finishMaterial(reserveId, quantityExecuted)
-//                    repository.getReservesOnce(streetId)
-//                }
-//
-//                if (!hasPosted && reserves.isEmpty()) {
-//                    try {
-//                        withContext(Dispatchers.IO) {
-//                            repository.queuePostExecution(streetId)
-//                        }
-//                        onPostExecuted()
-//                    } catch (e: Exception) {
-//                        Log.e("ViewModel", "Erro ao enviar execução", e)
-//                        onError("Erro ao enviar execução: ${e.localizedMessage}")
-//                    }
-//                } else {
-//                    onReservesUpdated(reserves)
-//                }
-//
-//            } catch (e: Exception) {
-//                Log.e("ViewModel", "Erro ao finalizar material ou buscar dados", e)
-//                onError("Erro ao finalizar material: ${e.localizedMessage}")
-//            } finally {
-//                _isLoadingReserves.value = false
-//            }
-//        }
-//    }
-
-
-

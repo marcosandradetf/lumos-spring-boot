@@ -39,32 +39,18 @@ fun UserAction(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 48.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(horizontal = 24.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-
-        Spacer(modifier = Modifier.height(32.dp))
-
         // 🎯 Feedback visual principal
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.TaskAlt,
-                    contentDescription = "Tarefa concluída",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(56.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Rounded.TaskAlt,
+                contentDescription = "Tarefa concluída",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(56.dp)
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -94,15 +80,20 @@ fun UserAction(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 🔹 Ação principal
-            Button(
-                onClick = finish,
+
+            // 🔺 Ação de risco
+            OutlinedButton(
+                onClick = cancel,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(32.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
             ) {
-                Text("Salvar e finalizar")
+                Text("Cancelar e sair")
             }
 
             // 🔸 Ação secundária
@@ -110,26 +101,22 @@ fun UserAction(
                 onClick = restart,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(50.dp),
+                shape = RoundedCornerShape(32.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
             ) {
                 Text("Recomeçar")
             }
 
-            // 🔺 Ação de risco
-            OutlinedButton(
-                onClick = cancel,
+            // 🔹 Ação principal
+            Button(
+                onClick = finish,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
+                    .height(50.dp),
+                shape = RoundedCornerShape(32.dp)
             ) {
-                Text("Cancelar e sair")
+                Text("Salvar e finalizar")
             }
         }
 

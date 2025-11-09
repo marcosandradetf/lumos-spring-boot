@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.lumos.domain.model.InstallationItemRequest
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
@@ -122,6 +123,9 @@ interface PreMeasurementInstallationDao {
         materialStockId: Long,
         quantityExecuted: String
     )
+
+    @Update
+    suspend fun updateStreet(currentStreet: PreMeasurementInstallationStreet)
 
 }
 

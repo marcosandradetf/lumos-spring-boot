@@ -263,4 +263,22 @@ object SyncManager {
         }
     }
 
+    suspend fun queueSubmitPreMeasurementInstallationStreet(
+        context: Context,
+        db: AppDatabase,
+        preMeasurementInstallationStreetId: String
+    ) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET, null, preMeasurementInstallationStreetId)
+        if (count == 0) {
+
+            val syncItem = SyncQueueEntity(
+                relatedUuid = preMeasurementInstallationStreetId,
+                type = SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET,
+                priority = 20
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
 }

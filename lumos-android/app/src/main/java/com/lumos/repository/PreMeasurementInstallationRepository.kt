@@ -3,6 +3,7 @@ package com.lumos.repository
 import android.app.Application
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.lumos.api.ApiExecutor
 import com.lumos.api.ApiService
@@ -262,7 +263,25 @@ class PreMeasurementInstallationRepository(
         materialStockId: Long,
         quantityExecuted: String
     ) {
-        db.preMeasurementInstallationDao().setInstallationItemQuantity(currentStreetId, materialStockId, quantityExecuted)
+        db.preMeasurementInstallationDao()
+            .setInstallationItemQuantity(currentStreetId, materialStockId, quantityExecuted)
+    }
+
+    suspend fun queueSubmitStreet(currentStreet: PreMeasurementInstallationStreet?) {
+        if (currentStreet == null) return
+        val currentStreetId = currentStreet.preMeasurementStreetId
+        val items = db.preMeasurementInstallationDao().getItems(currentStreetId)
+        db.withTransaction {
+            items.forEach {
+                db.stockDao().debitStock(it.materialStockId, it.executedQuantity)
+            }
+            db.preMeasurementInstallationDao().updateStreet(currentStreet.copy(status = "FINISHED"))
+        }
+        SyncManager.queueSubmitPreMeasurementInstallationStreet(
+            app.applicationContext,
+            db,
+            currentStreetId
+        )
     }
 
 }

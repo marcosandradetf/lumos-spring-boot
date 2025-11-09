@@ -11,6 +11,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,6 +48,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -112,6 +114,7 @@ fun MaterialsContent(
     navController: NavHostController,
     context: Context,
 ) {
+    val currentStreets = viewModel.currentInstallationStreets
     val currentStreet = viewModel.currentStreet
     val currentItems = viewModel.currentInstallationItems
     val hasPosted = viewModel.hasPosted
@@ -301,71 +304,15 @@ fun MaterialsContent(
                         item {
                             UserAction(
                                 finish = {
-
+                                    viewModel.submitStreet()
                                 },
                                 restart = {
-
+                                    viewModel.setStreetAndItems(viewModel.currentStreetId ?: "")
                                 },
                                 cancel = {
-
+                                    navController.popBackStack()
                                 }
                             )
-                        }
-                    }
-                }
-
-
-                FloatingActionButton(
-                    onClick = {
-                        val newUri = createFile() // Gera um novo Uri
-                        fileUri.value = newUri // Atualiza o estado
-                        launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
-                        .padding(16.dp)
-                ) {
-                    AnimatedVisibility(visible = imageSaved.value) {
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                ImageRequest.Builder(LocalContext.current)
-                                    .data(fileUri.value)
-                                    .crossfade(true) // Para um fade suave
-                                    .build()
-                            ),
-                            contentDescription = "Imagem da foto",
-                            modifier = Modifier
-                                .size(70.dp)
-                                .padding(0.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-
-                    AnimatedVisibility(visible = !imageSaved.value) {
-                        Box(
-                            modifier = Modifier
-                                .clip(
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .background(MaterialTheme.colorScheme.primaryContainer)
-                                .padding(10.dp)
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    contentDescription = null,
-                                    imageVector = Icons.Rounded.PhotoCamera,
-                                    modifier = Modifier.size(30.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    "Tirar Foto",
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    fontSize = 12.sp
-                                )
-                            }
-
                         }
                     }
                 }
@@ -402,90 +349,154 @@ fun MaterialsContent(
                     }
                 }
 
+                AnimatedVisibility(visible = currentItems.isNotEmpty()) {
 
-                FloatingActionButton(
-                    onClick = {
-
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(currentStreet?.photoUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Imagem do botão",
+                    FloatingActionButton(
+                        onClick = {
+                            val newUri = createFile() // Gera um novo Uri
+                            fileUri.value = newUri // Atualiza o estado
+                            launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
+                        },
                         modifier = Modifier
-                            .size(70.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.primary),
-                    )
+                            .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
+                            .padding(16.dp)
+                    ) {
+                        AnimatedVisibility(visible = imageSaved.value) {
+                            Image(
+                                painter = rememberAsyncImagePainter(
+                                    ImageRequest.Builder(LocalContext.current)
+                                        .data(fileUri.value)
+                                        .crossfade(true) // Para um fade suave
+                                        .build()
+                                ),
+                                contentDescription = "Imagem da foto",
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .padding(0.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        AnimatedVisibility(visible = !imageSaved.value) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                    .padding(10.dp)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        contentDescription = null,
+                                        imageVector = Icons.Rounded.PhotoCamera,
+                                        modifier = Modifier.size(30.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        "Tirar Foto",
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                            }
+                        }
+                    }
+
+
+                    FloatingActionButton(
+                        onClick = {
+
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp),
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(currentStreet?.photoUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Imagem do botão",
+                            modifier = Modifier
+                                .size(70.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.primary),
+                        )
+                    }
                 }
 
             } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 200.dp),
+                        .padding(horizontal = 24.dp, vertical = 48.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Spacer(modifier = Modifier.height(10.dp))
-
+                    // 🎯 Feedback visual principal
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Rounded.TaskAlt,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(72.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surface,
-                                    shape = CircleShape
-                                )
-                                .padding(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            contentDescription = "Tarefa concluída",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(56.dp)
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         Text(
-                            text = "Missão cumprida!",
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "Missão Cumprida!",
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
+                            text = if (currentStreets.isEmpty()) "Nessa istalação, Todas as ruas foram concluídas com sucesso"
+                            else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
 
-                    Button(
-                        onClick = {
-                            navController.popBackStack()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f),
-                        colors = ButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary,
-                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-                        )
+
+                    // 🧭 Grupo de ações
+                    Column(
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(
-                            "Ok, voltar a tela anterior"
-                        )
+                        // 🔹 Ação principal
+                        Button(
+                            onClick = {
+                                if (currentStreets.isEmpty()) {
+                                    viewModel.submitInstallation()
+                                } else {
+                                    navController.popBackStack()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(32.dp)
+                        ) {
+                            Text(
+                                if (currentStreets.isEmpty()) "Salvar e finalizar"
+                                else "Selecionar Próxima Rua"
+                            )
+                        }
                     }
+
                 }
             }
         }
@@ -624,7 +635,10 @@ fun MaterialItem(
             Button(
                 enabled = !loading,
                 shape = RoundedCornerShape(10.dp),
-                onClick = { confirmModal = true },
+                onClick = {
+                    finish(quantityExecuted.toString(), material.materialStockId)
+//                    confirmModal = true
+                },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text("Concluir")
