@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,9 +21,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NotListedLocation
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.NotListedLocation
 import androidx.compose.material.icons.filled.Power
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SentimentVerySatisfied
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -76,10 +82,9 @@ fun InstallationHolderScreen(
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
 
-    val executions by viewRepository.getFlowInstallations("PENDING").collectAsState(emptyList())
+    val executions by viewRepository.getFlowInstallations(listOf("PENDING", "IN_PROGRESS")).collectAsState(emptyList())
 
     val isSyncing = directExecutionViewModel.isLoading
-
     val error1 by directExecutionViewModel.syncError.collectAsState()
     val error2 = preMeasurementInstallationViewModel.message
 
@@ -130,7 +135,7 @@ fun InstallationHolderScreen(
                 val directExecutionId = id.toLong()
                 directExecutionViewModel.markAsFinished(directExecutionId)
             } catch (_: Exception) {
-                preMeasurementInstallationViewModel.markAsFinished(id)
+                preMeasurementInstallationViewModel.submitInstallation()
             }
         },
         stockDataSize = directExecutionViewModel.stockCount
@@ -227,20 +232,16 @@ fun ContentCitiesScreen(
                 items(executions) { execution -> // Iteração na lista
 
                     Card(
-                        shape = RoundedCornerShape(5.dp),
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .padding(3.dp)
+                            .fillMaxWidth(0.95f)
+                            .padding(vertical = 6.dp)
                             .clickable {
                                 if (stockDataSize > 0)
-                                    select(
-                                        execution.id,
-                                        execution.type,
-                                        execution.contractor
-                                    )
+                                    select(execution.id, execution.type, execution.contractor)
                                 else showModal = true
                             },
-                        elevation = CardDefaults.cardElevation(1.dp),
+                        elevation = CardDefaults.cardElevation(3.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
@@ -249,131 +250,162 @@ fun ContentCitiesScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(IntrinsicSize.Min) // Isso é o truque!
+                                .padding(12.dp)
                         ) {
+                            // Linha e ícone lateral
                             Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxHeight()
+                                modifier = Modifier.padding(end = 16.dp)
                             ) {
-                                // Linha vertical com bolinha no meio
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxHeight(0.5f)
-                                        .padding(start = 20.dp)
                                         .width(4.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
+                                        .height(50.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(MaterialTheme.colorScheme.primary)
                                 )
 
-                                // Bolinha com ícone (no meio da linha)
+                                Spacer(modifier = Modifier.height(8.dp))
+
                                 Box(
                                     modifier = Modifier
-                                        .offset(x = 10.dp) // posiciona sobre a linha
-                                        .size(24.dp) // tamanho do círculo
+                                        .size(28.dp)
                                         .clip(CircleShape)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary
-                                        ),
+                                        .background(MaterialTheme.colorScheme.primary),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Power,
                                         contentDescription = "Local",
                                         tint = Color.White,
-                                        modifier = Modifier.size(
-                                            18.dp
-                                        )
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
 
-
+                            // Conteúdo principal
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = execution.contractor,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.SemiBold
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
 
+                                        // Tipo de execução (chip visual)
+                                        val (tagText, tagColor, tagIcon) = when (execution.type) {
+                                            "PreMeasurementInstallation" -> Triple(
+                                                "Com Pré-Medição",
+                                                MaterialTheme.colorScheme.primaryContainer,
+                                                Icons.Default.Map
+                                            )
+                                            else -> Triple(
+                                                "Sem Pré-Medição",
+                                                MaterialTheme.colorScheme.tertiaryContainer,
+                                                Icons.AutoMirrored.Filled.NotListedLocation
+                                            )
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(50))
+                                                .background(tagColor)
+                                                .padding(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
-                                        Row {
+                                            Icon(
+                                                imageVector = tagIcon,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(14.dp),
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
                                             Text(
-                                                text = execution.contractor,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.onSurface,
+                                                text = tagText,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                         }
                                     }
 
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(5.dp))
-                                                .background(MaterialTheme.colorScheme.secondaryContainer)
-                                                .padding(5.dp)
-                                        ) {
-                                            Text(
-                                                text = Utils.translateStatus(execution.executionStatus),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.Medium,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                fontSize = 12.sp
-                                            )
-                                        }
-                                        if (execution.type != "PreMeasurementInstallation") {
-                                            var expanded by remember(execution.id) {
-                                                mutableStateOf(
-                                                    false
-                                                )
-                                            }
+                                    // Menu (somente se não for pré-medição)
+                                    if (execution.type != "PreMeasurementInstallation") {
+                                        var expanded by remember(execution.id) { mutableStateOf(false) }
+
+                                        Box {
                                             IconButton(onClick = { expanded = true }) {
                                                 Icon(
                                                     Icons.Default.MoreVert,
                                                     contentDescription = "Mais opções"
                                                 )
-                                                DropdownMenu(
-                                                    expanded = expanded,
-                                                    onDismissRequest = { expanded = false },
-                                                ) {
-                                                    DropdownMenuItem(
-                                                        onClick = {
-                                                            id = execution.id
-                                                            expanded = false
-                                                            openModal = true
-                                                        },
-                                                        text = { Text("Marcar como finalizado") },
-                                                        leadingIcon = {
-                                                            id
-                                                            Icon(
-                                                                contentDescription = null,
-                                                                imageVector = Icons.Default.CloudUpload
-                                                            )
-                                                        }
-                                                    )
+                                            }
 
-                                                }
+                                            DropdownMenu(
+                                                expanded = expanded,
+                                                onDismissRequest = { expanded = false },
+                                            ) {
+                                                DropdownMenuItem(
+                                                    onClick = {
+                                                        id = execution.id
+                                                        expanded = false
+                                                        openModal = true
+                                                    },
+                                                    text = { Text("Marcar como finalizado") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            imageVector = Icons.Default.CloudUpload,
+                                                            contentDescription = null
+                                                        )
+                                                    }
+                                                )
                                             }
                                         }
                                     }
+                                }
 
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Status (chip secundário)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(50))
+                                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = Utils.translateStatus(execution.executionStatus),
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                fontWeight = FontWeight.Medium
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
+
+
                 }
             }
 

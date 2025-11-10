@@ -145,7 +145,7 @@ class HomeViewModel(
 
         installationsJob = viewModelScope.launch {
             try {
-                viewRepository.getFlowInstallations("PENDING")
+                viewRepository.getFlowInstallations(listOf("PENDING"))
                     .flowOn(Dispatchers.IO)
                     .collectLatest { fetched ->
                         _installations.value = fetched

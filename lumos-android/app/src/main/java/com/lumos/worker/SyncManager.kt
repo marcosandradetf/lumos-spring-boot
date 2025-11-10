@@ -138,21 +138,6 @@ object SyncManager {
         }
     }
 
-    suspend fun queuePostIndirectExecution(context: Context, db: AppDatabase, streetId: Long) {
-        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_INDIRECT_EXECUTION, streetId)
-        if (count == 0) {
-
-            val syncItem = SyncQueueEntity(
-                relatedId = streetId,
-                type = SyncTypes.POST_INDIRECT_EXECUTION,
-                priority = 19
-            )
-            db.queueDao().insert(syncItem)
-            enqueueSync(context)
-        }
-
-    }
-
     suspend fun queuePostDirectExecution(context: Context, db: AppDatabase, streetId: Long) {
         val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_DIRECT_EXECUTION, streetId)
         if (count == 0) {
@@ -245,24 +230,6 @@ object SyncManager {
         }
     }
 
-    suspend fun markPreMeasurementInstallationAsFinished(
-        context: Context,
-        db: AppDatabase,
-        preMeasurementInstallationId: String
-    ) {
-        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.FINISH_PRE_MEASUREMENT_INSTALLATION, null, preMeasurementInstallationId)
-        if (count == 0) {
-
-            val syncItem = SyncQueueEntity(
-                relatedUuid = preMeasurementInstallationId,
-                type = SyncTypes.FINISH_PRE_MEASUREMENT_INSTALLATION,
-                priority = 20
-            )
-            db.queueDao().insert(syncItem)
-            enqueueSync(context)
-        }
-    }
-
     suspend fun queueSubmitPreMeasurementInstallationStreet(
         context: Context,
         db: AppDatabase,
@@ -274,6 +241,23 @@ object SyncManager {
             val syncItem = SyncQueueEntity(
                 relatedUuid = preMeasurementInstallationStreetId,
                 type = SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET,
+                priority = 17
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
+    suspend fun queueSubmitPreMeasurementInstallation(
+        context: Context,
+        db: AppDatabase,
+        preMeasurementInstallationId: String
+    ) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION, null, preMeasurementInstallationId)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                relatedUuid = preMeasurementInstallationId,
+                type = SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION,
                 priority = 20
             )
             db.queueDao().insert(syncItem)

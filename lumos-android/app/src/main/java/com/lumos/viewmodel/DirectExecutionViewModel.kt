@@ -13,6 +13,7 @@ import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.ReserveMaterialJoin
+import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ import java.util.UUID
 
 class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository,
+    private val contractRepository: ContractRepository?
 
     ) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)

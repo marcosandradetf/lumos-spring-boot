@@ -80,6 +80,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.navigation.BottomBar
@@ -121,6 +122,7 @@ fun MaterialsContent(
     val loading = viewModel.loading
     val alertModal = viewModel.alertModal
     val showExpanded = viewModel.showExpanded
+    val checkBalance = viewModel.checkBalance
 
     val fileUri: MutableState<Uri?> = remember {
         mutableStateOf(
@@ -173,14 +175,20 @@ fun MaterialsContent(
             modifier = Modifier.fillMaxSize()
         ) {
             if (viewModel.message != null) {
-                snackBar(viewModel.message!!, null) {
+                val item = viewModel.message == "Item concluído com sucesso"
+                snackBar(viewModel.message!!, if (item) "Desfazer" else null) {
                     viewModel.message = null
+                    if (item && viewModel.lastItem != null) {
+                        viewModel.currentInstallationItems =
+                            viewModel.currentInstallationItems + viewModel.lastItem!!
+                        viewModel.lastItem = null
+                        viewModel.message = "Operação desfeita com sucesso."
+                    }
                 }
                 viewModel.message = null
             }
 
             if (!hasPosted) {
-
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -188,7 +196,6 @@ fun MaterialsContent(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
                 ) {
-
                     item {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -291,7 +298,17 @@ fun MaterialsContent(
                         ) {
                             MaterialItem(
                                 material = it,
-                                finish = { quantityExecuted, materialStockId ->
+                                checkBalance = checkBalance,
+                                finish = { quantityExecuted, materialStockId, stockQuantity, currentBalance ->
+                                    if (BigDecimal(quantityExecuted) > BigDecimal(stockQuantity)) {
+                                        viewModel.message =
+                                            "Não há estoque disponível para esse item."
+                                        return@MaterialItem
+                                    } else if(checkBalance && BigDecimal(quantityExecuted) > BigDecimal(currentBalance)) {
+                                        viewModel.message =
+                                            "Não há saldo contratual disponível para esse item."
+                                        return@MaterialItem
+                                    }
                                     viewModel.setInstallationItemQuantity(
                                         quantityExecuted,
                                         materialStockId
@@ -461,7 +478,7 @@ fun MaterialsContent(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = if (currentStreets.isEmpty()) "Nessa istalação, Todas as ruas foram concluídas com sucesso"
+                            text = if (currentStreets.isEmpty()) "Nessa istalação, Todas as ruas foram concluídas com sucesso."
                             else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -477,10 +494,26 @@ fun MaterialsContent(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // 🔹 Ação principal
+                        if (currentStreets.isEmpty()) {
+                            OutlinedButton(
+                                onClick = {
+
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(32.dp)
+                            ) {
+                                Text(
+                                    "Coletar assinatura"
+                                )
+                            }
+                        }
+
                         Button(
                             onClick = {
                                 if (currentStreets.isEmpty()) {
-                                    viewModel.submitInstallation()
+                                    viewModel.openConfirmation = true
                                 } else {
                                     navController.popBackStack()
                                 }
@@ -499,6 +532,18 @@ fun MaterialsContent(
 
                 }
             }
+
+            if (viewModel.openConfirmation) {
+                Confirm(
+                    body = "Deseja confirmar o salvamento dessa instalação?",
+                    confirm = {
+                        viewModel.submitInstallation()
+                    },
+                    cancel = {
+                        viewModel.openConfirmation = false
+                    }
+                )
+            }
         }
 
     }
@@ -506,8 +551,9 @@ fun MaterialsContent(
 
 @Composable
 fun MaterialItem(
-    material: PreMeasurementInstallationItem,
-    finish: (String, Long) -> Unit,
+    material: ItemView,
+    checkBalance: Boolean,
+    finish: (String, Long, String, String) -> Unit,
     loading: Boolean
 ) {
     var confirmModal by remember { mutableStateOf(false) }
@@ -542,7 +588,11 @@ fun MaterialItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Quantidade levantada na rua: ${material.materialQuantity}",
+                text = """
+                    Quantidade levantada na rua: ${material.materialQuantity}
+                    Quantidade em estoque: ${material.stockQuantity}
+                    ${if(checkBalance) "Saldo contratual: " +  material.stockQuantity else ""}
+                """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -636,8 +686,12 @@ fun MaterialItem(
                 enabled = !loading,
                 shape = RoundedCornerShape(10.dp),
                 onClick = {
-                    finish(quantityExecuted.toString(), material.materialStockId)
-//                    confirmModal = true
+                    finish(
+                        quantityExecuted.toString(),
+                        material.materialStockId,
+                        material.stockQuantity,
+                        material.currentBalance
+                    )
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
@@ -651,7 +705,12 @@ fun MaterialItem(
             body = "Deseja confirmar a execução de $quantityExecuted ${material.requestUnit}?",
             confirm = {
                 confirmModal = false
-                finish(quantityExecuted.toString(), material.materialStockId)
+                finish(
+                    quantityExecuted.toString(),
+                    material.materialStockId,
+                    material.stockQuantity,
+                    material.currentBalance
+                )
             },
             cancel = {
                 confirmModal = false
@@ -711,7 +770,7 @@ fun PrevMScreen() {
 
 
     val mockInstallationItems = listOf(
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1001L,
             contractItemId = 2001L,
@@ -721,7 +780,7 @@ fun PrevMScreen() {
             specs = "10MM",
             executedQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1002L,
             contractItemId = 2002L,
@@ -731,7 +790,7 @@ fun PrevMScreen() {
             specs = "9M",
             executedQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1003L,
             contractItemId = 2003L,
@@ -741,7 +800,7 @@ fun PrevMScreen() {
             specs = "150W",
             executedQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1004L,
             contractItemId = 2004L,
@@ -751,7 +810,7 @@ fun PrevMScreen() {
             specs = "M8",
             executedQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1005L,
             contractItemId = 2005L,
@@ -761,7 +820,7 @@ fun PrevMScreen() {
             specs = "40A",
             executedQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1006L,
             contractItemId = 2006L,
@@ -776,8 +835,9 @@ fun PrevMScreen() {
     MaterialsContent(
         viewModel = PreMeasurementInstallationViewModel(
             repository = null,
+            contractRepository = null,
             mockStreets = mockInstallationStreets,
-            mockItems = emptyList(),
+            mockItems = mockInstallationItems,
             mockCurrentStreet = PreMeasurementInstallationStreet(
                 preMeasurementStreetId = "",
                 preMeasurementId = "",

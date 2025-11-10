@@ -8,9 +8,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
-import com.lumos.domain.model.PreMeasurementInstallationItem
+import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.navigation.Routes
+import com.lumos.repository.ContractRepository
 import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
@@ -19,29 +20,35 @@ import kotlinx.coroutines.withContext
 
 class PreMeasurementInstallationViewModel(
     private val repository: PreMeasurementInstallationRepository?,
+    private val contractRepository: ContractRepository?,
 
     // -> Param to utilize preview
     mockStreets: List<PreMeasurementInstallationStreet> = emptyList(),
-    mockItems: List<PreMeasurementInstallationItem> = emptyList(),
+    mockItems: List<ItemView> = emptyList(),
     mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
-    ) : ViewModel() {
+) : ViewModel() {
+
     // -> Bellow Properties to control installations
     var installationID: String? = null
+    var signPhotoUri: String? = null
+    var signDate: String? = null
     var contractor: String? = null
     var currentInstallationStreets by mutableStateOf(mockStreets)
     var currentInstallationItems by mutableStateOf(mockItems)
+    var lastItem by mutableStateOf<ItemView?>(null)
 
     var currentStreetId: String? = null
-    var currentStreet by mutableStateOf<PreMeasurementInstallationStreet?>(mockCurrentStreet)
+    var currentStreet by mutableStateOf(mockCurrentStreet)
 
     // -> Bellow Properties to UI State
     var loading by mutableStateOf(false)
     var alertModal by mutableStateOf(false)
     var showExpanded by mutableStateOf(false)
-
     var message by mutableStateOf<String?>(null)
-    var hasPosted by mutableStateOf(true)
+    var hasPosted by mutableStateOf(false)
+    var checkBalance by mutableStateOf(false)
+    var openConfirmation by mutableStateOf(false)
 
     // -> control viewModel
 
@@ -92,10 +99,12 @@ class PreMeasurementInstallationViewModel(
             message = null
             try {
                 currentStreetId = paramCurrentStreetId
-                currentStreet = currentInstallationStreets.find { it.preMeasurementStreetId == paramCurrentStreetId }
+                currentStreet =
+                    currentInstallationStreets.find { it.preMeasurementStreetId == paramCurrentStreetId }
 
                 withContext(Dispatchers.IO) {
                     repository?.setStreetStatus(paramCurrentStreetId, "IN_PROGRESS")
+                    if(contractRepository?.getContractItemBalance() == RequestResult.Success(Unit)) checkBalance = true
                     currentInstallationItems = repository?.getItems(paramCurrentStreetId)!!
                 }
             } catch (e: Exception) {
@@ -168,28 +177,19 @@ class PreMeasurementInstallationViewModel(
         return now >= (currentStreet?.photoExpiration ?: 0L)
     }
 
-    fun markAsFinished(preMeasurementInstallationId: String) {
-        viewModelScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    repository?.markAsFinished(preMeasurementInstallationId)
-                    currentStreet = null
-                }
-            } catch (e: IllegalStateException) {
-                null
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-
     fun setInstallationItemQuantity(quantityExecuted: String, materialStockId: Long) {
         viewModelScope.launch {
             loading = true
             try {
-                currentInstallationItems = currentInstallationItems.filter { it.materialStockId != materialStockId }
+                lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }
+                currentInstallationItems =
+                    currentInstallationItems.filter { it.materialStockId != materialStockId }
                 withContext(Dispatchers.IO) {
-                    repository?.setInstallationItemQuantity(currentStreetId, materialStockId, quantityExecuted)
+                    repository?.setInstallationItemQuantity(
+                        currentStreetId,
+                        materialStockId,
+                        quantityExecuted
+                    )
                 }
                 message = "Item concluído com sucesso"
             } catch (e: Exception) {
@@ -207,7 +207,8 @@ class PreMeasurementInstallationViewModel(
                 withContext(Dispatchers.IO) {
                     repository?.queueSubmitStreet(currentStreet)
                 }
-                currentInstallationStreets = currentInstallationStreets.filter { it.preMeasurementStreetId != currentStreetId }
+                currentInstallationStreets =
+                    currentInstallationStreets.filter { it.preMeasurementStreetId != currentStreetId }
                 hasPosted = true
                 currentStreetId = null
                 currentStreet = null
@@ -220,7 +221,20 @@ class PreMeasurementInstallationViewModel(
     }
 
     fun submitInstallation() {
-        TODO()
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    repository?.queueSubmitInstallation(installationID, signPhotoUri, signDate)
+                }
+                installationID = null
+                signPhotoUri = null
+                signDate = null
+            } catch (e: IllegalStateException) {
+                null
+            } catch (e: Exception) {
+                null
+            }
+        }
     }
 
 }

@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.lumos.domain.model.InstallationItemRequest
+import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
@@ -53,8 +54,8 @@ interface PreMeasurementInstallationDao {
     )
     suspend fun setPhotoInstallationUri(photoUri: String, streetId: String)
 
-    @Query("SELECT * from premeasurementinstallationstreet where preMeasurementId = :installationID")
-    suspend fun getStreetsByInstallationId(installationID: String?): List<PreMeasurementInstallationStreet>
+    @Query("SELECT * from premeasurementinstallationstreet where preMeasurementId = :installationID and status in (:status)")
+    suspend fun getStreetsByInstallationId(installationID: String?, status: List<String>): List<PreMeasurementInstallationStreet>
 
     @Query(
         """
@@ -110,8 +111,24 @@ interface PreMeasurementInstallationDao {
     @Query("update premeasurementinstallation set status = 'FINISHED' where preMeasurementId = :preMeasurementInstallationId")
     suspend fun markAsFinished(preMeasurementInstallationId: String)
 
-    @Query("SELECT * from premeasurementinstallationitem WHERE preMeasurementStreetId = :preMeasurementStreetID")
-    suspend fun getItems(preMeasurementStreetID: String): List<PreMeasurementInstallationItem>
+    @Query("""
+        SELECT 
+            i.preMeasurementStreetId as preMeasurementStreetId,
+            i.materialStockId as materialStockId,
+            i.contractItemId as contractItemId,
+            i.materialName as materialName,
+            i.materialQuantity as materialQuantity,
+            i.requestUnit as requestUnit,
+            i.specs as specs,
+            s.stockQuantity as stockQuantity,
+            i.executedQuantity as executedQuantity,
+            c.currentBalance as currentBalance
+        FROM premeasurementinstallationitem i
+        JOIN material_stock s on s.materialStockId = i.materialStockId
+        JOIN ContractItemBalance c on c.contractItemId = i.contractItemId
+        WHERE preMeasurementStreetId = :preMeasurementStreetID
+    """)
+    suspend fun getItems(preMeasurementStreetID: String): List<ItemView>
 
     @Query("""
         UPDATE premeasurementinstallationitem
@@ -126,6 +143,13 @@ interface PreMeasurementInstallationDao {
 
     @Update
     suspend fun updateStreet(currentStreet: PreMeasurementInstallationStreet)
+
+    @Query("""
+        UPDATE premeasurementinstallation 
+        SET signPath = :photoSignUri, status = :status, signDate = :signDate
+        WHERE preMeasurementId = :installationID
+    """)
+    suspend fun updateInstallation(installationID: String, photoSignUri: String?, status: String, signDate: String?)
 
 }
 

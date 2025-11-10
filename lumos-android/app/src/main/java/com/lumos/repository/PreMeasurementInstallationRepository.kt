@@ -14,6 +14,7 @@ import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.InstallationRequest
+import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
@@ -139,15 +140,6 @@ class PreMeasurementInstallationRepository(
         db.preMeasurementInstallationDao().setPhotoInstallationUri(photoUri, streetId)
     }
 
-
-    suspend fun queuePostExecution(streetId: Long) {
-        SyncManager.queuePostIndirectExecution(
-            context = app.applicationContext,
-            db = db,
-            streetId = streetId
-        )
-    }
-
     suspend fun postExecution(streetId: String): RequestResult<Unit> {
         val gson = Gson()
 
@@ -207,8 +199,8 @@ class PreMeasurementInstallationRepository(
         return ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
-    suspend fun getStreets(installationID: String?): List<PreMeasurementInstallationStreet> {
-        return db.preMeasurementInstallationDao().getStreetsByInstallationId(installationID)
+    suspend fun getStreets(installationID: String?, status: List<String> = listOf("PENDING", "IN_PROGRESS")): List<PreMeasurementInstallationStreet> {
+        return db.preMeasurementInstallationDao().getStreetsByInstallationId(installationID, status)
     }
 
     suspend fun updateObjectPublicUrl(
@@ -245,16 +237,7 @@ class PreMeasurementInstallationRepository(
 
     }
 
-    suspend fun markAsFinished(preMeasurementInstallationId: String) {
-        db.preMeasurementInstallationDao().markAsFinished(preMeasurementInstallationId)
-        SyncManager.markPreMeasurementInstallationAsFinished(
-            context = app.applicationContext,
-            db = db,
-            preMeasurementInstallationId = preMeasurementInstallationId
-        )
-    }
-
-    suspend fun getItems(preMeasurementStreetID: String): List<PreMeasurementInstallationItem> {
+    suspend fun getItems(preMeasurementStreetID: String): List<ItemView> {
         return db.preMeasurementInstallationDao().getItems(preMeasurementStreetID)
     }
 
@@ -281,6 +264,17 @@ class PreMeasurementInstallationRepository(
             app.applicationContext,
             db,
             currentStreetId
+        )
+    }
+
+    suspend fun queueSubmitInstallation(installationID: String?, photoSignUri: String?, signDate: String?) {
+        if (installationID == null) return
+        db.preMeasurementInstallationDao().updateInstallation(installationID, photoSignUri, "FINISHED", signDate)
+
+        SyncManager.queueSubmitPreMeasurementInstallationStreet(
+            app.applicationContext,
+            db,
+            installationID
         )
     }
 

@@ -145,7 +145,7 @@ fun AppNavigation(
     )
 
     val preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel = viewModel {
-        PreMeasurementInstallationViewModel(repository = preMeasurementInstallationRepository)
+        PreMeasurementInstallationViewModel(repository = preMeasurementInstallationRepository, contractRepository = contractRepository)
     }
 
     val directExecutionRepository = DirectExecutionRepository(
@@ -157,7 +157,8 @@ fun AppNavigation(
 
     val directExecutionViewModel: DirectExecutionViewModel = viewModel {
         DirectExecutionViewModel(
-            repository = directExecutionRepository
+            repository = directExecutionRepository,
+            contractRepository = contractRepository
         )
     }
 

@@ -98,4 +98,28 @@ class ContractRepository(
     fun getFlowContractsForMaintenance(): Flow<List<Contract>> =
         db.contractDao().getFlowContractsForMaintenance()
 
+    suspend fun getContractItemBalance(): RequestResult<Unit>  {
+        val response = ApiExecutor.execute { api.getContractItemBalance() }
+
+        return when (response) {
+            is RequestResult.Success -> {
+                db.contractDao().insertContractItemBalance(response.data) // lista direta
+                RequestResult.Success(Unit)
+            }
+            is SuccessEmptyBody -> {
+                ServerError(204, "Resposta 204 inesperada")
+            }
+            is RequestResult.NoInternet -> {
+                SyncManager.queueSyncContractItems(app.applicationContext, db)
+                RequestResult.NoInternet
+            }
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> {
+                Log.e("Sync", "Erro desconhecido", response.error)
+                RequestResult.UnknownError(response.error)
+            }
+        }
+    }
+
 }

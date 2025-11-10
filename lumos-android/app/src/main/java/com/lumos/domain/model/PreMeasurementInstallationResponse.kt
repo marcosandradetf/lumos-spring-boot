@@ -66,3 +66,16 @@ data class InstallationView(
     val streetsQuantity: Int,
     val itemsQuantity: Int,
 )
+
+data class ItemView(
+    val preMeasurementStreetId: String,
+    val materialStockId: Long,
+    val contractItemId: Long,
+    val materialName: String,
+    val materialQuantity: String,
+    val requestUnit: String,
+    val specs: String?,
+    val stockQuantity: String = "0",
+    val executedQuantity: String = "0",
+    val currentBalance: String = "0",
+)

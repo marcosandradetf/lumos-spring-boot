@@ -50,9 +50,9 @@ interface ViewDao {
                     WHERE s.directExecutionId = d.directExecutionId
                 ) AS itemsQuantity
             FROM direct_execution d
-            WHERE d.executionStatus = :status
+            WHERE d.executionStatus in (:status)
         """)
-    fun getInstallationsHolderByStatus(status: String): Flow<List<InstallationView>>
+    fun getInstallationsHolderByStatus(status: List<String>): Flow<List<InstallationView>>
 
 
 

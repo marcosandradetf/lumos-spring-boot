@@ -20,8 +20,6 @@ import androidx.compose.material.icons.outlined.FireTruck
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.MoreHoriz
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -39,12 +37,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import com.lumos.navigation.BottomBar
-import com.lumos.navigation.Routes
 import kotlinx.coroutines.launch
 
 @Composable
@@ -88,10 +83,10 @@ fun AppLayout(
             val result = snackBarHostState.showSnackbar(
                 message = message,
                 actionLabel = label,
-                withDismissAction = action != null,
+                withDismissAction = true,
                 duration = SnackbarDuration.Long
             )
-            if (result == SnackbarResult.ActionPerformed) {
+            if (result == SnackbarResult.ActionPerformed && label != null) {
                 action?.invoke()
             }
         }

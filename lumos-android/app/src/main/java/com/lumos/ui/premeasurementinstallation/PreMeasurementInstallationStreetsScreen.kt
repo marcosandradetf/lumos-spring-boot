@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.repository.ExecutionStatus
@@ -334,7 +335,7 @@ fun PrevStreetsScreen() {
 
 
     val mockInstallationItems = listOf(
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1001L,
             contractItemId = 2001L,
@@ -342,9 +343,9 @@ fun PrevStreetsScreen() {
             materialQuantity = "50",
             requestUnit = "M",
             specs = "10MM",
-            executedQuantity = "0"
+            stockQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1002L,
             contractItemId = 2002L,
@@ -352,9 +353,9 @@ fun PrevStreetsScreen() {
             materialQuantity = "3",
             requestUnit = "UN",
             specs = "9M",
-            executedQuantity = "0"
+            stockQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1003L,
             contractItemId = 2003L,
@@ -362,9 +363,9 @@ fun PrevStreetsScreen() {
             materialQuantity = "5",
             requestUnit = "UN",
             specs = "150W",
-            executedQuantity = "0"
+            stockQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1004L,
             contractItemId = 2004L,
@@ -372,9 +373,9 @@ fun PrevStreetsScreen() {
             materialQuantity = "100",
             requestUnit = "UN",
             specs = "M8",
-            executedQuantity = "0"
+            stockQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1005L,
             contractItemId = 2005L,
@@ -382,9 +383,9 @@ fun PrevStreetsScreen() {
             materialQuantity = "2",
             requestUnit = "UN",
             specs = "40A",
-            executedQuantity = "0"
+            stockQuantity = "0"
         ),
-        PreMeasurementInstallationItem(
+        ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
             materialStockId = 1006L,
             contractItemId = 2006L,
@@ -392,7 +393,7 @@ fun PrevStreetsScreen() {
             materialQuantity = "200",
             requestUnit = "UN",
             specs = "10MM",
-            executedQuantity = "0"
+            stockQuantity = "0"
         )
     )
 

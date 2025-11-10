@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.ContractItemBalance
 import com.lumos.domain.model.Item
 import kotlinx.coroutines.flow.Flow
 
@@ -50,5 +51,8 @@ interface ContractDao {
 
     @Query("SELECT * FROM contracts WHERE hasMaintenance = 1")
     fun getFlowContractsForMaintenance(): Flow<List<Contract>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertContractItemBalance(contractItemBalance: List<ContractItemBalance>)
 
 }

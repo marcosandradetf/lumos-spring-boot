@@ -8,7 +8,7 @@ class ViewRepository(
     private val db: AppDatabase
 ) {
 
-    fun getFlowInstallations(status: String): Flow<List<InstallationView>> =
+    fun getFlowInstallations(status: List<String>): Flow<List<InstallationView>> =
         db.viewDao().getInstallationsHolderByStatus(status)
 
 }

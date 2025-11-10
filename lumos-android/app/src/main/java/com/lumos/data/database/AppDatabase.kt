@@ -706,6 +706,15 @@ abstract class AppDatabase : RoomDatabase() {
                         );
                 """.trimIndent()
                 )
+
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS ContractItemBalance (
+                            contractItemId INTEGER NOT NULL PRIMARY KEY,
+                            currentBalance TEXT NOT NULL
+                        );
+                """.trimIndent()
+                )
             }
         }
 
