@@ -22,6 +22,7 @@ data class ExecutionWithoutPreMeasurementItems(
 data class DirectExecutionDTOResponse(
     val directExecutionId: Long,
     val currentDirectExecutionId: Long,
+    val contractId: Long,
     val description: String,
     val instructions: String?,
     val creationDate: String,

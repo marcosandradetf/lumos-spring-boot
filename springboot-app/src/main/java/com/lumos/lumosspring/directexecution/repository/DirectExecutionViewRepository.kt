@@ -37,6 +37,7 @@ class DirectExecutionViewRepository(
             DirectExecutionDTOResponse(
                 directExecutionId = directExecutionId,
                 currentDirectExecutionId = directExecutionId,
+                contractId = execution["contract_id"] as Long,
                 description = execution["description"] as String,
                 instructions = execution["instructions"] as? String,
                 creationDate = (execution["assigned_at"] as Timestamp).toInstant().toString(),
@@ -49,7 +50,7 @@ class DirectExecutionViewRepository(
         return JdbcUtil.getRawData(
             namedJdbc,
             """
-                SELECT de.direct_execution_id, de.instructions, de.description, de.assigned_at
+                SELECT de.direct_execution_id, de.contract_id, de.instructions, de.description, de.assigned_at
                 FROM direct_execution de
                 WHERE de.team_id = :teamId AND de.direct_execution_status = :status
             """.trimIndent(),
@@ -158,5 +159,4 @@ class DirectExecutionViewRepository(
             )
         }
     }
-
 }

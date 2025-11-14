@@ -34,7 +34,7 @@ public class InstallationViewRepository {
 
         return namedJDBC.query(
                 """
-                SELECT p.pre_measurement_id, p.device_pre_measurement_id, c.contractor, p.comment
+                SELECT p.pre_measurement_id, p.device_pre_measurement_id, c.contract_id, c.contractor, p.comment
                 FROM pre_measurement p
                 JOIN contract c ON c.contract_id = p.contract_contract_id
                 WHERE team_id = :teamId
@@ -110,6 +110,7 @@ public class InstallationViewRepository {
 
                     return new InstallationResponse(
                             UUID.fromString(rs.getObject("device_pre_measurement_id").toString()),
+                            rs.getLong("contract_id"),
                             rs.getString("contractor"),
                             rs.getString("comment"),
                             streets

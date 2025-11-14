@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.contract.repository;
 
+import com.lumos.lumosspring.contract.dto.ContractItemBalance;
 import com.lumos.lumosspring.contract.entities.Contract;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -37,4 +38,13 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
                  from cte
             \s""")
     Integer getLastStep(long contractId);
+
+    @Query(
+        """
+            select contract_item_id, contracted_quantity - quantity_executed as current_balance
+            from contract_item
+            where contract_contract_id = :contractId
+        """
+    )
+    List<ContractItemBalance> getContractItemBalance(long contractId);
 }

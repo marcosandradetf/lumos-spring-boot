@@ -10,6 +10,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumos.data.converter.Converters
 import com.lumos.domain.model.Contract
+import com.lumos.domain.model.ContractItemBalance
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
@@ -44,6 +45,7 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
 
         (Contract::class),
         (Item::class),
+        (ContractItemBalance::class),
 
         (NotificationItem::class),
 

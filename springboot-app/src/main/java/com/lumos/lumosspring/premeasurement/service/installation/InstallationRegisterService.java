@@ -3,6 +3,7 @@ package com.lumos.lumosspring.premeasurement.service.installation;
 import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationItemRequest;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationRequest;
+import com.lumos.lumosspring.premeasurement.dto.installation.InstallationStreetRequest;
 import com.lumos.lumosspring.util.ExecutionStatus;
 import com.lumos.lumosspring.util.JdbcUtil;
 import com.lumos.lumosspring.util.Utils;
@@ -27,14 +28,13 @@ public class InstallationRegisterService {
         this.minioService = minioService;
     }
 
-
     @Transactional
-    public ResponseEntity<?> saveStreetInstallation(MultipartFile photo, InstallationRequest installationReq) {
+    public ResponseEntity<?> saveStreetInstallation(MultipartFile photo, InstallationStreetRequest installationReq) {
         if (installationReq == null) {
-            return ResponseEntity.badRequest().body("payload vazio.");
+            throw new Utils.BusinessException("payload vazio.");
         }
 
-        var execution = JdbcUtil.INSTANCE.getSingleRow(
+        var installation = JdbcUtil.INSTANCE.getSingleRow(
                 namedJdbc,
                 """
                             SELECT p.pre_measurement_id, p.status, p.city
@@ -45,7 +45,7 @@ public class InstallationRegisterService {
                 Map.of("streetId", installationReq.getStreetId())
         );
 
-        if (execution == null) {
+        if (installation == null) {
             String message = new StringBuilder()
                     .append("Instalação com ID ")
                     .append(installationReq.getStreetId())
@@ -54,11 +54,11 @@ public class InstallationRegisterService {
             throw new Utils.BusinessException(message);
         }
 
-        if (!Objects.equals(execution.get("status").toString(), ExecutionStatus.AVAILABLE_EXECUTION)) {
+        if (!Objects.equals(installation.get("status").toString(), ExecutionStatus.AVAILABLE_EXECUTION)) {
             return ResponseEntity.noContent().build();
         }
 
-        Long preMeasurementID = ((Number) execution.get("pre_measurement_id")).longValue();
+        Long preMeasurementID = ((Number) installation.get("pre_measurement_id")).longValue();
 
         String sql;
         for (InstallationItemRequest r : installationReq.getItems()) {
@@ -78,7 +78,7 @@ public class InstallationRegisterService {
                     "contractItemId", r.getContractItemId()
             ));
 
-            if(hasService != null) {
+            if (hasService != null) {
                 params.put("dependency", hasService);
                 params.put("preMeasurementId", preMeasurementID);
 
@@ -88,9 +88,9 @@ public class InstallationRegisterService {
                                     SELECT ci.contract_item_id
                                     FROM contract_item ci
                                     WHERE ci.contract_item_id = :contractItemId
-    
+                                
                                     UNION ALL
-    
+                                
                                     SELECT ci.contract_item_id
                                     FROM contract_item ci
                                     JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
@@ -111,10 +111,10 @@ public class InstallationRegisterService {
                 // Use update porque não há retorno
                 namedJdbc.update(
                         """
-                                UPDATE contract_item
-                                SET quantity_executed = quantity_executed + :quantityExecuted
-                                WHERE contract_item_id = :contractItemId
-                        """,
+                                        UPDATE contract_item
+                                        SET quantity_executed = quantity_executed + :quantityExecuted
+                                        WHERE contract_item_id = :contractItemId
+                                """,
                         params
                 );
             }
@@ -148,28 +148,58 @@ public class InstallationRegisterService {
 
         }
 
-        String city = ((String) execution.get("city"));
-        String folder = "photos";
-        if (city != null) folder = "photos/$city";
+        if (photo != null) {
+            String city = ((String) installation.get("city"));
+            String folder = "photos";
+            if (city != null) folder = "photos/$city";
 
-        String fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder, "execution");
+            String fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder, "execution");
 
-        sql = """
-                    UPDATE pre_measurement_street
-                    SET execution_photo_uri = :fileUri, street_status = :streetStatus
-                    WHERE device_pre_measurement_street_id = :streetId
-                """;
+            sql = """
+                        UPDATE pre_measurement_street
+                        SET execution_photo_uri = :fileUri, street_status = :streetStatus
+                        WHERE device_pre_measurement_street_id = :streetId
+                    """;
 
-        namedJdbc.update(
-                sql,
-                Map.of(
-                        "fileUri", fileUri,
-                        "streetStatus", ExecutionStatus.FINISHED,
-                        "streetId", installationReq.getStreetId()
-                )
-        );
+            namedJdbc.update(
+                    sql,
+                    Map.of(
+                            "fileUri", fileUri,
+                            "streetStatus", ExecutionStatus.FINISHED,
+                            "streetId", installationReq.getStreetId()
+                    )
+            );
+        }
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
+    }
+
+    @Transactional
+    public ResponseEntity<?> saveInstallation(MultipartFile photo, InstallationRequest installationReq) {
+
+        if (photo != null) {
+            String city = ((String) execution.get("city"));
+            String folder = "photos";
+            if (city != null) folder = "photos/$city";
+
+            String fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder, "execution");
+
+
+            namedJdbc.update(
+                    """
+                        UPDATE pre_measurement_street
+                        SET execution_photo_uri = :fileUri, street_status = :streetStatus
+                        WHERE device_pre_measurement_street_id = :streetId
+                    """,
+                    Map.of(
+                            "fileUri", fileUri,
+                            "streetStatus", ExecutionStatus.FINISHED,
+                            "streetId", installationReq.getStreetId()
+                    )
+            );
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
 

@@ -5,6 +5,7 @@ import java.util.*
 
 data class InstallationResponse (
     val preMeasurementId: UUID,
+    val contractId: Long,
     val contractor: String,
     val instructions: String,
     val streets: List<StreetsInstallationResponse>

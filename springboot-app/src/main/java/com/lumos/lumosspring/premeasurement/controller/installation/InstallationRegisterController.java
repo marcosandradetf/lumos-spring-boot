@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.premeasurement.controller.installation;
 
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationRequest;
+import com.lumos.lumosspring.premeasurement.dto.installation.InstallationStreetRequest;
 import com.lumos.lumosspring.premeasurement.service.installation.InstallationRegisterService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,20 @@ public class InstallationRegisterController {
     )
     public ResponseEntity<?> saveStreetInstallation(
             @RequestPart("photo") MultipartFile photo,
-            @RequestPart("execution") InstallationRequest execution
+            @RequestPart("installationStreet") InstallationStreetRequest installationStreet
     ) {
-        return registerService.saveStreetInstallation(photo, execution);
+        return registerService.saveStreetInstallation(photo, installationStreet);
+    }
+
+    @PostMapping(
+            value = {"/mobile/v1/pre-measurement/installation/save-installation"},
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
+    )
+    public ResponseEntity<?> saveInstallation(
+            @RequestPart("photo") MultipartFile photo,
+            @RequestPart("installation") InstallationRequest installationReq
+    ) {
+        return registerService.saveInstallation(photo, installationReq);
     }
 
 
