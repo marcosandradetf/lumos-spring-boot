@@ -1,7 +1,6 @@
 package com.lumos.worker
 
 import android.app.Application
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -710,7 +709,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = directExecutionRepository.finishedDirectExecution(item.relatedId)
+            val response = directExecutionRepository.submitDirectExecution(item.relatedId)
             checkResponse(response, item)
 
         } catch (e: Exception) {

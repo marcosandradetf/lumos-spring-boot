@@ -10,11 +10,10 @@ import io.minio.http.Method
 import io.minio.messages.DeleteObject
 import java.time.Instant
 
-
 @Service
 class MinioService(private val minioClient: MinioClient) {
 
-    fun uploadFile(file: MultipartFile, bucketName: String, folder: String, type: String): String {
+    fun uploadFile(file: MultipartFile, bucketName: String, folder: String, fileName: String): String {
         try {
             // Verifica se o bucket existe, se não, cria
             val found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())
@@ -23,7 +22,7 @@ class MinioService(private val minioClient: MinioClient) {
             }
 
             val extension = file.originalFilename?.substringAfterLast('.', "") ?: ""
-            val objectName = "$folder/${type}_file_${System.currentTimeMillis()}.$extension"
+            val objectName = "$folder/${fileName}_file_${System.currentTimeMillis()}.$extension"
 
             minioClient.putObject(
                 PutObjectArgs.builder()

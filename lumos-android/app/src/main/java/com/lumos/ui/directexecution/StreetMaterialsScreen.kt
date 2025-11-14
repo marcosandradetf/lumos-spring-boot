@@ -1,5 +1,6 @@
 package com.lumos.ui.directexecution
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -45,6 +46,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -98,6 +100,7 @@ import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
+import com.lumos.utils.Utils
 import com.lumos.viewmodel.DirectExecutionViewModel
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import java.io.File
@@ -109,9 +112,7 @@ fun StreetMaterialScreen(
     description: String,
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
-    lastRoute: String?,
     navController: NavHostController,
-    notificationsBadge: String,
 ) {
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
@@ -178,7 +179,7 @@ fun StreetMaterialScreen(
         Loading("Tentando carregar as coordenadas...")
     } else if (directExecutionViewModel.nextStep) {
         AppLayout(
-            title = description,
+            title = Utils.abbreviate(description),
             selectedIcon = BottomBar.EXECUTIONS.value,
             navigateBack = {
                 if (directExecutionViewModel.hasPosted) {
@@ -208,95 +209,84 @@ fun StreetMaterialScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 150.dp),
+                        .padding(horizontal = 24.dp, vertical = 48.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Spacer(modifier = Modifier.height(10.dp))
-
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Rounded.TaskAlt,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(72.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surface,
-                                    shape = CircleShape
-                                )
-                                .padding(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            contentDescription = "Tarefa concluída",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(56.dp)
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         Text(
-                            text = "Missão cumprida!",
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "Missão Cumprida!",
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Os dados serão enviados para o sistema.",
+                            text = "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
 
-                    Button(
-                        onClick = {
-                            directExecutionViewModel.clearViewModel()
-                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary,
-                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-                        )
+                    // 🧭 Grupo de ações
+                    Column(
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            "Ok, voltar a tela anterior"
-                        )
+                        // 🔹 Ação principal
+                        OutlinedButton(
+                            onClick = {
+                                directExecutionViewModel.clearViewModel()
+                                directExecutionViewModel.sameStreet = true
+                                directExecutionViewModel.loadExecutionData(
+                                    directExecutionId,
+                                    description
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(32.dp)
+                        ) {
+                            Text(
+                                "Finalizar Instalação"
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                directExecutionViewModel.clearViewModel()
+                                directExecutionViewModel.sameStreet = true
+                                directExecutionViewModel.loadExecutionData(
+                                    directExecutionId,
+                                    description
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(32.dp)
+                        ) {
+                            Text(
+                                "Nova Instalação Nessa Rua"
+                            )
+                        }
                     }
 
-                    Button(
-                        onClick = {
-                            directExecutionViewModel.clearViewModel()
-                            directExecutionViewModel.sameStreet = true
-                            directExecutionViewModel.loadExecutionData(
-                                directExecutionId,
-                                description
-                            )
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary,
-                            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    ) {
-                        Text(
-                            "Iniciar nova instalação nessa rua"
-                        )
-                    }
                 }
             } else
                 Column(
@@ -410,9 +400,8 @@ fun StreetMaterialScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .height(48.dp)
                             .padding(horizontal = 8.dp),
-                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             "Enviar",
@@ -427,10 +416,8 @@ fun StreetMaterialScreen(
             description = description,
             reserves = directExecutionViewModel.reserves,
             street = directExecutionViewModel.street,
-            lastRoute = lastRoute,
             context = context,
             navController = navController,
-            notificationsBadge = notificationsBadge,
             takePhoto = { uri ->
                 directExecutionViewModel.street =
                     directExecutionViewModel.street?.copy(photoUri = uri.toString())
@@ -585,10 +572,8 @@ fun StreetMaterialsContent(
     description: String,
     reserves: List<ReserveMaterialJoin>,
     street: DirectExecutionStreet?,
-    lastRoute: String?,
     context: Context,
     navController: NavHostController,
-    notificationsBadge: String,
     takePhoto: (uri: Uri) -> Unit,
     changeStreet: (address: String) -> Unit,
     confirmModal: (String) -> Unit,
@@ -633,13 +618,10 @@ fun StreetMaterialsContent(
 
     var action by remember { mutableStateOf("") }
 
-    val selectedIcon =
-        if (lastRoute == Routes.DIRECT_EXECUTION_SCREEN) BottomBar.EXECUTIONS.value else BottomBar.EXECUTIONS.value
 
     AppLayout(
         title = description,
-        selectedIcon = selectedIcon,
-        notificationsBadge = notificationsBadge,
+        selectedIcon = BottomBar.EXECUTIONS.value,
         navigateToMore = {
             action = Routes.MORE
             openModal(Routes.MORE)
@@ -1106,6 +1088,7 @@ fun MaterialItem(
 }
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun PrevMStreetScreen() {
@@ -1196,41 +1179,51 @@ fun PrevMStreetScreen() {
     )
 
 
-    StreetMaterialsContent(
-        isLoading = false,
-        description = "Prefeitura de Belo Horizonte",
-        reserves = reserves,
-        street = DirectExecutionStreet(
-            directStreetId = 1,
-            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
-            latitude = null,
-            longitude = null,
-            photoUri = null,
-            deviceId = "",
-            directExecutionId = 1,
-            description = "",
-            lastPower = "100W",
-            finishAt = "",
-            currentSupply = "",
+//    StreetMaterialsContent(
+//        isLoading = false,
+//        description = "Prefeitura de Belo Horizonte",
+//        reserves = reserves,
+//        street = DirectExecutionStreet(
+//            directStreetId = 1,
+//            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
+//            latitude = null,
+//            longitude = null,
+//            photoUri = null,
+//            deviceId = "",
+//            directExecutionId = 1,
+//            description = "",
+//            lastPower = "100W",
+//            finishAt = "",
+//            currentSupply = "",
+//        ),
+//        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
+//        context = fakeContext,
+//        navController = rememberNavController(),
+//        notificationsBadge = "12",
+//        takePhoto = { },
+//        changeStreet = {},
+//        confirmModal = { },
+//        openConfirmModal = false,
+//        openModal = {},
+//        alertModal = false,
+//        closeAlertModal = { },
+//        changeMaterial = { _, _, _, _, _, _ -> },
+//        changeQuantity = { _, _, _, _ -> },
+//        errorMessage = null,
+//        alertMessage = mutableMapOf(
+//            "title" to "Título da mensagem",
+//            "body" to "Conteúdo da mensagem"
+//        ),
+//        streetItems = emptyList(),
+//    )
+
+    StreetMaterialScreen(
+        directExecutionId = 1,
+        description = "Etapa 8 - PREFEITURA ITAMBACURI",
+        directExecutionViewModel = DirectExecutionViewModel(
+            null, null
         ),
-        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
-        context = fakeContext,
-        navController = rememberNavController(),
-        notificationsBadge = "12",
-        takePhoto = { },
-        changeStreet = {},
-        confirmModal = { },
-        openConfirmModal = false,
-        openModal = {},
-        alertModal = false,
-        closeAlertModal = { },
-        changeMaterial = { _, _, _, _, _, _ -> },
-        changeQuantity = { _, _, _, _ -> },
-        errorMessage = null,
-        alertMessage = mutableMapOf(
-            "title" to "Título da mensagem",
-            "body" to "Conteúdo da mensagem"
-        ),
-        streetItems = emptyList(),
+        context = LocalContext.current,
+        navController = rememberNavController()
     )
 }

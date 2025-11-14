@@ -67,37 +67,3 @@ data class DirectExecutionDTOResponse(
     val creationDate: String,
     val reserves: List<DirectReserve>,
 )
-
-data class SendDirectExecutionDto(
-    val directExecutionId: Long,
-    val description: String,
-    val deviceStreetId: Long,
-    val deviceId: String,
-    val latitude: Double?,
-    val longitude: Double?,
-    val address: String,
-    val lastPower: String?,
-    val materials: List<ReservePartial>,
-    val currentSupply: String?,
-    val finishAt: String?
-)
-
-data class ReservePartial(
-    val reserveId: Long = 0,
-    val contractItemId: Long,
-    val truckMaterialStockId: Long,
-    val quantityExecuted: String,
-    val materialName: String
-)
-
-
-data class ReserveMaterialJoin(
-    val reserveId: Long,
-    val directExecutionId: Long,
-    val materialStockId: Long, // *_*
-    val contractItemId: Long,
-    val materialName: String,
-    val materialQuantity: String,
-    val requestUnit: String,
-    val stockAvailable: String
-)

@@ -4,6 +4,7 @@ import com.lumos.lumosspring.contract.entities.ContractItem;
 import com.lumos.lumosspring.stock.order.installationrequest.dto.ResponseItemReserve;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;

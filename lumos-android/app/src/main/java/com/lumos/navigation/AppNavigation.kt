@@ -541,9 +541,7 @@ fun AppNavigation(
                         description = description,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
-                        lastRoute = lastRoute,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString()
                     )
                 }
 

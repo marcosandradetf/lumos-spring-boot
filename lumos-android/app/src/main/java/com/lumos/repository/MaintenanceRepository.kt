@@ -1,7 +1,6 @@
 package com.lumos.repository
 
 import android.app.Application
-import android.util.Log
 import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.google.gson.Gson
@@ -105,9 +104,8 @@ class MaintenanceRepository(
 
     suspend fun callPostMaintenance(maintenanceId: String): RequestResult<Unit> {
         val gson = Gson()
-        val maintenance = db.maintenanceDao().getMaintenance(maintenanceId)
-        Log.e("callPostMaintenance", maintenance.toString())
 
+        val maintenance = db.maintenanceDao().getMaintenance(maintenanceId)
         val signUri = maintenance.signPath
 
         val json = gson.toJson(maintenance)
@@ -124,7 +122,7 @@ class MaintenanceRepository(
         }
 
         val response = ApiExecutor.execute {
-            maintenanceApi.finishMaintenance(
+            maintenanceApi.submitMaintenance(
                 maintenance = jsonBody,
                 signature = imagePart
             )
@@ -162,7 +160,7 @@ class MaintenanceRepository(
     suspend fun callPostMaintenanceStreet(maintenanceStreetId: String): RequestResult<Unit> {
         val street = db.maintenanceDao().getMaintenanceStreetWithItems(maintenanceStreetId)
 
-        val response = ApiExecutor.execute { maintenanceApi.sendStreet(street) }
+        val response = ApiExecutor.execute { maintenanceApi.submitMaintenanceStreet(street) }
 
         return when (response) {
             is RequestResult.Success -> {

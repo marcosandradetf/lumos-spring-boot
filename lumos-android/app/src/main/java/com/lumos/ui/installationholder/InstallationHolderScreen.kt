@@ -30,14 +30,19 @@ import androidx.compose.material.icons.filled.NotListedLocation
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SentimentVerySatisfied
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -69,6 +74,7 @@ import com.lumos.ui.components.NothingData
 import com.lumos.utils.Utils
 import com.lumos.viewmodel.DirectExecutionViewModel
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
+import java.time.Instant
 import java.util.UUID
 
 @Composable
@@ -82,7 +88,8 @@ fun InstallationHolderScreen(
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
 
-    val executions by viewRepository.getFlowInstallations(listOf("PENDING", "IN_PROGRESS")).collectAsState(emptyList())
+    val executions by viewRepository.getFlowInstallations(listOf("PENDING", "IN_PROGRESS"))
+        .collectAsState(emptyList())
 
     val isSyncing = directExecutionViewModel.isLoading
     val error1 by directExecutionViewModel.syncError.collectAsState()
@@ -231,177 +238,138 @@ fun ContentCitiesScreen(
 
                 items(executions) { execution -> // Iteração na lista
 
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
+                    val shape = RoundedCornerShape(16.dp)
+
+                    ElevatedCard(
+                        shape = shape,
                         modifier = Modifier
-                            .fillMaxWidth(0.95f)
-                            .padding(vertical = 6.dp)
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp, horizontal = 10.dp)
                             .clickable {
-                                if (stockDataSize > 0)
-                                    select(execution.id, execution.type, execution.contractor)
+                                if (stockDataSize > 0) select(
+                                    execution.id,
+                                    execution.type,
+                                    execution.contractor
+                                )
                                 else showModal = true
                             },
-                        elevation = CardDefaults.cardElevation(3.dp),
-                        colors = CardDefaults.cardColors(
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+                        colors = CardDefaults.elevatedCardColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
-                        Row(
+
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp)
+                                .padding(16.dp) // layout mais respirado
                         ) {
-                            // Linha e ícone lateral
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(end = 16.dp)
+
+                            // ----------------------------------------------
+                            // Cabeçalho com ícone circular + título
+                            // ----------------------------------------------
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+
+                                // Ícone com fundo suave
                                 Box(
                                     modifier = Modifier
-                                        .width(4.dp)
-                                        .height(50.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(MaterialTheme.colorScheme.primary)
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
+                                        .size(46.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary),
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Power,
-                                        contentDescription = "Local",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(14.dp))
+
+                                Column {
+                                    Text(
+                                        text = Utils.abbreviate(execution.contractor),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    )
+
+                                    Text(
+                                        text = Utils.timeSinceCreation(execution.creationDate),
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = MaterialTheme.colorScheme.outline
+                                        )
                                     )
                                 }
                             }
 
-                            // Conteúdo principal
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // ----------------------------------------------
+                            // Chips de Tipo da Execução e Status
+                            // ----------------------------------------------
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = execution.contractor,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.SemiBold
-                                            ),
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
 
-                                        // Tipo de execução (chip visual)
-                                        val (tagText, tagColor, tagIcon) = when (execution.type) {
-                                            "PreMeasurementInstallation" -> Triple(
-                                                "Com Pré-Medição",
-                                                MaterialTheme.colorScheme.primaryContainer,
-                                                Icons.Default.Map
-                                            )
-                                            else -> Triple(
-                                                "Sem Pré-Medição",
-                                                MaterialTheme.colorScheme.tertiaryContainer,
-                                                Icons.AutoMirrored.Filled.NotListedLocation
-                                            )
-                                        }
+                                // Tipo da execução
+                                val (tagText, tagColor, tagIcon) = when (execution.type) {
+                                    "PreMeasurementInstallation" -> Triple(
+                                        "Com Pré-Medição",
+                                        MaterialTheme.colorScheme.primaryContainer,
+                                        Icons.Default.Map
+                                    )
 
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(50))
-                                                .background(tagColor)
-                                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = tagIcon,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(14.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = tagText,
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.Medium
-                                                ),
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                    }
-
-                                    // Menu (somente se não for pré-medição)
-                                    if (execution.type != "PreMeasurementInstallation") {
-                                        var expanded by remember(execution.id) { mutableStateOf(false) }
-
-                                        Box {
-                                            IconButton(onClick = { expanded = true }) {
-                                                Icon(
-                                                    Icons.Default.MoreVert,
-                                                    contentDescription = "Mais opções"
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                expanded = expanded,
-                                                onDismissRequest = { expanded = false },
-                                            ) {
-                                                DropdownMenuItem(
-                                                    onClick = {
-                                                        id = execution.id
-                                                        expanded = false
-                                                        openModal = true
-                                                    },
-                                                    text = { Text("Marcar como finalizado") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = Icons.Default.CloudUpload,
-                                                            contentDescription = null
-                                                        )
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
+                                    else -> Triple(
+                                        "Sem Pré-Medição",
+                                        MaterialTheme.colorScheme.tertiaryContainer,
+                                        Icons.AutoMirrored.Filled.NotListedLocation
+                                    )
                                 }
 
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Status (chip secundário)
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(50))
-                                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                                    ) {
+                                AssistChip(
+                                    onClick = {},
+                                    label = {
                                         Text(
-                                            text = Utils.translateStatus(execution.executionStatus),
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                fontWeight = FontWeight.Medium
-                                            ),
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            tagText,
+                                            style = MaterialTheme.typography.labelLarge
                                         )
-                                    }
-                                }
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            tagIcon,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        containerColor = tagColor
+                                    )
+                                )
+
+                                // Status
+                                SuggestionChip(
+                                    onClick = {},
+                                    label = {
+                                        Text(
+                                            Utils.translateStatus(execution.executionStatus),
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    },
+                                    colors = SuggestionChipDefaults.suggestionChipColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                )
                             }
+
                         }
                     }
 
@@ -436,11 +404,11 @@ fun PrevContentCitiesScreen() {
         listOf(
             InstallationView(
                 id = UUID.randomUUID().toString(),
-                contractor = "Contagem",
+                contractor = "Etapa 8 - PREFEITURA ITAMBACURI",
                 executionStatus = "PENDING",
                 type = "PreMeasurementInstallation",
                 itemsQuantity = 12,
-                creationDate = "",
+                creationDate = Instant.now().toString(),
                 streetsQuantity = 3,
             ),
             InstallationView(

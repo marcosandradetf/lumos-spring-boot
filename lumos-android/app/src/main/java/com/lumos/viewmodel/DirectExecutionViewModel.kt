@@ -24,22 +24,22 @@ import java.time.Instant
 import java.util.UUID
 
 class DirectExecutionViewModel(
-    private val repository: DirectExecutionRepository,
+    private val repository: DirectExecutionRepository?,
     private val contractRepository: ContractRepository?
 
-    ) : ViewModel() {
+) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
     var street by mutableStateOf<DirectExecutionStreet?>(null)
     var streetItems by mutableStateOf(listOf<DirectExecutionStreetItem>())
 
-    var hasPosted by mutableStateOf(false)
+    var hasPosted by mutableStateOf(true)
     var alertModal by mutableStateOf(false)
     var confirmModal by mutableStateOf(false)
 
     var loadingCoordinates by mutableStateOf(false)
-    var nextStep by mutableStateOf(false)
+    var nextStep by mutableStateOf(true)
     var sameStreet by mutableStateOf(false)
 
     var isLoading by mutableStateOf(false)
@@ -47,7 +47,11 @@ class DirectExecutionViewModel(
     var errorMessage by mutableStateOf<String?>(null)
 
     var reserves by mutableStateOf<List<ReserveMaterialJoin>>(emptyList())
-    var stockCount by  mutableIntStateOf(0)
+    var stockCount by mutableIntStateOf(0)
+
+    var responsible: String? = null
+    var signPath: String? = null
+    var signDate: String? = null
 
     private fun initializeExecution(directExecutionId: Long, description: String) {
         if (street == null) {
@@ -114,7 +118,7 @@ class DirectExecutionViewModel(
             _syncError.value = null
             try {
                 isLoading = true
-                val response = repository.syncDirectExecutions()
+                val response = repository?.syncDirectExecutions()
                 when (response) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
@@ -128,6 +132,8 @@ class DirectExecutionViewModel(
                     is RequestResult.SuccessEmptyBody -> {
                         ServerError(204, "Resposta 204 inesperada")
                     }
+
+                    null -> null
                 }
             } catch (e: Exception) {
                 isLoading = false
@@ -153,7 +159,7 @@ class DirectExecutionViewModel(
     suspend fun getExecution(contractId: Long): DirectExecution? {
         return withContext(Dispatchers.IO) {
             try {
-                repository.getExecution(contractId)
+                repository?.getExecution(contractId)
             } catch (e: Exception) {
                 Log.e("Error loadMaterials", e.message.toString())
                 null  // Retorna null em caso de erro
@@ -175,7 +181,7 @@ class DirectExecutionViewModel(
 
     private suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> {
         return withContext(Dispatchers.IO) {
-            repository.getReservesOnce(directExecutionId)
+            repository?.getReservesOnce(directExecutionId) ?: emptyList()
         }
     }
 
@@ -189,7 +195,7 @@ class DirectExecutionViewModel(
             try {
                 isLoading = true
                 withContext(Dispatchers.IO) {
-                    repository.createStreet(street.copy(finishAt = Instant.now().toString()), items)
+                    repository?.createStreet(street.copy(finishAt = Instant.now().toString()), items)
                 }
                 onPostExecuted()
             } catch (e: IllegalStateException) {
@@ -208,7 +214,7 @@ class DirectExecutionViewModel(
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    repository.markAsFinished(directExecutionId)
+                    repository?.markAsFinished(directExecutionId, responsible, signPath, signDate)
                     street = null
                 }
             } catch (e: IllegalStateException) {
@@ -224,11 +230,8 @@ class DirectExecutionViewModel(
             try {
                 isLoading = true
                 initializeExecution(directExecutionId, description)
-                repository.setStatus(directExecutionId, "IN_PROGRESS")
+                repository?.setStatus(directExecutionId, "IN_PROGRESS")
                 reserves = getReservesOnce(directExecutionId)
-                if(reserves.isEmpty()) {
-                    markAsFinished(directExecutionId)
-                }
             } catch (e: Exception) {
                 errorMessage = e.message
             } finally {
@@ -239,15 +242,14 @@ class DirectExecutionViewModel(
 
     fun countStock() {
         viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    stockCount = repository.countStock()
-                } catch (e: Exception) {
-                    errorMessage = e.message
-                } finally {
-                    isLoading = false
-                }
+            try {
+                stockCount = repository?.countStock() ?: 0
+            } catch (e: Exception) {
+                errorMessage = e.message
+            } finally {
+                isLoading = false
+            }
         }
     }
-
 
 }

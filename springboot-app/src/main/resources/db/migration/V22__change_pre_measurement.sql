@@ -109,14 +109,18 @@ $$
             ALTER TABLE stockist
             ALTER COLUMN notification_code SET NOT NULL;
         end if;
+
+        if exists(select 1 from information_schema.columns where column_name = 'measured_item_quantity' and table_name = 'pre_measurement_street_item' and data_type <> 'numeric') then
+            ALTER TABLE pre_measurement_street_item
+            ALTER COLUMN measured_item_quantity TYPE NUMERIC;
+        end if;
     END
 $$;
 
-
-ALTER TABLE pre_measurement_street_item
-    ALTER COLUMN measured_item_quantity TYPE NUMERIC;
-
 alter table pre_measurement
+    ADD COLUMN IF NOT EXISTS signature_uri TEXT,
+    ADD COLUMN IF NOT EXISTS responsible TEXT,
+    ADD COLUMN IF NOT EXISTS sign_date timestamp,
     add column if not exists created_at timestamptz not null default now(),
     add column if not exists comment text;
 
@@ -143,3 +147,19 @@ alter table order_material_item
 
 alter table order_material_item
     add column if not exists quantity_released numeric null;
+
+CREATE TABLE IF NOT EXISTS pre_measurement_executor
+(
+    pre_measurement_id  BIGINT,
+    user_id             UUID NOT NULL,
+
+    CONSTRAINT pre_measurement_installation_executor_pkey PRIMARY KEY (pre_measurement_id, user_id),
+
+    CONSTRAINT pre_measurement_installation_executor_id_f_key
+        FOREIGN KEY (pre_measurement_id)
+            REFERENCES pre_measurement (pre_measurement_id),
+
+    CONSTRAINT pre_measurement_installation_executor_user_id_f_key
+        FOREIGN KEY (user_id)
+            REFERENCES app_user (user_id)
+);
