@@ -56,7 +56,7 @@ class MaintenanceService(
 
         val fileUri = signature?.let {
             val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
-            minioService.uploadFile(it, Utils.getCurrentBucket(), folder, "execution")
+            minioService.uploadFile(it, Utils.getCurrentBucket(), folder, "maintenance")
         }
 
         val newMaintenance = Maintenance(

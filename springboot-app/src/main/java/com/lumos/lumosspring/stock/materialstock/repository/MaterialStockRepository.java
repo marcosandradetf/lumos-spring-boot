@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Repository
@@ -47,6 +48,16 @@ public interface MaterialStockRepository extends CrudRepository<MaterialStock, L
     ) THEN 1 ELSE 0 END
     """)
     Optional<Integer> existsDeposit(@Param("id") Long id);
+
+    @Query(
+        """
+            UPDATE material_stock
+            SET stock_quantity = stock_quantity - :quantity,
+                stock_available = stock_available - :quantity
+            WHERE material_id_stock = :materialStockId
+        """
+    )
+    void debitStock(BigDecimal quantity, Long materialStockId);
 
 }
 

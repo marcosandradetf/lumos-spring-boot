@@ -10,20 +10,23 @@ import com.lumos.api.DirectExecutionApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
-import com.lumos.data.converter.Converters
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
+import com.lumos.domain.model.DirectExecutionRequest
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ReserveMaterialJoin
-import com.lumos.domain.model.SendDirectExecutionDto
+import com.lumos.domain.model.DirectExecutionStreetRequest
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.compressImageFromUri
+import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.collections.forEach
 
@@ -197,7 +200,7 @@ class DirectExecutionRepository(
         val materials = db.directExecutionDao().getStreetItems(streetId)
 
 
-        val dto = SendDirectExecutionDto(
+        val dto = DirectExecutionStreetRequest(
             directExecutionId = street.directExecutionId,
             description = street.description,
             deviceStreetId = street.directStreetId,
@@ -225,7 +228,7 @@ class DirectExecutionRepository(
 
             val response =
                 ApiExecutor.execute {
-                    api.uploadDirectExecutionData(
+                    api.submitDirectExecutionStreet(
                         photo = imagePart,
                         execution = jsonBody
                     )
@@ -262,19 +265,34 @@ class DirectExecutionRepository(
         return ServerError(-1, "Erro na criacao da foto da execucao")
     }
 
-    suspend fun finishedDirectExecution(directExecutionId: Long): RequestResult<Unit> {
-        val executorsIds = db.directExecutionDao().getExecutorsIds(directExecutionId)
-            .let { json -> Converters().toList(json) }
-            .takeIf { it?.isNotEmpty() == true } // só mantém se não estiver vazia
-            ?: secureStorage.getOperationalUsers().toList() // fallback
+    suspend fun submitDirectExecution(directExecutionId: Long): RequestResult<Unit> {
+        val gson = Gson()
 
-        val response =
-            ApiExecutor.execute {
-                api.finishDirectExecution(
-                    directExecutionId = directExecutionId,
-                    operationalUsers = executorsIds
-                )
-            }
+        val installation = db.directExecutionDao().getExecutionPayload(directExecutionId)
+        val signUri = installation?.signPath
+        val executorsIds = installation?.operationalUsers
+            ?.takeIf { it.isNotEmpty() }
+            ?: secureStorage.getOperationalUsers().toList()
+
+        val json = gson.toJson(installation?.copy(operationalUsers = executorsIds))
+        val jsonBody = json.toRequestBody("application/json".toMediaType())
+
+        val imagePart = signUri?.let {
+            val file = getFileFromUri(
+                app.applicationContext,
+                it.toUri(),
+                "signature_${System.currentTimeMillis()}.png"
+            )
+            val requestFile = file.asRequestBody("image/png".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("signature", file.name, requestFile)
+        }
+
+        val response = ApiExecutor.execute {
+            api.submitDirectExecution(
+                photo = imagePart,
+                installation = jsonBody
+            )
+        }
 
         return when (response) {
             is RequestResult.Success -> {
@@ -309,8 +327,18 @@ class DirectExecutionRepository(
         db.directExecutionDao().setStatus(directExecutionId, status)
     }
 
-    suspend fun markAsFinished(directExecutionId: Long) {
-        setStatus(directExecutionId, "FINISHED")
+    suspend fun markAsFinished(
+        directExecutionId: Long,
+        responsible: String?,
+        signPath: String?,
+        signDate: String?,
+    ) {
+        db.directExecutionDao().markAsFinished(
+            directExecutionId,
+            responsible,
+            signPath,
+            signDate
+        )
         SyncManager.markAsDirectExecutionAsFinished(
             context = app.applicationContext,
             db = db,

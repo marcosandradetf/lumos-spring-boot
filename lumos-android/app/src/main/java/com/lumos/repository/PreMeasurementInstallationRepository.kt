@@ -13,7 +13,7 @@ import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
-import com.lumos.domain.model.InstallationRequest
+import com.lumos.domain.model.InstallationStreetRequest
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
@@ -35,7 +35,7 @@ class PreMeasurementInstallationRepository(
     private val minioApi = apiService.createApi(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.getExecutions("PENDING") }
+        val response = ApiExecutor.execute { api.getInstallations("PENDING") }
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data)
@@ -148,7 +148,7 @@ class PreMeasurementInstallationRepository(
             return ServerError(-1, "Foto da pré-medição não encontrada")
         }
         val items = db.preMeasurementInstallationDao().getStreetItemsPayload(streetId)
-        val dto = InstallationRequest(
+        val dto = InstallationStreetRequest(
             streetId = streetId,
             items = items
         )
@@ -166,7 +166,7 @@ class PreMeasurementInstallationRepository(
             )
 
             val response =
-                ApiExecutor.execute { api.uploadData(photo = imagePart, execution = jsonBody) }
+                ApiExecutor.execute { api.submitInstallationStreet(photo = imagePart, installationStreet = jsonBody) }
 
             return when (response) {
                 is RequestResult.Success -> {

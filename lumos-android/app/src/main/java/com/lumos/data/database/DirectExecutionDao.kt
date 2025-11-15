@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
 import com.lumos.domain.model.DirectExecution
+import com.lumos.domain.model.DirectExecutionRequest
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
@@ -107,10 +108,31 @@ interface DirectExecutionDao {
     """)
     suspend fun getStreets(streetIds: List<Long>): List<DirectExecutionStreet>
 
+    @Query(
+        """
+            SELECT 
+                directExecutionId as directExecutionId,
+                responsible as responsible,
+                signPath as signPath,
+                signDate as signDate,
+                executorsIds as operationalUsers
+            FROM direct_execution
+            WHERE directExecutionId = :directExecutionId
+        """
+    )
+    suspend fun getExecutionPayload(directExecutionId: Long): DirectExecutionRequest?
+
     @Query("""
-        SELECT executorsIds
-        FROM direct_execution
-        WHERE directExecutionId = :directExecutionId
+        update direct_execution
+        set responsible = :responsible,
+            signPath = :signPath,
+            signDate = :signDate
+        where directExecutionId = :directExecutionId
     """)
-    suspend fun getExecutorsIds(directExecutionId: Long): String?
+    suspend fun markAsFinished(
+        directExecutionId: Long,
+        responsible: String?,
+        signPath: String?,
+        signDate: String?
+    )
 }

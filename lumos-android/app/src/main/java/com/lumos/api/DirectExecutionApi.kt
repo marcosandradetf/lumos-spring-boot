@@ -20,14 +20,14 @@ interface DirectExecutionApi {
     
     @Multipart
     @POST("api/mobile/execution/upload-direct-execution")
-    suspend fun uploadDirectExecutionData(
+    suspend fun submitDirectExecutionStreet(
         @Part photo: MultipartBody.Part,
         @Part("execution") execution: RequestBody
     ): Response<Void>
 
-    @POST("api/mobile/execution/finish-direct-execution/{directExecutionId}")
-    suspend fun finishDirectExecution(
-        @Path("directExecutionId") directExecutionId: Long,
-        @Query("operationalUsers") operationalUsers: List<String>
+    @POST("api/mobile/v2/execution/finish-direct-execution/{directExecutionId}")
+    suspend fun submitDirectExecution(
+        @Part photo: MultipartBody.Part?,
+        @Part("installation") installation: RequestBody?,
     ): Response<Void>
 }

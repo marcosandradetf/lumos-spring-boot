@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.premeasurement.dto.installation
 
 import java.math.BigDecimal
+import java.time.Instant
 import java.util.UUID
 
 data class InstallationStreetRequest(
@@ -17,5 +18,7 @@ data class InstallationItemRequest(
 
 data class InstallationRequest(
     val installationId: UUID,
+    val responsible: String? = null,
+    val signDate: Instant? = null,
     val operationalUsers: List<UUID>
 )

@@ -12,13 +12,13 @@ import retrofit2.http.Part
 interface MaintenanceApi {
 
     @POST("api/maintenance/send-street")
-    suspend fun sendStreet(
+    suspend fun submitMaintenanceStreet(
         @Body maintenanceStreetWithItems: MaintenanceStreetWithItems
     ): Response<Void>
 
     @Multipart
     @POST("api/maintenance/finish-maintenance")
-    suspend fun finishMaintenance(
+    suspend fun submitMaintenance(
         @Part("maintenance") maintenance: RequestBody,
         @Part signature: MultipartBody.Part?,
     ): Response<Void>

@@ -39,6 +39,10 @@ public class PreMeasurement {
 
     private Long reservationManagementId;
 
+    private Instant signDate;
+    private String responsible;
+    private String signatureUri;
+
     public Long getPreMeasurementId() {
         return preMeasurementId;
     }
@@ -141,6 +145,30 @@ public class PreMeasurement {
 
     public void setReservationManagementId(Long reservationManagementId) {
         this.reservationManagementId = reservationManagementId;
+    }
+
+    public Instant getSignDate() {
+        return signDate;
+    }
+
+    public void setSignDate(Instant signDate) {
+        this.signDate = signDate;
+    }
+
+    public String getResponsible() {
+        return responsible;
+    }
+
+    public void setResponsible(String responsible) {
+        this.responsible = responsible;
+    }
+
+    public String getSignatureUri() {
+        return signatureUri;
+    }
+
+    public void setSignatureUri(String signatureUri) {
+        this.signatureUri = signatureUri;
     }
 }
 
