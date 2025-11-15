@@ -130,8 +130,7 @@ fun MaterialsContent(
         )
     }
 
-    val imageSaved =
-        remember { mutableStateOf(viewModel.currentStreet?.installationPhotoUri != null) }
+    val imageSaved = remember { mutableStateOf(currentStreet?.installationPhotoUri != null) }
     val createFile: () -> Uri = {
         val file = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
         file.createNewFile() // Garante que o arquivo seja criado
@@ -366,7 +365,7 @@ fun MaterialsContent(
                     }
                 }
 
-                AnimatedVisibility(visible = currentItems.isNotEmpty()) {
+//                AnimatedVisibility(visible = currentItems.isNotEmpty()) {
 
                     FloatingActionButton(
                         onClick = {
@@ -446,7 +445,7 @@ fun MaterialsContent(
                                 .background(MaterialTheme.colorScheme.primary),
                         )
                     }
-                }
+//                }
 
             } else {
                 Column(
@@ -850,7 +849,7 @@ fun PrevMScreen() {
                 photoExpiration = 1L,
                 objectUri = "",
                 status = "",
-                installationPhotoUri = ""
+                installationPhotoUri = null
             )
         ),
         navController = rememberNavController(),

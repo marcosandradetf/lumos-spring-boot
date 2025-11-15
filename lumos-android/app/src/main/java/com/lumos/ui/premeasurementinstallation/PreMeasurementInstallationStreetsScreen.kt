@@ -397,13 +397,10 @@ fun PrevStreetsScreen() {
         )
     )
 
-
-
-
-
     Content(
         viewModel = PreMeasurementInstallationViewModel(
             repository = null,
+            contractRepository = null,
             mockStreets = mockInstallationStreets,
             mockItems = mockInstallationItems
         ),
