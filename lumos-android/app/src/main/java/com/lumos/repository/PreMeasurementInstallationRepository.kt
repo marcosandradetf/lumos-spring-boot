@@ -35,7 +35,7 @@ class PreMeasurementInstallationRepository(
     private val minioApi = apiService.createApi(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.getInstallations("PENDING") }
+        val response = ApiExecutor.execute { api.getExecutions("PENDING") }
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data)
@@ -68,6 +68,7 @@ class PreMeasurementInstallationRepository(
         val installations = fetchedExecutions.map { installation ->
             PreMeasurementInstallation(
                 preMeasurementId = installation.preMeasurementId,
+                contractId = installation.contractId,
                 contractor = installation.contractor,
                 instructions = installation.instructions,
                 executorsIds = secureStorage.getOperationalUsers().toList()
@@ -140,13 +141,10 @@ class PreMeasurementInstallationRepository(
         db.preMeasurementInstallationDao().setPhotoInstallationUri(photoUri, streetId)
     }
 
-    suspend fun postExecution(streetId: String): RequestResult<Unit> {
+    suspend fun submitStreet(streetId: String): RequestResult<Unit> {
         val gson = Gson()
 
         val photoUri = db.preMeasurementInstallationDao().getPhotoUri(streetId)
-        if (photoUri == null) {
-            return ServerError(-1, "Foto da pré-medição não encontrada")
-        }
         val items = db.preMeasurementInstallationDao().getStreetItemsPayload(streetId)
         val dto = InstallationStreetRequest(
             streetId = streetId,
@@ -156,47 +154,35 @@ class PreMeasurementInstallationRepository(
         val json = gson.toJson(dto)
         val jsonBody = json.toRequestBody("application/json".toMediaType())
 
-        val byteArray = compressImageFromUri(app.applicationContext, photoUri.toUri())
-        byteArray?.let {
+        val byteArray = photoUri?.let { compressImageFromUri(app.applicationContext, it.toUri()) }
+        val imagePart = byteArray?.let {
             val requestFile = it.toRequestBody("image/jpeg".toMediaType())
-            val imagePart = MultipartBody.Part.createFormData(
+            MultipartBody.Part.createFormData(
                 "photo",
                 "upload_${System.currentTimeMillis()}.jpg",
                 requestFile
             )
-
-            val response =
-                ApiExecutor.execute { api.submitInstallationStreet(photo = imagePart, installationStreet = jsonBody) }
-
-            return when (response) {
-                is RequestResult.Success -> {
-                    db.preMeasurementInstallationDao().deleteInstallation(streetId)
-                    db.preMeasurementInstallationDao().deleteItems(streetId)
-
-                    RequestResult.Success(Unit)
-                }
-
-                is SuccessEmptyBody -> {
-                    db.preMeasurementInstallationDao().deleteInstallation(streetId)
-                    db.preMeasurementInstallationDao().deleteItems(streetId)
-
-                    SuccessEmptyBody
-                }
-
-                is RequestResult.NoInternet -> {
-                    RequestResult.NoInternet
-                }
-
-                is RequestResult.Timeout -> RequestResult.Timeout
-                is ServerError -> ServerError(response.code, response.message)
-                is RequestResult.UnknownError -> {
-                    Log.e("Sync", "Erro desconhecido", response.error)
-                    RequestResult.UnknownError(response.error)
-                }
-            }
         }
 
-        return ServerError(-1, "Erro na criacao da foto da execucao")
+        val response = ApiExecutor.execute { api.submitStreetInstallation(photo = imagePart, installationStreet = jsonBody) }
+        return when (response) {
+            is RequestResult.Success -> {
+                db.preMeasurementInstallationDao().deleteInstallation(streetId)
+                db.preMeasurementInstallationDao().deleteItems(streetId)
+                RequestResult.Success(Unit)
+            }
+
+            is SuccessEmptyBody -> {
+                db.preMeasurementInstallationDao().deleteInstallation(streetId)
+                db.preMeasurementInstallationDao().deleteItems(streetId)
+                SuccessEmptyBody
+            }
+
+            is RequestResult.NoInternet -> RequestResult.NoInternet
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> RequestResult.UnknownError(response.error)
+        }
     }
 
     suspend fun getStreets(installationID: String?, status: List<String> = listOf("PENDING", "IN_PROGRESS")): List<PreMeasurementInstallationStreet> {
@@ -206,7 +192,7 @@ class PreMeasurementInstallationRepository(
     suspend fun updateObjectPublicUrl(
         streetInstallationID: String,
         objectName: String
-    ): RequestResult<Unit> {
+    ): RequestResult<String> {
         val response = ApiExecutor.execute { minioApi.updateObjectPublicUrl(objectName) }
 
         return when (response) {
@@ -216,7 +202,7 @@ class PreMeasurementInstallationRepository(
                     response.data.newUrl,
                     response.data.expiryAt
                 )
-                RequestResult.Success(Unit)
+                RequestResult.Success(response.data.newUrl)
             }
 
             is SuccessEmptyBody -> {

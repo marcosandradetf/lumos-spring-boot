@@ -11,6 +11,7 @@ interface ViewDao {
             SELECT 
                 p.preMeasurementId AS id,
                 'PreMeasurementInstallation' AS type,
+                p.contractId as contractId,
                 p.contractor AS contractor,
                 p.status AS executionStatus,
                 p.creationDate AS creationDate,
@@ -34,6 +35,7 @@ interface ViewDao {
             SELECT 
                 CAST(d.directExecutionId AS TEXT) AS id,
                 'direct_execution' AS type,
+                d.contractId as contractId,
                 d.description AS contractor,
                 d.executionStatus AS executionStatus,
                 d.creationDate AS creationDate,

@@ -1,6 +1,5 @@
 package com.lumos.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,11 +27,10 @@ class PreMeasurementInstallationViewModel(
     mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
 ) : ViewModel() {
-
-    // -> Bellow Properties to control installations
-    var installationID: String? = null
+    var installationID by mutableStateOf<String?>(null)
     var signPhotoUri: String? = null
     var signDate: String? = null
+    var contractId: Long? = null
     var contractor: String? = null
     var currentInstallationStreets by mutableStateOf(mockStreets)
     var currentInstallationItems by mutableStateOf(mockItems)
@@ -44,31 +42,46 @@ class PreMeasurementInstallationViewModel(
     // -> Bellow Properties to UI State
     var loading by mutableStateOf(false)
     var alertModal by mutableStateOf(false)
-    var showExpanded by mutableStateOf(false)
+
     var message by mutableStateOf<String?>(null)
-    var hasPosted by mutableStateOf(false)
+    var hasPosted by mutableStateOf(true)
     var checkBalance by mutableStateOf(false)
     var openConfirmation by mutableStateOf(false)
+    var showSignScreen by mutableStateOf(false)
 
     // -> control viewModel
-
     init {
         viewModelScope.launch {
             NavEvents.route.collect { route ->
                 when (route) {
                     Routes.INSTALLATION_HOLDER -> {
                         installationID = null
+                        signPhotoUri = null
+                        signDate = null
+                        contractId = null
                         contractor = null
-                        currentStreetId = null
-                        currentStreet = null
                         currentInstallationStreets = emptyList()
                         currentInstallationItems = emptyList()
+                        lastItem = null
+                        currentStreetId = null
+                        currentStreet = null
+                        alertModal = false
+                        hasPosted = false
+                        checkBalance = false
+                        openConfirmation = false
+                        showSignScreen = false
                     }
 
                     Routes.PRE_MEASUREMENT_INSTALLATION_STREETS -> {
+                        currentInstallationItems = emptyList()
+                        lastItem = null
                         currentStreetId = null
                         currentStreet = null
-                        currentInstallationItems = emptyList()
+                        alertModal = false
+                        hasPosted = false
+                        checkBalance = false
+                        openConfirmation = false
+                        showSignScreen = false
                     }
                 }
             }
@@ -104,8 +117,13 @@ class PreMeasurementInstallationViewModel(
 
                 withContext(Dispatchers.IO) {
                     repository?.setStreetStatus(paramCurrentStreetId, "IN_PROGRESS")
-                    if(contractRepository?.getContractItemBalance() == RequestResult.Success(Unit)) checkBalance = true
-                    currentInstallationItems = repository?.getItems(paramCurrentStreetId)!!
+                    contractId?.let {
+                        if (contractRepository?.getContractItemBalance(it) is RequestResult.Success) {
+                            checkBalance = true
+                        }
+                    }
+                    repository?.getItems(paramCurrentStreetId)
+                        ?.let { currentInstallationItems = it }
                 }
             } catch (e: Exception) {
                 message = e.message ?: "Erro ao carregar as ruas da pré-medição"
@@ -142,39 +160,6 @@ class PreMeasurementInstallationViewModel(
                 loading = false
             }
         }
-    }
-
-
-    fun setExecutionStatus(streetId: String, status: String) {
-        viewModelScope.launch {
-            try {
-                repository?.setStreetStatus(streetId, status)
-            } catch (e: Exception) {
-                Log.e("Error setExecutionStatus", e.message.toString())
-            }
-        }
-    }
-
-
-    fun setPhotoUri(photoUri: String, streetId: String) {
-        viewModelScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    repository?.setPhotoUri(photoUri, streetId)
-                }
-            } catch (e: Exception) {
-                Log.e("Error setPhotoUri", e.message.toString())
-            }
-        }
-    }
-
-    fun hasPhotoUrl(): Boolean {
-        return currentStreet?.photoExpiration != null
-    }
-
-    fun isPhotoUrlExpired(): Boolean {
-        val now = System.currentTimeMillis() / 1000
-        return now >= (currentStreet?.photoExpiration ?: 0L)
     }
 
     fun setInstallationItemQuantity(quantityExecuted: String, materialStockId: Long) {
@@ -229,10 +214,30 @@ class PreMeasurementInstallationViewModel(
                 installationID = null
                 signPhotoUri = null
                 signDate = null
+                contractor = null
+                contractId = null
             } catch (e: IllegalStateException) {
                 null
             } catch (e: Exception) {
                 null
+            }
+        }
+    }
+
+    fun refreshUrlImage() {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    repository?.updateObjectPublicUrl(
+                        currentStreetId ?: "",
+                        currentStreet?.objectUri ?: ""
+                    )
+                }
+
+                if (response is RequestResult.Success) {
+                    currentStreet = currentStreet?.copy(photoUrl = response.data)
+                }
+            } catch (_: Exception) {
             }
         }
     }

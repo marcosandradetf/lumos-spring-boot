@@ -123,11 +123,12 @@ fun InstallationHolderScreen(
         executions = executions,
         navController = navController,
         isSyncing = isSyncing,
-        select = { id, type, contractor ->
+        select = { id, type, contractor, contractId ->
             if (type != "PreMeasurementInstallation") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
             else {
                 preMeasurementInstallationViewModel.installationID = id
                 preMeasurementInstallationViewModel.contractor = contractor
+                preMeasurementInstallationViewModel.contractId = contractId
                 preMeasurementInstallationViewModel.setStreets()
                 navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_STREETS)
             }
@@ -156,7 +157,7 @@ fun ContentCitiesScreen(
     executions: List<InstallationView>,
     navController: NavHostController,
     isSyncing: Boolean,
-    select: (String, String, String) -> Unit,
+    select: (String, String, String, Long?) -> Unit,
     error: String?,
     refresh: () -> Unit,
     markAsFinished: (String) -> Unit = {},
@@ -246,11 +247,8 @@ fun ContentCitiesScreen(
                             .fillMaxWidth()
                             .padding(vertical = 4.dp, horizontal = 10.dp)
                             .clickable {
-                                if (stockDataSize > 0) select(
-                                    execution.id,
-                                    execution.type,
-                                    execution.contractor
-                                )
+                                if (stockDataSize > 0)
+                                    select(execution.id, execution.type, execution.contractor, execution.contractId)
                                 else showModal = true
                             },
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
@@ -435,7 +433,7 @@ fun PrevContentCitiesScreen() {
         executions = values,
         navController = rememberNavController(),
         isSyncing = false,
-        select = { _, _, _ -> },
+        select = { _, _, _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {},
         stockDataSize = 0

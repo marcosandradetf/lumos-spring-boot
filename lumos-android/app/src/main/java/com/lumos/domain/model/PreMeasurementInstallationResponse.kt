@@ -10,11 +10,11 @@ import java.time.Instant
 data class PreMeasurementInstallation(
     @PrimaryKey
     val preMeasurementId: String,
+    var contractId: Long,
     val contractor: String,
     val instructions: String?,
     val creationDate: String = Instant.now().toString(),
     val status: String = "PENDING",
-
     val responsible: String? = null,
     val signPath: String? = null,
     val signDate: String? = null,
@@ -60,6 +60,7 @@ data class PreMeasurementInstallationItem(
 data class InstallationView(
     val id: String,
     val type: String,
+    var contractId: Long? = null,
     var contractor: String,
     val executionStatus: String,
     val creationDate: String,

@@ -19,6 +19,7 @@ data class DirectReserve(
 @Entity(tableName = "direct_execution")
 data class DirectExecution( //tabela nova
     @PrimaryKey val directExecutionId: Long,
+    var contractId: Long?,
     var description: String,
     var instructions: String? = null,
     val executionStatus: String,

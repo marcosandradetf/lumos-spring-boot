@@ -98,8 +98,8 @@ class ContractRepository(
     fun getFlowContractsForMaintenance(): Flow<List<Contract>> =
         db.contractDao().getFlowContractsForMaintenance()
 
-    suspend fun getContractItemBalance(): RequestResult<Unit>  {
-        val response = ApiExecutor.execute { api.getContractItemBalance() }
+    suspend fun getContractItemBalance(contractId: Long): RequestResult<Unit>  {
+        val response = ApiExecutor.execute { api.getContractItemBalance(contractId) }
 
         return when (response) {
             is RequestResult.Success -> {

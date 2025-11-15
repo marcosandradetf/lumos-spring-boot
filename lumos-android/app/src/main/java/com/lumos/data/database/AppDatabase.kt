@@ -652,6 +652,7 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE direct_execution ADD COLUMN signPath TEXT")
                 db.execSQL("ALTER TABLE direct_execution ADD COLUMN signDate TEXT")
                 db.execSQL("alter table direct_execution ADD COLUMN executorsIds TEXT")
+                db.execSQL("alter table direct_execution ADD COLUMN contractId INT")
 
                 // installation
                 db.execSQL("DROP TABLE IF EXISTS indirect_execution")
@@ -661,6 +662,7 @@ abstract class AppDatabase : RoomDatabase() {
                     """
                         CREATE TABLE IF NOT EXISTS PreMeasurementInstallation (
                             preMeasurementId TEXT NOT NULL PRIMARY KEY,
+                            contractId INT NOT NULL,
                             contractor TEXT NOT NULL,
                             instructions TEXT,
                             creationDate TEXT NOT NULL,

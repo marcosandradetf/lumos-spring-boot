@@ -3,6 +3,7 @@ package com.lumos.ui.premeasurementinstallation.onstreet
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,7 +12,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,7 +40,6 @@ import androidx.compose.material.icons.rounded.Navigation
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -81,32 +80,60 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.lumos.domain.model.ItemView
-import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.LoadImageComponent
+import com.lumos.ui.components.SignatureScreenLandscape
 import com.lumos.utils.Utils
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import java.io.File
+import java.io.FileOutputStream
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
 @Composable
 fun MaterialScreen(
-    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
+    viewModel: PreMeasurementInstallationViewModel,
     context: Context,
     navController: NavHostController,
 ) {
-    MaterialsContent(
-        viewModel = preMeasurementInstallationViewModel,
-        navController = navController,
-        context = context,
-    )
+    if (viewModel.showSignScreen) {
+        SignatureScreenLandscape(
+            description = Utils.abbreviate(viewModel.contractor ?: "PREFEITURA DE BELO HORIZONTE"),
+            onSave = { bitmap, signDate ->
+                val file = File(context.filesDir, "signature_${System.currentTimeMillis()}.png")
+                file.createNewFile()
+                val uri =
+                    FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
 
+                try {
+                    FileOutputStream(file).use { out ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+
+                    viewModel.signPhotoUri = uri.toString()
+                    viewModel.signDate = signDate.toString()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    viewModel.showSignScreen = false
+                }
+            },
+            onCancel = {
+                viewModel.showSignScreen = false
+            })
+    } else {
+        MaterialsContent(
+            viewModel = viewModel,
+            navController = navController,
+            context = context,
+        )
+    }
 }
 
 @Composable
@@ -115,13 +142,13 @@ fun MaterialsContent(
     navController: NavHostController,
     context: Context,
 ) {
+    val currentInstallationId = viewModel.installationID
     val currentStreets = viewModel.currentInstallationStreets
     val currentStreet = viewModel.currentStreet
     val currentItems = viewModel.currentInstallationItems
     val hasPosted = viewModel.hasPosted
     val loading = viewModel.loading
     val alertModal = viewModel.alertModal
-    val showExpanded = viewModel.showExpanded
     val checkBalance = viewModel.checkBalance
 
     val fileUri: MutableState<Uri?> = remember {
@@ -303,7 +330,10 @@ fun MaterialsContent(
                                         viewModel.message =
                                             "Não há estoque disponível para esse item."
                                         return@MaterialItem
-                                    } else if(checkBalance && BigDecimal(quantityExecuted) > BigDecimal(currentBalance)) {
+                                    } else if (checkBalance && BigDecimal(quantityExecuted) > BigDecimal(
+                                            currentBalance
+                                        )
+                                    ) {
                                         viewModel.message =
                                             "Não há saldo contratual disponível para esse item."
                                         return@MaterialItem
@@ -339,33 +369,11 @@ fun MaterialsContent(
                         body = "Antes de finalizar tire uma foto.",
                         confirm = {
                             viewModel.alertModal = false
-                        })
-                }
-
-                if (showExpanded && currentStreet?.photoUrl != null) {
-                    Dialog(onDismissRequest = { viewModel.showExpanded = false }) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.9f))
-                                .clickable { viewModel.showExpanded = false },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(currentStreet.photoUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Imagem ampliada",
-                                modifier = Modifier
-                                    .fillMaxWidth(0.9f)
-                                    .clip(RoundedCornerShape(16.dp))
-                            )
                         }
-                    }
+                    )
                 }
 
-//                AnimatedVisibility(visible = currentItems.isNotEmpty()) {
+                if (currentItems.isNotEmpty()) {
 
                     FloatingActionButton(
                         onClick = {
@@ -422,30 +430,16 @@ fun MaterialsContent(
                         }
                     }
 
-
-                    FloatingActionButton(
-                        onClick = {
-
-                        },
+                    LoadImageComponent(
+                        imageUrl = currentStreet?.photoUrl,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(16.dp),
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(currentStreet?.photoUrl)
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "Imagem do botão",
-                            modifier = Modifier
-                                .size(70.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.primary),
-                        )
-                    }
-//                }
+                        onRefreshUrl = {
+                            viewModel.refreshUrlImage()
+                        }
+                    )
+                }
 
             } else {
                 Column(
@@ -477,8 +471,10 @@ fun MaterialsContent(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = if (currentStreets.isEmpty()) "Nessa istalação, Todas as ruas foram concluídas com sucesso."
-                            else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
+                            text =
+                                if (currentInstallationId == null) "Essa instalação foi concluída com sucesso.\nOs dados serão enviados para o sistema."
+                                else if (currentStreets.isEmpty()) "Nessa istalação, Todas as ruas foram concluídas com sucesso."
+                                else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -488,15 +484,15 @@ fun MaterialsContent(
 
                     // 🧭 Grupo de ações
                     Column(
-                        modifier = Modifier.fillMaxWidth(0.9f),
+                        modifier = Modifier.fillMaxWidth(0.99f),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // 🔹 Ação principal
-                        if (currentStreets.isEmpty()) {
+                        if (currentStreets.isEmpty() && currentInstallationId != null) {
                             OutlinedButton(
                                 onClick = {
-
+                                    viewModel.showSignScreen = true
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -504,14 +500,16 @@ fun MaterialsContent(
                                 shape = RoundedCornerShape(32.dp)
                             ) {
                                 Text(
-                                    "Coletar assinatura"
+                                    "Coletar Assinatura do Responsável"
                                 )
                             }
                         }
 
                         Button(
                             onClick = {
-                                if (currentStreets.isEmpty()) {
+                                if (currentInstallationId != null) {
+                                    navController.navigate(Routes.HOME)
+                                }else if (currentStreets.isEmpty()) {
                                     viewModel.openConfirmation = true
                                 } else {
                                     navController.popBackStack()
@@ -523,7 +521,8 @@ fun MaterialsContent(
                             shape = RoundedCornerShape(32.dp)
                         ) {
                             Text(
-                                if (currentStreets.isEmpty()) "Salvar e finalizar"
+                                if (currentInstallationId == null) "Sair"
+                                else if (currentStreets.isEmpty()) "Salvar e Finalizar"
                                 else "Selecionar Próxima Rua"
                             )
                         }
@@ -590,7 +589,7 @@ fun MaterialItem(
                 text = """
                     Quantidade levantada na rua: ${material.materialQuantity}
                     Quantidade em estoque: ${material.stockQuantity}
-                    ${if(checkBalance) "Saldo contratual: " +  material.stockQuantity else ""}
+                    ${if (checkBalance) "Saldo contratual: " + material.stockQuantity else ""}
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -835,8 +834,8 @@ fun PrevMScreen() {
         viewModel = PreMeasurementInstallationViewModel(
             repository = null,
             contractRepository = null,
-            mockStreets = mockInstallationStreets,
-            mockItems = mockInstallationItems,
+            mockStreets = emptyList(),
+            mockItems = emptyList(),
             mockCurrentStreet = PreMeasurementInstallationStreet(
                 preMeasurementStreetId = "",
                 preMeasurementId = "",

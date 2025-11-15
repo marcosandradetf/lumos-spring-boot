@@ -22,6 +22,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
+import androidx.core.graphics.scale
 
 
 object Utils {
@@ -178,22 +179,64 @@ object Utils {
     fun compressImageFromUri(
         context: Context,
         imageUri: Uri,
-        quality: Int = 70 // Qualidade de 0 a 100
+        quality: Int = 75,      // Qualidade ideal
+        maxSize: Int = 1280     // Máximo recomendado para alta nitidez + baixo tamanho
     ): ByteArray? {
         return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
+            // 1. Carrega bitmap
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
 
+            if (originalBitmap == null) return null
+
+            // 2. Redimensiona se necessário
+            val resized = resizeBitmap(originalBitmap, maxSize)
+
+            // 3. Libera memória do original se foi redimensionado
+            if (resized != originalBitmap) {
+                originalBitmap.recycle()
+            }
+
+            // 4. Comprime a versão final
             val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            resized.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+
+            resized.recycle()
 
             outputStream.toByteArray()
+
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
+
+    fun resizeBitmap(bitmap: Bitmap, maxSize: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+
+        // Se já for menor que maxSize, não redimensiona
+        if (width <= maxSize && height <= maxSize) return bitmap
+
+        val ratio = width.toFloat() / height.toFloat()
+
+        val newWidth: Int
+        val newHeight: Int
+
+        if (ratio > 1) {
+            // Horizontal
+            newWidth = maxSize
+            newHeight = (maxSize / ratio).toInt()
+        } else {
+            // Vertical
+            newHeight = maxSize
+            newWidth = (maxSize * ratio).toInt()
+        }
+
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
 
     fun sanitizeDecimalInput(input: String): String {
         var replaced = input.replace(',', '.')
