@@ -123,12 +123,20 @@ fun InstallationHolderScreen(
         executions = executions,
         navController = navController,
         isSyncing = isSyncing,
-        select = { id, type, contractor, contractId ->
-            if (type != "PreMeasurementInstallation") navController.navigate("${Routes.DIRECT_EXECUTION_SCREEN}/${id}/${contractor}")
-            else {
+        select = { id, type, contractor, contractId, creationDate, instructions ->
+            if (type != "PreMeasurementInstallation") {
+                directExecutionViewModel.installationId = id.toLong()
+                directExecutionViewModel.contractor = contractor
+                directExecutionViewModel.contractId = contractId
+                directExecutionViewModel.creationDate = creationDate
+                directExecutionViewModel.instructions = instructions
+                directExecutionViewModel.setStreets()
+                navController.navigate(Routes.DIRECT_EXECUTION_HOME_SCREEN)
+            } else {
                 preMeasurementInstallationViewModel.installationID = id
                 preMeasurementInstallationViewModel.contractor = contractor
                 preMeasurementInstallationViewModel.contractId = contractId
+                preMeasurementInstallationViewModel.instructions = instructions
                 preMeasurementInstallationViewModel.setStreets()
                 navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_STREETS)
             }
@@ -137,14 +145,6 @@ fun InstallationHolderScreen(
         refresh = {
             directExecutionViewModel.syncExecutions()
             preMeasurementInstallationViewModel.syncExecutions()
-        },
-        markAsFinished = { id ->
-            try {
-                val directExecutionId = id.toLong()
-                directExecutionViewModel.markAsFinished(directExecutionId)
-            } catch (_: Exception) {
-                preMeasurementInstallationViewModel.submitInstallation()
-            }
         },
         stockDataSize = directExecutionViewModel.stockCount
     )
@@ -157,10 +157,9 @@ fun ContentCitiesScreen(
     executions: List<InstallationView>,
     navController: NavHostController,
     isSyncing: Boolean,
-    select: (String, String, String, Long?) -> Unit,
+    select: (String, String, String, Long?, String, String?) -> Unit,
     error: String?,
     refresh: () -> Unit,
-    markAsFinished: (String) -> Unit = {},
     stockDataSize: Int
 ) {
     var openModal by remember { mutableStateOf(false) }
@@ -248,7 +247,14 @@ fun ContentCitiesScreen(
                             .padding(vertical = 4.dp, horizontal = 10.dp)
                             .clickable {
                                 if (stockDataSize > 0)
-                                    select(execution.id, execution.type, execution.contractor, execution.contractId)
+                                    select(
+                                        execution.id,
+                                        execution.type,
+                                        execution.contractor,
+                                        execution.contractId,
+                                        execution.creationDate,
+                                        execution.instructions
+                                    )
                                 else showModal = true
                             },
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
@@ -374,19 +380,6 @@ fun ContentCitiesScreen(
 
                 }
             }
-
-            if (openModal) {
-                Confirm(
-                    body = "Essa ação finaliza a execução e envia ao sistema, deseja continuar?",
-                    confirm = {
-                        markAsFinished(id)
-                        openModal = false
-                    },
-                    cancel = {
-                        openModal = false
-                    }
-                )
-            }
         }
 
     }
@@ -433,7 +426,7 @@ fun PrevContentCitiesScreen() {
         executions = values,
         navController = rememberNavController(),
         isSyncing = false,
-        select = { _, _, _, _ -> },
+        select = { _, _, _, _, _, _ -> },
         error = "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo.",
         refresh = {},
         stockDataSize = 0

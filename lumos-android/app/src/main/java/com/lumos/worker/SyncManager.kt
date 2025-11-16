@@ -153,7 +153,7 @@ object SyncManager {
         }
     }
 
-    suspend fun markAsDirectExecutionAsFinished(context: Context, db: AppDatabase, directExecutionId: Long) {
+    suspend fun queueSubmitInstallation(context: Context, db: AppDatabase, directExecutionId: Long) {
         val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.FINISHED_DIRECT_EXECUTION, directExecutionId)
         if (count == 0) {
 

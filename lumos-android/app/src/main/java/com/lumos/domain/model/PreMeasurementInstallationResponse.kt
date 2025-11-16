@@ -66,6 +66,7 @@ data class InstallationView(
     val creationDate: String,
     val streetsQuantity: Int,
     val itemsQuantity: Int,
+    val instructions: String? = null,
 )
 
 data class ItemView(

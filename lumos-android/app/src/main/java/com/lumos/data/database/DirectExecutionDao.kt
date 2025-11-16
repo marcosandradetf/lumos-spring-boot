@@ -135,4 +135,7 @@ interface DirectExecutionDao {
         signPath: String?,
         signDate: String?
     )
+
+    @Query("SELECT * from direct_execution_street where directExecutionId = :installationID")
+    suspend fun getStreetsByInstallationId(installationID: Long?): List<DirectExecutionStreet>
 }

@@ -1,6 +1,5 @@
 package com.lumos.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
-import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.ReserveMaterialJoin
@@ -25,21 +23,33 @@ import java.util.UUID
 
 class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository?,
-    private val contractRepository: ContractRepository?
+    private val contractRepository: ContractRepository?,
+    mockContractor: String? = null,
+    mockCreationDate: String? = null,
+    mockStreets: List<DirectExecutionStreet> = emptyList(),
 
-) : ViewModel() {
+    ) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
 
+    var installationId by mutableStateOf<Long?>(null)
+    var creationDate by mutableStateOf(mockCreationDate)
+    var contractId by mutableStateOf<Long?>(null)
+    var contractor by mutableStateOf(mockContractor)
+
     var street by mutableStateOf<DirectExecutionStreet?>(null)
+    var streets by mutableStateOf(mockStreets)
     var streetItems by mutableStateOf(listOf<DirectExecutionStreetItem>())
 
-    var hasPosted by mutableStateOf(true)
+    var hasPosted by mutableStateOf(false)
     var alertModal by mutableStateOf(false)
     var confirmModal by mutableStateOf(false)
+    var showFinishForm by mutableStateOf(false)
+    var showSignScreen by mutableStateOf(false)
 
     var loadingCoordinates by mutableStateOf(false)
-    var nextStep by mutableStateOf(true)
+    var nextStep by mutableStateOf(false)
+    var triedToSubmit by mutableStateOf(false)
     var sameStreet by mutableStateOf(false)
 
     var isLoading by mutableStateOf(false)
@@ -49,9 +59,13 @@ class DirectExecutionViewModel(
     var reserves by mutableStateOf<List<ReserveMaterialJoin>>(emptyList())
     var stockCount by mutableIntStateOf(0)
 
-    var responsible: String? = null
-    var signPath: String? = null
+    var responsible by mutableStateOf<String?>(null)
+    var signPath by mutableStateOf<String?>(null)
     var signDate: String? = null
+
+    var responsibleError by mutableStateOf<String?>(null)
+    var instructions by mutableStateOf<String?>(null)
+    var hasResponsible by mutableStateOf<Boolean?>(null)
 
     private fun initializeExecution(directExecutionId: Long, description: String) {
         if (street == null) {
@@ -144,41 +158,6 @@ class DirectExecutionViewModel(
         }
     }
 
-
-//    fun setExecutionStatus(streetId: Long, status: String) {
-//        viewModelScope.launch {
-//            try {
-//                repository.setExecutionStatus(streetId, status)
-//            } catch (e: Exception) {
-//                Log.e("Error setExecutionStatus", e.message.toString())
-//            }
-//        }
-//    }
-
-
-    suspend fun getExecution(contractId: Long): DirectExecution? {
-        return withContext(Dispatchers.IO) {
-            try {
-                repository?.getExecution(contractId)
-            } catch (e: Exception) {
-                Log.e("Error loadMaterials", e.message.toString())
-                null  // Retorna null em caso de erro
-            }
-        }
-    }
-
-//    fun queueSyncStartExecution(streetId: Long, context: Context) {
-//        viewModelScope.launch {
-//            try {
-//                withContext(Dispatchers.IO) {
-//                    repository.queueSyncStartExecution(streetId)
-//                }
-//            } catch (e: Exception) {
-//                Log.e("Error queueSyncFetchReservationStatus", e.message.toString())
-//            }
-//        }
-//    }
-
     private suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> {
         return withContext(Dispatchers.IO) {
             repository?.getReservesOnce(directExecutionId) ?: emptyList()
@@ -210,28 +189,26 @@ class DirectExecutionViewModel(
         }
     }
 
-    fun markAsFinished(directExecutionId: Long) {
+    fun submitInstallation() {
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    repository?.markAsFinished(directExecutionId, responsible, signPath, signDate)
+                    repository?.queueSubmitInstallation(installationId, responsible, signPath, signDate)
                     street = null
                 }
-            } catch (e: IllegalStateException) {
-                null
             } catch (e: Exception) {
-                null
+                errorMessage = e.message
             }
         }
     }
 
-    fun loadExecutionData(directExecutionId: Long, description: String) {
+    fun loadExecutionData() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 isLoading = true
-                initializeExecution(directExecutionId, description)
-                repository?.setStatus(directExecutionId, "IN_PROGRESS")
-                reserves = getReservesOnce(directExecutionId)
+                initializeExecution(installationId!!, contractor!!)
+                repository?.setStatus(installationId!!, "IN_PROGRESS")
+                reserves = getReservesOnce(installationId!!)
             } catch (e: Exception) {
                 errorMessage = e.message
             } finally {
@@ -246,6 +223,22 @@ class DirectExecutionViewModel(
                 stockCount = repository?.countStock() ?: 0
             } catch (e: Exception) {
                 errorMessage = e.message
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    fun setStreets() {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                withContext(Dispatchers.IO) {
+                    streets = repository?.getStreets(installationId)!!
+                }
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Erro ao carregar as ruas da pré-medição"
             } finally {
                 isLoading = false
             }

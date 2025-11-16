@@ -48,6 +48,7 @@ class PreMeasurementInstallationViewModel(
     var checkBalance by mutableStateOf(false)
     var openConfirmation by mutableStateOf(false)
     var showSignScreen by mutableStateOf(false)
+    var instructions by mutableStateOf<String?>(null)
 
     // -> control viewModel
     init {

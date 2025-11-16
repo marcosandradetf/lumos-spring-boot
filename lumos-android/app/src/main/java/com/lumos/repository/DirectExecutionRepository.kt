@@ -13,7 +13,6 @@ import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
-import com.lumos.domain.model.DirectExecutionRequest
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
@@ -111,7 +110,8 @@ class DirectExecutionRepository(
                 creationDate = executionDto.creationDate,
                 description = executionDto.description,
                 instructions = executionDto.instructions,
-                executorsIds = secureStorage.getOperationalUsers().toList()
+                executorsIds = secureStorage.getOperationalUsers().toList(),
+                contractId = executionDto.contractId,
             )
 
             db.directExecutionDao().insertExecution(execution)
@@ -327,19 +327,23 @@ class DirectExecutionRepository(
         db.directExecutionDao().setStatus(directExecutionId, status)
     }
 
-    suspend fun markAsFinished(
-        directExecutionId: Long,
+    suspend fun queueSubmitInstallation(
+        directExecutionId: Long?,
         responsible: String?,
         signPath: String?,
         signDate: String?,
     ) {
+        if (directExecutionId == null) {
+            throw Exception("Parâmetro directExecutionId null durante a execução da queueSubmitInstallation")
+        }
+
         db.directExecutionDao().markAsFinished(
             directExecutionId,
             responsible,
             signPath,
             signDate
         )
-        SyncManager.markAsDirectExecutionAsFinished(
+        SyncManager.queueSubmitInstallation(
             context = app.applicationContext,
             db = db,
             directExecutionId = directExecutionId
@@ -348,6 +352,10 @@ class DirectExecutionRepository(
 
     suspend fun countStock(): Int {
         return db.stockDao().materialCount()
+    }
+
+    suspend fun getStreets(installationID: Long?): List<DirectExecutionStreet> {
+        return db.directExecutionDao().getStreetsByInstallationId(installationID)
     }
 
 }

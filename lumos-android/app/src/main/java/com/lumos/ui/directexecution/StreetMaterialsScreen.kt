@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory2
@@ -38,8 +36,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
@@ -101,15 +97,13 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
-import com.lumos.viewmodel.DirectExecutionViewModel
 import com.lumos.utils.Utils.sanitizeDecimalInput
+import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.math.BigDecimal
 
 @Composable
 fun StreetMaterialScreen(
-    directExecutionId: Long,
-    description: String,
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
     navController: NavHostController,
@@ -117,16 +111,13 @@ fun StreetMaterialScreen(
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
     val coordinates = CoordinatesService(context, fusedLocationProvider)
     var currentAddress by remember { mutableStateOf("") }
+    val contractor = directExecutionViewModel.contractor
 
     val message = remember {
         mutableStateMapOf(
             "title" to "Título da mensagem",
             "body" to "Você está na rua da execução neste momento?"
         )
-    }
-
-    LaunchedEffect(Unit) {
-        directExecutionViewModel.loadExecutionData(directExecutionId, description)
     }
 
     LaunchedEffect(directExecutionViewModel.reserves.size) {
@@ -179,7 +170,7 @@ fun StreetMaterialScreen(
         Loading("Tentando carregar as coordenadas...")
     } else if (directExecutionViewModel.nextStep) {
         AppLayout(
-            title = Utils.abbreviate(description),
+            title = Utils.abbreviate(contractor ?: ""),
             selectedIcon = BottomBar.EXECUTIONS.value,
             navigateBack = {
                 if (directExecutionViewModel.hasPosted) {
@@ -252,10 +243,7 @@ fun StreetMaterialScreen(
                             onClick = {
                                 directExecutionViewModel.clearViewModel()
                                 directExecutionViewModel.sameStreet = true
-                                directExecutionViewModel.loadExecutionData(
-                                    directExecutionId,
-                                    description
-                                )
+                                directExecutionViewModel.loadExecutionData()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -271,10 +259,7 @@ fun StreetMaterialScreen(
                             onClick = {
                                 directExecutionViewModel.clearViewModel()
                                 directExecutionViewModel.sameStreet = true
-                                directExecutionViewModel.loadExecutionData(
-                                    directExecutionId,
-                                    description
-                                )
+                                directExecutionViewModel.loadExecutionData()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -413,7 +398,7 @@ fun StreetMaterialScreen(
     } else
         StreetMaterialsContent(
             isLoading = directExecutionViewModel.isLoading,
-            description = description,
+            description = contractor ?: "",
             reserves = directExecutionViewModel.reserves,
             street = directExecutionViewModel.street,
             context = context,
@@ -655,67 +640,7 @@ fun StreetMaterialsContent(
 
             if (isLoading) {
                 Loading("Carregando materiais")
-            } else if (reserves.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(fraction = 0.7f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.TaskAlt,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface,
-                                shape = CircleShape
-                            )
-                            .padding(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = "Saldo igual a zero.\nExecução finalizada!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Nenhuma ação é necessária!\nEstamos processando o envio dos dados!!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Button(
-                        onClick = {
-                            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 4.dp,
-                            pressedElevation = 8.dp
-                        )
-                    ) {
-                        Text(
-                            text = "Ok, voltar a tela anterior",
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                    }
-                }
-            } else {
+            }  else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -881,7 +806,6 @@ fun StreetMaterialsContent(
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
-
                 }
 
                 if (alertModal) {
@@ -1218,10 +1142,8 @@ fun PrevMStreetScreen() {
 //    )
 
     StreetMaterialScreen(
-        directExecutionId = 1,
-        description = "Etapa 8 - PREFEITURA ITAMBACURI",
         directExecutionViewModel = DirectExecutionViewModel(
-            null, null
+            null, null,
         ),
         context = LocalContext.current,
         navController = rememberNavController()

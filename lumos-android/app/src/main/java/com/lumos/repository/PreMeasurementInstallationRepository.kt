@@ -35,7 +35,7 @@ class PreMeasurementInstallationRepository(
     private val minioApi = apiService.createApi(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.getExecutions("PENDING") }
+        val response = ApiExecutor.execute { api.getInstallations("PENDING") }
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data)
@@ -164,7 +164,7 @@ class PreMeasurementInstallationRepository(
             )
         }
 
-        val response = ApiExecutor.execute { api.submitStreetInstallation(photo = imagePart, installationStreet = jsonBody) }
+        val response = ApiExecutor.execute { api.submitInstallationStreet(photo = imagePart, installationStreet = jsonBody) }
         return when (response) {
             is RequestResult.Success -> {
                 db.preMeasurementInstallationDao().deleteInstallation(streetId)

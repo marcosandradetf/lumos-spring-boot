@@ -26,7 +26,8 @@ interface ViewDao {
                     JOIN PreMeasurementInstallationItem i
                         ON s.preMeasurementStreetId = i.preMeasurementStreetId
                     WHERE s.preMeasurementId = p.preMeasurementId
-                ) AS itemsQuantity
+                ) AS itemsQuantity,
+                instructions as instructions
             FROM PreMeasurementInstallation p
             WHERE p.status = :status
         
@@ -50,7 +51,8 @@ interface ViewDao {
                     JOIN direct_execution_street_item i
                         ON s.directStreetId = i.directStreetId
                     WHERE s.directExecutionId = d.directExecutionId
-                ) AS itemsQuantity
+                ) AS itemsQuantity,
+                instructions as instructions
             FROM direct_execution d
             WHERE d.executionStatus in (:status)
         """)

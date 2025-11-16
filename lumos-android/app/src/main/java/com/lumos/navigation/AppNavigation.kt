@@ -47,6 +47,7 @@ import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.TeamRepository
 import com.lumos.repository.ViewRepository
 import com.lumos.ui.auth.Login
+import com.lumos.ui.directexecution.DirectExecutionHomeScreen
 import com.lumos.ui.directexecution.StreetMaterialScreen
 import com.lumos.ui.installationholder.InstallationHolderScreen
 import com.lumos.ui.premeasurementinstallation.onstreet.MaterialScreen
@@ -145,7 +146,10 @@ fun AppNavigation(
     )
 
     val preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel = viewModel {
-        PreMeasurementInstallationViewModel(repository = preMeasurementInstallationRepository, contractRepository = contractRepository)
+        PreMeasurementInstallationViewModel(
+            repository = preMeasurementInstallationRepository,
+            contractRepository = contractRepository
+        )
     }
 
     val directExecutionRepository = DirectExecutionRepository(
@@ -158,7 +162,7 @@ fun AppNavigation(
     val directExecutionViewModel: DirectExecutionViewModel = viewModel {
         DirectExecutionViewModel(
             repository = directExecutionRepository,
-            contractRepository = contractRepository
+            contractRepository = contractRepository,
         )
     }
 
@@ -520,25 +524,23 @@ fun AppNavigation(
 
                 composable(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) {
                     MaterialScreen(
-                        preMeasurementInstallationViewModel = preMeasurementInstallationViewModel,
+                        viewModel = preMeasurementInstallationViewModel,
                         context = LocalContext.current,
                         navController = navController,
                     )
                 }
 
-                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS + "/{directExecutionId}/{description}?lastRoute={lastRoute}") { backStackEntry ->
-                    val directExecutionId =
-                        backStackEntry.arguments?.getString("directExecutionId")?.toLongOrNull()
-                            ?: 0
-                    val description =
-                        backStackEntry.arguments?.getString("description") ?: ""
 
-                    val lastRoute =
-                        backStackEntry.arguments?.getString("lastRoute")
+                // Direct Execution
+                composable(Routes.DIRECT_EXECUTION_HOME_SCREEN) {
+                    DirectExecutionHomeScreen(
+                        viewModel = directExecutionViewModel,
+                        navController = navController
+                    )
+                }
 
+                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS) {
                     StreetMaterialScreen(
-                        directExecutionId = directExecutionId,
-                        description = description,
                         directExecutionViewModel = directExecutionViewModel,
                         context = LocalContext.current,
                         navController = navController,
@@ -655,6 +657,7 @@ object Routes {
 
     // -> direct-installations
     const val DIRECT_EXECUTION_SCREEN = "direct-execution-screen"
+    const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
     const val UPDATE = "update"
     const val SYNC = "sync"
