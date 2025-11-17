@@ -37,6 +37,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - MINIO_URL=http://minio:9000
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - MINIO_PASSWORD=${MINIO_PASSWORD}
       - JAVA_TOOL_OPTIONS=-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:+ExitOnOutOfMemoryError -XX:+AlwaysPreTouch --enable-preview
     mem_limit: 512m
@@ -53,7 +54,7 @@ services:
       - "3000"
     environment:
       - NODE_ENV=production
-    mem_limit: 250m
+    mem_limit: 350m
     restart: always
 
   minio:

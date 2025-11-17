@@ -550,8 +550,8 @@ fun StreetItemsContent(
             )
         } else if (action != null) {
             ConfirmNavigation(
-                action!!,
-                navController
+                route = action!!,
+                navController = navController
             ) {
                 action = null
             }
@@ -759,17 +759,18 @@ fun StreetItemsContent(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
-                    .padding(10.dp),
+                    .fillMaxWidth(0.6f)
+                    .padding(15.dp),
                 containerColor = MaterialTheme.colorScheme.inverseSurface,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(30.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.inverseSurface)
-                        .padding(20.dp)
+                        .padding(10.dp)
                 ) {
                     Text(
-                        "CONTINUAR",
+                        "Continuar",
                         color = MaterialTheme.colorScheme.inverseOnSurface,
                         style = MaterialTheme.typography.titleMedium,
                     )

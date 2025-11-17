@@ -40,6 +40,7 @@ data class PreMeasurementInstallationStreet(
 
     val status: String = "PENDING",
     val installationPhotoUri: String? = null,
+    val currentSupply: String? = null,
 ) {
     @Ignore
     val items: List<PreMeasurementInstallationItem> = emptyList()
@@ -79,5 +80,5 @@ data class ItemView(
     val specs: String?,
     val stockQuantity: String = "0",
     val executedQuantity: String = "0",
-    val currentBalance: String = "0",
+    val currentBalance: String? = null,
 )

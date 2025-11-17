@@ -147,9 +147,12 @@ class DirectExecutionRepository(
     }
 
     suspend fun createStreet(
-        street: DirectExecutionStreet,
+        street: DirectExecutionStreet?,
         items: List<DirectExecutionStreetItem>
     ) {
+        if (street == null) {
+            throw Exception("parametro street null na fun createStreet")
+        }
         db.withTransaction {
             val streetId = db.directExecutionDao().createStreet(street)
             if (streetId <= 0) {

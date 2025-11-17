@@ -38,5 +38,6 @@ data class ReserveMaterialJoin(
     val materialName: String,
     val materialQuantity: String,
     val requestUnit: String,
-    val stockAvailable: String
+    val stockAvailable: String,
+    val currentBalance: String? = null
 )

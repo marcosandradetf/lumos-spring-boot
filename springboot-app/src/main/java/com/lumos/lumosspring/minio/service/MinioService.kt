@@ -8,10 +8,11 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import io.minio.http.Method
 import io.minio.messages.DeleteObject
+import org.springframework.core.env.Environment
 import java.time.Instant
 
 @Service
-class MinioService(private val minioClient: MinioClient) {
+class MinioService(private val minioClient: MinioClient, private val environment: Environment) {
 
     fun uploadFile(file: MultipartFile, bucketName: String, folder: String, fileName: String): String {
         try {
@@ -65,13 +66,15 @@ class MinioService(private val minioClient: MinioClient) {
         val url: String,
         val expiresAt: Long // epoch seconds ou millis
     )
+
     fun getPublicUrl(bucketName: String, objectName: String, expiryAt: Int = 5 * 60): PublicUrlResponse {
 
         val presigned = getPresignedObjectUrl(bucketName, objectName, expiryAt)
         val expiresAtTimestamp = Instant.now().plusSeconds(expiryAt.toLong()).epochSecond
+        val publicUrl = environment.getProperty("minio.public.url")
 
         return PublicUrlResponse(
-            url = presigned.replace("http://minio:9000", "https://api.thryon.com.br/minio"),
+            url = presigned.replace("http://minio:9000", publicUrl ?: "http://minio:9000"),
             expiresAt = expiresAtTimestamp
         )
     }

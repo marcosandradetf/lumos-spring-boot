@@ -45,9 +45,10 @@ interface DirectExecutionDao {
     @Query("""
         SELECT de.reserveId as reserveId, de.directExecutionId as directExecutionId, de.materialStockId,
         de.contractItemId, de.materialName as materialName, de.materialQuantity as materialQuantity, 
-        de.requestUnit as requestUnit,  ms.stockAvailable as stockAvailable 
+        de.requestUnit as requestUnit,  ms.stockAvailable as stockAvailable, cib.currentBalance as currentBalance
         from direct_reserve de
         JOIN material_stock ms on ms.materialStockId = de.materialStockId
+        LEFT JOIN ContractItemBalance cib on cib.contractItemId = de.contractItemId
         WHERE de.directExecutionId = :directExecutionId AND CAST(de.materialQuantity AS NUMERIC) > 0
     """)
     suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin>

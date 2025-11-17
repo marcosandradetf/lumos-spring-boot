@@ -243,9 +243,11 @@ class PreMeasurementInstallationRepository(
         db.withTransaction {
             items.forEach {
                 db.stockDao().debitStock(it.materialStockId, it.executedQuantity)
+                db.contractDao().debitContractItem(it.contractItemId, it.executedQuantity)
             }
             db.preMeasurementInstallationDao().updateStreet(currentStreet.copy(status = "FINISHED"))
         }
+
         SyncManager.queueSubmitPreMeasurementInstallationStreet(
             app.applicationContext,
             db,

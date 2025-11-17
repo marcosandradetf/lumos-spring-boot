@@ -122,4 +122,9 @@ class ContractRepository(
         }
     }
 
+    suspend fun debitContractItem(contractItemId: Long, quantityExecuted: String) {
+        db.contractDao().debitContractItem(contractItemId, quantityExecuted)
+    }
+
+
 }

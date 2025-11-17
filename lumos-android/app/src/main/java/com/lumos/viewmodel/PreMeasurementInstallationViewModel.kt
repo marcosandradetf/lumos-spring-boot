@@ -16,6 +16,7 @@ import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
 
 class PreMeasurementInstallationViewModel(
     private val repository: PreMeasurementInstallationRepository?,
@@ -27,7 +28,7 @@ class PreMeasurementInstallationViewModel(
     mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
 ) : ViewModel() {
-    var installationID by mutableStateOf<String?>(null)
+    var installationID by mutableStateOf<String?>("null")
     var signPhotoUri: String? = null
     var signDate: String? = null
     var contractId: Long? = null
@@ -49,6 +50,13 @@ class PreMeasurementInstallationViewModel(
     var openConfirmation by mutableStateOf(false)
     var showSignScreen by mutableStateOf(false)
     var instructions by mutableStateOf<String?>(null)
+    var route by mutableStateOf<String?>(null)
+
+    var responsible by mutableStateOf<String?>(null)
+    var responsibleError by mutableStateOf<String?>(null)
+    var hasResponsible by mutableStateOf<Boolean?>(null)
+    var triedToSubmit by mutableStateOf(false)
+    var showFinishForm by mutableStateOf(false)
 
     // -> control viewModel
     init {
@@ -80,7 +88,6 @@ class PreMeasurementInstallationViewModel(
                         currentStreet = null
                         alertModal = false
                         hasPosted = false
-                        checkBalance = false
                         openConfirmation = false
                         showSignScreen = false
                     }
@@ -118,9 +125,11 @@ class PreMeasurementInstallationViewModel(
 
                 withContext(Dispatchers.IO) {
                     repository?.setStreetStatus(paramCurrentStreetId, "IN_PROGRESS")
-                    contractId?.let {
-                        if (contractRepository?.getContractItemBalance(it) is RequestResult.Success) {
-                            checkBalance = true
+                    if (!checkBalance) {
+                        contractId?.let {
+                            if (contractRepository?.getContractItemBalance(it) is RequestResult.Success) {
+                                checkBalance = true
+                            }
                         }
                     }
                     repository?.getItems(paramCurrentStreetId)
@@ -163,13 +172,21 @@ class PreMeasurementInstallationViewModel(
         }
     }
 
-    fun setInstallationItemQuantity(quantityExecuted: String, materialStockId: Long) {
+    fun setInstallationItemQuantity(
+        quantityExecuted: String,
+        materialStockId: Long,
+        contractItemId: Long
+    ) {
         viewModelScope.launch {
             loading = true
             try {
                 lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }
+
+                if (checkBalance) updateCurrentBalance(contractItemId, quantityExecuted)
+
                 currentInstallationItems =
                     currentInstallationItems.filter { it.materialStockId != materialStockId }
+
                 withContext(Dispatchers.IO) {
                     repository?.setInstallationItemQuantity(
                         currentStreetId,
@@ -177,6 +194,7 @@ class PreMeasurementInstallationViewModel(
                         quantityExecuted
                     )
                 }
+
                 message = "Item concluído com sucesso"
             } catch (e: Exception) {
                 message = e.message ?: ""
@@ -217,9 +235,9 @@ class PreMeasurementInstallationViewModel(
                 signDate = null
                 contractor = null
                 contractId = null
-            } catch (e: IllegalStateException) {
+            } catch (_: IllegalStateException) {
                 null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -240,6 +258,18 @@ class PreMeasurementInstallationViewModel(
                 }
             } catch (_: Exception) {
             }
+        }
+    }
+
+    private fun updateCurrentBalance(contractItemId: Long, quantityExecuted: String) {
+        currentInstallationItems = currentInstallationItems.map { item ->
+            if (item.contractItemId == contractItemId) {
+                item.copy(
+                    currentBalance = (BigDecimal(item.currentBalance) - BigDecimal(
+                        quantityExecuted
+                    )).toString()
+                )
+            } else item
         }
     }
 

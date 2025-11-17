@@ -218,7 +218,7 @@ class DirectExecutionReportRepository(
                 SELECT json_agg(
                   json_build_object(
                     'address', x.address,
-                    'finished_at', coalesce(to_char(x.finished_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY "às" HH24:MI'), ''),
+                    'finished_at', coalesce(to_char(x.finished_at AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY "às" HH24:MI'), ''),
                     'latitude', x.latitude,
             		'longitude', x.longitude,
                     'execution_photo_uri', coalesce(x.execution_photo_uri, '')

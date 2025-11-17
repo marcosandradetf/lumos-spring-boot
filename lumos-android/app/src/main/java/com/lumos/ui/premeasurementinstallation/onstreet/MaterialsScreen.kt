@@ -28,9 +28,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
@@ -42,11 +44,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -83,9 +88,11 @@ import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
+import com.lumos.ui.components.ConfirmNavigation
 import com.lumos.ui.components.LoadImageComponent
 import com.lumos.ui.components.SignatureScreenLandscape
 import com.lumos.utils.Utils
+import com.lumos.utils.Utils.hasFullName
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
 import java.io.File
 import java.io.FileOutputStream
@@ -147,6 +154,9 @@ fun MaterialsContent(
     val loading = viewModel.loading
     val alertModal = viewModel.alertModal
     val checkBalance = viewModel.checkBalance
+    val route = viewModel.route
+    val triedToSubmit = viewModel.triedToSubmit
+    val showFinishForm = viewModel.showFinishForm
 
     val fileUri: MutableState<Uri?> = remember {
         mutableStateOf(
@@ -170,8 +180,6 @@ fun MaterialsContent(
                         viewModel.currentStreet?.copy(installationPhotoUri = uri.toString())
                     imageSaved.value = true
                 }
-            } else {
-                Log.e("ImageDebug", "Erro ao tirar foto.")
             }
         }
 
@@ -179,19 +187,35 @@ fun MaterialsContent(
         title = Utils.abbreviate(viewModel.contractor ?: "PREFEITURA DE BELO HORIZONTE"),
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateToMore = {
-            navController.navigate(Routes.MORE)
+            if (!hasPosted) {
+                viewModel.route = Routes.MORE
+            } else {
+                navController.navigate(Routes.MORE)
+            }
         },
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            if (!hasPosted) {
+                viewModel.route = Routes.HOME
+            } else {
+                navController.navigate(Routes.HOME)
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            if (!hasPosted) {
+                viewModel.route = Routes.STOCK
+            } else {
+                navController.navigate(Routes.STOCK)
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            if (!hasPosted) {
+                viewModel.route = Routes.MAINTENANCE
+            } else {
+                navController.navigate(Routes.MAINTENANCE)
+            }
         },
         navigateBack = {
-            navController.popBackStack()
+            viewModel.route = "back"
         },
     ) { _, snackBar ->
         Box(
@@ -209,6 +233,15 @@ fun MaterialsContent(
                     }
                 }
                 viewModel.message = null
+            }
+
+            if (route != null) {
+                ConfirmNavigation(
+                    route = route,
+                    navController = navController
+                ) {
+                    viewModel.route = null
+                }
             }
 
             if (!hasPosted) {
@@ -309,7 +342,6 @@ fun MaterialsContent(
                                         color = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
-
                             }
                         }
                     }
@@ -322,22 +354,28 @@ fun MaterialsContent(
                             MaterialItem(
                                 material = it,
                                 checkBalance = checkBalance,
-                                finish = { quantityExecuted, materialStockId, stockQuantity, currentBalance ->
+                                finish = { quantityExecuted, materialStockId, stockQuantity, currentBalance, contractItemId ->
                                     if (BigDecimal(quantityExecuted) > BigDecimal(stockQuantity)) {
                                         viewModel.message =
                                             "Não há estoque disponível para esse item."
                                         return@MaterialItem
                                     } else if (checkBalance && BigDecimal(quantityExecuted) > BigDecimal(
-                                            currentBalance
+                                            currentBalance ?: "0"
                                         )
                                     ) {
                                         viewModel.message =
                                             "Não há saldo contratual disponível para esse item."
                                         return@MaterialItem
+                                    } else if (quantityExecuted.trim() == "" || quantityExecuted.trim() == "0") {
+                                        viewModel.message =
+                                            "Para concluir, Insira a quantidade do item"
+                                        return@MaterialItem
                                     }
+
                                     viewModel.setInstallationItemQuantity(
                                         quantityExecuted,
-                                        materialStockId
+                                        materialStockId,
+                                        contractItemId
                                     )
                                 },
                                 loading = loading
@@ -439,116 +477,308 @@ fun MaterialsContent(
                 }
 
             } else {
-                Column(
+
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 48.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 20.dp)
+                        .verticalScroll(rememberScrollState()),
                 ) {
-                    // 🎯 Feedback visual principal
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Rounded.TaskAlt,
-                            contentDescription = "Tarefa concluída",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(56.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Text(
-                            text = "Missão Cumprida!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text =
-                                if (currentInstallationId == null) "Essa instalação foi concluída com sucesso.\nOs dados serão enviados para o sistema."
-                                else if (currentStreets.isEmpty()) "Nessa istalação, Todas as ruas foram concluídas com sucesso."
-                                else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-
-                    // 🧭 Grupo de ações
-                    Column(
-                        modifier = Modifier.fillMaxWidth(0.99f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // 🔹 Ação principal
-                        if (currentStreets.isEmpty() && currentInstallationId != null) {
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.showSignScreen = true
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(32.dp)
-                            ) {
-                                Text(
-                                    "Coletar Assinatura do Responsável"
-                                )
-                            }
-                        }
-
-                        Button(
-                            onClick = {
-                                if (currentInstallationId != null) {
-                                    navController.navigate(Routes.HOME)
-                                }else if (currentStreets.isEmpty()) {
-                                    viewModel.openConfirmation = true
-                                } else {
-                                    navController.popBackStack()
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(32.dp)
+                    if (!showFinishForm) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
+                            Icon(
+                                imageVector = Icons.Rounded.TaskAlt,
+                                contentDescription = "Tarefa concluída",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(56.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
                             Text(
-                                if (currentInstallationId == null) "Sair"
-                                else if (currentStreets.isEmpty()) "Salvar e Finalizar"
-                                else "Selecionar Próxima Rua"
+                                text = if (currentInstallationId == null) "Missão Cumprida!"
+                                else if (currentStreets.isEmpty()) "Quase lá!"
+                                else "Bom trabalho!",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text =
+                                    if (currentInstallationId == null) "Instalação concluída com sucesso.\nOs dados serão enviados para o sistema."
+                                    else if (currentStreets.isEmpty()) "Todas as ruas foram concluídas com sucesso.\nToque no botão abaixo para preencher os dados restantes."
+                                    else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.\n\nToque no botão abaixo para selecionar e iniciar a próxima rua.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
                         }
+                    } else {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            // HEADER PRINCIPAL
+                            Text(
+                                text = "Dados da Instalação",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+
+
+                            // =========================================================
+                            //                  SEÇÃO 1 — DADOS PRINCIPAIS
+                            // =========================================================
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+
+                                Column(
+                                    modifier = Modifier.padding(20.dp),
+                                ) {
+                                    OutlinedTextField(
+                                        value = viewModel.currentStreet?.currentSupply ?: "",
+                                        onValueChange = {
+                                            viewModel.triedToSubmit = false
+                                            viewModel.currentStreet =
+                                                viewModel.currentStreet?.copy(currentSupply = it)
+                                        },
+                                        label = { Text("Fornecedor atual") },
+                                        isError = triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank(),
+                                        supportingText = {
+                                            if (triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank()) {
+                                                Text("Informe o fornecedor atual")
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = viewModel.currentStreet?.lastPower ?: "",
+                                        onValueChange = {
+                                            viewModel.triedToSubmit = false
+                                            viewModel.currentStreet =
+                                                viewModel.currentStreet?.copy(lastPower = it)
+                                        },
+                                        label = { Text("Potência anterior") },
+                                        isError = triedToSubmit && viewModel.currentStreet?.lastPower.isNullOrBlank(),
+                                        supportingText = {
+                                            if (triedToSubmit && viewModel.currentStreet?.lastPower.isNullOrBlank()) {
+                                                Text("Informe a potência anterior")
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                }
+                            }
+
+
+                            // =========================================================
+                            //                  SEÇÃO 2 — RESPONSÁVEL
+                            // =========================================================
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+
+                                Column(
+                                    modifier = Modifier.padding(20.dp),
+                                ) {
+
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        text = "Coletar Assinatura do Responsável?",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+
+                                        // Botão SIM
+                                        FilterChip(
+                                            selected = viewModel.hasResponsible == true,
+                                            onClick = {
+                                                viewModel.responsibleError = null
+                                                viewModel.hasResponsible = true
+                                            },
+                                            label = { Text("Sim") }
+                                        )
+
+                                        // Botão NÃO
+                                        FilterChip(
+                                            selected = viewModel.hasResponsible == false,
+                                            onClick = {
+                                                if (viewModel.signPhotoUri == null) {
+                                                    viewModel.responsibleError = null
+                                                    viewModel.hasResponsible = false
+                                                }
+                                            },
+                                            enabled = viewModel.signPhotoUri == null,
+                                            label = { Text("Não") }
+                                        )
+                                    }
+
+                                    if (viewModel.hasResponsible == null && viewModel.responsibleError != null) {
+                                        Text(
+                                            viewModel.responsibleError ?: "",
+                                            color = MaterialTheme.colorScheme.error,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+
+                                    // RESPONSÁVEL
+                                    if (viewModel.hasResponsible == true) {
+
+                                        // Nome antes da assinatura
+                                        if (viewModel.signPhotoUri == null) {
+
+                                            Text(
+                                                text = "Solicite o Nome do Responsável",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+
+                                            OutlinedTextField(
+                                                value = viewModel.responsible ?: "",
+                                                onValueChange = {
+                                                    viewModel.responsible = it
+                                                    viewModel.responsibleError = null
+                                                },
+                                                label = { Text("Nome do Responsável") },
+                                                isError = viewModel.responsibleError != null,
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+
+                                            if (viewModel.responsibleError != null) {
+                                                Text(
+                                                    viewModel.responsibleError ?: "",
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                            }
+                                        }
+
+                                        // Assinatura
+                                        if (viewModel.signPhotoUri != null) {
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .height(120.dp)
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(MaterialTheme.colorScheme.surface)
+                                            ) {
+                                                Image(
+                                                    painter = rememberAsyncImagePainter(viewModel.signPhotoUri),
+                                                    contentDescription = "Assinatura",
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentScale = ContentScale.Fit
+                                                )
+                                            }
+                                            Spacer(Modifier.height(10.dp))
+
+                                            Text(
+                                                text = "Ao finalizar o envio, presume-se que o responsável pela manutenção está ciente de que os dados fornecidos, incluindo a imagem da assinatura, poderão ser utilizados como comprovação da execução do serviço.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
+                    // =========================================================
+                    //                      BOTÃO FINAL
+                    // =========================================================
+                    Button(
+                        onClick = {
+                            var hasError = false
+
+                            if (currentInstallationId != null) {
+                                navController.navigate(Routes.HOME)
+                            } else if (currentStreets.isEmpty()) {
+                                if (viewModel.currentStreet?.currentSupply.isNullOrBlank()) hasError =
+                                    true
+                                if (viewModel.currentStreet?.lastPower.isNullOrBlank()) hasError =
+                                    true
+
+                                if (viewModel.hasResponsible == null) {
+                                    viewModel.responsibleError = "Informe se possui responsável"
+                                } else if (viewModel.hasResponsible == true &&
+                                    (viewModel.responsible.isNullOrBlank() || !hasFullName(
+                                        viewModel.responsible ?: ""
+                                    ))
+                                ) {
+                                    viewModel.responsibleError =
+                                        "Nome e sobrenome do responsável"
+                                } else if (viewModel.hasResponsible == true && viewModel.signPhotoUri == null) {
+                                    viewModel.showSignScreen = true
+                                } else if (!hasError) {
+                                    viewModel.openConfirmation = true
+                                }
+                            } else {
+                                navController.popBackStack()
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .align(Alignment.BottomCenter),
+                        shape = RoundedCornerShape(32.dp)
+                    ) {
+                        Text(
+                            if (currentInstallationId == null) "Sair"
+                            else if (viewModel.hasResponsible == true && viewModel.signPhotoUri == null)
+                                "Coletar Assinatura"
+                            else if (currentStreets.isEmpty()) "Preencher Dados da Instalação"
+                            else "Selecionar Próxima Rua"
+                        )
+                    }
                 }
-            }
 
-            if (viewModel.openConfirmation) {
-                Confirm(
-                    body = "Deseja confirmar o salvamento dessa instalação?",
-                    confirm = {
-                        viewModel.submitInstallation()
-                    },
-                    cancel = {
-                        viewModel.openConfirmation = false
-                    }
-                )
             }
         }
 
+        if (viewModel.openConfirmation) {
+            Confirm(
+                body = "Deseja confirmar o salvamento dessa instalação?",
+                confirm = {
+                    viewModel.submitInstallation()
+                },
+                cancel = {
+                    viewModel.openConfirmation = false
+                }
+            )
+        }
     }
+
 }
+
 
 @Composable
 fun MaterialItem(
     material: ItemView,
     checkBalance: Boolean,
-    finish: (String, Long, String, String) -> Unit,
+    finish: (String, Long, String, String?, Long) -> Unit,
     loading: Boolean
 ) {
     var confirmModal by remember { mutableStateOf(false) }
@@ -685,7 +915,8 @@ fun MaterialItem(
                         quantityExecuted.toString(),
                         material.materialStockId,
                         material.stockQuantity,
-                        material.currentBalance
+                        material.currentBalance,
+                        material.contractItemId
                     )
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -704,7 +935,8 @@ fun MaterialItem(
                     quantityExecuted.toString(),
                     material.materialStockId,
                     material.stockQuantity,
-                    material.currentBalance
+                    material.currentBalance,
+                    material.contractItemId
                 )
             },
             cancel = {

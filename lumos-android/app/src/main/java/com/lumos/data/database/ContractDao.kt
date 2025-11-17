@@ -36,23 +36,30 @@ interface ContractDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItems(items: List<Item>)
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM items 
         WHERE contractReferenceItemId IN (:itemsIds) AND type <> "MANUTENÇÃO"
         order by description
-    """)
+    """
+    )
     fun getItemsFromContract(itemsIds: List<Long>): Flow<List<Item>>
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM contracts 
         WHERE contractId IN (:longs)
-    """)
-    fun getFlowContractsByExecution(longs: List<Long>) : Flow<List<Contract>>
+    """
+    )
+    fun getFlowContractsByExecution(longs: List<Long>): Flow<List<Contract>>
 
     @Query("SELECT * FROM contracts WHERE hasMaintenance = 1")
     fun getFlowContractsForMaintenance(): Flow<List<Contract>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertContractItemBalance(contractItemBalance: List<ContractItemBalance>)
+
+    @Query("UPDATE contractitembalance set currentBalance = CAST(currentBalance AS NUMERIC) - CAST(:quantityExecuted AS NUMERIC) WHERE contractItemId = :contractItemId")
+    suspend fun debitContractItem(contractItemId: Long, quantityExecuted: String)
 
 }

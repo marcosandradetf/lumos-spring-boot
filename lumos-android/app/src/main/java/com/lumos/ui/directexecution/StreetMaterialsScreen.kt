@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -101,6 +102,7 @@ import com.lumos.utils.Utils.sanitizeDecimalInput
 import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.math.BigDecimal
+import java.util.UUID
 
 @Composable
 fun StreetMaterialScreen(
@@ -124,7 +126,7 @@ fun StreetMaterialScreen(
         if (directExecutionViewModel.sameStreet) {
             directExecutionViewModel.street =
                 directExecutionViewModel.street?.copy(
-                    address = currentAddress,
+                    address = currentAddress
                 )
 
             coordinates.execute { latitude, longitude ->
@@ -168,17 +170,12 @@ fun StreetMaterialScreen(
 
     if (directExecutionViewModel.loadingCoordinates) {
         Loading("Tentando carregar as coordenadas...")
-    } else if (directExecutionViewModel.nextStep) {
+    } else if (directExecutionViewModel.hasPosted) {
         AppLayout(
             title = Utils.abbreviate(contractor ?: ""),
             selectedIcon = BottomBar.EXECUTIONS.value,
             navigateBack = {
-                if (directExecutionViewModel.hasPosted) {
-                    directExecutionViewModel.clearViewModel()
-                    navController.popBackStack()
-                } else {
-                    directExecutionViewModel.nextStep = false
-                }
+                navController.popBackStack()
             },
             navigateToHome = {
                 navController.navigate(Routes.HOME)
@@ -190,210 +187,82 @@ fun StreetMaterialScreen(
                 navController.navigate(Routes.STOCK)
             },
             navigateToExecutions = {
-                directExecutionViewModel.clearViewModel()
                 navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
             }
         ) { _, _ ->
-            var triedToSubmit by remember { mutableStateOf(false) }
-
-            if (directExecutionViewModel.hasPosted) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 48.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Rounded.TaskAlt,
-                            contentDescription = "Tarefa concluída",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(56.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Text(
-                            text = "Missão Cumprida!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    // 🧭 Grupo de ações
-                    Column(
-                        modifier = Modifier.fillMaxWidth(0.9f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // 🔹 Ação principal
-                        OutlinedButton(
-                            onClick = {
-                                directExecutionViewModel.clearViewModel()
-                                directExecutionViewModel.sameStreet = true
-                                directExecutionViewModel.loadExecutionData()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(32.dp)
-                        ) {
-                            Text(
-                                "Finalizar Instalação"
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                directExecutionViewModel.clearViewModel()
-                                directExecutionViewModel.sameStreet = true
-                                directExecutionViewModel.loadExecutionData()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(32.dp)
-                        ) {
-                            Text(
-                                "Nova Instalação Nessa Rua"
-                            )
-                        }
-                    }
-
-                }
-            } else
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    Text(
-                        text = "Dados da instalação",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 4.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Rounded.TaskAlt,
+                        contentDescription = "Tarefa concluída",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(56.dp)
                     )
 
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     Text(
-                        text = "Preencha os dados abaixo",
+                        text = "Ótimo Trabalho!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Esta rua está concluída.\nFinalize todas as ruas e depois toque em Gerenciar Instalação para enviar a instalação.",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 24.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
+                }
 
-                    OutlinedTextField(
-                        value = directExecutionViewModel.street?.currentSupply ?: "",
-                        onValueChange = {
-                            triedToSubmit = false
-                            directExecutionViewModel.street =
-                                directExecutionViewModel.street?.copy(currentSupply = it)
+                // 🧭 Grupo de ações
+                Column(
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 🔹 Ação principal
+                    OutlinedButton(
+                        onClick = {
+                            navController.popBackStack()
                         },
-                        isError = triedToSubmit && directExecutionViewModel.street?.currentSupply.isNullOrBlank(),
-                        singleLine = true,
-                        label = { Text("Fornecedor atual") },
-                        supportingText = {
-                            if (triedToSubmit && directExecutionViewModel.street?.currentSupply.isNullOrBlank()) {
-                                Text(
-                                    "Informe o fornecedor atual",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
-                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            errorBorderColor = MaterialTheme.colorScheme.error
+                            .height(50.dp),
+                        shape = RoundedCornerShape(32.dp)
+                    ) {
+                        Text(
+                            "Gerenciar Instalação"
                         )
-                    )
-
-                    OutlinedTextField(
-                        value = directExecutionViewModel.street?.lastPower ?: "",
-                        onValueChange = {
-                            triedToSubmit = false
-                            directExecutionViewModel.street =
-                                directExecutionViewModel.street?.copy(lastPower = it)
-                        },
-                        isError = triedToSubmit && directExecutionViewModel.street?.lastPower.isNullOrBlank(),
-                        singleLine = true,
-                        label = { Text("Potência anterior") },
-                        supportingText = {
-                            if (triedToSubmit && directExecutionViewModel.street?.lastPower.isNullOrBlank()) {
-                                Text(
-                                    "Informe a potência anterior",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 32.dp),
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            errorBorderColor = MaterialTheme.colorScheme.error
-                        )
-                    )
+                    }
 
                     Button(
                         onClick = {
-                            triedToSubmit = true
-
-                            val isCurrentSupplyValid =
-                                !directExecutionViewModel.street?.currentSupply.isNullOrBlank()
-                            val isLastPowerValid =
-                                !directExecutionViewModel.street?.lastPower.isNullOrBlank()
-
-                            if (isCurrentSupplyValid && isLastPowerValid) {
-                                directExecutionViewModel.street?.let { street ->
-                                    directExecutionViewModel.saveAndPost(
-                                        street = street,
-                                        items = directExecutionViewModel.streetItems,
-                                        onPostExecuted = {
-                                            directExecutionViewModel.hasPosted = true
-                                        },
-                                        onError = {
-                                            directExecutionViewModel.errorMessage = it
-                                        }
-                                    )
-                                }
-                            }
+                            directExecutionViewModel.sameStreet = true
+                            directExecutionViewModel.loadExecutionData()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
-                            .padding(horizontal = 8.dp),
+                            .height(50.dp),
+                        shape = RoundedCornerShape(32.dp)
                     ) {
                         Text(
-                            "Enviar",
-                            style = MaterialTheme.typography.bodyLarge
+                            "Nova Instalação Nessa Rua"
                         )
                     }
                 }
+
+            }
         }
     } else
         StreetMaterialsContent(
@@ -439,19 +308,19 @@ fun StreetMaterialScreen(
                     } else {
                         val quantities =
                             directExecutionViewModel.streetItems.map { it.quantityExecuted }
+
                         if (quantities.any { BigDecimal(it) == BigDecimal.ZERO }) {
                             message["title"] = "Quantidade inválida"
                             message["body"] =
                                 "Não é permitido salvar itens com quantidade igual a 0."
                             directExecutionViewModel.alertModal = true
                         } else {
-                            directExecutionViewModel.nextStep = true
+                            directExecutionViewModel.saveAndPost()
                         }
                     }
                 } else if (action == "CLOSE") {
                     directExecutionViewModel.confirmModal = false
                 } else {
-                    directExecutionViewModel.clearViewModel()
                     navController.navigate(action)
                 }
             },
@@ -640,7 +509,7 @@ fun StreetMaterialsContent(
 
             if (isLoading) {
                 Loading("Carregando materiais")
-            }  else {
+            } else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -759,7 +628,7 @@ fun StreetMaterialsContent(
                         Box(
                             modifier = Modifier
                                 .clip(
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(20.dp)
                                 )
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .padding(10.dp)
@@ -791,17 +660,18 @@ fun StreetMaterialsContent(
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
-                        .padding(20.dp),
+                        .fillMaxWidth(0.6f)
+                        .padding(25.dp),
                     containerColor = MaterialTheme.colorScheme.inverseSurface,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(30.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.inverseSurface)
-                            .padding(20.dp)
+                            .padding(10.dp)
                     ) {
                         Text(
-                            "CONFIRMAR",
+                            "Finalizar",
                             color = MaterialTheme.colorScheme.inverseOnSurface,
                             style = MaterialTheme.typography.titleMedium,
                         )
@@ -1019,7 +889,7 @@ fun PrevMStreetScreen() {
     // Criando um contexto fake para a preview
     val fakeContext = LocalContext.current
 
-    val reserves = listOf(
+    val mockItems = listOf(
         ReserveMaterialJoin(
             materialStockId = 10,
             materialName = "LED 120W",
@@ -1102,48 +972,21 @@ fun PrevMStreetScreen() {
         )
     )
 
-
-//    StreetMaterialsContent(
-//        isLoading = false,
-//        description = "Prefeitura de Belo Horizonte",
-//        reserves = reserves,
-//        street = DirectExecutionStreet(
-//            directStreetId = 1,
-//            address = "Rua Marcos Coelho Neto, 960 - Estrela Dalva",
-//            latitude = null,
-//            longitude = null,
-//            photoUri = null,
-//            deviceId = "",
-//            directExecutionId = 1,
-//            description = "",
-//            lastPower = "100W",
-//            finishAt = "",
-//            currentSupply = "",
-//        ),
-//        lastRoute = Routes.DIRECT_EXECUTION_SCREEN,
-//        context = fakeContext,
-//        navController = rememberNavController(),
-//        notificationsBadge = "12",
-//        takePhoto = { },
-//        changeStreet = {},
-//        confirmModal = { },
-//        openConfirmModal = false,
-//        openModal = {},
-//        alertModal = false,
-//        closeAlertModal = { },
-//        changeMaterial = { _, _, _, _, _, _ -> },
-//        changeQuantity = { _, _, _, _ -> },
-//        errorMessage = null,
-//        alertMessage = mutableMapOf(
-//            "title" to "Título da mensagem",
-//            "body" to "Conteúdo da mensagem"
-//        ),
-//        streetItems = emptyList(),
-//    )
-
     StreetMaterialScreen(
         directExecutionViewModel = DirectExecutionViewModel(
             null, null,
+            mockItems = mockItems,
+            mockStreetItems = listOf(
+                DirectExecutionStreetItem(
+                    directStreetItemId = 1,
+                    reserveId = 1,
+                    materialStockId = 10,
+                    materialName = "",
+                    contractItemId = -1,
+                    directStreetId = 1,
+                    quantityExecuted = "12"
+                )
+            )
         ),
         context = LocalContext.current,
         navController = rememberNavController()

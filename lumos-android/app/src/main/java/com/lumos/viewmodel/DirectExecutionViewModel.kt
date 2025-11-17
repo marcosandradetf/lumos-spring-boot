@@ -11,13 +11,16 @@ import com.lumos.api.RequestResult.ServerError
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.ReserveMaterialJoin
+import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
+import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
@@ -27,6 +30,8 @@ class DirectExecutionViewModel(
     mockContractor: String? = null,
     mockCreationDate: String? = null,
     mockStreets: List<DirectExecutionStreet> = emptyList(),
+    mockItems: List<ReserveMaterialJoin> = emptyList(),
+    mockStreetItems: List<DirectExecutionStreetItem> = emptyList()
 
     ) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)
@@ -39,7 +44,7 @@ class DirectExecutionViewModel(
 
     var street by mutableStateOf<DirectExecutionStreet?>(null)
     var streets by mutableStateOf(mockStreets)
-    var streetItems by mutableStateOf(listOf<DirectExecutionStreetItem>())
+    var streetItems by mutableStateOf(mockStreetItems)
 
     var hasPosted by mutableStateOf(false)
     var alertModal by mutableStateOf(false)
@@ -53,10 +58,11 @@ class DirectExecutionViewModel(
     var sameStreet by mutableStateOf(false)
 
     var isLoading by mutableStateOf(false)
+    var checkBalance by mutableStateOf(false)
 
     var errorMessage by mutableStateOf<String?>(null)
 
-    var reserves by mutableStateOf<List<ReserveMaterialJoin>>(emptyList())
+    var reserves by mutableStateOf(mockItems)
     var stockCount by mutableIntStateOf(0)
 
     var responsible by mutableStateOf<String?>(null)
@@ -66,6 +72,55 @@ class DirectExecutionViewModel(
     var responsibleError by mutableStateOf<String?>(null)
     var instructions by mutableStateOf<String?>(null)
     var hasResponsible by mutableStateOf<Boolean?>(null)
+
+    // -> control viewModel
+    init {
+        viewModelScope.launch {
+            NavEvents.route.collect { route ->
+                when (route) {
+                    Routes.INSTALLATION_HOLDER -> {
+                        installationId = null
+                        contractId = null
+                        contractor = null
+                        creationDate = null
+                        instructions = null
+
+                        streets = emptyList()
+                        reserves = emptyList()
+
+                        street = null
+                        streetItems = emptyList()
+
+                        alertModal = false
+                        hasPosted = false
+                        checkBalance = false
+                        confirmModal = false
+                        showSignScreen = false
+                        showFinishForm = false
+
+                        hasResponsible = null
+                        responsible = null
+                        signPath = null
+                        signDate = null
+
+                        sameStreet = false
+                        stockCount = 0
+                    }
+
+                    Routes.DIRECT_EXECUTION_HOME_SCREEN -> {
+                        street = null
+                        streetItems = emptyList()
+
+                        loadExecutionData()
+                    }
+
+                    Routes.DIRECT_EXECUTION_SCREEN_MATERIALS -> {
+                        initializeExecution(installationId!!, contractor!!)
+                    }
+                }
+            }
+        }
+    }
 
     private fun initializeExecution(directExecutionId: Long, description: String) {
         if (street == null) {
@@ -82,23 +137,6 @@ class DirectExecutionViewModel(
                 currentSupply = null,
             )
         }
-    }
-
-    fun clearViewModel() {
-        isLoading = true
-
-        street = null
-        streetItems = emptyList()
-        reserves = emptyList()
-        hasPosted = false
-        errorMessage = null
-        alertModal = false
-        confirmModal = false
-        loadingCoordinates = false
-        nextStep = false
-        sameStreet = false
-
-        isLoading = false
     }
 
 //    fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
@@ -160,29 +198,34 @@ class DirectExecutionViewModel(
 
     private suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> {
         return withContext(Dispatchers.IO) {
+            if (!checkBalance) {
+                contractId?.let {
+                    if (contractRepository?.getContractItemBalance(it) is RequestResult.Success) {
+                        checkBalance = true
+                    }
+                }
+            }
             repository?.getReservesOnce(directExecutionId) ?: emptyList()
         }
     }
 
-    fun saveAndPost(
-        street: DirectExecutionStreet,
-        items: List<DirectExecutionStreetItem>,
-        onPostExecuted: () -> Unit,
-        onError: (String) -> Unit = {}
-    ) {
+    fun saveAndPost() {
         viewModelScope.launch {
             try {
                 isLoading = true
                 withContext(Dispatchers.IO) {
-                    repository?.createStreet(street.copy(finishAt = Instant.now().toString()), items)
+                    repository?.createStreet(
+                        street?.copy(finishAt = Instant.now().toString()),
+                        streetItems
+                    )
                 }
-                onPostExecuted()
+                hasPosted = true
             } catch (e: IllegalStateException) {
                 isLoading = false
-                onError(e.message ?: "Erro inesperado")
+                errorMessage = e.message
             } catch (e: Exception) {
                 isLoading = false
-                onError("Erro: ${e.localizedMessage}")
+                errorMessage = e.message
             } finally {
                 isLoading = false
             }
@@ -193,7 +236,12 @@ class DirectExecutionViewModel(
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    repository?.queueSubmitInstallation(installationId, responsible, signPath, signDate)
+                    repository?.queueSubmitInstallation(
+                        installationId,
+                        responsible,
+                        signPath,
+                        signDate
+                    )
                     street = null
                 }
             } catch (e: Exception) {
@@ -206,7 +254,6 @@ class DirectExecutionViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 isLoading = true
-                initializeExecution(installationId!!, contractor!!)
                 repository?.setStatus(installationId!!, "IN_PROGRESS")
                 reserves = getReservesOnce(installationId!!)
             } catch (e: Exception) {
@@ -216,6 +263,7 @@ class DirectExecutionViewModel(
             }
         }
     }
+
 
     fun countStock() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -241,6 +289,26 @@ class DirectExecutionViewModel(
                 errorMessage = e.message ?: "Erro ao carregar as ruas da pré-medição"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    private fun debitContractItem(contractItemId: Long, quantityExecuted: String) {
+        viewModelScope.launch {
+            try {
+                reserves = reserves.map { item ->
+                    if (item.contractItemId == contractItemId) {
+                        item.copy(
+                            currentBalance = (BigDecimal(item.currentBalance) - BigDecimal(
+                                quantityExecuted
+                            )).toString()
+                        )
+                    } else item
+                }
+
+                contractRepository?.debitContractItem(contractItemId, quantityExecuted)
+            } catch (e: Exception) {
+                errorMessage = e.message
             }
         }
     }

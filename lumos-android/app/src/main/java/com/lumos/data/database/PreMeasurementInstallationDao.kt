@@ -125,7 +125,7 @@ interface PreMeasurementInstallationDao {
             c.currentBalance as currentBalance
         FROM premeasurementinstallationitem i
         JOIN material_stock s on s.materialStockId = i.materialStockId
-        JOIN ContractItemBalance c on c.contractItemId = i.contractItemId
+        LEFT JOIN ContractItemBalance c on c.contractItemId = i.contractItemId
         WHERE preMeasurementStreetId = :preMeasurementStreetID
     """)
     suspend fun getItems(preMeasurementStreetID: String): List<ItemView>
