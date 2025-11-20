@@ -56,7 +56,7 @@ fun PreMeasurementScreen(
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/Pré-medição")
+            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Pré-medição")
         }
 
         preMeasurementViewModel.loadPreMeasurements()

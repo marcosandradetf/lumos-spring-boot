@@ -1,35 +1,27 @@
 package com.lumos.ui.menu
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Start
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -40,18 +32,15 @@ import com.lumos.ui.components.AppLayout
 
 @Composable
 fun MenuScreen(
-    onNavigateToHome: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     navController: NavHostController,
-    context: Context,
-    notificationsBadge: String
+    context: Context
 ) {
     AppLayout(
         title = "Mais Opções",
         selectedIcon = BottomBar.MORE.value,
-        notificationsBadge = notificationsBadge,
-        navigateToHome = onNavigateToHome,
+        navigateToHome = {
+            navController.navigate(Routes.HOME)
+        },
         navigateToStock = {
             navController.navigate(Routes.STOCK)
         },
@@ -73,7 +62,12 @@ fun CategoryMenu(navController: NavHostController, context: Context) {
         packageInfo.versionName
 
     val currentVersionCode =
-        packageInfo.longVersionCode
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode.toLong()
+        }
 
 
     // Supondo que você tenha uma lista de categorias com títulos e seus respectivos cards
@@ -91,12 +85,6 @@ fun CategoryMenu(navController: NavHostController, context: Context) {
             listOf("Nova pré-medição", "Pré-medições em andamento"),
             action = listOf(Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS),
             icons = listOf(Icons.Default.Mail, Icons.Default.Map)
-        ),
-        Category(
-            "Execução",
-            listOf("Execuções Com Pré-Medição"),
-            action = listOf(Routes.NO_ACCESS + "/Execuções"),
-            icons = listOf(Icons.Default.Build, Icons.Default.Start)
         ),
     )
 
@@ -174,11 +162,7 @@ data class Category(
 @Composable
 fun PrevMenuScreen() {
     MenuScreen(
-        {},
-        {},
-        {},
         rememberNavController(),
-        LocalContext.current,
-        "12"
+        LocalContext.current
     )
 }

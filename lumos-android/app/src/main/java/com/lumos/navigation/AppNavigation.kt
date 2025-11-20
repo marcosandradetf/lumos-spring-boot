@@ -314,24 +314,8 @@ fun AppNavigation(
             navigation(startDestination = Routes.HOME, route = Routes.MAIN) {
                 composable(Routes.MORE) {
                     MenuScreen(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.MORE) { inclusive = true }
-                            }
-                        },
-                        onNavigateToNotifications = {
-                            navController.navigate(Routes.NOTIFICATIONS) {
-                                popUpTo(Routes.MORE) { inclusive = true }
-                            }
-                        },
-                        onNavigateToProfile = {
-                            navController.navigate(Routes.PROFILE) {
-                                popUpTo(Routes.MORE) { inclusive = true }
-                            }
-                        },
                         navController = navController,
-                        context = LocalContext.current,
-                        notificationsBadge = notifications.size.toString()
+                        context = LocalContext.current
                     )
                 }
 
@@ -364,9 +348,10 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.NO_ACCESS + "/{lastRoute}") { backStackEntry ->
-                    val lastRoute =
-                        backStackEntry.arguments?.getString("lastRoute") ?: ""
+                composable(Routes.NO_ACCESS + "/{icon}/{title}") { backStackEntry ->
+
+                    val icon = backStackEntry.arguments?.getInt("icon") ?: 1
+                    val title = backStackEntry.arguments?.getString("title") ?: ""
 
                     NoAccessScreen(
                         onNavigateToMenu = {
@@ -376,7 +361,8 @@ fun AppNavigation(
                         },
                         navController = navController,
                         notificationsBadge = notifications.size.toString(),
-                        lastRoute = lastRoute,
+                        selectedIcon = icon,
+                        title = title,
                     )
                 }
 

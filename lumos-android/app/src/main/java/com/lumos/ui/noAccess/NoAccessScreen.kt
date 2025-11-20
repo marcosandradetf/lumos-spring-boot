@@ -35,29 +35,12 @@ fun NoAccessScreen(
     onNavigateToMenu: () -> Unit,
     navController: NavHostController,
     notificationsBadge: String,
-    lastRoute: String,
+    selectedIcon: Int,
+    title: String
 ) {
 
-    val selectedIcon =
-        when(lastRoute) {
-            Routes.STOCK -> BottomBar.STOCK.value
-            Routes.MAINTENANCE -> BottomBar.MAINTENANCE.value
-            Routes.DIRECT_EXECUTION_SCREEN -> BottomBar.EXECUTIONS.value
-            else -> BottomBar.MORE.value
-        }
-
-    val lastScreenName =
-        when(lastRoute) {
-            Routes.STOCK -> "Estoque do Caminhão"
-            Routes.CONTRACT_SCREEN -> "Nova pré-medição"
-            Routes.MAINTENANCE -> "Nova Manutenção"
-            Routes.DIRECT_EXECUTION_SCREEN -> "Execução sem pré-medição"
-            Routes.INSTALLATION_HOLDER -> "Execução com pré-medição"
-            else -> ""
-        }
-
     AppLayout(
-        title = lastScreenName,
+        title = title,
         selectedIcon = selectedIcon,
         notificationsBadge = notificationsBadge,
         navigateToHome = {
@@ -152,6 +135,7 @@ fun PrevNoAccess(){
         {},
         rememberNavController(),
         "10",
-        Routes.HOME
+        BottomBar.EXECUTIONS.value,
+        title = "Instalações"
     )
 }

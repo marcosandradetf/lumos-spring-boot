@@ -114,6 +114,7 @@ class PreMeasurementInstallationViewModel(
         }
     }
 
+    // TODO CONFIG EMPTY STREETS ON DIRECT_INSTALLATION_STREETS_SCREEN
     fun setStreetAndItems(paramCurrentStreetId: String) {
         viewModelScope.launch {
             loading = true

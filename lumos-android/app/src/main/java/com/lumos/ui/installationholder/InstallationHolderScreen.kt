@@ -106,7 +106,7 @@ fun InstallationHolderScreen(
         val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
 
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/Instalações")
+            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.EXECUTIONS.value}/Instalações")
         }
 
         if (isStaleCheckTeam)
@@ -162,9 +162,7 @@ fun ContentCitiesScreen(
     refresh: () -> Unit,
     stockDataSize: Int
 ) {
-    var openModal by remember { mutableStateOf(false) }
     var showModal by remember { mutableStateOf(false) }
-    var id by remember { mutableStateOf("") }
 
     AppLayout(
         title = "Instalações disponíveis",

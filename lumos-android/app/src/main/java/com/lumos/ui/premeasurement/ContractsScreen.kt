@@ -83,7 +83,7 @@ fun ContractsScreen(
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/${Routes.CONTRACT_SCREEN}")
+            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Contratos")
         }
 
         contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
