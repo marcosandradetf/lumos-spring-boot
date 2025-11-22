@@ -1,9 +1,7 @@
 package com.lumos.domain.model
 
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
-import java.time.Instant
 
 @Entity(tableName = "direct_reserve")
 data class DirectReserve(
@@ -52,7 +50,8 @@ data class DirectExecutionStreet( //tabela nova
 
 @Entity(tableName = "direct_execution_street_item")
 data class DirectExecutionStreetItem( //tabela nova
-    @PrimaryKey(autoGenerate = true) val directStreetItemId: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val directStreetItemId: Long = 0,
     val reserveId: Long,
     val materialStockId: Long,
     val materialName: String,

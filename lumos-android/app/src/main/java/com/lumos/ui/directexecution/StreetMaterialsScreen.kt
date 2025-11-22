@@ -57,6 +57,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,6 +101,9 @@ import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.sanitizeDecimalInput
 import com.lumos.viewmodel.DirectExecutionViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.math.BigDecimal
 import java.util.UUID
@@ -114,6 +118,8 @@ fun StreetMaterialScreen(
     val coordinates = CoordinatesService(context, fusedLocationProvider)
     var currentAddress by remember { mutableStateOf("") }
     val contractor = directExecutionViewModel.contractor
+    val checkBalance = directExecutionViewModel.checkBalance
+    val scope = rememberCoroutineScope()
 
     val message = remember {
         mutableStateMapOf(
@@ -286,6 +292,30 @@ fun StreetMaterialScreen(
                     val address = directExecutionViewModel.street?.address.orEmpty()
                     val hasNumber = Regex("""\d+""").containsMatchIn(address)
                     val hasSN = Regex("""(?i)\bS[\./\\]?\s?N\b""").containsMatchIn(address)
+                    val invalidQuantity =
+                        directExecutionViewModel.streetItems.map { it.quantityExecuted }
+                            .any { BigDecimal(it) == BigDecimal.ZERO }
+
+                    val balanceByContractId =
+                        directExecutionViewModel.reserves
+                            .groupBy { it.contractItemId }
+                            .mapValues { (_, items) ->
+                                BigDecimal(items.first().currentBalance ?: "0")
+                            }
+
+                    val contractItemQuantities =
+                        directExecutionViewModel.streetItems
+                            .groupBy { it.contractItemId }
+                            .mapValues { (_, items) ->
+                                items.fold(BigDecimal.ZERO) { acc, item ->
+                                    acc + BigDecimal(item.quantityExecuted)
+                                }
+                            }
+
+                    val exceededBalance = contractItemQuantities.any { (id, exec) ->
+                        (exec > (balanceByContractId[id] ?: BigDecimal.ZERO)) && checkBalance
+                    }
+
 
                     if (!hasNumber && !hasSN) {
                         message["title"] = "Número do endereço ausente"
@@ -305,18 +335,38 @@ fun StreetMaterialScreen(
                         message["title"] = "Aviso Importante"
                         message["body"] = "Selecione os itens executados para continuar."
                         directExecutionViewModel.alertModal = true
-                    } else {
-                        val quantities =
-                            directExecutionViewModel.streetItems.map { it.quantityExecuted }
+                    } else if (exceededBalance) {
+                        val itemId = contractItemQuantities
+                            .filter { (id, exec) ->
+                                exec > (balanceByContractId[id] ?: BigDecimal.ZERO)
+                            }.keys.firstOrNull()
 
-                        if (quantities.any { BigDecimal(it) == BigDecimal.ZERO }) {
-                            message["title"] = "Quantidade inválida"
-                            message["body"] =
-                                "Não é permitido salvar itens com quantidade igual a 0."
-                            directExecutionViewModel.alertModal = true
-                        } else {
-                            directExecutionViewModel.saveAndPost()
-                        }
+                        val itemName = directExecutionViewModel.reserves.find { it.contractItemId == itemId }?.materialName
+
+                        message["title"] = "Saldo atual: ${balanceByContractId[itemId]}"
+                        message["body"] =
+                            """
+                                Não há saldo suficiente para o material $itemName.
+                        
+                                Para evitar estouro de saldo, a soma de todos os materiais derivados deste item (Ex.: LED)
+                                não pode ultrapassar o saldo disponível no sistema.
+                        
+                                Saldo disponível atualmente: ${balanceByContractId[itemId]}
+                        
+                                Por favor, revise as quantidades derivadas para este item. 
+                                Caso precise de ajuste de saldo ou tenha dúvidas, entre em contato com o setor administrativo.
+                            """.trimIndent()
+
+
+                        directExecutionViewModel.alertModal = true
+
+                    } else if (invalidQuantity) {
+                        message["title"] = "Quantidade inválida"
+                        message["body"] =
+                            "Não é permitido salvar itens com quantidade igual a 0."
+                        directExecutionViewModel.alertModal = true
+                    } else {
+                        directExecutionViewModel.saveAndPost()
                     }
                 } else if (action == "CLOSE") {
                     directExecutionViewModel.confirmModal = false
@@ -366,19 +416,20 @@ fun StreetMaterialScreen(
             },
 
 
-            changeQuantity = { reserveId, quantityExecuted, balanceLimit, stockAvailable ->
+            changeQuantity = { reserveId, quantityExecuted, requestQuantity, stockAvailable ->
 
                 fun resetQuantityWithMessage(title: String, body: String) {
-                    message["title"] = title
-                    message["body"] = body
-                    directExecutionViewModel.alertModal = true
-
+//                    message["title"] = title
+//                    message["body"] = body
+//                    directExecutionViewModel.alertModal = true
+                    directExecutionViewModel.errorMessage = "$title - $body"
                     directExecutionViewModel.streetItems =
                         directExecutionViewModel.streetItems.map {
                             if (it.reserveId == reserveId) {
                                 it.copy(quantityExecuted = "0")
                             } else it
                         }
+
                 }
 
                 when {
@@ -389,12 +440,12 @@ fun StreetMaterialScreen(
                         )
                     }
 
-                    quantityExecuted > balanceLimit -> {
-                        resetQuantityWithMessage(
-                            title = "Saldo contratual excedido",
-                            body = "O máximo permitido é $balanceLimit."
-                        )
-                    }
+//                    quantityExecuted > requestQuantity -> {
+//                        resetQuantityWithMessage(
+//                            title = "Quantidade solicitada excedida",
+//                            body = "O máximo permitido é $requestQuantity."
+//                        )
+//                    }
 
                     stockAvailable < quantityExecuted -> {
                         resetQuantityWithMessage(
@@ -416,6 +467,9 @@ fun StreetMaterialScreen(
             errorMessage = directExecutionViewModel.errorMessage,
             alertMessage = message,
             streetItems = directExecutionViewModel.streetItems,
+            clearMessage = {
+                directExecutionViewModel.errorMessage = null
+            }
         )
 
 }
@@ -440,6 +494,7 @@ fun StreetMaterialsContent(
     errorMessage: String?,
     alertMessage: MutableMap<String, String>,
     streetItems: List<DirectExecutionStreetItem>,
+    clearMessage: () -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -502,7 +557,13 @@ fun StreetMaterialsContent(
             openModal(Routes.MAINTENANCE)
         }
 
-    ) { _, _ ->
+    ) { _, showSnackBar ->
+
+        if (errorMessage != null) {
+            showSnackBar(errorMessage, null, null)
+            clearMessage()
+        }
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {

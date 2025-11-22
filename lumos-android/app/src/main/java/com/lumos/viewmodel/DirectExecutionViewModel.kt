@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
@@ -33,10 +32,9 @@ class DirectExecutionViewModel(
     mockItems: List<ReserveMaterialJoin> = emptyList(),
     mockStreetItems: List<DirectExecutionStreetItem> = emptyList()
 
-    ) : ViewModel() {
+) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
-
     var installationId by mutableStateOf<Long?>(null)
     var creationDate by mutableStateOf(mockCreationDate)
     var contractId by mutableStateOf<Long?>(null)
@@ -289,26 +287,6 @@ class DirectExecutionViewModel(
                 errorMessage = e.message ?: "Erro ao carregar as ruas da pré-medição"
             } finally {
                 isLoading = false
-            }
-        }
-    }
-
-    private fun debitContractItem(contractItemId: Long, quantityExecuted: String) {
-        viewModelScope.launch {
-            try {
-                reserves = reserves.map { item ->
-                    if (item.contractItemId == contractItemId) {
-                        item.copy(
-                            currentBalance = (BigDecimal(item.currentBalance) - BigDecimal(
-                                quantityExecuted
-                            )).toString()
-                        )
-                    } else item
-                }
-
-                contractRepository?.debitContractItem(contractItemId, quantityExecuted)
-            } catch (e: Exception) {
-                errorMessage = e.message
             }
         }
     }
