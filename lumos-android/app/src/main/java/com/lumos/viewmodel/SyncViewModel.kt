@@ -6,8 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.SyncQueueEntity
-import com.lumos.navigation.Routes
-import com.lumos.utils.NavEvents
 import com.lumos.utils.SyncLoading
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.Dispatchers
@@ -117,7 +115,7 @@ class SyncViewModel(
             try {
                 if (db.queueDao().existsDirectExecution(relatedId, type)) {
                     db.queueDao().deleteDirectExecution(relatedId, type)
-                    db.directExecutionDao().deleteStreet(relatedId)
+                    db.directExecutionDao().deleteStreets(relatedId)
                     SyncManager.enqueueSync(context, true)
 
                     _message.value = "Envio cancelado com sucesso."

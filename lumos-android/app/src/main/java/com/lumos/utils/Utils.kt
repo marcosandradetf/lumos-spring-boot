@@ -384,6 +384,16 @@ object Utils {
         }
     }
 
+    fun deletePhoto(context: Context, uri: Uri) {
+        try {
+            val file = File(uri.path ?: return)
+            if (file.exists()) file.delete()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
 
 }
 

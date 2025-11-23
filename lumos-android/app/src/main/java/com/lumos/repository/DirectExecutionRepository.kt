@@ -19,6 +19,7 @@ import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.DirectExecutionStreetRequest
 import com.lumos.midleware.SecureStorage
+import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
@@ -132,21 +133,11 @@ class DirectExecutionRepository(
         }
     }
 
-    suspend fun getExecution(contractId: Long): DirectExecution? =
-        db.directExecutionDao().getExecution(contractId)
-
     suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> =
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
-    private suspend fun debitMaterial(
-        materialStockId: Long,
-        contractId: Long,
-        quantityExecuted: String
-    ) {
-        db.directExecutionDao().debitMaterial(materialStockId, contractId, quantityExecuted)
-    }
 
-    suspend fun createStreet(
+    suspend fun saveAndQueueStreet(
         street: DirectExecutionStreet?,
         items: List<DirectExecutionStreetItem>
     ) {
@@ -160,40 +151,32 @@ class DirectExecutionRepository(
             }
 
             for (item in items) {
-                debitMaterial(
-                    item.materialStockId,
-                    item.contractItemId,
-                    item.quantityExecuted
+                db.directExecutionDao().debitMaterial(
+                    item.materialStockId, item.contractItemId, item.quantityExecuted
                 )
-                createStreetItem(
+
+                db.directExecutionDao().insertDirectExecutionStreetItem(
                     item.copy(
                         directStreetId = streetId
                     )
                 )
 
                 db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
+                db.contractDao().debitContractItem(item.contractItemId, item.quantityExecuted)
             }
 
-            queuePostDirectExecution(streetId)
-            SyncManager.queueGetStock(
+            SyncManager.queuePostDirectExecution(
                 context = app.applicationContext,
                 db = db,
+                streetId = streetId
             )
+
+            SyncManager.queueGetStock(app.applicationContext, db)
+            SyncManager.queueContractItemBalance(app.applicationContext, db)
         }
     }
 
-    private suspend fun createStreetItem(item: DirectExecutionStreetItem) =
-        db.directExecutionDao().insertDirectExecutionStreetItem(item)
-
-    private suspend fun queuePostDirectExecution(streetId: Long) {
-        SyncManager.queuePostDirectExecution(
-            context = app.applicationContext,
-            db = db,
-            streetId = streetId
-        )
-    }
-
-    suspend fun postDirectExecution(streetId: Long): RequestResult<Unit> {
+    suspend fun submitStreet(streetId: Long): RequestResult<Unit> {
         val gson = Gson()
 
         val photoUri = db.directExecutionDao().getPhotoUri(streetId)
@@ -239,16 +222,12 @@ class DirectExecutionRepository(
 
             return when (response) {
                 is RequestResult.Success -> {
-                    db.directExecutionDao().deleteStreet(streetId)
-                    db.directExecutionDao().deleteItems(streetId)
-
+                    Utils.deletePhoto(app.applicationContext, photoUri.toUri())
                     RequestResult.Success(Unit)
                 }
 
                 is SuccessEmptyBody -> {
-                    db.directExecutionDao().deleteStreet(streetId)
-                    db.directExecutionDao().deleteStreet(streetId)
-
+                    Utils.deletePhoto(app.applicationContext, photoUri.toUri())
                     SuccessEmptyBody
                 }
 
@@ -301,6 +280,11 @@ class DirectExecutionRepository(
             is RequestResult.Success -> {
                 db.directExecutionDao().deleteDirectExecution(directExecutionId)
                 db.directExecutionDao().deleteDirectReserves(directExecutionId)
+                signUri?.let {
+                    Utils.deletePhoto(app.applicationContext, it.toUri())
+                }
+                db.directExecutionDao().deleteStreets(directExecutionId)
+                db.directExecutionDao().deleteItems(directExecutionId)
 
                 RequestResult.Success(Unit)
             }
@@ -308,6 +292,11 @@ class DirectExecutionRepository(
             is SuccessEmptyBody -> {
                 db.directExecutionDao().deleteDirectExecution(directExecutionId)
                 db.directExecutionDao().deleteDirectReserves(directExecutionId)
+                signUri?.let {
+                    Utils.deletePhoto(app.applicationContext, it.toUri())
+                }
+                db.directExecutionDao().deleteStreets(directExecutionId)
+                db.directExecutionDao().deleteItems(directExecutionId)
 
                 SuccessEmptyBody
             }
@@ -324,7 +313,6 @@ class DirectExecutionRepository(
             }
         }
     }
-
 
     suspend fun setStatus(directExecutionId: Long, status: String = "FINISHED") {
         db.directExecutionDao().setStatus(directExecutionId, status)

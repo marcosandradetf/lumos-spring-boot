@@ -53,6 +53,7 @@ object SyncTypes {
     const val SYNC_CONTRACT_ITEMS = "SYNC_CONTRACT_ITEMS"
     const val SYNC_CONTRACTS = "SYNC_CONTRACTS"
     const val SYNC_STOCK = "SYNC_STOCK"
+    const val SYNC_CONTRACT_ITEM_BALANCE = "SYNC_CONTRACT_ITEM_BALANCE"
     const val SYNC_EXECUTIONS = "SYNC_EXECUTIONS"
 
     const val POST_GENERIC = "POST_GENERIC"
@@ -520,7 +521,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            val response = directExecutionRepository.postDirectExecution(item.relatedId)
+            val response = directExecutionRepository.submitStreet(item.relatedId)
             checkResponse(response, item)
 
         } catch (e: Exception) {

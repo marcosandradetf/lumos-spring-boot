@@ -265,4 +265,16 @@ object SyncManager {
         }
     }
 
+    suspend fun queueContractItemBalance(context: Context, db: AppDatabase) {
+        val count = db.queueDao().countPendingItemsByType(SyncTypes.SYNC_CONTRACT_ITEM_BALANCE)
+        if (count == 0) {
+            val syncItem = SyncQueueEntity(
+                type = SyncTypes.SYNC_CONTRACT_ITEM_BALANCE,
+                priority = 23
+            )
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
 }

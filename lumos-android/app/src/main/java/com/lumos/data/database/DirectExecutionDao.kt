@@ -42,7 +42,8 @@ interface DirectExecutionDao {
     @Query("select * from direct_execution where directExecutionId = :directExecutionId")
     suspend fun getExecution(directExecutionId: Long): DirectExecution?
 
-    @Query("""
+    @Query(
+        """
         SELECT de.reserveId as reserveId, de.directExecutionId as directExecutionId, de.materialStockId,
         de.contractItemId, de.materialName as materialName, de.materialQuantity as materialQuantity, 
         de.requestUnit as requestUnit,  ms.stockAvailable as stockAvailable, cib.currentBalance as currentBalance
@@ -50,7 +51,8 @@ interface DirectExecutionDao {
         JOIN material_stock ms on ms.materialStockId = de.materialStockId
         LEFT JOIN ContractItemBalance cib on cib.contractItemId = de.contractItemId
         WHERE de.directExecutionId = :directExecutionId AND CAST(de.materialQuantity AS NUMERIC) > 0
-    """)
+    """
+    )
     suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin>
 
     @Insert(onConflict = IGNORE)
@@ -59,12 +61,14 @@ interface DirectExecutionDao {
     @Insert
     suspend fun insertDirectExecutionStreetItem(item: DirectExecutionStreetItem)
 
-    @Query("""
+    @Query(
+        """
         UPDATE direct_reserve
         SET materialQuantity = CAST(materialQuantity AS NUMERIC) - CAST(:quantityExecuted AS NUMERIC)
         WHERE materialStockId = :materialStockId
           AND contractItemId = :contractItemId
-    """)
+    """
+    )
     suspend fun debitMaterial(
         materialStockId: Long,
         contractItemId: Long,
@@ -75,38 +79,55 @@ interface DirectExecutionDao {
     @Query("select photoUri from direct_execution_street where directStreetId = :streetId")
     suspend fun getPhotoUri(streetId: Long): String?
 
-    @Query("""
+    @Query(
+        """
         SELECT reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted, materialName
         FROM direct_execution_street_item 
         WHERE directStreetId = :streetId
-    """)
+    """
+    )
     suspend fun getStreetItems(streetId: Long): List<ReservePartial>
 
-    @Query("""
+    @Query(
+        """
         SELECT *
         FROM direct_execution_street
         WHERE directStreetId = :streetId
-    """)
+    """
+    )
     suspend fun getStreet(streetId: Long): DirectExecutionStreet
 
-    @Query("DELETE FROM direct_execution_street WHERE directStreetId = :streetId")
-    suspend fun deleteStreet(streetId: Long)
+    @Query("DELETE FROM direct_execution_street WHERE directExecutionId = :directExecutionId")
+    suspend fun deleteStreets(directExecutionId: Long)
 
-    @Query("DELETE FROM direct_execution_street_item WHERE directStreetId = :streetId")
-    suspend fun deleteItems(streetId: Long)
+    @Query(
+        """
+        DELETE FROM direct_execution_street_item 
+        WHERE directStreetId IN (
+            SELECT directStreetId
+            FROM direct_execution_street
+            WHERE directExecutionId = :directExecutionId
+        )
+    """
+    )
+    suspend fun deleteItems(directExecutionId: Long)
 
-    @Query("""
+    @Query(
+        """
         UPDATE direct_execution 
         SET executionStatus = :status 
         WHERE directExecutionId = :directExecutionId and executionStatus <> :status
-    """)
+    """
+    )
     suspend fun setStatus(directExecutionId: Long, status: String = "FINISHED")
 
-    @Query("""
+    @Query(
+        """
         SELECT *
         FROM direct_execution_street
         WHERE directStreetId in (:streetIds)
-    """)
+    """
+    )
     suspend fun getStreets(streetIds: List<Long>): List<DirectExecutionStreet>
 
     @Query(
@@ -123,13 +144,15 @@ interface DirectExecutionDao {
     )
     suspend fun getExecutionPayload(directExecutionId: Long): DirectExecutionRequest?
 
-    @Query("""
+    @Query(
+        """
         update direct_execution
         set responsible = :responsible,
             signPath = :signPath,
             signDate = :signDate
         where directExecutionId = :directExecutionId
-    """)
+    """
+    )
     suspend fun markAsFinished(
         directExecutionId: Long,
         responsible: String?,

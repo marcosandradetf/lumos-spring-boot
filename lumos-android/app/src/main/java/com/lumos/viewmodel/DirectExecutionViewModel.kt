@@ -51,7 +51,6 @@ class DirectExecutionViewModel(
     var showSignScreen by mutableStateOf(false)
 
     var loadingCoordinates by mutableStateOf(false)
-    var nextStep by mutableStateOf(false)
     var triedToSubmit by mutableStateOf(false)
     var sameStreet by mutableStateOf(false)
 
@@ -168,8 +167,7 @@ class DirectExecutionViewModel(
             _syncError.value = null
             try {
                 isLoading = true
-                val response = repository?.syncDirectExecutions()
-                when (response) {
+                when (val response = repository?.syncDirectExecutions()) {
                     is RequestResult.Timeout -> _syncError.value =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
 
@@ -212,7 +210,7 @@ class DirectExecutionViewModel(
             try {
                 isLoading = true
                 withContext(Dispatchers.IO) {
-                    repository?.createStreet(
+                    repository?.saveAndQueueStreet(
                         street?.copy(finishAt = Instant.now().toString()),
                         streetItems
                     )
