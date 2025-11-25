@@ -28,7 +28,7 @@ class PreMeasurementInstallationViewModel(
     mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
 ) : ViewModel() {
-    var installationID by mutableStateOf<String?>("null")
+    var installationID by mutableStateOf<String?>(null)
     var signPhotoUri: String? = null
     var signDate: String? = null
     var contractId: Long? = null
@@ -46,7 +46,6 @@ class PreMeasurementInstallationViewModel(
 
     var message by mutableStateOf<String?>(null)
     var hasPosted by mutableStateOf(true)
-    var checkBalance by mutableStateOf(false)
     var openConfirmation by mutableStateOf(false)
     var showSignScreen by mutableStateOf(false)
     var instructions by mutableStateOf<String?>(null)
@@ -76,7 +75,6 @@ class PreMeasurementInstallationViewModel(
                         currentStreet = null
                         alertModal = false
                         hasPosted = false
-                        checkBalance = false
                         openConfirmation = false
                         showSignScreen = false
                     }
@@ -126,11 +124,9 @@ class PreMeasurementInstallationViewModel(
 
                 withContext(Dispatchers.IO) {
                     repository?.setStreetStatus(paramCurrentStreetId, "IN_PROGRESS")
-                    if (!checkBalance) {
+                    if (contractRepository?.checkBalance() == true) {
                         contractId?.let {
-                            if (contractRepository?.getContractItemBalance(it) is RequestResult.Success) {
-                                checkBalance = true
-                            }
+                            contractRepository.getContractItemBalance(it)
                         }
                     }
                     repository?.getItems(paramCurrentStreetId)
@@ -181,12 +177,10 @@ class PreMeasurementInstallationViewModel(
         viewModelScope.launch {
             loading = true
             try {
-                lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }
+                lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }?.copy(executedQuantity = quantityExecuted)
 
-                if (checkBalance) updateCurrentBalance(contractItemId, quantityExecuted)
-
-                currentInstallationItems =
-                    currentInstallationItems.filter { it.materialStockId != materialStockId }
+                subtractCurrentBalance(contractItemId, quantityExecuted)
+                currentInstallationItems = currentInstallationItems.filter { it.materialStockId != materialStockId }
 
                 withContext(Dispatchers.IO) {
                     repository?.setInstallationItemQuantity(
@@ -262,11 +256,23 @@ class PreMeasurementInstallationViewModel(
         }
     }
 
-    private fun updateCurrentBalance(contractItemId: Long, quantityExecuted: String) {
+    private fun subtractCurrentBalance(contractItemId: Long, quantityExecuted: String) {
         currentInstallationItems = currentInstallationItems.map { item ->
             if (item.contractItemId == contractItemId) {
                 item.copy(
                     currentBalance = (BigDecimal(item.currentBalance) - BigDecimal(
+                        quantityExecuted
+                    )).toString()
+                )
+            } else item
+        }
+    }
+
+    fun sumCurrentBalance(contractItemId: Long, quantityExecuted: String) {
+        currentInstallationItems = currentInstallationItems.map { item ->
+            if (item.contractItemId == contractItemId) {
+                item.copy(
+                    currentBalance = (BigDecimal(item.currentBalance) + BigDecimal(
                         quantityExecuted
                     )).toString()
                 )

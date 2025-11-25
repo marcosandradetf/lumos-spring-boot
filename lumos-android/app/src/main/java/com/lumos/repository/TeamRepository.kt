@@ -3,7 +3,6 @@ package com.lumos.repository
 import android.app.Application
 import android.util.Log
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ApiService
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
@@ -15,14 +14,15 @@ import com.lumos.domain.model.Team
 import com.lumos.midleware.SecureStorage
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
+import retrofit2.Retrofit
 
 class TeamRepository(
     private val db: AppDatabase,
-    api: ApiService,
+    api: Retrofit,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
-    private val teamApi = api.createApi(TeamApi::class.java)
+    private val teamApi = api.create(TeamApi::class.java)
 
     suspend fun queueUpdateTeam() {
         SyncManager.queueUpdateTeam(

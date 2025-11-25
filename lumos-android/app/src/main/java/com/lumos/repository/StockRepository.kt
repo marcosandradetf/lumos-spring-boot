@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.room.withTransaction
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ApiService
 import com.lumos.api.StockApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
@@ -19,15 +18,16 @@ import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils.uuidToShortCodeWithPrefix
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
+import retrofit2.Retrofit
 import java.util.UUID
 
 class StockRepository(
     private val db: AppDatabase,
-    api: ApiService,
+    api: Retrofit,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
-    private val stockApi = api.createApi(StockApi::class.java)
+    private val stockApi = api.create(StockApi::class.java)
 
     suspend fun hasTypesInQueue(types: List<String>): Boolean {
         return db.queueDao().hasTypesInQueue(types)

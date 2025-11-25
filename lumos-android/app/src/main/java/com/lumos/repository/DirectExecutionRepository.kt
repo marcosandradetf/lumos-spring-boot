@@ -11,6 +11,7 @@ import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
+import com.lumos.domain.model.ContractItemBalance
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
 import com.lumos.domain.model.DirectExecutionStreet
@@ -23,6 +24,7 @@ import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
+import com.lumos.worker.SyncTypes
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -129,7 +131,16 @@ class DirectExecutionRepository(
                 )
             }
 
+            val items = executionDto.reserves.map { i ->
+                ContractItemBalance(
+                    contractItemId = i.contractItemId,
+                    currentBalance = i.currentItemBalance,
+                    itemName = i.currentItemName
+                )
+            }.toSet()
+
             db.directExecutionDao().insertReservations(reservations)
+            db.contractDao().insertContractItemBalance(items.toList())
         }
     }
 

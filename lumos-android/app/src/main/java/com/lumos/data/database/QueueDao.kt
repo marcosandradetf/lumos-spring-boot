@@ -49,6 +49,9 @@ interface QueueDao {
     @Query("SELECT COUNT(type) FROM sync_queue_entity WHERE type = :type")
     suspend fun countPendingItemsByType(type: String): Int
 
+    @Query("SELECT COUNT(type) FROM sync_queue_entity WHERE type in (:types)")
+    suspend fun countPendingItemsByTypes(types: List<String>): Int
+
 
     @Query("""
     SELECT COUNT(*) FROM sync_queue_entity 

@@ -11,6 +11,7 @@ import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Item
 import com.lumos.worker.SyncManager
+import com.lumos.worker.SyncTypes
 import kotlinx.coroutines.flow.Flow
 
 class ContractRepository(
@@ -122,8 +123,9 @@ class ContractRepository(
         }
     }
 
-    suspend fun debitContractItem(contractItemId: Long, quantityExecuted: String) {
-        db.contractDao().debitContractItem(contractItemId, quantityExecuted)
+    suspend fun checkBalance(): Boolean {
+        val count = db.queueDao().countPendingItemsByTypes(listOf(SyncTypes.POST_DIRECT_EXECUTION, SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET))
+        return count == 0
     }
 
 

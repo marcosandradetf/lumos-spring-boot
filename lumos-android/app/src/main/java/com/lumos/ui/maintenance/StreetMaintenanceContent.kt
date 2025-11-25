@@ -255,7 +255,7 @@ fun StreetMaintenanceContent(
             navController.navigate(Routes.STOCK)
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         }
     ) { _, showSnackBar ->
 

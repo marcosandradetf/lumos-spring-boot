@@ -6,33 +6,35 @@ import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ApiService
 import com.lumos.api.MinioApi
 import com.lumos.api.PreMeasurementInstallationApi
 import com.lumos.api.RequestResult
 import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
+import com.lumos.domain.model.ContractItemBalance
 import com.lumos.domain.model.InstallationStreetRequest
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.midleware.SecureStorage
+import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Retrofit
 
 class PreMeasurementInstallationRepository(
     private val db: AppDatabase,
-    apiService: ApiService,
+    retrofit: Retrofit,
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
-    private val api = apiService.createApi(PreMeasurementInstallationApi::class.java)
-    private val minioApi = apiService.createApi(MinioApi::class.java)
+    private val api = retrofit.create(PreMeasurementInstallationApi::class.java)
+    private val minioApi = retrofit.create(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
         val response = ApiExecutor.execute { api.getInstallations("PENDING") }
@@ -104,15 +106,28 @@ class PreMeasurementInstallationRepository(
                         materialName = item.materialName,
                         materialQuantity = item.materialQuantity,
                         requestUnit = item.requestUnit,
-                        specs = item.specs
+                        specs = item.specs,
                     )
                 }
             }
         }
 
+        val contractItems = fetchedExecutions.flatMap { installation ->
+            installation.streets.flatMap { street ->
+                street.items.map { item ->
+                    ContractItemBalance(
+                        contractItemId = item.contractItemId,
+                        currentBalance = item.currentBalance,
+                        itemName = item.itemName
+                    )
+                }
+            }
+        }.toSet()
+
         db.preMeasurementInstallationDao().insertInstallations(installations)
         db.preMeasurementInstallationDao().insertStreets(streets)
         db.preMeasurementInstallationDao().insertItems(items)
+        db.contractDao().insertContractItemBalance(contractItems.toList())
     }
 
 
@@ -167,14 +182,66 @@ class PreMeasurementInstallationRepository(
         val response = ApiExecutor.execute { api.submitInstallationStreet(photo = imagePart, installationStreet = jsonBody) }
         return when (response) {
             is RequestResult.Success -> {
-                db.preMeasurementInstallationDao().deleteInstallation(streetId)
+                db.preMeasurementInstallationDao().deleteInstallationStreet(streetId)
                 db.preMeasurementInstallationDao().deleteItems(streetId)
+                photoUri?.let {
+                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                }
                 RequestResult.Success(Unit)
             }
 
             is SuccessEmptyBody -> {
-                db.preMeasurementInstallationDao().deleteInstallation(streetId)
+                db.preMeasurementInstallationDao().deleteInstallationStreet(streetId)
                 db.preMeasurementInstallationDao().deleteItems(streetId)
+                photoUri?.let {
+                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                }
+                SuccessEmptyBody
+            }
+
+            is RequestResult.NoInternet -> RequestResult.NoInternet
+            is RequestResult.Timeout -> RequestResult.Timeout
+            is ServerError -> ServerError(response.code, response.message)
+            is RequestResult.UnknownError -> RequestResult.UnknownError(response.error)
+        }
+    }
+
+    suspend fun submitInstallation(installationId: String): RequestResult<Unit> {
+        val gson = Gson()
+
+        val payload = db.preMeasurementInstallationDao().getInstallationRequest(installationId)
+        if (payload == null) {
+            return RequestResult.UnknownError(Exception("payload vazio na fun submitInstallation"))
+        }
+
+        val json = gson.toJson(payload)
+        val jsonBody = json.toRequestBody("application/json".toMediaType())
+
+        val byteArray = payload.signUri?.let { compressImageFromUri(app.applicationContext, it.toUri()) }
+        val imagePart = byteArray?.let {
+            val requestFile = it.toRequestBody("image/jpeg".toMediaType())
+            MultipartBody.Part.createFormData(
+                "photo",
+                "upload_${System.currentTimeMillis()}.jpg",
+                requestFile
+            )
+        }
+
+        val response = ApiExecutor.execute { api.submitInstallation(photo = imagePart, installation = jsonBody) }
+        return when (response) {
+            is RequestResult.Success -> {
+                db.preMeasurementInstallationDao().deleteInstallation(installationId)
+                payload.signUri?.let {
+                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                }
+                RequestResult.Success(Unit)
+            }
+
+            is SuccessEmptyBody -> {
+                db.preMeasurementInstallationDao().deleteInstallation(installationId)
+                payload.signUri?.let {
+                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                }
                 SuccessEmptyBody
             }
 

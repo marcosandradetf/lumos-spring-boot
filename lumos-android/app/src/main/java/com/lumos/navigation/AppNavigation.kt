@@ -27,7 +27,6 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.lumos.MyApp
 import com.lumos.R
-import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
 import com.lumos.api.DirectExecutionApi
 import com.lumos.api.PreMeasurementApi
@@ -101,7 +100,6 @@ fun AppNavigation(
     actionState: MutableState<String?>
 ) {
     val notificationItem by FCMBus.notificationItem.collectAsState()
-
     val navController = rememberNavController()
 
     DisposableEffect(navController) {
@@ -138,9 +136,10 @@ fun AppNavigation(
         )
     }
 
+
     val preMeasurementInstallationRepository = PreMeasurementInstallationRepository(
         db = app.database,
-        apiService = app.retrofit.create(ApiService::class.java),
+        retrofit = app.retrofit,
         secureStorage = secureStorage,
         app = app
     )
@@ -189,7 +188,7 @@ fun AppNavigation(
     val stockViewModel: StockViewModel = viewModel {
         val stockRepository = StockRepository(
             db = app.database,
-            api = ApiService(app.applicationContext, secureStorage),
+            api = app.retrofit,
             secureStorage = secureStorage,
             app = app
         )
@@ -201,7 +200,7 @@ fun AppNavigation(
     val maintenanceViewModel: MaintenanceViewModel = viewModel {
         val maintenanceRepository = MaintenanceRepository(
             db = app.database,
-            api = ApiService(app.applicationContext, secureStorage),
+            api = app.retrofit,
             app = app,
             secureStorage = secureStorage
         )
@@ -214,7 +213,7 @@ fun AppNavigation(
     val teamViewModel: TeamViewModel = viewModel {
         val teamRepository = TeamRepository(
             db = app.database,
-            api = ApiService(app.applicationContext, secureStorage),
+            api = app.retrofit,
             secureStorage = secureStorage,
             app = app
         )
@@ -253,7 +252,6 @@ fun AppNavigation(
                     Routes.NOTIFICATIONS -> navController.navigate(Routes.NOTIFICATIONS)
                     Routes.PROFILE -> navController.navigate(Routes.PROFILE)
                     Routes.INSTALLATION_HOLDER -> navController.navigate(Routes.INSTALLATION_HOLDER)
-                    Routes.DIRECT_EXECUTION_SCREEN -> navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
                     // Adicione mais cases conforme necessário
 
                 }
@@ -642,7 +640,7 @@ object Routes {
     const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
 
     // -> direct-installations
-    const val DIRECT_EXECUTION_SCREEN = "direct-execution-screen"
+
     const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
     const val UPDATE = "update"

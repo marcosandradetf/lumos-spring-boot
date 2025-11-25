@@ -5,7 +5,6 @@ import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ApiService
 import com.lumos.api.MaintenanceApi
 import com.lumos.api.RequestResult
 import com.lumos.data.database.AppDatabase
@@ -14,6 +13,7 @@ import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
 import com.lumos.midleware.SecureStorage
+import com.lumos.utils.Utils
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.Dispatchers
@@ -24,14 +24,15 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Retrofit
 
 class MaintenanceRepository(
     private val db: AppDatabase,
-    val api: ApiService,
+    val api: Retrofit,
     private val app: Application,
     val secureStorage: SecureStorage
 ) {
-    private val maintenanceApi = api.createApi(MaintenanceApi::class.java)
+    private val maintenanceApi = api.create(MaintenanceApi::class.java)
 
     suspend fun insertMaintenance(maintenance: Maintenance) {
         try {
@@ -129,13 +130,12 @@ class MaintenanceRepository(
         }
 
         return when (response) {
-            is RequestResult.Success -> {
-                db.maintenanceDao().deleteMaintenance(maintenanceId)
-                RequestResult.Success(Unit)
-            }
-
+            is RequestResult.Success,
             is RequestResult.SuccessEmptyBody -> {
                 db.maintenanceDao().deleteMaintenance(maintenanceId)
+                signUri?.let {
+                    Utils.deletePhoto(app.applicationContext, it.toUri())
+                }
                 RequestResult.Success(Unit)
             }
 

@@ -8,4 +8,5 @@ data class ContractItemBalance(
     @PrimaryKey
     val contractItemId: Long,
     val currentBalance: String,
+    val itemName: String,
 )

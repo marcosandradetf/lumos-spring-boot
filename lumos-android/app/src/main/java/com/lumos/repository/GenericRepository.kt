@@ -2,15 +2,15 @@ package com.lumos.repository
 
 import android.util.Log
 import com.lumos.api.ApiExecutor
-import com.lumos.api.ApiService
 import com.lumos.api.RequestResult
 import com.lumos.api.UpdateEntity
 import com.lumos.api.UtilApi
+import retrofit2.Retrofit
 
 class GenericRepository(
-    api: ApiService,
+    api: Retrofit,
 ) {
-    private val utilApi = api.createApi(UtilApi::class.java)
+    private val utilApi = api.create(UtilApi::class.java)
 
     suspend fun setEntity(
         request: UpdateEntity,

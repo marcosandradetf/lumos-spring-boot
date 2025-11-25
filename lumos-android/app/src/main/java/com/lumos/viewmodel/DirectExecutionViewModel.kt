@@ -55,7 +55,6 @@ class DirectExecutionViewModel(
     var sameStreet by mutableStateOf(false)
 
     var isLoading by mutableStateOf(false)
-    var checkBalance by mutableStateOf(false)
 
     var errorMessage by mutableStateOf<String?>(null)
 
@@ -90,7 +89,6 @@ class DirectExecutionViewModel(
 
                         alertModal = false
                         hasPosted = false
-                        checkBalance = false
                         confirmModal = false
                         showSignScreen = false
                         showFinishForm = false
@@ -194,11 +192,9 @@ class DirectExecutionViewModel(
 
     private suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> {
         return withContext(Dispatchers.IO) {
-            if (!checkBalance) {
+            if (contractRepository?.checkBalance() == true) {
                 contractId?.let {
-                    if (contractRepository?.getContractItemBalance(it) is RequestResult.Success) {
-                        checkBalance = true
-                    }
+                    contractRepository.getContractItemBalance(it)
                 }
             }
             repository?.getReservesOnce(directExecutionId) ?: emptyList()

@@ -65,10 +65,14 @@ class DirectExecutionViewRepository(
                 SELECT mr.material_id_reservation, mr.reserved_quantity, 
                        mr.truck_material_stock_id, mr.central_material_stock_id,
                        mr.direct_execution_id, m.material_name, mr.contract_item_id,
-                       m.material_power, m.material_length, ms.request_unit
+                       m.material_power, m.material_length, ms.request_unit, 
+                       ci.contracted_quantity - ci.quantity_executed as current_item_balance,
+                       coalesce(cri.name_for_import, cri.description) as item_name
                 FROM material_reservation mr
                 INNER JOIN material_stock ms ON ms.material_id_stock = mr.truck_material_stock_id
                 INNER JOIN material m ON m.id_material = ms.material_id
+                INNER JOIN contract_item ci on ci.contract_item_id = mr.contract_item_id
+                INNER JOIN contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
                 WHERE mr.pre_measurement_id IS NULL
                   AND mr.direct_execution_id IN (:direct_execution_ids)
             """.trimIndent(),
@@ -95,6 +99,8 @@ class DirectExecutionViewRepository(
                         materialName = name,
                         materialQuantity = BigDecimal(r["reserved_quantity"].toString()),
                         requestUnit = r["request_unit"] as? String ?: "UN",
+                        currentItemBalance = r["current_item_balance"] as BigDecimal,
+                        currentItemName = r["item_name"] as String,
                     )
                 }
             }

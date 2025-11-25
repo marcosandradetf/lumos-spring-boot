@@ -198,7 +198,7 @@ fun CheckTeamScreen(
             action = Routes.MAINTENANCE
         },
         navigateToExecutions = {
-            action = Routes.DIRECT_EXECUTION_SCREEN
+            action = Routes.INSTALLATION_HOLDER
         },
         navigateToStock = {
             action = Routes.STOCK

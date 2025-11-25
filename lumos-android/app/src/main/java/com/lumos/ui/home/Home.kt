@@ -116,7 +116,7 @@ fun HomeScreen(
             navController.navigate(Routes.STOCK)
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         },
         navigateToMaintenance = {
             navController.navigate(Routes.MAINTENANCE)
@@ -211,7 +211,7 @@ fun HomeScreen(
                 homeViewModel.syncContracts()
             }
 
-            if (isStaleCheckTeam) {
+            if (isStaleCheckTeam && roles.any { it in operators }) {
                 navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.HOME.value}")
             } else {
                 homeViewModel.syncInstallations()
@@ -313,37 +313,37 @@ fun HomeScreen(
                 )
             }
 
-            Button(
-                onClick = {
-                    confirmTeamModal = true
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 4.dp,
-                    pressedElevation = 8.dp
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.FireTruck,
-                    contentDescription = "Ícone de atualização",
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text(
-                    text = "Atualizar Equipe",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                )
+            if (roles.any { it in operators }) {
+
+                Button(
+                    onClick = {
+                        confirmTeamModal = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FireTruck,
+                        contentDescription = "Ícone de atualização",
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "Atualizar Equipe",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
             }
-
-
-
 
             Button(
                 onClick = {

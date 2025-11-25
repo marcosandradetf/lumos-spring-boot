@@ -16,5 +16,6 @@ data class InstallationRequest(
     val installationId: String,
     val responsible: String? = null,
     val signDate: String? = null,
+    val signUri: String? = null,
     val operationalUsers: List<String>
 )

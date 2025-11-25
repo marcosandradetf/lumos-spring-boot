@@ -1,6 +1,7 @@
 package com.lumos.repository
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.room.withTransaction
@@ -15,6 +16,7 @@ import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
 import com.lumos.midleware.SecureStorage
+import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.worker.SyncManager
 import okhttp3.MediaType.Companion.toMediaType
@@ -28,7 +30,6 @@ class PreMeasurementRepository(
 
     val secureStorage: SecureStorage = SecureStorage(app.applicationContext)
 ) {
-
     suspend fun save(
         preMeasurementStreet: PreMeasurementStreet,
         items: List<PreMeasurementStreetItem>
@@ -147,6 +148,7 @@ class PreMeasurementRepository(
 
             val images = mutableListOf<MultipartBody.Part>()
             val streetsToDelete = mutableListOf<String>()
+            val photoToDelete = mutableListOf<Uri>()
             var quantity = 0
 
             for (street in streets) {
@@ -166,6 +168,7 @@ class PreMeasurementRepository(
                             )
                             quantity++
                             streetsToDelete.add(street.preMeasurementStreetId)
+                            photoToDelete.add(it.toUri())
                         }
                     } catch (e: Exception) {
                         Log.e("Upload", "Erro ao processar imagem: $it", e)
@@ -185,6 +188,9 @@ class PreMeasurementRepository(
                 is RequestResult.SuccessEmptyBody -> {
                     db.preMeasurementDao().deleteStreets(streetsToDelete)
                     val count = db.preMeasurementDao().countPhotos(preMeasurementId).toString()
+                    photoToDelete.map {
+                        Utils.deletePhoto(app.applicationContext,it)
+                    }
                     RequestResult.Success(count)
                 }
 

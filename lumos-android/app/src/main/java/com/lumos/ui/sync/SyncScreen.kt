@@ -82,7 +82,7 @@ fun SyncScreenContent(
         navigateBack = { navController.navigate(Routes.PROFILE) },
         navigateToStock = { navController.navigate(Routes.STOCK) },
         navigateToMaintenance = { navController.navigate(Routes.MAINTENANCE) },
-        navigateToExecutions = { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) }
+        navigateToExecutions = { navController.navigate(Routes.INSTALLATION_HOLDER) }
     ) { modifier, snackBar ->
 
         if (error.isNotEmpty()) snackBar(error, null, null)

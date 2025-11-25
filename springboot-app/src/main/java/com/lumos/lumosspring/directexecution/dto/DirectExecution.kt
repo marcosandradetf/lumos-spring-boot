@@ -37,6 +37,8 @@ data class DirectReserve(
     val materialName: String,
     val materialQuantity: BigDecimal,
     val requestUnit: String,
+    val currentItemBalance: BigDecimal,
+    val currentItemName: String,
 )
 
 data class InstallationRequest(

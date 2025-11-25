@@ -216,7 +216,7 @@ fun PreMeasurementStreetScreen(
                 navController.navigate(Routes.STOCK)
             },
             navigateToExecutions = {
-                navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                navController.navigate(Routes.INSTALLATION_HOLDER)
             }
         ) { _, showSnackBar ->
             var triedToSubmit by remember { mutableStateOf(false) }
@@ -477,7 +477,7 @@ fun StreetItemsContent(
             action = Routes.STOCK
         },
         navigateToExecutions = {
-            action = Routes.DIRECT_EXECUTION_SCREEN
+            action = Routes.INSTALLATION_HOLDER
         },
         navigateToMaintenance = {
             action = Routes.MAINTENANCE

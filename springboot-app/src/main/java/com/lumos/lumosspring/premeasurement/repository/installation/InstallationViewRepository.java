@@ -60,7 +60,7 @@ public class InstallationViewRepository {
                             Map.of("preMeasurementId", preMeasurementId),
                             (rs2, _) -> {
                                 // Busca os materiais/reservas da rua
-                                List<ItemsInstallationResponse> reserves = namedJDBC.query(
+                                List<ItemsInstallationResponse> items = namedJDBC.query(
                                         """
                                         SELECT i.pre_measurement_street_item_id,
                                                i.contract_item_id,
@@ -68,7 +68,9 @@ public class InstallationViewRepository {
                                                i.measured_item_quantity,
                                                r.truck_material_stock_id,
                                                ms.request_unit,
-                                               COALESCE(m.material_power, m.material_length) AS specs
+                                               COALESCE(m.material_power, m.material_length) AS specs,
+                                               ci.contracted_quantity - ci.quantity_executed as current_balance,
+                                               COALESCE(cri.name_for_import, cri.description) as item_name
                                         FROM pre_measurement_street_item i
                                         JOIN material_reservation r
                                             ON r.contract_item_id = i.contract_item_id
@@ -77,6 +79,10 @@ public class InstallationViewRepository {
                                             ON ms.material_id_stock = r.truck_material_stock_id
                                         JOIN material m
                                             ON m.id_material = ms.material_id
+                                        JOIN contract_item ci
+                                            ON ci.contract_item_id = i.contract_item_id
+                                        JOIN contract_reference_item cri
+                                            ON cri.contract_reference_item_id = ci.contract_item_id
                                         WHERE i.pre_measurement_street_id = :streetId
                                         """,
                                         Map.of("streetId", rs2.getLong("pre_measurement_street_id")),
@@ -87,7 +93,9 @@ public class InstallationViewRepository {
                                                 rs3.getString("material_name"),
                                                 rs3.getBigDecimal("measured_item_quantity"),
                                                 rs3.getString("request_unit"),
-                                                rs3.getString("specs")
+                                                rs3.getString("specs"),
+                                                rs3.getBigDecimal("current_balance"),
+                                                rs3.getString("item_name")
                                         )
                                 );
 
@@ -103,7 +111,7 @@ public class InstallationViewRepository {
                                         publicUrl.getUrl(),
                                         publicUrl.getExpiresAt(),
                                         rs2.getString("photo_uri"),
-                                        reserves
+                                        items
                                 );
                             }
                     );

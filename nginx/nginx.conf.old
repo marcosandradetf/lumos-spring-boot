@@ -42,12 +42,12 @@ http {
         "spring.thryon.com.br" 0;
         "minio-console.thryon.com.br" 0;
         "api.thryon.com.br" 0;
-	    "66eb897af0fc.ngrok-free.app" 0;
+	"https://66eb897af0fc.ngrok-free.app" 0;
     }
 
     server {
         listen 80;
-        server_name 66eb897af0fc.ngrok-free.app;  # Domínio
+        server_name api.thryon.com.br;  # Domínio
 
         # Verifica se o host é permitido e se o user agent é bloqueado
         if ($blocked_host) {

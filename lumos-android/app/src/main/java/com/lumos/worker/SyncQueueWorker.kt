@@ -15,6 +15,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.lumos.MainActivity
+import com.lumos.MyApp
 import com.lumos.R
 import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
@@ -26,6 +27,7 @@ import com.lumos.api.UpdateEntity
 import com.lumos.api.UserExperience
 import com.lumos.data.database.AppDatabase
 import com.lumos.data.database.QueueDao
+import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.domain.model.SyncQueueEntity
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.Routes
@@ -33,6 +35,7 @@ import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
 import com.lumos.repository.GenericRepository
 import com.lumos.repository.MaintenanceRepository
+import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.PreMeasurementRepository
 import com.lumos.repository.StockRepository
 import com.lumos.repository.TeamRepository
@@ -77,11 +80,11 @@ class SyncQueueWorker(
     context: Context,
     workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams) {
-
-    private val app = context.applicationContext as Application
-
-    private val queueDao: QueueDao
-    private val secureStorage: SecureStorage = SecureStorage(app.applicationContext)
+    private val app = context.applicationContext as MyApp
+    private val db = app.database
+    private val queueDao = db.queueDao()
+    private val retrofit = app.retrofit
+    private val secureStorage = app.secureStorage
     private val preMeasurementRepository: PreMeasurementRepository
     private val contractRepository: ContractRepository
     private val directExecutionRepository: DirectExecutionRepository
@@ -89,16 +92,12 @@ class SyncQueueWorker(
     private val stockRepository: StockRepository
     private val maintenanceRepository: MaintenanceRepository
     private val teamRepository: TeamRepository
+    private val preMeasurementInstallationRepository: PreMeasurementInstallationRepository
 
     init {
-        val api = ApiService(app.applicationContext, secureStorage)
-        val db = AppDatabase.getInstance(app.applicationContext)
-
-        queueDao = db.queueDao()
-
-        val preMeasurementApi = api.createApi(PreMeasurementApi::class.java)
-        val contractApi = api.createApi(ContractApi::class.java)
-        val executionApi = api.createApi(DirectExecutionApi::class.java)
+        val preMeasurementApi = retrofit.create(PreMeasurementApi::class.java)
+        val contractApi = retrofit.create(ContractApi::class.java)
+        val executionApi = retrofit.create(DirectExecutionApi::class.java)
 
         preMeasurementRepository = PreMeasurementRepository(
             db,
@@ -120,29 +119,31 @@ class SyncQueueWorker(
         )
 
         genericRepository = GenericRepository(
-            api = api
+            api = retrofit
         )
 
         stockRepository = StockRepository(
             db = db,
-            api = api,
+            api = retrofit,
             secureStorage = secureStorage,
             app = app
         )
 
         maintenanceRepository = MaintenanceRepository(
             db = db,
-            api = api,
+            api = retrofit,
             app = app,
             secureStorage = secureStorage
         )
 
         teamRepository = TeamRepository(
             db = db,
-            api = api,
+            api = retrofit,
             secureStorage = secureStorage,
             app = app
         )
+
+        preMeasurementInstallationRepository = PreMeasurementInstallationRepository(db, retrofit, secureStorage, app)
     }
 
     override suspend fun doWork(): Result {
@@ -157,20 +158,24 @@ class SyncQueueWorker(
             val result = when (item.type) {
                 SyncTypes.SYNC_CONTRACT_ITEMS -> syncContractItems(item)
                 SyncTypes.SYNC_CONTRACTS -> syncContract(item)
-//                SyncTypes.SYNC_EXECUTIONS -> syncExecutions(item)
                 SyncTypes.SYNC_STOCK -> syncStock(item)
 
                 SyncTypes.POST_PRE_MEASUREMENT -> postPreMeasurement(item)
                 SyncTypes.POST_GENERIC -> postGeneric(item)
-//                SyncTypes.POST_INDIRECT_EXECUTION -> postIndirectExecution(item)
-                SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
                 SyncTypes.POST_ORDER -> postOrder(item)
+
                 SyncTypes.POST_MAINTENANCE_STREET -> postMaintenanceStreet(item)
                 SyncTypes.POST_MAINTENANCE -> postMaintenance(item)
+
                 SyncTypes.UPDATE_TEAM -> updateTeam(item)
 
+
+                SyncTypes.POST_DIRECT_EXECUTION -> postDirectExecution(item)
                 SyncTypes.FINISHED_DIRECT_EXECUTION -> finishedDirectExecution(item)
-                // SyncTypes.UPLOAD_STREET_PHOTOS -> uploadStreetPhotos(item)
+
+                SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET -> submitPreMeasurementInstallationStreet(item)
+                SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION -> submitPreMeasurementInstallation(item)
+
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
                     queueDao.update(item.copy(status = SyncStatus.FAILED))
@@ -383,42 +388,6 @@ class SyncQueueWorker(
         }
     }
 
-//    private suspend fun syncExecutions(item: SyncQueueEntity): Result {
-//        val inProgressItem = item.copy(
-//            status = SyncStatus.IN_PROGRESS,
-//            attemptCount = item.attemptCount + 1
-//        )
-//
-//        return try {
-//            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
-//
-//            queueDao.update(inProgressItem)
-//            // Atualiza o item com novo status e tentativa
-//
-//            // Checa limite de tentativas antes de continuar
-//            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
-//                return Result.success() // não tenta mais esse
-//            }
-//
-//            val response = indirectExecutionRepository.syncExecutions()
-//            checkResponse(response, item)
-//
-//        } catch (e: Exception) {
-//            queueDao.update(
-//                inProgressItem.copy(
-//                    status = SyncStatus.FAILED,
-//                    errorMessage = e.message
-//                )
-//            )
-//            UserExperience.sendNotification(
-//                context = applicationContext,
-//                title = "Erro ao enviar pré-mediçao",
-//                body = "Verifique o erro em Perfil - Sincronizações",
-//            )
-//            Result.failure()
-//        }
-//    }
-
     private suspend fun syncStock(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
@@ -458,47 +427,6 @@ class SyncQueueWorker(
         }
     }
 
-//    private suspend fun postIndirectExecution(item: SyncQueueEntity): Result {
-//        val inProgressItem = item.copy(
-//            status = SyncStatus.IN_PROGRESS,
-//            attemptCount = item.attemptCount + 1
-//        )
-//
-//        return try {
-//            if (item.relatedId == null) {
-//                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
-//                return Result.success()
-//            }
-//
-//            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
-//
-//            queueDao.update(inProgressItem)
-//            // Atualiza o item com novo status e tentativa
-//
-//            // Checa limite de tentativas antes de continuar
-//            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
-//                return Result.success() // não tenta mais esse
-//            }
-//
-//            val response = indirectExecutionRepository.postExecution(item.relatedId)
-//            checkResponse(response, item)
-//
-//        } catch (e: Exception) {
-//            queueDao.update(
-//                inProgressItem.copy(
-//                    status = SyncStatus.FAILED,
-//                    errorMessage = e.message
-//                )
-//            )
-//            UserExperience.sendNotification(
-//                context = applicationContext,
-//                title = "Erro ao enviar pré-mediçao",
-//                body = "Verifique o erro em Perfil - Sincronizações",
-//            )
-//            Result.failure()
-//        }
-//    }
-
     private suspend fun postDirectExecution(item: SyncQueueEntity): Result {
         val inProgressItem = item.copy(
             status = SyncStatus.IN_PROGRESS,
@@ -518,6 +446,11 @@ class SyncQueueWorker(
 
             // Checa limite de tentativas antes de continuar
             if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
                 return Result.success() // não tenta mais esse
             }
 
@@ -533,8 +466,8 @@ class SyncQueueWorker(
             )
             UserExperience.sendNotification(
                 context = applicationContext,
-                title = "Erro ao enviar pré-mediçao",
-                body = "Verifique o erro em Perfil - Sincronizações",
+                title = "Ops! Algo deu errado",
+                body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
             )
             FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
@@ -612,6 +545,11 @@ class SyncQueueWorker(
 
             // Checa limite de tentativas antes de continuar
             if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma manutenção não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
                 return Result.success() // não tenta mais esse
             }
 
@@ -627,12 +565,10 @@ class SyncQueueWorker(
             )
             UserExperience.sendNotification(
                 context = applicationContext,
-                title = "Falha ao rua finalizada da manutenção",
-                body = "Clique para saber mais",
+                title = "Ops! Algo deu errado",
+                body = "Uma manutenção não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
             )
-
             FirebaseCrashlytics.getInstance().recordException(e)
-
             Result.failure()
         }
 
@@ -662,6 +598,11 @@ class SyncQueueWorker(
 
             // Checa limite de tentativas antes de continuar
             if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma manutenção não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
                 return Result.success() // não tenta mais esse
             }
 
@@ -677,8 +618,8 @@ class SyncQueueWorker(
             )
             UserExperience.sendNotification(
                 context = applicationContext,
-                title = "Falha ao enviar manutenção",
-                body = "Clique para saber mais",
+                title = "Ops! Algo deu errado",
+                body = "Uma manutenção não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
             )
             FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
@@ -707,6 +648,11 @@ class SyncQueueWorker(
 
             // Checa limite de tentativas antes de continuar
             if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
                 return Result.success() // não tenta mais esse
             }
 
@@ -722,8 +668,8 @@ class SyncQueueWorker(
             )
             UserExperience.sendNotification(
                 context = applicationContext,
-                title = "Erro ao enviar execução",
-                body = "Verifique o erro no caminho Mais -> Perfil -> Tarefas em Sincronizações",
+                title = "Ops! Algo deu errado",
+                body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
             )
             FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
@@ -759,9 +705,103 @@ class SyncQueueWorker(
             )
             UserExperience.sendNotification(
                 context = applicationContext,
-                title = "Erro ao enviar pré-mediçao",
-                body = "Verifique o erro em Perfil - Sincronizações",
+                title = "Erro ao atualizar equipe",
+                body = "Verifique o erro no caminho Mais -> Perfil -> Tarefas em Sincronizações",
             )
+            Result.failure()
+        }
+    }
+
+    private suspend fun submitPreMeasurementInstallationStreet(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedUuid == null) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = preMeasurementInstallationRepository.submitStreet(item.relatedUuid)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Ops! Algo deu errado",
+                body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+            )
+            FirebaseCrashlytics.getInstance().recordException(e)
+            Result.failure()
+        }
+    }
+
+    private suspend fun submitPreMeasurementInstallation(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedUuid == null) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
+            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = preMeasurementInstallationRepository.submitInstallation(item.relatedUuid)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Ops! Algo deu errado",
+                body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+            )
+            FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
     }

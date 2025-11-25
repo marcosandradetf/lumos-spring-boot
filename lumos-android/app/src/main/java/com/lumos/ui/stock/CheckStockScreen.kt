@@ -286,7 +286,7 @@ fun CheckStockContent(
             navController.navigate(Routes.MAINTENANCE)
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         }) { _, showSnackBar ->
 
         if (message.isNotBlank() && message != lastMessage) {
@@ -620,7 +620,7 @@ fun SelectDeposit(
         navigateToHome = { navController.navigate(Routes.HOME) },
         navigateToMore = { navController.navigate(Routes.MORE) },
         navigateToMaintenance = { navController.navigate(Routes.MAINTENANCE) },
-        navigateToExecutions = { navController.navigate(Routes.DIRECT_EXECUTION_SCREEN) }) { _, showSnackBar ->
+        navigateToExecutions = { navController.navigate(Routes.INSTALLATION_HOLDER) }) { _, showSnackBar ->
 
         if (message.isNotBlank() && message != lastMessage) {
             showSnackBar(message, null, null)

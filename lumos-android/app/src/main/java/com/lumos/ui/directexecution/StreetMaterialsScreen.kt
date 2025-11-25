@@ -118,7 +118,6 @@ fun StreetMaterialScreen(
     val coordinates = CoordinatesService(context, fusedLocationProvider)
     var currentAddress by remember { mutableStateOf("") }
     val contractor = directExecutionViewModel.contractor
-    val checkBalance = directExecutionViewModel.checkBalance
     val scope = rememberCoroutineScope()
 
     val message = remember {
@@ -193,7 +192,7 @@ fun StreetMaterialScreen(
                 navController.navigate(Routes.STOCK)
             },
             navigateToExecutions = {
-                navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                navController.navigate(Routes.INSTALLATION_HOLDER)
             }
         ) { _, _ ->
             Column(
@@ -300,7 +299,9 @@ fun StreetMaterialScreen(
                         directExecutionViewModel.reserves
                             .groupBy { it.contractItemId }
                             .mapValues { (_, items) ->
-                                BigDecimal(items.first().currentBalance ?: "0")
+                                if(items.first().currentBalance != null) {
+                                    BigDecimal(items.first().currentBalance)
+                                } else null
                             }
 
                     val contractItemQuantities =
@@ -313,7 +314,8 @@ fun StreetMaterialScreen(
                             }
 
                     val exceededBalance = contractItemQuantities.any { (id, exec) ->
-                        (exec > (balanceByContractId[id] ?: BigDecimal.ZERO)) && checkBalance
+                        val balance = balanceByContractId[id]
+                        balance != null && exec > balance
                     }
 
 
@@ -341,14 +343,14 @@ fun StreetMaterialScreen(
                                 exec > (balanceByContractId[id] ?: BigDecimal.ZERO)
                             }.keys.firstOrNull()
 
-                        val itemName = directExecutionViewModel.reserves.find { it.contractItemId == itemId }?.materialName
+                        val itemName = directExecutionViewModel.reserves.find { it.contractItemId == itemId }?.itemName
 
                         message["title"] = "Saldo atual: ${balanceByContractId[itemId]}"
                         message["body"] =
                             """
-                                Não há saldo suficiente para o material $itemName.
+                                Não há saldo suficiente para o item $itemName.
                         
-                                Para evitar estouro de saldo, a soma de todos os materiais derivados deste item (Ex.: LED)
+                                Para evitar estouro de saldo, a soma de todos os materiais derivados deste item
                                 não pode ultrapassar o saldo disponível no sistema.
                         
                                 Saldo disponível atualmente: ${balanceByContractId[itemId]}
@@ -540,8 +542,8 @@ fun StreetMaterialsContent(
             openModal(Routes.HOME)
         },
         navigateBack = {
-            action = Routes.DIRECT_EXECUTION_SCREEN
-            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+            action = Routes.INSTALLATION_HOLDER
+            openModal(Routes.INSTALLATION_HOLDER)
         },
 
         navigateToStock = {
@@ -549,8 +551,8 @@ fun StreetMaterialsContent(
             openModal(Routes.STOCK)
         },
         navigateToExecutions = {
-            action = Routes.DIRECT_EXECUTION_SCREEN
-            openModal(Routes.DIRECT_EXECUTION_SCREEN)
+            action = Routes.INSTALLATION_HOLDER
+            openModal(Routes.INSTALLATION_HOLDER)
         },
         navigateToMaintenance = {
             action = Routes.MAINTENANCE

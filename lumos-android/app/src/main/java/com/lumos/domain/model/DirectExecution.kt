@@ -11,7 +11,7 @@ data class DirectReserve(
     val contractItemId: Long,
     val materialName: String,
     val materialQuantity: String,
-    val requestUnit: String,
+    val requestUnit: String
 )
 
 @Entity(tableName = "direct_execution")
@@ -66,5 +66,17 @@ data class DirectExecutionDTOResponse(
     val description: String,
     val instructions: String?,
     val creationDate: String,
-    val reserves: List<DirectReserve>,
+    val reserves: List<DirectReserveResponse>,
+)
+
+data class DirectReserveResponse(
+    @PrimaryKey val reserveId: Long,
+    val directExecutionId: Long,
+    val materialStockId: Long, // *_*
+    val contractItemId: Long,
+    val materialName: String,
+    val materialQuantity: String,
+    val requestUnit: String,
+    val currentItemBalance: String,
+    val currentItemName: String,
 )

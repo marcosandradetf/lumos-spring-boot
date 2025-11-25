@@ -153,7 +153,6 @@ fun MaterialsContent(
     val hasPosted = viewModel.hasPosted
     val loading = viewModel.loading
     val alertModal = viewModel.alertModal
-    val checkBalance = viewModel.checkBalance
     val route = viewModel.route
     val triedToSubmit = viewModel.triedToSubmit
     val showFinishForm = viewModel.showFinishForm
@@ -226,8 +225,10 @@ fun MaterialsContent(
                 snackBar(viewModel.message!!, if (item) "Desfazer" else null) {
                     viewModel.message = null
                     if (item && viewModel.lastItem != null) {
-                        viewModel.currentInstallationItems =
-                            viewModel.currentInstallationItems + viewModel.lastItem!!
+                        val lastItem = viewModel.lastItem!!
+                        viewModel.sumCurrentBalance(lastItem.contractItemId, lastItem.executedQuantity)
+                        viewModel.currentInstallationItems = viewModel.currentInstallationItems + lastItem.copy(executedQuantity = "0")
+
                         viewModel.lastItem = null
                         viewModel.message = "Operação desfeita com sucesso."
                     }
@@ -353,22 +354,22 @@ fun MaterialsContent(
                         ) {
                             MaterialItem(
                                 material = it,
-                                checkBalance = checkBalance,
                                 finish = { quantityExecuted, materialStockId, stockQuantity, currentBalance, contractItemId ->
                                     if (BigDecimal(quantityExecuted) > BigDecimal(stockQuantity)) {
                                         viewModel.message =
                                             "Não há estoque disponível para esse item."
                                         return@MaterialItem
-                                    } else if (checkBalance && BigDecimal(quantityExecuted) > BigDecimal(
-                                            currentBalance ?: "0"
-                                        )
-                                    ) {
+                                    } else if (BigDecimal(quantityExecuted) > BigDecimal(currentBalance)) {
                                         viewModel.message =
                                             "Não há saldo contratual disponível para esse item."
                                         return@MaterialItem
                                     } else if (quantityExecuted.trim() == "" || quantityExecuted.trim() == "0") {
                                         viewModel.message =
                                             "Para concluir, Insira a quantidade do item"
+                                        return@MaterialItem
+                                    } else if(BigDecimal(quantityExecuted) < BigDecimal.ZERO) {
+                                        viewModel.message =
+                                            "A quantidade do item não pode ser negativa"
                                         return@MaterialItem
                                     }
 
@@ -777,8 +778,7 @@ fun MaterialsContent(
 @Composable
 fun MaterialItem(
     material: ItemView,
-    checkBalance: Boolean,
-    finish: (String, Long, String, String?, Long) -> Unit,
+    finish: (String, Long, String, String, Long) -> Unit,
     loading: Boolean
 ) {
     var confirmModal by remember { mutableStateOf(false) }
@@ -816,7 +816,7 @@ fun MaterialItem(
                 text = """
                     Quantidade levantada na rua: ${material.materialQuantity}
                     Quantidade em estoque: ${material.stockQuantity}
-                    ${if (checkBalance) "Saldo contratual: " + material.stockQuantity else ""}
+                    Saldo contratual: ${material.currentBalance}
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -464,7 +464,7 @@ fun CurrentScreenLoading(
             navController.navigate(Routes.MAINTENANCE)
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         }
     ) { _, _ ->
         Loading(loadingLabel)
@@ -627,7 +627,7 @@ fun FinishScreen(
             navController.navigate(Routes.STOCK)
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         }
     ) { _, _ ->
 

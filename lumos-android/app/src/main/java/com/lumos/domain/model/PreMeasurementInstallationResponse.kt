@@ -56,7 +56,12 @@ data class PreMeasurementInstallationItem(
     val requestUnit: String,
     val specs: String?,
     val executedQuantity: String = "0",
-)
+) {
+    @Ignore
+    var currentBalance: String = "0"
+    @Ignore
+    var itemName: String = ""
+}
 
 data class InstallationView(
     val id: String,
@@ -80,5 +85,6 @@ data class ItemView(
     val specs: String?,
     val stockQuantity: String = "0",
     val executedQuantity: String = "0",
-    val currentBalance: String? = null,
+    val currentBalance: String = "0",
+    val itemName: String = ""
 )

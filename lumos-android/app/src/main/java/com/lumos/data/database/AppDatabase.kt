@@ -73,7 +73,7 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
         (PreMeasurementInstallationStreet::class),
         (PreMeasurementInstallationItem::class),
     ],
-    version = 17,
+    version = 16,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -715,7 +715,8 @@ abstract class AppDatabase : RoomDatabase() {
                     """
                         CREATE TABLE IF NOT EXISTS ContractItemBalance (
                             contractItemId INTEGER NOT NULL PRIMARY KEY,
-                            currentBalance TEXT NOT NULL
+                            currentBalance TEXT NOT NULL,
+                            itemName TEXT NOT NULL
                         );
                 """.trimIndent()
                 )

@@ -274,7 +274,7 @@ fun MaintenanceScreen(
                         navController.navigate(Routes.STOCK)
                     },
                     navigateToExecutions = {
-                        navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+                        navController.navigate(Routes.INSTALLATION_HOLDER)
                     }
                 ) { _, _ ->
 
@@ -414,7 +414,7 @@ fun NewMaintenanceContent(
             navController.navigate(Routes.MAINTENANCE)
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         }
     ) { _, _ ->
 

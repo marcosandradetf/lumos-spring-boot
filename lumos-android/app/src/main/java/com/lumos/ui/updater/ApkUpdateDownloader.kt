@@ -87,7 +87,7 @@ fun ApkUpdateDownloader(
                 .show()
         },
         navigateToExecutions = {
-            if (exit) navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            if (exit) navController.navigate(Routes.INSTALLATION_HOLDER)
             else Toast.makeText(context, "Aguarde o término da atualização", Toast.LENGTH_SHORT)
                 .show()
         }

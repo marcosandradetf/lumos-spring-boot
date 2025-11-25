@@ -94,7 +94,7 @@ fun PMContent(
             navController.popBackStack()
         },
         navigateToExecutions = {
-            navController.navigate(Routes.DIRECT_EXECUTION_SCREEN)
+            navController.navigate(Routes.INSTALLATION_HOLDER)
         },
         navigateToMaintenance = {
             navController.navigate(Routes.MAINTENANCE)
