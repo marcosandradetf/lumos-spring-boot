@@ -8,11 +8,22 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import io.minio.http.Method
 import io.minio.messages.DeleteObject
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.env.Environment
+import org.springframework.core.env.get
 import java.time.Instant
 
 @Service
-class MinioService(private val minioClient: MinioClient, private val environment: Environment) {
+class MinioService(
+    @Qualifier("internalMinioClient")
+    private val minioClient: MinioClient,
+
+    @Qualifier("publicMinioClient")
+    private val publicClient: MinioClient,
+) {
+    @Value("\${minio.public.url}")
+    private lateinit var minioPublicUrl: String
 
     fun uploadFile(file: MultipartFile, bucketName: String, folder: String, fileName: String): String {
         try {
@@ -56,25 +67,46 @@ class MinioService(private val minioClient: MinioClient, private val environment
                 .method(Method.GET)
                 .bucket(bucketName)
                 .`object`(objectName)
-                .expiry(expiryAt) // em segundos (5 minutos)
+                .expiry(expiryAt)
+                .build()
+        )
+        return url
+    }
+
+    fun getPublicPresignedObjectUrl(bucketName: String, objectName: String, expiryAt: Int = 5 * 60): String {
+        val url = publicClient.getPresignedObjectUrl(
+            GetPresignedObjectUrlArgs.builder()
+                .method(Method.GET)
+                .bucket(bucketName)
+                .`object`(objectName)
+                .expiry(expiryAt)
                 .build()
         )
         return url
     }
 
     data class PublicUrlResponse(
-        val url: String,
-        val expiresAt: Long // epoch seconds ou millis
+        val url: String?,
+        val expiresAt: Long? // epoch seconds ou millis
     )
 
-    fun getPublicUrl(bucketName: String, objectName: String, expiryAt: Int = 5 * 60): PublicUrlResponse {
+    fun getPublicUrl(bucketName: String, objectName: String?, expiryAt: Int = 5 * 60): PublicUrlResponse {
+        if (objectName == null) {
+            return PublicUrlResponse(
+                url = null,
+                expiresAt = null
+            )
+        }
+        val presigned = getPublicPresignedObjectUrl(bucketName, objectName, expiryAt)
+        println("PRESIGNED RAW = $presigned")
 
-        val presigned = getPresignedObjectUrl(bucketName, objectName, expiryAt)
         val expiresAtTimestamp = Instant.now().plusSeconds(expiryAt.toLong()).epochSecond
-        val publicUrl = environment.getProperty("minio.public.url")
 
         return PublicUrlResponse(
-            url = presigned.replace("http://minio:9000", publicUrl ?: "http://minio:9000"),
+            url =  presigned.replace(
+                "$minioPublicUrl/",
+                "$minioPublicUrl/minio/"
+            ),
             expiresAt = expiresAtTimestamp
         )
     }

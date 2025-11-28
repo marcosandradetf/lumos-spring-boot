@@ -14,6 +14,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,13 +38,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Navigation
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.TaskAlt
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -66,9 +70,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -90,7 +96,10 @@ import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.ConfirmNavigation
 import com.lumos.ui.components.LoadImageComponent
+import com.lumos.ui.components.Loading
 import com.lumos.ui.components.SignatureScreenLandscape
+import com.lumos.ui.components.Tag
+import com.lumos.ui.premeasurementinstallation.FinishFormScreen
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.hasFullName
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
@@ -146,7 +155,6 @@ fun MaterialsContent(
     navController: NavHostController,
     context: Context,
 ) {
-    val currentInstallationId = viewModel.installationID
     val currentStreets = viewModel.currentInstallationStreets
     val currentStreet = viewModel.currentStreet
     val currentItems = viewModel.currentInstallationItems
@@ -154,8 +162,7 @@ fun MaterialsContent(
     val loading = viewModel.loading
     val alertModal = viewModel.alertModal
     val route = viewModel.route
-    val triedToSubmit = viewModel.triedToSubmit
-    val showFinishForm = viewModel.showFinishForm
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     val fileUri: MutableState<Uri?> = remember {
         mutableStateOf(
@@ -217,552 +224,417 @@ fun MaterialsContent(
             viewModel.route = "back"
         },
     ) { _, snackBar ->
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            if (viewModel.message != null) {
-                val item = viewModel.message == "Item concluído com sucesso"
-                snackBar(viewModel.message!!, if (item) "Desfazer" else null) {
-                    viewModel.message = null
-                    if (item && viewModel.lastItem != null) {
-                        val lastItem = viewModel.lastItem!!
-                        viewModel.sumCurrentBalance(lastItem.contractItemId, lastItem.executedQuantity)
-                        viewModel.currentInstallationItems = viewModel.currentInstallationItems + lastItem.copy(executedQuantity = "0")
-
-                        viewModel.lastItem = null
-                        viewModel.message = "Operação desfeita com sucesso."
-                    }
-                }
+        if (viewModel.message != null) {
+            val item = viewModel.message == "Item concluído com sucesso"
+            snackBar(viewModel.message!!, if (item) "Desfazer" else null) {
                 viewModel.message = null
-            }
+                if (item && viewModel.lastItem != null) {
+                    val lastItem = viewModel.lastItem!!
+                    viewModel.sumCurrentBalance(
+                        lastItem.contractItemId,
+                        lastItem.executedQuantity
+                    )
+                    viewModel.currentInstallationItems =
+                        viewModel.currentInstallationItems + lastItem.copy(executedQuantity = "0")
 
-            if (route != null) {
-                ConfirmNavigation(
-                    route = route,
-                    navController = navController
-                ) {
-                    viewModel.route = null
+                    viewModel.lastItem = null
+                    viewModel.message = "Operação desfeita com sucesso."
                 }
             }
+            viewModel.message = null
+        }
 
-            if (!hasPosted) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 90.dp),// deixa espaço pros botões
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
-                ) {
-                    item {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                        ) {
-                            TextField(
-                                value = currentStreet?.address ?: "",
-                                enabled = false,
-                                onValueChange = {},
-                                colors = TextFieldDefaults.colors(
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
-                                    focusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
-                                    disabledContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent
-                                ),
+        if (loading)
+            Loading()
+        else
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (route != null) {
+                    ConfirmNavigation(
+                        confirm = {
+                            if (route == "back") {
+                                if (currentStreets.isEmpty()) navController.navigate(Routes.INSTALLATION_HOLDER)
+                                else navController.popBackStack()
+                                viewModel.route = null
+                            } else {
+                                navController.navigate(route)
+                                viewModel.route = null
+                            }
+                        },
+                        onDismiss = {
+                            viewModel.route = null
+                        }
+                    )
+                }
+
+                if (!hasPosted) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(1.dp) // Espaço entre os cards
+                    ) {
+                        item {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .height(56.dp)
-                                    .clip(CircleShape),
-                                placeholder = {
-                                    Text(
-                                        text = "Qual o endereço atual?",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 16.sp
-                                    )
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.LocationOn,
-                                        contentDescription = "Localização",
-                                        tint = MaterialTheme.colorScheme.onBackground
-                                    )
-                                },
-                                singleLine = true,
-                                shape = CircleShape,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            )
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
+                                TextField(
+                                    value = currentStreet?.address ?: "",
+                                    enabled = false,
+                                    onValueChange = {},
+                                    colors = TextFieldDefaults.colors(
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                                        focusedContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                                        disabledContainerColor = MaterialTheme.colorScheme.inverseOnSurface,
+                                        unfocusedIndicatorColor = Color.Transparent,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        disabledIndicatorColor = Color.Transparent
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(56.dp)
+                                        .clip(CircleShape),
+                                    placeholder = {
+                                        Text(
+                                            text = "Qual o endereço atual?",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 16.sp
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationOn,
+                                            contentDescription = "Localização",
+                                            tint = MaterialTheme.colorScheme.onBackground
+                                        )
+                                    },
+                                    singleLine = true,
+                                    shape = CircleShape,
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                )
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
 
-                            Button(
-                                enabled = currentItems.isNotEmpty(),
-                                onClick = {
-                                    val latitude = currentStreet?.latitude
-                                    val longitude = currentStreet?.longitude
+                                Button(
+                                    enabled = currentItems.isNotEmpty(),
+                                    onClick = {
+                                        val latitude = currentStreet?.latitude
+                                        val longitude = currentStreet?.longitude
 
-                                    val gmmIntentUri: Uri =
-                                        if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0)
-                                            "google.navigation:q=$latitude,$longitude".toUri()
-                                        else {
-                                            val encodedAddress = Uri.encode(currentStreet?.address)
+                                        val gmmIntentUri: Uri =
+                                            if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0)
+                                                "google.navigation:q=$latitude,$longitude".toUri()
+                                            else {
+                                                val encodedAddress =
+                                                    Uri.encode(currentStreet?.address)
 
-                                            "google.navigation:q=$encodedAddress".toUri()
+                                                "google.navigation:q=$encodedAddress".toUri()
+                                            }
+
+                                        val mapIntent =
+                                            Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
+                                                setPackage("com.google.android.apps.maps")
+                                            }
+
+                                        if (mapIntent.resolveActivity(context.packageManager) != null) {
+                                            context.startActivity(mapIntent)
+                                        }
+                                    },
+                                    shape = CircleShape,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    contentPadding = PaddingValues(
+                                        horizontal = 12.dp,
+                                        vertical = 8.dp
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Navigation,
+                                            contentDescription = "Navegar",
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Abrir GPS",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (currentItems.isNotEmpty()) {
+                            items(
+                                items = currentItems,
+                                key = { it.materialStockId }
+                            ) {
+                                MaterialItem(
+                                    material = it,
+                                    finish = { quantityExecuted, materialStockId, stockQuantity, currentBalance, contractItemId ->
+                                        if (BigDecimal(quantityExecuted) > BigDecimal(stockQuantity)) {
+                                            viewModel.message =
+                                                "Não há estoque disponível para esse item."
+                                            return@MaterialItem
+                                        } else if (BigDecimal(quantityExecuted) > BigDecimal(
+                                                currentBalance
+                                            )
+                                        ) {
+                                            viewModel.message =
+                                                "Não há saldo contratual disponível para esse item."
+                                            return@MaterialItem
+                                        } else if (quantityExecuted.trim() == "" || quantityExecuted.trim() == "0") {
+                                            viewModel.message =
+                                                "Para concluir, Insira a quantidade do item"
+                                            return@MaterialItem
+                                        } else if (BigDecimal(quantityExecuted) < BigDecimal.ZERO) {
+                                            viewModel.message =
+                                                "A quantidade do item não pode ser negativa"
+                                            return@MaterialItem
                                         }
 
-                                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
-                                        setPackage("com.google.android.apps.maps")
-                                    }
-
-                                    if (mapIntent.resolveActivity(context.packageManager) != null) {
-                                        context.startActivity(mapIntent)
-                                    }
-                                },
-                                shape = CircleShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Navigation,
-                                        contentDescription = "Navegar",
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Abrir GPS",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
+                                        viewModel.setInstallationItemQuantity(
+                                            quantityExecuted,
+                                            materialStockId,
+                                            contractItemId
+                                        )
+                                    },
+                                    loading = viewModel.buttonLoading
+                                )
                             }
-                        }
-                    }
-
-                    if (currentItems.isNotEmpty()) {
-                        items(
-                            items = currentItems,
-                            key = { it.materialStockId }
-                        ) {
-                            MaterialItem(
-                                material = it,
-                                finish = { quantityExecuted, materialStockId, stockQuantity, currentBalance, contractItemId ->
-                                    if (BigDecimal(quantityExecuted) > BigDecimal(stockQuantity)) {
-                                        viewModel.message =
-                                            "Não há estoque disponível para esse item."
-                                        return@MaterialItem
-                                    } else if (BigDecimal(quantityExecuted) > BigDecimal(currentBalance)) {
-                                        viewModel.message =
-                                            "Não há saldo contratual disponível para esse item."
-                                        return@MaterialItem
-                                    } else if (quantityExecuted.trim() == "" || quantityExecuted.trim() == "0") {
-                                        viewModel.message =
-                                            "Para concluir, Insira a quantidade do item"
-                                        return@MaterialItem
-                                    } else if(BigDecimal(quantityExecuted) < BigDecimal.ZERO) {
-                                        viewModel.message =
-                                            "A quantidade do item não pode ser negativa"
-                                        return@MaterialItem
-                                    }
-
-                                    viewModel.setInstallationItemQuantity(
-                                        quantityExecuted,
-                                        materialStockId,
-                                        contractItemId
-                                    )
-                                },
-                                loading = loading
-                            )
-                        }
-                    } else {
-                        item {
-                            UserAction(
-                                finish = {
-                                    viewModel.submitStreet()
-                                },
-                                restart = {
-                                    viewModel.setStreetAndItems(viewModel.currentStreetId ?: "")
-                                },
-                                cancel = {
-                                    navController.popBackStack()
-                                }
-                            )
-                        }
-                    }
-                }
-
-                if (alertModal) {
-                    Alert(
-                        title = "Você esqueceu da foto",
-                        body = "Antes de finalizar tire uma foto.",
-                        confirm = {
-                            viewModel.alertModal = false
-                        }
-                    )
-                }
-
-                if (currentItems.isNotEmpty()) {
-
-                    FloatingActionButton(
-                        onClick = {
-                            val newUri = createFile() // Gera um novo Uri
-                            fileUri.value = newUri // Atualiza o estado
-                            launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
-                            .padding(16.dp)
-                    ) {
-                        AnimatedVisibility(visible = imageSaved.value) {
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    ImageRequest.Builder(LocalContext.current)
-                                        .data(fileUri.value)
-                                        .crossfade(true) // Para um fade suave
-                                        .build()
-                                ),
-                                contentDescription = "Imagem da foto",
-                                modifier = Modifier
-                                    .size(70.dp)
-                                    .padding(0.dp),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-
-                        AnimatedVisibility(visible = !imageSaved.value) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                                    .padding(10.dp)
-                            ) {
+                        } else if (!viewModel.showFinishForm) {
+                            item {
                                 Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Icon(
-                                        contentDescription = null,
-                                        imageVector = Icons.Rounded.PhotoCamera,
-                                        modifier = Modifier.size(30.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Text(
-                                        "Tirar Foto",
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontSize = 12.sp
-                                    )
-                                }
-
-                            }
-                        }
-                    }
-
-                    LoadImageComponent(
-                        imageUrl = currentStreet?.photoUrl,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp),
-                        onRefreshUrl = {
-                            viewModel.refreshUrlImage()
-                        }
-                    )
-                }
-
-            } else {
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 20.dp)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    if (!showFinishForm) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.TaskAlt,
-                                contentDescription = "Tarefa concluída",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(56.dp)
-                            )
-
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            Text(
-                                text = if (currentInstallationId == null) "Missão Cumprida!"
-                                else if (currentStreets.isEmpty()) "Quase lá!"
-                                else "Bom trabalho!",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text =
-                                    if (currentInstallationId == null) "Instalação concluída com sucesso.\nOs dados serão enviados para o sistema."
-                                    else if (currentStreets.isEmpty()) "Todas as ruas foram concluídas com sucesso.\nToque no botão abaixo para preencher os dados restantes."
-                                    else "Essa rua foi concluída com sucesso.\nOs dados serão enviados para o sistema.\n\nToque no botão abaixo para selecionar e iniciar a próxima rua.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    } else {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            // HEADER PRINCIPAL
-                            Text(
-                                text = "Dados da Instalação",
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-
-
-                            // =========================================================
-                            //                  SEÇÃO 1 — DADOS PRINCIPAIS
-                            // =========================================================
-                            ElevatedCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-
-                                Column(
-                                    modifier = Modifier.padding(20.dp),
-                                ) {
-                                    OutlinedTextField(
-                                        value = viewModel.currentStreet?.currentSupply ?: "",
-                                        onValueChange = {
-                                            viewModel.triedToSubmit = false
-                                            viewModel.currentStreet =
-                                                viewModel.currentStreet?.copy(currentSupply = it)
-                                        },
-                                        label = { Text("Fornecedor atual") },
-                                        isError = triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank(),
-                                        supportingText = {
-                                            if (triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank()) {
-                                                Text("Informe o fornecedor atual")
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.padding(20.dp)
+                                        .pointerInput(Unit) {
+                                            detectTapGestures {
+                                                // Fechar o teclado ao tocar em qualquer lugar da tela
+                                                keyboardController?.hide()
                                             }
                                         },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-
-                                    OutlinedTextField(
-                                        value = viewModel.currentStreet?.lastPower ?: "",
-                                        onValueChange = {
-                                            viewModel.triedToSubmit = false
-                                            viewModel.currentStreet =
-                                                viewModel.currentStreet?.copy(lastPower = it)
-                                        },
-                                        label = { Text("Potência anterior") },
-                                        isError = triedToSubmit && viewModel.currentStreet?.lastPower.isNullOrBlank(),
-                                        supportingText = {
-                                            if (triedToSubmit && viewModel.currentStreet?.lastPower.isNullOrBlank()) {
-                                                Text("Informe a potência anterior")
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                }
-                            }
-
-
-                            // =========================================================
-                            //                  SEÇÃO 2 — RESPONSÁVEL
-                            // =========================================================
-                            ElevatedCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-
-                                Column(
-                                    modifier = Modifier.padding(20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
+                                    // HEADER PRINCIPAL
+                                    Icon(
+                                        imageVector = Icons.Rounded.Warning,
+                                        contentDescription = "Tarefa concluída",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(56.dp)
+                                    )
+
 
                                     Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = "Coletar Assinatura do Responsável?",
-                                        style = MaterialTheme.typography.titleMedium,
+                                        text = "Quase lá!",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+
+                                    Text(
+                                        text = "Para finalizar o ponto atual, Preencha os dados abaixo.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center
                                     )
 
-                                    Row(
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    ElevatedCard(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                        shape = RoundedCornerShape(16.dp)
                                     ) {
 
-                                        // Botão SIM
-                                        FilterChip(
-                                            selected = viewModel.hasResponsible == true,
-                                            onClick = {
-                                                viewModel.responsibleError = null
-                                                viewModel.hasResponsible = true
-                                            },
-                                            label = { Text("Sim") }
-                                        )
-
-                                        // Botão NÃO
-                                        FilterChip(
-                                            selected = viewModel.hasResponsible == false,
-                                            onClick = {
-                                                if (viewModel.signPhotoUri == null) {
-                                                    viewModel.responsibleError = null
-                                                    viewModel.hasResponsible = false
-                                                }
-                                            },
-                                            enabled = viewModel.signPhotoUri == null,
-                                            label = { Text("Não") }
-                                        )
-                                    }
-
-                                    if (viewModel.hasResponsible == null && viewModel.responsibleError != null) {
-                                        Text(
-                                            viewModel.responsibleError ?: "",
-                                            color = MaterialTheme.colorScheme.error,
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-
-                                    // RESPONSÁVEL
-                                    if (viewModel.hasResponsible == true) {
-
-                                        // Nome antes da assinatura
-                                        if (viewModel.signPhotoUri == null) {
-
-                                            Text(
-                                                text = "Solicite o Nome do Responsável",
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-
+                                        Column(
+                                            modifier = Modifier.padding(20.dp),
+                                        ) {
                                             OutlinedTextField(
-                                                value = viewModel.responsible ?: "",
+                                                value = viewModel.currentStreet?.currentSupply
+                                                    ?: "",
                                                 onValueChange = {
-                                                    viewModel.responsible = it
-                                                    viewModel.responsibleError = null
+                                                    viewModel.triedToSubmit = false
+                                                    viewModel.currentStreet =
+                                                        viewModel.currentStreet?.copy(currentSupply = it)
                                                 },
-                                                label = { Text("Nome do Responsável") },
-                                                isError = viewModel.responsibleError != null,
-                                                singleLine = true,
+                                                label = { Text("Fornecedor atual") },
+                                                isError = viewModel.triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank(),
+                                                supportingText = {
+                                                    if (viewModel.triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank()) {
+                                                        Text("Informe o fornecedor atual")
+                                                    }
+                                                },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 shape = RoundedCornerShape(12.dp)
                                             )
 
-                                            if (viewModel.responsibleError != null) {
-                                                Text(
-                                                    viewModel.responsibleError ?: "",
-                                                    color = MaterialTheme.colorScheme.error,
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                            }
-                                        }
-
-                                        // Assinatura
-                                        if (viewModel.signPhotoUri != null) {
-
-                                            Box(
-                                                modifier = Modifier
-                                                    .height(120.dp)
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .background(MaterialTheme.colorScheme.surface)
-                                            ) {
-                                                Image(
-                                                    painter = rememberAsyncImagePainter(viewModel.signPhotoUri),
-                                                    contentDescription = "Assinatura",
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentScale = ContentScale.Fit
-                                                )
-                                            }
-                                            Spacer(Modifier.height(10.dp))
-
-                                            Text(
-                                                text = "Ao finalizar o envio, presume-se que o responsável pela manutenção está ciente de que os dados fornecidos, incluindo a imagem da assinatura, poderão ser utilizados como comprovação da execução do serviço.",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                textAlign = TextAlign.Center
+                                            OutlinedTextField(
+                                                value = viewModel.currentStreet?.lastPower ?: "",
+                                                onValueChange = {
+                                                    viewModel.triedToSubmit = false
+                                                    viewModel.currentStreet =
+                                                        viewModel.currentStreet?.copy(lastPower = it)
+                                                },
+                                                label = { Text("Potência anterior") },
+                                                isError = viewModel.triedToSubmit && viewModel.currentStreet?.lastPower.isNullOrBlank(),
+                                                supportingText = {
+                                                    if (viewModel.triedToSubmit && viewModel.currentStreet?.lastPower.isNullOrBlank()) {
+                                                        Text("Informe a potência anterior")
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(12.dp)
                                             )
+
+                                            Button(
+                                                onClick = {
+                                                    viewModel.triedToSubmit = true
+                                                    if (!viewModel.currentStreet?.currentSupply
+                                                            .isNullOrBlank() &&
+                                                        !viewModel.currentStreet?.lastPower
+                                                            .isNullOrBlank()
+                                                    ) {
+                                                        viewModel.showFinishForm = true
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(50.dp),
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Text("Continuar")
+                                            }
                                         }
                                     }
                                 }
                             }
+                        } else {
+                            item {
+                                UserAction(
+                                    finish = {
+                                        if(currentStreet?.installationPhotoUri == null) viewModel.alertModal = true
+                                        else viewModel.submitStreet()
+                                    },
+                                    restart = {
+                                        viewModel.setStreetAndItems(viewModel.currentStreetId ?: "")
+                                    },
+                                    cancel = {
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
                         }
                     }
 
-                    // =========================================================
-                    //                      BOTÃO FINAL
-                    // =========================================================
-                    Button(
-                        onClick = {
-                            var hasError = false
-
-                            if (currentInstallationId != null) {
-                                navController.navigate(Routes.HOME)
-                            } else if (currentStreets.isEmpty()) {
-                                if (viewModel.currentStreet?.currentSupply.isNullOrBlank()) hasError =
-                                    true
-                                if (viewModel.currentStreet?.lastPower.isNullOrBlank()) hasError =
-                                    true
-
-                                if (viewModel.hasResponsible == null) {
-                                    viewModel.responsibleError = "Informe se possui responsável"
-                                } else if (viewModel.hasResponsible == true &&
-                                    (viewModel.responsible.isNullOrBlank() || !hasFullName(
-                                        viewModel.responsible ?: ""
-                                    ))
-                                ) {
-                                    viewModel.responsibleError =
-                                        "Nome e sobrenome do responsável"
-                                } else if (viewModel.hasResponsible == true && viewModel.signPhotoUri == null) {
-                                    viewModel.showSignScreen = true
-                                } else if (!hasError) {
-                                    viewModel.openConfirmation = true
-                                }
-                            } else {
-                                navController.popBackStack()
+                    if (alertModal) {
+                        Confirm(
+                            title = "Você esqueceu da foto",
+                            body = "Antes de finalizar tire uma foto do ponto finalizado.\nDeseja tirar a foto agora?",
+                            icon =  Icons.Rounded.PhotoCamera,
+                            confirm = {
+                                viewModel.alertModal = false
+                                val newUri = createFile() // Gera um novo Uri
+                                fileUri.value = newUri // Atualiza o estado
+                                launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
+                            },
+                            cancel = {
+                                viewModel.alertModal = false
                             }
-                        },
-                        modifier = Modifier
-                            .padding(bottom = 10.dp)
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .align(Alignment.BottomCenter),
-                        shape = RoundedCornerShape(32.dp)
-                    ) {
-                        Text(
-                            if (currentInstallationId == null) "Sair"
-                            else if (viewModel.hasResponsible == true && viewModel.signPhotoUri == null)
-                                "Coletar Assinatura"
-                            else if (currentStreets.isEmpty()) "Preencher Dados da Instalação"
-                            else "Selecionar Próxima Rua"
                         )
                     }
-                }
 
+                    if (currentItems.isNotEmpty()) {
+
+                        FloatingActionButton(
+                            onClick = {
+                                val newUri = createFile() // Gera um novo Uri
+                                fileUri.value = newUri // Atualiza o estado
+                                launcher.launch(newUri) // Usa a variável temporária, garantindo que o valor correto seja usado
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomStart) // <-- Aqui dentro de um Box
+                                .padding(16.dp)
+                        ) {
+                            AnimatedVisibility(visible = imageSaved.value) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        ImageRequest.Builder(LocalContext.current)
+                                            .data(fileUri.value)
+                                            .crossfade(true) // Para um fade suave
+                                            .build()
+                                    ),
+                                    contentDescription = "Imagem da foto",
+                                    modifier = Modifier
+                                        .size(70.dp)
+                                        .padding(0.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            AnimatedVisibility(visible = !imageSaved.value) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .padding(10.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Icon(
+                                            contentDescription = null,
+                                            imageVector = Icons.Rounded.PhotoCamera,
+                                            modifier = Modifier.size(30.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Text(
+                                            "Tirar Foto",
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+
+                                }
+                            }
+                        }
+
+                        LoadImageComponent(
+                            imageUrl = currentStreet?.photoUrl,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp),
+                            onRefreshUrl = {
+                                println("Atualizando URL da Imagem")
+                                viewModel.refreshUrlImage()
+                            }
+                        )
+                    }
+
+                } else {
+                    FinishFormScreen(
+                        viewModel = viewModel,
+                        navController = navController
+                    )
+                }
             }
-        }
 
         if (viewModel.openConfirmation) {
             Confirm(
                 body = "Deseja confirmar o salvamento dessa instalação?",
                 confirm = {
+                    viewModel.openConfirmation = false
                     viewModel.submitInstallation()
                 },
                 cancel = {
@@ -811,15 +683,17 @@ fun MaterialItem(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
+            if (material.specs != null) Tag(material.specs, MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = """
-                    Quantidade levantada na rua: ${material.materialQuantity}
-                    Quantidade em estoque: ${material.stockQuantity}
-                    Saldo contratual: ${material.currentBalance}
+                    Saldo contratual: ${material.currentBalance} ${material.requestUnit}
+                    Quantidade levantada na rua: ${material.materialQuantity} ${material.requestUnit}
+                    Quantidade em estoque: ${material.stockQuantity} ${material.requestUnit}
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -921,7 +795,15 @@ fun MaterialItem(
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("Concluir")
+                if (loading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Concluir")
+                }
             }
         }
     }
@@ -1063,7 +945,7 @@ fun PrevMScreen() {
         viewModel = PreMeasurementInstallationViewModel(
             repository = null,
             contractRepository = null,
-            mockStreets = emptyList(),
+            mockStreets = mockInstallationStreets,
             mockItems = emptyList(),
             mockCurrentStreet = PreMeasurementInstallationStreet(
                 preMeasurementStreetId = "",

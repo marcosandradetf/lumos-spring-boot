@@ -147,7 +147,7 @@ fun AppNavigation(
     val preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel = viewModel {
         PreMeasurementInstallationViewModel(
             repository = preMeasurementInstallationRepository,
-            contractRepository = contractRepository
+            contractRepository = contractRepository,
         )
     }
 

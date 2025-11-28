@@ -1,6 +1,7 @@
 package com.lumos.ui.premeasurementinstallation
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,15 +45,15 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.ItemView
-import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
-import com.lumos.repository.ExecutionStatus
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.repository.ExecutionStatus
 import com.lumos.ui.components.AppLayout
-import com.lumos.ui.components.NothingData
+import com.lumos.ui.components.Loading
 import com.lumos.utils.Utils
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
 
@@ -79,9 +81,15 @@ fun Content(
     val errorMessage = viewModel.message
     val loading = viewModel.loading
 
-    LaunchedEffect(currentItems) {
-        if(currentItems.isNotEmpty()) navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS)
+    LaunchedEffect(Unit) {
+        println("setStateForStreetScreen")
+        viewModel.setStateForStreetScreen()
     }
+
+    LaunchedEffect(currentItems) {
+        if (currentItems.isNotEmpty()) navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS)
+    }
+
 
     AppLayout(
         title = Utils.abbreviate(viewModel.contractor ?: "PREFEITURA DE BELO HORIZONTE"),
@@ -106,8 +114,14 @@ fun Content(
         }
     ) { _, showSnackBar ->
 
-        AnimatedVisibility(visible = !loading) {
-
+        if (loading) {
+            Loading()
+        } else if (currentStreets.isEmpty()) {
+            FinishFormScreen(
+                viewModel = viewModel,
+                navController = navController
+            )
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -115,14 +129,6 @@ fun Content(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp) // Espaço entre os cards
             ) {
-
-                if (currentStreets.isEmpty()) {
-                    item {
-                        NothingData(
-                            "Nenhuma execução disponível no momento, volte mais tarde!"
-                        )
-                    }
-                }
 
                 items(currentStreets) { installation -> // Iteração na lista
                     val status = when (installation.status) {
@@ -180,7 +186,7 @@ fun Content(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector =Icons.Default.Power,
+                                        imageVector = Icons.Default.Power,
                                         contentDescription = "Local",
                                         tint = Color.White,
                                         modifier = Modifier.size(
@@ -256,7 +262,10 @@ fun Content(
                                             horizontalArrangement = Arrangement.End,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("Solicitado Prioridade", modifier = Modifier.padding(horizontal = 5.dp))
+                                            Text(
+                                                "Solicitado Prioridade",
+                                                modifier = Modifier.padding(horizontal = 5.dp)
+                                            )
                                             Column(
                                                 verticalArrangement = Arrangement.Center,
                                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -333,7 +342,6 @@ fun PrevStreetsScreen() {
     )
 
 
-
     val mockInstallationItems = listOf(
         ItemView(
             preMeasurementStreetId = UUID.randomUUID().toString(),
@@ -404,7 +412,7 @@ fun PrevStreetsScreen() {
             mockStreets = mockInstallationStreets,
             mockItems = mockInstallationItems
         ),
-        navController =  rememberNavController()
+        navController = rememberNavController()
     )
 }
 

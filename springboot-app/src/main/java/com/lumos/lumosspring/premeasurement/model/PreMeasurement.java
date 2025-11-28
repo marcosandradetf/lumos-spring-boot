@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.premeasurement.model;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -9,7 +10,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Table
-public class PreMeasurement {
+public class PreMeasurement extends TenantEntity {
     @Id
     private Long preMeasurementId;
 
@@ -42,6 +43,8 @@ public class PreMeasurement {
     private Instant signDate;
     private String responsible;
     private String signatureUri;
+
+    private String comment;
 
     public Long getPreMeasurementId() {
         return preMeasurementId;
@@ -169,6 +172,14 @@ public class PreMeasurement {
 
     public void setSignatureUri(String signatureUri) {
         this.signatureUri = signatureUri;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }
 

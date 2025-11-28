@@ -13,11 +13,13 @@ import com.lumos.api.RequestResult.ServerError
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.data.database.AppDatabase
 import com.lumos.domain.model.ContractItemBalance
+import com.lumos.domain.model.InstallationResponse
 import com.lumos.domain.model.InstallationStreetRequest
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
+import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
@@ -38,6 +40,7 @@ class PreMeasurementInstallationRepository(
 
     suspend fun syncExecutions(): RequestResult<Unit> {
         val response = ApiExecutor.execute { api.getInstallations("PENDING") }
+        Log.e("response", response.toString())
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data)
@@ -66,32 +69,38 @@ class PreMeasurementInstallationRepository(
         }
     }
 
-    private suspend fun saveExecutionsToDb(fetchedExecutions: List<PreMeasurementInstallation>) {
-        val installations = fetchedExecutions.map { installation ->
+    private suspend fun saveExecutionsToDb(fetchedExecutions: List<InstallationResponse>) {
+        val executorsIds = secureStorage.getOperationalUsers().toList()
+        Log.e("executorsIds", executorsIds.isEmpty().toString())
+        if (executorsIds.isEmpty()) return
+
+        Log.e("fetchedExecutions", fetchedExecutions.toString())
+
+        val installations = fetchedExecutions.map {
             PreMeasurementInstallation(
-                preMeasurementId = installation.preMeasurementId,
-                contractId = installation.contractId,
-                contractor = installation.contractor,
-                instructions = installation.instructions,
-                executorsIds = secureStorage.getOperationalUsers().toList()
+                preMeasurementId = it.preMeasurementId,
+                contractId = it.contractId,
+                contractor = it.contractor,
+                instructions = it.contractor,
+                executorsIds = executorsIds
             )
         }
+        Log.e("installations", installations.toString())
+
 
         val streets = fetchedExecutions.flatMap { installation ->
             installation.streets.map { street ->
                 PreMeasurementInstallationStreet(
                     preMeasurementStreetId = street.preMeasurementStreetId,
-                    preMeasurementId = installation.preMeasurementId,
-                    address = street.address,
-                    priority = street.priority,
+                    preMeasurementId = street.preMeasurementId,
+                    lastPower = street.lastPower,
                     latitude = street.latitude,
                     longitude = street.longitude,
-                    lastPower = street.lastPower,
+                    address = street.address,
+                    priority = street.priority,
                     photoUrl = street.photoUrl,
                     photoExpiration = street.photoExpiration,
                     objectUri = street.objectUri,
-                    status = street.status,
-                    installationPhotoUri = street.installationPhotoUri,
                 )
             }
         }
@@ -100,7 +109,7 @@ class PreMeasurementInstallationRepository(
             installation.streets.flatMap { street ->
                 street.items.map { item ->
                     PreMeasurementInstallationItem(
-                        preMeasurementStreetId = street.preMeasurementStreetId,
+                        preMeasurementStreetId = item.preMeasurementStreetId,
                         materialStockId = item.materialStockId,
                         contractItemId = item.contractItemId,
                         materialName = item.materialName,

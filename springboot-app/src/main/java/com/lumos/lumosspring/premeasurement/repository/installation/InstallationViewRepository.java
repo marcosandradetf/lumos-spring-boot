@@ -53,7 +53,7 @@ public class InstallationViewRepository {
                                    s.latitude,
                                    s.longitude,
                                    s.last_power,
-                                   s.photo_uri
+                                   s.pre_measurement_photo_uri
                             FROM pre_measurement_street s
                             WHERE s.pre_measurement_id = :preMeasurementId
                             """,
@@ -82,7 +82,7 @@ public class InstallationViewRepository {
                                         JOIN contract_item ci
                                             ON ci.contract_item_id = i.contract_item_id
                                         JOIN contract_reference_item cri
-                                            ON cri.contract_reference_item_id = ci.contract_item_id
+                                            ON cri.contract_reference_item_id = ci.contract_item_reference_id
                                         WHERE i.pre_measurement_street_id = :streetId
                                         """,
                                         Map.of("streetId", rs2.getLong("pre_measurement_street_id")),
@@ -99,7 +99,7 @@ public class InstallationViewRepository {
                                         )
                                 );
 
-                                var publicUrl = minioService.getPublicUrl(Utils.INSTANCE.getCurrentBucket(), rs2.getString("photo_uri"), 2 * 24 * 60 * 60); // 2 dias
+                                var publicUrl = minioService.getPublicUrl(Utils.INSTANCE.getCurrentBucket(), rs2.getString("pre_measurement_photo_uri"), 2 * 24 * 60 * 60); // 2 dias
                                 return new StreetsInstallationResponse(
                                         rs.getObject("device_pre_measurement_id", UUID.class),
                                         rs2.getObject("device_pre_measurement_street_id", UUID.class),
@@ -110,7 +110,7 @@ public class InstallationViewRepository {
                                         rs2.getString("last_power"),
                                         publicUrl.getUrl(),
                                         publicUrl.getExpiresAt(),
-                                        rs2.getString("photo_uri"),
+                                        rs2.getString("pre_measurement_photo_uri"),
                                         items
                                 );
                             }

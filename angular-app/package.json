@@ -50,7 +50,7 @@
     "@types/html-to-pdfmake": "^2.4.4",
     "@types/jasmine": "~5.1.0",
     "@types/leaflet": "^1.9.16",
-    "@types/lodash": "^4.17.20",
+    "@types/lodash": "^4.17.21",
     "@types/node": "^18.18.0",
     "autoprefixer": "^10.4.20",
     "daisyui": "^4.12.14",

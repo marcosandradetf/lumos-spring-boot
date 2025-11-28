@@ -29,7 +29,7 @@ interface ViewDao {
                 ) AS itemsQuantity,
                 instructions as instructions
             FROM PreMeasurementInstallation p
-            WHERE p.status = :status
+            WHERE p.status in (:status)
         
             UNION ALL
         

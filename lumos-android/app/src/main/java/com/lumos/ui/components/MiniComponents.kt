@@ -556,17 +556,12 @@ fun UpdateModal(
 }
 
 @Composable
-fun ConfirmNavigation(route: String, navController: NavHostController, body: String = "Deseja sair?", onDismiss: () -> Unit) {
+fun ConfirmNavigation(body: String = "Deseja sair?", confirm: () -> Unit, onDismiss: () -> Unit) {
     Confirm(
         title = "Confirme sua ação",
         body = body,
         confirm = {
-            if (route == "back") {
-                navController.popBackStack()
-            } else {
-                navController.navigate(route)
-            }
-
+            confirm()
         },
         cancel = {
             onDismiss()

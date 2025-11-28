@@ -16,7 +16,6 @@
       <th class="text-left">Grupo Material</th>
       <th class="text-left">Qtde. Estoque</th>
       <th class="text-left">Inativo</th>
-      <th class="text-left">Empresa</th>
       <th class="text-left">Almoxarifado</th>
       <th class="text-left" colspan="2">Ação</th>
     </tr>
@@ -42,7 +41,6 @@
                [checked]="material.inactive"
                class="toggle toggle-primary"/>
       </td>
-      <td>{{ material.company }}</td>
       <td>{{ material.deposit }}</td>
       <td class="cursor-pointer">
         <button (click)="idMaterial = material.idMaterial; openConfirmationModal = true"

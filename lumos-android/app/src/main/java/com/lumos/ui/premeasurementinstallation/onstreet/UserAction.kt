@@ -55,7 +55,7 @@ fun UserAction(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Bom trabalho!",
+                text = "Quase lá!",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -65,7 +65,7 @@ fun UserAction(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Todos os itens foram concluídos com sucesso.\nEscolha o que deseja fazer agora.",
+                text = "Ponto Finalizado.\nTodos os itens foram concluídos com sucesso!\nEscolha o que deseja fazer agora.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -116,7 +116,7 @@ fun UserAction(
                     .height(50.dp),
                 shape = RoundedCornerShape(32.dp)
             ) {
-                Text("Salvar e finalizar")
+                Text("Salvar e Finalizar")
             }
         }
 

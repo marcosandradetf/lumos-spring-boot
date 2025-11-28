@@ -212,7 +212,7 @@ public class PreMeasurementRegisterService {
                 jdbcTemplate.update(updateSql, photoUri, deviceStreetId);
 
             } catch (Exception e) {
-                e.printStackTrace(); // ou log.warn("Erro ao processar foto", e);
+                throw new Utils.BusinessException(e.getMessage());
             }
         }
 

@@ -203,8 +203,8 @@ fun MaintenanceScreen(
                         maintenanceViewModel.setMaintenanceId(currentId)
                         maintenanceViewModel.setScreenState(MaintenanceUIState.HOME)
                     },
-                    saveStreet = { street, items ->
-                        maintenanceViewModel.insertMaintenanceStreet(street, items)
+                    saveStreet = { street, items, coordinatesService ->
+                        maintenanceViewModel.insertMaintenanceStreet(street, items, coordinatesService)
                     },
                     lastRoute = lastRoute,
                     streetCreated = uiState.streetCreated,
@@ -214,7 +214,8 @@ fun MaintenanceScreen(
                         maintenanceViewModel.setMaintenanceId(currentMaintenanceId)
                     },
                     stockData = stock,
-                    message = uiState.message
+                    message = uiState.message,
+                    setMessage = { maintenanceViewModel.setMessage(it) }
                 )
             } else {
                 CurrentScreenLoading(

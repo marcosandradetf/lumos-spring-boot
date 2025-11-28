@@ -46,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -134,44 +135,43 @@ fun StreetMaterialScreen(
                     address = currentAddress
                 )
 
-            coordinates.execute { latitude, longitude ->
-                if (latitude != null && longitude != null) {
-                    directExecutionViewModel.street =
-                        directExecutionViewModel.street?.copy(
-                            latitude = latitude,
-                            longitude = longitude
-                        )
-                }
+            val (lat, long) = coordinates.execute()
+            if (lat != null && long != null) {
+                directExecutionViewModel.street =
+                    directExecutionViewModel.street?.copy(
+                        latitude = lat,
+                        longitude = long
+                    )
             }
 
         } else if (directExecutionViewModel.reserves.isNotEmpty()) {
             directExecutionViewModel.loadingCoordinates = true
-            coordinates.execute { latitude, longitude ->
-                if (latitude != null && longitude != null) {
-                    val addr = AddressService(context).execute(latitude, longitude)
+            val (lat, long) = coordinates.execute()
+            if (lat != null && long != null) {
+                val addr = AddressService(context).execute(lat, long)
 
-                    if (addr != null && addr.size >= 4) {
-                        val streetName = addr[0]
-                        val neighborhood = addr[1]
-                        val city = addr[2]
+                if (addr != null && addr.size >= 4) {
+                    val streetName = addr[0]
+                    val neighborhood = addr[1]
+                    val city = addr[2]
 
-                        currentAddress = "$streetName, $neighborhood, $city"
+                    currentAddress = "$streetName, $neighborhood, $city"
 
-                        directExecutionViewModel.street =
-                            directExecutionViewModel.street?.copy(
-                                address = currentAddress,
-                                latitude = latitude,
-                                longitude = longitude
-                            )
-                    }
-                    directExecutionViewModel.loadingCoordinates = false
+                    directExecutionViewModel.street =
+                        directExecutionViewModel.street?.copy(
+                            address = currentAddress,
+                            latitude = lat,
+                            longitude = long
+                        )
                 } else {
-                    Log.e("GET Address", "Latitude ou Longitude são nulos.")
-                    directExecutionViewModel.loadingCoordinates = false
+                    directExecutionViewModel.errorMessage = "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
                 }
             }
+            directExecutionViewModel.loadingCoordinates = false
         }
     }
+
+
 
     if (directExecutionViewModel.loadingCoordinates) {
         Loading("Tentando carregar as coordenadas...")
@@ -368,7 +368,7 @@ fun StreetMaterialScreen(
                             "Não é permitido salvar itens com quantidade igual a 0."
                         directExecutionViewModel.alertModal = true
                     } else {
-                        directExecutionViewModel.saveAndPost()
+                        directExecutionViewModel.saveAndPost(coordinates)
                     }
                 } else if (action == "CLOSE") {
                     directExecutionViewModel.confirmModal = false

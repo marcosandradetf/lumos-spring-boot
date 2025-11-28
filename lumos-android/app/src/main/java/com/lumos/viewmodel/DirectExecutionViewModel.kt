@@ -11,6 +11,7 @@ import com.lumos.api.RequestResult.ServerError
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.ReserveMaterialJoin
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
@@ -201,10 +202,17 @@ class DirectExecutionViewModel(
         }
     }
 
-    fun saveAndPost() {
+    fun saveAndPost(coordinates: CoordinatesService) {
         viewModelScope.launch {
+            isLoading = true
             try {
-                isLoading = true
+                val (lat, long) = coordinates.execute()
+                if (lat != null && long != null) {
+                    street = street?.copy(
+                        latitude = lat,
+                        longitude = long,
+                    )
+                }
                 withContext(Dispatchers.IO) {
                     repository?.saveAndQueueStreet(
                         street?.copy(finishAt = Instant.now().toString()),
@@ -258,9 +266,13 @@ class DirectExecutionViewModel(
 
 
     fun countStock() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
-                stockCount = repository?.countStock() ?: 0
+                val countStock = withContext(Dispatchers.IO) {
+                    repository?.countStock() ?: 0
+                }
+
+                stockCount = countStock
             } catch (e: Exception) {
                 errorMessage = e.message
             } finally {

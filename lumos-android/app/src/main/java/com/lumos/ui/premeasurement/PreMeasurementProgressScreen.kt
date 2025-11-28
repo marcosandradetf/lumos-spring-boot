@@ -187,7 +187,7 @@ fun PMPContent(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        text = measurement.contractor,
+                                        text = Utils.abbreviate(measurement.contractor),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimary

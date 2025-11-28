@@ -1,6 +1,5 @@
 package com.lumos.ui.maintenance
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -87,7 +86,6 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.sanitizeDecimalInput
-import com.lumos.viewmodel.MaintenanceUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.UUID
@@ -99,12 +97,13 @@ fun StreetMaintenanceContent(
     loading: Boolean,
     lastRoute: String?,
     back: () -> Unit,
-    saveStreet: (MaintenanceStreet, List<MaintenanceStreetItem>) -> Unit,
+    saveStreet: (MaintenanceStreet, List<MaintenanceStreetItem>, CoordinatesService) -> Unit,
     streetCreated: Boolean,
     newStreet: () -> Unit,
     stockData: List<MaterialStock>,
     contractor: String?,
     message: String?,
+    setMessage: (String) -> Unit
 ) {
     val context = LocalContext.current
     val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
@@ -216,29 +215,26 @@ fun StreetMaintenanceContent(
 
     LaunchedEffect(Unit) {
         loadingCoordinates = true
-        coordinates.execute { latitude, longitude ->
-            if (latitude != null && longitude != null) {
-                val addr = AddressService(context).execute(latitude, longitude)
+        val (lat, long) = coordinates.execute()
+        if (lat != null && long != null) {
+            val addr = AddressService(context).execute(lat, lat)
 
-                if (addr != null && addr.size >= 4) {
-                    val streetName = addr[0]
-                    val neighborhood = addr[1]
-                    val city = addr[2]
+            if (addr != null && addr.size >= 4) {
+                val streetName = addr[0]
+                val neighborhood = addr[1]
+                val city = addr[2]
 
-                    street.address =
-                        "$streetName, $neighborhood, $city"
-                    street.latitude = latitude
-                    street.longitude = longitude
+                street.address =
+                    "$streetName, $neighborhood, $city"
+                street.latitude = lat
+                street.longitude = lat
 
-                    address = street.address
-                }
-                loadingCoordinates = false
+                address = street.address
             } else {
-                Log.e("GET Address", "Latitude ou Longitude são nulos.")
-                loadingCoordinates = false
+                setMessage("Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente.")
             }
         }
-
+        loadingCoordinates = false
     }
 
     AppLayout(
@@ -274,7 +270,7 @@ fun StreetMaintenanceContent(
         if (confirmModal) {
             Confirm(body = "Deseja finalizar essa manutenção?", confirm = {
                 confirmModal = false
-                saveStreet(street, items)
+                saveStreet(street, items, coordinates)
             }, cancel = {
                 confirmModal = false
             })
@@ -1033,7 +1029,7 @@ fun PrevStreetMaintenance() {
         back = {
 
         },
-        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem> -> },
+        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem>, _ -> },
         streetCreated = false,
         newStreet = {},
         stockData = listOf(
@@ -1069,6 +1065,7 @@ fun PrevStreetMaintenance() {
             ),
         ),
         contractor = "",
-        message =  null
+        message =  null,
+        setMessage = {}
     )
 }

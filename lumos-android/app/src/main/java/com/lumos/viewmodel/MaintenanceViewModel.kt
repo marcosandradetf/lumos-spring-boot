@@ -6,6 +6,7 @@ import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.repository.MaintenanceRepository
 import com.lumos.ui.maintenance.MaintenanceUIState
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 data class MaintenanceUiState(
@@ -50,7 +52,7 @@ class MaintenanceViewModel(
 
     fun setScreenState(state: MaintenanceUIState) = _uiState.update { it.copy(screenState = state) }
 
-    private fun setMessage(message: String?) {
+    fun setMessage(message: String?) {
         viewModelScope.launch {
             _uiState.update { it.copy(message = message) }
 
@@ -131,7 +133,7 @@ class MaintenanceViewModel(
                 repository.insertMaintenance(maintenance)
                 setContractSelected(true)
             } catch (e: Exception) {
-                if(e.message?.lowercase()?.contains("unique") == true) {
+                if (e.message?.lowercase()?.contains("unique") == true) {
                     setMessage("Manutenção já salva anteriormente")
                 } else {
                     setMessage(e.message ?: "")
@@ -142,14 +144,26 @@ class MaintenanceViewModel(
         }
     }
 
-    fun insertMaintenanceStreet(street: MaintenanceStreet, items: List<MaintenanceStreetItem>) {
+    fun insertMaintenanceStreet(
+        street: MaintenanceStreet,
+        items: List<MaintenanceStreetItem>,
+        coordinates: CoordinatesService
+    ) {
         viewModelScope.launch {
+            setLoading(true)
             try {
-                setLoading(true)
-                repository.insertMaintenanceStreet(street, items)
+                val (lat, long) = coordinates.execute()
+                withContext(Dispatchers.IO) {
+                    repository.insertMaintenanceStreet(
+                        street.copy(
+                            latitude = lat ?: street.latitude,
+                            longitude = long ?: street.longitude
+                        ), items
+                    )
+                }
                 setStreetCreated(true)
             } catch (e: Exception) {
-                if(e.message?.lowercase()?.contains("unique") == true) {
+                if (e.message?.lowercase()?.contains("unique") == true) {
                     setMessage("Esse ponto já foi salvo - Informe outro ponto ou outro número")
                 } else {
                     setMessage(e.message ?: "")

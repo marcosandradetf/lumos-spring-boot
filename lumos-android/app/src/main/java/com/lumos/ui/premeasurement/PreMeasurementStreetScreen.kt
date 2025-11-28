@@ -157,26 +157,27 @@ fun PreMeasurementStreetScreen(
 
         preMeasurementViewModel.locationLoading = true
 
-        coordinates.execute { latitude, longitude ->
-            if (latitude != null && longitude != null) {
-                preMeasurementViewModel.latitude = latitude
-                preMeasurementViewModel.longitude = longitude
-                val addr = AddressService(context).execute(latitude, longitude)
+        val (latitude, longitude) = coordinates.execute()
+        if (latitude != null && longitude != null) {
+            preMeasurementViewModel.latitude = latitude
+            preMeasurementViewModel.longitude = longitude
+            val addr = AddressService(context).execute(latitude, longitude)
 
-                val street = addr?.get(0).toString()
-                val neighborhood = addr?.get(1).toString()
-                val city = addr?.get(2).toString()
+            val street = addr?.get(0).toString()
+            val neighborhood = addr?.get(1).toString()
+            val city = addr?.get(2).toString()
 
-                currentAddress = "$street, $neighborhood, $city"
+            currentAddress = "$street, $neighborhood, $city"
 
-                preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
-                    latitude = latitude,
-                    longitude = longitude,
-                    address = currentAddress
-                )
-            }
-            preMeasurementViewModel.locationLoading = false
+            preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
+                latitude = latitude,
+                longitude = longitude,
+                address = currentAddress
+            )
+        } else {
+            preMeasurementViewModel.message = "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
         }
+        preMeasurementViewModel.locationLoading = false
 
     }
 
@@ -389,7 +390,7 @@ fun PreMeasurementStreetScreen(
 
                             if (isLastPowerValid) {
                                 preMeasurementViewModel.street?.let { street ->
-                                    preMeasurementViewModel.save()
+                                    preMeasurementViewModel.save(coordinates)
                                 }
                             }
                         },
@@ -550,11 +551,17 @@ fun StreetItemsContent(
             )
         } else if (action != null) {
             ConfirmNavigation(
-                route = action!!,
-                navController = navController
-            ) {
-                action = null
-            }
+                confirm = {
+                    if (action == "back") {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(action!!)
+                    }
+                },
+                onDismiss = {
+                    action = null
+                }
+            )
         }
 
         Box(

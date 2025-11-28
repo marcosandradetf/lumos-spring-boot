@@ -149,8 +149,13 @@ fun CheckTeamScreen(
 
     if (action.isNotBlank()) {
         ConfirmNavigation(
-            route = action,
-            navController = navController,
+            confirm = {
+                if (action == "back") {
+                    navController.popBackStack()
+                } else {
+                    navController.navigate(action)
+                }
+            },
             onDismiss = {
                 action = ""
             }

@@ -1,5 +1,6 @@
 package com.lumos.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,8 +15,11 @@ import com.lumos.repository.ContractRepository
 import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
+import java.lang.Thread.sleep
 import java.math.BigDecimal
 
 class PreMeasurementInstallationViewModel(
@@ -28,7 +32,7 @@ class PreMeasurementInstallationViewModel(
     mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
 ) : ViewModel() {
-    var installationID by mutableStateOf<String?>(null)
+    var installationID by mutableStateOf<String?>("null")
     var signPhotoUri: String? = null
     var signDate: String? = null
     var contractId: Long? = null
@@ -45,7 +49,7 @@ class PreMeasurementInstallationViewModel(
     var alertModal by mutableStateOf(false)
 
     var message by mutableStateOf<String?>(null)
-    var hasPosted by mutableStateOf(true)
+    var hasPosted by mutableStateOf(false)
     var openConfirmation by mutableStateOf(false)
     var showSignScreen by mutableStateOf(false)
     var instructions by mutableStateOf<String?>(null)
@@ -56,42 +60,47 @@ class PreMeasurementInstallationViewModel(
     var hasResponsible by mutableStateOf<Boolean?>(null)
     var triedToSubmit by mutableStateOf(false)
     var showFinishForm by mutableStateOf(false)
+    var buttonLoading by mutableStateOf(false)
 
-    // -> control viewModel
-    init {
-        viewModelScope.launch {
-            NavEvents.route.collect { route ->
-                when (route) {
-                    Routes.INSTALLATION_HOLDER -> {
-                        installationID = null
-                        signPhotoUri = null
-                        signDate = null
-                        contractId = null
-                        contractor = null
-                        currentInstallationStreets = emptyList()
-                        currentInstallationItems = emptyList()
-                        lastItem = null
-                        currentStreetId = null
-                        currentStreet = null
-                        alertModal = false
-                        hasPosted = false
-                        openConfirmation = false
-                        showSignScreen = false
-                    }
+    // -> control state viewModel
+    fun setStateForHolderScreen() {
+        installationID = null
+        signPhotoUri = null
+        signDate = null
+        contractId = null
+        contractor = null
+        currentInstallationStreets = emptyList()
+        currentInstallationItems = emptyList()
+        lastItem = null
+        currentStreetId = null
+        currentStreet = null
+        alertModal = false
+        hasPosted = false
+        openConfirmation = false
+        showSignScreen = false
+        showFinishForm = false
+        responsible = null
+        signDate = null
+        signPhotoUri = null
+        hasResponsible = null
+        triedToSubmit = false
+    }
 
-                    Routes.PRE_MEASUREMENT_INSTALLATION_STREETS -> {
-                        currentInstallationItems = emptyList()
-                        lastItem = null
-                        currentStreetId = null
-                        currentStreet = null
-                        alertModal = false
-                        hasPosted = false
-                        openConfirmation = false
-                        showSignScreen = false
-                    }
-                }
-            }
-        }
+    fun setStateForStreetScreen() {
+        currentInstallationItems = emptyList()
+        lastItem = null
+        currentStreetId = null
+        currentStreet = null
+        alertModal = false
+        hasPosted = false
+        openConfirmation = false
+        showSignScreen = false
+        showFinishForm = false
+        responsible = null
+        signDate = null
+        signPhotoUri = null
+        hasResponsible = null
+        triedToSubmit = false
     }
 
     // -> Bellow properties to actions or get/sets
@@ -146,8 +155,8 @@ class PreMeasurementInstallationViewModel(
             loading = true
             message = null
             try {
-                val response = repository?.syncExecutions()!!
-                when (response) {
+                Log.e("syncExecutions", "syncExecutions")
+                when (val response = repository?.syncExecutions()!!) {
                     is RequestResult.Timeout -> message =
                         "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui - ou puxe para atualizar agora mesmo."
 
@@ -175,7 +184,7 @@ class PreMeasurementInstallationViewModel(
         contractItemId: Long
     ) {
         viewModelScope.launch {
-            loading = true
+            buttonLoading = true
             try {
                 lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }?.copy(executedQuantity = quantityExecuted)
 
@@ -194,7 +203,7 @@ class PreMeasurementInstallationViewModel(
             } catch (e: Exception) {
                 message = e.message ?: ""
             } finally {
-                loading = false
+                buttonLoading = false
             }
         }
     }
@@ -209,6 +218,7 @@ class PreMeasurementInstallationViewModel(
                 currentInstallationStreets =
                     currentInstallationStreets.filter { it.preMeasurementStreetId != currentStreetId }
                 hasPosted = true
+                showFinishForm = false
                 currentStreetId = null
                 currentStreet = null
             } catch (e: Exception) {
@@ -221,6 +231,7 @@ class PreMeasurementInstallationViewModel(
 
     fun submitInstallation() {
         viewModelScope.launch {
+            loading = true
             try {
                 withContext(Dispatchers.IO) {
                     repository?.queueSubmitInstallation(installationID, signPhotoUri, signDate)
@@ -230,10 +241,13 @@ class PreMeasurementInstallationViewModel(
                 signDate = null
                 contractor = null
                 contractId = null
-            } catch (_: IllegalStateException) {
-                null
-            } catch (_: Exception) {
-                null
+                showFinishForm = false
+            } catch (e: IllegalStateException) {
+                message = e.message
+            } catch (e: Exception) {
+                message = e.message
+            } finally {
+                loading = false
             }
         }
     }

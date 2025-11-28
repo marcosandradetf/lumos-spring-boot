@@ -1,7 +1,6 @@
 package com.lumos.viewmodel
 
 import android.util.Log
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,7 +10,7 @@ import com.lumos.domain.model.Item
 import com.lumos.domain.model.PreMeasurement
 import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.domain.model.PreMeasurementStreetItem
-import com.lumos.midleware.SecureStorage
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.Routes
 import com.lumos.repository.PreMeasurementRepository
 import com.lumos.utils.NavEvents
@@ -585,10 +584,18 @@ class PreMeasurementViewModel(
         }
     }
 
-    fun save() {
+    fun save(coordinates: CoordinatesService) {
         viewModelScope.launch {
             loading = true
             try {
+                val (lat, long) = coordinates.execute()
+                if (lat != null && long != null) {
+                    street = street?.copy(
+                        latitude = lat,
+                        longitude = long,
+                    )
+                }
+
                 withContext(Dispatchers.IO) {
                     repository?.save(street!!, streetItems)
                 }
