@@ -115,7 +115,6 @@ import java.util.UUID
 fun PreMeasurementStreetScreen(
     context: Context,
     preMeasurementViewModel: PreMeasurementViewModel,
-    preMeasurementId: String,
     contractViewModel: ContractViewModel,
     navController: NavHostController,
 ) {
@@ -844,7 +843,7 @@ fun ContractItem(
     ListItem(
         headlineContent = {
             Text(
-                text = item.description,
+                text = item.nameForImport,
                 style = MaterialTheme.typography.titleMedium,
                 overflow = TextOverflow.Ellipsis
             )

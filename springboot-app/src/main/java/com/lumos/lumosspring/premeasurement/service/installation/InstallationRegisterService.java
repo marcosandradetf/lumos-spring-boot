@@ -11,25 +11,27 @@ import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockReposit
 import com.lumos.lumosspring.util.ExecutionStatus;
 import com.lumos.lumosspring.util.Utils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class InstallationRegisterService {
-    private final NamedParameterJdbcTemplate namedJdbc;
     private final MinioService minioService;
     private final PreMeasurementInstallationRepository preMeasurementInstallationRepository;
     private final MaterialStockRepository materialStockRepository;
     private final PreMeasurementExecutorRepository preMeasurementExecutorRepository;
 
-    public InstallationRegisterService(NamedParameterJdbcTemplate namedJdbc, MinioService minioService, PreMeasurementInstallationRepository preMeasurementInstallationRepository, MaterialStockRepository materialStockRepository, PreMeasurementExecutorRepository preMeasurementExecutorRepository) {
-        this.namedJdbc = namedJdbc;
+    public InstallationRegisterService(
+            MinioService minioService,
+            PreMeasurementInstallationRepository preMeasurementInstallationRepository,
+            MaterialStockRepository materialStockRepository,
+            PreMeasurementExecutorRepository preMeasurementExecutorRepository
+    ) {
         this.minioService = minioService;
         this.preMeasurementInstallationRepository = preMeasurementInstallationRepository;
         this.materialStockRepository = materialStockRepository;
@@ -53,36 +55,27 @@ public class InstallationRegisterService {
             throw new Utils.BusinessException(message);
         }
 
-        if (!Objects.equals(installation.get("status").toString(), ExecutionStatus.AVAILABLE_EXECUTION)) {
+        if (!Objects.equals(installation.status(), ExecutionStatus.AVAILABLE_EXECUTION)) {
             return ResponseEntity.noContent().build();
         }
 
-        Long preMeasurementID = ((Number) installation.get("pre_measurement_id")).longValue();
-
-        String sql;
         for (InstallationItemRequest r : installationReq.getItems()) {
             String materialName = r.getMaterialName().toLowerCase(Locale.ROOT);
-            String hasService;
+            String hasService = null;
 
             if (materialName.contains("led")) {
                 hasService = "led";
             } else if (materialName.contains("braço")) {
                 hasService = "braço";
-            } else {
-                hasService = null;
             }
 
-
             if (hasService != null) {
-
                 preMeasurementInstallationRepository.updateExecutedQuantity(
                         r.getContractItemId(),
                         hasService,
-                        preMeasurementID,
+                        installation.preMeasurementId(),
                         r.getQuantityExecuted()
                 );
-
-
             } else {
                 preMeasurementInstallationRepository.updateExecutedQuantity(
                         r.getContractItemId(),
@@ -94,29 +87,26 @@ public class InstallationRegisterService {
                     r.getQuantityExecuted(),
                     r.getTruckMaterialStockId()
             );
-
         }
 
+        String fileUri = null;
         if (photo != null) {
-            String city = ((String) installation.get("city"));
+            String description = installation.description();
             var folder = new StringBuilder()
                     .append("photos");
 
-            if (city != null) {
+            if (description != null) {
                 folder.append("/")
-                        .append(city);
+                        .append(description.replaceAll("\\s+", "_"));
             }
 
-            String fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution");
-
-            preMeasurementInstallationRepository.saveInstallationStreetPhotoUri(
-                    fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId()
-            );
-        } else {
-            preMeasurementInstallationRepository.saveInstallationStreetPhotoUri(
-                    null, ExecutionStatus.FINISHED, installationReq.getStreetId()
-            );
+            fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution");
         }
+        minioService.deleteFiles(Utils.INSTANCE.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
+
+        preMeasurementInstallationRepository.saveInstallationStreetPhotoUri(
+                fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId()
+        );
 
         return ResponseEntity.noContent().build();
     }
@@ -127,22 +117,23 @@ public class InstallationRegisterService {
             throw new Utils.BusinessException("payload vazio.");
         }
 
-        Map<String, Object> installation = preMeasurementInstallationRepository.getInstallationByDeviceInstallationId(installationReq.getInstallationId());
-        Long installationId = ((Long) installation.get("pre_measurement_id"));
-        String city = ((String) installation.get("city"));
-        String status = ((String) installation.get("status"));
+        var installation = preMeasurementInstallationRepository.getInstallationByDeviceInstallationId(installationReq.getInstallationId());
+        Long installationId = installation.preMeasurementId();
+        String description = installation.description();
+        String status = installation.status();
 
         if (Objects.equals(status, ExecutionStatus.FINISHED)) {
             return ResponseEntity.noContent().build();
         }
 
+        String fileUri = null;
         if (photo != null) {
             var folder = new StringBuilder()
                     .append("photos");
 
-            if (city != null) {
+            if (description != null) {
                 folder.append("/")
-                        .append(city);
+                        .append(description.replaceAll("\\s+", "_"));
             }
 
             if (installationReq.getResponsible() != null) {
@@ -150,20 +141,16 @@ public class InstallationRegisterService {
                         .append(installationReq.getResponsible().replaceAll("\\s+", "_"));
             }
 
-            String fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "installation");
-
-            preMeasurementInstallationRepository.saveInstallationSignPhotoUri(
-                    fileUri, installationReq.getSignDate(),
-                    installationReq.getResponsible(),
-                    ExecutionStatus.FINISHED, installationId
-            );
-        } else {
-            preMeasurementInstallationRepository.saveInstallationSignPhotoUri(
-                    null, null,
-                    null,
-                    ExecutionStatus.FINISHED, installationId
-            );
+            fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "installation");
         }
+
+        preMeasurementInstallationRepository.saveInstallationSignPhotoUri(
+                fileUri,
+                installationReq.getSignDate(),
+                installationReq.getResponsible(),
+                ExecutionStatus.FINISHED,
+                installationId
+        );
 
         var executors = installationReq.getOperationalUsers()
                 .stream()

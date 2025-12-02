@@ -22,7 +22,7 @@ public class InstallationRegisterController {
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
     )
     public ResponseEntity<?> saveStreetInstallation(
-            @RequestPart("photo") MultipartFile photo,
+            @RequestPart(value = "photo", required = false) MultipartFile photo,
             @RequestPart("installationStreet") InstallationStreetRequest installationStreet
     ) {
         return registerService.saveStreetInstallation(photo, installationStreet);
@@ -33,7 +33,7 @@ public class InstallationRegisterController {
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
     )
     public ResponseEntity<?> saveInstallation(
-            @RequestPart("photo") MultipartFile photo,
+            @RequestPart(value = "photo", required = false) MultipartFile photo,
             @RequestPart("installation") InstallationRequest installationReq
     ) {
         return registerService.saveInstallation(photo, installationReq);

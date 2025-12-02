@@ -479,7 +479,6 @@ fun AppNavigation(
                     PreMeasurementStreetScreen(
                         context = LocalContext.current,
                         preMeasurementViewModel = preMeasurementViewModel,
-                        preMeasurementId = preMeasurementId,
                         contractViewModel = contractViewModel,
                         navController = navController
                     )

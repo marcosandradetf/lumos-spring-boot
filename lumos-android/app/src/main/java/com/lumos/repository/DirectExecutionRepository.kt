@@ -23,6 +23,7 @@ import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.utils.Utils.getFileFromUri
+import com.lumos.utils.Utils.isStaleCheckTeam
 import com.lumos.worker.SyncManager
 import com.lumos.worker.SyncTypes
 import okhttp3.MediaType.Companion.toMediaType
@@ -73,10 +74,13 @@ class DirectExecutionRepository(
         val uuid = secureStorage.getUserUuid()
             ?: return ServerError(-1, "UUID Não encontrado")
 
+        val executorsIds = secureStorage.getOperationalUsers().toList()
+        if (executorsIds.isEmpty() || isStaleCheckTeam(secureStorage)) RequestResult.Success(Unit)
+
         val response = ApiExecutor.execute { api.getDirectExecutions(uuid) }
         return when (response) {
             is RequestResult.Success -> {
-                saveDirectExecutionsToDb(response.data)
+                saveDirectExecutionsToDb(response.data, executorsIds)
                 RequestResult.Success(Unit)
             }
 
@@ -102,7 +106,7 @@ class DirectExecutionRepository(
         }
     }
 
-    private suspend fun saveDirectExecutionsToDb(fetchedExecutions: List<DirectExecutionDTOResponse>) {
+    private suspend fun saveDirectExecutionsToDb(fetchedExecutions: List<DirectExecutionDTOResponse>, executorsIds: List<String>) {
         fetchedExecutions.forEach { executionDto ->
 
             val execution = DirectExecution(
@@ -113,7 +117,7 @@ class DirectExecutionRepository(
                 creationDate = executionDto.creationDate,
                 description = executionDto.description,
                 instructions = executionDto.instructions,
-                executorsIds = secureStorage.getOperationalUsers().toList(),
+                executorsIds = executorsIds,
                 contractId = executionDto.contractId,
             )
 

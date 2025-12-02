@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.materialstock.repository;
 
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -49,6 +50,7 @@ public interface MaterialStockRepository extends CrudRepository<MaterialStock, L
     """)
     Optional<Integer> existsDeposit(@Param("id") Long id);
 
+    @Modifying
     @Query(
         """
             UPDATE material_stock

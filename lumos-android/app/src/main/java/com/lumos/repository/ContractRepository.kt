@@ -74,8 +74,8 @@ class ContractRepository(
         }
     }
 
-    fun getFlowContracts(status: String): Flow<List<Contract>> =
-        db.contractDao().getFlowContracts(status)
+    fun getFlowContractsForPreMeasurement(status: String): Flow<List<Contract>> =
+        db.contractDao().getFlowContractsForPreMeasurement(status)
 
 
     suspend fun getContract(contractId: Long): Contract? {

@@ -76,7 +76,7 @@ fun PreMeasurementProgressScreen(
     if (preMeasurementViewModel.loading) {
         CurrentScreenLoading(
             navController = navController,
-            currentScreenName = Utils.abbreviate(measurement?.contractor!!),
+            currentScreenName = Utils.abbreviate(measurement?.contractor ?: ""),
             loadingLabel = "Loading",
             selectedIcon = BottomBar.MORE.value
         )

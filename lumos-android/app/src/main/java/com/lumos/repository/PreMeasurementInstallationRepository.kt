@@ -19,13 +19,16 @@ import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
 import com.lumos.domain.model.PreMeasurementInstallationStreet
-import com.lumos.domain.model.PreMeasurementStreet
 import com.lumos.midleware.SecureStorage
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.compressImageFromUri
+import com.lumos.utils.Utils.getFileFromUri
+import com.lumos.utils.Utils.isStaleCheckTeam
 import com.lumos.worker.SyncManager
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 
@@ -39,11 +42,13 @@ class PreMeasurementInstallationRepository(
     private val minioApi = retrofit.create(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
-        val response = ApiExecutor.execute { api.getInstallations("PENDING") }
-        Log.e("response", response.toString())
+        val executorsIds = secureStorage.getOperationalUsers().toList()
+        if (executorsIds.isEmpty() || isStaleCheckTeam(secureStorage)) RequestResult.Success(Unit)
+
+        val response = ApiExecutor.execute { api.getInstallations("AVAILABLE_EXECUTION") }
         return when (response) {
             is RequestResult.Success -> {
-                saveExecutionsToDb(response.data)
+                saveExecutionsToDb(response.data, executorsIds)
                 RequestResult.Success(Unit)
             }
 
@@ -69,13 +74,10 @@ class PreMeasurementInstallationRepository(
         }
     }
 
-    private suspend fun saveExecutionsToDb(fetchedExecutions: List<InstallationResponse>) {
-        val executorsIds = secureStorage.getOperationalUsers().toList()
-        Log.e("executorsIds", executorsIds.isEmpty().toString())
-        if (executorsIds.isEmpty()) return
-
-        Log.e("fetchedExecutions", fetchedExecutions.toString())
-
+    private suspend fun saveExecutionsToDb(
+        fetchedExecutions: List<InstallationResponse>,
+        executorsIds: List<String>
+    ) {
         val installations = fetchedExecutions.map {
             PreMeasurementInstallation(
                 preMeasurementId = it.preMeasurementId,
@@ -188,13 +190,18 @@ class PreMeasurementInstallationRepository(
             )
         }
 
-        val response = ApiExecutor.execute { api.submitInstallationStreet(photo = imagePart, installationStreet = jsonBody) }
+        val response = ApiExecutor.execute {
+            api.submitInstallationStreet(
+                photo = imagePart,
+                installationStreet = jsonBody
+            )
+        }
         return when (response) {
             is RequestResult.Success -> {
                 db.preMeasurementInstallationDao().deleteInstallationStreet(streetId)
                 db.preMeasurementInstallationDao().deleteItems(streetId)
                 photoUri?.let {
-                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                    Utils.deletePhoto(app.applicationContext, it.toUri())
                 }
                 RequestResult.Success(Unit)
             }
@@ -203,7 +210,7 @@ class PreMeasurementInstallationRepository(
                 db.preMeasurementInstallationDao().deleteInstallationStreet(streetId)
                 db.preMeasurementInstallationDao().deleteItems(streetId)
                 photoUri?.let {
-                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                    Utils.deletePhoto(app.applicationContext, it.toUri())
                 }
                 SuccessEmptyBody
             }
@@ -226,32 +233,34 @@ class PreMeasurementInstallationRepository(
         val json = gson.toJson(payload)
         val jsonBody = json.toRequestBody("application/json".toMediaType())
 
-        val byteArray = payload.signUri?.let { compressImageFromUri(app.applicationContext, it.toUri()) }
-        val imagePart = byteArray?.let {
-            val requestFile = it.toRequestBody("image/jpeg".toMediaType())
-            MultipartBody.Part.createFormData(
-                "photo",
-                "upload_${System.currentTimeMillis()}.jpg",
-                requestFile
+        if (payload.signUri == null) {
+            RequestResult.NoInternet
+        }
+
+        val imagePart = payload.signUri?.let  {
+            val file = getFileFromUri(
+                app.applicationContext,
+                it.toUri(),
+                "signature_${System.currentTimeMillis()}.png"
+            )
+            val requestFile = file.asRequestBody("image/png".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("signature", file.name, requestFile)
+        }
+
+        val response = ApiExecutor.execute {
+            api.submitInstallation(
+                photo = imagePart,
+                installation = jsonBody
             )
         }
 
-        val response = ApiExecutor.execute { api.submitInstallation(photo = imagePart, installation = jsonBody) }
         return when (response) {
-            is RequestResult.Success -> {
+            is RequestResult.Success, SuccessEmptyBody -> {
                 db.preMeasurementInstallationDao().deleteInstallation(installationId)
                 payload.signUri?.let {
-                    Utils.deletePhoto(app.applicationContext,it.toUri())
+                    Utils.deletePhoto(app.applicationContext, it.toUri())
                 }
                 RequestResult.Success(Unit)
-            }
-
-            is SuccessEmptyBody -> {
-                db.preMeasurementInstallationDao().deleteInstallation(installationId)
-                payload.signUri?.let {
-                    Utils.deletePhoto(app.applicationContext,it.toUri())
-                }
-                SuccessEmptyBody
             }
 
             is RequestResult.NoInternet -> RequestResult.NoInternet
@@ -261,7 +270,10 @@ class PreMeasurementInstallationRepository(
         }
     }
 
-    suspend fun getStreets(installationID: String?, status: List<String> = listOf("PENDING", "IN_PROGRESS")): List<PreMeasurementInstallationStreet> {
+    suspend fun getStreets(
+        installationID: String?,
+        status: List<String> = listOf("PENDING", "IN_PROGRESS")
+    ): List<PreMeasurementInstallationStreet> {
         return db.preMeasurementInstallationDao().getStreetsByInstallationId(installationID, status)
     }
 
@@ -331,11 +343,16 @@ class PreMeasurementInstallationRepository(
         )
     }
 
-    suspend fun queueSubmitInstallation(installationID: String?, photoSignUri: String?, signDate: String?) {
+    suspend fun queueSubmitInstallation(
+        installationID: String?,
+        photoSignUri: String?,
+        signDate: String?
+    ) {
         if (installationID == null) return
-        db.preMeasurementInstallationDao().updateInstallation(installationID, photoSignUri, "FINISHED", signDate)
+        db.preMeasurementInstallationDao()
+            .updateInstallation(installationID, photoSignUri, "FINISHED", signDate)
 
-        SyncManager.queueSubmitPreMeasurementInstallationStreet(
+        SyncManager.queueSubmitPreMeasurementInstallation(
             app.applicationContext,
             db,
             installationID

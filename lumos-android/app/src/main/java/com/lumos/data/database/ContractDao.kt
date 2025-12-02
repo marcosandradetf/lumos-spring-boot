@@ -18,10 +18,10 @@ interface ContractDao {
     @Query("DELETE FROM contracts")
     suspend fun deleteContracts()
 
-    @Query("SELECT * FROM contracts WHERE status = :status")
-    fun getFlowContracts(status: String): Flow<List<Contract>>
+    @Query("SELECT * FROM contracts WHERE status = :status and contractor not like '%manuten%' order by createdAt desc")
+    fun getFlowContractsForPreMeasurement(status: String): Flow<List<Contract>>
 
-    @Query("SELECT * FROM contracts WHERE status = :status")
+    @Query("SELECT * FROM contracts WHERE status = :status order by createdAt desc")
     suspend fun getContracts(status: String): List<Contract>
 
     @Query("UPDATE contracts SET status = :status WHERE contractId = :contractId")
@@ -49,11 +49,12 @@ interface ContractDao {
         """
         SELECT * FROM contracts 
         WHERE contractId IN (:longs)
+        order by createdAt desc
     """
     )
     fun getFlowContractsByExecution(longs: List<Long>): Flow<List<Contract>>
 
-    @Query("SELECT * FROM contracts WHERE hasMaintenance = 1")
+    @Query("SELECT * FROM contracts WHERE hasMaintenance = 1 order by createdAt desc")
     fun getFlowContractsForMaintenance(): Flow<List<Contract>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

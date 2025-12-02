@@ -10,14 +10,8 @@ import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.notifications.service.Routes
-import com.lumos.lumosspring.user.model.Role
 import com.lumos.lumosspring.user.repository.UserRepository
-import com.lumos.lumosspring.util.ContractStatus
-import com.lumos.lumosspring.util.DefaultResponse
-import com.lumos.lumosspring.util.JdbcUtil
-import com.lumos.lumosspring.util.NotificationType
-import com.lumos.lumosspring.util.Util
-import com.lumos.lumosspring.util.Utils
+import com.lumos.lumosspring.util.*
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -25,8 +19,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
-import java.time.Instant
-import java.util.*
 
 @Service
 class ContractService(

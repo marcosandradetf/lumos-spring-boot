@@ -37,9 +37,9 @@ public class InstallationViewRepository {
                 SELECT p.pre_measurement_id, p.device_pre_measurement_id, c.contract_id, c.contractor, p.comment
                 FROM pre_measurement p
                 JOIN contract c ON c.contract_id = p.contract_contract_id
-                WHERE team_id = :teamId
+                WHERE team_id = :teamId and p.status = :status
                 """,
-                Map.of("teamId", teamId),
+                Map.of("teamId", teamId,  "status", status),
                 (rs, _) -> {
                     Long preMeasurementId = rs.getLong("pre_measurement_id");
 

@@ -645,7 +645,9 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // pre measurement
+                db.execSQL("delete from pre_measurement")
                 db.execSQL("alter table pre_measurement add column status text not null")
+                db.execSQL("alter table pre_measurement add column startedAt text not null")
 
                 // direct execution
                 db.execSQL("ALTER TABLE direct_execution ADD COLUMN responsible TEXT")

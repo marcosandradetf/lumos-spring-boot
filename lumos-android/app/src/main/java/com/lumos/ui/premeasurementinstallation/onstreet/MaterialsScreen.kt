@@ -467,6 +467,7 @@ fun MaterialsContent(
                                                     viewModel.currentStreet =
                                                         viewModel.currentStreet?.copy(currentSupply = it)
                                                 },
+                                                singleLine = true,
                                                 label = { Text("Fornecedor atual") },
                                                 isError = viewModel.triedToSubmit && viewModel.currentStreet?.currentSupply.isNullOrBlank(),
                                                 supportingText = {

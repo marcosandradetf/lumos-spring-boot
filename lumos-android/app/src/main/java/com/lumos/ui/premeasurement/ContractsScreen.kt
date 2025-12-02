@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import com.lumos.ui.components.AppLayout
 import com.lumos.utils.Utils
 import com.lumos.viewmodel.ContractViewModel
 import com.lumos.viewmodel.PreMeasurementViewModel
+import kotlinx.coroutines.launch
 import java.time.Instant
 
 
@@ -73,21 +75,21 @@ fun ContractsScreen(
     roles: Set<String>,
     preMeasurementViewModel: PreMeasurementViewModel
 ) {
+    val scope = rememberCoroutineScope()
     val requiredRoles = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
 
     val contracts by contractViewModel.contracts.collectAsState()
     val isSyncing by contractViewModel.isSyncing.collectAsState()
-
-
     val hasError by contractViewModel.syncError.collectAsState()
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
             navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Contratos")
+        } else {
+            contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
+            contractViewModel.syncContracts()
+            contractViewModel.syncContractItems()
         }
-
-        contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
-        contractViewModel.syncContracts()
     }
 
     DisposableEffect(Unit) {
@@ -118,7 +120,9 @@ fun ContractsScreen(
         isLoading = isSyncing,
         error = hasError,
         refresh = {
-            contractViewModel.syncContracts()
+            scope.launch {
+                contractViewModel.syncContracts()
+            }
         }
     )
 }

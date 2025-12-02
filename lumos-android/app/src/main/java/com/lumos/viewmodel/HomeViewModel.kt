@@ -129,7 +129,7 @@ class HomeViewModel(
 
         installationsJob = viewModelScope.launch {
             try {
-                repository.getFlowContracts("ACTIVE")
+                repository.getFlowContractsForPreMeasurement("ACTIVE")
                     .flowOn(Dispatchers.IO)
                     .collectLatest { fetched ->
                         _contracts.value = fetched

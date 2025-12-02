@@ -98,7 +98,6 @@ class MinioService(
             )
         }
         val presigned = getPublicPresignedObjectUrl(bucketName, objectName, expiryAt)
-        println("PRESIGNED RAW = $presigned")
 
         val expiresAtTimestamp = Instant.now().plusSeconds(expiryAt.toLong()).epochSecond
 

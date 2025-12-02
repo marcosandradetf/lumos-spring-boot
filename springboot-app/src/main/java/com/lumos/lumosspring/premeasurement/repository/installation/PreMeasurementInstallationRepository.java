@@ -1,36 +1,38 @@
 package com.lumos.lumosspring.premeasurement.repository.installation;
 
 import com.lumos.lumosspring.premeasurement.model.PreMeasurement;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 public interface PreMeasurementInstallationRepository extends CrudRepository<PreMeasurement, Long> {
+    record PreMeasurementRow(Long preMeasurementId, String status, String description, String preMeasurementPhotoUri) {}
 
     @Query(
             """
-                SELECT p.pre_measurement_id, p.status, p.city
+                SELECT p.pre_measurement_id, p.status, 'Etapa ' || p.step || ' - ' || p.city as description, s.pre_measurement_photo_uri
                 FROM pre_measurement p
                 JOIN pre_measurement_street s on s.pre_measurement_id = p.pre_measurement_id
                 WHERE s.device_pre_measurement_street_id = :streetId
             """
     )
-    Map<String, Object> getInstallationByDeviceStreetId(UUID streetId);
+    PreMeasurementRow getInstallationByDeviceStreetId(UUID streetId);
 
     @Query(
             """
-                SELECT p.pre_measurement_id, p.status, p.city
+                SELECT p.pre_measurement_id, p.status, 'Etapa ' || p.step || ' - ' || p.city as description, null
                 FROM pre_measurement p
                 where p.device_pre_measurement_id = :installationId
             """
     )
-    Map<String, Object> getInstallationByDeviceInstallationId(UUID installationId);
+    PreMeasurementRow getInstallationByDeviceInstallationId(UUID installationId);
 
+    @Modifying
     @Query("""
         WITH to_update AS (
             SELECT ci.contract_item_id
@@ -61,6 +63,7 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
             @Param("quantityExecuted") BigDecimal quantityExecuted
     );
 
+    @Modifying
     @Query(
             """
                 UPDATE contract_item
@@ -73,6 +76,7 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
             @Param("quantityExecuted") BigDecimal quantityExecuted
     );
 
+    @Modifying
     @Query(
             """
                 UPDATE pre_measurement_street
@@ -86,6 +90,7 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
             UUID streetId
     );
 
+    @Modifying
     @Query(
             """
                 UPDATE pre_measurement

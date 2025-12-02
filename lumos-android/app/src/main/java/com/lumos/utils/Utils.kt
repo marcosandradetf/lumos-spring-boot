@@ -7,7 +7,9 @@ import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.location.LocationManager
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.core.content.ContextCompat
 import com.lumos.api.RequestResult
@@ -23,6 +25,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
 import androidx.core.graphics.scale
+import com.lumos.midleware.SecureStorage
 
 
 object Utils {
@@ -60,7 +63,8 @@ object Utils {
         // 1) tenta ISO 8601 direto (ex: "2025-08-28T10:03:07Z")
         try {
             return Instant.parse(raw)
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
 
         // 2) normaliza frações de segundo (se tiver .00749 → vira .007490)
         val normalized = raw.replace(
@@ -87,7 +91,8 @@ object Utils {
         for (formatter in formatters) {
             try {
                 return OffsetDateTime.parse(normalized, formatter).toInstant()
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
 
         // 4) fallback → nunca crasha
@@ -118,9 +123,11 @@ object Utils {
             digits.length >= 11 -> { // (XX) XXXXX-XXXX
                 "(${digits.substring(0, 2)}) ${digits.substring(2, 7)}-${digits.substring(7, 11)}"
             }
+
             digits.length >= 10 -> { // (XX) XXXX-XXXX
                 "(${digits.substring(0, 2)}) ${digits.substring(2, 6)}-${digits.substring(6, 10)}"
             }
+
             else -> digits // sem formatação, se muito curto
         }
     }
@@ -175,36 +182,42 @@ object Utils {
         return file
     }
 
-
     fun compressImageFromUri(
         context: Context,
         imageUri: Uri,
-        quality: Int = 75,      // Qualidade ideal
-        maxSize: Int = 1280     // Máximo recomendado para alta nitidez + baixo tamanho
+        quality: Int = 75,
+        maxSize: Int = 1280
     ): ByteArray? {
         return try {
-            // 1. Carrega bitmap
+            // 1. Ler EXIF
+            val exif = ExifInterface(context.contentResolver.openInputStream(imageUri)!!)
+            val orientation = exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+
+            // 2. Carregar bitmap
             val inputStream = context.contentResolver.openInputStream(imageUri)
-            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
 
-            if (originalBitmap == null) return null
+            if (bitmap == null) return null
 
-            // 2. Redimensiona se necessário
-            val resized = resizeBitmap(originalBitmap, maxSize)
+            // 3. Corrigir rotação conforme EXIF
+            val rotated = rotateBitmapIfNeeded(bitmap, orientation)
 
-            // 3. Libera memória do original se foi redimensionado
-            if (resized != originalBitmap) {
-                originalBitmap.recycle()
-            }
+            // 4. Redimensionar se necessário
+            val resized = resizeBitmap(rotated, maxSize)
 
-            // 4. Comprime a versão final
-            val outputStream = ByteArrayOutputStream()
-            resized.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            if (rotated != bitmap) bitmap.recycle()
+
+            // 5. Comprimir
+            val output = ByteArrayOutputStream()
+            resized.compress(Bitmap.CompressFormat.JPEG, quality, output)
 
             resized.recycle()
 
-            outputStream.toByteArray()
+            output.toByteArray()
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -212,7 +225,20 @@ object Utils {
         }
     }
 
-    fun resizeBitmap(bitmap: Bitmap, maxSize: Int): Bitmap {
+    fun rotateBitmapIfNeeded(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            else -> return bitmap
+        }
+
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+
+    private fun resizeBitmap(bitmap: Bitmap, maxSize: Int): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
 
@@ -293,12 +319,15 @@ object Utils {
                     result.add("PREF.")
                     replace = true
                 }
+
                 word.lowercase() == "municipal" && replace -> {
                     result.add("MUN.")
                 }
+
                 word.lowercase() == "de" && replace -> {
                     // ignora "DE" após PREFEITURA ou MUNICIPAL
                 }
+
                 else -> {
                     result.add(token)
                     replace = false
@@ -393,7 +422,13 @@ object Utils {
         }
     }
 
+    fun isStaleCheckTeam(secureStorage: SecureStorage): Boolean {
+        val TWELVE_HOURS = 12 * 60 * 60 * 1000L
+        val now = System.currentTimeMillis()
+        val lastTeamCheck = secureStorage.getLastTeamCheck()
 
+        return now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
+    }
 
 }
 

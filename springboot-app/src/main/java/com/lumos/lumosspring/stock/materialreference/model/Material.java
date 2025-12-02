@@ -3,6 +3,8 @@ package com.lumos.lumosspring.stock.materialreference.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 
+import java.math.BigDecimal;
+
 public class Material {
     @Id
     private Long idMaterial;
@@ -22,6 +24,12 @@ public class Material {
     private Long idMaterialType;
 
     private Boolean inactive;
+
+    private String BuyUnit;
+
+    private String RequestUnit;
+
+    private BigDecimal conversionFactor; // utilized for calculate quantity for units than cx, rolo, etc
 
     @Column("contract_reference_item_contract_reference_item_id")
     private Long contractReferenceItemId;
@@ -119,6 +127,30 @@ public class Material {
 
     public void setContractReferenceItemId(Long contractReferenceItemId) {
         this.contractReferenceItemId = contractReferenceItemId;
+    }
+
+    public String getBuyUnit() {
+        return BuyUnit;
+    }
+
+    public void setBuyUnit(String buyUnit) {
+        BuyUnit = buyUnit;
+    }
+
+    public String getRequestUnit() {
+        return RequestUnit;
+    }
+
+    public void setRequestUnit(String requestUnit) {
+        RequestUnit = requestUnit;
+    }
+
+    public BigDecimal getConversionFactor() {
+        return conversionFactor;
+    }
+
+    public void setConversionFactor(BigDecimal conversionFactor) {
+        this.conversionFactor = conversionFactor;
     }
 }
 

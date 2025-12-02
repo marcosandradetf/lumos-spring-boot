@@ -40,6 +40,7 @@ import com.lumos.domain.model.PreMeasurement
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
+import com.lumos.utils.Utils
 import com.lumos.viewmodel.PreMeasurementViewModel
 import java.time.Instant
 
@@ -145,7 +146,7 @@ fun PMContent(
 
                                 ) {
                                 Text(
-                                    text = preMeasurement.contractor,
+                                    text = Utils.abbreviate(preMeasurement.contractor),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -168,13 +169,13 @@ fun PMContent(
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp) // Ajuste do tamanho do ícone
                                 )
-//                                Text(
-//                                    modifier = Modifier.padding(start = 5.dp),
-//                                    text = createdAt,
-//                                    style = MaterialTheme.typography.bodySmall,
-//                                    fontWeight = FontWeight.Light,
-//                                    color = MaterialTheme.colorScheme.onSurface
-//                                )
+                                Text(
+                                    modifier = Modifier.padding(start = 5.dp),
+                                    text = "Iniciada há ${Utils.timeSinceCreation(preMeasurement.startedAt)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Light,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
 

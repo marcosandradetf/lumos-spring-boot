@@ -2,6 +2,7 @@ package com.lumos.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.time.Instant
 
 @Entity(tableName = "pre_measurement")
 data class PreMeasurement(
@@ -9,7 +10,8 @@ data class PreMeasurement(
     val preMeasurementId: String,
     var contractId: Long,
     var contractor: String,
-    var status: String = "IN_PROGRESS"
+    var status: String = "IN_PROGRESS",
+    var startedAt: String = Instant.now().toString()
 )
 
 @Entity(tableName = "pre_measurement_street")
