@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
@@ -25,6 +26,7 @@ import java.math.BigDecimal
 class PreMeasurementInstallationViewModel(
     private val repository: PreMeasurementInstallationRepository?,
     private val contractRepository: ContractRepository?,
+    private val savedStateHandle: SavedStateHandle?,
 
     // -> Param to utilize preview
     mockStreets: List<PreMeasurementInstallationStreet> = emptyList(),
@@ -32,27 +34,27 @@ class PreMeasurementInstallationViewModel(
     mockCurrentStreet: PreMeasurementInstallationStreet? = null
 
 ) : ViewModel() {
-    var installationID by mutableStateOf<String?>("null")
+    var installationID by mutableStateOf(savedStateHandle?.get<String>("id"))
+    var contractor: String? = savedStateHandle?.get<String>("contractor")
+    var contractId: Long? = savedStateHandle?.get<Long>("contractId")
+    var instructions by mutableStateOf(savedStateHandle?.get<String>("instructions"))
     var signPhotoUri: String? = null
     var signDate: String? = null
-    var contractId: Long? = null
-    var contractor: String? = null
     var currentInstallationStreets by mutableStateOf(mockStreets)
     var currentInstallationItems by mutableStateOf(mockItems)
+
     var lastItem by mutableStateOf<ItemView?>(null)
-
     var currentStreetId: String? = null
-    var currentStreet by mutableStateOf(mockCurrentStreet)
 
+    var currentStreet by mutableStateOf(mockCurrentStreet)
     // -> Bellow Properties to UI State
     var loading by mutableStateOf(false)
-    var alertModal by mutableStateOf(false)
 
+    var alertModal by mutableStateOf(false)
     var message by mutableStateOf<String?>(null)
     var hasPosted by mutableStateOf(false)
     var openConfirmation by mutableStateOf(false)
     var showSignScreen by mutableStateOf(false)
-    var instructions by mutableStateOf<String?>(null)
     var route by mutableStateOf<String?>(null)
 
     var responsible by mutableStateOf<String?>(null)
@@ -63,6 +65,26 @@ class PreMeasurementInstallationViewModel(
     var buttonLoading by mutableStateOf(false)
 
     // -> control state viewModel
+    init {
+        viewModelScope.launch {
+            // Observa eventos de navegação enviados via SavedStateHandle
+            savedStateHandle
+                ?.getStateFlow("route_event", null as String?)
+                ?.collect { route ->
+
+                    when (route) {
+
+                        Routes.INSTALLATION_HOLDER -> setStateForHolderScreen()
+
+                        Routes.PRE_MEASUREMENT_INSTALLATION_STREETS -> setStateForStreetScreen()
+                    }
+
+                    // limpa o evento para não repetir
+                    savedStateHandle["route_event"] = null
+                }
+        }
+    }
+
     fun setStateForHolderScreen() {
         installationID = null
         signPhotoUri = null

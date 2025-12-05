@@ -43,9 +43,9 @@ android {
     // 2) Consolide buildTypes (um bloco só)
     signingConfigs {
         create("release") {
-//            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("/Users/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
-            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
+//            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"
@@ -158,4 +158,7 @@ dependencies {
 
     implementation("com.google.android.play:app-update:2.1.0")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
+
+    implementation("com.auth0.android:jwtdecode:2.0.2")
+
 }

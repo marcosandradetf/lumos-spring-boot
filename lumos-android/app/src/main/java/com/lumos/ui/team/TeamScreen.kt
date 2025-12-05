@@ -95,12 +95,13 @@ fun CheckTeamScreen(
     val users by viewModel.operationalUser.collectAsState()
     val teams by viewModel.teams.collectAsState()
     val currentUserId = secureStorage.getUserUuid()
-    val currentUserName = secureStorage.getUserName()
+    val currentUserName = secureStorage.getFullName()
 
     val scope = rememberCoroutineScope()
 
     var selectedTeamId by remember { mutableStateOf<Long?>(null) }
     var selectedTeamName by remember { mutableStateOf<String?>(null) }
+    var notificationTopic by remember { mutableStateOf<String?>(null) }
 
     var operationalUsersIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var operationalNames by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -142,7 +143,6 @@ fun CheckTeamScreen(
             val currentUserName = users.find { it.userId == currentUserId }?.completeName
             currentUserName?.let {
                 operationalNames = operationalNames + it
-                secureStorage.setUserName(it)
             }
         }
     }
@@ -179,7 +179,7 @@ fun CheckTeamScreen(
             """.trimIndent(),
             confirm = {
                 confirmModal = false
-                viewModel.queueUpdateTeams(selectedTeamId!!, operationalUsersIds)
+                viewModel.queueUpdateTeams(selectedTeamId!!, operationalUsersIds, notificationTopic)
             }, cancel = {
                 confirmModal = false
             },
@@ -489,6 +489,7 @@ fun CheckTeamScreen(
                                         team = team,
                                         selected = team.teamId == selectedTeamId,
                                         onClick = {
+                                            notificationTopic = team.notificationTopic
                                             selectedTeamId = team.teamId
                                             selectedTeamName =
                                                 "Caminhão placa - ${team.plateVehicle}"

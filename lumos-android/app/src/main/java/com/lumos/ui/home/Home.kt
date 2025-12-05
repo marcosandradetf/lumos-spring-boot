@@ -53,6 +53,7 @@ import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.lumos.BuildConfig
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.InstallationView
 import com.lumos.midleware.SecureStorage
@@ -88,7 +89,7 @@ fun HomeScreen(
     val others = setOf("ADMIN", "RESPONSAVEL_TECNICO", "ANALISTA")
     val operators = setOf("ELETRICISTA", "MOTORISTA")
 
-    val currentUserName = secureStorage.getUserName()
+    val currentUserName = secureStorage.getFullName()
 
     var confirmTeamModal by remember { mutableStateOf(false) }
 
@@ -127,6 +128,9 @@ fun HomeScreen(
             buttonClick: Boolean = false,
             updateType: Int = AppUpdateType.IMMEDIATE // padrão
         ) {
+            if (BuildConfig.DEBUG) {
+                return
+            }
             val appUpdateInfo = appUpdateManager.appUpdateInfo.await()
             val options = AppUpdateOptions.newBuilder(updateType).build()
 

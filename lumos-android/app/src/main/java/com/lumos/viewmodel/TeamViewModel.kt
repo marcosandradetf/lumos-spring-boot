@@ -52,12 +52,12 @@ class TeamViewModel(
         }
     }
 
-    fun queueUpdateTeams(teamId: Long, operationalUsers: Set<String>) {
+    fun queueUpdateTeams(teamId: Long, operationalUsers: Set<String>, topic: String?) {
         viewModelScope.launch {
             loading = true
             try {
                 withContext(Dispatchers.IO) {
-                    repository?.setTeamAndQueue(teamId, operationalUsers)
+                    repository?.setTeamAndQueue(teamId, operationalUsers, topic)
                 }
                 finished = true
             } catch (e: Exception) {

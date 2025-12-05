@@ -37,13 +37,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,20 +54,21 @@ import com.lumos.domain.model.InstallationView
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.repository.DirectExecutionRepository
+import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.ViewRepository
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.NothingData
 import com.lumos.utils.Utils
-import com.lumos.viewmodel.DirectExecutionViewModel
-import com.lumos.viewmodel.PreMeasurementInstallationViewModel
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
 
 @Composable
 fun InstallationHolderScreen(
-    directExecutionViewModel: DirectExecutionViewModel,
-    preMeasurementInstallationViewModel: PreMeasurementInstallationViewModel,
+    directExecutionRepository: DirectExecutionRepository,
+    preMeasurementInstallationRepository: PreMeasurementInstallationRepository,
     viewRepository: ViewRepository,
     navController: NavHostController,
     roles: Set<String>,
@@ -77,14 +79,13 @@ fun InstallationHolderScreen(
     val executions by viewRepository.getFlowInstallations(listOf("PENDING", "IN_PROGRESS"))
         .collectAsState(emptyList())
 
-    val isSyncing = directExecutionViewModel.isLoading || preMeasurementInstallationViewModel.loading
-    val error1 by directExecutionViewModel.syncError.collectAsState()
-    val error2 = preMeasurementInstallationViewModel.message
-
-    val responseError = if (error1.isNullOrBlank()) error2 else error1
+    var isSyncing by remember { mutableStateOf(false) }
+    var responseError by remember { mutableStateOf<String?>(null) }
+    var stockCount by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        preMeasurementInstallationViewModel.loading = true
+        isSyncing = true
         val TWELVE_HOURS = 12 * 60 * 60 * 1000L
 
         val now = System.currentTimeMillis()
@@ -99,16 +100,13 @@ fun InstallationHolderScreen(
         if (isStaleCheckTeam)
             navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.EXECUTIONS.value}")
         else {
-            directExecutionViewModel.syncExecutions()
-            preMeasurementInstallationViewModel.syncExecutions()
+            directExecutionRepository.syncDirectExecutions()
+            preMeasurementInstallationRepository.syncExecutions()
         }
 
-        directExecutionViewModel.countStock()
+        stockCount = directExecutionRepository.countStock()
 
-        preMeasurementInstallationViewModel.setStateForHolderScreen()
-        println("setStateForHolderScreen")
-
-        preMeasurementInstallationViewModel.loading = false
+        isSyncing = false
     }
 
     ContentCitiesScreen(
@@ -117,28 +115,23 @@ fun InstallationHolderScreen(
         isSyncing = isSyncing,
         select = { id, type, contractor, contractId, creationDate, instructions ->
             if (type != "PreMeasurementInstallation") {
-                directExecutionViewModel.installationId = id.toLong()
-                directExecutionViewModel.contractor = contractor
-                directExecutionViewModel.contractId = contractId
-                directExecutionViewModel.creationDate = creationDate
-                directExecutionViewModel.instructions = instructions
-                directExecutionViewModel.setStreets()
-                navController.navigate(Routes.DIRECT_EXECUTION_HOME_SCREEN)
+                navController.navigate(
+                    "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$id/$contractor/$contractId/$creationDate/$instructions"
+                )
             } else {
-                preMeasurementInstallationViewModel.installationID = id
-                preMeasurementInstallationViewModel.contractor = contractor
-                preMeasurementInstallationViewModel.contractId = contractId
-                preMeasurementInstallationViewModel.instructions = instructions
-                preMeasurementInstallationViewModel.setStreets()
-                navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_STREETS)
+                navController.navigate(
+                    "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/$id/$contractor/$contractId/$instructions"
+                )
             }
         },
         error = responseError,
         refresh = {
-            directExecutionViewModel.syncExecutions()
-            preMeasurementInstallationViewModel.syncExecutions()
+            scope.launch {
+                directExecutionRepository.syncDirectExecutions()
+                preMeasurementInstallationRepository.syncExecutions()
+            }
         },
-        stockDataSize = directExecutionViewModel.stockCount
+        stockDataSize = stockCount
     )
 }
 
@@ -378,8 +371,6 @@ fun ContentCitiesScreen(
 @Preview
 @Composable
 fun PrevContentCitiesScreen() {
-    // Criando um contexto fake para a preview
-    val fakeContext = LocalContext.current
     val values =
         listOf(
             InstallationView(

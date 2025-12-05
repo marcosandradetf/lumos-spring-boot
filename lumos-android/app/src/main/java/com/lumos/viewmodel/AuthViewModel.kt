@@ -2,31 +2,27 @@ package com.lumos.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.repository.AuthRepository
-import com.lumos.midleware.SecureStorage
+import com.lumos.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AuthViewModel(
     private val authRepository: AuthRepository,
-    private val secureStorage: SecureStorage
+    private val savedStateHandle: SavedStateHandle
+
 ) : ViewModel() {
-    private val _isAuthenticated = MutableStateFlow<Boolean?>(null)
-    val isAuthenticated: StateFlow<Boolean?> = _isAuthenticated
     var loading by mutableStateOf(false)
     var message by mutableStateOf<String?>(null)
     fun login(
         username: String,
-        password: String,
-        onSuccess: () -> Unit,
+        password: String
     ) {
         viewModelScope.launch {
             val response = withContext(Dispatchers.IO) {
@@ -36,11 +32,10 @@ class AuthViewModel(
                     password,
                 )
             }
-
             when (response) {
                 is RequestResult.Success -> {
+                    SessionManager.setLoggedIn(true)
                     message = "Login realizado com sucesso!"
-                    onSuccess()
                 }
 
                 is RequestResult.SuccessEmptyBody -> {
@@ -70,24 +65,8 @@ class AuthViewModel(
             withContext(Dispatchers.IO) {
                 authRepository.logout(onSuccess)
             }
-            _isAuthenticated.value = false
             loading = false
-        }
-    }
-
-    fun authenticate() {
-        viewModelScope.launch {
-            loading = true
-            try {
-                val accessToken = withContext(Dispatchers.IO) {
-                    secureStorage.getAccessToken()
-                }
-                _isAuthenticated.value = accessToken != null
-            } catch (_: Exception) {
-
-            } finally {
-                loading = false
-            }
+            SessionManager.setLoggedOut(true)
         }
     }
 

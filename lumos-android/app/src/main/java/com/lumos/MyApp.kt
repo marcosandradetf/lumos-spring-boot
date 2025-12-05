@@ -28,25 +28,30 @@ class MyApp : Application(), Application.ActivityLifecycleCallbacks {
         createNotificationChannel()
         FirebaseApp.initializeApp(this)
 
-//        // Inicializar WorkManager
-//        WorkManager.initialize(this, Configuration.Builder().build())
-
         secureStorage = SecureStorage(this)
 
         // Inicializar Room
         database = AppDatabase.getInstance(this)
 
-        // Inicializar Retrofit
-        val okHttpClient = OkHttpClient.Builder()
+        // Inicializar Client
+        val refreshClient = OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
+
+
+        val mainClient = OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS) // Timeout de conexão
             .writeTimeout(60, TimeUnit.SECONDS)   // Timeout de escrita
             .readTimeout(60, TimeUnit.SECONDS)    // Timeout de leitura
-            .addInterceptor(AuthInterceptor(this, secureStorage))
+            .addInterceptor(AuthInterceptor(secureStorage, refreshClient))
             .build()
 
+        // Inicializar Retrofit
         retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(okHttpClient)
+            .client(mainClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 

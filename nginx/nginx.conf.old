@@ -42,7 +42,6 @@ http {
         "spring.thryon.com.br" 0;
         "minio-console.thryon.com.br" 0;
         "api.thryon.com.br" 0;
-	"https://66eb897af0fc.ngrok-free.app" 0;
     }
 
     server {

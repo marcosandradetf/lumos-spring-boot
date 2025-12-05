@@ -1,6 +1,7 @@
 package com.lumos.domain.model
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 @Entity
@@ -9,7 +10,8 @@ data class Team(
     val teamId: Long,
     val depositName: String,
     val teamName: String,
-    val plateVehicle: String
+    val plateVehicle: String,
+    val notificationTopic: String? = null
 )
 
 @Entity

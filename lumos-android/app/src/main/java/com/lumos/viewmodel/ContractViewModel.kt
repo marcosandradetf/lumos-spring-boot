@@ -1,6 +1,7 @@
 package com.lumos.viewmodel
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 
 class ContractViewModel(
     private val repository: ContractRepository,
+    savedStateHandle: SavedStateHandle,
 
     ) : ViewModel() {
     private val _contracts = MutableStateFlow<List<Contract>>(emptyList()) // estado da lista

@@ -20,7 +20,8 @@ import java.util.UUID;
         select t.id_team as team_id,
                d.deposit_name as deposit_name,
                t.team_name as team_name,
-               t.plate_vehicle as plate_vehicle
+               t.plate_vehicle as plate_vehicle,
+               t.notification_code as notification_topic
         from team t
         join deposit d on d.id_deposit = t.deposit_id_deposit
         WHERE t.tenant_id = :tenantId

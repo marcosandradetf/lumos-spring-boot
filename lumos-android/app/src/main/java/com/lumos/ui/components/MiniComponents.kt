@@ -2,7 +2,13 @@ package com.lumos.ui.components
 
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -21,7 +27,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +37,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -40,11 +44,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -54,29 +60,55 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.lumos.R
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
-import com.lumos.ui.maintenance.MaintenanceUIState
 
 @Composable
-fun Loading(label: String? = null) {
+fun Loading(label: String = "Carregando...") {
+
+    // Mesma animação da Splash (pulsação suave)
+    val infinite = rememberInfiniteTransition(label = "")
+    val scale by infinite.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            tween(1400, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse
+        ),
+        label = ""
+    )
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier.width(34.dp),
-            color = MaterialTheme.colorScheme.onBackground,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+
+        // Substitui o progress indicator pela logo pulsando
+        Image(
+            painter = painterResource(R.drawable.ic_lumos),
+            contentDescription = "Loading",
+            modifier = Modifier
+                .size(70.dp)   // tamanho reduzido para loading
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
         )
+
         if (label != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(label, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = label,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
+
 
 @Composable
 fun NothingData(description: String) {
@@ -445,7 +477,7 @@ fun Tag(text: String, color: Color, icon: ImageVector? = null) {
 fun CurrentScreenLoading(
     navController: NavHostController,
     currentScreenName: String,
-    loadingLabel: String? = null,
+    loadingLabel: String = "Carregando...",
     selectedIcon: Int = BottomBar.MAINTENANCE.value
 ) {
     AppLayout(
@@ -685,15 +717,11 @@ fun FinishScreen(
 @Preview(showBackground = true)
 @Composable
 fun PrevComponents() {
-    UpdateModal(
-        context = LocalContext.current,
-        progress = 100,
-        onRestart = {
-
-        },
-        onDismiss = {
-
-        }
+    CurrentScreenLoading(
+        navController = rememberNavController(),
+        currentScreenName = "Home",
+        loadingLabel = "Carregando...",
+        selectedIcon = 1
     )
 
 }

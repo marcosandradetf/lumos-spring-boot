@@ -980,7 +980,7 @@ fun ContractItem(
 fun PrevPMStreet() {
     // Criando um contexto fake para a preview
     val fakeContext = LocalContext.current
-    val viewModel = PreMeasurementViewModel()
+    val viewModel = PreMeasurementViewModel(savedStateHandle = parentEntry.savedStateHandle)
 
     StreetItemsContent(
         description = "Pré-mediçao",

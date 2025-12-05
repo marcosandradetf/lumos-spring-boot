@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val actionState =
-                remember { mutableStateOf<String?>(intent?.getStringExtra("action")) }
+                remember { mutableStateOf(intent?.getStringExtra("action")) }
 
             LumosTheme {
                 AppNavigation(

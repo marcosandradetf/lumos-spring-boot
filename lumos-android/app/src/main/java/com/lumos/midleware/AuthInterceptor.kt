@@ -1,125 +1,101 @@
 package com.lumos.midleware
 
-import android.content.Context
-import android.content.Intent
 import android.util.Log
-import android.widget.Toast
-import com.lumos.MainActivity
-import com.lumos.api.AuthApi
-import com.lumos.domain.model.LoginResponse
-import com.lumos.notifications.NotificationManager
 import com.lumos.utils.ConnectivityUtils.BASE_URL
-import kotlinx.coroutines.Dispatchers
+import com.lumos.utils.SessionManager
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import org.json.JSONObject
 
 class AuthInterceptor(
-    context: Context,
     private val secureStorage: SecureStorage,
+    private val client: OkHttpClient
 ) : Interceptor {
 
-    private val notificationManager = NotificationManager(context, secureStorage)
-    private val appContext = context.applicationContext
-
     companion object {
-        private val refreshMutex = Mutex() // 🔒 garante exclusividade
+        private val refreshMutex = Mutex()
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
+        val url = chain.request().url.encodedPath
         val accessToken = secureStorage.getAccessToken()
 
-        // Se não for uma requisição de API, apenas passa a requisição como está
-        val request = if (!chain.request().url.toString().contains("/api/mobile/auth/")) {
-            chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer $accessToken")
-                .build()
-        } else {
+        // Não intercepta rotas de auth
+        val isAuthEndpoint = url.startsWith("/spring/api/mobile/auth")
+        if (isAuthEndpoint) {
             return chain.proceed(chain.request())
         }
 
-        Log.e("intercept", secureStorage.getRefreshToken().toString())
+        // Aplica token
+        val request = chain.request().newBuilder()
+            .addHeader("Authorization", "Bearer $accessToken")
+            .build()
 
         val response = chain.proceed(request)
 
-        // Se o token expirar (status 401), tenta renovar o token
         if (response.code == 401) {
             response.close()
 
-            val newTokens = runBlocking(Dispatchers.IO) {
+            val newToken = runBlocking {
                 refreshMutex.withLock {
-                    val currentToken = secureStorage.getAccessToken()
-                    if (currentToken != null && currentToken != accessToken) {
-                        // Outra thread já renovou enquanto esperávamos
-                        return@withLock LoginResponse(
-                            currentToken,
-                            0L,
-                            "",
-                            "",
-                            "",
-                            ""
-                        )
+
+                    // Caso outro thread já tenha renovado
+                    val updatedToken = secureStorage.getAccessToken()
+                    if (updatedToken != null && updatedToken != accessToken) {
+                        return@withLock updatedToken
                     }
 
-                    val refreshToken = secureStorage.getRefreshToken()
+                    val refresh = secureStorage.getRefreshToken()
+                    val body = """{"refreshToken":"$refresh"}"""
+                        .toRequestBody("application/json".toMediaType())
 
-                    val retrofit = Retrofit.Builder()
-                        .baseUrl(BASE_URL)
-                        .addConverterFactory(GsonConverterFactory.create())
+                    val refreshRequest = Request.Builder()
+                        .url(BASE_URL + "api/mobile/auth/v2/refresh-token")
+                        .post(body)
                         .build()
 
-                    val authApi = retrofit.create(AuthApi::class.java)
+                    return@withLock try {
+                        client.newCall(refreshRequest).execute().use { tokenResponse ->
+                            if (!tokenResponse.isSuccessful) {
+                                SessionManager.setSessionExpired(true)
+                                null
+                            } else {
+                                val json = tokenResponse.body.string()
+                                val obj = JSONObject(json)
+                                val newAccess = obj.optString("accessToken", "")
+                                val newRefresh = obj.optString("refreshToken", "")
 
-                    try {
-                        val tokenResponse = authApi.refreshToken(refreshToken = refreshToken)
-                        if (tokenResponse.isSuccessful) {
-                            val tokens = tokenResponse.body()
-                            if (tokens != null) {
-                                secureStorage.saveTokens(tokens.accessToken, tokens.refreshToken) // Salvando novos tokens
+                                if (newAccess.isNotEmpty() && newRefresh.isNotEmpty()) {
+                                    secureStorage.saveTokens(newAccess, newRefresh)
+                                    newAccess
+                                } else {
+                                    null
+                                }
                             }
-                            tokenResponse.body()
-                        } else {
-                            authApi.logout(refreshToken = refreshToken)
-                            notificationManager.unsubscribeFromSavedTopics()
-                            secureStorage.clearAll()
-
-                            val intent = Intent(appContext, MainActivity::class.java)
-                            intent.flags =
-                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            appContext.startActivity(intent)
-
-                            null
                         }
                     } catch (e: Exception) {
-                        Log.e(
-                            "Exception",
-                            "Erro durante a renovação do token: ${e.localizedMessage}"
-                        )
+                        Log.e("AuthInterceptor", "Erro ao renovar token: ${e.localizedMessage}")
                         null
                     }
                 }
             }
 
-            if (newTokens != null) {
+            if (newToken != null) {
                 val newRequest = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${newTokens.accessToken}")
+                    .addHeader("Authorization", "Bearer $newToken")
                     .build()
+
                 return chain.proceed(newRequest)
             }
         }
 
-
-        // Caso o código da resposta seja 403, você pode adicionar um log ou tratá-lo de outra forma
-        if (response.code == 403) {
-            Log.e("Response", "403 - Forbidden")
-        }
-
         return response
     }
-
 }
-

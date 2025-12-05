@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import javax.crypto.AEADBadTagException
 import androidx.core.content.edit
 
 class SecureStorage(private val context: Context) {
@@ -17,6 +16,7 @@ class SecureStorage(private val context: Context) {
         private const val KEY_ACCESS_TOKEN = "accessToken"
         private const val KEY_REFRESH_TOKEN = "refreshToken"
         private const val KEY_USER_UUID = "userUUID"
+        private const val KEY_USER_MAIL = "userMail"
 
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_ROLES = "roles"
@@ -26,7 +26,9 @@ class SecureStorage(private val context: Context) {
         private const val KEY_LAST_UPDATE_CHECK = "last_update_check"
         private const val KEY_LAST_TEAM_CHECK = "last_team_check"
 
-        private const val KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT = "key_auto_calculate_items_pre_measurement"
+        private const val KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT =
+            "key_auto_calculate_items_pre_measurement"
+        private const val SUBSCRIBED_TEAM_TOPIC = "subscribed-team-topic"
     }
 
     // Cache de instâncias
@@ -67,7 +69,8 @@ class SecureStorage(private val context: Context) {
             if (encryptedPrefs != null) {
                 // Atualiza cache em memória
                 val accessToken = encryptedPrefs.getString(KEY_ACCESS_TOKEN, lastKnownAccessToken)
-                val refreshToken = encryptedPrefs.getString(KEY_REFRESH_TOKEN, lastKnownRefreshToken)
+                val refreshToken =
+                    encryptedPrefs.getString(KEY_REFRESH_TOKEN, lastKnownRefreshToken)
 
                 lastKnownAccessToken = accessToken
                 lastKnownRefreshToken = refreshToken
@@ -183,13 +186,13 @@ class SecureStorage(private val context: Context) {
         getNormalPrefs().edit { putString(KEY_USER_UUID, uuid) }
     }
 
-    fun setUserName(name: String) {
+    fun setFullName(name: String) {
         getNormalPrefs().edit { putString(KEY_USER_NAME, name) }
     }
 
     fun getUserUuid(): String? = getNormalPrefs().getString(KEY_USER_UUID, null)
 
-    fun getUserName(): String? = getNormalPrefs().getString(KEY_USER_NAME, null)
+    fun getFullName(): String? = getNormalPrefs().getString(KEY_USER_NAME, null)
 
     fun saveRoles(roles: Set<String>) {
         getNormalPrefs().edit { putStringSet(KEY_ROLES, roles) }
@@ -243,4 +246,17 @@ class SecureStorage(private val context: Context) {
     fun toggleAutoCalculate(value: Boolean) {
         getNormalPrefs().edit { putBoolean(KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT, value) }
     }
+
+    fun saveEmail(email: String) {
+        getNormalPrefs().edit { putString(KEY_USER_MAIL, email) }
+    }
+
+    fun getEmail(): String? = getNormalPrefs().getString(KEY_USER_MAIL, null)
+
+    fun getTeamSubscribedTopic(): String? = getNormalPrefs().getString(SUBSCRIBED_TEAM_TOPIC, null)
+
+    fun setTeamSubscribedTopic(topic: String) {
+        getNormalPrefs().edit { putString(SUBSCRIBED_TEAM_TOPIC, topic) }
+    }
+
 }

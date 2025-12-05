@@ -14,7 +14,7 @@ interface ContractApi {
     @GET("api/mobile/contracts/get-reference-items")
     suspend fun getItems(): Response<List<Item>>
 
-    @GET("api/mobile/v1/contracts/get-contracts-balance")
+    @GET("api/mobile/v1/contracts/get-contracts-balance/{contractId}")
     suspend fun getContractItemBalance(@Path("contractId") contractId: Long): Response<List<ContractItemBalance>>
 
 }

@@ -1,6 +1,5 @@
 package com.lumos.worker
 
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -17,7 +16,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.lumos.MainActivity
 import com.lumos.MyApp
 import com.lumos.R
-import com.lumos.api.ApiService
 import com.lumos.api.ContractApi
 import com.lumos.api.DirectExecutionApi
 import com.lumos.api.NotificationType
@@ -25,11 +23,7 @@ import com.lumos.api.PreMeasurementApi
 import com.lumos.api.RequestResult
 import com.lumos.api.UpdateEntity
 import com.lumos.api.UserExperience
-import com.lumos.data.database.AppDatabase
-import com.lumos.data.database.QueueDao
-import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.domain.model.SyncQueueEntity
-import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
@@ -140,7 +134,8 @@ class SyncQueueWorker(
             db = db,
             api = retrofit,
             secureStorage = secureStorage,
-            app = app
+            app = app,
+            notificationManager = null
         )
 
         preMeasurementInstallationRepository = PreMeasurementInstallationRepository(db, retrofit, secureStorage, app)

@@ -1,18 +1,11 @@
 package com.lumos.notifications
 
-import android.content.Context
-import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
-import com.lumos.midleware.SecureStorage
 
-class NotificationManager(private val context: Context, private val secureStorage: SecureStorage) {
+class NotificationManager() {
 
-    fun subscribeToSavedTopics() {
-        Log.e("n", "No notification manager")
-        val roles = secureStorage.getRoles()
-        val teams = secureStorage.getTeams()
-
-        (roles + teams + "mobile_update").forEach { topic ->
+    fun subscribeInTopics(topics: Set<String>) {
+        (topics + "mobile_update").forEach { topic ->
             FirebaseMessaging.getInstance().subscribeToTopic(topic)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
@@ -24,11 +17,19 @@ class NotificationManager(private val context: Context, private val secureStorag
         }
     }
 
-    fun unsubscribeFromSavedTopics() {
-        val roles = secureStorage.getRoles()
-        val teams = secureStorage.getTeams()
+    fun unsubscribeFromAllTopics() {
+        // Invalida completamente
+        FirebaseMessaging.getInstance().deleteToken()
 
-        (roles + teams + "mobile_update").forEach { topic ->
+        // Recria novo token automaticamente
+        FirebaseMessaging.getInstance().token
+
+        println("🎯 Todas as inscrições foram apagadas (reset do token FCM).")
+    }
+
+
+    fun unsubscribeInTopics(topics: Set<String>) {
+        (topics).forEach { topic ->
             FirebaseMessaging.getInstance().unsubscribeFromTopic(topic)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {

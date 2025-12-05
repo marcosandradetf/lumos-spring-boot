@@ -81,11 +81,6 @@ fun Content(
     val errorMessage = viewModel.message
     val loading = viewModel.loading
 
-    LaunchedEffect(Unit) {
-        println("setStateForStreetScreen")
-        viewModel.setStateForStreetScreen()
-    }
-
     LaunchedEffect(currentItems) {
         if (currentItems.isNotEmpty()) navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS)
     }

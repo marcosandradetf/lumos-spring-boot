@@ -647,6 +647,7 @@ abstract class AppDatabase : RoomDatabase() {
                 // pre measurement
                 db.execSQL("delete from pre_measurement")
                 db.execSQL("alter table pre_measurement add column status text not null")
+                db.execSQL("alter table team add column notificationTopic text")
                 db.execSQL("alter table pre_measurement add column startedAt text not null")
 
                 // direct execution

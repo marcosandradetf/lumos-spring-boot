@@ -28,6 +28,6 @@ COPY --from=builder /app/target/*.jar /app/lumos-spring.jar
 EXPOSE 8080
 
 # JVM otimizada para containers leves
-#CMD ["java", "-XX:+UseG1GC", "-XX:InitialRAMPercentage=30.0", "-XX:MaxRAMPercentage=60.0", "-XX:+ExitOnOutOfMemoryError", "-XX:+AlwaysPreTouch", "--enable-preview", "-jar", "lumos-spring.jar"]
+CMD ["java", "-XX:+UseG1GC", "-XX:InitialRAMPercentage=30.0", "-XX:MaxRAMPercentage=60.0", "-XX:+ExitOnOutOfMemoryError", "-XX:+AlwaysPreTouch", "--enable-preview", "-jar", "lumos-spring.jar"]
 
-CMD ["java", "-jar", "lumos-spring.jar"]
+#CMD ["java", "-jar", "lumos-spring.jar"]

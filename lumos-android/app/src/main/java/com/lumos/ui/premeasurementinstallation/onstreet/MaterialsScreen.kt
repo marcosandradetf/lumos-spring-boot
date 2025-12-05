@@ -196,28 +196,36 @@ fun MaterialsContent(
             if (!hasPosted) {
                 viewModel.route = Routes.MORE
             } else {
-                navController.navigate(Routes.MORE)
+                navController.navigate(Routes.MORE) {
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                }
             }
         },
         navigateToHome = {
             if (!hasPosted) {
                 viewModel.route = Routes.HOME
             } else {
-                navController.navigate(Routes.HOME)
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                }
             }
         },
         navigateToStock = {
             if (!hasPosted) {
                 viewModel.route = Routes.STOCK
             } else {
-                navController.navigate(Routes.STOCK)
+                navController.navigate(Routes.STOCK) {
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                }
             }
         },
         navigateToMaintenance = {
             if (!hasPosted) {
                 viewModel.route = Routes.MAINTENANCE
             } else {
-                navController.navigate(Routes.MAINTENANCE)
+                navController.navigate(Routes.MAINTENANCE) {
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                }
             }
         },
         navigateBack = {
@@ -254,11 +262,28 @@ fun MaterialsContent(
                     ConfirmNavigation(
                         confirm = {
                             if (route == "back") {
-                                if (currentStreets.isEmpty()) navController.navigate(Routes.INSTALLATION_HOLDER)
-                                else navController.popBackStack()
+
+                                if (currentStreets.isEmpty()) {
+                                    navController.currentBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("route_event", Routes.INSTALLATION_HOLDER)
+
+                                    navController.navigate(Routes.INSTALLATION_HOLDER)
+                                } else {
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("route_event", Routes.INSTALLATION_HOLDER)
+
+                                    navController.popBackStack()
+                                }
                                 viewModel.route = null
                             } else {
-                                navController.navigate(route)
+                                navController.navigate(route) {
+                                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) {
+                                        inclusive = true
+                                    }
+                                }
+
                                 viewModel.route = null
                             }
                         },
@@ -416,7 +441,8 @@ fun MaterialsContent(
                             item {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.padding(20.dp)
+                                    modifier = Modifier
+                                        .padding(20.dp)
                                         .pointerInput(Unit) {
                                             detectTapGestures {
                                                 // Fechar o teclado ao tocar em qualquer lugar da tela
@@ -523,13 +549,18 @@ fun MaterialsContent(
                             item {
                                 UserAction(
                                     finish = {
-                                        if(currentStreet?.installationPhotoUri == null) viewModel.alertModal = true
+                                        if (currentStreet?.installationPhotoUri == null) viewModel.alertModal =
+                                            true
                                         else viewModel.submitStreet()
                                     },
                                     restart = {
                                         viewModel.setStreetAndItems(viewModel.currentStreetId ?: "")
                                     },
                                     cancel = {
+                                        navController.previousBackStackEntry
+                                            ?.savedStateHandle
+                                            ?.set("route_event", Routes.INSTALLATION_HOLDER)
+
                                         navController.popBackStack()
                                     }
                                 )
@@ -541,7 +572,7 @@ fun MaterialsContent(
                         Confirm(
                             title = "Você esqueceu da foto",
                             body = "Antes de finalizar tire uma foto do ponto finalizado.\nDeseja tirar a foto agora?",
-                            icon =  Icons.Rounded.PhotoCamera,
+                            icon = Icons.Rounded.PhotoCamera,
                             confirm = {
                                 viewModel.alertModal = false
                                 val newUri = createFile() // Gera um novo Uri
@@ -946,6 +977,7 @@ fun PrevMScreen() {
         viewModel = PreMeasurementInstallationViewModel(
             repository = null,
             contractRepository = null,
+            null,
             mockStreets = mockInstallationStreets,
             mockItems = emptyList(),
             mockCurrentStreet = PreMeasurementInstallationStreet(

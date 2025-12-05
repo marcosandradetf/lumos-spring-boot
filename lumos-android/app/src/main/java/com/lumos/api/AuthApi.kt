@@ -9,13 +9,13 @@ import retrofit2.http.POST
 
 interface AuthApi {
 
-    @POST("api/mobile/auth/login")
+    @POST("api/mobile/auth/v2/login")
     suspend fun login(
         @Header("Content-Type") contentType: String = "application/json",
         @Body request: LoginRequest
     ): Response<LoginResponse>
 
-    @POST("api/mobile/auth/refresh-token")
+    @POST("api/mobile/auth/v2/refresh-token")
     suspend fun refreshToken(
         @Header("Content-Type") contentType: String = "application/json",
         @Header("Authorization") refreshToken: String? // Token passado no header

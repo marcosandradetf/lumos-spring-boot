@@ -12,6 +12,7 @@ import com.lumos.domain.model.OperationalUser
 import com.lumos.domain.model.SendTeamEdit
 import com.lumos.domain.model.Team
 import com.lumos.midleware.SecureStorage
+import com.lumos.notifications.NotificationManager
 import com.lumos.worker.SyncManager
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
@@ -20,7 +21,8 @@ class TeamRepository(
     private val db: AppDatabase,
     api: Retrofit,
     private val secureStorage: SecureStorage,
-    private val app: Application
+    private val app: Application,
+    private val notificationManager: NotificationManager?
 ) {
     private val teamApi = api.create(TeamApi::class.java)
 
@@ -109,7 +111,7 @@ class TeamRepository(
 
     }
 
-    suspend fun setTeamAndQueue(teamId: Long, operationalUsers: Set<String>) {
+    suspend fun setTeamAndQueue(teamId: Long, operationalUsers: Set<String>, newTopic: String?) {
         try {
             val currentTeamId = secureStorage.getTeamId()
             secureStorage.saveOperationalUsers(operationalUsers)
@@ -117,6 +119,17 @@ class TeamRepository(
             queueUpdateTeam()
 
             if(currentTeamId != teamId) {
+                val currentTopic = secureStorage.getTeamSubscribedTopic()
+
+                if (currentTopic != null) {
+                    notificationManager?.unsubscribeInTopics(setOf(currentTopic))
+                }
+
+                if(newTopic != null) {
+                    secureStorage.setTeamSubscribedTopic(newTopic)
+                    notificationManager?.subscribeInTopics(setOf(newTopic))
+                }
+
                 secureStorage.setTeamId(teamId)
                 db.stockDao().deleteStock()
                 queueGetStock()
