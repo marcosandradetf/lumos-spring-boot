@@ -254,10 +254,12 @@ fun CheckTeamScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(10.dp))
-                        Button(onClick = {
-                            navController.popBackStack()
-                            viewModel.finished = false
-                        }) {
+                        Button(
+                            onClick = {
+                                navController.popBackStack()
+                                viewModel.finished = false
+                            }
+                        ) {
                             Text("Voltar a tela anterior")
                         }
                     }

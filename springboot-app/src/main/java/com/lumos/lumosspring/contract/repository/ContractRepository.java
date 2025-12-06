@@ -41,9 +41,10 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
 
     @Query(
         """
-            select contract_item_id, contracted_quantity - quantity_executed as current_balance
-            from contract_item
-            where contract_contract_id = :contractId
+            select ci.contract_item_id, ci.contracted_quantity - ci.quantity_executed as current_balance, coalesce(cri.name_for_import, cri.description) as item_name
+            from contract_item ci
+            join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+            where ci.contract_contract_id = :contractId
         """
     )
     List<ContractItemBalance> getContractItemBalance(long contractId);

@@ -114,13 +114,19 @@ fun HomeScreen(
         navigateToMore = onNavigateToMenu,
         navigateToNotifications = onNavigateToNotifications,
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK) {
+                popUpTo(Routes.HOME) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
+                popUpTo(Routes.HOME) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE) {
+                popUpTo(Routes.HOME) { inclusive = true }
+            }
         }
     ) { modifier, showSnackBar ->
 
@@ -230,7 +236,11 @@ fun HomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { navController.navigate(Routes.PROFILE) },
+                    .clickable {
+                        navController.navigate(Routes.PROFILE) {
+                            popUpTo(Routes.HOME) { inclusive = true }
+                        }
+                    },
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -351,7 +361,9 @@ fun HomeScreen(
 
             Button(
                 onClick = {
-                    navController.navigate(Routes.SYNC)
+                    navController.navigate(Routes.SYNC) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -430,7 +442,11 @@ fun MaintenanceStatusCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate(Routes.INSTALLATION_HOLDER) },
+            .clickable {
+                navController.navigate(Routes.INSTALLATION_HOLDER) {
+                    popUpTo(Routes.HOME) { inclusive = true }
+                }
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -491,7 +507,9 @@ fun PreMeasurementCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate(Routes.CONTRACT_SCREEN) },
+            .clickable {
+                navController.navigate(Routes.CONTRACT_SCREEN)
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.inverseSurface)
     ) {

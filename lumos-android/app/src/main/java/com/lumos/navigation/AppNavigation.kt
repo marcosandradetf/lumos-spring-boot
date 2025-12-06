@@ -86,6 +86,43 @@ enum class BottomBar(val value: Int) {
     MORE(4),
 }
 
+object Routes {
+    const val AUTH_FLOW = "auth-flow"
+    const val LOGIN = "login"
+    const val MAIN = "main"
+    const val HOME = "home"
+    const val NO_ACCESS = "no-access"
+    const val MORE = "more"
+    const val NOTIFICATIONS = "notifications"
+    const val PROFILE = "profile"
+    const val CONTRACT_SCREEN = "contract-screen"
+    const val PRE_MEASUREMENT_FLOW = "pre-measurement-flow"
+    const val PRE_MEASUREMENTS = "pre-measurements"
+    const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
+    const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
+
+    const val INSTALLATION_HOLDER = "installation-holder-screen"
+    const val MAINTENANCE = "maintenance"
+    const val STOCK = "stock"
+    const val ORDER = "order"
+
+    // -> pre-measurement-installations
+    const val PRE_MEASUREMENT_INSTALLATION_FLOW = "pre-measurement-installation-flow"
+    const val PRE_MEASUREMENT_INSTALLATION_STREETS = "pre-measurement-installation-streets"
+    const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
+
+    // -> direct-installations
+
+    const val DIRECT_EXECUTION_FLOW = "direct-execution-flow"
+    const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
+    const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
+    const val UPDATE = "update"
+    const val SYNC_FLOW = "sync-flow"
+    const val SYNC = "sync"
+
+    const val TEAM_SCREEN = "team-screen"
+}
+
 @Composable
 fun AppNavigation(
     app: MyApp,
@@ -127,59 +164,37 @@ fun AppNavigation(
         app = app
     )
 
+    val notificationRepository = NotificationRepository(
+        db = app.database,
+        app = app
+    )
+
+    val maintenanceRepository = MaintenanceRepository(
+        db = app.database,
+        api = app.retrofit,
+        app = app,
+        secureStorage = secureStorage
+    )
+
+    val stockRepository = StockRepository(
+        db = app.database,
+        api = app.retrofit,
+        secureStorage = secureStorage,
+        app = app
+    )
+
+    val teamRepository = TeamRepository(
+        db = app.database,
+        api = app.retrofit,
+        secureStorage = secureStorage,
+        app = app,
+        notificationManager = notificationManager
+    )
+
     val notificationViewModel: NotificationViewModel = viewModel {
-        val notificationRepository = NotificationRepository(
-            db = app.database,
-            app = app
-        )
+
         NotificationViewModel(
             repository = notificationRepository
-        )
-    }
-
-
-    val syncViewModel: SyncViewModel = viewModel {
-        SyncViewModel(
-            db = app.database
-        )
-    }
-
-    val stockViewModel: StockViewModel = viewModel {
-        val stockRepository = StockRepository(
-            db = app.database,
-            api = app.retrofit,
-            secureStorage = secureStorage,
-            app = app
-        )
-        StockViewModel(
-            repository = stockRepository
-        )
-    }
-
-    val maintenanceViewModel: MaintenanceViewModel = viewModel {
-        val maintenanceRepository = MaintenanceRepository(
-            db = app.database,
-            api = app.retrofit,
-            app = app,
-            secureStorage = secureStorage
-        )
-
-        MaintenanceViewModel(
-            repository = maintenanceRepository
-        )
-    }
-
-    val teamViewModel: TeamViewModel = viewModel {
-        val teamRepository = TeamRepository(
-            db = app.database,
-            api = app.retrofit,
-            secureStorage = secureStorage,
-            app = app,
-            notificationManager = notificationManager
-        )
-
-        TeamViewModel(
-            repository = teamRepository
         )
     }
 
@@ -298,17 +313,18 @@ fun AppNavigation(
 
         NavHost(
             navController = navController,
-            startDestination = if (loggedIn) Routes.HOME else Routes.AUTH
+            startDestination = if (loggedIn) Routes.HOME else Routes.AUTH_FLOW
         ) {
+
             navigation(
-                route = Routes.AUTH,
+                route = Routes.AUTH_FLOW,
                 startDestination = Routes.LOGIN
             ) {
 
                 composable(Routes.LOGIN) { backStackEntry ->
 
                     val parentEntry = remember(backStackEntry) {
-                        navController.getBackStackEntry(Routes.AUTH)
+                        navController.getBackStackEntry(Routes.AUTH_FLOW)
                     }
 
                     val vm: AuthViewModel = viewModel(parentEntry) {
@@ -325,30 +341,32 @@ fun AppNavigation(
                 composable(Routes.PROFILE) { backStackEntry ->
 
                     val parentEntry = remember(backStackEntry) {
-                        navController.getBackStackEntry(Routes.AUTH)
+                        navController.getBackStackEntry(Routes.AUTH_FLOW)
                     }
 
-                    val vm: AuthViewModel = viewModel(parentEntry)
+                    val vm: AuthViewModel = viewModel(parentEntry) {
+                        AuthViewModel(authRepository, parentEntry.savedStateHandle)
+                    }
 
                     ProfileScreen(
                         authViewModel = vm,
                         navController = navController,
                         context = LocalContext.current,
-                        notificationsBadge = notifications.size.toString(),
+                        notificationsBadge = "",
 
                         onNavigateToHome = {
                             navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.AUTH) { inclusive = true }
+                                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
                             }
                         },
                         onNavigateToMenu = {
                             navController.navigate(Routes.MORE) {
-                                popUpTo(Routes.AUTH) { inclusive = true }
+                                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
                             }
                         },
                         onNavigateToNotifications = {
                             navController.navigate(Routes.NOTIFICATIONS) {
-                                popUpTo(Routes.AUTH) { inclusive = true }
+                                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
                             }
                         },
                         onLogoutSuccess = {}
@@ -365,17 +383,17 @@ fun AppNavigation(
                 // pre-measurement
                 composable(Routes.CONTRACT_SCREEN) { backStackEntry ->
                     val parentEntry = remember(backStackEntry) {
-                        navController.getBackStackEntry(Routes.AUTH)
+                        navController.getBackStackEntry(Routes.PRE_MEASUREMENT_FLOW)
                     }
 
-                    val cvm: ContractViewModel = viewModel {
+                    val cvm: ContractViewModel = viewModel(parentEntry) {
                         ContractViewModel(
                             repository = contractRepository,
                             parentEntry.savedStateHandle
                         )
                     }
 
-                    val pvm: PreMeasurementViewModel = viewModel {
+                    val pvm: PreMeasurementViewModel = viewModel(parentEntry) {
                         PreMeasurementViewModel(
                             preMeasurementRepository,
                             parentEntry.savedStateHandle
@@ -385,15 +403,19 @@ fun AppNavigation(
 
                     ContractsScreen(
                         onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                            }
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
+                            navController.navigate(Routes.MORE) {
+                                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                            }
                         },
                         context = LocalContext.current,
                         contractViewModel = cvm,
                         navController = navController,
-                        notificationsBadge = notifications.size.toString(),
+                        notificationsBadge = "",
                         roles = secureStorage.getRoles(),
                         pvm
                     )
@@ -404,8 +426,19 @@ fun AppNavigation(
                         navController.getBackStackEntry(Routes.PRE_MEASUREMENT_FLOW)
                     }
 
-                    val cvm: ContractViewModel = viewModel(parentEntry)
-                    val pvm: PreMeasurementViewModel = viewModel(parentEntry)
+                    val cvm: ContractViewModel = viewModel(parentEntry) {
+                        ContractViewModel(
+                            repository = contractRepository,
+                            parentEntry.savedStateHandle
+                        )
+                    }
+
+                    val pvm: PreMeasurementViewModel = viewModel(parentEntry) {
+                        PreMeasurementViewModel(
+                            preMeasurementRepository,
+                            parentEntry.savedStateHandle
+                        )
+                    }
 
                     PreMeasurementStreetScreen(
                         context = LocalContext.current,
@@ -419,14 +452,24 @@ fun AppNavigation(
                     val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(Routes.PRE_MEASUREMENT_FLOW)
                     }
-                    val pvm: PreMeasurementViewModel = viewModel(parentEntry)
+
+                    val pvm: PreMeasurementViewModel = viewModel(parentEntry) {
+                        PreMeasurementViewModel(
+                            preMeasurementRepository,
+                            parentEntry.savedStateHandle
+                        )
+                    }
 
                     PreMeasurementProgressScreen(
                         onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
+                            }
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
+                            navController.navigate(Routes.MORE) {
+                                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                            }
                         },
                         onNavigateToPreMeasurements = {
                             navController.navigate(Routes.PRE_MEASUREMENTS)
@@ -442,14 +485,23 @@ fun AppNavigation(
                         navController.getBackStackEntry(Routes.PRE_MEASUREMENT_FLOW)
                     }
 
-                    val pvm: PreMeasurementViewModel = viewModel(parentEntry)
+                    val pvm: PreMeasurementViewModel = viewModel(parentEntry) {
+                        PreMeasurementViewModel(
+                            preMeasurementRepository,
+                            parentEntry.savedStateHandle
+                        )
+                    }
 
                     PreMeasurementScreen(
                         onNavigateToHome = {
-                            navController.navigate(Routes.HOME)
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                            }
                         },
                         onNavigateToMenu = {
-                            navController.navigate(Routes.MORE)
+                            navController.navigate(Routes.MORE) {
+                                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                            }
                         },
                         preMeasurementViewModel = pvm,
                         navController = navController,
@@ -475,7 +527,6 @@ fun AppNavigation(
                 route = Routes.PRE_MEASUREMENT_INSTALLATION_FLOW,
                 startDestination = Routes.PRE_MEASUREMENT_INSTALLATION_STREETS
             ) {
-
                 composable(
                     route = "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/{id}/{contractor}/{contractId}/{instructions}",
                     arguments = listOf(
@@ -489,7 +540,9 @@ fun AppNavigation(
                         navController.getBackStackEntry(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW)
                     }
 
-                    val vm: PreMeasurementInstallationViewModel = viewModel {
+                    val vm: PreMeasurementInstallationViewModel = viewModel(
+                        parentEntry
+                    ) {
                         PreMeasurementInstallationViewModel(
                             repository = preMeasurementInstallationRepository,
                             contractRepository = contractRepository,
@@ -508,7 +561,15 @@ fun AppNavigation(
                         navController.getBackStackEntry(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW)
                     }
 
-                    val vm: PreMeasurementInstallationViewModel = viewModel(parentEntry)
+                    val vm: PreMeasurementInstallationViewModel = viewModel(
+                        parentEntry
+                    ) {
+                        PreMeasurementInstallationViewModel(
+                            repository = preMeasurementInstallationRepository,
+                            contractRepository = contractRepository,
+                            savedStateHandle = parentEntry.savedStateHandle
+                        )
+                    }
 
                     MaterialScreen(
                         viewModel = vm,
@@ -516,14 +577,57 @@ fun AppNavigation(
                         navController = navController,
                     )
                 }
-
             }
 
-            navigation() {
-                val directExecutionViewModel: DirectExecutionViewModel = viewModel {
-                    DirectExecutionViewModel(
-                        repository = directExecutionRepository,
-                        contractRepository = contractRepository,
+            navigation(
+                route = Routes.DIRECT_EXECUTION_FLOW,
+                startDestination = Routes.DIRECT_EXECUTION_HOME_SCREEN
+            ) {
+                composable(
+                    route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{contractId}/{creationDate}/{instructions}",
+                    arguments = listOf(
+                        navArgument("id") { type = NavType.StringType },
+                        navArgument("contractor") { type = NavType.StringType },
+                        navArgument("contractId") { type = NavType.LongType },
+                        navArgument("creationDate") { type = NavType.StringType },
+                        navArgument("instructions") { type = NavType.StringType },
+                    )
+                ) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                    }
+
+                    val vm: DirectExecutionViewModel = viewModel(parentEntry) {
+                        DirectExecutionViewModel(
+                            repository = directExecutionRepository,
+                            contractRepository = contractRepository,
+                            parentEntry.savedStateHandle
+                        )
+                    }
+
+                    DirectExecutionHomeScreen(
+                        viewModel = vm,
+                        navController = navController
+                    )
+                }
+
+                composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                    }
+
+                    val vm: DirectExecutionViewModel = viewModel(parentEntry) {
+                        DirectExecutionViewModel(
+                            repository = directExecutionRepository,
+                            contractRepository = contractRepository,
+                            parentEntry.savedStateHandle
+                        )
+                    }
+
+                    StreetMaterialScreen(
+                        directExecutionViewModel = vm,
+                        context = LocalContext.current,
+                        navController = navController,
                     )
                 }
 
@@ -536,9 +640,9 @@ fun AppNavigation(
                 )
             }
 
-            composable(Routes.HOME) {
+            composable(Routes.HOME) { backStackEntry ->
 
-                val vm: HomeViewModel = viewModel {
+                val vm: HomeViewModel = viewModel(backStackEntry) {
                     HomeViewModel(
                         repository = contractRepository,
                         directExecutionRepository = directExecutionRepository,
@@ -550,13 +654,11 @@ fun AppNavigation(
                 HomeScreen(
                     onNavigateToMenu = {
                         navController.navigate(Routes.MORE) {
-                            popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+                            popUpTo(Routes.HOME) { inclusive = true }
                         }
                     },
                     onNavigateToNotifications = {
-                        navController.navigate(Routes.NOTIFICATIONS) {
-                            popUpTo(Routes.HOME) { inclusive = true }
-                        }
+                        navController.navigate(Routes.NOTIFICATIONS)
                     },
                     navController = navController,
                     notificationsBadge = notifications.size.toString(),
@@ -574,11 +676,11 @@ fun AppNavigation(
                 NoAccessScreen(
                     onNavigateToMenu = {
                         navController.navigate(Routes.MORE) {
-                            popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+                            popUpTo(Routes.NO_ACCESS) { inclusive = true }
                         }
                     },
                     navController = navController,
-                    notificationsBadge = notifications.size.toString(),
+                    notificationsBadge = "",
                     selectedIcon = icon,
                     title = title,
                 )
@@ -605,35 +707,9 @@ fun AppNavigation(
                     navController = navController,
                     context = LocalContext.current,
                     notificationViewModel = notificationViewModel,
-
-                    )
-            }
-
-
-            // Direct Execution
-            composable(
-                route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{contractId}/{creationDate}/{instructions}",
-                arguments = listOf(
-                    navArgument("id") { type = NavType.StringType },
-                    navArgument("contractor") { type = NavType.StringType },
-                    navArgument("contractId") { type = NavType.LongType },
-                    navArgument("creationDate") { type = NavType.StringType },
-                    navArgument("instructions") { type = NavType.StringType },
-                )
-            ) {
-                DirectExecutionHomeScreen(
-                    viewModel = directExecutionViewModel,
-                    navController = navController
                 )
             }
 
-            composable(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS) {
-                StreetMaterialScreen(
-                    directExecutionViewModel = directExecutionViewModel,
-                    context = LocalContext.current,
-                    navController = navController,
-                )
-            }
 
             composable(Routes.UPDATE + "/{apk}") { backStackEntry ->
                 val encodedUrl = backStackEntry.arguments?.getString("apk") ?: ""
@@ -642,33 +718,59 @@ fun AppNavigation(
                     apkUrl = apkUrl,
                     context = LocalContext.current,
                     navController,
-                    notifications.size.toString()
+                    "",
                 )
             }
 
-            composable(Routes.SYNC) {
-                SyncScreen(
-                    context = LocalContext.current,
-                    navController,
-                    notifications.size.toString(),
-                    syncViewModel,
-                )
-            }
 
-            composable(Routes.SYNC + "/{type}?lastRoute={lastRoute}") { backStackEntry ->
-                val type = backStackEntry.arguments?.getString("type") ?: ""
-                val lastRoute =
-                    backStackEntry.arguments?.getString("lastRoute")
+            navigation(
+                route = Routes.SYNC_FLOW,
+                startDestination = Routes.SYNC
+            ) {
+                composable(Routes.SYNC) { backStackEntry ->
 
-                SyncDetailsScreen(
-                    applicationContext = app.applicationContext,
-                    context = LocalContext.current,
-                    navController,
-                    notifications.size.toString(),
-                    syncViewModel,
-                    type,
-                    lastRoute = lastRoute
-                )
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.SYNC_FLOW)
+                    }
+
+                    val vm: SyncViewModel = viewModel(backStackEntry) {
+                        SyncViewModel(
+                            db = app.database,
+                            parentEntry.savedStateHandle
+                        )
+                    }
+
+                    SyncScreen(
+                        navController,
+                        vm,
+                    )
+                }
+
+                composable(Routes.SYNC + "/{type}?lastRoute={lastRoute}") { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.SYNC_FLOW)
+                    }
+                    val type = backStackEntry.arguments?.getString("type") ?: ""
+                    val lastRoute =
+                        backStackEntry.arguments?.getString("lastRoute")
+
+                    val vm: SyncViewModel = viewModel(backStackEntry) {
+                        SyncViewModel(
+                            db = app.database,
+                            parentEntry.savedStateHandle
+                        )
+                    }
+
+                    SyncDetailsScreen(
+                        applicationContext = app.applicationContext,
+                        context = LocalContext.current,
+                        navController,
+                        "",
+                        vm,
+                        type,
+                        lastRoute = lastRoute
+                    )
+                }
             }
 
             // MAINTENANCE
@@ -676,6 +778,12 @@ fun AppNavigation(
             composable(Routes.STOCK + "?lastRoute={lastRoute}") { backStackEntry ->
                 val lastRoute =
                     backStackEntry.arguments?.getString("lastRoute")
+
+                val stockViewModel: StockViewModel = viewModel(backStackEntry) {
+                    StockViewModel(
+                        repository = stockRepository
+                    )
+                }
 
                 CheckStockScreen(
                     navController = navController,
@@ -691,10 +799,16 @@ fun AppNavigation(
                 val maintenanceId =
                     backStackEntry.arguments?.getString("maintenanceId")
 
+                val maintenanceViewModel: MaintenanceViewModel = viewModel(backStackEntry) {
+                    MaintenanceViewModel(
+                        repository = maintenanceRepository,
+                        contractRepository = contractRepository,
+                        stockRepository = stockRepository,
+                    )
+                }
+
                 MaintenanceScreen(
                     maintenanceViewModel = maintenanceViewModel,
-                    contractViewModel = contractViewModel,
-                    stockViewModel = stockViewModel,
                     navController = navController,
                     lastRoute = lastRoute,
                     secureStorage = secureStorage
@@ -704,6 +818,12 @@ fun AppNavigation(
             composable(Routes.TEAM_SCREEN + "/{currentScreen}") { backStackEntry ->
                 val currentScreen =
                     backStackEntry.arguments?.getString("currentScreen")?.toInt()
+
+                val teamViewModel: TeamViewModel = viewModel(backStackEntry) {
+                    TeamViewModel(
+                        repository = teamRepository
+                    )
+                }
 
                 CheckTeamScreen(
                     viewModel = teamViewModel,
@@ -717,40 +837,4 @@ fun AppNavigation(
         }
     }
 
-}
-
-
-object Routes {
-    const val AUTH = "auth"
-    const val LOGIN = "login"
-    const val MAIN = "main"
-    const val HOME = "home"
-    const val NO_ACCESS = "no-access"
-    const val MORE = "more"
-    const val NOTIFICATIONS = "notifications"
-    const val PROFILE = "profile"
-    const val CONTRACT_SCREEN = "contract-screen"
-    const val PRE_MEASUREMENT_FLOW = "pre-measurement-flow"
-    const val PRE_MEASUREMENTS = "pre-measurements"
-    const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
-    const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
-
-    const val INSTALLATION_HOLDER = "installation-holder-screen"
-    const val MAINTENANCE = "maintenance"
-    const val STOCK = "stock"
-    const val ORDER = "order"
-
-    // -> pre-measurement-installations
-    const val PRE_MEASUREMENT_INSTALLATION_FLOW = "pre-measurement-installation-flow"
-    const val PRE_MEASUREMENT_INSTALLATION_STREETS = "pre-measurement-installation-streets"
-    const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
-
-    // -> direct-installations
-
-    const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
-    const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
-    const val UPDATE = "update"
-    const val SYNC = "sync"
-
-    const val TEAM_SCREEN = "team-screen"
 }

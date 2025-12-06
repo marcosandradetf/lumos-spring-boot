@@ -155,7 +155,8 @@ fun StreetMaterialScreen(
                             longitude = long
                         )
                 } else {
-                    directExecutionViewModel.errorMessage = "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
+                    directExecutionViewModel.errorMessage =
+                        "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
                 }
             }
             directExecutionViewModel.loadingCoordinates = false
@@ -174,16 +175,24 @@ fun StreetMaterialScreen(
                 navController.popBackStack()
             },
             navigateToHome = {
-                navController.navigate(Routes.HOME)
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             },
             navigateToMore = {
-                navController.navigate(Routes.MORE)
+                navController.navigate(Routes.MORE) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             },
             navigateToStock = {
-                navController.navigate(Routes.STOCK)
+                navController.navigate(Routes.STOCK) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             },
             navigateToExecutions = {
-                navController.navigate(Routes.INSTALLATION_HOLDER)
+                navController.navigate(Routes.INSTALLATION_HOLDER) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             }
         ) { _, _ ->
             Column(
@@ -290,7 +299,7 @@ fun StreetMaterialScreen(
                         directExecutionViewModel.reserves
                             .groupBy { it.contractItemId }
                             .mapValues { (_, items) ->
-                                if(items.first().currentBalance != null) {
+                                if (items.first().currentBalance != null) {
                                     BigDecimal(items.first().currentBalance)
                                 } else null
                             }
@@ -334,7 +343,8 @@ fun StreetMaterialScreen(
                                 exec > (balanceByContractId[id] ?: BigDecimal.ZERO)
                             }.keys.firstOrNull()
 
-                        val itemName = directExecutionViewModel.reserves.find { it.contractItemId == itemId }?.itemName
+                        val itemName =
+                            directExecutionViewModel.reserves.find { it.contractItemId == itemId }?.itemName
 
                         message["title"] = "Saldo atual: ${balanceByContractId[itemId]}"
                         message["body"] =
@@ -363,7 +373,9 @@ fun StreetMaterialScreen(
                 } else if (action == "CLOSE") {
                     directExecutionViewModel.confirmModal = false
                 } else {
-                    navController.navigate(action)
+                    navController.navigate(action) {
+                        popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                    }
                 }
             },
             openConfirmModal = directExecutionViewModel.confirmModal,
@@ -1025,23 +1037,23 @@ fun PrevMStreetScreen() {
         )
     )
 
-    StreetMaterialScreen(
-        directExecutionViewModel = DirectExecutionViewModel(
-            null, null,
-            mockItems = mockItems,
-            mockStreetItems = listOf(
-                DirectExecutionStreetItem(
-                    directStreetItemId = 1,
-                    reserveId = 1,
-                    materialStockId = 10,
-                    materialName = "",
-                    contractItemId = -1,
-                    directStreetId = 1,
-                    quantityExecuted = "12"
-                )
-            )
-        ),
-        context = LocalContext.current,
-        navController = rememberNavController()
-    )
+//    StreetMaterialScreen(
+//        directExecutionViewModel = DirectExecutionViewModel(
+//            null, null,
+//            mockItems = mockItems,
+//            mockStreetItems = listOf(
+//                DirectExecutionStreetItem(
+//                    directStreetItemId = 1,
+//                    reserveId = 1,
+//                    materialStockId = 10,
+//                    materialName = "",
+//                    contractItemId = -1,
+//                    directStreetId = 1,
+//                    quantityExecuted = "12"
+//                )
+//            )
+//        ),
+//        context = LocalContext.current,
+//        navController = rememberNavController()
+//    )
 }

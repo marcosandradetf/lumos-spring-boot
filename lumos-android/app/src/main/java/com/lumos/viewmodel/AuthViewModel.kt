@@ -28,7 +28,6 @@ class AuthViewModel(
             val response = withContext(Dispatchers.IO) {
                 authRepository.login(
                     username,
-                    username,
                     password,
                 )
             }

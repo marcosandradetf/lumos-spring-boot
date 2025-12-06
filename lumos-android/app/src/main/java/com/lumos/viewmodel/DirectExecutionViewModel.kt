@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
@@ -27,6 +28,7 @@ import java.util.UUID
 class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository?,
     private val contractRepository: ContractRepository?,
+    private val savedStateHandle: SavedStateHandle,
     mockContractor: String? = null,
     mockCreationDate: String? = null,
     mockStreets: List<DirectExecutionStreet> = emptyList(),

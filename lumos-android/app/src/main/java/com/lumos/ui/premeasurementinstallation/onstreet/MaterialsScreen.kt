@@ -60,6 +60,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -115,6 +116,10 @@ fun MaterialScreen(
     context: Context,
     navController: NavHostController,
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.loading = false
+    }
+
     if (viewModel.showSignScreen) {
         SignatureScreenLandscape(
             description = Utils.abbreviate(viewModel.contractor ?: "PREFEITURA DE BELO HORIZONTE"),
@@ -197,7 +202,7 @@ fun MaterialsContent(
                 viewModel.route = Routes.MORE
             } else {
                 navController.navigate(Routes.MORE) {
-                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
                 }
             }
         },
@@ -206,7 +211,7 @@ fun MaterialsContent(
                 viewModel.route = Routes.HOME
             } else {
                 navController.navigate(Routes.HOME) {
-                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
                 }
             }
         },
@@ -215,7 +220,7 @@ fun MaterialsContent(
                 viewModel.route = Routes.STOCK
             } else {
                 navController.navigate(Routes.STOCK) {
-                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
                 }
             }
         },
@@ -224,7 +229,7 @@ fun MaterialsContent(
                 viewModel.route = Routes.MAINTENANCE
             } else {
                 navController.navigate(Routes.MAINTENANCE) {
-                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) { inclusive = true }
+                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
                 }
             }
         },
@@ -268,20 +273,20 @@ fun MaterialsContent(
                                         ?.savedStateHandle
                                         ?.set("route_event", Routes.INSTALLATION_HOLDER)
 
-                                    navController.navigate(Routes.INSTALLATION_HOLDER)
+                                    navController.navigate(Routes.INSTALLATION_HOLDER){
+                                        popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+                                    }
                                 } else {
-                                    navController.previousBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set("route_event", Routes.INSTALLATION_HOLDER)
+                                    viewModel.loading = true
+                                    navController.getBackStackEntry(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW)
+                                        .savedStateHandle["route_event"] = Routes.PRE_MEASUREMENT_INSTALLATION_STREETS
 
                                     navController.popBackStack()
                                 }
                                 viewModel.route = null
                             } else {
                                 navController.navigate(route) {
-                                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS) {
-                                        inclusive = true
-                                    }
+                                    popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
                                 }
 
                                 viewModel.route = null

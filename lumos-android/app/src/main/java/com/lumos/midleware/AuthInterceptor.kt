@@ -52,13 +52,11 @@ class AuthInterceptor(
                         return@withLock updatedToken
                     }
 
-                    val refresh = secureStorage.getRefreshToken()
-                    val body = """{"refreshToken":"$refresh"}"""
-                        .toRequestBody("application/json".toMediaType())
-
+                    val refreshToken = secureStorage.getRefreshToken()
                     val refreshRequest = Request.Builder()
-                        .url(BASE_URL + "api/mobile/auth/v2/refresh-token")
-                        .post(body)
+                        .url("$BASE_URL/api/mobile/auth/v2/refresh-token")
+                        .header("Authorization", refreshToken.toString())
+                        .post("".toRequestBody(null)) // caso precise ser POST
                         .build()
 
                     return@withLock try {

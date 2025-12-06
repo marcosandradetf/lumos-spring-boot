@@ -44,20 +44,30 @@ fun NoAccessScreen(
         selectedIcon = selectedIcon,
         notificationsBadge = notificationsBadge,
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME){
+                popUpTo(Routes.NO_ACCESS) { inclusive = true }
+            }
         },
         navigateToMore = onNavigateToMenu,
         navigateBack = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME){
+                popUpTo(Routes.NO_ACCESS) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.NO_ACCESS) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE){
+                popUpTo(Routes.NO_ACCESS) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK){
+                popUpTo(Routes.NO_ACCESS) { inclusive = true }
+            }
         }
     ) { modifier, snackBar ->
         Column(
@@ -116,7 +126,9 @@ fun NoAccessScreen(
 
             Button(
                 onClick = {
-                    navController.navigate(Routes.HOME)
+                    navController.navigate(Routes.HOME){
+                        popUpTo(Routes.NO_ACCESS) { inclusive = true }
+                    }
                 },
                 shape = RoundedCornerShape(12.dp)
             ) {

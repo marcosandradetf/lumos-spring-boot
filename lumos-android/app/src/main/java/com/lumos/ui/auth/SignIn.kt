@@ -22,6 +22,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -118,7 +119,7 @@ fun LoginScreen(
         label = ""
     )
 
-    if(message != null) {
+    if (message != null) {
         Toast.makeText(
             context,
             message,
@@ -200,6 +201,7 @@ fun LoginScreen(
                                     "Quem está acessando hoje?",
                                     style = MaterialTheme.typography.titleMedium,
                                     modifier = Modifier.padding(bottom = 20.dp),
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
 
                                 OutlinedTextField(
@@ -215,7 +217,9 @@ fun LoginScreen(
 
                                 Button(
                                     onClick = { if (username.isNotEmpty()) step = 2 },
-                                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
                                 ) { Text("Avançar") }
                             }
                         }
@@ -223,26 +227,26 @@ fun LoginScreen(
                         2 -> {
                             Column {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        step = 1
+                                    }
                                 ) {
                                     Icon(
                                         Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.padding(end = 5.dp)
+                                            .size(18.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
-
-                                    TextButton(
-                                        onClick = { step = 1 },
-                                    ) {
-                                        Text("Trocar usuário")
-                                    }
+                                    Text("Trocar usuário", color = MaterialTheme.colorScheme.primary)
                                 }
 
                                 Text(
                                     "Agora falta só sua senha",
                                     style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(bottom = 20.dp)
+                                    modifier = Modifier.padding(bottom = 20.dp),
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
 
                                 OutlinedTextField(
@@ -254,7 +258,9 @@ fun LoginScreen(
                                         if (passwordVisible) VisualTransformation.None
                                         else PasswordVisualTransformation(),
                                     trailingIcon = {
-                                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                        IconButton(onClick = {
+                                            passwordVisible = !passwordVisible
+                                        }) {
                                             Icon(
                                                 imageVector =
                                                     if (passwordVisible)
@@ -276,7 +282,9 @@ fun LoginScreen(
                                             scope.launch { viewModel.login(username, password) }
                                         }
                                     },
-                                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
                                 ) { Text("Entrar") }
                             }
                         }

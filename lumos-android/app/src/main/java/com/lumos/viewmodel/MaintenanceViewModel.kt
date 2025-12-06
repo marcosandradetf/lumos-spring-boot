@@ -2,12 +2,17 @@ package com.lumos.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lumos.api.RequestResult
+import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Maintenance
 import com.lumos.domain.model.MaintenanceJoin
 import com.lumos.domain.model.MaintenanceStreet
 import com.lumos.domain.model.MaintenanceStreetItem
+import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.service.CoordinatesService
+import com.lumos.repository.ContractRepository
 import com.lumos.repository.MaintenanceRepository
+import com.lumos.repository.StockRepository
 import com.lumos.ui.maintenance.MaintenanceUIState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -16,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,18 +36,26 @@ data class MaintenanceUiState(
     val message: String? = null,
     val maintenances: List<MaintenanceJoin> = emptyList(),
     val maintenanceStreets: List<MaintenanceStreet> = emptyList(),
-    val screenState: MaintenanceUIState? = null
+    val screenState: MaintenanceUIState? = null,
+    val hasInternet: Boolean = true
 )
 
 class MaintenanceViewModel(
-    private val repository: MaintenanceRepository
+    private val repository: MaintenanceRepository,
+    private val contractRepository: ContractRepository,
+    private val stockRepository: StockRepository
 ) : ViewModel() {
-
+    private val _contracts = MutableStateFlow<List<Contract>>(emptyList()) // estado da lista
+    val contracts: StateFlow<List<Contract>> = _contracts // estado acessível externamente
+    private val _stock = MutableStateFlow<List<MaterialStock>>(emptyList())
+    val stock = _stock
     private val _uiState = MutableStateFlow(MaintenanceUiState(loading = true))
 
     var uiState: StateFlow<MaintenanceUiState> = _uiState.asStateFlow()
 
     init {
+        loadFlowContractsForMaintenance()
+        loadStockFlow()
         loadMaintenances("IN_PROGRESS")
         loadMaintenanceStreets()
     }
@@ -50,7 +64,8 @@ class MaintenanceViewModel(
         _uiState.update { it.copy(loading = isLoading) }
     }
 
-    fun setScreenState(state: MaintenanceUIState) = _uiState.update { it.copy(screenState = state) }
+    fun setScreenState(state: MaintenanceUIState) =
+        _uiState.update { it.copy(screenState = state) }
 
     fun setMessage(message: String?) {
         viewModelScope.launch {
@@ -58,10 +73,9 @@ class MaintenanceViewModel(
 
             delay(5000)
 
-            _uiState.update { it.copy(message = null) }
+            _uiState.update { it.copy() }
         }
     }
-
 
     private fun setMaintenances(list: List<MaintenanceJoin>) {
         _uiState.update { it.copy(maintenances = list) }
@@ -194,13 +208,63 @@ class MaintenanceViewModel(
 
     fun resetFormState() {
         _uiState.update {
-            it.copy(
-                maintenanceId = null,
-                message = null,
-                finish = false,
-                streetCreated = false,
-                contractSelected = false
-            )
+            it.copy()
+        }
+    }
+
+    suspend fun syncContracts() {
+        withContext(Dispatchers.IO) {
+            _uiState.update { it.copy(loading = true, message = null, hasInternet = true) }
+            try {
+                when (val response = contractRepository.syncContracts()) {
+                    is RequestResult.Timeout -> {
+                        val msg =
+                            "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
+                        _uiState.update { it.copy(message = msg) }
+                    }
+
+                    is RequestResult.NoInternet -> {
+                        val msg =
+                            "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
+                        _uiState.update { it.copy(message = msg, hasInternet = false) }
+                    }
+
+                    is RequestResult.ServerError -> _uiState.update { it.copy(message = response.message) }
+                    is RequestResult.SuccessEmptyBody -> null
+                    is RequestResult.Success -> null
+                    is RequestResult.UnknownError -> null
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(message = e.message) }
+            } finally {
+                _uiState.update { it.copy() }
+            }
+        }
+    }
+
+    fun loadFlowContractsForMaintenance() {
+        viewModelScope.launch {
+            try {
+                contractRepository.getFlowContractsForMaintenance()
+                    .flowOn(Dispatchers.IO)
+                    .collectLatest { fetched ->
+                        _contracts.value = fetched
+                    }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(message = e.message) }
+            }
+        }
+    }
+
+    fun loadStockFlow() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                stockRepository.getMaterialsFlow().collectLatest {
+                    _stock.value = it
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(message = e.message) }
+            }
         }
     }
 

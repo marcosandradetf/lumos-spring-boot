@@ -94,7 +94,9 @@ fun InstallationHolderScreen(
         val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
 
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.EXECUTIONS.value}/Instalações")
+            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.EXECUTIONS.value}/Instalações") {
+                popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
+            }
         }
 
         if (isStaleCheckTeam)
@@ -152,13 +154,25 @@ fun ContentCitiesScreen(
     AppLayout(
         title = "Instalações disponíveis",
         selectedIcon = BottomBar.EXECUTIONS.value,
-        navigateToMore = { navController.navigate(Routes.MORE) },
-        navigateToHome = { navController.navigate(Routes.HOME) },
+        navigateToMore = {
+            navController.navigate(Routes.MORE) {
+                popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
+            }
+        },
+        navigateToHome = {
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
+            }
+        },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE) {
+                popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK) {
+                popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
+            }
         }
     ) { _, _ ->
 
@@ -168,7 +182,9 @@ fun ContentCitiesScreen(
                 body = "Você precisa carregar os dados do estoque para criar uma nova instalação. Deseja fazer isso agora?",
                 confirm = {
                     showModal = false
-                    navController.navigate(Routes.STOCK)
+                    navController.navigate(Routes.STOCK){
+                        popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
+                    }
                 },
                 cancel = { showModal = false }
             )

@@ -1,6 +1,5 @@
 package com.lumos.ui.sync
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,9 +40,7 @@ import com.lumos.worker.SyncTypes
 
 @Composable
 fun SyncScreen(
-    context: Context,
     navController: NavHostController,
-    currentNotifications: String,
     syncViewModel: SyncViewModel
 ) {
     val syncItems by syncViewModel.syncItemsTypes.collectAsState()
@@ -58,7 +55,6 @@ fun SyncScreen(
         syncItems,
         loading,
         error,
-        currentNotifications,
         navController
     )
 
@@ -69,14 +65,12 @@ fun SyncScreenContent(
     syncItems: List<String>,
     loading: Boolean,
     error: String,
-    currentNotifications: String,
     navController: NavHostController
 ) {
 
     AppLayout(
         title = "Fila de sincronização",
         selectedIcon = BottomBar.MORE.value,
-        notificationsBadge = currentNotifications,
         navigateToMore = { navController.navigate(Routes.MORE) },
         navigateToHome = { navController.navigate(Routes.HOME) },
         navigateBack = { navController.navigate(Routes.PROFILE) },
@@ -192,7 +186,6 @@ fun PrevSyncScreen() {
         syncItems = listOf(SyncTypes.POST_DIRECT_EXECUTION),
         loading = false,
         error = "",
-        currentNotifications = "10",
         navController = rememberNavController()
     )
 }

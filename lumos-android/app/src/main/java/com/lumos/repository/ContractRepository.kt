@@ -101,10 +101,13 @@ class ContractRepository(
 
     suspend fun getContractItemBalance(contractId: Long): RequestResult<Unit>  {
         val response = ApiExecutor.execute { api.getContractItemBalance(contractId) }
+        println("getContractItemBalance")
 
         return when (response) {
             is RequestResult.Success -> {
+                println(response)
                 db.contractDao().insertContractItemBalance(response.data) // lista direta
+                println("getContractItemBalance - success")
                 RequestResult.Success(Unit)
             }
             is SuccessEmptyBody -> {
@@ -124,6 +127,7 @@ class ContractRepository(
     }
 
     suspend fun checkBalance(): Boolean {
+        println("checkBalance")
         val count = db.queueDao().countPendingItemsByTypes(listOf(SyncTypes.POST_DIRECT_EXECUTION, SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET))
         return count == 0
     }

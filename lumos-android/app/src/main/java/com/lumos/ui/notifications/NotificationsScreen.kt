@@ -100,16 +100,22 @@ fun NotificationsList(
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
         navigateBack = {
-            navController.navigate(Routes.HOME)
+            navController.popBackStack()
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK) {
+                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
+                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE) {
+                popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+            }
         }
     ) { modifier, snackBar ->
         LazyColumn(

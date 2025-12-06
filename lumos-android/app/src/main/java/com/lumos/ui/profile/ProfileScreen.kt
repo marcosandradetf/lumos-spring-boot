@@ -49,16 +49,22 @@ fun ProfileScreen(
         navigateToMore = onNavigateToMenu,
         navigateToHome = onNavigateToHome,
         navigateBack = {
-            navController.navigate(Routes.MORE)
+            navController.popBackStack()
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK) {
+                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE){
+                popUpTo(Routes.AUTH_FLOW) { inclusive = true }
+            }
         }
 
     ) { modifier, snackBar ->

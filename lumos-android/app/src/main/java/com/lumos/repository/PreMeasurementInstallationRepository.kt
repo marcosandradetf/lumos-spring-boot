@@ -147,6 +147,7 @@ class PreMeasurementInstallationRepository(
     }
 
     suspend fun setStreetStatus(streetId: String, status: String = ExecutionStatus.IN_PROGRESS) {
+        println("setStreetStatus")
         db.preMeasurementInstallationDao().setStreetStatus(streetId, status)
     }
 

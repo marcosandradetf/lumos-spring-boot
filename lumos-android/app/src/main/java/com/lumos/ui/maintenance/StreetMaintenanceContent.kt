@@ -113,7 +113,11 @@ fun StreetMaintenanceContent(
     val keyboardController = LocalSoftwareKeyboardController.current
     val navigateBack: (() -> Unit) =
         if (lastRoute == Routes.HOME) {
-            { navController.navigate(Routes.HOME) }
+            {
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                }
+            }
         } else {
             back
         }
@@ -242,20 +246,28 @@ fun StreetMaintenanceContent(
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateBack = navigateBack,
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE)
+            navController.navigate(Routes.MORE){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         }
     ) { _, showSnackBar ->
 
-        if(message != null) {
+        if (message != null) {
             showSnackBar(message, null, null)
         }
 
@@ -1065,7 +1077,7 @@ fun PrevStreetMaintenance() {
             ),
         ),
         contractor = "",
-        message =  null,
+        message = null,
         setMessage = {}
     )
 }

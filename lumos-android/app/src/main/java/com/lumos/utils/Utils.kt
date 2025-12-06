@@ -12,10 +12,11 @@ import android.location.LocationManager
 import android.media.ExifInterface
 import android.net.Uri
 import androidx.core.content.ContextCompat
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.lumos.api.RequestResult
+import com.lumos.midleware.SecureStorage
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.InputStream
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -24,8 +25,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
-import androidx.core.graphics.scale
-import com.lumos.midleware.SecureStorage
 
 
 object Utils {
@@ -189,21 +188,37 @@ object Utils {
         maxSize: Int = 1280
     ): ByteArray? {
         return try {
-            // 1. Ler EXIF
-            val exif = ExifInterface(context.contentResolver.openInputStream(imageUri)!!)
-            val orientation = exif.getAttributeInt(
-                ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_NORMAL
-            )
 
-            // 2. Carregar bitmap
-            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val resolver = context.contentResolver
+
+            // Detectar MIME
+            val mimeType = resolver.getType(imageUri)
+
+            var orientation = ExifInterface.ORIENTATION_NORMAL
+
+            // Só tenta ler EXIF se for JPEG
+            if (mimeType == "image/jpeg" || mimeType == "image/jpg") {
+                try {
+                    resolver.openInputStream(imageUri)?.use { input ->
+                        val exif = ExifInterface(input)
+                        orientation = exif.getAttributeInt(
+                            ExifInterface.TAG_ORIENTATION,
+                            ExifInterface.ORIENTATION_NORMAL
+                        )
+                    }
+                } catch (_: Exception) {
+                    // Ignora erro de EXIF, segue sem rotação
+                }
+            }
+
+            // 2. Carregar o bitmap
+            val inputStream = resolver.openInputStream(imageUri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
 
             if (bitmap == null) return null
 
-            // 3. Corrigir rotação conforme EXIF
+            // 3. Corrigir rotação se necessário
             val rotated = rotateBitmapIfNeeded(bitmap, orientation)
 
             // 4. Redimensionar se necessário
@@ -211,7 +226,7 @@ object Utils {
 
             if (rotated != bitmap) bitmap.recycle()
 
-            // 5. Comprimir
+            // 5. Converter pra JPEG (independente do formato original)
             val output = ByteArrayOutputStream()
             resized.compress(Bitmap.CompressFormat.JPEG, quality, output)
 
@@ -428,6 +443,10 @@ object Utils {
         val lastTeamCheck = secureStorage.getLastTeamCheck()
 
         return now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
+    }
+
+    fun sendLog(local: String, function: String, message: String?) {
+        FirebaseCrashlytics.getInstance().recordException(Exception("Local: $local - Function:$function: $message"))
     }
 
 }

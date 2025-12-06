@@ -251,7 +251,9 @@ fun FinishFormScreen(
         Button(
             onClick = {
                 if (currentInstallationId == null) {
-                    navController.navigate(Routes.HOME)
+                    navController.navigate(Routes.HOME){
+                        popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+                    }
                 } else if (currentStreets.isEmpty()) {
                     if (!showFinishForm) {
                         viewModel.showFinishForm = true
@@ -266,6 +268,10 @@ fun FinishFormScreen(
                         viewModel.openConfirmation = true
                     }
                 } else {
+                    viewModel.loading = true
+                    navController.getBackStackEntry(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW)
+                        .savedStateHandle["route_event"] = Routes.PRE_MEASUREMENT_INSTALLATION_STREETS
+
                     navController.popBackStack()
                 }
             },

@@ -1,8 +1,6 @@
 package com.lumos.ui.premeasurementinstallation
 
 import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +40,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.navigation.BottomBar
@@ -53,7 +49,6 @@ import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Loading
 import com.lumos.utils.Utils
 import com.lumos.viewmodel.PreMeasurementInstallationViewModel
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
 
@@ -81,10 +76,15 @@ fun Content(
     val errorMessage = viewModel.message
     val loading = viewModel.loading
 
-    LaunchedEffect(currentItems) {
-        if (currentItems.isNotEmpty()) navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS)
+    LaunchedEffect(Unit) {
+        viewModel.loading = false
     }
 
+    LaunchedEffect(currentItems) {
+        if (currentItems.isNotEmpty()) {
+            navController.navigate(Routes.PRE_MEASUREMENT_INSTALLATION_MATERIALS)
+        }
+    }
 
     AppLayout(
         title = Utils.abbreviate(viewModel.contractor ?: "PREFEITURA DE BELO HORIZONTE"),
@@ -93,21 +93,35 @@ fun Content(
             navController.popBackStack()
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE){
+                popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK){
+                popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+            }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE)
+            navController.navigate(Routes.MORE){
+                popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+            }
         },
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME){
+                popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
+            }
         }
     ) { _, showSnackBar ->
+
+        if(errorMessage != null) {
+            showSnackBar(errorMessage, null, null)
+        }
 
         if (loading) {
             Loading()
@@ -119,8 +133,7 @@ fun Content(
         } else {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = if (errorMessage != null) 60.dp else 0.dp),
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp) // Espaço entre os cards
             ) {
@@ -400,14 +413,14 @@ fun PrevStreetsScreen() {
         )
     )
 
-    Content(
-        viewModel = PreMeasurementInstallationViewModel(
-            repository = null,
-            contractRepository = null,
-            mockStreets = mockInstallationStreets,
-            mockItems = mockInstallationItems
-        ),
-        navController = rememberNavController()
-    )
+//    Content(
+//        viewModel = PreMeasurementInstallationViewModel(
+//            repository = null,
+//            contractRepository = null,
+//            mockStreets = mockInstallationStreets,
+//            mockItems = mockInstallationItems
+//        ),
+//        navController = rememberNavController()
+//    )
 }
 

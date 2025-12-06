@@ -204,19 +204,29 @@ fun PreMeasurementStreetScreen(
                 navController.popBackStack()
             },
             navigateToMaintenance = {
-                navController.navigate(Routes.MAINTENANCE)
+                navController.navigate(Routes.MAINTENANCE){
+                    popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                }
             },
             navigateToHome = {
-                navController.navigate(Routes.HOME)
+                navController.navigate(Routes.HOME){
+                    popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                }
             },
             navigateToMore = {
-                navController.navigate(Routes.MORE)
+                navController.navigate(Routes.MORE){
+                    popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                }
             },
             navigateToStock = {
-                navController.navigate(Routes.STOCK)
+                navController.navigate(Routes.STOCK){
+                    popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                }
             },
             navigateToExecutions = {
-                navController.navigate(Routes.INSTALLATION_HOLDER)
+                navController.navigate(Routes.INSTALLATION_HOLDER){
+                    popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                }
             }
         ) { _, showSnackBar ->
             var triedToSubmit by remember { mutableStateOf(false) }
@@ -458,7 +468,6 @@ fun StreetItemsContent(
 
     var action by remember { mutableStateOf<String?>(null) }
 
-    val inputRequester = remember { FocusRequester() }
 
     AppLayout(
         title = description,
@@ -511,12 +520,10 @@ fun StreetItemsContent(
                         preMeasurementViewModel.message =
                             "Você esqueceu de preencher o endereço! Por favor, informe a Rua, Nº - Bairro atual"
                         action = null
-                        inputRequester.requestFocus()
                         return@Confirm
                     } else if (!hasNumber && !hasSN) {
                         preMeasurementViewModel.message =
                             "Número do endereço ausente! Por favor, informe o número do endereço ou indique que é 'S/N'."
-                        inputRequester.requestFocus()
                         action = null
                         return@Confirm
                     } else if (preMeasurementViewModel.streetItems.isEmpty()) {
@@ -554,7 +561,9 @@ fun StreetItemsContent(
                     if (action == "back") {
                         navController.popBackStack()
                     } else {
-                        navController.navigate(action!!)
+                        navController.navigate(action!!){
+                            popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+                        }
                     }
                 },
                 onDismiss = {
@@ -598,7 +607,6 @@ fun StreetItemsContent(
                             disabledIndicatorColor = Color.Transparent
                         ),
                         modifier = Modifier
-                            .focusRequester(inputRequester)
                             .focusable()
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -980,31 +988,31 @@ fun ContractItem(
 fun PrevPMStreet() {
     // Criando um contexto fake para a preview
     val fakeContext = LocalContext.current
-    val viewModel = PreMeasurementViewModel(savedStateHandle = parentEntry.savedStateHandle)
-
-    StreetItemsContent(
-        description = "Pré-mediçao",
-        preMeasurementViewModel = viewModel,
-        context = fakeContext,
-        navController = rememberNavController(),
-        items = listOf(
-            Item(
-                contractReferenceItemId = 1,
-                description = "BRAÇO DE 3,5",
-                nameForImport = "BRAÇO DE 3,5",
-                type = "BRAÇO",
-                linking = null,
-                itemDependency = null
-            ),
-            Item(
-                contractReferenceItemId = 2,
-                description = "BRAÇO DE 3,5",
-                nameForImport = "BRAÇO DE 3,5",
-                type = "SERVIÇO",
-                linking = null,
-                itemDependency = null
-            )
-        )
-    )
+//    val viewModel = PreMeasurementViewModel(savedStateHandle = parentEntry.savedStateHandle)
+//
+//    StreetItemsContent(
+//        description = "Pré-mediçao",
+//        preMeasurementViewModel = viewModel,
+//        context = fakeContext,
+//        navController = rememberNavController(),
+//        items = listOf(
+//            Item(
+//                contractReferenceItemId = 1,
+//                description = "BRAÇO DE 3,5",
+//                nameForImport = "BRAÇO DE 3,5",
+//                type = "BRAÇO",
+//                linking = null,
+//                itemDependency = null
+//            ),
+//            Item(
+//                contractReferenceItemId = 2,
+//                description = "BRAÇO DE 3,5",
+//                nameForImport = "BRAÇO DE 3,5",
+//                type = "SERVIÇO",
+//                linking = null,
+//                itemDependency = null
+//            )
+//        )
+//    )
 
 }

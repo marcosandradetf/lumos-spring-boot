@@ -2,14 +2,12 @@ package com.lumos.ui.maintenance
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -64,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
@@ -76,7 +73,6 @@ import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
-import com.lumos.ui.components.LandscapeModeWrapper
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.SignatureScreenLandscape
 import com.lumos.ui.components.Tag
@@ -84,7 +80,6 @@ import com.lumos.utils.Utils
 import com.lumos.utils.Utils.hasFullName
 import java.io.File
 import java.io.FileOutputStream
-import java.time.Instant
 import java.util.UUID
 
 class MaintenanceHomeViewModel : ViewModel() {
@@ -184,16 +179,24 @@ fun MaintenanceHomeContent(
                 back()
             },
             navigateToHome = {
-                navController.navigate(Routes.HOME)
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                }
             },
             navigateToMore = {
-                navController.navigate(Routes.MORE)
+                navController.navigate(Routes.MORE) {
+                    popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                }
             },
             navigateToStock = {
-                navController.navigate(Routes.STOCK)
+                navController.navigate(Routes.STOCK) {
+                    popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                }
             },
             navigateToExecutions = {
-                navController.navigate(Routes.INSTALLATION_HOLDER)
+                navController.navigate(Routes.INSTALLATION_HOLDER) {
+                    popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                }
             }) { _, _ ->
 
             Box(

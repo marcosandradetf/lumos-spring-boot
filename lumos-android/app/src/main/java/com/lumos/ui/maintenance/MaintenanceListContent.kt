@@ -77,16 +77,24 @@ fun MaintenanceListContent(
         title = "Manutenções em andamento",
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE)
+            navController.navigate(Routes.MORE) {
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK) {
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         }
     ) { _, _ ->
 
@@ -99,7 +107,9 @@ fun MaintenanceListContent(
                     body = "Você precisa carregar os dados do estoque para criar uma nova manutenção. Deseja fazer isso agora?",
                     confirm = {
                         showModal = false
-                        navController.navigate(Routes.STOCK)
+                        navController.navigate(Routes.STOCK) {
+                            popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                        }
                     },
                     cancel = { showModal = false }
                 )
@@ -208,8 +218,8 @@ fun MaintenanceListContent(
                                         Text(
                                             "Iniciado há ${
                                                 Utils.timeSinceCreation(
-                                                        maintenance.dateOfVisit
-                                                    
+                                                    maintenance.dateOfVisit
+
                                                 )
                                             }"
                                         )
@@ -224,13 +234,13 @@ fun MaintenanceListContent(
 
             FloatingActionButton(
                 onClick = {
-                    if(isStaleCheckTeam) {
-                        navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.MAINTENANCE.value}")
-                    }
-                    else if (stockSize > 0) {
+                    if (isStaleCheckTeam) {
+                        navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.MAINTENANCE.value}") {
+                            popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                        }
+                    } else if (stockSize > 0) {
                         newMaintenance()
-                    }
-                    else {
+                    } else {
                         showModal = true
                     }
                 },

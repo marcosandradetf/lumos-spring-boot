@@ -84,7 +84,9 @@ fun ContractsScreen(
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Contratos")
+            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Contratos"){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         } else {
             contractViewModel.loadFlowContracts(ContractStatus.ACTIVE)
             contractViewModel.syncContracts()
@@ -160,13 +162,19 @@ fun ContractsScreenContent(
             navController.popBackStack()
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         }
     ) { _, snackBar ->
 

@@ -57,7 +57,9 @@ fun PreMeasurementScreen(
 
     LaunchedEffect(Unit) {
         if (!roles.any { it in requiredRoles }) {
-            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Pré-medição")
+            navController.navigate(Routes.NO_ACCESS + "/${BottomBar.MORE.value}/Pré-medição"){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         }
 
         preMeasurementViewModel.loadPreMeasurements()
@@ -95,13 +97,19 @@ fun PMContent(
             navController.popBackStack()
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK){
+                popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
+            }
         },
     ) { modifier, snackBar ->
 

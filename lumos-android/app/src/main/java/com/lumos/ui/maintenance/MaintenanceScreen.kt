@@ -57,11 +57,9 @@ import com.lumos.ui.components.CurrentScreenLoading
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
-import com.lumos.viewmodel.ContractViewModel
-import com.lumos.viewmodel.MaintenanceViewModel
-import com.lumos.viewmodel.StockViewModel
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.abbreviate
+import com.lumos.viewmodel.MaintenanceViewModel
 import kotlinx.coroutines.delay
 import java.util.UUID
 
@@ -75,8 +73,6 @@ enum class MaintenanceUIState {
 @Composable
 fun MaintenanceScreen(
     maintenanceViewModel: MaintenanceViewModel,
-    contractViewModel: ContractViewModel,
-    stockViewModel: StockViewModel,
     navController: NavHostController,
     lastRoute: String?,
     secureStorage: SecureStorage
@@ -84,24 +80,17 @@ fun MaintenanceScreen(
     val viewModelAux: MaintenanceHomeViewModel = viewModel()
     val uiState by maintenanceViewModel.uiState.collectAsState()
 
-    val stock by stockViewModel.stock.collectAsState()
-    val contractLoading by contractViewModel.isSyncing.collectAsState()
-    val contractMessage by contractViewModel.syncError.collectAsState()
-    val hasInternet by contractViewModel.hasInternet.collectAsState()
+    val stock by maintenanceViewModel.stock.collectAsState()
     var forceLoading by remember { mutableStateOf(false) }
-    val contracts by contractViewModel.contracts.collectAsState()
+    val contracts by maintenanceViewModel.contracts.collectAsState()
 
     var resync by remember { mutableIntStateOf(0) }
 
     val maintenanceMap by remember(uiState.maintenances) {
-        Log.e("maintenances", uiState.maintenances.toString())
-
         derivedStateOf { uiState.maintenances.associateBy { it.maintenanceId } }
     }
 
     val maintenance by remember(uiState.maintenanceId, maintenanceMap) {
-        Log.e("Maintenance", maintenanceMap.toString())
-
         derivedStateOf {
             uiState.maintenanceId?.toString()?.let { maintenanceMap[it] }
         }
@@ -140,7 +129,7 @@ fun MaintenanceScreen(
 
     LaunchedEffect(resync) {
         if(uiState.screenState != MaintenanceUIState.HOME) {
-            if (resync < 10) contractViewModel.syncContracts()
+            if (resync < 10) maintenanceViewModel.syncContracts()
         }
     }
 
@@ -155,11 +144,11 @@ fun MaintenanceScreen(
             NewMaintenanceContent(
                 navController = navController,
                 contracts = contracts,
-                loading = contractLoading,
+                loading = loading,
                 resync = {
                     resync += 1
                 },
-                hasInternet = hasInternet,
+                hasInternet = uiState.hasInternet,
                 createMaintenance = { contractId ->
                     val newId = UUID.randomUUID()
                     maintenanceViewModel.insertMaintenance(
@@ -266,16 +255,24 @@ fun MaintenanceScreen(
                         maintenanceViewModel.setScreenState(MaintenanceUIState.LIST)
                     },
                     navigateToHome = {
-                        navController.navigate(Routes.HOME)
+                        navController.navigate(Routes.HOME){
+                            popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                        }
                     },
                     navigateToMore = {
-                        navController.navigate(Routes.MORE)
+                        navController.navigate(Routes.MORE){
+                            popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                        }
                     },
                     navigateToStock = {
-                        navController.navigate(Routes.STOCK)
+                        navController.navigate(Routes.STOCK){
+                            popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                        }
                     },
                     navigateToExecutions = {
-                        navController.navigate(Routes.INSTALLATION_HOLDER)
+                        navController.navigate(Routes.INSTALLATION_HOLDER){
+                            popUpTo(Routes.MAINTENANCE) { inclusive = true }
+                        }
                     }
                 ) { _, _ ->
 
@@ -403,19 +400,29 @@ fun NewMaintenanceContent(
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateBack = back,
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE)
+            navController.navigate(Routes.MORE){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER){
+                popUpTo(Routes.MAINTENANCE) { inclusive = true }
+            }
         }
     ) { _, _ ->
 

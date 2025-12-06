@@ -39,16 +39,24 @@ fun MenuScreen(
         title = "Mais Opções",
         selectedIcon = BottomBar.MORE.value,
         navigateToHome = {
-            navController.navigate(Routes.HOME)
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.MORE) { inclusive = true }
+            }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK)
+            navController.navigate(Routes.STOCK) {
+                popUpTo(Routes.MORE) { inclusive = true }
+            }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER)
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
+                popUpTo(Routes.MORE) { inclusive = true }
+            }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE)
+            navController.navigate(Routes.MAINTENANCE) {
+                popUpTo(Routes.MORE) { inclusive = true }
+            }
         }
     ) { modifier, snackBar ->
         CategoryMenu(navController = navController, context = context)

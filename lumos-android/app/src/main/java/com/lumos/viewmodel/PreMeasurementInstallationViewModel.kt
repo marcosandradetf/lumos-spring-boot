@@ -1,6 +1,5 @@
 package com.lumos.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,19 +7,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
-import com.lumos.api.RequestResult.ServerError
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationStreet
 import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.PreMeasurementInstallationRepository
-import com.lumos.utils.NavEvents
+import com.lumos.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
-import java.lang.Thread.sleep
 import java.math.BigDecimal
 
 class PreMeasurementInstallationViewModel(
@@ -66,6 +62,7 @@ class PreMeasurementInstallationViewModel(
 
     // -> control state viewModel
     init {
+        setStreets()
         viewModelScope.launch {
             // Observa eventos de navegação enviados via SavedStateHandle
             savedStateHandle
@@ -73,10 +70,10 @@ class PreMeasurementInstallationViewModel(
                 ?.collect { route ->
 
                     when (route) {
-
                         Routes.INSTALLATION_HOLDER -> setStateForHolderScreen()
-
-                        Routes.PRE_MEASUREMENT_INSTALLATION_STREETS -> setStateForStreetScreen()
+                        Routes.PRE_MEASUREMENT_INSTALLATION_STREETS -> {
+                            setStateForStreetScreen()
+                        }
                     }
 
                     // limpa o evento para não repetir
@@ -137,13 +134,13 @@ class PreMeasurementInstallationViewModel(
                 }
             } catch (e: Exception) {
                 message = e.message ?: "Erro ao carregar as ruas da pré-medição"
+                Utils.sendLog("premeasurementinstallationviewmodel", "setStreets", e.message)
             } finally {
                 loading = false
             }
         }
     }
 
-    // TODO CONFIG EMPTY STREETS ON DIRECT_INSTALLATION_STREETS_SCREEN
     fun setStreetAndItems(paramCurrentStreetId: String) {
         viewModelScope.launch {
             loading = true
@@ -164,37 +161,8 @@ class PreMeasurementInstallationViewModel(
                         ?.let { currentInstallationItems = it }
                 }
             } catch (e: Exception) {
+                Utils.sendLog("premeasurementinstallationviewmodel", "setstreetanditems", e.message)
                 message = e.message ?: "Erro ao carregar as ruas da pré-medição"
-            } finally {
-                loading = false
-
-            }
-        }
-    }
-
-    fun syncExecutions() {
-        viewModelScope.launch(Dispatchers.IO) {
-            loading = true
-            message = null
-            try {
-                Log.e("syncExecutions", "syncExecutions")
-                when (val response = repository?.syncExecutions()!!) {
-                    is RequestResult.Timeout -> message =
-                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui - ou puxe para atualizar agora mesmo."
-
-                    is RequestResult.NoInternet -> message =
-                        "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
-
-                    is ServerError -> message = response.message
-                    is RequestResult.Success -> message = null
-                    is RequestResult.UnknownError -> message = null
-                    is RequestResult.SuccessEmptyBody -> {
-                        ServerError(204, "Resposta 204 inesperada")
-                    }
-                }
-            } catch (e: Exception) {
-                message = e.message ?: "Erro inesperado."
-            } finally {
                 loading = false
             }
         }
@@ -223,6 +191,7 @@ class PreMeasurementInstallationViewModel(
 
                 message = "Item concluído com sucesso"
             } catch (e: Exception) {
+                Utils.sendLog("premeasurementinstallationviewmodel", "setInstallationItemQuantity", e.message)
                 message = e.message ?: ""
             } finally {
                 buttonLoading = false
@@ -244,6 +213,7 @@ class PreMeasurementInstallationViewModel(
                 currentStreetId = null
                 currentStreet = null
             } catch (e: Exception) {
+                Utils.sendLog("premeasurementinstallationviewmodel", "submitStreet", e.message)
                 message = e.message ?: ""
             } finally {
                 loading = false
@@ -267,6 +237,7 @@ class PreMeasurementInstallationViewModel(
             } catch (e: IllegalStateException) {
                 message = e.message
             } catch (e: Exception) {
+                Utils.sendLog("premeasurementinstallationviewmodel", "submitInstallation", e.message)
                 message = e.message
             } finally {
                 loading = false
@@ -287,7 +258,8 @@ class PreMeasurementInstallationViewModel(
                 if (response is RequestResult.Success) {
                     currentStreet = currentStreet?.copy(photoUrl = response.data)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Utils.sendLog("premeasurementinstallationviewmodel", "refreshUrlImage", e.message)
             }
         }
     }

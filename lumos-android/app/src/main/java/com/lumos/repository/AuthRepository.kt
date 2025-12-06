@@ -78,11 +78,18 @@ class AuthRepository(
 
     suspend fun login(
         username: String,
-        email: String,
         password: String,
     ): RequestResult<Unit> {
 
-        val loginRequest = LoginRequest(username, email, password)
+        val loginValue = username.trim()
+        val finalValue =
+            if (loginValue.filter { it.isDigit() }.length == 11)
+                loginValue.filter { it.isDigit() }
+            else
+                loginValue
+        println(finalValue)
+
+        val loginRequest = LoginRequest(finalValue, finalValue, password)
 
         return try {
             val response = ApiExecutor.execute { authApi.login(request = loginRequest) }

@@ -39,7 +39,7 @@ interface ContractDao {
     @Query(
         """
         SELECT * FROM items 
-        WHERE contractReferenceItemId IN (:itemsIds) AND type <> "MANUTENÇÃO"
+        WHERE contractReferenceItemId IN (:itemsIds) AND type <> 'MANUTENÇÃO'
         order by description
     """
     )

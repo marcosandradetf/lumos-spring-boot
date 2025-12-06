@@ -122,19 +122,27 @@ fun DirectExecutionHomeScreen(
                 navController.popBackStack()
             },
             navigateToHome = {
-                navController.navigate(Routes.HOME)
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             },
             navigateToMore = {
-                navController.navigate(Routes.MORE)
+                navController.navigate(Routes.MORE) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             },
             navigateToStock = {
-                navController.navigate(Routes.STOCK)
+                navController.navigate(Routes.STOCK) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             },
             navigateToExecutions = {
-                navController.navigate(Routes.INSTALLATION_HOLDER)
+                navController.navigate(Routes.INSTALLATION_HOLDER) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
             }) { _, showSnackBar ->
 
-            if(viewModel.errorMessage != null) {
+            if (viewModel.errorMessage != null) {
                 showSnackBar(viewModel.errorMessage!!, null, null)
                 viewModel.errorMessage = null
             }
@@ -488,7 +496,9 @@ fun DirectExecutionHomeScreen(
                                             Text(
                                                 "Instruções",
                                                 style = MaterialTheme.typography.labelMedium.copy(
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(
+                                                        alpha = 0.6f
+                                                    )
                                                 )
                                             )
                                             Text(
@@ -502,7 +512,9 @@ fun DirectExecutionHomeScreen(
                                         Text(
                                             "Status",
                                             style = MaterialTheme.typography.labelMedium.copy(
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                                color = MaterialTheme.colorScheme.onSurface.copy(
+                                                    alpha = 0.6f
+                                                )
                                             )
                                         )
                                         Text(
@@ -709,15 +721,15 @@ fun PrevDirectExecutionHome() {
     )
 
 
-    DirectExecutionHomeScreen(
-        DirectExecutionViewModel(
-            null,
-            null,
-            mockContractor = "ETAPA 1 - Prefeitura de Iguatama",
-            mockCreationDate = Instant.now().toString(),
-            mockStreets = mockStreets,
-
-            ),
-        rememberNavController()
-    )
+//    DirectExecutionHomeScreen(
+//        DirectExecutionViewModel(
+//            null,
+//            null,
+//            mockContractor = "ETAPA 1 - Prefeitura de Iguatama",
+//            mockCreationDate = Instant.now().toString(),
+//            mockStreets = mockStreets,
+//
+//            ),
+//        rememberNavController()
+//    )
 }

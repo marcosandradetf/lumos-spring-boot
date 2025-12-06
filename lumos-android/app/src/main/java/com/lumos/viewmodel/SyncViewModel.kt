@@ -1,6 +1,7 @@
 package com.lumos.viewmodel
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumos.data.database.AppDatabase
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SyncViewModel(
-    private val db: AppDatabase
+    private val db: AppDatabase,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _syncItemsTypes = MutableStateFlow<List<String>>(emptyList())
     val syncItemsTypes = _syncItemsTypes
