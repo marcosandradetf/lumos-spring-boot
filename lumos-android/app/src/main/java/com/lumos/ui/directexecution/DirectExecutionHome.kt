@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
@@ -42,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -169,6 +171,60 @@ fun DirectExecutionHomeScreen(
                 if (loading) {
                     Loading()
                 }
+                // ========= TELA FINAL ========
+                else if (viewModel.installationId == null) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.TaskAlt,
+                            contentDescription = "Tarefa concluída",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(56.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = "Missão Cumprida!",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Instalação concluída com sucesso.\nOs dados serão enviados para o sistema.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+
+                    }
+
+                    Button(
+                        onClick = {
+                            navController.navigate(Routes.INSTALLATION_HOLDER) {
+                                popUpTo(Routes.DIRECT_EXECUTION_FLOW) {
+                                    inclusive = true
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .fillMaxWidth(0.9f)
+                            .height(50.dp)
+                            .align(Alignment.BottomCenter),
+                        shape = RoundedCornerShape(32.dp)
+                    ) {
+                        Text(
+                            "Sair"
+                        )
+                    }
+                }
 
                 // ────────────────────────────────────────────────
                 //               FORMULÁRIO FINALIZAR
@@ -184,78 +240,32 @@ fun DirectExecutionHomeScreen(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-
-
                             // HEADER PRINCIPAL
                             Text(
-                                text = "Dados da Instalação",
+                                text = "Última Etapa",
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.SemiBold
                                 ),
-                                modifier = Modifier.padding(top = 4.dp)
+                                modifier = Modifier
+                                    .padding(top = 10.dp)
+                                    .fillMaxWidth(),
+                                textAlign = TextAlign.Center
                             )
 
 
                             // =========================================================
-                            //                  SEÇÃO 1 — DADOS PRINCIPAIS
+                            //                  SEÇÃO — RESPONSÁVEL
                             // =========================================================
                             ElevatedCard(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp)
+                                shape = RoundedCornerShape(16.dp),
                             ) {
 
                                 Column(
-                                    modifier = Modifier.padding(20.dp),
-                                ) {
-                                    OutlinedTextField(
-                                        value = viewModel.street?.currentSupply ?: "",
-                                        onValueChange = {
-                                            viewModel.triedToSubmit = false
-                                            viewModel.street =
-                                                viewModel.street?.copy(currentSupply = it)
-                                        },
-                                        label = { Text("Fornecedor atual") },
-                                        isError = triedToSubmit && viewModel.street?.currentSupply.isNullOrBlank(),
-                                        supportingText = {
-                                            if (triedToSubmit && viewModel.street?.currentSupply.isNullOrBlank()) {
-                                                Text("Informe o fornecedor atual")
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-
-                                    OutlinedTextField(
-                                        value = viewModel.street?.lastPower ?: "",
-                                        onValueChange = {
-                                            viewModel.triedToSubmit = false
-                                            viewModel.street =
-                                                viewModel.street?.copy(lastPower = it)
-                                        },
-                                        label = { Text("Potência anterior") },
-                                        isError = triedToSubmit && viewModel.street?.lastPower.isNullOrBlank(),
-                                        supportingText = {
-                                            if (triedToSubmit && viewModel.street?.lastPower.isNullOrBlank()) {
-                                                Text("Informe a potência anterior")
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                }
-                            }
-
-
-                            // =========================================================
-                            //                  SEÇÃO 2 — RESPONSÁVEL
-                            // =========================================================
-                            ElevatedCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-
-                                Column(
-                                    modifier = Modifier.padding(20.dp),
+                                    modifier = Modifier
+                                        .padding(20.dp)
+                                        .fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
 
                                     Text(
@@ -276,6 +286,8 @@ fun DirectExecutionHomeScreen(
                                             onClick = {
                                                 viewModel.responsibleError = null
                                                 viewModel.hasResponsible = true
+                                                viewModel.errorMessage =
+                                                    "Solicite o Nome do Responsável"
                                             },
                                             label = { Text("Sim") }
                                         )
@@ -308,11 +320,6 @@ fun DirectExecutionHomeScreen(
                                         // Nome antes da assinatura
                                         if (viewModel.signPath == null) {
 
-                                            Text(
-                                                text = "Solicite o Nome do Responsável",
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-
                                             OutlinedTextField(
                                                 value = viewModel.responsible ?: "",
                                                 onValueChange = {
@@ -340,13 +347,17 @@ fun DirectExecutionHomeScreen(
 
                                             Box(
                                                 modifier = Modifier
-                                                    .height(120.dp)
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .background(MaterialTheme.colorScheme.surface)
+                                                    .height(50.dp)
+                                                    .width(250.dp)
+                                                    .background(
+                                                        Color.White,
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    ) // ou Color.LightGray
                                             ) {
                                                 Image(
-                                                    painter = rememberAsyncImagePainter(viewModel.signPath),
+                                                    painter = rememberAsyncImagePainter(
+                                                        viewModel.signPath
+                                                    ),
                                                     contentDescription = "Assinatura",
                                                     modifier = Modifier.fillMaxSize(),
                                                     contentScale = ContentScale.Fit
@@ -361,52 +372,70 @@ fun DirectExecutionHomeScreen(
                                                 textAlign = TextAlign.Center
                                             )
                                         }
+
+                                        if (viewModel.signPath == null && hasFullName(
+                                                viewModel.responsible ?: ""
+                                            )
+                                        ) {
+                                            Spacer(Modifier.height(25.dp))
+                                            Button(
+                                                onClick = {
+                                                    viewModel.showSignScreen = true
+                                                },
+                                                modifier = Modifier
+                                                    .padding(bottom = 10.dp)
+                                                    .height(50.dp),
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Text(
+                                                    "Coletar Assinatura"
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-
-                        // =========================================================
-                        //                      BOTÃO FINAL
-                        // =========================================================
-                        Button(
-                            onClick = {
-                                var hasError = false
-
-                                if (viewModel.street?.currentSupply.isNullOrBlank()) hasError = true
-                                if (viewModel.street?.lastPower.isNullOrBlank()) hasError = true
-
-                                if (viewModel.hasResponsible == null) {
-                                    viewModel.responsibleError = "Informe se possui responsável"
-                                } else if (viewModel.hasResponsible == true &&
-                                    (viewModel.responsible.isNullOrBlank() || !hasFullName(
-                                        viewModel.responsible!!
-                                    ))
-                                ) {
-                                    viewModel.responsibleError =
-                                        "Nome e sobrenome do responsável"
-                                } else if (viewModel.hasResponsible == true && viewModel.signPath == null) {
-                                    viewModel.showSignScreen = true
-                                } else if (!hasError) {
-                                    confirmModal = true
-                                }
-                            },
-                            modifier = Modifier
-                                .padding(bottom = 10.dp)
-                                .fillMaxWidth()
-                                .height(45.dp)
-                                .align(Alignment.BottomCenter),
-                        ) {
-                            Text(
-                                if (viewModel.hasResponsible == true && viewModel.signPath == null)
-                                    "Coletar Assinatura"
-                                else
-                                    "Salvar e Finalizar",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
                     }
 
+                    // =========================================================
+                    //                      BOTÃO FINAL
+                    // =========================================================
+                    Button(
+                        onClick = {
+                            if (viewModel.installationId == null) {
+                                navController.navigate(Routes.INSTALLATION_HOLDER) {
+                                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) {
+                                        inclusive = true
+                                    }
+                                }
+                            } else if (viewModel.hasResponsible == null) {
+                                viewModel.responsibleError = "Informe se possui responsável"
+                            } else if (viewModel.hasResponsible == true && !hasFullName(
+                                    viewModel.responsible ?: ""
+                                )
+                            ) {
+                                viewModel.responsibleError =
+                                    "Nome e sobrenome do responsável"
+                            } else if (viewModel.hasResponsible == true && viewModel.signPath == null) {
+                                viewModel.showSignScreen = true
+                            } else {
+                                confirmModal = true
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .fillMaxWidth(0.9f)
+                            .height(50.dp)
+                            .align(Alignment.BottomCenter),
+                        shape = RoundedCornerShape(32.dp)
+                    ) {
+                        Text(
+                            if (viewModel.installationId == null) "Sair"
+                            else if (viewModel.hasResponsible == true && viewModel.signPath == null) "Continuar"
+                            else "Salvar e Finalizar"
+                        )
+                    }
                 }
 
                 // ────────────────────────────────────────────────
@@ -417,6 +446,7 @@ fun DirectExecutionHomeScreen(
                     // ---------- HEADER OUSADO ----------
                     Box(
                         modifier = Modifier
+                            .padding(top = 10.dp)
                             .fillMaxWidth(0.95f)
                             .clip(RoundedCornerShape(14.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f))
@@ -433,19 +463,22 @@ fun DirectExecutionHomeScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                if (streets.isNotEmpty()) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
 
                                 Text(
-                                    text = if (streets.size > 1)
-                                        "${streets.size} ruas finalizadas"
+                                    text = if (streets.isEmpty())
+                                        "Nenhum ponto finalizado"
+                                    else if (streets.size == 1)
+                                        "${streets.size} ponto finalizado"
                                     else
-                                        "${streets.size} rua finalizada",
+                                        "${streets.size} pontos finalizados",
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                                     )
@@ -466,7 +499,7 @@ fun DirectExecutionHomeScreen(
                                 )
 
                                 Text(
-                                    text = "Iniciada há ${Utils.timeSinceCreation(creationDate ?: "")}",
+                                    text = "Criada há ${Utils.timeSinceCreation(creationDate ?: "")}",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                     )
@@ -603,13 +636,17 @@ fun DirectExecutionHomeScreen(
                         Button(
                             onClick = {
                                 viewModel.loadExecutionData()
+                                navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                                    .savedStateHandle["route_event"] =
+                                    Routes.DIRECT_EXECUTION_SCREEN_MATERIALS
+
                                 navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS)
                             },
                             modifier = Modifier
                                 .fillMaxWidth(0.9f)
                                 .height(45.dp),
                         ) {
-                            Text("Adicionar Nova Rua")
+                            Text("Iniciar novo ponto")
                         }
                     }
                 }

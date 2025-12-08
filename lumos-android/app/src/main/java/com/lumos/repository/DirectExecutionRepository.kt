@@ -286,7 +286,7 @@ class DirectExecutionRepository(
 
         val response = ApiExecutor.execute {
             api.submitDirectExecution(
-                photo = imagePart,
+                signature = imagePart,
                 installation = jsonBody
             )
         }

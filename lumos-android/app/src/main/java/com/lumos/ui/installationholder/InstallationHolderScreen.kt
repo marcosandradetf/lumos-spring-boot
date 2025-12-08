@@ -99,14 +99,14 @@ fun InstallationHolderScreen(
             }
         }
 
+        stockCount = directExecutionRepository.countStock()
+
         if (isStaleCheckTeam)
             navController.navigate("${Routes.TEAM_SCREEN}/${BottomBar.EXECUTIONS.value}")
         else {
             directExecutionRepository.syncDirectExecutions()
             preMeasurementInstallationRepository.syncExecutions()
         }
-
-        stockCount = directExecutionRepository.countStock()
 
         isSyncing = false
     }
@@ -303,7 +303,7 @@ fun ContentCitiesScreen(
                                     )
 
                                     Text(
-                                        text = Utils.timeSinceCreation(execution.creationDate),
+                                        text = "Há " + Utils.timeSinceCreation(execution.creationDate),
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = MaterialTheme.colorScheme.outline
                                         )

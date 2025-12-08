@@ -16,7 +16,6 @@ class AddressService(private val context: Context) {
                 val addresses = geocoder.getFromLocation(latitude, longitude, 1)
 
                 if (addresses.isNullOrEmpty()) return@withContext null
-
                 val address = addresses[0]
 
                 val street = address.thoroughfare ?: return@withContext null
@@ -26,7 +25,7 @@ class AddressService(private val context: Context) {
 
                 arrayOf(street, neighborhood, city, state)
 
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 null
             }
         }

@@ -180,24 +180,6 @@ fun SyncDetailsMaintenanceContent(
     retry: (Long) -> Unit,
     cancel: (Long, Int) -> Unit
 ) {
-    val type = when (syncType) {
-        SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
-        SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
-
-        SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
-
-        SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
-        SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
-        SyncTypes.POST_PRE_MEASUREMENT -> "Pré-medição"
-
-        SyncTypes.SYNC_STOCK -> "Dados de estoque"
-        SyncTypes.POST_ORDER -> "Requisição de materiais"
-
-        SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
-
-        else -> syncType
-    }
-
     var expandedItemId by remember { mutableStateOf<Long?>(null) }
     var syncItem by remember { mutableStateOf<SyncQueueEntity?>(null) }
 
@@ -289,7 +271,8 @@ fun SyncDetailsMaintenanceContent(
                             SyncTypes.POST_DIRECT_EXECUTION -> "Instalação (sem pré-medição) - Registro em campo"
                             SyncTypes.FINISHED_DIRECT_EXECUTION -> "Execução (sem pré-medição) - Finalização"
 
-                            SyncTypes.POST_INDIRECT_EXECUTION -> "Instalação (com pré-medição) - Registro em campo"
+                            SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET -> "Instalação (com pré-medição) - Registro em campo"
+                            SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION -> "Instalação (com pré-medição) - Finalização"
 
                             SyncTypes.POST_MAINTENANCE -> "Manutenção - Finalização"
                             SyncTypes.POST_MAINTENANCE_STREET -> "Manutenção - Registro em campo"
@@ -299,6 +282,8 @@ fun SyncDetailsMaintenanceContent(
                             SyncTypes.POST_ORDER -> "Requisição de materiais"
 
                             SyncTypes.UPDATE_TEAM -> "Confirmação de Equipe"
+
+                            SyncTypes.SYNC_CONTRACT_ITEM_BALANCE -> "Sincronização de Saldo Contratual"
 
                             else -> m.type
                         }

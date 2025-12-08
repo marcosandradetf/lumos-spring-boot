@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -100,7 +102,8 @@ fun FinishFormScreen(
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier
+                        .padding(top = 4.dp)
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
@@ -199,10 +202,12 @@ fun FinishFormScreen(
 
                                 Box(
                                     modifier = Modifier
-                                        .height(120.dp)
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(MaterialTheme.colorScheme.surface)
+                                        .height(50.dp)
+                                        .width(250.dp)
+                                        .background(
+                                            Color.White,
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) // ou Color.LightGray
                                 ) {
                                     Image(
                                         painter = rememberAsyncImagePainter(
@@ -223,7 +228,10 @@ fun FinishFormScreen(
                                 )
                             }
 
-                            if (viewModel.signPhotoUri == null && hasFullName(viewModel.responsible ?: "")) {
+                            if (viewModel.signPhotoUri == null && hasFullName(
+                                    viewModel.responsible ?: ""
+                                )
+                            ) {
                                 Spacer(Modifier.height(25.dp))
                                 Button(
                                     onClick = {
@@ -251,7 +259,7 @@ fun FinishFormScreen(
         Button(
             onClick = {
                 if (currentInstallationId == null) {
-                    navController.navigate(Routes.HOME){
+                    navController.navigate(Routes.HOME) {
                         popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
                     }
                 } else if (currentStreets.isEmpty()) {
@@ -259,7 +267,10 @@ fun FinishFormScreen(
                         viewModel.showFinishForm = true
                     } else if (viewModel.hasResponsible == null) {
                         viewModel.responsibleError = "Informe se possui responsável"
-                    } else if (viewModel.hasResponsible == true && !hasFullName(viewModel.responsible ?: "")) {
+                    } else if (viewModel.hasResponsible == true && !hasFullName(
+                            viewModel.responsible ?: ""
+                        )
+                    ) {
                         viewModel.responsibleError =
                             "Nome e sobrenome do responsável"
                     } else if (viewModel.hasResponsible == true && viewModel.signPhotoUri == null) {
@@ -270,7 +281,8 @@ fun FinishFormScreen(
                 } else {
                     viewModel.loading = true
                     navController.getBackStackEntry(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW)
-                        .savedStateHandle["route_event"] = Routes.PRE_MEASUREMENT_INSTALLATION_STREETS
+                        .savedStateHandle["route_event"] =
+                        Routes.PRE_MEASUREMENT_INSTALLATION_STREETS
 
                     navController.popBackStack()
                 }

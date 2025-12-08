@@ -16,8 +16,8 @@ android {
         applicationId = "com.thryon.lumos"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "1.0.9"
+        versionCode = 24
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -45,7 +45,8 @@ android {
         create("release") {
 //            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("/Users/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
-            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
+//            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("/home/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"

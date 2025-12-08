@@ -586,7 +586,7 @@ fun AppNavigation(
                 composable(
                     route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{contractId}/{creationDate}/{instructions}",
                     arguments = listOf(
-                        navArgument("id") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.LongType },
                         navArgument("contractor") { type = NavType.StringType },
                         navArgument("contractId") { type = NavType.LongType },
                         navArgument("creationDate") { type = NavType.StringType },

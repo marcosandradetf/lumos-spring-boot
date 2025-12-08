@@ -150,7 +150,8 @@ interface DirectExecutionDao {
         update direct_execution
         set responsible = :responsible,
             signPath = :signPath,
-            signDate = :signDate
+            signDate = :signDate,
+            executionStatus = 'FINISHED'
         where directExecutionId = :directExecutionId
     """
     )

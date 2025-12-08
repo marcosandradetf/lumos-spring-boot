@@ -93,33 +93,33 @@ fun Content(
             navController.popBackStack()
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE){
+            navController.navigate(Routes.MAINTENANCE) {
                 popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
             }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK){
+            navController.navigate(Routes.STOCK) {
                 popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
             }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE){
+            navController.navigate(Routes.MORE) {
                 popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
             }
         },
         navigateToHome = {
-            navController.navigate(Routes.HOME){
+            navController.navigate(Routes.HOME) {
                 popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
             }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER){
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
                 popUpTo(Routes.PRE_MEASUREMENT_INSTALLATION_FLOW) { inclusive = true }
             }
         }
     ) { _, showSnackBar ->
 
-        if(errorMessage != null) {
+        if (errorMessage != null) {
             showSnackBar(errorMessage, null, null)
         }
 
@@ -301,7 +301,7 @@ fun Content(
 
 
 @SuppressLint("ViewModelConstructorInComposable")
-@Preview()
+@Preview
 @Composable
 fun PrevStreetsScreen() {
     val mockInstallationStreets = listOf(

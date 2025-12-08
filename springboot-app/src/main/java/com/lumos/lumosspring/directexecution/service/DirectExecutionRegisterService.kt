@@ -1,10 +1,12 @@
 package com.lumos.lumosspring.directexecution.service
 
 import com.lumos.lumosspring.directexecution.dto.InstallationRequest
+import com.lumos.lumosspring.directexecution.dto.InstallationStreetRequest
 import com.lumos.lumosspring.directexecution.model.DirectExecutionExecutor
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreet
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreetItem
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionExecutorRepository
+import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepository
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryStreet
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryStreetItem
 import com.lumos.lumosspring.minio.service.MinioService
@@ -30,10 +32,11 @@ class DirectExecutionRegisterService(
     private val directExecutionRepositoryStreet: DirectExecutionRepositoryStreet,
     private val directExecutionRepositoryStreetItem: DirectExecutionRepositoryStreetItem,
     private val directExecutionExecutorRepository: DirectExecutionExecutorRepository,
+    private val directExecutionRepository: DirectExecutionRepository,
 ) {
 
     @Transactional
-    fun saveStreetInstallation(photo: MultipartFile, installationReq: InstallationRequest?): ResponseEntity<Any> {
+    fun saveStreetInstallation(photo: MultipartFile, installationReq: InstallationStreetRequest?): ResponseEntity<Any> {
         if (installationReq == null) {
             return ResponseEntity.badRequest().body("payload vazio.")
         }
@@ -66,7 +69,7 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "execution")
+        val fileUri = minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
         installationStreet.executionPhotoUri = fileUri
 
         try {
@@ -224,20 +227,13 @@ class DirectExecutionRegisterService(
         return ResponseEntity.ok().build()
     }
 
-
     @Transactional
     fun finishDirectExecution(directExecutionId: Long, operationalUsers: List<UUID>? = null): ResponseEntity<Any> {
-        val hasFinished = JdbcUtil.getSingleRow(
-            namedJdbc,
-            "SELECT 1 as result FROM direct_execution des WHERE direct_execution_status = :status AND direct_execution_id = :directExecutionId",
-            mapOf(
-                "directExecutionId" to directExecutionId,
-                "status" to ExecutionStatus.FINISHED
-            ),
-        )?.get("result") != null
+        val installation = directExecutionRepository.getInstallation(directExecutionId)
+        val status = installation?.status
 
-        if (hasFinished) {
-            return ResponseEntity.status(409).body("Execução já finalizada anteriormente")
+        if (status == ExecutionStatus.FINISHED) {
+            return ResponseEntity.noContent().build()
         }
 
         operationalUsers?.let { users ->
@@ -264,15 +260,77 @@ class DirectExecutionRegisterService(
             )
         )
 
+        directExecutionRepository.finishDirectExecution(
+            id = directExecutionId,
+            status = ExecutionStatus.FINISHED,
+            signatureUri = null,
+            signDate = null,
+            responsible = null
+        )
+
+        return ResponseEntity.ok().build()
+    }
+
+    @Transactional
+    fun finishDirectExecutionV2(photo: MultipartFile?, request: InstallationRequest?): ResponseEntity<Any> {
+        if (request == null) {
+            throw Utils.BusinessException("Payload is null")
+        }
+
+        val directExecutionId = request.directExecutionId
+        val installation = directExecutionRepository.getInstallation(directExecutionId)
+        val description = installation?.description
+        val status = installation?.status
+
+        if (status == ExecutionStatus.FINISHED) {
+            return ResponseEntity.noContent().build()
+        }
+
+        val fileUri =
+            if (photo != null) {
+                var folder = "photos"
+
+                if (description != null) {
+                    folder += "/${description.replace("\\s+".toRegex(), "_")}"
+                }
+
+                if (request.responsible != null) {
+                    folder += "/${request.responsible.replace("\\s+".toRegex(), "_")}"
+                }
+
+                minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+            } else null
+
+        directExecutionRepository.finishDirectExecution(
+            id = directExecutionId,
+            status = ExecutionStatus.FINISHED,
+            signatureUri = fileUri,
+            signDate = request.signDate,
+            responsible = request.responsible
+        )
+
+        request.operationalUsers?.let { users ->
+            directExecutionExecutorRepository.saveAll(
+                users.map { userId ->
+                    DirectExecutionExecutor(
+                        directExecutionId = directExecutionId,
+                        userId = userId,
+                        isNewEntry = true
+                    )
+                }
+            )
+        }
+
         namedJdbc.update(
             """
-            UPDATE direct_execution set direct_execution_status = :status
-            where direct_execution_id = :directExecutionId
-        """.trimIndent(),
+                    UPDATE material_reservation
+                    SET status = :status
+                    WHERE direct_execution_id = :directExecutionId
+                """.trimIndent(),
             mapOf(
                 "directExecutionId" to directExecutionId,
-                "status" to ExecutionStatus.FINISHED
-            ),
+                "status" to ReservationStatus.FINISHED
+            )
         )
 
         return ResponseEntity.ok().build()

@@ -41,7 +41,7 @@ data class DirectReserve(
     val currentItemName: String,
 )
 
-data class InstallationRequest(
+data class InstallationStreetRequest(
     val directExecutionId: Long,
     val description: String,
     val deviceStreetId: Long,
@@ -62,4 +62,12 @@ data class InstallationItemRequest(
     val truckMaterialStockId: Long,
     val quantityExecuted: BigDecimal,
     val materialName: String
+)
+
+data class InstallationRequest(
+    val directExecutionId: Long,
+    val responsible: String? = null,
+    val signPath: String? = null,
+    val signDate: Instant? = null,
+    val operationalUsers: List<UUID>? = null
 )

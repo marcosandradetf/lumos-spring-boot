@@ -25,9 +25,10 @@ interface DirectExecutionApi {
         @Part("execution") execution: RequestBody
     ): Response<Void>
 
-    @POST("api/mobile/v2/execution/finish-direct-execution/{directExecutionId}")
+    @Multipart
+    @POST("api/mobile/v2/direct-execution/finish")
     suspend fun submitDirectExecution(
-        @Part photo: MultipartBody.Part?,
+        @Part signature: MultipartBody.Part?,
         @Part("installation") installation: RequestBody?,
     ): Response<Void>
 }

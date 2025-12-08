@@ -234,10 +234,6 @@ class PreMeasurementInstallationRepository(
         val json = gson.toJson(payload)
         val jsonBody = json.toRequestBody("application/json".toMediaType())
 
-        if (payload.signUri == null) {
-            RequestResult.NoInternet
-        }
-
         val imagePart = payload.signUri?.let  {
             val file = getFileFromUri(
                 app.applicationContext,
@@ -250,7 +246,7 @@ class PreMeasurementInstallationRepository(
 
         val response = ApiExecutor.execute {
             api.submitInstallation(
-                photo = imagePart,
+                signature = imagePart,
                 installation = jsonBody
             )
         }

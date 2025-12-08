@@ -73,7 +73,7 @@ class MaintenanceViewModel(
 
             delay(5000)
 
-            _uiState.update { it.copy() }
+            _uiState.update { it.copy(message = null) }
         }
     }
 
@@ -208,7 +208,13 @@ class MaintenanceViewModel(
 
     fun resetFormState() {
         _uiState.update {
-            it.copy()
+            it.copy(
+                maintenanceId = null,
+                message = null,
+                finish = false,
+                streetCreated = false,
+                contractSelected = false
+            )
         }
     }
 

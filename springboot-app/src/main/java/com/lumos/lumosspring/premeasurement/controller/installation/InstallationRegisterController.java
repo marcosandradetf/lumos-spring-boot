@@ -33,10 +33,10 @@ public class InstallationRegisterController {
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
     )
     public ResponseEntity<?> saveInstallation(
-            @RequestPart(value = "photo", required = false) MultipartFile photo,
+            @RequestPart(value = "signature", required = false) MultipartFile signature,
             @RequestPart("installation") InstallationRequest installationReq
     ) {
-        return registerService.saveInstallation(photo, installationReq);
+        return registerService.saveInstallation(signature, installationReq);
     }
 
 

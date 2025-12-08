@@ -50,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +87,7 @@ import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.sanitizeDecimalInput
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.UUID
@@ -216,27 +218,27 @@ fun StreetMaintenanceContent(
     val screwErrors = remember { mutableStateMapOf<Long, String?>() }
     var loadingCoordinates by remember { mutableStateOf(false) }
     var address by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         loadingCoordinates = true
         val (lat, long) = coordinates.execute()
         if (lat != null && long != null) {
-            val addr = AddressService(context).execute(lat, lat)
+            val addr = AddressService(context).execute(lat, long)
 
-            if (addr != null && addr.size >= 4) {
-                val streetName = addr[0]
-                val neighborhood = addr[1]
-                val city = addr[2]
+            val streetName = addr?.get(0)
+            val neighborhood = addr?.get(1)
+            val city = addr?.get(2)
 
-                street.address =
-                    "$streetName, $neighborhood, $city"
-                street.latitude = lat
-                street.longitude = lat
-
+            if (streetName != null) {
+                street.address = "$streetName, $neighborhood, $city"
                 address = street.address
             } else {
                 setMessage("Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente.")
             }
+
+            street.latitude = lat
+            street.longitude = lat
         }
         loadingCoordinates = false
     }
@@ -246,22 +248,22 @@ fun StreetMaintenanceContent(
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateBack = navigateBack,
         navigateToHome = {
-            navController.navigate(Routes.HOME){
+            navController.navigate(Routes.HOME) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE){
+            navController.navigate(Routes.MORE) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK){
+            navController.navigate(Routes.STOCK) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER){
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         }
@@ -351,6 +353,16 @@ fun StreetMaintenanceContent(
                             reason = null
                         )
                         newStreet()
+
+                        scope.launch {
+                            val (lat, long) = coordinates.execute()
+                            if (lat != null && long != null) {
+                                street = street.copy(
+                                    latitude = lat,
+                                    longitude = long,
+                                )
+                            }
+                        }
                     }
                 ) {
                     Text("Inserir outro ponto")

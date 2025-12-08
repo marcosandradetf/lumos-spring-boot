@@ -142,7 +142,7 @@ public class StockistInstallationService {
                             var items = namedJdbc.query(
                                     """
                                             select ci.contract_item_id,
-                                                   cri.name_for_import as description,
+                                                   coalesce(cri.name_for_import, cri.description) as description,
                                                    dei.measured_item_quantity as quantity,
                                                    cri.type,
                                                    cri.linking,

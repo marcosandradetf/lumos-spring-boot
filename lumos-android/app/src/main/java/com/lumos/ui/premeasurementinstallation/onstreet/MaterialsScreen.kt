@@ -718,7 +718,8 @@ fun MaterialItem(
             Text(
                 text = material.materialName,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
             )
             if (material.specs != null) Tag(material.specs, MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(4.dp))

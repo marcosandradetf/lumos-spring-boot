@@ -38,10 +38,11 @@ class DirectExecutionViewModel(
 ) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
-    var installationId by mutableStateOf<Long?>(null)
-    var creationDate by mutableStateOf(mockCreationDate)
-    var contractId by mutableStateOf<Long?>(null)
-    var contractor by mutableStateOf(mockContractor)
+    var installationId by mutableStateOf(savedStateHandle.get<Long>("id"))
+    var creationDate by mutableStateOf(savedStateHandle.get<String>("creationDate"))
+    var contractId by mutableStateOf(savedStateHandle.get<Long>("contractId"))
+    var contractor by mutableStateOf(savedStateHandle.get<String>("contractor"))
+    var instructions by mutableStateOf(savedStateHandle.get<String>("instructions"))
 
     var street by mutableStateOf<DirectExecutionStreet?>(null)
     var streets by mutableStateOf(mockStreets)
@@ -69,54 +70,60 @@ class DirectExecutionViewModel(
     var signDate: String? = null
 
     var responsibleError by mutableStateOf<String?>(null)
-    var instructions by mutableStateOf<String?>(null)
     var hasResponsible by mutableStateOf<Boolean?>(null)
 
     // -> control viewModel
     init {
+        setStreets()
         viewModelScope.launch {
-            NavEvents.route.collect { route ->
-                when (route) {
-                    Routes.INSTALLATION_HOLDER -> {
-                        installationId = null
-                        contractId = null
-                        contractor = null
-                        creationDate = null
-                        instructions = null
+            savedStateHandle
+                .getStateFlow("route_event", null as String?)
+                .collect { route ->
+                    when (route) {
+                        Routes.INSTALLATION_HOLDER -> {
+                            installationId = null
+                            contractId = null
+                            contractor = null
+                            creationDate = null
+                            instructions = null
 
-                        streets = emptyList()
-                        reserves = emptyList()
+                            streets = emptyList()
+                            reserves = emptyList()
 
-                        street = null
-                        streetItems = emptyList()
+                            street = null
+                            streetItems = emptyList()
 
-                        alertModal = false
-                        hasPosted = false
-                        confirmModal = false
-                        showSignScreen = false
-                        showFinishForm = false
+                            alertModal = false
+                            hasPosted = false
+                            confirmModal = false
+                            showSignScreen = false
+                            showFinishForm = false
 
-                        hasResponsible = null
-                        responsible = null
-                        signPath = null
-                        signDate = null
+                            hasResponsible = null
+                            responsible = null
+                            signPath = null
+                            signDate = null
 
-                        sameStreet = false
-                        stockCount = 0
-                    }
+                            sameStreet = false
+                            stockCount = 0
+                        }
 
-                    Routes.DIRECT_EXECUTION_HOME_SCREEN -> {
-                        street = null
-                        streetItems = emptyList()
+                        Routes.DIRECT_EXECUTION_HOME_SCREEN -> {
+                            showSignScreen = false
+                            showFinishForm = false
+                            hasPosted = false
+                            street = null
+                            streetItems = emptyList()
 
-                        loadExecutionData()
-                    }
+                            setStreets()
+                            loadExecutionData()
+                        }
 
-                    Routes.DIRECT_EXECUTION_SCREEN_MATERIALS -> {
-                        initializeExecution(installationId!!, contractor!!)
+                        Routes.DIRECT_EXECUTION_SCREEN_MATERIALS -> {
+                            initializeExecution(installationId!!, contractor!!)
+                        }
                     }
                 }
-            }
         }
     }
 
@@ -221,6 +228,7 @@ class DirectExecutionViewModel(
                         streetItems
                     )
                 }
+                showFinishForm = false
                 hasPosted = true
             } catch (e: IllegalStateException) {
                 isLoading = false
@@ -235,6 +243,7 @@ class DirectExecutionViewModel(
     }
 
     fun submitInstallation() {
+        isLoading = true
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -244,10 +253,13 @@ class DirectExecutionViewModel(
                         signPath,
                         signDate
                     )
-                    street = null
                 }
+                installationId = null
+                street = null
             } catch (e: Exception) {
                 errorMessage = e.message
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -289,7 +301,9 @@ class DirectExecutionViewModel(
             errorMessage = null
             try {
                 withContext(Dispatchers.IO) {
-                    streets = repository?.getStreets(installationId)!!
+                    streets = repository?.getStreets(installationId) ?: emptyList()
+                    println(installationId)
+                    println(streets)
                 }
             } catch (e: Exception) {
                 errorMessage = e.message ?: "Erro ao carregar as ruas da pré-medição"

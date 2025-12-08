@@ -24,7 +24,7 @@ interface PreMeasurementInstallationApi {
     @Multipart
     @POST("api/mobile/v1/pre-measurement/installation/save-installation")
     suspend fun submitInstallation(
-        @Part photo: MultipartBody.Part?,
+        @Part signature: MultipartBody.Part?,
         @Part("installation") installation: RequestBody
     ): Response<Void>
 }
