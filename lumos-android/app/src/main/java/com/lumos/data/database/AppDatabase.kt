@@ -73,7 +73,7 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
         (PreMeasurementInstallationStreet::class),
         (PreMeasurementInstallationItem::class),
     ],
-    version = 16,
+    version = 17,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -644,9 +644,14 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("alter table pre_measurement add column status text not null")
+            }
+        }
+
+        private val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // pre measurement
                 db.execSQL("delete from pre_measurement")
-                db.execSQL("alter table pre_measurement add column status text not null")
                 db.execSQL("alter table team add column notificationTopic text")
                 db.execSQL("alter table pre_measurement add column startedAt text not null")
 
@@ -687,13 +692,13 @@ abstract class AppDatabase : RoomDatabase() {
                             priority INTEGER NOT NULL,
                             latitude REAL,
                             longitude REAL,
-                            lastPower TEXT,
+                            lastPower TEXT NOT NULL,
                             photoUrl TEXT,
                             photoExpiration INTEGER,
                             objectUri TEXT,
-                            
                             status TEXT NOT NULL,
                             installationPhotoUri TEXT,
+                            currentSupply TEXT
                         );
                 """.trimIndent()
                 )
@@ -749,6 +754,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_13_14,
                     MIGRATION_14_15,
                     MIGRATION_15_16,
+                    MIGRATION_16_17,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

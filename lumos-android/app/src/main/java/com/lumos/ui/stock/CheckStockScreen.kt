@@ -133,7 +133,7 @@ fun CheckStockScreen(
                 listOf(
                     SyncTypes.POST_MAINTENANCE_STREET,
                     SyncTypes.POST_DIRECT_EXECUTION,
-                    SyncTypes.POST_INDIRECT_EXECUTION,
+                    SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET,
                 )
             )
         } else {
@@ -151,7 +151,7 @@ fun CheckStockScreen(
                     listOf(
                         SyncTypes.POST_MAINTENANCE_STREET,
                         SyncTypes.POST_DIRECT_EXECUTION,
-                        SyncTypes.POST_INDIRECT_EXECUTION,
+                        SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET,
                     )
                 )
             } else {

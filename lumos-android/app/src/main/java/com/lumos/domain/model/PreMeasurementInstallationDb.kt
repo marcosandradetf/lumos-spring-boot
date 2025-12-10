@@ -33,7 +33,6 @@ data class PreMeasurementInstallationStreet(
     val photoUrl: String?,
     val photoExpiration: Long?,
     val objectUri: String?,
-
     val status: String = "PENDING",
     val installationPhotoUri: String? = null,
     val currentSupply: String? = null,

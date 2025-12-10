@@ -127,7 +127,6 @@ class ContractRepository(
     }
 
     suspend fun checkBalance(): Boolean {
-        println("checkBalance")
         val count = db.queueDao().countPendingItemsByTypes(listOf(SyncTypes.POST_DIRECT_EXECUTION, SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET))
         return count == 0
     }
