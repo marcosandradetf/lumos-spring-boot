@@ -528,12 +528,21 @@ fun AppNavigation(
                 startDestination = Routes.PRE_MEASUREMENT_INSTALLATION_STREETS
             ) {
                 composable(
-                    route = "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/{id}/{contractor}/{contractId}/{instructions}",
+                    route = "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/{id}/{contractor}"
+                            + "?contractId={contractId}&instructions={instructions}",
                     arguments = listOf(
                         navArgument("id") { type = NavType.StringType },
                         navArgument("contractor") { type = NavType.StringType },
-                        navArgument("contractId") { type = NavType.LongType },
-                        navArgument("instructions") { type = NavType.StringType },
+                        navArgument("contractId") {
+                            type = NavType.LongType
+                            nullable = true
+                            defaultValue = null
+                        },
+                        navArgument("instructions") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
                     )
                 ) { backStackEntry ->
                     val parentEntry = remember(backStackEntry) {
@@ -584,13 +593,22 @@ fun AppNavigation(
                 startDestination = Routes.DIRECT_EXECUTION_HOME_SCREEN
             ) {
                 composable(
-                    route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{contractId}/{creationDate}/{instructions}",
+                    route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{creationDate}" +
+                            "?contractId={contractId}&instructions={instructions}",
                     arguments = listOf(
                         navArgument("id") { type = NavType.LongType },
                         navArgument("contractor") { type = NavType.StringType },
-                        navArgument("contractId") { type = NavType.LongType },
                         navArgument("creationDate") { type = NavType.StringType },
-                        navArgument("instructions") { type = NavType.StringType },
+                        navArgument("contractId") {
+                            type = NavType.LongType
+                            nullable = true
+                            defaultValue = null
+                        },
+                        navArgument("instructions") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
                     )
                 ) { backStackEntry ->
                     val parentEntry = remember(backStackEntry) {

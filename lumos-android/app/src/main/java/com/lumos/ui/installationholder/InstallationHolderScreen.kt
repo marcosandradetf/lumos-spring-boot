@@ -1,5 +1,6 @@
 package com.lumos.ui.installationholder
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -116,13 +117,22 @@ fun InstallationHolderScreen(
         navController = navController,
         isSyncing = isSyncing,
         select = { id, type, contractor, contractId, creationDate, instructions ->
+            val contractParam = contractId?.let { "contractId=$it" }
+            val instructionsParam = instructions?.let { "instructions=${Uri.encode(it)}" }
+
+            val query = listOfNotNull(contractParam, instructionsParam)
+                .joinToString("&")
+                .let { if (it.isNotEmpty()) "?$it" else "" }
+
+            // String, String, String, Long?, String, String?
             if (type != "PreMeasurementInstallation") {
                 navController.navigate(
-                    "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$id/$contractor/$contractId/$creationDate/$instructions"
+                    "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$id/$contractor/$creationDate$query"
                 )
+
             } else {
                 navController.navigate(
-                    "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/$id/$contractor/$contractId/$instructions"
+                    "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/$id/$contractor$query"
                 )
             }
         },
