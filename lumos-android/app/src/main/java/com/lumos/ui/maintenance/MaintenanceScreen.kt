@@ -49,6 +49,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Contract
 import com.lumos.domain.model.Maintenance
+import com.lumos.domain.service.AddressService
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
@@ -75,7 +77,9 @@ fun MaintenanceScreen(
     maintenanceViewModel: MaintenanceViewModel,
     navController: NavHostController,
     lastRoute: String?,
-    secureStorage: SecureStorage
+    secureStorage: SecureStorage,
+    coordinatesService: CoordinatesService,
+    addressService: AddressService
 ) {
     val viewModelAux: MaintenanceHomeViewModel = viewModel()
     val uiState by maintenanceViewModel.uiState.collectAsState()
@@ -193,7 +197,11 @@ fun MaintenanceScreen(
                         maintenanceViewModel.setScreenState(MaintenanceUIState.HOME)
                     },
                     saveStreet = { street, items, coordinatesService ->
-                        maintenanceViewModel.insertMaintenanceStreet(street, items, coordinatesService)
+                        maintenanceViewModel.insertMaintenanceStreet(
+                            street,
+                            items,
+                            coordinatesService
+                        )
                     },
                     lastRoute = lastRoute,
                     streetCreated = uiState.streetCreated,
@@ -204,7 +212,9 @@ fun MaintenanceScreen(
                     },
                     stockData = stock,
                     message = uiState.message,
-                    setMessage = { maintenanceViewModel.setMessage(it) }
+                    setMessage = { maintenanceViewModel.setMessage(it) },
+                    coordinates = coordinatesService,
+                    addressService = addressService
                 )
             } else {
                 CurrentScreenLoading(

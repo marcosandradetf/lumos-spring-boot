@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.lumos.domain.model.InstallationItemRequest
 import com.lumos.domain.model.InstallationRequest
+import com.lumos.domain.model.InstallationStreetPayload
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallation
 import com.lumos.domain.model.PreMeasurementInstallationItem
@@ -82,12 +83,12 @@ interface PreMeasurementInstallationDao {
 
     @Query(
         """
-        select installationPhotoUri
+        select installationPhotoUri, currentSupply, lastPower, latitude, longitude
         from PreMeasurementInstallationStreet
         where preMeasurementStreetId = :streetID
     """
     )
-    suspend fun getPhotoUri(streetID: String): String?
+    suspend fun getInstallationStreetPayload(streetID: String): InstallationStreetPayload?
 
     @Query(
         """

@@ -28,6 +28,8 @@ public class PreMeasurementStreetItem {
     private String contractServiceIdMask;
     private BigDecimal contractServiceDividerPrices = BigDecimal.ZERO;
 
+    private BigDecimal quantityExecuted = BigDecimal.ZERO;
+
 
     public Long getPreMeasurementStreetItemId() {
         return preMeasurementStreetItemId;
@@ -107,5 +109,13 @@ public class PreMeasurementStreetItem {
 
     public void setContractServiceDividerPrices(BigDecimal contractServiceDividerPrices) {
         this.contractServiceDividerPrices = contractServiceDividerPrices;
+    }
+
+    public BigDecimal getQuantityExecuted() {
+        return quantityExecuted;
+    }
+
+    public void setQuantityExecuted(BigDecimal quantityExecuted) {
+        this.quantityExecuted = quantityExecuted;
     }
 }

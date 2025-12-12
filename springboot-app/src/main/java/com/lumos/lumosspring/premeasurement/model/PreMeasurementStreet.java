@@ -53,6 +53,10 @@ public class PreMeasurementStreet {
 
     private String executionPhotoUri;
 
+    private String currentSupply;
+    private Double installationLatitude;
+    private Double installationLongitude;
+
 
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
@@ -213,5 +217,29 @@ public class PreMeasurementStreet {
 
     public void setExecutionPhotoUri(String executionPhotoUri) {
         this.executionPhotoUri = executionPhotoUri;
+    }
+
+    public Double getInstallationLongitude() {
+        return installationLongitude;
+    }
+
+    public void setInstallationLongitude(Double installationLongitude) {
+        this.installationLongitude = installationLongitude;
+    }
+
+    public Double getInstallationLatitude() {
+        return installationLatitude;
+    }
+
+    public void setInstallationLatitude(Double installationLatitude) {
+        this.installationLatitude = installationLatitude;
+    }
+
+    public String getCurrentSupply() {
+        return currentSupply;
+    }
+
+    public void setCurrentSupply(String currentSupply) {
+        this.currentSupply = currentSupply;
     }
 }

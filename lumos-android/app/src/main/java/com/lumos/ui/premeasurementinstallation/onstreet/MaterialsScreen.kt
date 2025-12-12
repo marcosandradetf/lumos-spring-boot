@@ -90,6 +90,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationStreet
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
@@ -115,6 +116,7 @@ fun MaterialScreen(
     viewModel: PreMeasurementInstallationViewModel,
     context: Context,
     navController: NavHostController,
+    coordinatesService: CoordinatesService
 ) {
     LaunchedEffect(Unit) {
         viewModel.loading = false
@@ -150,6 +152,7 @@ fun MaterialScreen(
             viewModel = viewModel,
             navController = navController,
             context = context,
+            coordinatesService = coordinatesService
         )
     }
 }
@@ -159,6 +162,7 @@ fun MaterialsContent(
     viewModel: PreMeasurementInstallationViewModel,
     navController: NavHostController,
     context: Context,
+    coordinatesService: CoordinatesService
 ) {
     val currentStreets = viewModel.currentInstallationStreets
     val currentStreet = viewModel.currentStreet
@@ -556,7 +560,7 @@ fun MaterialsContent(
                                     finish = {
                                         if (currentStreet?.installationPhotoUri == null) viewModel.alertModal =
                                             true
-                                        else viewModel.submitStreet()
+                                        else viewModel.submitStreet(coordinatesService = coordinatesService)
                                     },
                                     restart = {
                                         viewModel.setStreetAndItems(viewModel.currentStreetId ?: "")
@@ -979,29 +983,29 @@ fun PrevMScreen() {
         )
     )
 
-    MaterialsContent(
-        viewModel = PreMeasurementInstallationViewModel(
-            repository = null,
-            contractRepository = null,
-            null,
-            mockStreets = mockInstallationStreets,
-            mockItems = emptyList(),
-            mockCurrentStreet = PreMeasurementInstallationStreet(
-                preMeasurementStreetId = "",
-                preMeasurementId = "",
-                address = "Rua Dona Tina, 251 - Palmeiras, Belo Horizonte - MG",
-                priority = false,
-                latitude = 1.1,
-                longitude = 1.2,
-                lastPower = "100W",
-                photoUrl = "https://cdn.pixabay.com/photo/2025/06/22/19/27/back-lit-9674838_1280.jpg",
-                photoExpiration = 1L,
-                objectUri = "",
-                status = "",
-                installationPhotoUri = null
-            )
-        ),
-        navController = rememberNavController(),
-        context = LocalContext.current
-    )
+//    MaterialsContent(
+//        viewModel = PreMeasurementInstallationViewModel(
+//            repository = null,
+//            contractRepository = null,
+//            null,
+//            mockStreets = mockInstallationStreets,
+//            mockItems = emptyList(),
+//            mockCurrentStreet = PreMeasurementInstallationStreet(
+//                preMeasurementStreetId = "",
+//                preMeasurementId = "",
+//                address = "Rua Dona Tina, 251 - Palmeiras, Belo Horizonte - MG",
+//                priority = false,
+//                latitude = 1.1,
+//                longitude = 1.2,
+//                lastPower = "100W",
+//                photoUrl = "https://cdn.pixabay.com/photo/2025/06/22/19/27/back-lit-9674838_1280.jpg",
+//                photoExpiration = 1L,
+//                objectUri = "",
+//                status = "",
+//                installationPhotoUri = null
+//            )
+//        ),
+//        navController = rememberNavController(),
+//        context = LocalContext.current,
+//    )
 }

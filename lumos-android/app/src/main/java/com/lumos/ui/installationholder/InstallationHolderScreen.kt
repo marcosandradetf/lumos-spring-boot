@@ -117,6 +117,10 @@ fun InstallationHolderScreen(
         navController = navController,
         isSyncing = isSyncing,
         select = { id, type, contractor, contractId, creationDate, instructions ->
+
+            val contractorEncoded = Uri.encode(contractor)
+            val creationDateEncoded = Uri.encode(creationDate)
+
             val contractParam = contractId?.let { "contractId=$it" }
             val instructionsParam = instructions?.let { "instructions=${Uri.encode(it)}" }
 
@@ -124,15 +128,14 @@ fun InstallationHolderScreen(
                 .joinToString("&")
                 .let { if (it.isNotEmpty()) "?$it" else "" }
 
-            // String, String, String, Long?, String, String?
             if (type != "PreMeasurementInstallation") {
                 navController.navigate(
-                    "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$id/$contractor/$creationDate$query"
+                    "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$id/$contractorEncoded/$creationDateEncoded$query"
                 )
-
             } else {
+                val uuidEncoded = Uri.encode(id)
                 navController.navigate(
-                    "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/$id/$contractor$query"
+                    "${Routes.PRE_MEASUREMENT_INSTALLATION_STREETS}/$uuidEncoded/$contractorEncoded$query"
                 )
             }
         },

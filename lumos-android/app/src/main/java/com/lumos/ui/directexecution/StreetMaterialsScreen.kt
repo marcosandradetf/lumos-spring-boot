@@ -105,9 +105,9 @@ fun StreetMaterialScreen(
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
     navController: NavHostController,
+    coordinates: CoordinatesService,
+    addressService: AddressService
 ) {
-    val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
-    val coordinates = CoordinatesService(context, fusedLocationProvider)
     var currentAddress by remember { mutableStateOf("") }
     val contractor = directExecutionViewModel.contractor
 
@@ -138,7 +138,7 @@ fun StreetMaterialScreen(
             directExecutionViewModel.loadingCoordinates = true
             val (lat, long) = coordinates.execute()
             if (lat != null && long != null) {
-                val addr = AddressService(context).execute(lat, long)
+                val addr = addressService.execute(lat, long)
 
                 if (addr != null && addr.size >= 4) {
                     val streetName = addr[0]
@@ -392,7 +392,7 @@ fun StreetMaterialScreen(
                     if (action == "back") {
                         navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
                             .savedStateHandle["route_event"] =
-                            Routes.DIRECT_EXECUTION_SCREEN_MATERIALS
+                            Routes.DIRECT_EXECUTION_HOME_SCREEN
 
                         navController.popBackStack()
                     } else {
@@ -559,22 +559,27 @@ fun StreetMaterialsContent(
         title = description,
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateToMore = {
+            action = Routes.MORE
             openModal(Routes.MORE)
         },
         navigateToHome = {
+            action = Routes.HOME
             openModal(Routes.HOME)
         },
         navigateBack = {
-            openModal(Routes.INSTALLATION_HOLDER)
+            action = "back"
+            openModal("back")
         },
-
         navigateToStock = {
+            action = Routes.STOCK
             openModal(Routes.STOCK)
         },
         navigateToExecutions = {
+            action = Routes.INSTALLATION_HOLDER
             openModal(Routes.INSTALLATION_HOLDER)
         },
         navigateToMaintenance = {
+            action = Routes.MAINTENANCE
             openModal(Routes.MAINTENANCE)
         }
 
@@ -999,6 +1004,11 @@ fun InstallationData(
         },
         navigateToExecutions = {
             navController.navigate(Routes.INSTALLATION_HOLDER) {
+                popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+            }
+        },
+        navigateToMaintenance = {
+            navController.navigate(Routes.MAINTENANCE) {
                 popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
             }
         }

@@ -18,10 +18,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.google.android.gms.location.LocationServices
 import com.lumos.MyApp
 import com.lumos.api.ContractApi
 import com.lumos.api.DirectExecutionApi
 import com.lumos.api.PreMeasurementApi
+import com.lumos.domain.service.AddressService
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.midleware.SecureStorage
 import com.lumos.notifications.FCMService
 import com.lumos.notifications.FCMService.FCMBus
@@ -100,7 +103,6 @@ object Routes {
     const val PRE_MEASUREMENTS = "pre-measurements"
     const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
-
     const val INSTALLATION_HOLDER = "installation-holder-screen"
     const val MAINTENANCE = "maintenance"
     const val STOCK = "stock"
@@ -112,14 +114,12 @@ object Routes {
     const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
 
     // -> direct-installations
-
     const val DIRECT_EXECUTION_FLOW = "direct-execution-flow"
     const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
     const val UPDATE = "update"
     const val SYNC_FLOW = "sync-flow"
     const val SYNC = "sync"
-
     const val TEAM_SCREEN = "team-screen"
 }
 
@@ -129,67 +129,91 @@ fun AppNavigation(
     secureStorage: SecureStorage,
     actionState: MutableState<String?>
 ) {
+    val context = LocalContext.current
     val notificationItem by FCMBus.notificationItem.collectAsState()
     val navController = rememberNavController()
     val loggedIn by SessionManager.loggedIn.collectAsState()
     val loggedOut by SessionManager.loggedOut.collectAsState()
     val sessionExpired by SessionManager.sessionExpired.collectAsState()
     val checkingSession by SessionManager.checkingSession.collectAsState()
-    val notificationManager = NotificationManager()
-    val viewRepository = ViewRepository(app.database)
-    val authRepository = AuthRepository(app.retrofit, secureStorage, app, notificationManager)
+    val notificationManager = remember { NotificationManager() }
 
-    val api = app.retrofit.create(PreMeasurementApi::class.java)
-    val preMeasurementRepository = PreMeasurementRepository(app.database, api, app)
+    val viewRepository = remember { ViewRepository(app.database) }
+    val authRepository =
+        remember { AuthRepository(app.retrofit, secureStorage, app, notificationManager) }
+    val preMeasurementRepository = remember {
+        PreMeasurementRepository(
+            app.database,
+            app.retrofit.create(PreMeasurementApi::class.java),
+            app
+        )
+    }
+    val fusedLocationProvider =
+        remember(context) { LocationServices.getFusedLocationProviderClient(context) }
+    val coordinatesService =
+        remember(context) { CoordinatesService(context, fusedLocationProvider) }
+    val addressService = remember(context) { AddressService(context) }
 
+    val contractRepository = remember {
+        ContractRepository(
+            db = app.database,
+            api = app.retrofit.create(ContractApi::class.java),
+            app = app
+        )
+    }
 
-    val contractRepository = ContractRepository(
-        db = app.database,
-        api = app.retrofit.create(ContractApi::class.java),
-        app = app
-    )
+    val preMeasurementInstallationRepository = remember {
+        PreMeasurementInstallationRepository(
+            db = app.database,
+            retrofit = app.retrofit,
+            secureStorage = secureStorage,
+            app = app
+        )
+    }
 
+    val directExecutionRepository = remember {
+        DirectExecutionRepository(
+            db = app.database,
+            api = app.retrofit.create(DirectExecutionApi::class.java),
+            secureStorage = secureStorage,
+            app = app
+        )
+    }
 
-    val preMeasurementInstallationRepository = PreMeasurementInstallationRepository(
-        db = app.database,
-        retrofit = app.retrofit,
-        secureStorage = secureStorage,
-        app = app
-    )
+    val notificationRepository = remember {
+        NotificationRepository(
+            db = app.database,
+            app = app
+        )
+    }
 
-    val directExecutionRepository = DirectExecutionRepository(
-        db = app.database,
-        api = app.retrofit.create(DirectExecutionApi::class.java),
-        secureStorage = secureStorage,
-        app = app
-    )
+    val maintenanceRepository = remember {
+        MaintenanceRepository(
+            db = app.database,
+            api = app.retrofit,
+            app = app,
+            secureStorage = secureStorage
+        )
+    }
 
-    val notificationRepository = NotificationRepository(
-        db = app.database,
-        app = app
-    )
+    val stockRepository = remember {
+        StockRepository(
+            db = app.database,
+            api = app.retrofit,
+            secureStorage = secureStorage,
+            app = app
+        )
+    }
 
-    val maintenanceRepository = MaintenanceRepository(
-        db = app.database,
-        api = app.retrofit,
-        app = app,
-        secureStorage = secureStorage
-    )
-
-    val stockRepository = StockRepository(
-        db = app.database,
-        api = app.retrofit,
-        secureStorage = secureStorage,
-        app = app
-    )
-
-    val teamRepository = TeamRepository(
-        db = app.database,
-        api = app.retrofit,
-        secureStorage = secureStorage,
-        app = app,
-        notificationManager = notificationManager
-    )
+    val teamRepository = remember {
+        TeamRepository(
+            db = app.database,
+            api = app.retrofit,
+            secureStorage = secureStorage,
+            app = app,
+            notificationManager = notificationManager
+        )
+    }
 
     val notificationViewModel: NotificationViewModel = viewModel {
 
@@ -299,7 +323,7 @@ fun AppNavigation(
 
     if (sessionExpired) {
         Toast.makeText(
-            LocalContext.current,
+            context,
             "Sua sessão expirou, por favor faça login novamente!",
             Toast.LENGTH_LONG
         ).show()
@@ -333,7 +357,7 @@ fun AppNavigation(
 
                     LoginScreen(
                         viewModel = vm,
-                        context = LocalContext.current,
+                        context = context,
                         onTestClick = {}
                     )
                 }
@@ -351,7 +375,7 @@ fun AppNavigation(
                     ProfileScreen(
                         authViewModel = vm,
                         navController = navController,
-                        context = LocalContext.current,
+                        context = context,
                         notificationsBadge = "",
 
                         onNavigateToHome = {
@@ -412,7 +436,7 @@ fun AppNavigation(
                                 popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                             }
                         },
-                        context = LocalContext.current,
+                        context = context,
                         contractViewModel = cvm,
                         navController = navController,
                         notificationsBadge = "",
@@ -441,10 +465,12 @@ fun AppNavigation(
                     }
 
                     PreMeasurementStreetScreen(
-                        context = LocalContext.current,
+                        context = context,
                         preMeasurementViewModel = pvm,
                         contractViewModel = cvm,
-                        navController = navController
+                        navController = navController,
+                        coordinates = coordinatesService,
+                        addressService = addressService
                     )
                 }
 
@@ -474,7 +500,7 @@ fun AppNavigation(
                         onNavigateToPreMeasurements = {
                             navController.navigate(Routes.PRE_MEASUREMENTS)
                         },
-                        context = LocalContext.current,
+                        context = context,
                         preMeasurementViewModel = pvm,
                         navController = navController,
                     )
@@ -534,7 +560,7 @@ fun AppNavigation(
                         navArgument("id") { type = NavType.StringType },
                         navArgument("contractor") { type = NavType.StringType },
                         navArgument("contractId") {
-                            type = NavType.LongType
+                            type = NavType.StringType
                             nullable = true
                             defaultValue = null
                         },
@@ -582,8 +608,9 @@ fun AppNavigation(
 
                     MaterialScreen(
                         viewModel = vm,
-                        context = LocalContext.current,
+                        context = context,
                         navController = navController,
+                        coordinatesService = coordinatesService,
                     )
                 }
             }
@@ -600,7 +627,7 @@ fun AppNavigation(
                         navArgument("contractor") { type = NavType.StringType },
                         navArgument("creationDate") { type = NavType.StringType },
                         navArgument("contractId") {
-                            type = NavType.LongType
+                            type = NavType.StringType
                             nullable = true
                             defaultValue = null
                         },
@@ -644,8 +671,10 @@ fun AppNavigation(
 
                     StreetMaterialScreen(
                         directExecutionViewModel = vm,
-                        context = LocalContext.current,
+                        context = context,
                         navController = navController,
+                        coordinates = coordinatesService,
+                        addressService = addressService,
                     )
                 }
 
@@ -654,7 +683,7 @@ fun AppNavigation(
             composable(Routes.MORE) {
                 MenuScreen(
                     navController = navController,
-                    context = LocalContext.current
+                    context = context
                 )
             }
 
@@ -723,7 +752,7 @@ fun AppNavigation(
                         }
                     },
                     navController = navController,
-                    context = LocalContext.current,
+                    context = context,
                     notificationViewModel = notificationViewModel,
                 )
             }
@@ -734,7 +763,7 @@ fun AppNavigation(
                 val apkUrl = Uri.decode(encodedUrl)
                 ApkUpdateDownloader(
                     apkUrl = apkUrl,
-                    context = LocalContext.current,
+                    context = context,
                     navController,
                     "",
                 )
@@ -781,7 +810,7 @@ fun AppNavigation(
 
                     SyncDetailsScreen(
                         applicationContext = app.applicationContext,
-                        context = LocalContext.current,
+                        context = context,
                         navController,
                         "",
                         vm,
@@ -829,7 +858,9 @@ fun AppNavigation(
                     maintenanceViewModel = maintenanceViewModel,
                     navController = navController,
                     lastRoute = lastRoute,
-                    secureStorage = secureStorage
+                    secureStorage = secureStorage,
+                    coordinatesService = coordinatesService,
+                    addressService = addressService
                 )
             }
 

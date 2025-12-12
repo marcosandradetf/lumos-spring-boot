@@ -105,12 +105,10 @@ fun StreetMaintenanceContent(
     stockData: List<MaterialStock>,
     contractor: String?,
     message: String?,
-    setMessage: (String) -> Unit
+    setMessage: (String) -> Unit,
+    coordinates: CoordinatesService,
+    addressService: AddressService
 ) {
-    val context = LocalContext.current
-    val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
-    val coordinates = CoordinatesService(context, fusedLocationProvider)
-
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val navigateBack: (() -> Unit) =
@@ -224,7 +222,7 @@ fun StreetMaintenanceContent(
         loadingCoordinates = true
         val (lat, long) = coordinates.execute()
         if (lat != null && long != null) {
-            val addr = AddressService(context).execute(lat, long)
+            val addr = addressService.execute(lat, long)
 
             val streetName = addr?.get(0)
             val neighborhood = addr?.get(1)
@@ -1045,51 +1043,51 @@ fun StreetMaintenanceContent(
 @Preview
 @Composable
 fun PrevStreetMaintenance() {
-    StreetMaintenanceContent(
-        maintenanceId = UUID.randomUUID(),
-        navController = rememberNavController(),
-        loading = false,
-        lastRoute = null,
-        back = {
-
-        },
-        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem>, _ -> },
-        streetCreated = false,
-        newStreet = {},
-        stockData = listOf(
-            MaterialStock(
-                materialId = 1,
-                materialStockId = 11,
-                materialName = "LUMINÁRIA LED",
-                specs = "120W",
-                stockQuantity = "12.0",
-                stockAvailable = "0.0",
-                requestUnit = "UN",
-                type = "LED"
-            ),
-            MaterialStock(
-                materialId = 2,
-                materialStockId = 22,
-                materialName = "LÂMPADA DE SÓDIO TUBULAR",
-                specs = "400W",
-                stockQuantity = "15.0",
-                stockAvailable = "10.0",
-                requestUnit = "UN",
-                type = "LÂMPADA"
-            ),
-            MaterialStock(
-                materialId = 3,
-                materialStockId = 33,
-                materialName = "LÂMPADA DE MERCÚRIO",
-                specs = "250W",
-                stockQuantity = "62.0",
-                stockAvailable = "48.0",
-                requestUnit = "UN",
-                type = "LÂMPADA"
-            ),
-        ),
-        contractor = "",
-        message = null,
-        setMessage = {}
-    )
+//    StreetMaintenanceContent(
+//        maintenanceId = UUID.randomUUID(),
+//        navController = rememberNavController(),
+//        loading = false,
+//        lastRoute = null,
+//        back = {
+//
+//        },
+//        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem>, _ -> },
+//        streetCreated = false,
+//        newStreet = {},
+//        stockData = listOf(
+//            MaterialStock(
+//                materialId = 1,
+//                materialStockId = 11,
+//                materialName = "LUMINÁRIA LED",
+//                specs = "120W",
+//                stockQuantity = "12.0",
+//                stockAvailable = "0.0",
+//                requestUnit = "UN",
+//                type = "LED"
+//            ),
+//            MaterialStock(
+//                materialId = 2,
+//                materialStockId = 22,
+//                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+//                specs = "400W",
+//                stockQuantity = "15.0",
+//                stockAvailable = "10.0",
+//                requestUnit = "UN",
+//                type = "LÂMPADA"
+//            ),
+//            MaterialStock(
+//                materialId = 3,
+//                materialStockId = 33,
+//                materialName = "LÂMPADA DE MERCÚRIO",
+//                specs = "250W",
+//                stockQuantity = "62.0",
+//                stockAvailable = "48.0",
+//                requestUnit = "UN",
+//                type = "LÂMPADA"
+//            ),
+//        ),
+//        contractor = "",
+//        message = null,
+//        setMessage = {},
+//    )
 }

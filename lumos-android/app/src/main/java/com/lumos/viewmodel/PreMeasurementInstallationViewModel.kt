@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.lumos.api.RequestResult
 import com.lumos.domain.model.ItemView
 import com.lumos.domain.model.PreMeasurementInstallationStreet
+import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.PreMeasurementInstallationRepository
@@ -32,7 +33,7 @@ class PreMeasurementInstallationViewModel(
 ) : ViewModel() {
     var installationID by mutableStateOf(savedStateHandle?.get<String>("id"))
     var contractor: String? = savedStateHandle?.get<String>("contractor")
-    var contractId: Long? = savedStateHandle?.get<Long>("contractId")
+    var contractId: Long? = savedStateHandle?.get<String>("contractId")?.toLongOrNull()
     var instructions by mutableStateOf(savedStateHandle?.get<String>("instructions"))
     var signPhotoUri: String? = null
     var signDate: String? = null
@@ -43,6 +44,7 @@ class PreMeasurementInstallationViewModel(
     var currentStreetId: String? = null
 
     var currentStreet by mutableStateOf(mockCurrentStreet)
+
     // -> Bellow Properties to UI State
     var loading by mutableStateOf(false)
 
@@ -176,10 +178,12 @@ class PreMeasurementInstallationViewModel(
         viewModelScope.launch {
             buttonLoading = true
             try {
-                lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }?.copy(executedQuantity = quantityExecuted)
+                lastItem = currentInstallationItems.find { it.materialStockId == materialStockId }
+                    ?.copy(executedQuantity = quantityExecuted)
 
                 subtractCurrentBalance(contractItemId, quantityExecuted)
-                currentInstallationItems = currentInstallationItems.filter { it.materialStockId != materialStockId }
+                currentInstallationItems =
+                    currentInstallationItems.filter { it.materialStockId != materialStockId }
 
                 withContext(Dispatchers.IO) {
                     repository?.setInstallationItemQuantity(
@@ -191,7 +195,11 @@ class PreMeasurementInstallationViewModel(
 
                 message = "Item concluído com sucesso"
             } catch (e: Exception) {
-                Utils.sendLog("premeasurementinstallationviewmodel", "setInstallationItemQuantity", e.message)
+                Utils.sendLog(
+                    "premeasurementinstallationviewmodel",
+                    "setInstallationItemQuantity",
+                    e.message
+                )
                 message = e.message ?: ""
             } finally {
                 buttonLoading = false
@@ -199,12 +207,19 @@ class PreMeasurementInstallationViewModel(
         }
     }
 
-    fun submitStreet() {
+    fun submitStreet(coordinatesService: CoordinatesService) {
         viewModelScope.launch {
             loading = true
             try {
                 withContext(Dispatchers.IO) {
-                    repository?.queueSubmitStreet(currentStreet)
+                    val (lat, long) = coordinatesService.execute()
+                    repository?.queueSubmitStreet(
+                        currentStreet?.copy(
+                            latitude = lat ?: currentStreet?.latitude,
+                            longitude = long ?: currentStreet?.longitude,
+                            status = "FINISHED"
+                        )
+                    )
                 }
                 currentInstallationStreets =
                     currentInstallationStreets.filter { it.preMeasurementStreetId != currentStreetId }
@@ -237,7 +252,11 @@ class PreMeasurementInstallationViewModel(
             } catch (e: IllegalStateException) {
                 message = e.message
             } catch (e: Exception) {
-                Utils.sendLog("premeasurementinstallationviewmodel", "submitInstallation", e.message)
+                Utils.sendLog(
+                    "premeasurementinstallationviewmodel",
+                    "submitInstallation",
+                    e.message
+                )
                 message = e.message
             } finally {
                 loading = false

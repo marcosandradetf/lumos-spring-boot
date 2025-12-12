@@ -164,17 +164,19 @@ class PreMeasurementInstallationRepository(
         )
     }
 
-    suspend fun setPhotoUri(photoUri: String, streetId: String) {
-        db.preMeasurementInstallationDao().setPhotoInstallationUri(photoUri, streetId)
-    }
-
     suspend fun submitStreet(streetId: String): RequestResult<Unit> {
         val gson = Gson()
 
-        val photoUri = db.preMeasurementInstallationDao().getPhotoUri(streetId)
+        val payload = db.preMeasurementInstallationDao().getInstallationStreetPayload(streetId)
+        val photoUri = payload?.installationPhotoUri
         val items = db.preMeasurementInstallationDao().getStreetItemsPayload(streetId)
+
         val dto = InstallationStreetRequest(
             streetId = streetId,
+            currentSupply = payload?.currentSupply,
+            lastPower = payload?.lastPower,
+            latitude = payload?.latitude,
+            longitude = payload?.longitude,
             items = items
         )
 
@@ -330,7 +332,7 @@ class PreMeasurementInstallationRepository(
                 db.stockDao().debitStock(it.materialStockId, it.executedQuantity)
                 db.contractDao().debitContractItem(it.contractItemId, it.executedQuantity)
             }
-            db.preMeasurementInstallationDao().updateStreet(currentStreet.copy(status = "FINISHED"))
+            db.preMeasurementInstallationDao().updateStreet(currentStreet)
         }
 
         SyncManager.queueSubmitPreMeasurementInstallationStreet(

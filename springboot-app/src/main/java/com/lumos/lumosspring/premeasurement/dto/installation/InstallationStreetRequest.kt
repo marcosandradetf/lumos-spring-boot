@@ -6,6 +6,10 @@ import java.util.UUID
 
 data class InstallationStreetRequest(
     val streetId: UUID,
+    val currentSupply: String?,
+    val lastPower: String?,
+    val latitude: Double?,
+    val longitude: Double?,
     val items: List<InstallationItemRequest>
 )
 

@@ -40,7 +40,7 @@ class DirectExecutionViewModel(
     val syncError: StateFlow<String?> = _syncError
     var installationId by mutableStateOf(savedStateHandle.get<Long>("id"))
     var creationDate by mutableStateOf(savedStateHandle.get<String>("creationDate"))
-    var contractId by mutableStateOf(savedStateHandle.get<Long>("contractId"))
+    var contractId by mutableStateOf(savedStateHandle.get<String>("contractId")?.toLongOrNull())
     var contractor by mutableStateOf(savedStateHandle.get<String>("contractor"))
     var instructions by mutableStateOf(savedStateHandle.get<String>("instructions"))
 

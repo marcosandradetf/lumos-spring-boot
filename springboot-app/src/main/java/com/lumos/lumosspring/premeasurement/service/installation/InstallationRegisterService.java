@@ -83,6 +83,8 @@ public class InstallationRegisterService {
                 );
             }
 
+            preMeasurementInstallationRepository.updateInstallationItem(r.getContractItemId(), r.getQuantityExecuted(), installation.preMeasurementStreetId());
+
             materialStockRepository.debitStock(
                     r.getQuantityExecuted(),
                     r.getTruckMaterialStockId()
@@ -104,8 +106,9 @@ public class InstallationRegisterService {
         }
         minioService.deleteFiles(Utils.INSTANCE.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
 
-        preMeasurementInstallationRepository.saveInstallationStreetPhotoUri(
-                fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId()
+        preMeasurementInstallationRepository.finishInstallationStreet(
+                fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId(), installationReq.getCurrentSupply(),
+                installationReq.getLastPower(), installationReq.getLatitude(), installationReq.getLongitude()
         );
 
         return ResponseEntity.noContent().build();

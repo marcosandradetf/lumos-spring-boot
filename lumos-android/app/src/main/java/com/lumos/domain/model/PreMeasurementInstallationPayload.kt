@@ -2,6 +2,10 @@ package com.lumos.domain.model
 
 data class InstallationStreetRequest(
     val streetId: String,
+    val currentSupply: String?,
+    val lastPower: String?,
+    val latitude: Double?,
+    val longitude: Double?,
     val items: List<InstallationItemRequest>
 )
 
@@ -18,4 +22,12 @@ data class InstallationRequest(
     val signDate: String? = null,
     val signUri: String? = null,
     val operationalUsers: List<String>
+)
+
+data class InstallationStreetPayload(
+    val installationPhotoUri: String?,
+    val currentSupply: String?,
+    val lastPower: String?,
+    val latitude: Double?,
+    val longitude: Double?
 )

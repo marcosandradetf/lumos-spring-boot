@@ -53,7 +53,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.navigation.BottomBar
@@ -67,7 +66,6 @@ import com.lumos.utils.Utils.hasFullName
 import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.io.FileOutputStream
-import java.time.Instant
 
 @Composable
 fun DirectExecutionHomeScreen(
@@ -140,6 +138,11 @@ fun DirectExecutionHomeScreen(
             },
             navigateToExecutions = {
                 navController.navigate(Routes.INSTALLATION_HOLDER) {
+                    popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
+                }
+            },
+            navigateToMaintenance = {
+                navController.navigate(Routes.MAINTENANCE) {
                     popUpTo(Routes.DIRECT_EXECUTION_FLOW) { inclusive = true }
                 }
             }) { _, showSnackBar ->

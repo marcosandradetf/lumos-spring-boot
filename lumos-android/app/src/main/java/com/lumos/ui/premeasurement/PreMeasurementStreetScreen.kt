@@ -117,10 +117,9 @@ fun PreMeasurementStreetScreen(
     preMeasurementViewModel: PreMeasurementViewModel,
     contractViewModel: ContractViewModel,
     navController: NavHostController,
+    coordinates: CoordinatesService,
+    addressService: AddressService
 ) {
-    val fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
-    val coordinates = CoordinatesService(context, fusedLocationProvider)
-
     var currentAddress by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
@@ -160,7 +159,7 @@ fun PreMeasurementStreetScreen(
         if (latitude != null && longitude != null) {
             preMeasurementViewModel.latitude = latitude
             preMeasurementViewModel.longitude = longitude
-            val addr = AddressService(context).execute(latitude, longitude)
+            val addr = addressService.execute(latitude, longitude)
 
             val street = addr?.get(0).toString()
             val neighborhood = addr?.get(1).toString()
