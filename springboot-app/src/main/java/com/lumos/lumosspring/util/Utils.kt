@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDateTime
@@ -97,6 +98,15 @@ object Utils {
         val format = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) // Forma moderna
         return format.format(amount)
     }
+
+    fun formatMoney(amount: BigDecimal): String {
+        val format = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+        format.currency = Currency.getInstance("BRL")
+        format.minimumFractionDigits = 2
+        format.maximumFractionDigits = 2
+        return format.format(amount)
+    }
+
 
     fun uuidToShortCodeWithPrefix(prefix: String, uuid: UUID, length: Int = 10): String {
         val mostSigBits = uuid.mostSignificantBits
