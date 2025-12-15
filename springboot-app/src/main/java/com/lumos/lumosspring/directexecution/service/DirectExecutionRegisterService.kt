@@ -171,22 +171,25 @@ class DirectExecutionRegisterService(
                         namedJdbc,
                         """
                             WITH to_update AS (
-                                SELECT ci.contract_item_id, false as isService
+                                SELECT ci.contract_item_id, false as isService, null as factor
                                 FROM contract_item ci
                                 WHERE ci.contract_item_id = :contractItemId
 
                                 UNION ALL
 
-                                SELECT ci.contract_item_id, true as isService
+                                SELECT ci.contract_item_id, true as isService, cri.factor
                                 FROM contract_item ci
                                 JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
                                 JOIN direct_execution_item di ON di.contract_item_id = ci.contract_item_id
                                 WHERE lower(cri.item_dependency) = :dependency
-                                  AND lower(cri.type) IN ('projeto', 'serviço')
-                                  AND di.direct_execution_id = :directExecutionId
+                                    AND lower(cri.type) IN ('projeto', 'serviço', 'cemig')
+                                    AND di.direct_execution_id = :directExecutionId
                             )
                             UPDATE contract_item ci
-                            SET quantity_executed = quantity_executed + :quantityExecuted
+                            SET quantity_executed = case 
+                                                        when tu.factor is null then quantity_executed + :quantityExecuted 
+                                                        else quantity_executed + :quantityExecuted * tu.factor
+                                                    end
                             FROM to_update tu
                             WHERE ci.contract_item_id = tu.contract_item_id
                             RETURNING ci.contract_item_id, tu.isService
