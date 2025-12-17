@@ -206,7 +206,33 @@ class DirectExecutionRegisterService(
 
         val installationItems = directExecutionRepositoryItem.getByDirectExecutionId(directExecutionId)
         installationItems.forEach {
-            contractItemsQuantitativeRepository.updateBalance(it.contractItemId, it.measuredItemQuantity, it.factor ?: BigDecimal.ONE)
+            contractItemsQuantitativeRepository.updateBalance(
+                it.contractItemId,
+                it.measuredItemQuantity,
+                it.factor ?: BigDecimal.ONE
+            )
+        }
+
+        val streets = directExecutionRepositoryStreet.getByDirectExecutionId(directExecutionId)
+        val cableDistribution =
+            directExecutionRepositoryItem.getCableDistribution(streets.size, directExecutionId)
+
+        streets.forEachIndexed { index, id ->
+            val isLast = index == streets.lastIndex
+            val quantity = if (isLast) {
+                cableDistribution.first + cableDistribution.second
+            } else {
+                cableDistribution.first
+            }
+
+            directExecutionRepositoryStreetItem.save(
+                DirectExecutionStreetItem(
+                    executedQuantity = quantity,
+                    materialStockId = null,
+                    contractItemId = cableDistribution.third,
+                    directExecutionStreetId = id
+                )
+            )
         }
 
         return ResponseEntity.ok().build()
@@ -276,7 +302,33 @@ class DirectExecutionRegisterService(
 
         val installationItems = directExecutionRepositoryItem.getByDirectExecutionId(directExecutionId)
         installationItems.forEach {
-            contractItemsQuantitativeRepository.updateBalance(it.contractItemId, it.measuredItemQuantity, it.factor ?: BigDecimal.ONE)
+            contractItemsQuantitativeRepository.updateBalance(
+                it.contractItemId,
+                it.measuredItemQuantity,
+                it.factor ?: BigDecimal.ONE
+            )
+        }
+
+        val streets = directExecutionRepositoryStreet.getByDirectExecutionId(request.directExecutionId)
+        val cableDistribution =
+            directExecutionRepositoryItem.getCableDistribution(streets.size, request.directExecutionId)
+
+        streets.forEachIndexed { index, id ->
+            val isLast = index == streets.lastIndex
+            val quantity = if (isLast) {
+                cableDistribution.first + cableDistribution.second
+            } else {
+                cableDistribution.first
+            }
+
+            directExecutionRepositoryStreetItem.save(
+                DirectExecutionStreetItem(
+                    executedQuantity = quantity,
+                    materialStockId = null,
+                    contractItemId = cableDistribution.third,
+                    directExecutionStreetId = id
+                )
+            )
         }
 
         return ResponseEntity.ok().build()

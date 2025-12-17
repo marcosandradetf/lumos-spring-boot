@@ -13,7 +13,11 @@ import java.time.Instant
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     data class InstallationRow(val status: String, val description: String)
 
-    @Query("select direct_execution_status as status, description from direct_execution where direct_execution_id = :id")
+    @Query("""
+        SELECT direct_execution_status as status, description
+        FROM direct_execution 
+        WHERE direct_execution_id = :id
+    """)
     fun getInstallation(id: Long): InstallationRow?
 
     @Modifying
@@ -50,10 +54,31 @@ interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Lo
     """
     )
     fun getByDirectExecutionId(directExecutionId: Long): List<InstallationRow>
+
+    @Query(
+    """
+            select
+                round(dei.measured_item_quantity / cast(:size as numeric), 2) as quantity,
+                dei.measured_item_quantity - round(dei.measured_item_quantity / cast(:size as numeric), 2) * :size as correction,
+                ci.contract_item_id
+            from direct_execution_item dei
+            join contract_item ci on ci.contract_item_id = dei.contract_item_id
+            join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+            where cri.type = 'CABO'
+                and dei.direct_execution_id = :directExecutionId
+        """
+    )
+    fun getCableDistribution(size: Int, directExecutionId: Long): Triple<BigDecimal, BigDecimal, Long>
 }
 
 @Repository
 interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet, Long> {
+    @Query("""
+        select direct_execution_street_id
+        from direct_execution_street
+        where direct_execution_id = :id
+    """)
+    fun getByDirectExecutionId(id: Long): List<Long>
 }
 
 @Repository
