@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.stock.materialreference.repository;
+package com.lumos.lumosspring.stock.materialsku.repository;
 
-import com.lumos.lumosspring.stock.materialreference.model.MaterialType;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialType;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;

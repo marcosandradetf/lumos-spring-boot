@@ -6,6 +6,7 @@ import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
 import java.time.Instant
 
 @Repository
@@ -37,6 +38,18 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
 
 @Repository
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
+    data class InstallationRow(val contractItemId: Long, val measuredItemQuantity: BigDecimal, val factor: BigDecimal?)
+
+    @Query(
+        """
+        select dei.contract_item_id, dei.measured_item_quantity, cri.factor 
+        from direct_execution_item dei
+        join contract_item ci on ci.contract_item_id = dei.contract_item_id
+        join public.contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+        where dei.direct_execution_id = :direct_execution_id
+    """
+    )
+    fun getByDirectExecutionId(directExecutionId: Long): List<InstallationRow>
 }
 
 @Repository

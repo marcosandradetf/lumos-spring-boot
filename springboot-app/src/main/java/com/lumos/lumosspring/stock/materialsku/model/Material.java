@@ -1,10 +1,12 @@
-package com.lumos.lumosspring.stock.materialreference.model;
+package com.lumos.lumosspring.stock.materialsku.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 
+@Table
 public class Material {
     @Id
     private Long idMaterial;
@@ -30,22 +32,6 @@ public class Material {
     private String RequestUnit;
 
     private BigDecimal conversionFactor; // utilized for calculate quantity for units than cx, rolo, etc
-
-    @Column("contract_reference_item_contract_reference_item_id")
-    private Long contractReferenceItemId;
-
-    public Material(Long idMaterial, String materialName, String nameForImport, String materialBrand, String materialPower, String materialAmps, String materialLength, Long idMaterialType, Boolean inactive, Long contractReferenceItemId) {
-        this.idMaterial = idMaterial;
-        this.materialName = materialName;
-        this.nameForImport = nameForImport;
-        this.materialBrand = materialBrand;
-        this.materialPower = materialPower;
-        this.materialAmps = materialAmps;
-        this.materialLength = materialLength;
-        this.idMaterialType = idMaterialType;
-        this.inactive = inactive;
-        this.contractReferenceItemId = contractReferenceItemId;
-    }
 
     public Material() {}
 
@@ -121,13 +107,6 @@ public class Material {
         this.inactive = inactive;
     }
 
-    public Long getContractReferenceItemId() {
-        return contractReferenceItemId;
-    }
-
-    public void setContractReferenceItemId(Long contractReferenceItemId) {
-        this.contractReferenceItemId = contractReferenceItemId;
-    }
 
     public String getBuyUnit() {
         return BuyUnit;

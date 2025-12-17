@@ -1,7 +1,7 @@
-package com.lumos.lumosspring.stock.materialreference.controller;
+package com.lumos.lumosspring.stock.materialsku.controller;
 
-import com.lumos.lumosspring.stock.materialreference.model.MaterialGroup;
-import com.lumos.lumosspring.stock.materialreference.service.GroupService;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialGroup;
+import com.lumos.lumosspring.stock.materialsku.service.GroupService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

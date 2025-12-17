@@ -2,6 +2,7 @@ package com.lumos.lumosspring.contract.repository;
 
 import com.lumos.lumosspring.contract.entities.ContractItem;
 import com.lumos.lumosspring.stock.order.installationrequest.dto.ResponseItemReserve;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -46,4 +47,12 @@ public interface ContractItemsQuantitativeRepository extends CrudRepository<Cont
         where mr.status <> 'FINISHED' and mr.quantity_completed < mr.reserved_quantity and mr.contract_item_id  = :contractItemId
    \s""")
     List<ResponseItemReserve> getInProgressReservations(long contractItemId);
+
+    @Modifying
+    @Query("""
+        update contract_item
+        set quantity_executed = quantity_executed + :quantityExecuted * :factor
+        where contract_item_id = :contractItemId
+    """)
+    void updateBalance(long contractItemId, BigDecimal quantityExecuted, BigDecimal factor);
 }

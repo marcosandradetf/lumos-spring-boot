@@ -1,8 +1,8 @@
-package com.lumos.lumosspring.stock.materialreference.service;
+package com.lumos.lumosspring.stock.materialsku.service;
 
-import com.lumos.lumosspring.stock.materialreference.model.MaterialGroup;
-import com.lumos.lumosspring.stock.materialreference.repository.GroupRepository;
-import com.lumos.lumosspring.stock.materialreference.repository.TypeRepository;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialGroup;
+import com.lumos.lumosspring.stock.materialsku.repository.GroupRepository;
+import com.lumos.lumosspring.stock.materialsku.repository.TypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;

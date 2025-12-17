@@ -1,18 +1,16 @@
 package com.lumos.lumosspring.directexecution.service
 
+import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.directexecution.dto.InstallationRequest
 import com.lumos.lumosspring.directexecution.dto.InstallationStreetRequest
 import com.lumos.lumosspring.directexecution.model.DirectExecutionExecutor
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreet
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreetItem
-import com.lumos.lumosspring.directexecution.repository.DirectExecutionExecutorRepository
-import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepository
-import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryStreet
-import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryStreetItem
+import com.lumos.lumosspring.directexecution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractReferenceItemRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
-import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import com.lumos.lumosspring.util.ReservationStatus
 import com.lumos.lumosspring.util.Utils
 import org.springframework.dao.DataIntegrityViolationException
@@ -33,6 +31,9 @@ class DirectExecutionRegisterService(
     private val directExecutionRepositoryStreetItem: DirectExecutionRepositoryStreetItem,
     private val directExecutionExecutorRepository: DirectExecutionExecutorRepository,
     private val directExecutionRepository: DirectExecutionRepository,
+    private val directExecutionRepositoryItem: DirectExecutionRepositoryItem,
+    private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
+    private val materialContractReferenceItemRepository: MaterialContractReferenceItemRepository,
 ) {
 
     @Transactional
@@ -83,23 +84,7 @@ class DirectExecutionRegisterService(
         }
 
         for (m in installationReq.materials) {
-
-            var balance = namedJdbc.queryForObject(
-                """
-                    select contracted_quantity - quantity_executed as balance
-                    from contract_item
-                    where contract_item_id = :contractItemId
-                    limit 1
-                """.trimIndent(),
-                mapOf("contractItemId" to m.contractItemId),
-                BigDecimal::class.java
-            )
-
-            if (balance == null || balance < m.quantityExecuted) {
-                throw Utils.BusinessException("Sem saldo contratual para o material: " + m.contractItemId + " - " + m.materialName)
-            }
-
-            balance = namedJdbc.queryForObject(
+            val balance = namedJdbc.queryForObject(
                 """
                     select stock_quantity
                     from material_stock
@@ -111,7 +96,7 @@ class DirectExecutionRegisterService(
             )
 
             if (balance == null || balance < m.quantityExecuted) {
-                throw Utils.BusinessException("Sem estoque para o material: " + m.contractItemId + " - " + m.materialName)
+                throw Utils.BusinessException("Sem estoque para o material: " + m.truckMaterialStockId + " - " + m.materialName)
             }
 
             namedJdbc.update(
@@ -149,82 +134,31 @@ class DirectExecutionRegisterService(
 
             directExecutionRepositoryStreetItem.save(item)
 
-            val hasService = when {
-                m.materialName.contains("led", ignoreCase = true) -> "led"
-                m.materialName.contains("braço", ignoreCase = true) -> "braço"
-                else -> null
-            }
+        }
 
-            val params = mutableMapOf<String, Any?>(
-                "quantityExecuted" to m.quantityExecuted,
-                "contractItemId" to m.contractItemId
-            )
+        val materialsPair = installationReq.materials.map { Pair(it.truckMaterialStockId, it.quantityExecuted) }
+        val servicesPair = materialContractReferenceItemRepository.findByContractReferenceItemId(
+            materialsPair.map { it.first },
+            installationReq.directExecutionId
+        )
 
-            hasService?.let {
-                params["dependency"] = it
-                params["directExecutionId"] = installationReq.directExecutionId
-            }
+        servicesPair.forEach { s ->
+            val contractItemId = s.first
+            val materialId = s.second
+            val quantityExecuted = materialsPair.find { it.first == materialId }?.second
 
-            if (hasService != null) {
-                val servicesData: List<Map<String, Any>> =
-                    getRawData(
-                        namedJdbc,
-                        """
-                            WITH to_update AS (
-                                SELECT ci.contract_item_id, false as isService, null as factor
-                                FROM contract_item ci
-                                WHERE ci.contract_item_id = :contractItemId
-
-                                UNION ALL
-
-                                SELECT ci.contract_item_id, true as isService, cri.factor
-                                FROM contract_item ci
-                                JOIN contract_reference_item cri ON cri.contract_reference_item_id = ci.contract_item_reference_id
-                                JOIN direct_execution_item di ON di.contract_item_id = ci.contract_item_id
-                                WHERE lower(cri.item_dependency) = :dependency
-                                    AND lower(cri.type) IN ('projeto', 'serviço', 'cemig')
-                                    AND di.direct_execution_id = :directExecutionId
-                            )
-                            UPDATE contract_item ci
-                            SET quantity_executed = case 
-                                                        when tu.factor is null then quantity_executed + :quantityExecuted 
-                                                        else quantity_executed + :quantityExecuted * tu.factor
-                                                    end
-                            FROM to_update tu
-                            WHERE ci.contract_item_id = tu.contract_item_id
-                            RETURNING ci.contract_item_id, tu.isService
-                        """.trimIndent(),
-                        params
-                    )
-
-                for (s in servicesData) {
-                    val serviceItemId = (s["contract_item_id"] as Number).toLong()
-                    val isService = s["isService"] as Boolean
-
-                    if (!isService) continue
-
-                    val serviceItem = DirectExecutionStreetItem(
-                        executedQuantity = m.quantityExecuted,
+            quantityExecuted?.let {
+                directExecutionRepositoryStreetItem.save(
+                    DirectExecutionStreetItem(
+                        executedQuantity = it,
                         materialStockId = null,
-                        contractItemId = serviceItemId,
+                        contractItemId = contractItemId,
                         directExecutionStreetId = installationStreet.directExecutionStreetId
                             ?: throw IllegalStateException("directExecutionStreetId not set")
                     )
-                    directExecutionRepositoryStreetItem.save(serviceItem)
-                }
-
-            } else {
-
-                // Use update porque não há retorno
-                namedJdbc.update(
-                    """
-                            UPDATE contract_item
-                            SET quantity_executed = quantity_executed + :quantityExecuted
-                            WHERE contract_item_id = :contractItemId
-                    """.trimIndent(),
-                    params
                 )
             }
+
         }
 
         return ResponseEntity.ok().build()
@@ -270,6 +204,11 @@ class DirectExecutionRegisterService(
             signDate = null,
             responsible = null
         )
+
+        val installationItems = directExecutionRepositoryItem.getByDirectExecutionId(directExecutionId)
+        installationItems.forEach {
+            contractItemsQuantitativeRepository.updateBalance(it.contractItemId, it.measuredItemQuantity, it.factor ?: BigDecimal.ONE)
+        }
 
         return ResponseEntity.ok().build()
     }
@@ -335,6 +274,11 @@ class DirectExecutionRegisterService(
                 "status" to ReservationStatus.FINISHED
             )
         )
+
+        val installationItems = directExecutionRepositoryItem.getByDirectExecutionId(directExecutionId)
+        installationItems.forEach {
+            contractItemsQuantitativeRepository.updateBalance(it.contractItemId, it.measuredItemQuantity, it.factor ?: BigDecimal.ONE)
+        }
 
         return ResponseEntity.ok().build()
     }

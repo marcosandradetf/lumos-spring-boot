@@ -3,7 +3,7 @@ package com.lumos.lumosspring.stock.materialstock.service;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
-import com.lumos.lumosspring.stock.materialreference.repository.MaterialReferenceRepository;
+import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.StockMovementRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.SupplierRepository;

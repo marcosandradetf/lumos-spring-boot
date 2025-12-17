@@ -1,11 +1,11 @@
-package com.lumos.lumosspring.stock.materialreference.service;
+package com.lumos.lumosspring.stock.materialsku.service;
 
-import com.lumos.lumosspring.stock.materialreference.dto.TypeDTO;
-import com.lumos.lumosspring.stock.materialreference.model.MaterialType;
-import com.lumos.lumosspring.stock.materialreference.repository.GroupRepository;
-import com.lumos.lumosspring.stock.materialreference.repository.MaterialReferenceRepository;
+import com.lumos.lumosspring.stock.materialsku.dto.TypeDTO;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialType;
+import com.lumos.lumosspring.stock.materialsku.repository.GroupRepository;
+import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
-import com.lumos.lumosspring.stock.materialreference.repository.TypeRepository;
+import com.lumos.lumosspring.stock.materialsku.repository.TypeRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

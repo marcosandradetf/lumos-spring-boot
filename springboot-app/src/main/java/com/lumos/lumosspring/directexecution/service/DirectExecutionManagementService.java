@@ -57,14 +57,14 @@ public class DirectExecutionManagementService {
         var stockist = userRepository.findByUserId(execution.getStockistId()).orElse(null);
         if (stockist == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new DefaultResponse("Estoquista não encontrado"));
+                .body(new DefaultResponse("Estoquista não encontrado"));
         }
 
         // 2) Contrato
         var contract = contractRepository.findById(execution.getContractId()).orElse(null);
         if (contract == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new DefaultResponse("Contrato não encontrado"));
+                .body(new DefaultResponse("Contrato não encontrado"));
         }
 
         // 3) Usuário corrente (quem delega)
@@ -143,14 +143,6 @@ public class DirectExecutionManagementService {
 
                 if (available.compareTo(item.getQuantity()) < 0) {
                     throw new IllegalStateException("Não há saldo disponível para o item " + (description != null ? description : ""));
-                }
-
-                // 7.4) Verifica saldo total considerando outras execuções em andamento
-                available = contractItemsQuantitativeRepository.getTotalBalance(item.getContractItemId());
-                if (available.compareTo(item.getQuantity()) < 0) {
-                    throw new Utils.BusinessException(
-                            STR."Apesar de no sistema existir saldo para o item \{description != null ? description : ""} existem execuções em andamentos que podem fazer o saldo estourar"
-                    );
                 }
 
                 // 7.5) Cria o item da execução direta

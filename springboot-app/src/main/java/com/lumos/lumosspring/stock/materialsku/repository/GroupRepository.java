@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.stock.materialreference.repository;
+package com.lumos.lumosspring.stock.materialsku.repository;
 
-import com.lumos.lumosspring.stock.materialreference.model.MaterialGroup;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialGroup;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,12 +1,11 @@
 package com.lumos.lumosspring.stock.materialstock.repository
 
-import com.lumos.lumosspring.stock.materialreference.dto.MaterialResponse
+import com.lumos.lumosspring.stock.materialsku.dto.MaterialResponse
 import com.lumos.lumosspring.stock.materialstock.dto.MaterialInStockDTO
 import com.lumos.lumosspring.util.Utils
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
-import java.util.UUID
 
 data class PagedResponse<T>(
     val content: List<T>,

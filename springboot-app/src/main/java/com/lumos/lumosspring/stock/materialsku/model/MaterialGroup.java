@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.materialreference.model;
+package com.lumos.lumosspring.stock.materialsku.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;

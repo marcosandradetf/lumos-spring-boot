@@ -1,20 +1,20 @@
-package com.lumos.lumosspring.stock.materialreference.service;
+package com.lumos.lumosspring.stock.materialsku.service;
 
 import com.lumos.lumosspring.company.model.Company;
 import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
-import com.lumos.lumosspring.stock.materialreference.model.Material;
-import com.lumos.lumosspring.stock.materialreference.model.MaterialType;
+import com.lumos.lumosspring.stock.materialsku.model.Material;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialType;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
-import com.lumos.lumosspring.stock.materialreference.repository.MaterialReferenceRepository;
-import com.lumos.lumosspring.stock.materialreference.repository.TypeRepository;
+import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
+import com.lumos.lumosspring.stock.materialsku.repository.TypeRepository;
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.PagedResponse;
 import com.lumos.lumosspring.user.repository.UserRepository;
-import com.lumos.lumosspring.stock.materialreference.dto.MaterialRequest;
-import com.lumos.lumosspring.stock.materialreference.dto.MaterialResponse;
+import com.lumos.lumosspring.stock.materialsku.dto.MaterialRequest;
+import com.lumos.lumosspring.stock.materialsku.dto.MaterialResponse;
 import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
 

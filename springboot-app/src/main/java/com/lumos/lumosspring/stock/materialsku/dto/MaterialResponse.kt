@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.materialreference.dto
+package com.lumos.lumosspring.stock.materialsku.dto
 
 import java.math.BigDecimal
 

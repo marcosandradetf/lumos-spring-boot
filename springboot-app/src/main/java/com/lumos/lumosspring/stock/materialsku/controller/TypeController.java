@@ -1,8 +1,8 @@
-package com.lumos.lumosspring.stock.materialreference.controller;
+package com.lumos.lumosspring.stock.materialsku.controller;
 
-import com.lumos.lumosspring.stock.materialreference.dto.TypeDTO;
-import com.lumos.lumosspring.stock.materialreference.model.MaterialType;
-import com.lumos.lumosspring.stock.materialreference.service.TypeService;
+import com.lumos.lumosspring.stock.materialsku.dto.TypeDTO;
+import com.lumos.lumosspring.stock.materialsku.model.MaterialType;
+import com.lumos.lumosspring.stock.materialsku.service.TypeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

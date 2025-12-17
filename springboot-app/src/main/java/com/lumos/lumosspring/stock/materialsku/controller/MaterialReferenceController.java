@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.materialreference.controller;
+package com.lumos.lumosspring.stock.materialsku.controller;
 
 import java.util.Objects;
 
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
-import com.lumos.lumosspring.stock.materialreference.dto.MaterialResponse;
-import com.lumos.lumosspring.stock.materialreference.repository.MaterialReferenceRepository;
-import com.lumos.lumosspring.stock.materialreference.service.MaterialReferenceService;
+import com.lumos.lumosspring.stock.materialsku.dto.MaterialResponse;
+import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
+import com.lumos.lumosspring.stock.materialsku.service.MaterialReferenceService;
 
 @RestController
 @RequestMapping("/api/material")
