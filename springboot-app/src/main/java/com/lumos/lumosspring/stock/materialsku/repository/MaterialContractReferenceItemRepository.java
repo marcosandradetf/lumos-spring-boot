@@ -13,14 +13,14 @@ import java.util.List;
 public interface MaterialContractReferenceItemRepository extends CrudRepository<MaterialContractReferenceItem, Long> {
 
     @Query("""
-        select distinct ci.contract_item_id, ms.material_id_stock
-        from material_stock ms
-        join material m on m.id_material = ms.material_id
-        join material_contract_reference_item mcri on mcri.material_id = m.id_material
-        join contract_reference_item cri on cri.contract_reference_item_id = mcri.contract_reference_item_id
-        join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
-        join direct_execution_item dei on dei.contract_item_id = ci.contract_item_id
-        where ms.material_id_stock in (:materialIds)
+        SELECT distinct ci.contract_item_id, ms.material_id_stock
+        FROM material_stock ms
+        JOIN material m ON m.id_material = ms.material_id
+        JOIN material_contract_reference_item mcri ON mcri.material_id = m.id_material
+        JOIN contract_reference_item cri ON cri.contract_reference_item_id = mcri.contract_reference_item_id
+        JOIN contract_item ci ON ci.contract_item_reference_id = cri.contract_reference_item_id
+        JOIN direct_execution_item dei ON dei.contract_item_id = ci.contract_item_id
+        WHERE ms.material_id_stock IN (:materialIds)
             AND dei.direct_execution_id = :directExecutionId
     """)
     List<Pair<Long, Long>> findByContractReferenceItemId(List<Long> materialIds, Long directExecutionId);

@@ -158,7 +158,6 @@ class DirectExecutionRegisterService(
                     )
                 )
             }
-
         }
 
         return ResponseEntity.ok().build()

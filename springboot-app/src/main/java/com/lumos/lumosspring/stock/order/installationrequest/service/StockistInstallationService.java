@@ -106,7 +106,7 @@ public class StockistInstallationService {
                                             join contract_item ci on ci.contract_item_id = pmsi.contract_item_id
                                             join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
                                             where pmsi.pre_measurement_id = :preMeasurementID
-                                              and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG')
+                                              and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG', 'CABO', 'FITA ISOLANTE', 'FITA ISOLANTE AUTOFUSÃO')
                                             group by ci.contracted_quantity, ci.quantity_executed, cri.description, cri.contract_reference_item_id, ci.contract_item_id
                                             """,
                                     new MapSqlParameterSource(
@@ -152,7 +152,7 @@ public class StockistInstallationService {
                                             inner join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
                                             where dei.direct_execution_id = :direct_execution_id
                                               and dei.item_status = :itemStatus
-                                              and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG')
+                                              and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG', 'CABO', 'FITA ISOLANTE', 'FITA ISOLANTE AUTOFUSÃO')
                                             order by cri.name_for_import
                                             """,
                                     new MapSqlParameterSource(
