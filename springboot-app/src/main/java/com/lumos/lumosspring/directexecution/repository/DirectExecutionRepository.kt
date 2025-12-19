@@ -13,11 +13,13 @@ import java.time.Instant
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     data class InstallationRow(val status: String, val description: String)
 
-    @Query("""
+    @Query(
+        """
         SELECT direct_execution_status as status, description
         FROM direct_execution 
         WHERE direct_execution_id = :id
-    """)
+    """
+    )
     fun getInstallation(id: Long): InstallationRow?
 
     @Modifying
@@ -43,6 +45,7 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
 @Repository
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
     data class InstallationRow(val contractItemId: Long, val measuredItemQuantity: BigDecimal, val factor: BigDecimal?)
+    data class CableDistributionRow(val quantity: BigDecimal, val correction: BigDecimal, val contractItemId: Long)
 
     @Query(
         """
@@ -56,7 +59,7 @@ interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Lo
     fun getByDirectExecutionId(directExecutionId: Long): List<InstallationRow>
 
     @Query(
-    """
+        """
             select
                 round(dei.measured_item_quantity / cast(:size as numeric), 2) as quantity,
                 dei.measured_item_quantity - round(dei.measured_item_quantity / cast(:size as numeric), 2) * :size as correction,
@@ -68,16 +71,18 @@ interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Lo
                 and dei.direct_execution_id = :directExecutionId
         """
     )
-    fun getCableDistribution(size: Int, directExecutionId: Long): Triple<BigDecimal, BigDecimal, Long>
+    fun getCableDistribution(size: Int, directExecutionId: Long): CableDistributionRow
 }
 
 @Repository
 interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet, Long> {
-    @Query("""
+    @Query(
+        """
         select direct_execution_street_id
         from direct_execution_street
         where direct_execution_id = :id
-    """)
+    """
+    )
     fun getByDirectExecutionId(id: Long): List<Long>
 }
 

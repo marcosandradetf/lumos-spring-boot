@@ -82,7 +82,7 @@ public class DepositService {
 
         deposit = depositRepository.save(deposit);
 
-        materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit());
+        materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit(), false);
 
         return ResponseEntity.ok(this.findAll());
     }

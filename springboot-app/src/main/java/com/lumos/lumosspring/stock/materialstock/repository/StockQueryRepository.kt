@@ -44,12 +44,14 @@ class StockQueryRepository(
     fun getMaterialsForMaintenance(depositId: Long): StockResponse {
         val materialStock = jdbcTemplate.query(
             """
-                select m.id_material, ms.material_id_stock, m.material_name, coalesce(m.material_power, m.material_length) as specs,
-                ms.stock_quantity, ms.stock_available, ms.request_unit, mt.type_name
-                from material_stock ms
-                inner join material m on m.id_material = ms.material_id
-                inner join material_type mt on mt.id_type = m.id_material_type
-                where ms.deposit_id = :depositId
+                SELECT m.id_material, ms.material_id_stock, m.material_name, coalesce(m.material_power, m.material_length) AS specs,
+                    ms.stock_quantity, ms.stock_available, ms.request_unit, mt.type_name
+                FROM material_stock ms
+                INNER JOIN material m ON m.id_material = ms.material_id
+                INNER JOIN material_type mt ON mt.id_type = m.id_material_type
+                CROSS JOIN material g
+                WHERE ms.deposit_id = :depositId
+                    AND g.is_generic = true
             """.trimIndent(),
             mapOf("depositId" to depositId)
         ) { rs, _ ->

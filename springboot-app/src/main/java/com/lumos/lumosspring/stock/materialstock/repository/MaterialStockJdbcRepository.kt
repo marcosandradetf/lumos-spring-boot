@@ -389,9 +389,8 @@ class MaterialStockJdbcRepository(
     }
 
 
-    fun insertMaterials(depositId: Long) {
-        jdbc.update(
-            """
+    fun insertMaterials(depositId: Long, isTruck: Boolean) {
+        var sql = """
                 insert into material_stock (
                     buy_unit,
                     cost_per_item,
@@ -415,8 +414,23 @@ class MaterialStockJdbcRepository(
                     :depositId,
                     m.id_material,
                     :tenantId
-                from material m;
-            """,
+                from material m
+            """
+
+        sql += if (isTruck) {
+            """
+                join material_type t on t.id_type = m.id_material_type
+                where m.is_generic = false 
+                    and t.type_name not in ('FITA ISOLANTE AUTOFUSÃO','FITA ISOLANTE ADESIVO','CABO')
+            """.trimIndent()
+        } else {
+            """
+                where m.is_generic = false
+            """.trimIndent()
+        }
+
+        jdbc.update(
+            sql,
             mapOf(
                 "depositId" to depositId,
                 "tenantId" to Utils.getCurrentTenantId()

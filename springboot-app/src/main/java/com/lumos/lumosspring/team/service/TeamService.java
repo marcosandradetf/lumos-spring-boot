@@ -116,7 +116,7 @@ public class TeamService {
 
         try {
             deposit = depositRepository.save(deposit);
-            materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit());
+            materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit(), true);
 
             newTeam.setDepositId(deposit.getIdDeposit());
             newTeam = teamRepository.save(newTeam);

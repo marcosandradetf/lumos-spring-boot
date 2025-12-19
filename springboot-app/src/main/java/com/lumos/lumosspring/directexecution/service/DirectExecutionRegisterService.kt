@@ -220,16 +220,16 @@ class DirectExecutionRegisterService(
         streets.forEachIndexed { index, id ->
             val isLast = index == streets.lastIndex
             val quantity = if (isLast) {
-                cableDistribution.first + cableDistribution.second
+                cableDistribution.quantity + cableDistribution.correction
             } else {
-                cableDistribution.first
+                cableDistribution.quantity
             }
 
             directExecutionRepositoryStreetItem.save(
                 DirectExecutionStreetItem(
                     executedQuantity = quantity,
                     materialStockId = null,
-                    contractItemId = cableDistribution.third,
+                    contractItemId = cableDistribution.contractItemId,
                     directExecutionStreetId = id
                 )
             )
@@ -316,16 +316,16 @@ class DirectExecutionRegisterService(
         streets.forEachIndexed { index, id ->
             val isLast = index == streets.lastIndex
             val quantity = if (isLast) {
-                cableDistribution.first + cableDistribution.second
+                cableDistribution.quantity + cableDistribution.correction
             } else {
-                cableDistribution.first
+                cableDistribution.quantity
             }
 
             directExecutionRepositoryStreetItem.save(
                 DirectExecutionStreetItem(
                     executedQuantity = quantity,
                     materialStockId = null,
-                    contractItemId = cableDistribution.third,
+                    contractItemId = cableDistribution.contractItemId,
                     directExecutionStreetId = id
                 )
             )
