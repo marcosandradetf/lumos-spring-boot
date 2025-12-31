@@ -1,0 +1,230 @@
+<div class="h-full w-full">
+  <div class="flex items-center justify-between">
+    <app-prime-breadcrumb
+      title=""
+      [path]="['Estoque', 'Materiais']"/>
+  </div>
+
+  <div class="max-w-5xl mx-auto">
+
+    <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-200 mb-6">
+      Cadastro de Material
+    </h2>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
+
+      <!-- Código de Barras -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
+          Código de Barras (EAN/GTIN)*
+        </label>
+        <input
+          pInputText
+          inputmode="numeric"
+          (input)="utils.formatNumber($event)"
+          placeholder="Ex.: 1234567890123"
+          formControlName="barCode"
+          maxlength="14"
+          class="w-full"
+        />
+        <small
+          *ngIf="form.get('barCode')?.invalid && form.get('barCode')?.touched"
+          class="text-red-500">
+          Código de barras inválido
+        </small>
+      </div>
+
+      <!-- Tipo / Subtipo -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+            Tipo
+          </label>
+          <p-dropdown
+            [options]="materialTypes"
+            optionLabel="typeName"
+            optionValue="idType"
+            formControlName="materialType"
+            (onChange)="onTypeChange($event.value)"
+            placeholder="Selecione o tipo"
+            class="w-full">
+          </p-dropdown>
+          <small
+            *ngIf="form.get('materialType')?.invalid && form.get('materialType')?.touched"
+            class="text-red-500">
+            Tipo é obrigatório
+          </small>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+            Subtipo
+          </label>
+          @if (availableSubtypes.length === 0 && !form.get('materialType')?.value) {
+            <input
+              pInputText
+              value="Selecione um tipo primeiro"
+              readonly
+              class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
+            />
+          } @else if (availableSubtypes.length === 0) {
+            <input
+              pInputText
+              value="Sem subtipos"
+              readonly
+              class="w-full bg-gray-100 cursor-not-allowed"
+            />
+          } @else {
+            <p-dropdown
+              [options]="availableSubtypes"
+              formControlName="materialSubtype"
+              placeholder="Selecione o subtipo"
+              class="w-full">
+            </p-dropdown>
+            <small
+              *ngIf="form.get('materialSubtype')?.invalid && form.get('materialSubtype')?.touched"
+              class="text-red-500">
+              Subtipo é obrigatório
+            </small>
+          }
+        </div>
+      </div>
+
+      <!-- Nome gerado -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
+          Nome do material (gerado automaticamente)
+        </label>
+        <input
+          pInputText
+          formControlName="materialName"
+          readonly
+          class="w-full bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-neutral-200"
+        />
+      </div>
+
+      <!-- Especificações técnicas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label class="label">Função técnica/Referência</label>
+          <input pInputText formControlName="materialFunction"
+                 placeholder="Ex.: DERIVAÇÃO, M16 e etc"
+                 class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Modelo/Tecnologia</label>
+          <input pInputText formControlName="materialModel"
+                 placeholder="Ex.: 105-305V"
+                 class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Marca*</label>
+          <input pInputText
+                 placeholder="Insira a marca do material"
+                 formControlName="materialBrand" class="w-full"/>
+          <small
+            *ngIf="form.get('materialBrand')?.invalid && form.get('materialBrand')?.touched"
+            class="text-red-500">
+            Marca é obrigatório
+          </small>
+        </div>
+
+        <div>
+          <label class="label">Corrente (A)</label>
+          <input pInputText
+                 placeholder="Ex.: 16A"
+                 formControlName="materialAmps" class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Comprimento</label>
+          <input pInputText formControlName="materialLength"
+                 placeholder="Ex.: 240MM"
+                 class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Largura</label>
+          <input pInputText
+                 placeholder="Ex.: 120MM, 24X24X13MM e etc"
+                 formControlName="materialWidth" class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Potência (W)</label>
+          <input pInputText formControlName="materialPower"
+                 placeholder="Ex.: 200W"
+                 class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Seção/Bitola</label>
+          <input pInputText
+                 formControlName="materialGauge"
+                 placeholder="Ex.: 1.5/16 MM², M16 e etc"
+                 class="w-full"/>
+        </div>
+
+        <div>
+          <label class="label">Peso</label>
+          <input pInputText
+                 placeholder="Ex.: 50KG, 100KG e etc"
+                 formControlName="materialWeight" class="w-full"/>
+        </div>
+      </div>
+
+      <!-- Itens Contratuais -->
+      <div class="space-y-4">
+
+        <div class="flex flex-col gap-3">
+
+          <label class="block text-base font-medium text-gray-800 dark:text-neutral-200">
+            Itens Contratuais Vinculados*
+          </label>
+          <p class="text-sm text-gray-500 dark:text-neutral-400">
+            Selecione os itens contratuais relacionados a este material.
+          </p>
+
+          <p-multiSelect
+            formControlName="contractItems"
+            [options]="items"
+            optionLabel="description"
+            display="chip"
+            placeholder="Selecione um ou mais itens"
+            class="w-full">
+          </p-multiSelect>
+
+          <small
+            *ngIf="
+              form.get('contractItems')?.invalid &&
+                form.get('contractItems')?.touched"
+            class="text-red-500 text-xs">
+            Selecione ao menos um item.
+          </small>
+
+        </div>
+
+        <!-- Ações -->
+        <div class="flex justify-end gap-4 pt-6">
+          <button
+            pButton
+            (click)="form.reset()"
+            type="button"
+            label="Cancelar"
+            class="p-button-text">
+          </button>
+
+          <button
+            pButton
+            type="submit"
+            label="Salvar Material"
+            class="p-button-primary">
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+</div>

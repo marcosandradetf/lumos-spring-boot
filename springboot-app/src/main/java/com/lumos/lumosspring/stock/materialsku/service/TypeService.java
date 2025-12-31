@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TypeService {
@@ -33,6 +34,37 @@ public class TypeService {
         return tipoRepository.findAllByOrderByIdTypeAsc();
     }
 
+    @Cacheable("getAllTypes")
+    public ResponseEntity<?> findAllTypeSubtype() {
+        record sypTypeResponse(Long subtypeId, String subtypeName) {
+        }
+        record typeResponse(Long typeId, String typeName, List<sypTypeResponse> subtypes) {
+        }
+
+        var types = tipoRepository.findAllTypeSubtype();
+
+        var response = types.stream()
+                .collect(Collectors.groupingBy(
+                        TypeRepository.typeSubtypeResponse::typeId
+                ))
+                .values()
+                .stream()
+                .map(group -> {
+                    var first = group.getFirst();
+
+                    var subtypes = group.stream()
+                            .map(e -> new sypTypeResponse(e.subtypeId(), e.subtypeName()))
+                            .distinct()
+                            .toList();
+
+                    return new typeResponse(first.typeId(), first.typeName(), subtypes);
+
+                })
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
     public MaterialType findById(Long id) {
         return tipoRepository.findById(id).orElse(null);
     }
@@ -50,7 +82,7 @@ public class TypeService {
         return ResponseEntity.ok(this.findAll());
     }
 
-    public ResponseEntity<?> update(Long typeId ,TypeDTO typeDTO) {
+    public ResponseEntity<?> update(Long typeId, TypeDTO typeDTO) {
         var type = typeRepository.findById(typeId).orElse(null);
         if (type == null) {
             return ResponseEntity.notFound().build();

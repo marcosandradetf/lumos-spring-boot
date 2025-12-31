@@ -22,7 +22,7 @@ export const routes: Routes = [
   // start paths stock
   {
     path: 'estoque/materiais',
-    loadComponent: () => import('./stock/material/material-page.component').then(m => m.MaterialPageComponent),
+    loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
     canActivate: [AuthGuard],
     data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'},
   },

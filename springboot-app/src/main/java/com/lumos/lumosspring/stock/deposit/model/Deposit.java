@@ -1,11 +1,12 @@
 package com.lumos.lumosspring.stock.deposit.model;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table
-public class Deposit {
+public class Deposit extends TenantEntity {
     @Id
     private Long idDeposit;
 
