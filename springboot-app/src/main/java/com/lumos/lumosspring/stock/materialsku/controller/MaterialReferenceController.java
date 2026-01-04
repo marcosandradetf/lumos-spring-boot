@@ -65,6 +65,14 @@ public class MaterialReferenceController {
         return materialReferenceService.create(material);
     }
 
+    @GetMapping("/find-by-barcode")
+    public ResponseEntity<?> findByBarcode(
+            @RequestParam("barcode") String barcode
+    ) {
+
+        return materialReferenceService.findByBarcode(barcode);
+    }
+
 //    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
 //    @PutMapping("{materialId}")
 //    public ResponseEntity<?> update(@RequestBody MaterialRequest material, @PathVariable Long materialId, @CookieValue("refreshToken") String refreshToken) {

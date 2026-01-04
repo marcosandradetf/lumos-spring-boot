@@ -419,13 +419,15 @@ class MaterialStockJdbcRepository(
 
         sql += if (isTruck) {
             """
-                join material_type t on t.id_type = m.id_material_type
-                where m.is_generic = false 
-                    and t.type_name not in ('FITA ISOLANTE AUTOFUSÃO','FITA ISOLANTE ADESIVO','CABO')
+                JOIN material_type t on t.id_type = m.id_material_type
+                WHERE m.is_generic = false 
+                    AND t.type_name not in ('FITA ISOLANTE', 'CABO')
+                    AND m.tenant_id = :tenantId
             """.trimIndent()
         } else {
             """
-                where m.is_generic = false
+                WHERE m.is_generic = false 
+                    AND m.tenant_id = :tenantId
             """.trimIndent()
         }
 
@@ -437,6 +439,5 @@ class MaterialStockJdbcRepository(
             )
         );
     }
-
 
 }

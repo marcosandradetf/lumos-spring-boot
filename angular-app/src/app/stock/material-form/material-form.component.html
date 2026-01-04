@@ -24,12 +24,12 @@
           (input)="utils.formatNumber($event)"
           (blur)="findMaterial($event)"
           placeholder="Ex.: 1234567890123"
-          formControlName="barCode"
+          formControlName="barcode"
           maxlength="14"
           class="w-full"
         />
         <small
-          *ngIf="form.get('barCode')?.invalid && form.get('barCode')?.touched"
+          *ngIf="form.get('barcode')?.invalid && form.get('barcode')?.touched"
           class="text-red-500">
           Código de barras inválido
         </small>
@@ -187,13 +187,14 @@
             Itens Contratuais Vinculados*
           </label>
           <p class="text-sm text-gray-500 dark:text-neutral-400">
-            Selecione os itens contratuais relacionados a este material.
+            Selecione os itens contratuais relacionados a este material. <strong>Atenção, isso é importante para vincular os itens ao estoque</strong>
           </p>
 
           <p-multiSelect
             formControlName="contractItems"
             [options]="items"
             optionLabel="description"
+            optionValue="contractReferenceItemId"
             display="chip"
             placeholder="Selecione um ou mais itens"
             class="w-full">
@@ -204,7 +205,7 @@
               form.get('contractItems')?.invalid &&
                 form.get('contractItems')?.touched"
             class="text-red-500 text-xs">
-            Selecione ao menos um item.
+            Atenção, isso é importante para vincular os itens ao estoque. <strong>Selecione ao menos um item.</strong>
           </small>
 
         </div>
@@ -229,5 +230,8 @@
       </div>
     </form>
   </div>
+
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
+  <p-toast/>
 
 </div>

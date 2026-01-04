@@ -1,13 +1,13 @@
 package com.lumos.lumosspring.stock.materialsku.model;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 
 @Table
-public class Material {
+public class Material extends TenantEntity {
     @Id
     private Long idMaterial;
 
@@ -30,9 +30,6 @@ public class Material {
     private String BuyUnit;
 
     private String RequestUnit;
-
-    private BigDecimal conversionFactor; // utilized for calculate quantity for units than cx, rolo, etc
-
     private Long parentMaterialId;
     private Long subtypeId;
     private String materialFunction;
@@ -40,7 +37,7 @@ public class Material {
     private String materialWidth;
     private String materialGauge;
     private String materialWeight;
-    private String barCode;
+    private String barcode;
 
     public Material() {
     }
@@ -59,7 +56,9 @@ public class Material {
             String materialPower,
             String materialGauge,
             String materialWeight,
-            String barCode
+            String barcode,
+            String buyUnit,
+            String requestUnit
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -74,7 +73,9 @@ public class Material {
         this.materialPower = materialPower;
         this.materialGauge = materialGauge;
         this.materialWeight = materialWeight;
-        this.barCode = barCode;
+        this.barcode = barcode;
+        this.BuyUnit = buyUnit;
+        this.RequestUnit = requestUnit;
     }
 
     public Material(
@@ -176,13 +177,6 @@ public class Material {
         RequestUnit = requestUnit;
     }
 
-    public BigDecimal getConversionFactor() {
-        return conversionFactor;
-    }
-
-    public void setConversionFactor(BigDecimal conversionFactor) {
-        this.conversionFactor = conversionFactor;
-    }
 
     public Long getParentMaterialId() {
         return parentMaterialId;
@@ -240,12 +234,50 @@ public class Material {
         this.materialWeight = materialWeight;
     }
 
-    public String getBarCode() {
-        return barCode;
+    public String getBarcode() {
+        return barcode;
     }
 
-    public void setBarCode(String barCode) {
-        this.barCode = barCode;
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public void update(
+            Long parentMaterialId,
+            String materialName,
+            Long materialType,
+            Long materialSubtype,
+            String materialFunction,
+            String materialModel,
+            String materialBrand,
+            String materialAmps,
+            String materialLength,
+            String materialWidth,
+            String materialPower,
+            String materialGauge,
+            String materialWeight,
+            String barcode,
+            Boolean inactive,
+            String buyUnit,
+            String requestUnit
+    ) {
+        this.parentMaterialId = parentMaterialId;
+        this.materialName = materialName;
+        this.idMaterialType = materialType;
+        this.subtypeId = materialSubtype;
+        this.materialFunction = materialFunction;
+        this.materialModel = materialModel;
+        this.materialBrand = materialBrand;
+        this.materialAmps = materialAmps;
+        this.materialLength = materialLength;
+        this.materialWidth = materialWidth;
+        this.materialPower = materialPower;
+        this.materialGauge = materialGauge;
+        this.materialWeight = materialWeight;
+        this.barcode = barcode;
+        this.inactive = inactive;
+        this.BuyUnit = buyUnit;
+        this.RequestUnit = requestUnit;
     }
 }
 

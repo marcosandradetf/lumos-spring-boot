@@ -103,8 +103,8 @@ export class MaterialService {
       });
   }
 
-  create(material: CreateMaterialRequest): Observable<MaterialResponse[]> {
-    return this.http.post<MaterialResponse[]>(`${this.apiUrl}`, material);
+  create(material: MaterialFormDTO) {
+    return this.http.post(`${this.apiUrl}/create`, material);
   }
 
   findByBarCode(barcode: string): Observable<MaterialFormDTO> {

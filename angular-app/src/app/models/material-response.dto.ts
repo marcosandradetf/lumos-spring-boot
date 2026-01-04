@@ -13,7 +13,10 @@ export interface MaterialFormDTO {
   materialPower: number | null;
   materialGauge: number | null;
   materialWeight: number | null;
-  barCode: string;
+  barcode: string;
+  inactive: boolean;
+  buyUnit: string;
+  requestUnit: string;
   contractItems: any[];
 }
 

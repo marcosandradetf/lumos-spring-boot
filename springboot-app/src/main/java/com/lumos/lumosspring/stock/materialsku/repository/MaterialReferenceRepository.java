@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface MaterialReferenceRepository extends CrudRepository<Material, Long> {
@@ -73,5 +74,7 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
 
     @Query("select id_material from material where material_name = :name")
     Long findBaseMaterialId(String name);
+
+    Material findAllByBarcodeAndTenantId(String barcode, UUID tenantId);
 }
 

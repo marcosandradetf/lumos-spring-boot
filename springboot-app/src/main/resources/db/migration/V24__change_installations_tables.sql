@@ -493,22 +493,52 @@ $$
         SET material_model = 'G12'
         WHERE id_material = 152;
 
+        if not exists(select 1 from information_schema.columns where column_name = 'tenant_id' and table_name = 'material') then
+            ALTER TABLE material
+                ADD COLUMN tenant_id UUID,
+                ADD CONSTRAINT material_sku_tenant_f_key
+                    FOREIGN KEY (tenant_id)
+                        REFERENCES tenant (tenant_id);
+
+            UPDATE material
+            SET tenant_id = (SELECT tenant_id from tenant limit 1);
+
+            ALTER TABLE material
+                ALTER COLUMN tenant_id SET NOT NULL;
+        end if;
+
+        if not exists(select 1 from information_schema.columns where column_name = 'tenant_id' and table_name = 'contract_reference_item') then
+            ALTER TABLE contract_reference_item
+                ADD COLUMN tenant_id UUID,
+                ADD CONSTRAINT contract_reference_item_tenant_f_key
+                    FOREIGN KEY (tenant_id)
+                        REFERENCES tenant (tenant_id);
+
+            UPDATE contract_reference_item
+            SET tenant_id = (SELECT tenant_id from tenant limit 1);
+
+            ALTER TABLE contract_reference_item
+                ALTER COLUMN tenant_id SET NOT NULL;
+        end if;
+
         -- generic
         IF NOT EXISTS(select 1 from material where is_generic = true) THEN
             alter table material
                 alter column id_material_type drop not null;
 
-            INSERT INTO material (
+            INSERT INTO material(
                 material_name,
                 is_generic,
                 id_material_type,
-                subtype_id
+                subtype_id,
+                tenant_id
             )
             SELECT
                 distinct base_name AS material_name,
                          true,
                          m.id_material_type,
-                         m.subtype_id
+                         m.subtype_id,
+                         m.tenant_id
             FROM (
                      SELECT
                          m.*,
@@ -580,7 +610,7 @@ $$
             on contract_reference_item (description);
 
         create unique index if not exists contract_reference_item_description_uindex
-            on contract_reference_item (description);
+            on contract_reference_item (description, tenant_id);
 
         create table if not exists item_rule_distribution
         (
@@ -625,6 +655,17 @@ $$
             VALUES (DEFAULT, 'CABO FIO PP 3 X 2,5 MM COR DA COBERTURA PRETO', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
         end if;
 
+        alter table material
+            drop column if exists cost_price;
+
+        alter table material
+            drop column if exists cost_per_item;
+
+        alter table material
+            add if not exists buy_unit text not null default 'UN';
+
+        alter table material
+            add if not exists request_unit text not null default 'UN';
 
     END;
 $$;

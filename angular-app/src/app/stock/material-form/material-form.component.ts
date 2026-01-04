@@ -10,9 +10,10 @@ import {MultiSelectModule} from 'primeng/multiselect';
 import {ContractReferenceItemsDTO} from '../../contract/contract-models';
 import {Title} from '@angular/platform-browser';
 import {ContractService} from '../../contract/services/contract.service';
-import {Type} from '../../models/tipo.model';
 import {StockService} from '../services/stock.service';
 import {MaterialService} from '../services/material.service';
+import {Toast} from 'primeng/toast';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-material-form',
@@ -25,6 +26,8 @@ import {MaterialService} from '../services/material.service';
     ButtonDirective,
     NgIf,
     MultiSelectModule,
+    Toast,
+    LoadingOverlayComponent,
   ],
   templateUrl: './material-form.component.html',
   styleUrl: './material-form.component.scss'
@@ -64,7 +67,10 @@ export class MaterialFormComponent implements OnInit {
       materialPower: [null],
       materialGauge: [null],
       materialWeight: [null],
-      barCode: ['', [Validators.required, this.barcodeValidator]],
+      barcode: ['', [Validators.required, this.barcodeValidator]],
+      inactive: [false],
+      buyUnit: [null, Validators.required],
+      requestUnit: [null, Validators.required],
       contractItems: [[], Validators.required], // multiselect
     });
 
@@ -74,7 +80,11 @@ export class MaterialFormComponent implements OnInit {
 
     this.title.setTitle('Cadastrar Material');
     this.contractService.getContractReferenceItems().subscribe(items => {
-      this.items = items
+      this.items = items.filter(i =>
+        !['SERVIÇO', 'CEMIG', 'PROJETO', 'MANUTENÇÃO'].includes(
+          (i.type ?? '').toUpperCase()
+        )
+      );
     });
 
     this.stockService.findAllTypeSubtype().subscribe(types => {
@@ -92,15 +102,16 @@ export class MaterialFormComponent implements OnInit {
   generateMaterialName() {
     const v = this.form.getRawValue();
     const materialType = this.materialTypes.find(t => t.typeId === v.materialType)?.typeName ?? '';
+    const materialSubType = this.availableSubtypes.find(t => t.subtypeId === v.materialSubtype)?.subtypeName ?? '';
 
     const partsBase = [
       materialType,
-      v.materialSubtype,
+      materialSubType,
     ];
 
     const parts = [
       materialType,
-      v.materialSubtype,
+      materialSubType,
       v.materialFunction,
       v.materialModel,
       v.materialBrand,
@@ -170,7 +181,7 @@ export class MaterialFormComponent implements OnInit {
       }
 
       if (!value) {
-        return { subtypeRequired: true };
+        return {subtypeRequired: true};
       }
 
       return null;
@@ -207,15 +218,58 @@ export class MaterialFormComponent implements OnInit {
           materialPower: [data.materialPower],
           materialGauge: [data.materialGauge],
           materialWeight: [data.materialWeight],
-          barCode: [data.barCode, [Validators.required, this.barcodeValidator]],
+          barcode: [data.barcode, [Validators.required, this.barcodeValidator]],
+          inactive: [data.inactive],
+          buyUnit: [data.buyUnit, Validators.required],
+          requestUnit: [data.requestUnit, Validators.required],
           contractItems: [data.contractItems, Validators.required], // multiselect
         });
       },
       error: err => {
-        this.utils.showMessage(err.error.message || err.error.error, "error", "Erro ao buscar material por código de barras")
+        this.loading = false;
+        const v = this.form.getRawValue();
+        if(v.materialId !== null) {
+          this.form = this.fb.group({
+            materialId: [null],
+            materialBaseName: [{value: '', disabled: false}],
+            materialName: [{value: '', disabled: false}],
+            materialType: [null, Validators.required],
+            materialSubtype: [
+              null,
+              this.subtypeValidatorFactory(() => this.availableSubtypes)
+            ],
+            materialFunction: [null],
+            materialModel: [null],
+            materialBrand: [null, Validators.required],
+            materialAmps: [null],
+            materialLength: [null],
+            materialWidth: [null],
+            materialPower: [null],
+            materialGauge: [null],
+            materialWeight: [null],
+            barcode: [value, [Validators.required, this.barcodeValidator]],
+            inactive: [false],
+            buyUnit: [null, Validators.required],
+            requestUnit: [null, Validators.required],
+            contractItems: [[], Validators.required], // multiselect
+          });
+        }
+
+        this.utils.showMessage(
+          'Nenhum material foi encontrado com este código de barras. Você pode continuar o cadastro normalmente.',
+          'info',
+          'Busca por código de barras'
+        );
       },
       complete: () => {
+        this.generateMaterialName();
         this.loading = false;
+        this.utils.showMessage(
+          'Já existe um material cadastrado com este código de barras. Caso precise, você pode ajustar as informações antes de salvar.',
+          'info',
+          'Busca por código de barras'
+        );
+
       }
     });
 

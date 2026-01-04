@@ -32,10 +32,10 @@ class ContractService(
 ) {
 
     fun getReferenceItems(): ResponseEntity<Any> {
-        val referenceItems = contractReferenceItemRepository.findAll()
+        val referenceItems = contractReferenceItemRepository.findAllByTenantId(Utils.getCurrentTenantId())
         val referenceItemsResponse: MutableList<ContractReferenceItemDTO> = mutableListOf()
 
-        for (item in referenceItems.sortedBy { it.contractReferenceItemId }) {
+        for (item in referenceItems.sortedBy { it.description }) {
             referenceItemsResponse.add(
                 ContractReferenceItemDTO(
                     item.contractReferenceItemId!!,
@@ -337,7 +337,7 @@ class ContractService(
 
     @Cacheable("GetItemsForMobPreMeasurement")
     fun getItemsForMob(): ResponseEntity<List<PContractReferenceItemDTO>> {
-        val items = contractReferenceItemRepository.findAll()
+        val items = contractReferenceItemRepository.findAllByTenantId(Utils.getCurrentTenantId())
             .map {
                 PContractReferenceItemDTO(
                     contractReferenceItemId = it.contractReferenceItemId!!,

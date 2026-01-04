@@ -14,6 +14,14 @@ public class MaterialContractReferenceItem implements Persistable<Long> {
     @Transient
     private boolean isNewEntry = false;
 
+    public MaterialContractReferenceItem() {}
+
+    public MaterialContractReferenceItem(Long materialId, Long contractReferenceItemId, boolean isNewEntry) {
+        this.materialId = materialId;
+        this.contractReferenceItemId = contractReferenceItemId;
+        this.isNewEntry = isNewEntry;
+    }
+
     public Long getMaterialId() {
         return materialId;
     }

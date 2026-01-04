@@ -17,7 +17,10 @@ public record MaterialRequest(
         String materialPower,
         String materialGauge,
         String materialWeight,
-        String barCode,
+        String barcode,
+        Boolean inactive,
+        String buyUnit,
+        String requestUnit,
         List<Long> contractItems
 ) {
 
