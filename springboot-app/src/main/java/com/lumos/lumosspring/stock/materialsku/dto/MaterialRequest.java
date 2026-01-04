@@ -1,6 +1,24 @@
 package com.lumos.lumosspring.stock.materialsku.dto;
 
-public record MaterialRequest(String materialName, String materialBrand, String materialPower, String materialAmps, String materialLength,
-                              String buyUnit, String requestUnit, Integer stockQt, Boolean inactive, Boolean allDeposits, Long materialType, Long deposit, Long company) {
+import java.util.List;
+
+public record MaterialRequest(
+        Long materialId,
+        String materialBaseName,
+        String materialName,
+        Long materialType,
+        Long materialSubtype,
+        String materialFunction,
+        String materialModel,
+        String materialBrand,
+        String materialAmps,
+        String materialLength,
+        String materialWidth,
+        String materialPower,
+        String materialGauge,
+        String materialWeight,
+        String barCode,
+        List<Long> contractItems
+) {
 
 }

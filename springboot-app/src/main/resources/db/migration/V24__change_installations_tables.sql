@@ -419,7 +419,6 @@ $$
         FROM public.material_type
         WHERE id_type = 24;
 
-
         DELETE
         FROM public.material_type
         WHERE id_type = 33;
@@ -427,6 +426,10 @@ $$
         DELETE
         FROM public.material_type
         WHERE id_type = 37;
+
+        DELETE
+        FROM public.material_type
+        WHERE id_type = 25;
 
         UPDATE public.material_type
         SET type_name = 'FUSÍVEL'
@@ -458,5 +461,170 @@ $$
         UPDATE material set parent_material_id = null;
         delete from material where is_generic = true;
 
-    end;
+        UPDATE public.material
+        SET material_model = 'CP-II-E32'
+        WHERE id_material = 339;
+
+        UPDATE public.material
+        SET material_model = 'ITEM 4 VM'
+        WHERE id_material = 136;
+
+        UPDATE public.material
+        SET material_model = 'E-27'
+        WHERE id_material = 118;
+
+        UPDATE public.material
+        SET material_model = 'G12'
+        WHERE id_material = 120;
+
+        UPDATE public.material
+        SET material_model = 'ITEM 3 VM'
+        WHERE id_material = 135;
+
+        UPDATE public.material
+        SET material_model = 'TIPO C'
+        WHERE id_material = 338;
+
+        UPDATE public.material
+        SET material_model = 'E-40'
+        WHERE id_material = 119;
+
+        UPDATE public.material
+        SET material_model = 'G12'
+        WHERE id_material = 152;
+
+        -- generic
+        IF NOT EXISTS(select 1 from material where is_generic = true) THEN
+            alter table material
+                alter column id_material_type drop not null;
+
+            INSERT INTO material (
+                material_name,
+                is_generic,
+                id_material_type,
+                subtype_id
+            )
+            SELECT
+                distinct base_name AS material_name,
+                         true,
+                         m.id_material_type,
+                         m.subtype_id
+            FROM (
+                     SELECT
+                         m.*,
+                         UPPER(
+                                 REGEXP_REPLACE(
+                                         TRIM(
+                                                 CONCAT_WS(
+                                                         ' ',
+                                                         t.type_name,
+                                                         s.subtype_name
+                                                 )
+                                         ),
+                                         '\s+',
+                                         ' ',
+                                         'g'
+                                 )
+                         ) AS base_name
+                     FROM material m
+                              JOIN material_type t on t.id_type = m.id_material_type
+                              left join material_subtype s on s.subtype_id = m.subtype_id
+                 ) m;
+
+            UPDATE material m
+            SET parent_material_id = m2.id_material
+            FROM material m2
+            WHERE m.id_material_type = m2.id_material_type
+              AND m2.subtype_id IS NOT DISTINCT FROM m.subtype_id
+              AND m2.is_generic = true;
+        END IF;
+
+        WITH valid_material AS (
+            SELECT m.id_material, t.type_name, s.subtype_name,
+                   m.material_function, m.material_model, m.material_brand,
+                   m.material_amps, m.material_length, m.material_width,
+                   m.material_power, m.material_gauge, m.material_weight
+            FROM material m
+                     JOIN material_type t ON m.id_material_type = t.id_type
+                     LEFT JOIN material_subtype s ON m.subtype_id = s.subtype_id
+            WHERE m.is_generic = false
+        )
+        UPDATE material m
+        SET material_name = UPPER(
+                REGEXP_REPLACE(
+                        TRIM(
+                                CONCAT_WS(
+                                        ' ',
+                                        vm.type_name,
+                                        vm.subtype_name,
+                                        vm.material_function,
+                                        vm.material_model,
+                                        vm.material_brand,
+                                        vm.material_amps,
+                                        vm.material_length,
+                                        vm.material_width,
+                                        vm.material_power,
+                                        vm.material_gauge,
+                                        vm.material_weight
+                                )
+                        ),
+                        '\s+',
+                        ' ',
+                        'g'
+                )
+                            )
+        FROM valid_material vm
+        WHERE m.id_material = vm.id_material;
+
+        create index if not exists contract_reference_item_description_index
+            on contract_reference_item (description);
+
+        create unique index if not exists contract_reference_item_description_uindex
+            on contract_reference_item (description);
+
+        create table if not exists item_rule_distribution
+        (
+            item_rule_distribution_id serial
+                constraint item_rule_distribution_pk
+                    primary key,
+            description                      text not null,
+            tenant_id                 uuid
+                constraint item_rule_distribution_tenant_tenant_id_fk
+                    references tenant
+        );
+
+        create index if not exists item_rule_distribution_tenant_id_index
+            on item_rule_distribution (tenant_id);
+
+        if not exists(select 1 from item_rule_distribution) then
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'SERVIÇO DE EXECUÇÃO DE PROJETO POR IP', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'CONSTRUÇÃO E MANUTENÇÃO EM REDES DE DISTRIBUIÇÃO', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'CABO FIO PP 2,5MM', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'CABO FLEXÍVEL 1,5MM', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'CABO 16MM²', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'CABO 25MM²', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+
+            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
+            VALUES (DEFAULT, 'CABO FIO PP 3 X 2,5 MM COR DA COBERTURA PRETO', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
+        end if;
+
+
+    END;
 $$;

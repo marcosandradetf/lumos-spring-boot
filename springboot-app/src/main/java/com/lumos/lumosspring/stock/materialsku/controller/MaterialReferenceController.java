@@ -2,16 +2,13 @@ package com.lumos.lumosspring.stock.materialsku.controller;
 
 import java.util.Objects;
 
+import com.lumos.lumosspring.stock.materialsku.dto.MaterialRequest;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.PagedResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.stock.materialsku.dto.MaterialResponse;
@@ -62,13 +59,11 @@ public class MaterialReferenceController {
         return ResponseEntity.ok(Objects.requireNonNullElse(name, ""));
     }
 
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
-//    @PostMapping
-//    //public ResponseEntity<String>  create(@RequestBody Material material, @CookieValue("refreshToken") String refreshToken) {
-//    public ResponseEntity<?> create(@RequestBody MaterialRequest material) {
-//        //return materialService.save(material, UUID.fromString(refreshToken));
-//        return materialService.save(material);
-//    }
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
+    @PostMapping("/create")
+    public ResponseEntity<?> create(@RequestBody MaterialRequest material) {
+        return materialReferenceService.create(material);
+    }
 
 //    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_ESTOQUISTA_CHEFE') or hasAuthority('SCOPE_ESTOQUISTA')")
 //    @PutMapping("{materialId}")
@@ -93,6 +88,26 @@ public class MaterialReferenceController {
 //
 //        return materialService.deleteById(id, userUUID);
 //    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @GetMapping("/get-all")
     public ResponseEntity<?> findAllForImportPreMeasurement() {

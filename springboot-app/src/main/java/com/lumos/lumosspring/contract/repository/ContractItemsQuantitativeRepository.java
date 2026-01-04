@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ContractItemsQuantitativeRepository extends CrudRepository<ContractItem, Long> {
+    record ItemDistributionRow(BigDecimal quantity, BigDecimal correction,  Long contractItemId){}
+
     void deleteByContractId(Long contractId);
 
     @Query("""
@@ -55,4 +57,20 @@ public interface ContractItemsQuantitativeRepository extends CrudRepository<Cont
         where contract_item_id = :contractItemId
     """)
     void updateBalance(long contractItemId, BigDecimal quantityExecuted, BigDecimal factor);
+
+    @Query(
+            """
+                select
+                    round(dei.measured_item_quantity / cast(:size as numeric), 2) as quantity,
+                    dei.measured_item_quantity - round(dei.measured_item_quantity / cast(:size as numeric), 2) * :size as correction,
+                    ci.contract_item_id
+                from direct_execution_item dei
+                join contract_item ci on ci.contract_item_id = dei.contract_item_id
+                join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+                where cri.description = :description
+                    and dei.direct_execution_id = :directExecutionId
+            """
+    )
+    ItemDistributionRow getItemDistribution(Integer size, Long directExecutionId, String description);
+
 }

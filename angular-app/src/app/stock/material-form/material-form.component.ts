@@ -12,6 +12,7 @@ import {Title} from '@angular/platform-browser';
 import {ContractService} from '../../contract/services/contract.service';
 import {Type} from '../../models/tipo.model';
 import {StockService} from '../services/stock.service';
+import {MaterialService} from '../services/material.service';
 
 @Component({
   selector: 'app-material-form',
@@ -29,33 +30,24 @@ import {StockService} from '../services/stock.service';
   styleUrl: './material-form.component.scss'
 })
 export class MaterialFormComponent implements OnInit {
-
   form!: FormGroup;
-
-  materialTypes: Type[] = [];
-
-  subtypesByType: Record<string, string[]> = {
-    'BRAÇO': ['GALVANIZADO', 'SUPORTE'],
-    'CABO': ['CONDUTOR', 'PP', 'FLEXÍVEL'],
-    'CONECTOR': ['TORÇÃO', 'PERFURANTE'],
-    'POSTE': ['AÇO', 'CIMENTO', 'ORNAMENTAL GALVANIZADO'],
-    'FITA ISOLANTE': ['ADESIVO', 'AUTOFUSÃO']
-  };
-
-  availableSubtypes: string[] = [];
-
+  materialTypes: any[] = [];
+  availableSubtypes: any[] = [];
   items: ContractReferenceItemsDTO[] = [];
+  loading = false;
 
   constructor(private fb: FormBuilder,
               protected utils: UtilsService,
               private title: Title,
               private contractService: ContractService,
               private stockService: StockService,
+              private materialService: MaterialService,
   ) {
   }
 
   ngOnInit(): void {
     this.form = this.fb.group({
+      materialId: [null],
       materialBaseName: [{value: '', disabled: false}],
       materialName: [{value: '', disabled: false}],
       materialType: [null, Validators.required],
@@ -84,35 +76,30 @@ export class MaterialFormComponent implements OnInit {
     this.contractService.getContractReferenceItems().subscribe(items => {
       this.items = items
     });
-    this.stockService.getTypes().subscribe(
-      t => this.materialTypes = t
-    );
+
+    this.stockService.findAllTypeSubtype().subscribe(types => {
+      this.materialTypes = types;
+    });
 
   }
 
-  onTypeChange(type: string) {
-    this.availableSubtypes = this.subtypesByType[type] || [];
-    this.form.patchValue({material_subtype: null});
+  onTypeChange(typeId: number) {
+    this.availableSubtypes = this.materialTypes.filter(t => t.typeId === typeId).map(s => s.subtypes);
+    if (this.availableSubtypes.length > 0) this.availableSubtypes = this.availableSubtypes[0];
+    this.form.patchValue({materialSubtype: null});
   }
 
   generateMaterialName() {
     const v = this.form.getRawValue();
+    const materialType = this.materialTypes.find(t => t.typeId === v.materialType)?.typeName ?? '';
 
     const partsBase = [
-      v.materialType,
+      materialType,
       v.materialSubtype,
-      v.materialFunction,
-      v.materialModel,
-      v.materialAmps,
-      v.materialLength,
-      v.materialWidth,
-      v.materialPower,
-      v.materialGauge,
-      v.materialWeight,
     ];
 
     const parts = [
-      v.materialType,
+      materialType,
       v.materialSubtype,
       v.materialFunction,
       v.materialModel,
@@ -191,4 +178,46 @@ export class MaterialFormComponent implements OnInit {
   }
 
 
+  protected findMaterial(event: FocusEvent) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+
+    if (![8, 12, 13, 14].includes(value.length)) {
+      return;
+    }
+
+    this.loading = true;
+    this.materialService.findByBarCode(value).subscribe({
+      next: (data) => {
+        this.form = this.fb.group({
+          materialId: [data.materialId],
+          materialBaseName: [{value: data.materialBaseName, disabled: false}],
+          materialName: [{value: data.materialBaseName, disabled: false}],
+          materialType: [data.materialType, Validators.required],
+          materialSubtype: [
+            data.materialSubtype,
+            this.subtypeValidatorFactory(() => this.availableSubtypes)
+          ],
+          materialFunction: [data.materialFunction],
+          materialModel: [data.materialModel],
+          materialBrand: [data.materialBrand, Validators.required],
+          materialAmps: [data.materialAmps],
+          materialLength: [data.materialLength],
+          materialWidth: [data.materialWidth],
+          materialPower: [data.materialPower],
+          materialGauge: [data.materialGauge],
+          materialWeight: [data.materialWeight],
+          barCode: [data.barCode, [Validators.required, this.barcodeValidator]],
+          contractItems: [data.contractItems, Validators.required], // multiselect
+        });
+      },
+      error: err => {
+        this.utils.showMessage(err.error.message || err.error.error, "error", "Erro ao buscar material por código de barras")
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+
+  }
 }

@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {MaterialResponse} from '../../models/material-response.dto';
+import {MaterialFormDTO, MaterialResponse} from '../../models/material-response.dto';
 import {CreateMaterialRequest} from '../../models/create-material-request.dto';
 import {environment} from '../../../environments/environment';
 
@@ -105,6 +105,10 @@ export class MaterialService {
 
   create(material: CreateMaterialRequest): Observable<MaterialResponse[]> {
     return this.http.post<MaterialResponse[]>(`${this.apiUrl}`, material);
+  }
+
+  findByBarCode(barcode: string): Observable<MaterialFormDTO> {
+    return this.http.get<MaterialFormDTO>(`${this.apiUrl}/find-by-barcode?barcode=${barcode}`);
   }
 
   // Atualiza a lista de materiais local

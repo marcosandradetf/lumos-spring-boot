@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.directexecution.service
 
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
+import com.lumos.lumosspring.contract.repository.ItemRuleDistributionRepository
 import com.lumos.lumosspring.directexecution.dto.InstallationRequest
 import com.lumos.lumosspring.directexecution.dto.InstallationStreetRequest
 import com.lumos.lumosspring.directexecution.model.DirectExecutionExecutor
@@ -22,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.util.*
 
-
 @Service
 class DirectExecutionRegisterService(
     private val minioService: MinioService,
@@ -34,6 +34,7 @@ class DirectExecutionRegisterService(
     private val directExecutionRepositoryItem: DirectExecutionRepositoryItem,
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
     private val materialContractReferenceItemRepository: MaterialContractReferenceItemRepository,
+    private val itemRuleDistributionRepository: ItemRuleDistributionRepository,
 ) {
 
     @Transactional
@@ -54,7 +55,7 @@ class DirectExecutionRegisterService(
         )?.get("result") != null
 
         if (exists) {
-            return ResponseEntity.status(409).body("Rua já enviada antes ou instalação já finalizada!")
+            return ResponseEntity.status(200).body("Rua já enviada antes ou instalação já finalizada!")
         }
 
         var installationStreet = DirectExecutionStreet(
@@ -136,30 +137,6 @@ class DirectExecutionRegisterService(
 
         }
 
-        val materialsPair = installationReq.materials.map { Pair(it.truckMaterialStockId, it.quantityExecuted) }
-        val servicesPair = materialContractReferenceItemRepository.findByContractReferenceItemId(
-            materialsPair.map { it.first },
-            installationReq.directExecutionId
-        )
-
-        servicesPair.forEach { s ->
-            val contractItemId = s.first
-            val materialId = s.second
-            val quantityExecuted = materialsPair.find { it.first == materialId }?.second
-
-            quantityExecuted?.let {
-                directExecutionRepositoryStreetItem.save(
-                    DirectExecutionStreetItem(
-                        executedQuantity = it,
-                        materialStockId = null,
-                        contractItemId = contractItemId,
-                        directExecutionStreetId = installationStreet.directExecutionStreetId
-                            ?: throw IllegalStateException("directExecutionStreetId not set")
-                    )
-                )
-            }
-        }
-
         return ResponseEntity.ok().build()
     }
 
@@ -213,27 +190,7 @@ class DirectExecutionRegisterService(
             )
         }
 
-        val streets = directExecutionRepositoryStreet.getByDirectExecutionId(directExecutionId)
-        val cableDistribution =
-            directExecutionRepositoryItem.getCableDistribution(streets.size, directExecutionId)
-
-        streets.forEachIndexed { index, id ->
-            val isLast = index == streets.lastIndex
-            val quantity = if (isLast) {
-                cableDistribution.quantity + cableDistribution.correction
-            } else {
-                cableDistribution.quantity
-            }
-
-            directExecutionRepositoryStreetItem.save(
-                DirectExecutionStreetItem(
-                    executedQuantity = quantity,
-                    materialStockId = null,
-                    contractItemId = cableDistribution.contractItemId,
-                    directExecutionStreetId = id
-                )
-            )
-        }
+        distributeOtherItems(directExecutionId)
 
         return ResponseEntity.ok().build()
     }
@@ -309,28 +266,37 @@ class DirectExecutionRegisterService(
             )
         }
 
-        val streets = directExecutionRepositoryStreet.getByDirectExecutionId(request.directExecutionId)
-        val cableDistribution =
-            directExecutionRepositoryItem.getCableDistribution(streets.size, request.directExecutionId)
-
-        streets.forEachIndexed { index, id ->
-            val isLast = index == streets.lastIndex
-            val quantity = if (isLast) {
-                cableDistribution.quantity + cableDistribution.correction
-            } else {
-                cableDistribution.quantity
-            }
-
-            directExecutionRepositoryStreetItem.save(
-                DirectExecutionStreetItem(
-                    executedQuantity = quantity,
-                    materialStockId = null,
-                    contractItemId = cableDistribution.contractItemId,
-                    directExecutionStreetId = id
-                )
-            )
-        }
-
         return ResponseEntity.ok().build()
+    }
+
+    private fun distributeOtherItems(directExecutionId: Long) {
+        val streets = directExecutionRepositoryStreet.getByDirectExecutionId(directExecutionId)
+        val paramsRules = itemRuleDistributionRepository.findAllByTenantId(Utils.getCurrentTenantId())
+
+        paramsRules.forEach {
+            val distribution = contractItemsQuantitativeRepository.getItemDistribution(
+                streets.size,
+                directExecutionId,
+                it
+            )
+
+            streets.forEachIndexed { index, id ->
+                val isLast = index == streets.lastIndex
+                val quantity = if (isLast) {
+                    distribution.quantity + distribution.correction
+                } else {
+                    distribution.quantity
+                }
+
+                directExecutionRepositoryStreetItem.save(
+                    DirectExecutionStreetItem(
+                        executedQuantity = quantity,
+                        materialStockId = null,
+                        contractItemId = distribution.contractItemId,
+                        directExecutionStreetId = id
+                    )
+                )
+            }
+        }
     }
 }

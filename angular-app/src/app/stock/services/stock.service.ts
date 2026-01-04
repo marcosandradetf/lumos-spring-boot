@@ -29,6 +29,10 @@ export class StockService {
     return this.http.get<Type[]>(`${this.endpoint}/type`);
   }
 
+  findAllTypeSubtype() {
+    return this.http.get<any[]>(`${this.endpoint}/type/get-all-type-subtype`);
+  }
+
   getGroups() {
     return this.http.get<Group[]>(`${this.endpoint}/group`);
   }

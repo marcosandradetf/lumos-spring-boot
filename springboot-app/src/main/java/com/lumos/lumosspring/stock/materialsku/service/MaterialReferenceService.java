@@ -18,6 +18,7 @@ import com.lumos.lumosspring.stock.materialsku.dto.MaterialResponse;
 import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
 
+import com.lumos.lumosspring.util.Utils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -72,76 +73,6 @@ public class MaterialReferenceService {
         return ResponseEntity.ok(materials);  // Retorna os materiais no formato de resposta
     }
 
-    private ResponseEntity<String> validateMaterialRequest(MaterialRequest material) {
-        if (materialStockRepository.existsMaterial(
-                material.materialName(), material.deposit(), material.materialBrand())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Este material já existe no almoxarifado informado.");
-        }
-
-        if (!typeRepository.existsById(material.materialType())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Tipo de material não encontrado.");
-        }
-
-        if (!material.allDeposits() && !depositRepository.existsById(material.deposit())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Almoxarifado não encontrado.");
-        }
-
-        if (!companyRepository.existsById(material.company())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Empresa não encontrada.");
-        }
-        return null; // Indica que não houve erros
-    }
-
-    private List<MaterialStock> convertToMaterial(MaterialRequest material) {
-        List<MaterialStock> materialList = new ArrayList<>();
-
-        MaterialType materialType = typeRepository.findById(material.materialType())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tipo informado não encontrado."));
-
-        Company company = companyRepository.findById(material.company())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Empresa não encontrada."));
-
-        if (material.allDeposits()) {
-            Iterable<Deposit> deposits = depositRepository.findAll();
-            for (Deposit deposit : deposits) {
-                MaterialStock materialStock = new MaterialStock();
-                materialStock.setMaterialId(createMaterial(material, materialType).getIdMaterial());
-                materialStock.setDepositId(deposit.getIdDeposit());
-                materialStock.setBuyUnit(material.buyUnit());
-                materialStock.setRequestUnit(material.requestUnit());
-                materialList.add(materialStock);
-            }
-        } else {
-            MaterialStock materialStock = new MaterialStock();
-            materialStock.setMaterialId(createMaterial(material, materialType).getIdMaterial());
-            Deposit deposit = depositRepository.findById(material.deposit())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Almoxarifado não encontrado."));
-            materialStock.setDepositId(deposit.getIdDeposit());
-            materialStock.setBuyUnit(material.buyUnit());
-            materialStock.setRequestUnit(material.requestUnit());
-            materialList.add(materialStock);
-        }
-
-        // Salvar todos os materiais de uma vez
-        materialStockRepository.saveAll(materialList);
-
-        return materialList;
-    }
-
-    private Material createMaterial(MaterialRequest material, MaterialType materialType) {
-        Material newMaterial = new Material();
-        newMaterial.setMaterialName(material.materialName());
-        newMaterial.setMaterialBrand(material.materialBrand());
-        newMaterial.setMaterialPower(material.materialPower());
-        newMaterial.setMaterialAmps(material.materialAmps());  // Corrigido
-        newMaterial.setMaterialLength(material.materialLength());  // Corrigido
-        newMaterial.setIdMaterialType(materialType.getIdType());
-        return newMaterial;
-    }
 
 
     @Transactional
@@ -174,55 +105,6 @@ public class MaterialReferenceService {
         return ResponseEntity.noContent().build();
     }
 
-//    @Transactional
-//    public ResponseEntity<?> update(MaterialRequest material, Long materialId, UUID idUsuario) {
-//        var user = userRepository.findById(idUsuario);
-//        var existingMaterial = materialStockRepository.findById(materialId);
-//
-//        // Verifica se o material existe
-//        if (existingMaterial.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                    .body("Material não encontrado.");
-//        }
-//
-//        // Verifica se o usuário existe
-//        if (user.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                    .body("Usuário não encontrado.");
-//        }
-//
-//        // Atualiza os campos necessários do material existente
-//        MaterialStock materialToUpdate = existingMaterial.get();
-//        materialToUpdate.getMaterial().setMaterialName(material.materialName());
-//        materialToUpdate.getMaterial().setMaterialBrand(material.materialBrand());
-//
-//        materialToUpdate.getMaterial().setMaterialPower(material.materialPower());
-//        materialToUpdate.getMaterial().setMaterialAmps(material.materialAmps());
-//        materialToUpdate.getMaterial().setMaterialLength(material.materialLength());
-//
-//        materialToUpdate.setBuyUnit(material.buyUnit());
-//        materialToUpdate.setRequestUnit(material.requestUnit());
-//        materialToUpdate.setInactive(material.inactive());
-//        materialToUpdate.getMaterial().setMaterialType(typeRepository.findById(material.materialType()).orElse(null));
-//
-//        materialStockRepository.save(materialToUpdate);
-//
-//        // Cria e salva o log de atualização
-//        var log = new Log();
-//        String logMessage = String.format("Usuário %s atualizou material %d com sucesso.",
-//                user.get().getUsername(),
-//                materialId);
-//
-//        log.setMessage(logMessage);
-//        log.setUser(user.get());
-//        log.setCategory("Estoque");
-//        log.setType("Atualização");
-//        logRepository.save(log);
-//
-//        return ResponseEntity.ok(convertToMaterialResponse(List.of(materialToUpdate)));
-//    }
-
-
     public ResponseEntity<?> findAllForImportPreMeasurement() {
         List<Material> materials = materialReferenceRepository.findAllForImportPreMeasurement(); // ou equivalente
         record MaterialDTOImport(long idMaterial, String materialName, String materialBrand, String materialPower,
@@ -245,4 +127,65 @@ public class MaterialReferenceService {
     }
 
 
+    public ResponseEntity<?> create(MaterialRequest material) {
+        // Cria e salva o log de atualização
+        var user = userRepository.findByUserId(Utils.INSTANCE.getCurrentUserId()).orElseThrow();
+        var log = new Log();
+        String logMessage;
+
+        if(material.materialId() == null) {
+            Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName());
+            if(baseMaterialId == null) {
+                var baseMaterial = new Material(
+                        material.materialBaseName(),
+                        material.materialType(),
+                        material.materialSubtype()
+                );
+                baseMaterial = materialReferenceRepository.save(baseMaterial);
+                baseMaterialId = baseMaterial.getIdMaterial();
+            }
+
+            var materialSku = new Material(
+                    baseMaterialId,
+                    material.materialName(),
+                    material.materialType(),
+                    material.materialSubtype(),
+                    material.materialFunction(),
+                    material.materialModel(),
+                    material.materialBrand(),
+                    material.materialAmps(),
+                    material.materialLength(),
+                    material.materialWidth(),
+                    material.materialPower(),
+                    material.materialGauge(),
+                    material.materialWeight(),
+                    material.barCode()
+            );
+            materialSku = materialReferenceRepository.save(materialSku);
+            logMessage = String.format("Usuário %s criou o material %d - %s com sucesso.",
+                    user.getUsername(),
+                    materialSku.getIdMaterial(),
+                    material.materialName()
+            );
+            log.setType("Criação");
+        } else {
+            var materialSku = materialReferenceRepository.findById(material.materialId()).orElseThrow();
+
+
+
+            logMessage = String.format("Usuário %s atualizou o material %d - %s com sucesso.",
+                    user.getUsername(),
+                    material.materialId(),
+                    material.materialName()
+            );
+            log.setType("Atualização");
+        }
+
+        log.setMessage(logMessage);
+        log.setIdUser(user.getUserId());
+        log.setCategory("Estoque");
+        logRepository.save(log);
+
+        return null;
+    }
 }

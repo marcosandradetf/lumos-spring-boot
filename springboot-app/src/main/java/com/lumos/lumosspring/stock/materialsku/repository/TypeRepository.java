@@ -18,9 +18,9 @@ public interface TypeRepository extends CrudRepository<MaterialType, Long> {
     List<MaterialType> findAllByOrderByIdTypeAsc();
 
     @Query("""
-        SELECT mst.type_id, mt.type_name, mst.subtype_id, mst.subtype_name
+        SELECT mt.id_type as type_id, mt.type_name, mst.subtype_id, mst.subtype_name
         FROM material_type mt
-        JOIN material_subtype mst on mst.type_id = mt.id_type
+        LEFT JOIN material_subtype mst on mst.type_id = mt.id_type
         ORDER BY mt.type_name
     """)
     List<typeSubtypeResponse> findAllTypeSubtype();

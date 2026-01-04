@@ -71,5 +71,7 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
             @Param("materialQuantity") BigDecimal materialQuantity
     );
 
+    @Query("select id_material from material where material_name = :name")
+    Long findBaseMaterialId(String name);
 }
 

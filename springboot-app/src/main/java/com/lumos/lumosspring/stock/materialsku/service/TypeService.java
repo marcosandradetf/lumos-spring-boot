@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,16 +35,14 @@ public class TypeService {
         return tipoRepository.findAllByOrderByIdTypeAsc();
     }
 
-    @Cacheable("getAllTypes")
-    public ResponseEntity<?> findAllTypeSubtype() {
-        record sypTypeResponse(Long subtypeId, String subtypeName) {
-        }
-        record typeResponse(Long typeId, String typeName, List<sypTypeResponse> subtypes) {
-        }
+    record sypTypeResponse(Long subtypeId, String subtypeName) {}
+    public record TypeResponse(Long typeId, String typeName, List<sypTypeResponse> subtypes) {}
 
+    @Cacheable("getAllTypes")
+    public List<TypeResponse> findAllTypeSubtype() {
         var types = tipoRepository.findAllTypeSubtype();
 
-        var response = types.stream()
+        return types.stream()
                 .collect(Collectors.groupingBy(
                         TypeRepository.typeSubtypeResponse::typeId
                 ))
@@ -53,17 +52,18 @@ public class TypeService {
                     var first = group.getFirst();
 
                     var subtypes = group.stream()
+                            .filter(e -> e.subtypeId() != null)
                             .map(e -> new sypTypeResponse(e.subtypeId(), e.subtypeName()))
                             .distinct()
                             .toList();
 
-                    return new typeResponse(first.typeId(), first.typeName(), subtypes);
+                    return new TypeResponse(first.typeId(), first.typeName(), subtypes);
 
                 })
+                .sorted(Comparator.comparing(TypeResponse::typeName))
                 .toList();
-
-        return ResponseEntity.ok(response);
     }
+
 
     public MaterialType findById(Long id) {
         return tipoRepository.findById(id).orElse(null);

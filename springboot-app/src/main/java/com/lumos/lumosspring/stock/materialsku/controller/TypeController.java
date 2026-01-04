@@ -24,7 +24,7 @@ public class TypeController {
 
     @GetMapping("/get-all-type-subtype")
     public ResponseEntity<?> findAllTypeSubtype() {
-        return typeService.findAllTypeSubtype();
+        return ResponseEntity.ok(typeService.findAllTypeSubtype());
     }
 
     @GetMapping("/{id}")

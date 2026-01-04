@@ -22,6 +22,7 @@
           pInputText
           inputmode="numeric"
           (input)="utils.formatNumber($event)"
+          (blur)="findMaterial($event)"
           placeholder="Ex.: 1234567890123"
           formControlName="barCode"
           maxlength="14"
@@ -43,7 +44,7 @@
           <p-dropdown
             [options]="materialTypes"
             optionLabel="typeName"
-            optionValue="idType"
+            optionValue="typeId"
             formControlName="materialType"
             (onChange)="onTypeChange($event.value)"
             placeholder="Selecione o tipo"
@@ -72,12 +73,14 @@
               pInputText
               value="Sem subtipos"
               readonly
-              class="w-full bg-gray-100 cursor-not-allowed"
+              class="w-full bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-neutral-200"
             />
           } @else {
             <p-dropdown
               [options]="availableSubtypes"
               formControlName="materialSubtype"
+              optionLabel="subtypeName"
+              optionValue="subtypeId"
               placeholder="Selecione o subtipo"
               class="w-full">
             </p-dropdown>
@@ -207,7 +210,7 @@
         </div>
 
         <!-- Ações -->
-        <div class="flex justify-end gap-4 pt-6">
+        <div class="flex justify-end gap-4 py-6">
           <button
             pButton
             (click)="form.reset()"

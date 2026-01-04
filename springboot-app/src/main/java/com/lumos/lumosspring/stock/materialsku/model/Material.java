@@ -33,7 +33,59 @@ public class Material {
 
     private BigDecimal conversionFactor; // utilized for calculate quantity for units than cx, rolo, etc
 
-    public Material() {}
+    private Long parentMaterialId;
+    private Long subtypeId;
+    private String materialFunction;
+    private String materialModel;
+    private String materialWidth;
+    private String materialGauge;
+    private String materialWeight;
+    private String barCode;
+
+    public Material() {
+    }
+
+    public Material(
+            Long parentMaterialId,
+            String materialName,
+            Long materialType,
+            Long materialSubtype,
+            String materialFunction,
+            String materialModel,
+            String materialBrand,
+            String materialAmps,
+            String materialLength,
+            String materialWidth,
+            String materialPower,
+            String materialGauge,
+            String materialWeight,
+            String barCode
+    ) {
+        this.parentMaterialId = parentMaterialId;
+        this.materialName = materialName;
+        this.idMaterialType = materialType;
+        this.subtypeId = materialSubtype;
+        this.materialFunction = materialFunction;
+        this.materialModel = materialModel;
+        this.materialBrand = materialBrand;
+        this.materialAmps = materialAmps;
+        this.materialLength = materialLength;
+        this.materialWidth = materialWidth;
+        this.materialPower = materialPower;
+        this.materialGauge = materialGauge;
+        this.materialWeight = materialWeight;
+        this.barCode = barCode;
+    }
+
+    public Material(
+            String materialName,
+            Long materialType,
+            Long materialSubtype
+    ) {
+        this.materialName = materialName;
+        this.idMaterialType = materialType;
+        this.subtypeId = materialSubtype;
+    }
 
     public Long getIdMaterial() {
         return idMaterial;
@@ -130,6 +182,70 @@ public class Material {
 
     public void setConversionFactor(BigDecimal conversionFactor) {
         this.conversionFactor = conversionFactor;
+    }
+
+    public Long getParentMaterialId() {
+        return parentMaterialId;
+    }
+
+    public void setParentMaterialId(Long parentMaterialId) {
+        this.parentMaterialId = parentMaterialId;
+    }
+
+    public Long getSubtypeId() {
+        return subtypeId;
+    }
+
+    public void setSubtypeId(Long subtypeId) {
+        this.subtypeId = subtypeId;
+    }
+
+    public String getMaterialFunction() {
+        return materialFunction;
+    }
+
+    public void setMaterialFunction(String materialFunction) {
+        this.materialFunction = materialFunction;
+    }
+
+    public String getMaterialModel() {
+        return materialModel;
+    }
+
+    public void setMaterialModel(String materialModel) {
+        this.materialModel = materialModel;
+    }
+
+    public String getMaterialWidth() {
+        return materialWidth;
+    }
+
+    public void setMaterialWidth(String materialWidth) {
+        this.materialWidth = materialWidth;
+    }
+
+    public String getMaterialGauge() {
+        return materialGauge;
+    }
+
+    public void setMaterialGauge(String materialGauge) {
+        this.materialGauge = materialGauge;
+    }
+
+    public String getMaterialWeight() {
+        return materialWeight;
+    }
+
+    public void setMaterialWeight(String materialWeight) {
+        this.materialWeight = materialWeight;
+    }
+
+    public String getBarCode() {
+        return barCode;
+    }
+
+    public void setBarCode(String barCode) {
+        this.barCode = barCode;
     }
 }
 

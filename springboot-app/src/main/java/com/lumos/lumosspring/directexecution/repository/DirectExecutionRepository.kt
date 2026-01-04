@@ -45,7 +45,6 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
 @Repository
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
     data class InstallationRow(val contractItemId: Long, val measuredItemQuantity: BigDecimal, val factor: BigDecimal?)
-    data class CableDistributionRow(val quantity: BigDecimal, val correction: BigDecimal, val contractItemId: Long)
 
     @Query(
         """
@@ -58,20 +57,6 @@ interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Lo
     )
     fun getByDirectExecutionId(directExecutionId: Long): List<InstallationRow>
 
-    @Query(
-        """
-            select
-                round(dei.measured_item_quantity / cast(:size as numeric), 2) as quantity,
-                dei.measured_item_quantity - round(dei.measured_item_quantity / cast(:size as numeric), 2) * :size as correction,
-                ci.contract_item_id
-            from direct_execution_item dei
-            join contract_item ci on ci.contract_item_id = dei.contract_item_id
-            join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
-            where cri.type = 'CABO'
-                and dei.direct_execution_id = :directExecutionId
-        """
-    )
-    fun getCableDistribution(size: Int, directExecutionId: Long): CableDistributionRow
 }
 
 @Repository
