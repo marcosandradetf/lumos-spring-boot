@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.directexecution.service
 
+import com.lumos.lumosspring.contract.repository.ContractItemServiceRepository
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ItemRuleDistributionRepository
 import com.lumos.lumosspring.directexecution.dto.InstallationRequest
@@ -9,7 +10,6 @@ import com.lumos.lumosspring.directexecution.model.DirectExecutionStreet
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreetItem
 import com.lumos.lumosspring.directexecution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
-import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractReferenceItemRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.ReservationStatus
@@ -33,8 +33,8 @@ class DirectExecutionRegisterService(
     private val directExecutionRepository: DirectExecutionRepository,
     private val directExecutionRepositoryItem: DirectExecutionRepositoryItem,
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
-    private val materialContractReferenceItemRepository: MaterialContractReferenceItemRepository,
     private val itemRuleDistributionRepository: ItemRuleDistributionRepository,
+    private val contractItemServiceRepository: ContractItemServiceRepository,
 ) {
 
     @Transactional
@@ -134,7 +134,7 @@ class DirectExecutionRegisterService(
             )
 
             directExecutionRepositoryStreetItem.save(item)
-
+            saveLinkedItems(item, installationReq.directExecutionId)
         }
 
         return ResponseEntity.ok().build()
@@ -189,8 +189,6 @@ class DirectExecutionRegisterService(
                 it.factor ?: BigDecimal.ONE
             )
         }
-
-        distributeOtherItems(directExecutionId)
 
         return ResponseEntity.ok().build()
     }
@@ -269,6 +267,7 @@ class DirectExecutionRegisterService(
         return ResponseEntity.ok().build()
     }
 
+    //    paused!
     private fun distributeOtherItems(directExecutionId: Long) {
         val streets = directExecutionRepositoryStreet.getByDirectExecutionId(directExecutionId)
         val paramsRules = itemRuleDistributionRepository.findAllByTenantId(Utils.getCurrentTenantId())
@@ -297,6 +296,20 @@ class DirectExecutionRegisterService(
                     )
                 )
             }
+        }
+    }
+
+    private fun saveLinkedItems(item: DirectExecutionStreetItem, directExecutionId: Long) {
+        val itemServices = contractItemServiceRepository.getAllById(item.contractItemId, directExecutionId)
+
+        itemServices.forEach { service ->
+            val serviceItem = item.copy(
+                contractItemId = service.contractItemId,
+                executedQuantity = item.executedQuantity * service.factor,
+                directExecutionStreetItemId = null,
+                materialStockId = null
+            )
+            directExecutionRepositoryStreetItem.save(serviceItem)
         }
     }
 }

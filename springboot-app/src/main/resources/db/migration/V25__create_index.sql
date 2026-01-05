@@ -42,3 +42,17 @@ create index if not exists material_reservation_tenant_index
 
 create index if not exists material_history_tenant_index
     on material_history (tenant_id);
+
+create table if not exists contract_item_service
+(
+    contract_item_reference_id         integer
+        constraint contract_item_id_contract_reference_item_id_fk
+            references contract_reference_item,
+    contract_item_reference_id_service integer
+        constraint contract_item_service_id_contract_reference_item_id_fk
+            references contract_reference_item,
+    factor numeric default 1 not null,
+    constraint contract_item_service_pk
+        primary key (contract_item_reference_id, contract_item_reference_id_service)
+);
+

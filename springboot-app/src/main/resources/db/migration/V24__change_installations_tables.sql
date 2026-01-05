@@ -628,18 +628,6 @@ $$
 
         if not exists(select 1 from item_rule_distribution) then
             INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
-            VALUES (DEFAULT, 'SERVIÇO DE EXECUÇÃO DE PROJETO POR IP', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
-
-            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
-            VALUES (DEFAULT, 'SERVIÇO DE INSTALAÇÃO DE LUMINÁRIA EM LED', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
-
-            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
-            VALUES (DEFAULT, 'CONSTRUÇÃO E MANUTENÇÃO EM REDES DE DISTRIBUIÇÃO', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
-
-            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
-            VALUES (DEFAULT, 'SERVIÇO DE RECOLOCAÇÃO DE BRAÇOS', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
-
-            INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
             VALUES (DEFAULT, 'CABO FIO PP 2,5MM', 'f0dc9ab8-cb2c-4f21-a75f-05b122614862');
 
             INSERT INTO public.item_rule_distribution (item_rule_distribution_id, description, tenant_id)
