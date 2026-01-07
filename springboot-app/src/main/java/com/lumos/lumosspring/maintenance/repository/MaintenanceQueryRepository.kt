@@ -116,9 +116,9 @@ class MaintenanceQueryRepository(
         val sql = """
             WITH items_by_street AS (
                 SELECT
-            msi.maintenance_street_id,
-            material_name_unaccent,
-            m.material_power
+                    msi.maintenance_street_id,
+                    material_name_unaccent,
+                    coalesce(m.material_power, ms.last_power) as material_power
                   FROM maintenance_street_item msi
                   join maintenance_street ms on ms.maintenance_street_id = msi.maintenance_street_id
                   JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id

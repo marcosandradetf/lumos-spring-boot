@@ -53,10 +53,10 @@ public interface ContractItemsQuantitativeRepository extends CrudRepository<Cont
     @Modifying
     @Query("""
         update contract_item
-        set quantity_executed = quantity_executed + :quantityExecuted * :factor
+        set quantity_executed = quantity_executed + :quantityExecuted
         where contract_item_id = :contractItemId
     """)
-    void updateBalance(long contractItemId, BigDecimal quantityExecuted, BigDecimal factor);
+    void updateBalance(long contractItemId, BigDecimal quantityExecuted);
 
     @Query(
             """

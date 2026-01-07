@@ -1,10 +1,13 @@
 package com.lumos.lumosspring.premeasurement.service.installation;
 
+import com.lumos.lumosspring.contract.repository.ContractItemDependencyRepository;
+import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository;
 import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationItemRequest;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationRequest;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationStreetRequest;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurementExecutor;
+import com.lumos.lumosspring.premeasurement.model.PreMeasurementStreetItem;
 import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementExecutorRepository;
 import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementInstallationRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
@@ -25,17 +29,21 @@ public class InstallationRegisterService {
     private final PreMeasurementInstallationRepository preMeasurementInstallationRepository;
     private final MaterialStockRepository materialStockRepository;
     private final PreMeasurementExecutorRepository preMeasurementExecutorRepository;
+    private final ContractItemDependencyRepository contractItemDependencyRepository;
+    private final ContractItemsQuantitativeRepository contractItemsQuantitativeRepository;
 
     public InstallationRegisterService(
             MinioService minioService,
             PreMeasurementInstallationRepository preMeasurementInstallationRepository,
             MaterialStockRepository materialStockRepository,
-            PreMeasurementExecutorRepository preMeasurementExecutorRepository
-    ) {
+            PreMeasurementExecutorRepository preMeasurementExecutorRepository,
+            ContractItemDependencyRepository contractItemDependencyRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository) {
         this.minioService = minioService;
         this.preMeasurementInstallationRepository = preMeasurementInstallationRepository;
         this.materialStockRepository = materialStockRepository;
         this.preMeasurementExecutorRepository = preMeasurementExecutorRepository;
+        this.contractItemDependencyRepository = contractItemDependencyRepository;
+        this.contractItemsQuantitativeRepository = contractItemsQuantitativeRepository;
     }
 
     @Transactional
@@ -60,30 +68,12 @@ public class InstallationRegisterService {
         }
 
         for (InstallationItemRequest r : installationReq.getItems()) {
-            String materialName = r.getMaterialName().toLowerCase(Locale.ROOT);
-            String hasService = null;
-
-            if (materialName.contains("led")) {
-                hasService = "led";
-            } else if (materialName.contains("braço")) {
-                hasService = "braço";
-            }
-
-            if (hasService != null) {
-                preMeasurementInstallationRepository.updateExecutedQuantity(
-                        r.getContractItemId(),
-                        hasService,
-                        installation.preMeasurementId(),
-                        r.getQuantityExecuted()
-                );
-            } else {
-                preMeasurementInstallationRepository.updateExecutedQuantity(
-                        r.getContractItemId(),
-                        r.getQuantityExecuted()
-                );
-            }
-
             preMeasurementInstallationRepository.updateInstallationItem(r.getContractItemId(), r.getQuantityExecuted(), installation.preMeasurementStreetId());
+            contractItemsQuantitativeRepository.updateBalance(
+                    r.getContractItemId(),
+                    r.getQuantityExecuted()
+            );
+            saveLinkedItems(r.getContractItemId(), r.getQuantityExecuted(), installation.preMeasurementStreetId());
 
             materialStockRepository.debitStock(
                     r.getQuantityExecuted(),
@@ -167,5 +157,22 @@ public class InstallationRegisterService {
         return ResponseEntity.noContent().build();
     }
 
+
+    private void saveLinkedItems(Long contractItemId, BigDecimal quantityExecuted, Long preMeasurementStreetId) {
+        var itemDependency = contractItemDependencyRepository.getAllPreMeasurementItemsById(contractItemId, preMeasurementStreetId);
+
+        itemDependency.forEach(dependency -> {
+            preMeasurementInstallationRepository.updateInstallationItem(
+                    dependency.getContractItemId(),
+                    quantityExecuted.multiply(dependency.getFactor()),
+                    preMeasurementStreetId
+            );
+
+            contractItemsQuantitativeRepository.updateBalance(
+                    dependency.getContractItemId(),
+                    quantityExecuted.multiply(dependency.getFactor())
+            );
+        });
+    }
 
 }

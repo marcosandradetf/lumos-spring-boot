@@ -44,7 +44,7 @@ public class TypeService {
 
         return types.stream()
                 .collect(Collectors.groupingBy(
-                        TypeRepository.typeSubtypeResponse::typeId
+                        TypeRepository.TypeSubtypeResponse::typeId
                 ))
                 .values()
                 .stream()
@@ -62,6 +62,18 @@ public class TypeService {
                 })
                 .sorted(Comparator.comparing(TypeResponse::typeName))
                 .toList();
+    }
+
+    public ResponseEntity<?> findUnitsByTypeId(Long typeId) {
+        record UnitResponse(List<TypeRepository.TypeUnitResponse> buyUnits, List<TypeRepository.TypeUnitResponse> requestUnits) {}
+
+        var units = tipoRepository.findUnitsByTypeId(typeId);
+        var response = new UnitResponse(
+                units.stream().filter(TypeRepository.TypeUnitResponse::buyUnit).toList(),
+                units.stream().filter(u -> !u.buyUnit()).toList()
+        );
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 

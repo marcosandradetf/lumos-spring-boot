@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.directexecution.service
 
-import com.lumos.lumosspring.contract.repository.ContractItemServiceRepository
+import com.lumos.lumosspring.contract.repository.ContractItemDependencyRepository
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ItemRuleDistributionRepository
 import com.lumos.lumosspring.directexecution.dto.InstallationRequest
@@ -10,6 +10,7 @@ import com.lumos.lumosspring.directexecution.model.DirectExecutionStreet
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreetItem
 import com.lumos.lumosspring.directexecution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.ReservationStatus
@@ -34,7 +35,8 @@ class DirectExecutionRegisterService(
     private val directExecutionRepositoryItem: DirectExecutionRepositoryItem,
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
     private val itemRuleDistributionRepository: ItemRuleDistributionRepository,
-    private val contractItemServiceRepository: ContractItemServiceRepository,
+    private val contractItemDependencyRepository: ContractItemDependencyRepository,
+    private val materialStockRepository: MaterialStockRepository,
 ) {
 
     @Transactional
@@ -100,17 +102,9 @@ class DirectExecutionRegisterService(
                 throw Utils.BusinessException("Sem estoque para o material: " + m.truckMaterialStockId + " - " + m.materialName)
             }
 
-            namedJdbc.update(
-                """
-                    UPDATE material_stock
-                    SET stock_quantity = stock_quantity - :quantityCompleted,
-                        stock_available = stock_available - :quantityCompleted
-                    WHERE material_id_stock = :materialStockId
-                """.trimIndent(),
-                mapOf(
-                    "quantityCompleted" to m.quantityExecuted,
-                    "materialStockId" to m.truckMaterialStockId,
-                )
+            materialStockRepository.debitStock(
+                m.quantityExecuted,
+                m.truckMaterialStockId
             )
 
             namedJdbc.update(
@@ -134,6 +128,10 @@ class DirectExecutionRegisterService(
             )
 
             directExecutionRepositoryStreetItem.save(item)
+            contractItemsQuantitativeRepository.updateBalance(
+                item.contractItemId,
+                item.executedQuantity
+            )
             saveLinkedItems(item, installationReq.directExecutionId)
         }
 
@@ -180,15 +178,6 @@ class DirectExecutionRegisterService(
             signDate = null,
             responsible = null
         )
-
-        val installationItems = directExecutionRepositoryItem.getByDirectExecutionId(directExecutionId)
-        installationItems.forEach {
-            contractItemsQuantitativeRepository.updateBalance(
-                it.contractItemId,
-                it.measuredItemQuantity,
-                it.factor ?: BigDecimal.ONE
-            )
-        }
 
         return ResponseEntity.ok().build()
     }
@@ -255,61 +244,24 @@ class DirectExecutionRegisterService(
             )
         )
 
-        val installationItems = directExecutionRepositoryItem.getByDirectExecutionId(directExecutionId)
-        installationItems.forEach {
-            contractItemsQuantitativeRepository.updateBalance(
-                it.contractItemId,
-                it.measuredItemQuantity,
-                it.factor ?: BigDecimal.ONE
-            )
-        }
-
         return ResponseEntity.ok().build()
     }
 
-    //    paused!
-    private fun distributeOtherItems(directExecutionId: Long) {
-        val streets = directExecutionRepositoryStreet.getByDirectExecutionId(directExecutionId)
-        val paramsRules = itemRuleDistributionRepository.findAllByTenantId(Utils.getCurrentTenantId())
-
-        paramsRules.forEach {
-            val distribution = contractItemsQuantitativeRepository.getItemDistribution(
-                streets.size,
-                directExecutionId,
-                it
-            )
-
-            streets.forEachIndexed { index, id ->
-                val isLast = index == streets.lastIndex
-                val quantity = if (isLast) {
-                    distribution.quantity + distribution.correction
-                } else {
-                    distribution.quantity
-                }
-
-                directExecutionRepositoryStreetItem.save(
-                    DirectExecutionStreetItem(
-                        executedQuantity = quantity,
-                        materialStockId = null,
-                        contractItemId = distribution.contractItemId,
-                        directExecutionStreetId = id
-                    )
-                )
-            }
-        }
-    }
-
     private fun saveLinkedItems(item: DirectExecutionStreetItem, directExecutionId: Long) {
-        val itemServices = contractItemServiceRepository.getAllById(item.contractItemId, directExecutionId)
+        val itemDependency = contractItemDependencyRepository.getAllDirectExecutionItemsById(item.contractItemId, directExecutionId)
 
-        itemServices.forEach { service ->
-            val serviceItem = item.copy(
-                contractItemId = service.contractItemId,
-                executedQuantity = item.executedQuantity * service.factor,
+        itemDependency.forEach { dependency ->
+            val dependencyItem = item.copy(
+                contractItemId = dependency.contractItemId,
+                executedQuantity = item.executedQuantity * dependency.factor,
                 directExecutionStreetItemId = null,
                 materialStockId = null
             )
-            directExecutionRepositoryStreetItem.save(serviceItem)
+            directExecutionRepositoryStreetItem.save(dependencyItem)
+            contractItemsQuantitativeRepository.updateBalance(
+                dependency.contractItemId,
+                item.executedQuantity * dependency.factor
+            )
         }
     }
 }

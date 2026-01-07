@@ -390,7 +390,7 @@ class MaterialStockJdbcRepository(
 
 
     fun insertMaterials(depositId: Long, isTruck: Boolean) {
-        var sql = """
+        val sql = """
                 insert into material_stock (
                     buy_unit,
                     cost_per_item,
@@ -404,33 +404,21 @@ class MaterialStockJdbcRepository(
                     tenant_id
                 )
                 select
-                    'UN',
+                    m.buy_unit,
                     null as cost_per_item,
                     null as cost_price,
                     false as inactive,
-                    'UN',
+                    m.request_unit,
                     0 as stock_available,
                     0 as stock_quantity,
                     :depositId,
                     m.id_material,
                     :tenantId
                 from material m
-            """
-
-        sql += if (isTruck) {
-            """
-                JOIN material_type t on t.id_type = m.id_material_type
-                WHERE m.is_generic = false 
-                    AND t.type_name not in ('FITA ISOLANTE', 'CABO')
-                    AND m.tenant_id = :tenantId
-            """.trimIndent()
-        } else {
-            """
                 WHERE m.is_generic = false 
                     AND m.tenant_id = :tenantId
-            """.trimIndent()
-        }
-
+                    AND inactive = false
+            """
         jdbc.update(
             sql,
             mapOf(

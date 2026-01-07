@@ -11,7 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface TypeRepository extends CrudRepository<MaterialType, Long> {
-    record typeSubtypeResponse (Long typeId, String typeName, Long subtypeId, String subtypeName) {}
+    record TypeUnitResponse(String code, String description, Boolean truckStockControl, Boolean buyUnit) {}
+    record TypeSubtypeResponse(Long typeId, String typeName, Long subtypeId, String subtypeName) {}
 
     boolean existsByTypeName(String name);
 
@@ -23,7 +24,21 @@ public interface TypeRepository extends CrudRepository<MaterialType, Long> {
         LEFT JOIN material_subtype mst on mst.type_id = mt.id_type
         ORDER BY mt.type_name
     """)
-    List<typeSubtypeResponse> findAllTypeSubtype();
+    List<TypeSubtypeResponse> findAllTypeSubtype();
+
+    @Query("""
+        SELECT bu.code, bu.description, bu.truck_stock_control, true as buy_unit
+        FROM material_type_buy_unit mtbu
+        JOIN unit bu on bu.unit_id = mtbu.unit_id
+        WHERE mtbu.material_type_id = :typeId
+        UNION ALL
+        SELECT ru.code, ru.description, ru.truck_stock_control, false as buy_unit
+        FROM material_type_request_unit mtru
+        JOIN unit ru on ru.unit_id = mtru.unit_id
+        WHERE mtru.material_type_id = :typeId
+        order by buy_unit, code
+    """)
+    List<TypeUnitResponse> findUnitsByTypeId(Long typeId);
 
     @Query("SELECT 1 FROM material_type WHERE id_group = :groupId LIMIT 1")
     Optional<Integer> existsGroup(@Param("groupId") Long groupId);

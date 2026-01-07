@@ -27,6 +27,11 @@ public class TypeController {
         return ResponseEntity.ok(typeService.findAllTypeSubtype());
     }
 
+    @GetMapping("/get-units-by-type/{typeId}")
+    public ResponseEntity<?> findUnitsByTypeId(@PathVariable Long typeId) {
+        return typeService.findUnitsByTypeId(typeId);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         MaterialType materialType = typeService.findById(id);

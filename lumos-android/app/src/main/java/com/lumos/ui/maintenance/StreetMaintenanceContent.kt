@@ -683,12 +683,12 @@ fun StreetMaintenanceContent(
                             isError = lastPowerError != null,
                             value = street.lastPower ?: "",
                             onValueChange = {
-                                street = street.copy(lastPower = it)
+                                street = street.copy(lastPower = it.uppercase())
                                 lastPowerError = null
                             },
                             label = {
                                 Text(
-                                    "Potência anterior",
+                                    "Potência anterior (W)",
                                     style = MaterialTheme.typography.bodySmall.copy( // Texto menor
                                         fontSize = 14.sp
                                     )
@@ -793,7 +793,50 @@ fun StreetMaintenanceContent(
                             }
                         )
                     }
+                } else {
+                    Text(
+                        text = "Informação referente a potência",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    OutlinedTextField(
+                        isError = lastPowerError != null,
+                        value = street.lastPower ?: "",
+                        onValueChange = {
+                            street = street.copy(lastPower = it.uppercase())
+                            lastPowerError = null
+                        },
+                        label = {
+                            Text(
+                                "Potência atual (W)",
+                                style = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                                    fontSize = 14.sp
+                                )
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary
+                        ),
+                        textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
+                            fontSize = 14.sp
+                        ),
+                        supportingText = {
+                            if (lastPowerError != null) {
+                                Text(
+                                    text = lastPowerError ?: "",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(start = 16.dp, top = 7.dp)
+                                )
+                            }
+                        }
+                    )
                 }
+
                 if (cableItem != null) {
                     var text by remember {
                         mutableStateOf(TextFieldValue("0"))
@@ -994,6 +1037,9 @@ fun StreetMaintenanceContent(
                                 reasonError = "Informe o motivo da troca."
                                 error = true
                             }
+                        } else if (street.lastPower.isNullOrBlank()) {
+                            lastPowerError = "Informe a potência atual."
+                            error = true
                         }
 
                         if (cableItem != null) {
@@ -1043,51 +1089,56 @@ fun StreetMaintenanceContent(
 @Preview
 @Composable
 fun PrevStreetMaintenance() {
-//    StreetMaintenanceContent(
-//        maintenanceId = UUID.randomUUID(),
-//        navController = rememberNavController(),
-//        loading = false,
-//        lastRoute = null,
-//        back = {
-//
-//        },
-//        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem>, _ -> },
-//        streetCreated = false,
-//        newStreet = {},
-//        stockData = listOf(
-//            MaterialStock(
-//                materialId = 1,
-//                materialStockId = 11,
-//                materialName = "LUMINÁRIA LED",
-//                specs = "120W",
-//                stockQuantity = "12.0",
-//                stockAvailable = "0.0",
-//                requestUnit = "UN",
-//                type = "LED"
-//            ),
-//            MaterialStock(
-//                materialId = 2,
-//                materialStockId = 22,
-//                materialName = "LÂMPADA DE SÓDIO TUBULAR",
-//                specs = "400W",
-//                stockQuantity = "15.0",
-//                stockAvailable = "10.0",
-//                requestUnit = "UN",
-//                type = "LÂMPADA"
-//            ),
-//            MaterialStock(
-//                materialId = 3,
-//                materialStockId = 33,
-//                materialName = "LÂMPADA DE MERCÚRIO",
-//                specs = "250W",
-//                stockQuantity = "62.0",
-//                stockAvailable = "48.0",
-//                requestUnit = "UN",
-//                type = "LÂMPADA"
-//            ),
-//        ),
-//        contractor = "",
-//        message = null,
-//        setMessage = {},
-//    )
+    StreetMaintenanceContent(
+        maintenanceId = UUID.randomUUID(),
+        navController = rememberNavController(),
+        loading = false,
+        lastRoute = null,
+        back = {
+
+        },
+        saveStreet = { _: MaintenanceStreet, _: List<MaintenanceStreetItem>, _ -> },
+        streetCreated = false,
+        newStreet = {},
+        stockData = listOf(
+            MaterialStock(
+                materialId = 1,
+                materialStockId = 11,
+                materialName = "LUMINÁRIA LED",
+                specs = "120W",
+                stockQuantity = "12.0",
+                stockAvailable = "0.0",
+                requestUnit = "UN",
+                type = "LED"
+            ),
+            MaterialStock(
+                materialId = 2,
+                materialStockId = 22,
+                materialName = "LÂMPADA DE SÓDIO TUBULAR",
+                specs = "400W",
+                stockQuantity = "15.0",
+                stockAvailable = "10.0",
+                requestUnit = "UN",
+                type = "LÂMPADA"
+            ),
+            MaterialStock(
+                materialId = 3,
+                materialStockId = 33,
+                materialName = "LÂMPADA DE MERCÚRIO",
+                specs = "250W",
+                stockQuantity = "62.0",
+                stockAvailable = "48.0",
+                requestUnit = "UN",
+                type = "LÂMPADA"
+            ),
+        ),
+        contractor = "",
+        message = null,
+        setMessage = {},
+        coordinates = CoordinatesService(
+            LocalContext.current,
+            locationProvider = LocationServices.getFusedLocationProviderClient(LocalContext.current)
+        ),
+        addressService = AddressService(LocalContext.current),
+    )
 }

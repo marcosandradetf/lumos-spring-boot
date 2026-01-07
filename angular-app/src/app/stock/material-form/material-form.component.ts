@@ -93,10 +93,33 @@ export class MaterialFormComponent implements OnInit {
 
   }
 
+  lastTypeId = 0;
+  buyUnits: any[] = [];
+  requestUnits: any[] = [];
+
   onTypeChange(typeId: number) {
-    this.availableSubtypes = this.materialTypes.filter(t => t.typeId === typeId).map(s => s.subtypes);
-    if (this.availableSubtypes.length > 0) this.availableSubtypes = this.availableSubtypes[0];
-    this.form.patchValue({materialSubtype: null});
+    if(typeId !== this.lastTypeId) {
+      this.lastTypeId = typeId;
+      this.availableSubtypes = this.materialTypes.filter(t => t.typeId === typeId).map(s => s.subtypes);
+      if (this.availableSubtypes.length > 0) this.availableSubtypes = this.availableSubtypes[0];
+      this.form.patchValue({materialSubtype: null});
+
+      this.stockService.findUnitsByTypeId(typeId).subscribe({
+        next: (data) => {
+          this.buyUnits = data.buyUnits;
+          this.requestUnits = data.requestUnits;
+          if (this.buyUnits.length === 1) {
+            this.form.patchValue({code: this.buyUnits[0].code});
+          }
+          if (this.requestUnits.length === 1) {
+            this.form.patchValue({code: this.requestUnits[0].code, truckStockControl: this.requestUnits[0].truckStockControl});
+          }
+        },
+        error: (err) => {
+          this.utils.showMessage(err.error.message ?? err.error.error, 'error', "Erro ao buscar Unidades para o tipo atual");
+        },
+      });
+    }
   }
 
   generateMaterialName() {

@@ -33,6 +33,10 @@ export class StockService {
     return this.http.get<any[]>(`${this.endpoint}/type/get-all-type-subtype`);
   }
 
+  findUnitsByTypeId(typeId: number) {
+    return this.http.get<any>(`${this.endpoint}/type/get-units-by-type/${typeId}`);
+  }
+
   getGroups() {
     return this.http.get<Group[]>(`${this.endpoint}/group`);
   }
