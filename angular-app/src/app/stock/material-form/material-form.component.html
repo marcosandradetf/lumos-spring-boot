@@ -11,7 +11,7 @@
       Cadastro de Material
     </h2>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
 
       <!-- Código de Barras -->
       <div>
@@ -25,8 +25,8 @@
               pInputText
               inputmode="numeric"
               (input)="utils.formatNumber($event)"
-              (blur)="findMaterial($event)"
-              placeholder="Ex.: 1234567890123"
+              (blur)="findMaterial($any($event.target).value)"
+              placeholder="Digite manualmente ou utilize o leitor"
               formControlName="barcode"
               maxlength="14"
               class="w-full pr-10"
@@ -36,13 +36,16 @@
             <button
               type="button"
               (click)="scannerEnabled = true"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-              <i class="pi pi-barcode text-xl"></i> <!-- PrimeNG ícone -->
+              class="absolute right-0 top-[50%] -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-500">
+
+              <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="48px" fill="#e3e3e3"><path d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"/></svg>
             </button>
           </div>
 
           <div class="my-2 flex justify-between">
-            <p *ngIf="scannerEnabled">Ler código de barras</p>
+            <p>
+              {{ scannerEnabled ? 'Lendo código de barras' : '' }}
+            </p>
             <button (click)="scannerEnabled = !scannerEnabled">
               {{ scannerEnabled ? 'Parar câmera' : 'Ler código de barras' }}
             </button>
@@ -63,8 +66,7 @@
           </zxing-scanner>
 
           <!-- Linha guia central -->
-          <div class="absolute top-1/2 left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
-
+          <div class="absolute top-[72%] left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
         </div>
 
 

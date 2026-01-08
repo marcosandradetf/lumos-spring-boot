@@ -228,9 +228,9 @@ export class MaterialFormComponent implements OnInit {
   }
 
 
-  protected findMaterial(event: FocusEvent) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
+  protected findMaterial(value: string) {
+    // const input = event.target as HTMLInputElement;
+    // const value = input.value;
 
     if (![8, 12, 13, 14].includes(value.length)) {
       return;
@@ -326,7 +326,8 @@ export class MaterialFormComponent implements OnInit {
   protected onScanSuccess(value: string) {
     this.form.patchValue({barcode: value});
     this.utils.playSound('bip');
-    this.scannerEnabled = false
+    this.scannerEnabled = false;
+    this.findMaterial(value);
   }
 
 }
