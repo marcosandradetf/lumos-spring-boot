@@ -138,7 +138,8 @@ public class MaterialReferenceService {
                 var baseMaterial = new Material(
                         material.materialBaseName(),
                         material.materialType(),
-                        material.materialSubtype()
+                        material.materialSubtype(),
+                        material.truckStockControl()
                 );
                 baseMaterial = materialReferenceRepository.save(baseMaterial);
                 baseMaterialId = baseMaterial.getIdMaterial();
@@ -160,7 +161,8 @@ public class MaterialReferenceService {
                     material.materialWeight(),
                     material.barcode(),
                     material.buyUnit(),
-                    material.requestUnit()
+                    material.requestUnit(),
+                    material.truckStockControl()
             );
             materialSku = materialReferenceRepository.save(materialSku);
             Long materialId = materialSku.getIdMaterial();
@@ -189,7 +191,8 @@ public class MaterialReferenceService {
                 var baseMaterial = new Material(
                         material.materialBaseName(),
                         material.materialType(),
-                        material.materialSubtype()
+                        material.materialSubtype(),
+                        material.truckStockControl()
                 );
                 baseMaterial = materialReferenceRepository.save(baseMaterial);
                 baseMaterialId = baseMaterial.getIdMaterial();
@@ -212,7 +215,8 @@ public class MaterialReferenceService {
                     material.barcode(),
                     material.inactive(),
                     material.buyUnit(),
-                    material.requestUnit()
+                    material.requestUnit(),
+                    material.truckStockControl()
             );
             materialReferenceRepository.save(materialSku);
 
@@ -270,6 +274,7 @@ public class MaterialReferenceService {
                 material.getInactive(),
                 material.getBuyUnit(),
                 material.getRequestUnit(),
+                material.getTruckStockControl(),
                 items
         );
 

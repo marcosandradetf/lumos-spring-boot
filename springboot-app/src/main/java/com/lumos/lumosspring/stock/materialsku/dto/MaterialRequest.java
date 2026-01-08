@@ -21,6 +21,7 @@ public record MaterialRequest(
         Boolean inactive,
         String buyUnit,
         String requestUnit,
+        Boolean truckStockControl,
         List<Long> contractItems
 ) {
 

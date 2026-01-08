@@ -38,6 +38,7 @@ public class Material extends TenantEntity {
     private String materialGauge;
     private String materialWeight;
     private String barcode;
+    private Boolean truckStockControl;
 
     public Material() {
     }
@@ -58,7 +59,8 @@ public class Material extends TenantEntity {
             String materialWeight,
             String barcode,
             String buyUnit,
-            String requestUnit
+            String requestUnit,
+            Boolean truckStockControl
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -76,16 +78,19 @@ public class Material extends TenantEntity {
         this.barcode = barcode;
         this.BuyUnit = buyUnit;
         this.RequestUnit = requestUnit;
+        this.truckStockControl = truckStockControl;
     }
 
     public Material(
             String materialName,
             Long materialType,
-            Long materialSubtype
+            Long materialSubtype,
+            Boolean truckStockControl
     ) {
         this.materialName = materialName;
         this.idMaterialType = materialType;
         this.subtypeId = materialSubtype;
+        this.truckStockControl = truckStockControl;
     }
 
     public Long getIdMaterial() {
@@ -259,7 +264,8 @@ public class Material extends TenantEntity {
             String barcode,
             Boolean inactive,
             String buyUnit,
-            String requestUnit
+            String requestUnit,
+            Boolean truckStockControl
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -278,6 +284,15 @@ public class Material extends TenantEntity {
         this.inactive = inactive;
         this.BuyUnit = buyUnit;
         this.RequestUnit = requestUnit;
+        this.truckStockControl = truckStockControl;
+    }
+
+    public Boolean getTruckStockControl() {
+        return truckStockControl;
+    }
+
+    public void setTruckStockControl(Boolean truckStockControl) {
+        this.truckStockControl = truckStockControl;
     }
 }
 

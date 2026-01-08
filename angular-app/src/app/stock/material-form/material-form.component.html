@@ -5,7 +5,7 @@
       [path]="['Estoque', 'Materiais']"/>
   </div>
 
-  <div class="max-w-5xl mx-auto">
+  <div class="xl:max-w-5xl max-w-md mx-auto">
 
     <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-200 mb-6">
       Cadastro de Material
@@ -18,21 +18,56 @@
         <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
           Código de Barras (EAN/GTIN)*
         </label>
-        <input
-          pInputText
-          inputmode="numeric"
-          (input)="utils.formatNumber($event)"
-          (blur)="findMaterial($event)"
-          placeholder="Ex.: 1234567890123"
-          formControlName="barcode"
-          maxlength="14"
-          class="w-full"
-        />
+        <div>
+          <div class="relative w-full">
+            <!-- Input de código de barras -->
+            <input
+              pInputText
+              inputmode="numeric"
+              (input)="utils.formatNumber($event)"
+              (blur)="findMaterial($event)"
+              placeholder="Ex.: 1234567890123"
+              formControlName="barcode"
+              maxlength="14"
+              class="w-full pr-10"
+            />
+
+            <!-- Ícone de scanner -->
+            <button
+              type="button"
+              (click)="scannerEnabled = true"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+              <i class="pi pi-barcode text-xl"></i> <!-- PrimeNG ícone -->
+            </button>
+          </div>
+
+          <div class="my-2 flex justify-between">
+            <p *ngIf="scannerEnabled">Ler código de barras</p>
+            <button (click)="scannerEnabled = !scannerEnabled">
+              {{ scannerEnabled ? 'Parar câmera' : 'Ler código de barras' }}
+            </button>
+          </div>
+
+        </div>
         <small
           *ngIf="form.get('barcode')?.invalid && form.get('barcode')?.touched"
           class="text-red-500">
           Código de barras inválido
         </small>
+
+        <div class="relative w-full" *ngIf="scannerEnabled">
+          <zxing-scanner
+            [formats]="formats"
+            (scanSuccess)="onScanSuccess($event)"
+            class="w-full max-h-96 border-2 border-green-500 rounded-md overflow-hidden">
+          </zxing-scanner>
+
+          <!-- Linha guia central -->
+          <div class="absolute top-1/2 left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
+
+        </div>
+
+
       </div>
 
       <!-- Tipo / Subtipo -->
@@ -178,6 +213,65 @@
         </div>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+            Unidade de Compra
+          </label>
+          @if (!form.get('materialType')?.value) {
+            <input
+              pInputText
+              value="Selecione um tipo primeiro"
+              readonly
+              class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
+            />
+          } @else {
+            <p-dropdown
+              [options]="buyUnits"
+              formControlName="buyUnit"
+              optionLabel="code"
+              optionValue="code"
+              placeholder="Selecione a unidade de compra do material"
+              class="w-full">
+            </p-dropdown>
+            <small
+              *ngIf="form.get('buyUnit')?.invalid && form.get('buyUnit')?.touched"
+              class="text-red-500">
+              Unidade de Compra é obrigatório
+            </small>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+            Unidade de Requisição
+          </label>
+          @if (!form.get('materialType')?.value) {
+            <input
+              pInputText
+              value="Selecione um tipo primeiro"
+              readonly
+              class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
+            />
+          } @else {
+            <p-dropdown
+              [options]="requestUnits"
+              formControlName="requestUnit"
+              optionLabel="code"
+              optionValue="code"
+              placeholder="Selecione a unidade de requisição do material"
+              (onChange)="onRequestUnitChange($event.value)"
+              class="w-full">
+            </p-dropdown>
+            <small
+              *ngIf="form.get('requestUnit')?.invalid && form.get('requestUnit')?.touched"
+              class="text-red-500">
+              Unidade de Requisição é obrigatório
+            </small>
+          }
+        </div>
+      </div>
+
       <!-- Itens Contratuais -->
       <div class="space-y-4">
 
@@ -187,7 +281,8 @@
             Itens Contratuais Vinculados*
           </label>
           <p class="text-sm text-gray-500 dark:text-neutral-400">
-            Selecione os itens contratuais relacionados a este material. <strong>Atenção, isso é importante para vincular os itens ao estoque</strong>
+            Selecione os itens contratuais relacionados a este material. <strong>Atenção, isso é importante para
+            vincular os itens ao estoque</strong>
           </p>
 
           <p-multiSelect

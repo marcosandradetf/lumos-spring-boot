@@ -218,7 +218,7 @@ export class UtilsService {
   }
 
 
-  playSound(type: 'pop' | 'select' | 'open') {
+  playSound(type: 'pop' | 'select' | 'open'| 'bip') {
     if (type === 'open') {
       const audio = new Audio('/public/sci.mp3');
       audio.play().catch(err => {
@@ -229,6 +229,10 @@ export class UtilsService {
       });
     } else if (type === 'pop') {
       const audio = new Audio('/public/pop.mp3');
+      audio.play().catch(err => {
+      });
+    } else if (type === 'bip') {
+      const audio = new Audio('/public/bip.mp3');
       audio.play().catch(err => {
       });
     }

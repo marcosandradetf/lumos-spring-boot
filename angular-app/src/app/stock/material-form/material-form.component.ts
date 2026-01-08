@@ -14,6 +14,8 @@ import {StockService} from '../services/stock.service';
 import {MaterialService} from '../services/material.service';
 import {Toast} from 'primeng/toast';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+import {ZXingScannerModule} from '@zxing/ngx-scanner';
+import { BarcodeFormat } from '@zxing/library';
 
 @Component({
   selector: 'app-material-form',
@@ -28,6 +30,7 @@ import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/l
     MultiSelectModule,
     Toast,
     LoadingOverlayComponent,
+    ZXingScannerModule,
   ],
   templateUrl: './material-form.component.html',
   styleUrl: './material-form.component.scss'
@@ -38,6 +41,13 @@ export class MaterialFormComponent implements OnInit {
   availableSubtypes: any[] = [];
   items: ContractReferenceItemsDTO[] = [];
   loading = false;
+  formats: BarcodeFormat[] = [
+    BarcodeFormat.EAN_8,
+    BarcodeFormat.UPC_A,
+    BarcodeFormat.EAN_13,
+    BarcodeFormat.ITF
+  ];
+
 
   constructor(private fb: FormBuilder,
               protected utils: UtilsService,
@@ -71,6 +81,7 @@ export class MaterialFormComponent implements OnInit {
       inactive: [false],
       buyUnit: [null, Validators.required],
       requestUnit: [null, Validators.required],
+      truckStockControl: [true, Validators.required],
       contractItems: [[], Validators.required], // multiselect
     });
 
@@ -91,6 +102,8 @@ export class MaterialFormComponent implements OnInit {
       this.materialTypes = types;
     });
 
+    this.scannerEnabled = window.innerWidth <= 768; // largura típica de celular
+
   }
 
   lastTypeId = 0;
@@ -98,7 +111,7 @@ export class MaterialFormComponent implements OnInit {
   requestUnits: any[] = [];
 
   onTypeChange(typeId: number) {
-    if(typeId !== this.lastTypeId) {
+    if (typeId !== this.lastTypeId) {
       this.lastTypeId = typeId;
       this.availableSubtypes = this.materialTypes.filter(t => t.typeId === typeId).map(s => s.subtypes);
       if (this.availableSubtypes.length > 0) this.availableSubtypes = this.availableSubtypes[0];
@@ -109,10 +122,13 @@ export class MaterialFormComponent implements OnInit {
           this.buyUnits = data.buyUnits;
           this.requestUnits = data.requestUnits;
           if (this.buyUnits.length === 1) {
-            this.form.patchValue({code: this.buyUnits[0].code});
+            this.form.patchValue({buyUnit: this.buyUnits[0].code});
           }
           if (this.requestUnits.length === 1) {
-            this.form.patchValue({code: this.requestUnits[0].code, truckStockControl: this.requestUnits[0].truckStockControl});
+            this.form.patchValue({
+              requestUnit: this.requestUnits[0].code,
+              truckStockControl: this.requestUnits[0].truckStockControl
+            });
           }
         },
         error: (err) => {
@@ -245,13 +261,14 @@ export class MaterialFormComponent implements OnInit {
           inactive: [data.inactive],
           buyUnit: [data.buyUnit, Validators.required],
           requestUnit: [data.requestUnit, Validators.required],
+          truckStockControl: [data.truckStockControl, Validators.required],
           contractItems: [data.contractItems, Validators.required], // multiselect
         });
       },
-      error: err => {
+      error: (err) => {
         this.loading = false;
         const v = this.form.getRawValue();
-        if(v.materialId !== null) {
+        if (v.materialId !== null) {
           this.form = this.fb.group({
             materialId: [null],
             materialBaseName: [{value: '', disabled: false}],
@@ -297,4 +314,19 @@ export class MaterialFormComponent implements OnInit {
     });
 
   }
+
+  protected onRequestUnitChange(code: String) {
+    const truckStockControl: boolean = this.requestUnits.find(x => x.code === code)?.truckStockControl ?? true;
+    this.form.patchValue({truckStockControl: truckStockControl});
+  }
+
+
+  protected scannerEnabled = false;
+
+  protected onScanSuccess(value: string) {
+    this.form.patchValue({barcode: value});
+    this.utils.playSound('bip');
+    this.scannerEnabled = false
+  }
+
 }
