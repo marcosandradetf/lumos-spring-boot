@@ -95,8 +95,7 @@ export class AuthService {
         this.isLoggedInSubject.next(true);
       }),
       catchError(error => {
-        console.error("Erro no login:", error);
-        return of(null); // Retorna um observable nulo em caso de erro
+        throw error;
       })
     );
   }

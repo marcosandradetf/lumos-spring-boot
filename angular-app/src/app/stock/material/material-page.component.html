@@ -1,73 +1,121 @@
-<!--<div class="flex mt-[4rem] h-fit pl-2 pr-2">-->
-<div class="flex h-fit">
-  <!--  <div class="mb-5">-->
-  <!--    <div class="breadcrumbs text-sm py-5">-->
-  <!--      <ul class="select-none">-->
-  <!--        <li><a>Início</a></li>-->
-  <!--        <li><a>Estoque</a></li>-->
-  <!--        <li>Materiais</li>-->
-  <!--      </ul>-->
-  <!--    </div>-->
+<div class="h-full w-full p-4">
 
-  <!--    <div role="tablist" class="tabs tabs-bordered w-full justify-center mb-5">-->
-  <!--      <input type="radio" class="tab" aria-label="Tipos" (click)="router.navigate(['/estoque/tipos'])" />-->
-  <!--      <input type="radio" class="tab" aria-label="Materiais" checked />-->
-  <!--      <input type="radio" class="tab" aria-label="Grupos" (click)="router.navigate(['/estoque/grupos'])"/>-->
-  <!--      <input type="radio" class="tab" aria-label="Almoxarifados" (click)="router.navigate(['/estoque/almoxarifados'])"/>-->
-  <!--    </div>-->
+  <!-- Breadcrumb -->
+  <app-prime-breadcrumb title="" [path]="['Estoque', 'Materiais']"></app-prime-breadcrumb>
 
-  <!--    <div class="collapse border border-neutral-300 shadow rounded-none">-->
-  <!--      <input type="checkbox" class="peer" (click)="setOpen()"/>-->
-  <!--      <div-->
-  <!--        class="collapse-title text-primary-content">-->
-  <!--        @if (!formOpen) {-->
-  <!--          <div><p class="text-neutral-500">Clique para fazer um novo Cadastro</p></div>-->
-  <!--        } @else {-->
-  <!--          <div class="flex justify-end"><p class="material-icons text-neutral-800">close</p></div>-->
-  <!--        }-->
-  <!--      </div>-->
-  <!--      <div-->
-  <!--        class="collapse-content text-primary-content peer-checked: peer-checked:">-->
-  <!--        <app-material-form></app-material-form>-->
-  <!--      </div>-->
-  <!--    </div>-->
-
-  <!--    <div class="mt-4 border border-neutral-300 shadow p-1 overflow-auto">-->
-  <!--      <div class="flex w-full items-center mb-2">-->
-  <!--        <label class="input input-sm input-bordered flex items-center gap-2 flex-1">-->
-  <!--          <input type="text" class="grow" placeholder="Pesquisar" (input)="filterSearch($any($event.target).value)"/>-->
-  <!--          <svg-->
-  <!--            xmlns="http://www.w3.org/2000/svg"-->
-  <!--            viewBox="0 0 16 16"-->
-  <!--            fill="currentColor"-->
-  <!--            class="h-4 w-4 opacity-70">-->
-  <!--            <path-->
-  <!--              fill-rule="evenodd"-->
-  <!--              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"-->
-  <!--              clip-rule="evenodd"/>-->
-  <!--          </svg>-->
-  <!--        </label>-->
-  <!--      </div>-->
-  <!--      <app-tabela></app-tabela>-->
-
-  <!--    </div>-->
-  <!--  </div>-->
-
-  <div
-    class="flex flex-col items-center justify-center h-screen bg-gradient-to-br w-full text-center">
-    <!-- SVG de manutenção -->
-    <svg class="w-24 h-24 text-yellow-500 mb-6 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5"
-         viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round"
-            d="M9.75 3a1.5 1.5 0 00-1.5 1.5V6H6.75A1.5 1.5 0 005.25 7.5v1.125a6.75 6.75 0 0012.75 0V7.5A1.5 1.5 0 0016.5 6h-1.5V4.5a1.5 1.5 0 00-1.5-1.5h-3.75zM3.75 14.25a9.003 9.003 0 0116.5 0M9 18.75h6M10.5 21h3"/>
-    </svg>
-
-    <!-- Título -->
-    <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-2">Em manutenção</h1>
-    <!-- Texto adicional -->
-    <p class="text-gray-600 text-sm max-w-md">
-      Estamos realizando atualizações importantes para melhorar sua experiência. Volte mais tarde.
-    </p>
+  <!-- Título e botão de cadastro -->
+  <div class="flex justify-between items-center my-4">
+    <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-200">
+      Catálogo de Materiais
+    </h2>
+    <button
+      pButton
+      type="button"
+      label="Cadastrar Material"
+      icon="pi pi-plus"
+      class="p-button-primary"
+      (click)="navigateToCadastro()">
+    </button>
   </div>
 
+  <!-- Filtros -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+    <input
+      pInputText
+      placeholder="Pesquisar por nome"
+      [(ngModel)]="filters.materialName"
+      (ngModelChange)="applyFilters()"
+      class="w-full"
+    />
+    <p-dropdown
+      [options]="materialTypes"
+      optionLabel="typeName"
+      optionValue="typeId"
+      placeholder="Filtrar por tipo"
+      [(ngModel)]="filters.materialType"
+      (onChange)="applyFilters()"
+      class="w-full"
+    ></p-dropdown>
+    <input
+      pInputText
+      placeholder="Pesquisar por código de barras"
+      [(ngModel)]="filters.barcode"
+      (ngModelChange)="applyFilters()"
+      class="w-full"
+    />
+    <button
+      pButton
+      label="Limpar filtros"
+      icon="pi pi-filter-slash"
+      class="w-full"
+      (click)="clearFilters()"
+    ></button>
+  </div>
+
+  <!-- Desktop Table -->
+  <p-table [value]="filteredMaterials" [loading]="loading" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Código de Barras</th>
+        <th>Nome</th>
+        <th>Unidade Compra</th>
+        <th>Unidade Requisição</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-material>
+      <tr>
+        <td>{{ material.barcode }}</td>
+        <td>{{ material.materialName }}</td>
+        <td>{{ material.buyUnit }}</td>
+        <td>{{ material.requestUnit }}</td>
+        <td>
+          <span [ngClass]="{'text-green-600': !material.inactive, 'text-red-600': material.inactive}">
+            {{ material.inactive ? 'Inativo' : 'Ativo' }}
+          </span>
+        </td>
+        <td class="flex gap-2">
+          <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm"
+                  (click)="editMaterial(material)"></button>
+          <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger"
+                  (click)="deleteMaterial(material)"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="19" class="text-center text-gray-500">Nenhum material encontrado.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Mobile Cards -->
+  <div class="grid grid-cols-1 gap-4 md:hidden">
+    <div *ngFor="let material of filteredMaterials"
+         class="border rounded-lg p-4 shadow-sm bg-white dark:bg-neutral-800">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-semibold text-gray-700 dark:text-neutral-200">Código: {{ material.barcode }}</p>
+          <p class="text-base font-medium text-gray-800 dark:text-neutral-100">Nome: {{ material.materialName }}</p>
+          <p class="text-sm text-gray-600 dark:text-neutral-300">Unidade Compra: {{ material.buyUnit }}</p>
+          <p class="text-sm text-gray-600 dark:text-neutral-300">Unidade Requisição: {{ material.requestUnit }}</p>
+          <p class="text-sm text-gray-600 dark:text-neutral-300">Status:
+            <span [ngClass]="{'text-green-600': !material.inactive, 'text-red-600': material.inactive}">
+            {{ material.inactive ? 'Inativo' : 'Ativo' }}
+          </span>
+          </p>
+        </div>
+        <div class="flex flex-col gap-2">
+          <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-text"
+                  (click)="editMaterial(material)"></button>
+          <button pButton type="button" icon="pi pi-trash" class="p-button-sm p-button-text text-red-600"
+                  (click)="deleteMaterial(material)"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
+  <p-toast></p-toast>
 </div>

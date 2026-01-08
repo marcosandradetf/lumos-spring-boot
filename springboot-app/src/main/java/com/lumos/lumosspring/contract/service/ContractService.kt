@@ -31,27 +31,7 @@ class ContractService(
     private val namedJdbc: NamedParameterJdbcTemplate,
 ) {
 
-    fun getReferenceItems(): ResponseEntity<Any> {
-        val referenceItems = contractReferenceItemRepository.findAllByTenantId(Utils.getCurrentTenantId())
-        val referenceItemsResponse: MutableList<ContractReferenceItemDTO> = mutableListOf()
 
-        for (item in referenceItems.sortedBy { it.description }) {
-            referenceItemsResponse.add(
-                ContractReferenceItemDTO(
-                    item.contractReferenceItemId!!,
-                    item.description,
-                    item.nameForImport,
-                    item.type,
-                    item.linking,
-                    item.itemDependency,
-                    BigDecimal.ZERO,
-                    "0,00"
-                )
-            )
-        }
-
-        return ResponseEntity.ok().body(referenceItemsResponse)
-    }
 
     @Transactional
     fun deleteById(contractId: Long): ResponseEntity<Any> {

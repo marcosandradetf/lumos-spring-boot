@@ -17,7 +17,7 @@ export interface MaterialFormDTO {
   inactive: boolean;
   buyUnit: string;
   requestUnit: string;
-  truckStockControl: string;
+  truckStockControl: boolean;
   contractItems: any[];
 }
 

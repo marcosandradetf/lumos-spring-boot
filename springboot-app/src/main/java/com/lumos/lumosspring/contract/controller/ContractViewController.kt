@@ -19,4 +19,9 @@ class ContractViewController(
         return service.getContractItemBalance(contractId)
     }
 
+    @GetMapping("/contracts/get-items")
+    fun getItems() : ResponseEntity<Any> {
+        return service.getReferenceItems()
+    }
+
 }

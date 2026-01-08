@@ -223,8 +223,8 @@ export class SidebarComponent implements OnInit {
         },
         items: [
           {
-            label: 'Movimentar Estoque',
-            icon: 'pi pi-box text-neutral-800 dark:text-neutral-200',
+            label: 'Movimentação de Estoque',
+            icon: 'pi pi-barcode text-neutral-800 dark:text-neutral-200',
             routerLink: ['/estoque/movimento'],
           },
           {
@@ -233,9 +233,9 @@ export class SidebarComponent implements OnInit {
             routerLink: ['/estoque/movimento-pendente'],
           },
           {
-            label: 'Gerenciar Materiais',
-            icon: 'pi pi-briefcase text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/estoque/materiais'],
+            label: 'Cadastro de Materiais',
+            icon: 'pi pi-plus-circle text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/cadastrar-material'],
           },
           {
             label: 'Gerenciar Almoxarifados',
@@ -246,6 +246,17 @@ export class SidebarComponent implements OnInit {
             label: 'Gerenciar Caminhões',
             icon: 'pi pi-truck text-neutral-800 dark:text-neutral-200',
             routerLink: ['/estoque/caminhoes'],
+          },
+          {
+            label: 'Catálogo de Materiais',
+            icon: 'pi pi-table text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/catalogo-materiais'],
+          },
+          {
+            label: 'Tipos / Subtipos (configuração)',
+            icon: 'pi pi-cog text-neutral-800 dark:text-neutral-200',
+            routerLink: ['/estoque/cadastrar-material'],
+            disabled: true,
           },
         ]
       },

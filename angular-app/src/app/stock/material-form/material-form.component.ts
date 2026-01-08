@@ -16,6 +16,8 @@ import {Toast} from 'primeng/toast';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 import {ZXingScannerModule} from '@zxing/ngx-scanner';
 import { BarcodeFormat } from '@zxing/library';
+import {QRCodeModule} from 'angularx-qrcode';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-material-form',
@@ -31,6 +33,7 @@ import { BarcodeFormat } from '@zxing/library';
     Toast,
     LoadingOverlayComponent,
     ZXingScannerModule,
+    QRCodeModule,
   ],
   templateUrl: './material-form.component.html',
   styleUrl: './material-form.component.scss'
@@ -48,9 +51,9 @@ export class MaterialFormComponent implements OnInit {
     BarcodeFormat.ITF
   ];
 
-
   constructor(private fb: FormBuilder,
               protected utils: UtilsService,
+              protected router: Router,
               private title: Title,
               private contractService: ContractService,
               private stockService: StockService,
@@ -102,7 +105,8 @@ export class MaterialFormComponent implements OnInit {
       this.materialTypes = types;
     });
 
-    this.scannerEnabled = window.innerWidth <= 768; // largura típica de celular
+    this.isMobile = window.innerWidth <= 768;
+    this.scannerEnabled = this.isMobile;
 
   }
 
@@ -191,7 +195,17 @@ export class MaterialFormComponent implements OnInit {
       return;
     }
 
-    console.log(this.form.getRawValue());
+    this.loading = true;
+    this.stockService.createMaterial(this.form.getRawValue).subscribe({
+      error: (err) => {
+        this.loading = false;
+        this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, 'error',"Não foi possível salvar o material");
+      },
+      complete: () => {
+        this.loading = false;
+        this.submitted = true;
+      }
+    });
   }
 
   barcodeValidator(control: AbstractControl) {
@@ -322,6 +336,9 @@ export class MaterialFormComponent implements OnInit {
 
 
   protected scannerEnabled = false;
+  protected isMobile = false;
+  protected showQrCode = false;
+  protected submitted = false;
 
   protected onScanSuccess(value: string) {
     this.form.patchValue({barcode: value});
@@ -330,4 +347,11 @@ export class MaterialFormComponent implements OnInit {
     this.findMaterial(value);
   }
 
+  protected toggleScanner() {
+    if (!this.isMobile) {
+      this.showQrCode = true;
+      return;
+    }
+    this.scannerEnabled = !this.scannerEnabled;
+  }
 }

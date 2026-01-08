@@ -13,10 +13,7 @@ class ContractController(
     private val contractService: ContractService
 ) {
 
-    @GetMapping("/contracts/get-items")
-    fun getItems() : ResponseEntity<Any> {
-        return contractService.getReferenceItems()
-    }
+
 
     @PostMapping("/contracts/insert-contract")
     fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> =

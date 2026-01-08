@@ -11,7 +11,7 @@
       Cadastro de Material
     </h2>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" *ngIf="!submitted">
 
       <!-- Código de Barras -->
       <div>
@@ -26,7 +26,7 @@
               inputmode="numeric"
               (input)="utils.formatNumber($event)"
               (blur)="findMaterial($any($event.target).value)"
-              placeholder="Digite manualmente ou utilize o leitor"
+              placeholder="Digite manualmente ou use seu celular para escanear"
               formControlName="barcode"
               maxlength="14"
               class="w-full pr-10"
@@ -35,19 +35,26 @@
             <!-- Ícone de scanner -->
             <button
               type="button"
-              (click)="scannerEnabled = true"
+              (click)="toggleScanner()"
               class="absolute right-0 top-[50%] -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-500">
 
-              <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="48px" fill="#e3e3e3"><path d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="48px"
+                   fill="#e3e3e3">
+                <path
+                  d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"/>
+              </svg>
             </button>
           </div>
 
           <div class="my-2 flex justify-between">
-            <p>
-              {{ scannerEnabled ? 'Lendo código de barras' : '' }}
+            <p class="text-xs text-gray-500 mt-1">
+              Essa função funciona pelo celular, usando a câmera para escanear o código de barras.
             </p>
-            <button (click)="scannerEnabled = !scannerEnabled">
-              {{ scannerEnabled ? 'Parar câmera' : 'Ler código de barras' }}
+            <p *ngIf="scannerEnabled">
+              Lendo código de barras
+            </p>
+            <button (click)="toggleScanner()" type="button">
+              {{ scannerEnabled ? 'Parar câmera' : 'Usar celular para ler código de barras' }}
             </button>
           </div>
 
@@ -66,7 +73,53 @@
           </zxing-scanner>
 
           <!-- Linha guia central -->
-          <div class="absolute top-[72%] left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
+          <div
+            class="absolute top-[72%] left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
+        </div>
+
+        <!-- Fundo escuro -->
+        <div
+          *ngIf="showQrCode"
+          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
+          <!-- Caixa do modal -->
+          <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+
+            <!-- Botão fechar -->
+            <button
+              type="button"
+              class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              (click)="showQrCode = false">
+              ✕
+            </button>
+
+            <!-- Título -->
+            <h2 class="text-xl font-semibold text-center mb-4">
+              Continue o cadastro pelo celular
+            </h2>
+
+            <!-- Texto explicativo -->
+            <p class="text-gray-600 text-sm text-center">
+              Para continuar o cadastro, escaneie o QR Code abaixo com seu celular,
+              faça login e a função de <strong>leitura de código de barras</strong> estará funcionando</p>
+            <p class="text-xs text-gray-500 mt-1 mb-6 text-center">
+              Será necessário aceitar a permissão de acesso a câmera.
+            </p>
+
+            <!-- QR Code -->
+            <div class="flex justify-center mb-6">
+              <qrcode
+                qrdata="https://lumos.thryon.com.br/estoque/materiais"
+                [width]="200"
+                [errorCorrectionLevel]="'M'">
+              </qrcode>
+            </div>
+
+            <!-- Ajuda -->
+            <p class="text-xs text-gray-500 text-center">
+              Você pode usar a câmera do celular ou um app leitor de QR Code.
+            </p>
+          </div>
         </div>
 
 
@@ -326,6 +379,48 @@
         </div>
       </div>
     </form>
+
+    <div
+      *ngIf="submitted"
+      class="max-w-md mx-auto mt-20 rounded-lg shadow-lg p-8 text-center">
+
+      <!-- Ícone sucesso -->
+      <div class="flex justify-center mb-4">
+        <div class="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+          <span class="material-icons">check</span>
+        </div>
+      </div>
+
+      <!-- Título -->
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-neutral-200 mb-2">
+        Material cadastrado com sucesso
+      </h2>
+
+      <!-- Texto -->
+      <p class="text-sm text-gray-600 dark:text-neutral-400 mb-6">
+        O material foi registrado no sistema e já está disponível para uso no estoque.
+      </p>
+
+      <!-- Ações -->
+      <div class="flex flex-col gap-3">
+        <button
+          pButton
+          type="button"
+          label="Cadastrar outro material"
+          class="p-button-primary w-full"
+          (click)="form.reset(); submitted = false">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Voltar para lista de materiais"
+          class="p-button-text w-full"
+          (click)="router.navigate(['/estoque/materiais'])">
+        </button>
+      </div>
+    </div>
+
   </div>
 
   <app-loading-overlay [loading]="loading"></app-loading-overlay>

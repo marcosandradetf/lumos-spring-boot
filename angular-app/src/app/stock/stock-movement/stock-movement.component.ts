@@ -20,6 +20,7 @@ import {TableModule} from 'primeng/table';
 import {Skeleton} from 'primeng/skeleton';
 import {Toast} from 'primeng/toast';
 import {DropdownModule} from 'primeng/dropdown';
+import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 
 
 @Component({
@@ -39,6 +40,7 @@ import {DropdownModule} from 'primeng/dropdown';
     Skeleton,
     Toast,
     DropdownModule,
+    PrimeBreadcrumbComponent,
   ],
   templateUrl: './stock-movement.component.html',
   styleUrl: './stock-movement.component.scss'

@@ -12,6 +12,7 @@ export class AuthGuard implements CanActivate {
   canActivate(next: ActivatedRouteSnapshot): Observable<boolean> {
     const requiredRole: string[] = Array.isArray(next.data['role']) ? next.data['role'] : [];
     const path: string[] = next.data['path'];
+    const redirectPath = next.url.map(s => s.path).join('/');
     let hasAcess: boolean = false;
 
     if (requiredRole.length > 1) {
@@ -28,7 +29,7 @@ export class AuthGuard implements CanActivate {
             if (hasAcess) {
               return true;
             } else {
-              this.router.navigate(['/acesso-negado', path]);
+              void this.router.navigate(['/acesso-negado', path]);
               return false;
             }
           }
@@ -36,7 +37,9 @@ export class AuthGuard implements CanActivate {
           return true;
 
         } else {
-          this.router.navigate(['/auth/login']);
+          void this.router.navigate(['/auth/login'], {
+            queryParams: { redirect: redirectPath }
+          });
           return false;
         }
       })

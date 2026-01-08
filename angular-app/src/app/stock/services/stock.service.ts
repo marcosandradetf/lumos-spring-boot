@@ -114,4 +114,9 @@ export class StockService {
       .set('userId', userId);
     return this.http.get<DepositByStockist[]>(`${this.endpoint}/deposit/get-deposits-by-stockist`, {params: params});
   }
+
+  createMaterial(material: any) {
+    return this.http.post(this.endpoint + '/material/create', material);
+  }
+
 }

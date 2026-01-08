@@ -1,15 +1,17 @@
-import {Component} from '@angular/core';
-import { CommonModule } from '@angular/common'; // Importando o CommonModule
-import { Router } from '@angular/router';
-
-import {ReactiveFormsModule} from '@angular/forms';
-import {MaterialFormComponent} from './material-form/material-form.component';
-import {TabelaComponent} from './tabela/tabela.component';
-import {Title} from '@angular/platform-browser';
-import {MaterialResponse} from '../../models/material-response.dto';
-import {MaterialService} from '../services/material.service';
+import {Component, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {ButtonDirective} from 'primeng/button';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+import {Toast} from 'primeng/toast';
+import {TableModule} from 'primeng/table';
+import {InputText} from 'primeng/inputtext';
+import {DropdownModule} from 'primeng/dropdown';
+import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
+import {MaterialFormDTO} from '../../models/material-response.dto';
+import {Router} from '@angular/router';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {StockService} from '../services/stock.service';
-import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 
 
 @Component({
@@ -17,36 +19,140 @@ import {SidebarComponent} from '../../shared/components/sidebar/sidebar.componen
   standalone: true,
   templateUrl: './material-page.component.html',
   styleUrls: ['./material-page.component.scss'],
-  imports: [CommonModule, ReactiveFormsModule] // Adicionando os módulos aqui
+  providers: [ConfirmationService, MessageService],
+  imports: [CommonModule, ReactiveFormsModule, ButtonDirective, LoadingOverlayComponent, Toast, TableModule, InputText, DropdownModule, PrimeBreadcrumbComponent, FormsModule] // Adicionando os módulos aqui
 })
-export class MaterialPageComponent {
-  private searchFilter: string = '';
-  formOpen: boolean = false;
-  materiais: MaterialResponse[] = []; // Inicializando a lista de materiais
-  sidebarLinks = [
-    { title: 'Gerenciar', path: '/estoque/materiais', id: 'opt1' },
-    { title: 'Movimentar Estoque', path: '/estoque/movimento', id: 'opt2' },
-    { title: 'Entrada de Nota Fiscal', path: '/estoque/entrada', id: 'opt3' },
-    { title: 'Importar Material (.xlsx)', path: '/estoque/importar', id: 'opt4' },
-    { title: 'Sugestão de Compra', path: '/estoque/sugestao', id: 'opt5' }
-  ];
+export class MaterialPageComponent implements OnInit {
+  materials: MaterialFormDTO[] = [];
+  filteredMaterials: MaterialFormDTO[] = [];
+  materialTypes: any[] = [];
+  loading: boolean = false;
 
-  constructor(private materialService: MaterialService, private estoque: StockService,
-              private titleService:Title, protected router: Router) {
-    this.titleService.setTitle("Gerenciar - Materiais");
+  filters = {
+    materialName: '',
+    barcode: '',
+    materialType: null
+  };
+
+  constructor(
+    private router: Router,
+    private confirmationService: ConfirmationService,
+    private messageService: MessageService,
+    private stockService: StockService,
+  ) {
   }
 
-
-  // Atualiza o filtro de pesquisa e aplica os filtros combinados
-  filterSearch(value: string): void {
-    this.searchFilter = value.toLowerCase(); // Armazena o filtro de pesquisa
+  ngOnInit(): void {
+    this.loadMaterials();
+    this.loadMaterialTypes();
   }
 
-
-  protected readonly alert = alert;
-
-  setOpen() {
-    this.formOpen = !this.formOpen;
+  // Simula carregamento de materiais
+  loadMaterials() {
+    this.loading = true;
+    setTimeout(() => {
+      // Exemplo de dados
+      this.materials = [
+        {
+          materialId: 1,
+          materialBaseName: 'Parafuso',
+          materialName: 'Parafuso M16 Rosca',
+          materialType: 1,
+          materialSubtype: 1,
+          materialFunction: null,
+          materialModel: null,
+          materialBrand: null,
+          materialAmps: null,
+          materialLength: 50,
+          materialWidth: null,
+          materialPower: null,
+          materialGauge: null,
+          materialWeight: 0.1,
+          barcode: '1234567890123',
+          inactive: false,
+          buyUnit: 'PC',
+          requestUnit: 'PC',
+          truckStockControl: false,
+          contractItems: []
+        },
+        {
+          materialId: 2,
+          materialBaseName: 'Cabo',
+          materialName: 'Cabo 240MM',
+          materialType: 2,
+          materialSubtype: 2,
+          materialFunction: null,
+          materialModel: null,
+          materialBrand: null,
+          materialAmps: 16,
+          materialLength: 240,
+          materialWidth: 10,
+          materialPower: null,
+          materialGauge: 2.5,
+          materialWeight: 0.2,
+          barcode: '2345678901234',
+          inactive: false,
+          buyUnit: 'MT',
+          requestUnit: 'MT',
+          truckStockControl: false,
+          contractItems: []
+        }
+      ];
+      this.filteredMaterials = [...this.materials];
+      this.loading = false;
+    }, 500);
   }
 
+  // Simula carregamento de tipos
+  loadMaterialTypes() {
+    this.stockService.findAllTypeSubtype().subscribe(types => {
+      this.materialTypes = types;
+    });
+  }
+
+  // Aplica os filtros da tela
+  applyFilters() {
+    this.filteredMaterials = this.materials.filter(m => {
+      const matchesName = this.filters.materialName ? m.materialName.toLowerCase().includes(this.filters.materialName.toLowerCase()) : true;
+      const matchesCode = this.filters.barcode ? m.barcode.includes(this.filters.barcode) : true;
+      const matchesType = this.filters.materialType ? m.materialType === this.filters.materialType : true;
+      return matchesName && matchesCode && matchesType;
+    });
+  }
+
+  // Limpa filtros e mostra todos os materiais
+  clearFilters() {
+    this.filters = {materialName: '', barcode: '', materialType: null};
+    this.filteredMaterials = [...this.materials];
+  }
+
+  // Redireciona para tela de cadastro/edição
+  editMaterial(material: MaterialFormDTO) {
+    void this.router.navigate(['/estoque/cadastrar-material'], {queryParams: {barcode: material.barcode}});
+  }
+
+  // Deleta material com confirmação
+  deleteMaterial(material: MaterialFormDTO) {
+    this.confirmationService.confirm({
+      message: `Deseja realmente excluir o material ${material.materialName}?`,
+      accept: () => {
+        this.materials = this.materials.filter(m => m.barcode !== material.barcode);
+        this.applyFilters(); // Atualiza a lista filtrada
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Deletado',
+          detail: `${material.materialName} removido com sucesso`
+        });
+      }
+    });
+  }
+
+  // Botão de cadastro
+  navigateToCadastro() {
+    void this.router.navigate(['/estoque/cadastrar-material']);
+  }
+
+  protected getType(materialType: number): string | null {
+    return this.materialTypes.find(t => t.typeId === materialType)?.typeName;
+  }
 }

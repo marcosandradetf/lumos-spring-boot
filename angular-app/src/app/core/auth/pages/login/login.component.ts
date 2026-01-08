@@ -1,8 +1,8 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {NgIf, NgOptimizedImage} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {AuthService} from '../../auth.service';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {Title} from '@angular/platform-browser';
 import {map} from 'rxjs';
 import {UtilsService} from '../../../service/utils.service';
@@ -20,38 +20,50 @@ import {Toast} from 'primeng/toast';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   username: string = '';
   password: string = '';
   showPassword: boolean = false;
   message: string = 'Foi enviada uma nova senha para seu email, por favor verifique sua caixa de entrada e spam.';
+  redirectPath: string | null = null;
 
-  constructor(private authService: AuthService, private router: Router, private titleService: Title, protected utils: UtilsService) {
-    this.titleService.setTitle("Lumos - Login");
+  constructor(private authService: AuthService,
+              private router: Router,
+              private titleService: Title,
+              protected utils: UtilsService,
+              private route: ActivatedRoute,
+  ) {
+
 
     this.authService.isLoggedIn$.pipe(
       map(isLoggedIn => {
         if (isLoggedIn) {
-          this.router.navigate(['/']);
+          void this.router.navigate(['/']);
         }
         return isLoggedIn;
       })
     ).subscribe();
   }
 
+  ngOnInit(): void {
+    this.titleService.setTitle("Lumos - Login");
+
+    const redirect = this.route.snapshot.queryParamMap.get('redirect');
+
+    if (redirect) {
+      this.redirectPath = redirect;
+    }
+  }
+
   login(form: NgForm) {
     if (form.valid) {
-      this.authService.login(this.username, this.password).subscribe(
-        response => {
-          if (response) {
-            console.log('Login realizado com sucesso:', response);
-            void this.router.navigate(['/']); // Redireciona após o login bem-sucedido
-          } else {
-            this.utils.showMessage("Email/Usuário ou senha incorretos", 'error');
+      this.authService.login(this.username, this.password).subscribe({
+          next: () => {
+            void this.router.navigate([this.redirectPath ?? '/']); // Redireciona após o login bem-sucedido
+          },
+          error: (error) => {
+            this.utils.showMessage(error.error.message ?? error.error, 'error', "Não foi possível fazer Login");
           }
-        },
-        error => {
-          this.utils.showMessage("Email/Usuário ou senha incorretos",  'error');
         }
       );
     }
