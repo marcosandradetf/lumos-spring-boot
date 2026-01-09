@@ -13,7 +13,7 @@ import {FileServerService} from '../../file-server.service';
 import * as XLSX from 'xlsx';
 import {PreMeasurementService} from '../pre-measurement-home/premeasurement-service.service';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {MaterialResponse} from '../../models/material-response.dto';
+import {MaterialStockResponse} from '../../models/material-response.dto';
 import {IconAAlertComponent, IconArrowDropDownComponent, IconErrorComponent} from '../../shared/icons/icons.component';
 import {AuthService} from '../../core/auth/auth.service';
 import {ContractService} from '../../contract/services/contract.service';

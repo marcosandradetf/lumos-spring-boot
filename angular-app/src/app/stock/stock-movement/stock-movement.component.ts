@@ -7,7 +7,7 @@ import {TableComponent} from '../../shared/components/table/table.component';
 import {ButtonComponent} from '../../shared/components/button/button.component';
 import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {Deposit} from '../../models/almoxarifado.model';
-import {MaterialResponse} from '../../models/material-response.dto';
+import {MaterialStockResponse} from '../../models/material-response.dto';
 import {StockMovementDTO} from '../../models/stock-movement.dto';
 import {MaterialService} from '../services/material.service';
 import {StockService} from '../services/stock.service';
@@ -35,7 +35,6 @@ import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb
     NgIf,
     NgClass,
     Steps,
-    Paginator,
     TableModule,
     Skeleton,
     Toast,
@@ -46,31 +45,116 @@ import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb
   styleUrl: './stock-movement.component.scss'
 })
 export class StockMovementComponent implements OnInit {
+  totalRecords: number = 0;
+  currentPage: number = 0;
+  lastPage: number = 0;
+  rows: number = 15;
+  loading: boolean = true;
+
   items: MenuItem[] | undefined;
 
-  units: any[] = [
-    {Value: "CX"},   // Caixa
-    {Value: "Rolo"}, // Rolo de cabo ou fita
-    {Value: "PÇ"},   // Peça
-    {Value: "UN"},   // Unidade
-    {Value: "M"},    // Metro
-    {Value: "CM"},   // Centímetro
-    {Value: "KG"},   // Quilograma
-    {Value: "T"},    // Tonelada
-    {Value: "L"},    // Litro
-    {Value: "ML"},   // Mililitro
-    {Value: "KIT"},  // Conjunto de materiais
-    {Value: "PAR"},  // Par (ex: lâmpadas)
+  deposits: Deposit[] = [
+    {
+      idDeposit: 1,
+      depositName: "Depósito Central",
+      depositAddress: "Rua das Flores, 123",
+      depositDistrict: "Centro",
+      depositCity: "São Paulo",
+      depositState: "SP",
+      depositRegion: "Sudeste",
+      depositPhone: "(11) 99999-1111",
+      isTruck: true,
+      teamName: "Equipe Alfa",
+      plateVehicle: "ABC-1A23"
+    },
+    {
+      idDeposit: 2,
+      depositName: "Depósito Zona Norte",
+      depositAddress: "Avenida Brasil, 456",
+      depositDistrict: "Santana",
+      depositCity: "São Paulo",
+      depositState: "SP",
+      depositRegion: "Sudeste",
+      depositPhone: "(11) 98888-2222",
+      isTruck: false,
+      teamName: "Equipe Beta",
+      plateVehicle: "DEF-4B56"
+    },
+    {
+      idDeposit: 3,
+      depositName: "Depósito Regional Sul",
+      depositAddress: "Rua das Araucárias, 789",
+      depositDistrict: "Centro",
+      depositCity: "Curitiba",
+      depositState: "PR",
+      depositRegion: "Sul",
+      depositPhone: "(41) 97777-3333",
+      isTruck: true,
+      teamName: "Equipe Gama",
+      plateVehicle: "GHI-7C89"
+    }
   ];
 
+  materials: MaterialStockResponse[] = [
+    {
+      materialStockId: 201,
+      materialName: "Lâmpada LED Bulbo 9W Branca Fria 6500K Marca Philips",
+      barcode: "7891234000001",
+      buyUnit: "UN",
+      requestUnit: "UN",
+      stockQt: 180,
+      depositName: "Depósito Central"
+    },
+    {
+      materialStockId: 202,
+      materialName: "Disjuntor Termomagnético Monopolar 20A Curva C Marca Siemens",
+      barcode: "7891234000002",
+      buyUnit: "UN",
+      requestUnit: "UN",
+      stockQt: 95,
+      depositName: "Depósito Central"
+    },
+    {
+      materialStockId: 203,
+      materialName: "Cabo Elétrico Flexível 2,5mm² 750V Antichama Marca Prysmian",
+      barcode: "7891234000003",
+      buyUnit: "ROLO",
+      requestUnit: "ROLO",
+      stockQt: 1200,
+      depositName: "Depósito Zona Norte"
+    },
+    {
+      materialStockId: 204,
+      materialName: "Tomada Elétrica 2P+T 10A Padrão Brasileiro Marca Tramontina",
+      barcode: "7891234000004",
+      buyUnit: "UN",
+      requestUnit: "UN",
+      stockQt: 340,
+      depositName: "Depósito Zona Norte"
+    },
+    {
+      materialStockId: 205,
+      materialName: "Interruptor Simples 10A Branco Linha Lux Marca Schneider",
+      barcode: "7891234000005",
+      buyUnit: "UN",
+      requestUnit: "UN",
+      stockQt: 260,
+      depositName: "Depósito Regional Sul"
+    },
+    {
+      materialStockId: 206,
+      materialName: "Contator Tripolar 25A Bobina 220V Marca WEG",
+      barcode: "7891234000006",
+      buyUnit: "UN",
+      requestUnit: "UN",
+      stockQt: 42,
+      depositName: "Depósito Regional Sul"
+    }
+  ];
 
-  deposits: Deposit[] = [];
-
-  materials: MaterialResponse[] = [];
   suppliers: any = [];
   sendSuppliers: any[] = [];
   sendMovement: StockMovementDTO[] = [];
-  selectedMaterials: any[] = [];
   openMovementModal: boolean = false;
   openConfirmationModal: boolean = false;
   openSupplierModal: boolean = false;
@@ -116,51 +200,17 @@ export class StockMovementComponent implements OnInit {
     ];
   }
 
-  loading = true;
-
   loadMaterials() {
     if (!this.currentDeposit) return;
 
     this.loading = true;
-    // Chama o serviço para buscar os materiais apenas se o array estiver vazio
-    if (this.materials.length === 0) {
-      this.materialService.getFetch(0, this.currentDeposit.idDeposit);
-    }
 
-    this.materialService.materials$.subscribe({
-      next: materials => {
-        this.materials = materials;
-
-        this.materials = this.materials.filter(movement => !movement.inactive);
-
-        // Itera sobre os materiais recebidos
-        this.materials.forEach((material) => {
-          // Verifica se o ID do material está presente em sendMovement
-          const matchedMovement = this.sendMovement.find(movement => movement.materialId === material.idMaterial);
-          // Se houver correspondência, marque o material como selecionado
-          material.selected = !!matchedMovement;
-        });
-        this.loading = false;
-      },
-      error: error => {
-        this.loading = false;
-        this.utils.showMessage(error.error.message, 'error', 'Erro ao carregar materiais.');
-      },
-    });
-
-    this.estoqueService.getSuppliers().subscribe((suppliers: SupplierDTO[]) => {
-      this.suppliers = suppliers;
+    this.materialService.getMaterials(this.currentPage, this.rows).subscribe(response => {
+      this.materials = response.data;  // Dados dos materiais
+      this.totalRecords = response.totalRecords;  // Total de registros no banco
     });
   }
 
-  handleClick = () => {
-    if (this.sendMovement.length === 0) {
-      this.utils.showMessage("Antes de continuar você deve selecionar os itens desejados.", 'warn', 'Atenção');
-    } else {
-      this.openMovementModal = true;
-    }
-
-  }
   currentDeposit: Deposit | undefined;
 
   handleConfirmMovement() {
@@ -169,31 +219,25 @@ export class StockMovementComponent implements OnInit {
     }
   }
 
-  toggleSelection(item: MaterialResponse) {
-    if (item.selected) {
-      this.selectedMaterials.push({
-        idMaterial: item.idMaterial,
-        materialName: item.materialName,
-        materialPower: item.materialPower,
-        materialAmps: item.materialAmps,
-        materialLength: item.materialLength
-      });
+  toggleSelection(item: MaterialStockResponse) {
+    const index = this.sendMovement.findIndex(s => s.materialStockId === item.materialStockId);
+
+    if (index === -1) {
       const newMovement: StockMovementDTO = {
-        buyUnit: '',
-        requestUnit: '',
+        materialStockId: item.materialStockId,
+        materialName: item.materialName,
         description: '',
+        buyUnit: item.buyUnit,
+        requestUnit: item.requestUnit,
         inputQuantity: '',
-        materialId: item.idMaterial,
         priceTotal: '',
         quantityPackage: '',
-        supplierId: "",
+        supplierId: '',
         totalQuantity: 0
       };
       this.sendMovement.push(newMovement);
     } else {
-      // Remove o item filtrando pelo `materialId`
-      this.selectedMaterials = this.selectedMaterials.filter(m => m.materialId !== item.idMaterial);
-      this.sendMovement = this.sendMovement.filter(movement => movement.materialId !== item.idMaterial);
+      this.sendMovement = this.sendMovement.filter(movement => movement.materialStockId !== item.materialStockId);
     }
   }
 
@@ -230,12 +274,6 @@ export class StockMovementComponent implements OnInit {
   }
 
   clearSelection(): void {
-    this.materials.forEach((material: MaterialResponse) => {
-      if (material.selected) {
-        material.selected = false;
-      }
-    });
-
     this.sendMovement = [];
   }
 
@@ -281,26 +319,6 @@ export class StockMovementComponent implements OnInit {
 
   removeRow(index: number) {
     this.sendSuppliers.splice(index, 1); // Remove o fornecedor pelo índice
-  }
-
-
-  getDescription(id: number): string {
-    let material = this.selectedMaterials.find(m => m.idMaterial === id);
-
-    if (!material) {
-      return ''; // Retorna string vazia se o material não for encontrado
-    }
-
-
-    if (material.materialPower) {
-      return `${material.materialName} - ${material.materialPower}`;
-    } else if (material.materialAmps) {
-      return `${material.materialName} - ${material.materialAmps}`;
-    } else if (material.materialLength) {
-      return `${material.materialName} - ${material.materialLength}`;
-    }
-
-    return material.materialName; // Garante que a função sempre retorna uma string
   }
 
 
@@ -446,37 +464,30 @@ export class StockMovementComponent implements OnInit {
     }
   }
 
-  search: boolean = false;
-  value: string = '';
-  first: number = 0;
 
-  onPageChange(page: number | undefined) {
-    this.loading = true;
-    if (page) {
-      if (!this.search) {
-        this.materialService.getFetch(page, this.currentDeposit?.idDeposit);
-      } else {
-        this.materialService.getBySearch(page, this.value, this.currentDeposit?.idDeposit);
-      }
-    }
+  onPageChange(event: any) {
+    this.currentPage = event.page;
+    this.rows = event.rows;
+    this.loadMaterials();  // Recarrega os materiais com a nova página
   }
-
 
   handleSearch(value: string): void {
     this.loading = true;
     if (value.length > 2) {
-      this.value = value;
-      this.search = true;
-      this.materialService.getBySearch(this.materialService.currentPage, value, this.currentDeposit?.idDeposit);
-    }
-
-    if (value.length === 0) {
-      this.value = '';
-      this.search = false;
-      this.materialService.getFetch(this.materialService.currentPage, this.currentDeposit?.idDeposit);
+      this.materialService.getBySearch(this.materialService.currentPage, this.currentDeposit?.idDeposit!!, value);
+    } else if (value.length === 0) {
+      this.lastPage = this.currentPage;
+      this.materialService.getMaterials(this.lastPage, this.rows).subscribe(response => {
+        this.materials = response.data;  // Dados dos materiais
+        this.totalRecords = response.totalRecords;  // Total de registros no banco
+      });
     }
 
   }
 
-  skeleton: any[] = Array.from({length: 15}).map((_, i) => `Item #${i}`);
+  skeleton: any[] = Array.from({length: 7}).map((_, i) => `Item #${i}`);
+
+  protected isChecked(materialStockId: number) {
+    return this.sendMovement.findIndex(s => s.materialStockId === materialStockId) !== -1;
+  }
 }

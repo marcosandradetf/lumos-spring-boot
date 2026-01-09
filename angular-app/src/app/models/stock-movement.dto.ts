@@ -1,6 +1,7 @@
 export interface StockMovementDTO {
+  materialStockId: number;
+  materialName: string;
   description: string;
-  materialId: number;
   inputQuantity: string;
   buyUnit: string;
   requestUnit: string;

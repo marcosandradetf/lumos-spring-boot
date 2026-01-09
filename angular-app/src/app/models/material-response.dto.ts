@@ -21,21 +21,12 @@ export interface MaterialFormDTO {
   contractItems: any[];
 }
 
-export interface MaterialResponse {
-  selected: boolean;
-  idMaterial: number;
+export interface MaterialStockResponse {
+  materialStockId: number;
   materialName: string;
-  materialBrand: string;
-
-  materialPower: string;
-  materialAmps: string;
-  materialLength: string;
-
+  barcode: string;
   buyUnit: string;
   requestUnit: string;
-  materialType: string;
-  materialGroup: string;
-  stockQt: number | null;
-  inactive: boolean;
-  deposit: string;
+  stockQt: number;
+  depositName: string;
 }

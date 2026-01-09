@@ -30,18 +30,19 @@
     <p-table
       *ngIf="currentDeposit"
       [value]="materials"
-      [loading]="loading"
       [paginator]="true"
-      [rows]="15"
-      responsiveLayout="scroll">
+      [rows]="rows"
+      [totalRecords]="totalRecords"
+      (onPage)="onPageChange($event)"
+      [responsiveLayout]="'scroll'">
       <ng-template pTemplate="header">
         <tr>
-          <th class="material-icons">call_received</th>
+          <th></th>
           <th>Código de Barras</th>
-          <th>Nome</th>
+          <th>Descrição</th>
           <th>Unidade Compra</th>
           <th>Unidade Requisição</th>
-          <th>Estoque</th>
+          <th>Qtde. Estoque</th>
           <th>Almoxarifado</th>
         </tr>
       </ng-template>
@@ -51,17 +52,16 @@
             <input
               type="checkbox"
               class="checkbox"
-              [(ngModel)]="row.selected"
+              [checked]="isChecked(row.materialStockId)"
               (change)="toggleSelection(row)"
-              name="selected{{0}}"
             />
           </td>
-          <td>{{ row.idMaterial }}</td>
+          <td>{{ row.barcode}}</td>
           <td>{{ row.materialName }}</td>
           <td>{{ row.buyUnit }}</td>
-          <td>{{ row.buyRequest }}</td>
+          <td>{{ row.requestUnit }}</td>
           <td>{{ row.stockQt }}</td>
-          <td>{{ row.deposit }}</td>
+          <td>{{ row.depositName }}</td>
         </tr>
       </ng-template>
 
@@ -69,18 +69,17 @@
 
     <!--    table skeleton -->
     <p-table
-      styleClass="table table-xs table-auto"
       [value]="skeleton"
       [tableStyle]="{ 'min-width': '50rem' }"
       *ngIf="loading">
       <ng-template pTemplate="header" *ngIf="!currentDeposit">
         <tr>
-          <th class="material-icons">call_received</th>
+          <th></th>
           <th>Código de Barras</th>
-          <th>Nome</th>
+          <th>Descrição</th>
           <th>Unidade Compra</th>
           <th>Unidade Requisição</th>
-          <th>Estoque</th>
+          <th>Qtde. Estoque</th>
           <th>Almoxarifado</th>
         </tr>
       </ng-template>
@@ -135,7 +134,7 @@
           <td><input
             readonly
             required
-            [ngModel]="movement.materialId"
+            [ngModel]="movement.materialStockId"
             class="input input-bordered input-xs w-12"
             name="materialId{{i}}"
             type="text"></td>
@@ -143,7 +142,7 @@
             @if (openMovementModal) {
               <input
                 readonly
-                [value]="getDescription(movement.materialId)"
+                [value]="movement.materialName"
                 required
                 class="input input-bordered input-xs min-w-64"
                 name="materialId{{i}}"
@@ -166,24 +165,14 @@
                 obrigatório.</small>
             </div>
           </td>
+          <td><input
+            readonly
+            required
+            [ngModel]="movement.buyUnit"
+            class="input input-bordered input-xs w-12"
+            name="materialId{{i}}"
+            type="text"></td>
           <td>
-            <select
-              class="select select-bordered select-xs w-16"
-              [(ngModel)]="movement.buyUnit"
-              (change)="updateQuantityPackage();"
-              name="buyUnit{{i}}"
-              required
-              #buyUnit="ngModel">
-              @for (unit of units; track unit.Value) {
-                <option [value]="unit.Value" [selected]="movement.buyUnit === unit.Value">{{ unit.Value }}</option>
-              }
-            </select>
-            @if (buyUnit.invalid && formSubmitted) {
-              @if (buyUnit.errors?.['required']) {
-                <small class="text-red-600">Preenchimento obrigatório.</small>
-              }
-            }
-          </td>
           <td
             [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
             [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
