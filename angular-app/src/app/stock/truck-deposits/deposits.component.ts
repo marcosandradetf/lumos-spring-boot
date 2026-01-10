@@ -5,7 +5,7 @@ import {Router} from '@angular/router';
 import {FormsModule, NgForm} from '@angular/forms';
 import {NgClass, NgIf} from '@angular/common';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {Deposit} from '../../models/almoxarifado.model';
+import {Deposit} from '../dto/almoxarifado.model';
 import {catchError, tap, throwError} from 'rxjs';
 import {State} from '../services/material.service';
 import {ButtonComponent} from '../../shared/components/button/button.component';

@@ -10,7 +10,7 @@ import com.lumos.lumosspring.directexecution.model.DirectExecutionStreet
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreetItem
 import com.lumos.lumosspring.directexecution.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
 import com.lumos.lumosspring.util.ReservationStatus
@@ -36,7 +36,7 @@ class DirectExecutionRegisterService(
     private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
     private val itemRuleDistributionRepository: ItemRuleDistributionRepository,
     private val contractItemDependencyRepository: ContractItemDependencyRepository,
-    private val materialStockRepository: MaterialStockRepository,
+    private val materialStockRegisterRepository: MaterialStockRegisterRepository,
 ) {
 
     @Transactional
@@ -102,7 +102,7 @@ class DirectExecutionRegisterService(
                 throw Utils.BusinessException("Sem estoque para o material: " + m.truckMaterialStockId + " - " + m.materialName)
             }
 
-            materialStockRepository.debitStock(
+            materialStockRegisterRepository.debitStock(
                 m.quantityExecuted,
                 m.truckMaterialStockId
             )

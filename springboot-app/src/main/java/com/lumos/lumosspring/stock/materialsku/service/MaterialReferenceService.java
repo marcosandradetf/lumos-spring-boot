@@ -1,18 +1,12 @@
 package com.lumos.lumosspring.stock.materialsku.service;
 
-import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.materialsku.model.Material;
 import com.lumos.lumosspring.stock.materialsku.model.MaterialContractReferenceItem;
-import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractReferenceItemRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
-import com.lumos.lumosspring.stock.materialsku.repository.TypeRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.PagedResponse;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.stock.materialsku.dto.MaterialRequest;
-import com.lumos.lumosspring.stock.materialsku.dto.MaterialResponse;
 import com.lumos.lumosspring.system.entities.Log;
 import com.lumos.lumosspring.system.repository.LogRepository;
 
@@ -28,61 +22,35 @@ import java.util.UUID;
 
 @Service
 public class MaterialReferenceService {
-    private final MaterialStockRepository materialStockRepository;
+    private final MaterialStockRegisterRepository materialStockRegisterRepository;
     private final UserRepository userRepository;
     private final LogRepository logRepository;
-    private final TypeRepository typeRepository;
-    private final DepositRepository depositRepository;
-    private final CompanyRepository companyRepository;
     private final MaterialReferenceRepository materialReferenceRepository;
-    private final MaterialStockJdbcRepository materialStockJdbcRepository;
     private final MaterialContractReferenceItemRepository materialContractReferenceItemRepository;
 
-    public MaterialReferenceService(MaterialStockRepository materialStockRepository, UserRepository userRepository, LogRepository logRepository, TypeRepository tipoRepository, DepositRepository depositRepository, CompanyRepository companyRepository, MaterialReferenceRepository materialReferenceRepository, MaterialStockJdbcRepository materialStockJdbcRepository, MaterialContractReferenceItemRepository materialContractReferenceItemRepository) {
+    public MaterialReferenceService(MaterialStockRegisterRepository materialStockRegisterRepository,
+                                    UserRepository userRepository,
+                                    LogRepository logRepository,
+                                    MaterialReferenceRepository materialReferenceRepository,
+                                    MaterialContractReferenceItemRepository materialContractReferenceItemRepository) {
 
-        this.materialStockRepository = materialStockRepository;
+        this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.userRepository = userRepository;
         this.logRepository = logRepository;
-        this.typeRepository = tipoRepository;
-        this.depositRepository = depositRepository;
-        this.companyRepository = companyRepository;
+
         this.materialReferenceRepository = materialReferenceRepository;
-        this.materialStockJdbcRepository = materialStockJdbcRepository;
         this.materialContractReferenceItemRepository = materialContractReferenceItemRepository;
     }
-
-    public ResponseEntity<PagedResponse<MaterialResponse>> findAll(Integer page, Integer size, Long depositId) {
-        PagedResponse<MaterialResponse> materials;
-        if (depositId <= 0)
-            materials = materialStockJdbcRepository.findAllMaterialsStock(page, size);
-        else
-            materials = materialStockJdbcRepository.findAllMaterialsStockByDeposit(page, size, depositId);
-
-        return ResponseEntity.ok(materials);
-    }
-
-    public ResponseEntity<PagedResponse<MaterialResponse>> searchMaterialStock(String name, Integer page, Integer size, Long depositId) {
-        PagedResponse<MaterialResponse> materials;
-
-        if (depositId <= 0)
-            materials = materialStockJdbcRepository.searchMaterial(name.toLowerCase(), page, size);
-        else
-            materials = materialStockJdbcRepository.searchMaterialWithDeposit(name.toLowerCase(), depositId, page, size);
-
-        return ResponseEntity.ok(materials);  // Retorna os materiais no formato de resposta
-    }
-
-
 
     @Transactional
     public ResponseEntity<?> deleteById(Long idMaterial, UUID userId) {
         var user = userRepository.findById(userId);
-        var material = materialStockRepository.findById(idMaterial);
+        var material = materialStockRegisterRepository.findById(idMaterial);
         var log = new Log();
 
         if (material.isPresent() && user.isPresent()) {
             if (material.get().isInactive()) {
-                materialStockRepository.delete(material.get());
+                materialStockRegisterRepository.delete(material.get());
                 String logMessage = String.format("Usuário %s excluiu material %d com sucesso.",
                         user.get().getUsername(),
                         material.get().getMaterialId());
@@ -132,9 +100,9 @@ public class MaterialReferenceService {
         var log = new Log();
         String logMessage;
 
-        if(material.materialId() == null) {
+        if (material.materialId() == null) {
             Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName());
-            if(baseMaterialId == null) {
+            if (baseMaterialId == null) {
                 var baseMaterial = new Material(
                         material.materialBaseName(),
                         material.materialType(),
@@ -187,7 +155,7 @@ public class MaterialReferenceService {
             Long materialId = material.materialId();
             var materialSku = materialReferenceRepository.findById(materialId).orElseThrow();
             Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName());
-            if(baseMaterialId == null) {
+            if (baseMaterialId == null) {
                 var baseMaterial = new Material(
                         material.materialBaseName(),
                         material.materialType(),
@@ -248,10 +216,47 @@ public class MaterialReferenceService {
     }
 
     public ResponseEntity<?> findByBarcode(String barcode) {
-        var material = materialReferenceRepository.findAllByBarcodeAndTenantId(barcode, Utils.INSTANCE.getCurrentTenantId());
+        var material = materialReferenceRepository.findByBarcodeAndTenantId(barcode, Utils.INSTANCE.getCurrentTenantId()).orElse(null);
         if (material == null) {
-            return ResponseEntity.notFound().build();
+            material = materialReferenceRepository.findFirstByBarcode(barcode)
+                    .orElseThrow(() -> new Utils.BusinessException("Material não encontrado"));
+            material.setIdMaterial(null);
         }
+
+        List<Long> items = new ArrayList<>();
+        if (material.getIdMaterial() != null) {
+            items = materialContractReferenceItemRepository.findAllByMaterialId(material.getIdMaterial());
+        }
+
+        var response = new MaterialRequest(
+                material.getIdMaterial(),
+                null,
+                material.getMaterialName(),
+                material.getIdMaterialType(),
+                material.getSubtypeId(),
+                material.getMaterialFunction(),
+                material.getMaterialModel(),
+                material.getMaterialBrand(),
+                material.getMaterialAmps(),
+                material.getMaterialLength(),
+                material.getMaterialWidth(),
+                material.getMaterialPower(),
+                material.getMaterialGauge(),
+                material.getMaterialWeight(),
+                material.getBarcode(),
+                material.getInactive(),
+                material.getBuyUnit(),
+                material.getRequestUnit(),
+                material.getTruckStockControl(),
+                items
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<?> findById(Long materialId) {
+        var material = materialReferenceRepository.findById(materialId)
+                .orElseThrow(() -> new Utils.BusinessException("Material não encontrado"));
 
         var items = materialContractReferenceItemRepository.findAllByMaterialId(material.getIdMaterial());
 
@@ -280,4 +285,5 @@ public class MaterialReferenceService {
 
         return ResponseEntity.ok(response);
     }
+
 }

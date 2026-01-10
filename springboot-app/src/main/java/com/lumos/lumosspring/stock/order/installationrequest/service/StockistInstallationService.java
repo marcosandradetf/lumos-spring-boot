@@ -9,7 +9,7 @@ import com.lumos.lumosspring.premeasurement.repository.premeasurement.PreMeasure
 import com.lumos.lumosspring.stock.materialsku.model.Material;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.stock.order.installationrequest.dto.ReserveDTOCreate;
 import com.lumos.lumosspring.stock.order.installationrequest.dto.ReserveDTOResponse;
 import com.lumos.lumosspring.stock.order.installationrequest.model.MaterialReservation;
@@ -32,16 +32,16 @@ public class StockistInstallationService {
     private final DirectExecutionRepository directExecutionRepository;
     private final ContractItemsQuantitativeRepository contractItemsQuantitativeRepository;
     private final MaterialReservationRepository materialReservationRepository;
-    private final MaterialStockRepository materialStockRepository;
+    private final MaterialStockRegisterRepository materialStockRegisterRepository;
     private final MaterialReferenceRepository materialReferenceRepository;
 
-    public StockistInstallationService(NamedParameterJdbcTemplate namedJDBC, PreMeasurementRepository preMeasurementRepository, DirectExecutionRepository directExecutionRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository, MaterialReservationRepository materialReservationRepository, MaterialStockRepository materialStockRepository, MaterialReferenceRepository materialReferenceRepository) {
+    public StockistInstallationService(NamedParameterJdbcTemplate namedJDBC, PreMeasurementRepository preMeasurementRepository, DirectExecutionRepository directExecutionRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository, MaterialReservationRepository materialReservationRepository, MaterialStockRegisterRepository materialStockRegisterRepository, MaterialReferenceRepository materialReferenceRepository) {
         this.namedJdbc = namedJDBC;
         this.preMeasurementRepository = preMeasurementRepository;
         this.directExecutionRepository = directExecutionRepository;
         this.contractItemsQuantitativeRepository = contractItemsQuantitativeRepository;
         this.materialReservationRepository = materialReservationRepository;
-        this.materialStockRepository = materialStockRepository;
+        this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.materialReferenceRepository = materialReferenceRepository;
     }
 
@@ -290,7 +290,7 @@ public class StockistInstallationService {
 
                 if (materialReserve.getCentralMaterialStockId() != null) {
                     // Central (depósito central / caminhão do estoquista)
-                    MaterialStock materialStock = materialStockRepository
+                    MaterialStock materialStock = materialStockRegisterRepository
                             .findById(materialReserve.getCentralMaterialStockId())
                             .orElse(null);
 

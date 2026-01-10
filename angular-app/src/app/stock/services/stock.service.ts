@@ -1,15 +1,11 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {BehaviorSubject, Observable} from 'rxjs';
-
-import {StockMovementDTO} from '../../models/stock-movement.dto';
-import {SupplierDTO} from '../../models/supplier.dto';
-import {StockMovementResponse} from '../../models/stock-movement-response.dto';
-import {AuthService} from '../../core/auth/auth.service';
-import {Type} from '../../models/tipo.model';
-import {Group} from '../../models/grupo.model';
-import {CompanyResponse} from '../../company/dto/company.dto';
-import {Deposit} from '../../models/almoxarifado.model';
+import {StockMovementDTO} from '../dto/stock-movement.dto';
+import {SupplierDTO} from '../dto/supplier.dto';
+import {StockMovementResponse} from '../dto/stock-movement-response.dto';
+import {Type} from '../dto/tipo.model';
+import {Group} from '../dto/grupo.model';
+import {Deposit} from '../dto/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 import {DepositByStockist, StockistModel} from '../../executions/executions.model';
 
@@ -20,10 +16,7 @@ import {DepositByStockist, StockistModel} from '../../executions/executions.mode
 export class StockService {
   private endpoint = environment.springboot + '/api';
 
-  private onPathSubject = new BehaviorSubject<string>(''); // Inicializa o caminho
-  onPath$ = this.onPathSubject.asObservable(); // Observable para se inscrever
-
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(private http: HttpClient) { }
 
   getTypes() {
     return this.http.get<Type[]>(`${this.endpoint}/type`);

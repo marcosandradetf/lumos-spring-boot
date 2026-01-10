@@ -5,10 +5,9 @@ import com.lumos.lumosspring.stock.deposit.dto.StockistModel;
 import com.lumos.lumosspring.stock.deposit.dto.DepositDTO;
 import com.lumos.lumosspring.stock.deposit.dto.DepositResponse;
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
-import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockViewRepository;
 import com.lumos.lumosspring.team.model.Region;
 import com.lumos.lumosspring.team.model.Stockist;
 import com.lumos.lumosspring.team.repository.RegionRepository;
@@ -34,7 +33,7 @@ public class DepositService {
     @Autowired
     private DepositRepository depositRepository;
     @Autowired
-    private MaterialStockRepository materialStockRepository;
+    private MaterialStockRegisterRepository materialStockRegisterRepository;
     @Autowired
     private RegionRepository regionRepository;
     @Autowired
@@ -44,7 +43,7 @@ public class DepositService {
     @Autowired
     private NamedParameterJdbcTemplate namedJdbc;
     @Autowired
-    private MaterialStockJdbcRepository materialStockJdbcRepository;
+    private MaterialStockViewRepository materialStockViewRepository;
 
     @Cacheable("getAllDeposits")
     public List<DepositResponse> findAll() {
@@ -82,7 +81,7 @@ public class DepositService {
 
         deposit = depositRepository.save(deposit);
 
-        materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit(), false);
+        materialStockRegisterRepository.insertMaterials(deposit.getIdDeposit(), Utils.INSTANCE.getCurrentTenantId());
 
         return ResponseEntity.ok(this.findAll());
     }
@@ -129,7 +128,7 @@ public class DepositService {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: existe uma equipe vinculada a esse caminhão, remova o vínculo editando a equipe correspondente."));
         }
 
-        if (materialStockRepository.existsDeposit(id).isPresent()) {
+        if (materialStockViewRepository.existsDeposit(id).isPresent()) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais com estoque associados a este almoxarifado, faça a transferência do estoque para excluir."));
         }
 

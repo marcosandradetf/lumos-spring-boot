@@ -2,10 +2,9 @@ package com.lumos.lumosspring.stock.materialsku.service;
 
 import com.lumos.lumosspring.stock.materialsku.dto.TypeDTO;
 import com.lumos.lumosspring.stock.materialsku.model.MaterialType;
-import com.lumos.lumosspring.stock.materialsku.repository.GroupRepository;
-import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.TypeRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockViewRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,21 +17,21 @@ import java.util.stream.Collectors;
 
 @Service
 public class TypeService {
-    private final TypeRepository tipoRepository;
-    private final GroupRepository groupRepository;
     private final TypeRepository typeRepository;
-    private final MaterialStockRepository materialStockRepository;
+    private final MaterialStockRegisterRepository materialStockRegisterRepository;
+    private final MaterialStockViewRepository materialStockViewRepository;
 
-    public TypeService(TypeRepository tipoRepository, GroupRepository groupRepository, TypeRepository typeRepository, MaterialReferenceRepository materialReferenceRepository, MaterialStockRepository materialStockRepository) {
-        this.tipoRepository = tipoRepository;
-        this.groupRepository = groupRepository;
+    public TypeService(
+            TypeRepository typeRepository,
+            MaterialStockRegisterRepository materialStockRegisterRepository, MaterialStockViewRepository materialStockViewRepository) {
         this.typeRepository = typeRepository;
-        this.materialStockRepository = materialStockRepository;
+        this.materialStockRegisterRepository = materialStockRegisterRepository;
+        this.materialStockViewRepository = materialStockViewRepository;
     }
 
     @Cacheable("getAllTypes")
     public List<MaterialType> findAll() {
-        return tipoRepository.findAllByOrderByIdTypeAsc();
+        return typeRepository.findAllByOrderByIdTypeAsc();
     }
 
     record sypTypeResponse(Long subtypeId, String subtypeName) {}
@@ -40,7 +39,7 @@ public class TypeService {
 
     @Cacheable("getAllTypes")
     public List<TypeResponse> findAllTypeSubtype() {
-        var types = tipoRepository.findAllTypeSubtype();
+        var types = typeRepository.findAllTypeSubtype();
 
         return types.stream()
                 .collect(Collectors.groupingBy(
@@ -67,7 +66,7 @@ public class TypeService {
     public ResponseEntity<?> findUnitsByTypeId(Long typeId) {
         record UnitResponse(List<TypeRepository.TypeUnitResponse> buyUnits, List<TypeRepository.TypeUnitResponse> requestUnits) {}
 
-        var units = tipoRepository.findUnitsByTypeId(typeId);
+        var units = typeRepository.findUnitsByTypeId(typeId);
         var response = new UnitResponse(
                 units.stream().filter(TypeRepository.TypeUnitResponse::buyUnit).toList(),
                 units.stream().filter(u -> !u.buyUnit()).toList()
@@ -78,7 +77,7 @@ public class TypeService {
 
 
     public MaterialType findById(Long id) {
-        return tipoRepository.findById(id).orElse(null);
+        return typeRepository.findById(id).orElse(null);
     }
 
     public ResponseEntity<?> save(TypeDTO typeDTO) {
@@ -89,7 +88,7 @@ public class TypeService {
         MaterialType materialType = new MaterialType();
         materialType.setTypeName(typeDTO.typeName());
         materialType.setIdGroup(typeDTO.groupId());
-        tipoRepository.save(materialType);
+        typeRepository.save(materialType);
 
         return ResponseEntity.ok(this.findAll());
     }
@@ -102,7 +101,7 @@ public class TypeService {
 
         type.setTypeName(typeDTO.typeName());
         type.setIdGroup(typeDTO.groupId());
-        tipoRepository.save(type);
+        typeRepository.save(type);
 
         return ResponseEntity.ok(this.findAll());
     }
@@ -113,7 +112,7 @@ public class TypeService {
             return ResponseEntity.notFound().build();
         }
 
-        if (materialStockRepository.existsType(id).isPresent()) {
+        if (materialStockViewRepository.existsType(id).isPresent()) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Não é possível excluir: há materiais associados a este tipo."));
         }
 

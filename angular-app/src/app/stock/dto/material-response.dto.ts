@@ -23,10 +23,11 @@ export interface MaterialFormDTO {
 
 export interface MaterialStockResponse {
   materialStockId: number;
+  materialId: number;
   materialName: string;
-  barcode: string;
+  barcode: string | null;
   buyUnit: string;
   requestUnit: string;
-  stockQt: number;
+  stockQuantity: number;
   depositName: string;
 }

@@ -3,7 +3,7 @@ import {HttpClient} from '@angular/common/http';
 import {User} from '../../models/user.model';
 import {Observable} from 'rxjs';
 import * as http from 'node:http';
-import {Deposit} from '../../models/almoxarifado.model';
+import {Deposit} from '../../stock/dto/almoxarifado.model';
 import {environment} from '../../../environments/environment';
 
 @Injectable({

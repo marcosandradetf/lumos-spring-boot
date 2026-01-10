@@ -225,12 +225,12 @@ export class SidebarComponent implements OnInit {
           {
             label: 'Movimentação de Estoque',
             icon: 'pi pi-barcode text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/estoque/movimento'],
+            routerLink: ['/estoque/movimentar-estoque'],
           },
           {
             label: 'Movimentações Pendentes',
             icon: 'pi pi-clock text-neutral-800 dark:text-neutral-200',
-            routerLink: ['/estoque/movimento-pendente'],
+            routerLink: ['/estoque/movimentar-estoque-pendente'],
           },
           {
             label: 'Cadastro de Materiais',

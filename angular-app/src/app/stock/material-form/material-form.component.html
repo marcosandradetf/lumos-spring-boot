@@ -1,429 +1,431 @@
 <div class="h-full w-full">
-  <div class="flex items-center justify-between">
-    <app-prime-breadcrumb
-      title=""
-      [path]="['Estoque', 'Materiais']"/>
-  </div>
-
-  <div class="md:max-w-5xl max-w-md mx-auto">
-
-    <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-200 mb-6">
-      Cadastro de Material
-    </h2>
-
-    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" *ngIf="!submitted">
-
-      <!-- Código de Barras -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
-          Código de Barras (EAN/GTIN)*
-        </label>
-        <div>
-          <div class="relative w-full">
-            <!-- Input de código de barras -->
-            <input
-              pInputText
-              inputmode="numeric"
-              (input)="utils.formatNumber($event)"
-              (blur)="findMaterial($any($event.target).value)"
-              placeholder="Digite manualmente ou use seu celular para escanear"
-              formControlName="barcode"
-              maxlength="14"
-              class="w-full pr-10"
-            />
-
-            <!-- Ícone de scanner -->
-            <button
-              type="button"
-              (click)="toggleScanner()"
-              class="absolute right-0 top-[50%] -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-500">
-
-              <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="48px"
-                   fill="#e3e3e3">
-                <path
-                  d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="my-2 flex justify-between">
-            <p class="text-xs text-gray-500 mt-1">
-              Essa função funciona pelo celular, usando a câmera para escanear o código de barras.
-            </p>
-            <p *ngIf="scannerEnabled">
-              Lendo código de barras
-            </p>
-            <button (click)="toggleScanner()" type="button">
-              {{ scannerEnabled ? 'Parar câmera' : 'Usar celular para ler código de barras' }}
-            </button>
-          </div>
-
-        </div>
-        <small
-          *ngIf="form.get('barcode')?.invalid && form.get('barcode')?.touched"
-          class="text-red-500">
-          Código de barras inválido
-        </small>
-
-        <div class="relative w-full" *ngIf="scannerEnabled">
-          <zxing-scanner
-            [formats]="formats"
-            (scanSuccess)="onScanSuccess($event)"
-            class="w-full max-h-96 border-2 border-green-500 rounded-md overflow-hidden">
-          </zxing-scanner>
-
-          <!-- Linha guia central -->
-          <div
-            class="absolute top-[72%] left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
-        </div>
-
-        <!-- Fundo escuro -->
-        <div
-          *ngIf="showQrCode"
-          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-
-          <!-- Caixa do modal -->
-          <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-
-            <!-- Botão fechar -->
-            <button
-              type="button"
-              class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              (click)="showQrCode = false">
-              ✕
-            </button>
-
-            <!-- Título -->
-            <h2 class="text-xl font-semibold text-center mb-4">
-              Continue o cadastro pelo celular
-            </h2>
-
-            <!-- Texto explicativo -->
-            <p class="text-gray-600 text-sm text-center">
-              Para continuar o cadastro, escaneie o QR Code abaixo com seu celular,
-              faça login e a função de <strong>leitura de código de barras</strong> estará funcionando</p>
-            <p class="text-xs text-gray-500 mt-1 mb-6 text-center">
-              Será necessário aceitar a permissão de acesso a câmera.
-            </p>
-
-            <!-- QR Code -->
-            <div class="flex justify-center mb-6">
-              <qrcode
-                qrdata="https://lumos.thryon.com.br/estoque/cadastrar-material"
-                [width]="200"
-                [errorCorrectionLevel]="'M'">
-              </qrcode>
-            </div>
-
-            <!-- Ajuda -->
-            <p class="text-xs text-gray-500 text-center">
-              Você pode usar a câmera do celular ou um app leitor de QR Code.
-            </p>
-          </div>
-        </div>
-
-
-      </div>
-
-      <!-- Tipo / Subtipo -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
-            Tipo
-          </label>
-          <p-dropdown
-            [options]="materialTypes"
-            optionLabel="typeName"
-            optionValue="typeId"
-            formControlName="materialType"
-            (onChange)="onTypeChange($event.value)"
-            placeholder="Selecione o tipo"
-            class="w-full">
-          </p-dropdown>
-          <small
-            *ngIf="form.get('materialType')?.invalid && form.get('materialType')?.touched"
-            class="text-red-500">
-            Tipo é obrigatório
-          </small>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
-            Subtipo
-          </label>
-          @if (availableSubtypes.length === 0 && !form.get('materialType')?.value) {
-            <input
-              pInputText
-              value="Selecione um tipo primeiro"
-              readonly
-              class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
-            />
-          } @else if (availableSubtypes.length === 0) {
-            <input
-              pInputText
-              value="Sem subtipos"
-              readonly
-              class="w-full bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-neutral-200"
-            />
-          } @else {
-            <p-dropdown
-              [options]="availableSubtypes"
-              formControlName="materialSubtype"
-              optionLabel="subtypeName"
-              optionValue="subtypeId"
-              placeholder="Selecione o subtipo"
-              class="w-full">
-            </p-dropdown>
-            <small
-              *ngIf="form.get('materialSubtype')?.invalid && form.get('materialSubtype')?.touched"
-              class="text-red-500">
-              Subtipo é obrigatório
-            </small>
-          }
-        </div>
-      </div>
-
-      <!-- Nome gerado -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
-          Nome do material (gerado automaticamente)
-        </label>
-        <input
-          pInputText
-          formControlName="materialName"
-          readonly
-          class="w-full bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-neutral-200"
-        />
-      </div>
-
-      <!-- Especificações técnicas -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label class="label">Função técnica/Referência</label>
-          <input pInputText formControlName="materialFunction"
-                 placeholder="Ex.: DERIVAÇÃO, M16 e etc"
-                 class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Modelo/Tecnologia</label>
-          <input pInputText formControlName="materialModel"
-                 placeholder="Ex.: 105-305V"
-                 class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Marca*</label>
-          <input pInputText
-                 placeholder="Insira a marca do material"
-                 formControlName="materialBrand" class="w-full"/>
-          <small
-            *ngIf="form.get('materialBrand')?.invalid && form.get('materialBrand')?.touched"
-            class="text-red-500">
-            Marca é obrigatório
-          </small>
-        </div>
-
-        <div>
-          <label class="label">Corrente (A)</label>
-          <input pInputText
-                 placeholder="Ex.: 16A"
-                 formControlName="materialAmps" class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Comprimento</label>
-          <input pInputText formControlName="materialLength"
-                 placeholder="Ex.: 240MM"
-                 class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Largura</label>
-          <input pInputText
-                 placeholder="Ex.: 120MM, 24X24X13MM e etc"
-                 formControlName="materialWidth" class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Potência (W)</label>
-          <input pInputText formControlName="materialPower"
-                 placeholder="Ex.: 200W"
-                 class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Seção/Bitola</label>
-          <input pInputText
-                 formControlName="materialGauge"
-                 placeholder="Ex.: 1.5/16 MM², M16 e etc"
-                 class="w-full"/>
-        </div>
-
-        <div>
-          <label class="label">Peso</label>
-          <input pInputText
-                 placeholder="Ex.: 50KG, 100KG e etc"
-                 formControlName="materialWeight" class="w-full"/>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
-            Unidade de Compra
-          </label>
-          @if (!form.get('materialType')?.value) {
-            <input
-              pInputText
-              value="Selecione um tipo primeiro"
-              readonly
-              class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
-            />
-          } @else {
-            <p-dropdown
-              [options]="buyUnits"
-              formControlName="buyUnit"
-              optionLabel="code"
-              optionValue="code"
-              placeholder="Selecione a unidade de compra do material"
-              class="w-full">
-            </p-dropdown>
-            <small
-              *ngIf="form.get('buyUnit')?.invalid && form.get('buyUnit')?.touched"
-              class="text-red-500">
-              Unidade de Compra é obrigatório
-            </small>
-          }
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
-            Unidade de Requisição
-          </label>
-          @if (!form.get('materialType')?.value) {
-            <input
-              pInputText
-              value="Selecione um tipo primeiro"
-              readonly
-              class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
-            />
-          } @else {
-            <p-dropdown
-              [options]="requestUnits"
-              formControlName="requestUnit"
-              optionLabel="code"
-              optionValue="code"
-              placeholder="Selecione a unidade de requisição do material"
-              (onChange)="onRequestUnitChange($event.value)"
-              class="w-full">
-            </p-dropdown>
-            <small
-              *ngIf="form.get('requestUnit')?.invalid && form.get('requestUnit')?.touched"
-              class="text-red-500">
-              Unidade de Requisição é obrigatório
-            </small>
-          }
-        </div>
-      </div>
-
-      <!-- Itens Contratuais -->
-      <div class="space-y-4">
-
-        <div class="flex flex-col gap-3">
-
-          <label class="block text-base font-medium text-gray-800 dark:text-neutral-200">
-            Itens Contratuais Vinculados*
-          </label>
-          <p class="text-sm text-gray-500 dark:text-neutral-400">
-            Selecione os itens contratuais relacionados a este material. <strong>Atenção, isso é importante para
-            vincular os itens ao estoque</strong>
-          </p>
-
-          <p-multiSelect
-            formControlName="contractItems"
-            [options]="items"
-            optionLabel="description"
-            optionValue="contractReferenceItemId"
-            display="chip"
-            placeholder="Selecione um ou mais itens"
-            class="w-full">
-          </p-multiSelect>
-
-          <small
-            *ngIf="
-              form.get('contractItems')?.invalid &&
-                form.get('contractItems')?.touched"
-            class="text-red-500 text-xs">
-            Atenção, isso é importante para vincular os itens ao estoque. <strong>Selecione ao menos um item.</strong>
-          </small>
-
-        </div>
-
-        <!-- Ações -->
-        <div class="flex justify-end gap-4 py-6">
-          <button
-            pButton
-            (click)="form.reset()"
-            type="button"
-            label="Cancelar"
-            class="p-button-text">
-          </button>
-
-          <button
-            pButton
-            type="submit"
-            label="Salvar Material"
-            class="p-button-primary">
-          </button>
-        </div>
-      </div>
-    </form>
-
-    <div
-      *ngIf="submitted"
-      class="max-w-md mx-auto mt-20 rounded-lg shadow-lg p-8 text-center">
-
-      <!-- Ícone sucesso -->
-      <div class="flex justify-center mb-4">
-        <div class="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-          <span class="material-icons">check</span>
-        </div>
-      </div>
-
-      <!-- Título -->
-      <h2 class="text-xl font-semibold text-gray-800 dark:text-neutral-200 mb-2">
-        Material cadastrado com sucesso
-      </h2>
-
-      <!-- Texto -->
-      <p class="text-sm text-gray-600 dark:text-neutral-400 mb-6">
-        O material foi registrado no sistema e já está disponível para uso no estoque.
-      </p>
-
-      <!-- Ações -->
-      <div class="flex flex-col gap-3">
-        <button
-          pButton
-          type="button"
-          label="Cadastrar outro material"
-          class="p-button-primary w-full"
-          (click)="form.reset(); submitted = false">
-        </button>
-
-        <button
-          pButton
-          type="button"
-          label="Voltar para lista de materiais"
-          class="p-button-text w-full"
-          (click)="router.navigate(['/estoque/materiais'])">
-        </button>
-      </div>
+    <div class="flex items-center justify-between">
+        <app-prime-breadcrumb
+            title=""
+            [path]="['Estoque', 'Materiais']"/>
     </div>
 
-  </div>
+    <div class="md:max-w-5xl max-w-md mx-auto">
 
-  <app-loading-overlay [loading]="loading"></app-loading-overlay>
-  <p-toast/>
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-neutral-200 mb-6">
+            Cadastro de Material
+        </h2>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" *ngIf="!submitted">
+
+            <!-- Código de Barras -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
+                    Código de Barras (EAN/GTIN)*
+                </label>
+                <div>
+                    <div class="relative w-full">
+                        <!-- Input de código de barras -->
+                        <input
+                            pInputText
+                            inputmode="numeric"
+                            (input)="utils.formatNumber($event)"
+                            (blur)="findMaterial($any($event.target).value)"
+                            placeholder="Digite manualmente ou use seu celular para escanear"
+                            formControlName="barcode"
+                            maxlength="14"
+                            class="w-full pr-10"
+                        />
+
+                        <!-- Ícone de scanner -->
+                        <button
+                            type="button"
+                            (click)="toggleScanner()"
+                            class="absolute right-0 top-[50%] -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-500">
+
+                            <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="48px"
+                                 fill="#e3e3e3">
+                                <path
+                                    d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="my-2 flex justify-between">
+                        <p class="text-xs text-gray-500 mt-1">
+                            Essa função funciona pelo celular, usando a câmera para escanear o código de barras.
+                        </p>
+                        <p *ngIf="scannerEnabled">
+                            Lendo código de barras
+                        </p>
+                        <button (click)="toggleScanner()" type="button">
+                            {{ scannerEnabled ? 'Parar câmera' : 'Usar celular para ler código de barras' }}
+                        </button>
+                    </div>
+
+                </div>
+                <small
+                    *ngIf="form.get('barcode')?.invalid && form.get('barcode')?.touched"
+                    class="text-red-500">
+                    Código de barras inválido
+                </small>
+
+                <div class="relative w-full" *ngIf="scannerEnabled">
+                    <zxing-scanner
+                        [formats]="formats"
+                        (scanSuccess)="onScanSuccess($event)"
+                        class="w-full max-h-96 border-2 border-green-500 rounded-md overflow-hidden">
+                    </zxing-scanner>
+
+                    <!-- Linha guia central -->
+                    <div
+                        class="absolute top-[72%] left-0 w-full h-1 bg-red-500 -translate-y-1/2 animate-pulse pointer-events-none mx-1"></div>
+                </div>
+
+                <!-- Fundo escuro -->
+                <div
+                    *ngIf="showQrCode"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
+                    <!-- Caixa do modal -->
+                    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+
+                        <!-- Botão fechar -->
+                        <button
+                            type="button"
+                            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                            (click)="showQrCode = false">
+                            ✕
+                        </button>
+
+                        <!-- Título -->
+                        <h2 class="text-xl font-semibold text-center mb-4">
+                            Continue o cadastro pelo celular
+                        </h2>
+
+                        <!-- Texto explicativo -->
+                        <p class="text-gray-600 text-sm text-center">
+                            Para continuar o cadastro, escaneie o QR Code abaixo com seu celular,
+                            faça login e a função de <strong>leitura de código de barras</strong> estará funcionando</p>
+                        <p class="text-xs text-gray-500 mt-1 mb-6 text-center">
+                            Será necessário aceitar a permissão de acesso a câmera.
+                        </p>
+
+                        <!-- QR Code -->
+                        <div class="flex justify-center mb-6">
+                            <qrcode
+                                qrdata="https://lumos.thryon.com.br/estoque/cadastrar-material"
+                                [width]="200"
+                                [errorCorrectionLevel]="'M'">
+                            </qrcode>
+                        </div>
+
+                        <!-- Ajuda -->
+                        <p class="text-xs text-gray-500 text-center">
+                            Você pode usar a câmera do celular ou um app leitor de QR Code.
+                        </p>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Tipo / Subtipo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+                        Tipo
+                    </label>
+                    <p-dropdown
+                        [options]="materialTypes"
+                        optionLabel="typeName"
+                        optionValue="typeId"
+                        formControlName="materialType"
+                        (onChange)="onTypeChange($event.value)"
+                        placeholder="Selecione o tipo"
+                        class="w-full">
+                    </p-dropdown>
+                    <small
+                        *ngIf="form.get('materialType')?.invalid && form.get('materialType')?.touched"
+                        class="text-red-500">
+                        Tipo é obrigatório
+                    </small>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+                        Subtipo
+                    </label>
+                    @if (availableSubtypes.length === 0 && !form.get('materialType')?.value) {
+                        <input
+                            pInputText
+                            value="Selecione um tipo primeiro"
+                            readonly
+                            class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
+                        />
+                    } @else if (availableSubtypes.length === 0) {
+                        <input
+                            pInputText
+                            value="Sem subtipos"
+                            readonly
+                            class="w-full bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-neutral-200"
+                        />
+                    } @else {
+                        <p-dropdown
+                            [options]="availableSubtypes"
+                            formControlName="materialSubtype"
+                            optionLabel="subtypeName"
+                            optionValue="subtypeId"
+                            placeholder="Selecione o subtipo"
+                            class="w-full">
+                        </p-dropdown>
+                        <small
+                            *ngIf="form.get('materialSubtype')?.invalid && form.get('materialSubtype')?.touched"
+                            class="text-red-500">
+                            Subtipo é obrigatório
+                        </small>
+                    }
+                </div>
+            </div>
+
+            <!-- Nome gerado -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-neutral-200">
+                    Nome do material (gerado automaticamente)
+                </label>
+                <input
+                    pInputText
+                    formControlName="materialName"
+                    readonly
+                    class="w-full bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-neutral-200"
+                />
+            </div>
+
+            <!-- Especificações técnicas -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="label">Função técnica/Referência</label>
+                    <input pInputText formControlName="materialFunction"
+                           placeholder="Ex.: DERIVAÇÃO, M16 e etc"
+                           class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Modelo/Tecnologia</label>
+                    <input pInputText formControlName="materialModel"
+                           placeholder="Ex.: 105-305V"
+                           class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Marca*</label>
+                    <input pInputText
+                           placeholder="Insira a marca do material"
+                           formControlName="materialBrand" class="w-full"/>
+                    <small
+                        *ngIf="form.get('materialBrand')?.invalid && form.get('materialBrand')?.touched"
+                        class="text-red-500">
+                        Marca é obrigatório
+                    </small>
+                </div>
+
+                <div>
+                    <label class="label">Corrente (A)</label>
+                    <input pInputText
+                           placeholder="Ex.: 16A"
+                           formControlName="materialAmps" class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Comprimento</label>
+                    <input pInputText formControlName="materialLength"
+                           placeholder="Ex.: 240MM"
+                           class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Largura</label>
+                    <input pInputText
+                           placeholder="Ex.: 120MM, 24X24X13MM e etc"
+                           formControlName="materialWidth" class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Potência (W)</label>
+                    <input pInputText formControlName="materialPower"
+                           placeholder="Ex.: 200W"
+                           class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Seção/Bitola</label>
+                    <input pInputText
+                           formControlName="materialGauge"
+                           placeholder="Ex.: 1.5/16 MM², M16 e etc"
+                           class="w-full"/>
+                </div>
+
+                <div>
+                    <label class="label">Peso</label>
+                    <input pInputText
+                           placeholder="Ex.: 50KG, 100KG e etc"
+                           formControlName="materialWeight" class="w-full"/>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+                        Unidade de Compra
+                    </label>
+                    @if (!form.get('materialType')?.value) {
+                        <input
+                            pInputText
+                            value="Selecione um tipo primeiro"
+                            readonly
+                            class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
+                        />
+                    } @else {
+                        <p-dropdown
+                            [options]="buyUnits"
+                            formControlName="buyUnit"
+                            optionLabel="code"
+                            optionValue="code"
+                            placeholder="Selecione a unidade de compra do material"
+                            class="w-full">
+                        </p-dropdown>
+                        <small
+                            *ngIf="form.get('buyUnit')?.invalid && form.get('buyUnit')?.touched"
+                            class="text-red-500">
+                            Unidade de Compra é obrigatório
+                        </small>
+                    }
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200 mb-1">
+                        Unidade de Requisição
+                    </label>
+                    @if (!form.get('materialType')?.value) {
+                        <input
+                            pInputText
+                            value="Selecione um tipo primeiro"
+                            readonly
+                            class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-neutral-400"
+                        />
+                    } @else {
+                        <p-dropdown
+                            [options]="requestUnits"
+                            formControlName="requestUnit"
+                            optionLabel="code"
+                            optionValue="code"
+                            placeholder="Selecione a unidade de requisição do material"
+                            (onChange)="onRequestUnitChange($event.value)"
+                            class="w-full">
+                        </p-dropdown>
+                        <small
+                            *ngIf="form.get('requestUnit')?.invalid && form.get('requestUnit')?.touched"
+                            class="text-red-500">
+                            Unidade de Requisição é obrigatório
+                        </small>
+                    }
+                </div>
+            </div>
+
+            <!-- Itens Contratuais -->
+            <div class="space-y-4">
+
+                <div class="flex flex-col gap-3">
+
+                    <label class="block text-base font-medium text-gray-800 dark:text-neutral-200">
+                        Itens Contratuais Vinculados*
+                    </label>
+                    <p class="text-sm text-gray-500 dark:text-neutral-400">
+                        Selecione os itens contratuais relacionados a este material. <strong>Atenção, isso é importante
+                        para
+                        vincular os itens ao estoque</strong>
+                    </p>
+
+                    <p-multiSelect
+                        formControlName="contractItems"
+                        [options]="items"
+                        optionLabel="description"
+                        optionValue="contractReferenceItemId"
+                        display="chip"
+                        placeholder="Selecione um ou mais itens"
+                        class="w-full">
+                    </p-multiSelect>
+
+                    <small
+                        *ngIf="
+              form.get('contractItems')?.invalid &&
+                form.get('contractItems')?.touched"
+                        class="text-red-500 text-xs">
+                        Atenção, isso é importante para vincular os itens ao estoque. <strong>Selecione ao menos um
+                        item.</strong>
+                    </small>
+
+                </div>
+
+                <!-- Ações -->
+                <div class="flex justify-end gap-4 py-6">
+                    <button
+                        pButton
+                        (click)="form.reset()"
+                        type="button"
+                        label="Cancelar"
+                        class="p-button-text">
+                    </button>
+
+                    <button
+                        pButton
+                        type="submit"
+                        label="Salvar Material"
+                        class="p-button-primary">
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div
+            *ngIf="submitted"
+            class="max-w-md mx-auto mt-20 rounded-lg shadow-lg p-8 text-center">
+
+            <!-- Ícone sucesso -->
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                    <span class="material-icons">check</span>
+                </div>
+            </div>
+
+            <!-- Título -->
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-neutral-200 mb-2">
+                Material cadastrado com sucesso
+            </h2>
+
+            <!-- Texto -->
+            <p class="text-sm text-gray-600 dark:text-neutral-400 mb-6">
+                O material foi registrado no sistema e já está disponível para uso no estoque.
+            </p>
+
+            <!-- Ações -->
+            <div class="flex flex-col gap-3">
+                <button
+                    pButton
+                    type="button"
+                    label="Cadastrar outro material"
+                    class="p-button-primary w-full"
+                    (click)="form.reset(); submitted = false">
+                </button>
+
+                <button
+                    pButton
+                    type="button"
+                    label="Voltar para lista de materiais"
+                    class="p-button-text w-full"
+                    (click)="router.navigate(['/estoque/materiais'])">
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <app-loading-overlay [loading]="loading"></app-loading-overlay>
+    <p-toast/>
 
 </div>

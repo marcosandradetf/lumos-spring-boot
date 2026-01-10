@@ -5,7 +5,7 @@ import com.lumos.lumosspring.stock.order.teamrequest.model.OrderMaterial
 import com.lumos.lumosspring.stock.order.teamrequest.model.OrderMaterialItem
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository
 import com.lumos.lumosspring.stock.materialstock.dto.MaterialInStockDTO
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockViewRepository
 import com.lumos.lumosspring.stock.order.teamrequest.repository.OrderMaterialItemRepository
 import com.lumos.lumosspring.stock.order.teamrequest.repository.OrderMaterialRepository
 import com.lumos.lumosspring.stock.materialstock.repository.StockQueryRepository
@@ -24,18 +24,18 @@ class MaterialStockService(
     private val orderMaterialItemRepository: OrderMaterialItemRepository,
     private val teamQueryRepository: TeamQueryRepository,
     private val depositRepository: DepositRepository,
-    private val materialStockJdbcRepository: MaterialStockJdbcRepository
+    private val materialStockViewRepository: MaterialStockViewRepository,
 ) {
 
     fun getStockMaterialForLinking(linking: String, type: String, teamId: Long): ResponseEntity<Any> {
         val materials: List<MaterialInStockDTO> = if (type != "NULL" && linking != "NULL") {
-            materialStockJdbcRepository.findAllByLinkingAndType(
+            materialStockViewRepository.findAllByLinkingAndType(
                 linking.lowercase(),
                 type.lowercase(),
                 teamId
             )
         } else {
-            materialStockJdbcRepository.findAllByType(type.lowercase(), teamId)
+            materialStockViewRepository.findAllByType(type.lowercase(), teamId)
         }
 
         return ResponseEntity.ok(materials)

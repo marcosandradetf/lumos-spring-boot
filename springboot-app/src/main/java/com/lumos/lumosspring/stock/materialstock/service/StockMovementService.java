@@ -4,7 +4,7 @@ import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.StockMovementRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.SupplierRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
@@ -25,7 +25,7 @@ import java.util.*;
 
 @Service
 public class StockMovementService {
-    private final MaterialStockRepository materialStockRepository;
+    private final MaterialStockRegisterRepository materialStockRegisterRepository;
     private final StockMovementRepository stockMovementRepository;
     private final SupplierRepository supplierRepository;
     private final UserRepository userRepository;
@@ -34,8 +34,8 @@ public class StockMovementService {
     private final CompanyRepository companyRepository;
     private final DepositRepository depositRepository;
 
-    public StockMovementService(MaterialStockRepository materialStockRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util, MaterialReferenceRepository materialReferenceRepository, CompanyRepository companyRepository, DepositRepository depositRepository) {
-        this.materialStockRepository = materialStockRepository1;
+    public StockMovementService(MaterialStockRegisterRepository materialStockRegisterRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util, MaterialReferenceRepository materialReferenceRepository, CompanyRepository companyRepository, DepositRepository depositRepository) {
+        this.materialStockRegisterRepository = materialStockRegisterRepository1;
         this.stockMovementRepository = stockMovementRepository;
         this.supplierRepository = supplierRepository;
         this.userRepository = userRepository;
@@ -53,7 +53,7 @@ public class StockMovementService {
         List<StockMovementResponse> response = new ArrayList<>();
         for (StockMovement movement : stockMovements) {
             var userCreated = userRepository.findByUserId(movement.getAppUserCreatedId()).orElseThrow();
-            var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
+            var materialStock = materialStockRegisterRepository.findById(movement.getMaterialStockId()).orElseThrow();
             var material = materialReferenceRepository.findById(materialStock.getMaterialId()).orElseThrow();
             var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
             var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
@@ -120,7 +120,7 @@ public class StockMovementService {
 
     private ResponseEntity<String> convertToStockMovementAndSave(List<StockMovementDTO> stockMovement, UUID userUUID) {
         for (StockMovementDTO movement : stockMovement) {
-            var material = materialStockRepository.findById(movement.materialId());
+            var material = materialStockRegisterRepository.findById(movement.materialId());
             if (material.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Material ".concat(movement.materialId().toString()).concat(" não encontrado."));
             }
@@ -171,7 +171,7 @@ public class StockMovementService {
         movement.setStatus("APPROVED");
         movement.setAppUserFinishedId(Objects.requireNonNull(util.getUserFromRToken(refreshToken)));
 
-        var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
+        var materialStock = materialStockRegisterRepository.findById(movement.getMaterialStockId()).orElseThrow();
 
         materialStock.addStockQuantity(movement.getTotalQuantity());
         materialStock.addStockAvailable(movement.getTotalQuantity());
@@ -182,7 +182,7 @@ public class StockMovementService {
 
 
         stockMovementRepository.save(movement);
-        materialStockRepository.save(materialStock);
+        materialStockRegisterRepository.save(materialStock);
 
         return ResponseEntity.status(HttpStatus.OK).body("Movimento aprovado com sucesso.");
     }
@@ -234,7 +234,7 @@ public class StockMovementService {
         List<StockMovementResponse> response = new ArrayList<>();
         for (StockMovement movement : approvedMovements) {
             var userFinished = userRepository.findByUserId(movement.getAppUserFinishedId()).orElseThrow();
-            var materialStock = materialStockRepository.findById(movement.getMaterialStockId()).orElseThrow();
+            var materialStock = materialStockRegisterRepository.findById(movement.getMaterialStockId()).orElseThrow();
             var material = materialReferenceRepository.findById(materialStock.getMaterialId()).orElseThrow();
             var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
             var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();

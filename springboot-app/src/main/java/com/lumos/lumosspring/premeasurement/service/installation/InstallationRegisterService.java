@@ -7,10 +7,9 @@ import com.lumos.lumosspring.premeasurement.dto.installation.InstallationItemReq
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationRequest;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationStreetRequest;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurementExecutor;
-import com.lumos.lumosspring.premeasurement.model.PreMeasurementStreetItem;
 import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementExecutorRepository;
 import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementInstallationRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.util.ExecutionStatus;
 import com.lumos.lumosspring.util.Utils;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,7 +25,7 @@ import java.util.Set;
 public class InstallationRegisterService {
     private final MinioService minioService;
     private final PreMeasurementInstallationRepository preMeasurementInstallationRepository;
-    private final MaterialStockRepository materialStockRepository;
+    private final MaterialStockRegisterRepository materialStockRegisterRepository;
     private final PreMeasurementExecutorRepository preMeasurementExecutorRepository;
     private final ContractItemDependencyRepository contractItemDependencyRepository;
     private final ContractItemsQuantitativeRepository contractItemsQuantitativeRepository;
@@ -35,12 +33,12 @@ public class InstallationRegisterService {
     public InstallationRegisterService(
             MinioService minioService,
             PreMeasurementInstallationRepository preMeasurementInstallationRepository,
-            MaterialStockRepository materialStockRepository,
+            MaterialStockRegisterRepository materialStockRegisterRepository,
             PreMeasurementExecutorRepository preMeasurementExecutorRepository,
             ContractItemDependencyRepository contractItemDependencyRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository) {
         this.minioService = minioService;
         this.preMeasurementInstallationRepository = preMeasurementInstallationRepository;
-        this.materialStockRepository = materialStockRepository;
+        this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.preMeasurementExecutorRepository = preMeasurementExecutorRepository;
         this.contractItemDependencyRepository = contractItemDependencyRepository;
         this.contractItemsQuantitativeRepository = contractItemsQuantitativeRepository;
@@ -75,7 +73,7 @@ public class InstallationRegisterService {
             );
             saveLinkedItems(r.getContractItemId(), r.getQuantityExecuted(), installation.preMeasurementStreetId());
 
-            materialStockRepository.debitStock(
+            materialStockRegisterRepository.debitStock(
                     r.getQuantityExecuted(),
                     r.getTruckMaterialStockId()
             );

@@ -5,7 +5,7 @@ import {ModalComponent} from '../../shared/components/modal/modal.component';
 import {CurrencyPipe, NgForOf} from '@angular/common';
 import {SidebarComponent} from '../../shared/components/sidebar/sidebar.component';
 import {TableComponent} from '../../shared/components/table/table.component';
-import {StockMovementResponse} from '../../models/stock-movement-response.dto';
+import {StockMovementResponse} from '../dto/stock-movement-response.dto';
 import {StockService} from '../services/stock.service';
 import {Title} from '@angular/platform-browser';
 import {Steps} from 'primeng/steps';

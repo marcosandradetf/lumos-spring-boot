@@ -2,7 +2,7 @@ package com.lumos.lumosspring.team.service;
 
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
-import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockJdbcRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.team.dto.MemberTeamResponse;
 import com.lumos.lumosspring.team.dto.TeamCreate;
 import com.lumos.lumosspring.team.dto.TeamEdit;
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.StreamSupport;
 
 @Service
 public class TeamService {
@@ -33,19 +32,20 @@ public class TeamService {
     private final DepositRepository depositRepository;
     private final TeamQueryRepository teamQueryRepository;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private final MaterialStockJdbcRepository materialStockJdbcRepository;
+    private final MaterialStockRegisterRepository materialStockRegisterRepository;
 
     public TeamService(TeamRepository teamRepository,
                        RegionRepository regionRepository,
                        DepositRepository depositRepository,
-                       TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate, MaterialStockJdbcRepository materialStockJdbcRepository) {
+                       TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+                       MaterialStockRegisterRepository materialStockRegisterRepository) {
 
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
         this.depositRepository = depositRepository;
         this.teamQueryRepository = teamQueryRepository;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
-        this.materialStockJdbcRepository = materialStockJdbcRepository;
+        this.materialStockRegisterRepository = materialStockRegisterRepository;
     }
 
     @Cacheable("getAllTeams")
@@ -116,7 +116,7 @@ public class TeamService {
 
         try {
             deposit = depositRepository.save(deposit);
-            materialStockJdbcRepository.insertMaterials(deposit.getIdDeposit(), true);
+            materialStockRegisterRepository.insertMaterials(deposit.getIdDeposit(), Utils.INSTANCE.getCurrentTenantId());
 
             newTeam.setDepositId(deposit.getIdDeposit());
             newTeam = teamRepository.save(newTeam);

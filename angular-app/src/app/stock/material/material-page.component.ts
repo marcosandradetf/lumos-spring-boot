@@ -8,7 +8,7 @@ import {TableModule} from 'primeng/table';
 import {InputText} from 'primeng/inputtext';
 import {DropdownModule} from 'primeng/dropdown';
 import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
-import {MaterialFormDTO} from '../../models/material-response.dto';
+import {MaterialFormDTO} from '../dto/material-response.dto';
 import {Router} from '@angular/router';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {StockService} from '../services/stock.service';

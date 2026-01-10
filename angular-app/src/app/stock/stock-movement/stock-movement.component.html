@@ -1,378 +1,558 @@
-<div class="h-full w-full p-4">
-  <app-prime-breadcrumb title="" [path]="['Estoque', 'Movimentar Estoque']"></app-prime-breadcrumb>
+<div class="h-full w-full p-4 relative">
+    <app-prime-breadcrumb title="" [path]="['Estoque', 'Movimentar Estoque']"></app-prime-breadcrumb>
 
-  <div class="p-2">
-    <div class="card p-3">
-      <p-steps [model]="items" [readonly]="false"/>
+    <div class="p-2">
+        <div class="card p-3">
+            <p-steps [model]="items" [readonly]="false"/>
+        </div>
+
+        <div class="mb-2" *ngIf="!currentDeposit">
+            <p-dropdown
+                (onChange)="loadMaterials()"
+                [(ngModel)]="currentDeposit"
+                [options]="deposits"
+                placeholder="Selecione o Almoxarifado"
+                class="w-full">
+
+                <!-- Label na lista -->
+                <ng-template let-deposit
+                             pTemplate="item"> {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
+                </ng-template>
+
+                <!-- Label selecionada -->
+                <ng-template let-deposit pTemplate="selectedItem">
+                    {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
+                </ng-template>
+            </p-dropdown>
+
+        </div>
+
+        <p-toolbar *ngIf="currentDeposit && !isMobile">
+
+            <!-- START: ações principais -->
+            <ng-template #start>
+                <!-- Botão Adicionar -->
+                <p-button
+                    icon="pi pi-plus"
+                    label="Adicionar"
+                    class="mr-2"
+                    (click)="router.navigate(['/estoque/cadastrar-material'])"
+                ></p-button>
+
+                <!-- Botão scanner contínuo -->
+                <p-button
+                    class="flex justify-between items-center w-full max-w-md"
+                    label="Ativar modo scanner contínuo"
+                    (click)="checkBarcode()"
+                >
+                    <!-- Ícone SVG dentro do botão -->
+                    <ng-template pTemplate="icon">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 -960 960 960"
+                            height="24"
+                            width="24"
+
+                        >
+                            <path
+                                d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"
+                            />
+                        </svg>
+                    </ng-template>
+                </p-button>
+            </ng-template>
+
+
+
+            <!-- CENTER: pesquisa + scanner + limpar filtros -->
+            <ng-template #center>
+                <p-iconfield iconPosition="left">
+                    <p-inputicon class="pi pi-search"/>
+                    <input
+                        pInputText
+                        placeholder="Pesquisar por descrição ou código de barras"
+                        class="w-[28rem]"
+                        [value]="searchValue"
+                        (input)="handleSearch($any($event.target).value)"
+                    />
+                </p-iconfield>
+            </ng-template>
+
+            <!-- END: toggle apenas selecionados / todos -->
+            <ng-template #end>
+                <p-togglebutton
+                    [(ngModel)]="onlySelected"
+                    onLabel="Exibir todos"
+                    offLabel="Apenas selecionados"
+                    onIcon="pi pi-list"
+                    offIcon="pi pi-check"
+                    styleClass="w-60"
+                ></p-togglebutton>
+            </ng-template>
+
+        </p-toolbar>
+
+
+        <p-table
+            *ngIf="currentDeposit"
+            [value]="materials"
+            [paginator]="true"
+            [rows]="rows"
+            [totalRecords]="totalRecords"
+            [lazy]="true"
+            (onLazyLoad)="onPageChange($event)"
+            [responsiveLayout]="'scroll'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th></th>
+                    <th>Código de Barras</th>
+                    <th>Descrição</th>
+                    <th>Unidade Compra</th>
+                    <th>Unidade Requisição</th>
+                    <th>Qtde. Estoque</th>
+                    <th>Almoxarifado</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row>
+                <tr>
+                    <td>
+                        <input
+                            type="checkbox"
+                            class="checkbox"
+                            [checked]="isChecked(row.materialStockId)"
+                            (change)="toggleSelection(row)"
+                        />
+                    </td>
+                    <td>
+                          <span
+                              *ngIf="row.barcode; else missingBarcode"
+                              class="text-gray-800 dark:text-gray-200"
+                          >
+                        {{ row.barcode }}
+                      </span>
+
+                        <ng-template #missingBarcode>
+                            <button
+                                type="button"
+                                class="flex items-center gap-2 px-2 py-1 rounded-md
+             bg-amber-100 text-amber-700
+             hover:bg-amber-200 hover:text-amber-800
+             transition-colors text-sm font-semibold"
+                                (click)="goToCatalog(row)"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 9v2m0 4h.01M10.29 3.86l-7.4 12.82A1 1 0 003.75 18h16.5a1 1 0 00.86-1.5l-7.4-12.82a1 1 0 00-1.72 0z"/>
+                                </svg>
+
+                                Revisar cadastro
+                            </button>
+                        </ng-template>
+                    </td>
+
+                    <td>{{ row.materialName }}</td>
+                    <td>{{ row.buyUnit }}</td>
+                    <td>{{ row.requestUnit }}</td>
+                    <td>{{ row.stockQuantity }}</td>
+                    <td>{{ row.depositName }}</td>
+                </tr>
+            </ng-template>
+
+        </p-table>
+        <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
+             *ngIf="currentDeposit">
+            <p-button label="Continuar" size="large"/>
+        </div>
+
+        <!--    table skeleton -->
+        <p-table
+            [value]="skeleton"
+            [tableStyle]="{ 'min-width': '50rem' }"
+            *ngIf="loading">
+            <ng-template pTemplate="header" *ngIf="!currentDeposit">
+                <tr>
+                    <th></th>
+                    <th>Código de Barras</th>
+                    <th>Descrição</th>
+                    <th>Unidade Compra</th>
+                    <th>Unidade Requisição</th>
+                    <th>Qtde. Estoque</th>
+                    <th>Almoxarifado</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-product>
+                <tr>
+                    <td class="w-16 p-3">
+                        <p-skeleton/>
+                    </td>
+                    <td>
+                        <p-skeleton/>
+                    </td>
+                    <td>
+                        <p-skeleton/>
+                    </td>
+                    <td>
+                        <p-skeleton/>
+                    </td>
+                    <td>
+                        <p-skeleton/>
+                    </td>
+                    <td>
+                        <p-skeleton/>
+                    </td>
+                    <td>
+                        <p-skeleton/>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        <!--    end-->
+
     </div>
 
-    <div class="mb-2" *ngIf="!currentDeposit">
-      <p-dropdown
-        (onChange)="loadMaterials()"
-        [(ngModel)]="currentDeposit"
-        [options]="deposits"
-        placeholder="Selecione o Almoxarifado"
-        class="w-full">
 
-        <!-- Label na lista -->
-        <ng-template let-deposit
-                     pTemplate="item"> {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
-        </ng-template>
+    <!--    modal change -->
+    <app-modal [modalOpen]="openMovementModal" classModal="rounded-none" (modalClose)="closeMovementModal()">
+        <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
+            <app-table>
+                <tr header>
+                    <th>Codigo</th>
+                    <th class="min-w-64">Descrição</th>
+                    <th>Quantidade*</th>
+                    <th>UN. Compra*</th>
+                    <th>Qtde. p/ embalagem*</th>
+                    <th>Preço total*</th>
+                    <th>Fornecedor*</th>
+                    <th>Comentário</th>
+                    <th>UN. Requisição*</th>
+                    <th>Qtde. Total</th>
+                </tr>
+                <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral"
+                    body>
+                    <td><input
+                        readonly
+                        required
+                        [ngModel]="movement.materialStockId"
+                        class="input input-bordered input-xs w-12"
+                        name="materialId{{i}}"
+                        type="text"></td>
+                    <td>
+                        @if (openMovementModal) {
+                            <input
+                                readonly
+                                [value]="movement.materialName"
+                                required
+                                class="input input-bordered input-xs min-w-64"
+                                name="materialId{{i}}"
+                                type="text">
+                        }
+                    </td>
 
-        <!-- Label selecionada -->
-        <ng-template let-deposit pTemplate="selectedItem">
-          {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
-        </ng-template>
-      </p-dropdown>
-
-    </div>
-
-    <p-table
-      *ngIf="currentDeposit"
-      [value]="materials"
-      [paginator]="true"
-      [rows]="rows"
-      [totalRecords]="totalRecords"
-      (onPage)="onPageChange($event)"
-      [responsiveLayout]="'scroll'">
-      <ng-template pTemplate="header">
-        <tr>
-          <th></th>
-          <th>Código de Barras</th>
-          <th>Descrição</th>
-          <th>Unidade Compra</th>
-          <th>Unidade Requisição</th>
-          <th>Qtde. Estoque</th>
-          <th>Almoxarifado</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-row>
-        <tr>
-          <td>
-            <input
-              type="checkbox"
-              class="checkbox"
-              [checked]="isChecked(row.materialStockId)"
-              (change)="toggleSelection(row)"
-            />
-          </td>
-          <td>{{ row.barcode}}</td>
-          <td>{{ row.materialName }}</td>
-          <td>{{ row.buyUnit }}</td>
-          <td>{{ row.requestUnit }}</td>
-          <td>{{ row.stockQt }}</td>
-          <td>{{ row.depositName }}</td>
-        </tr>
-      </ng-template>
-
-    </p-table>
-
-    <!--    table skeleton -->
-    <p-table
-      [value]="skeleton"
-      [tableStyle]="{ 'min-width': '50rem' }"
-      *ngIf="loading">
-      <ng-template pTemplate="header" *ngIf="!currentDeposit">
-        <tr>
-          <th></th>
-          <th>Código de Barras</th>
-          <th>Descrição</th>
-          <th>Unidade Compra</th>
-          <th>Unidade Requisição</th>
-          <th>Qtde. Estoque</th>
-          <th>Almoxarifado</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-product>
-        <tr>
-          <td class="w-16 p-3">
-            <p-skeleton/>
-          </td>
-          <td>
-            <p-skeleton/>
-          </td>
-          <td>
-            <p-skeleton/>
-          </td>
-          <td>
-            <p-skeleton/>
-          </td>
-          <td>
-            <p-skeleton/>
-          </td>
-          <td>
-            <p-skeleton/>
-          </td>
-          <td>
-            <p-skeleton/>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-    <!--    end-->
-
-  </div>
-
-
-  <!--    modal change -->
-  <app-modal [modalOpen]="openMovementModal" classModal="rounded-none" (modalClose)="closeMovementModal()">
-    <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
-      <app-table>
-        <tr header>
-          <th>Codigo</th>
-          <th class="min-w-64">Descrição</th>
-          <th>Quantidade*</th>
-          <th>UN. Compra*</th>
-          <th>Qtde. p/ embalagem*</th>
-          <th>Preço total*</th>
-          <th>Fornecedor*</th>
-          <th>Comentário</th>
-          <th>UN. Requisição*</th>
-          <th>Qtde. Total</th>
-        </tr>
-        <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
-          <td><input
-            readonly
-            required
-            [ngModel]="movement.materialStockId"
-            class="input input-bordered input-xs w-12"
-            name="materialId{{i}}"
-            type="text"></td>
-          <td>
-            @if (openMovementModal) {
-              <input
-                readonly
-                [value]="movement.materialName"
-                required
-                class="input input-bordered input-xs min-w-64"
-                name="materialId{{i}}"
-                type="text">
-            }
-          </td>
-
-          <td><input
-            required
-            [(ngModel)]="movement.inputQuantity"
-            (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
-            name="inputQuantity{{i}}"
-            type="text"
-            (input)="this.utils.formatNumber($event)"
-            placeholder="Digite aqui"
-            class="input input-bordered input-xs w-24"
-            #inputQuantity="ngModel"/>
-            <div *ngIf="inputQuantity.invalid && formSubmitted">
-              <small *ngIf="inputQuantity.errors?.['required']" class="text-red-600">Preenchimento
-                obrigatório.</small>
+                    <td><input
+                        required
+                        [(ngModel)]="movement.inputQuantity"
+                        (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
+                        name="inputQuantity{{i}}"
+                        type="text"
+                        (input)="this.utils.formatNumber($event)"
+                        placeholder="Digite aqui"
+                        class="input input-bordered input-xs w-24"
+                        #inputQuantity="ngModel"/>
+                        <div *ngIf="inputQuantity.invalid && formSubmitted">
+                            <small *ngIf="inputQuantity.errors?.['required']" class="text-red-600">Preenchimento
+                                obrigatório.</small>
+                        </div>
+                    </td>
+                    <td><input
+                        readonly
+                        required
+                        [ngModel]="movement.buyUnit"
+                        class="input input-bordered input-xs w-12"
+                        name="materialId{{i}}"
+                        type="text"></td>
+                    <td>
+                    <td
+                        [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
+                        [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
+                        @if (getOption(movement)) {
+                            <input
+                                required
+                                (blur)="calculateQuantity(movement)"
+                                type="text"
+                                (input)="this.utils.formatNumber($event)"
+                                [(ngModel)]="movement.quantityPackage"
+                                [disabled]="movement.buyUnit === ''"
+                                [readOnly]="!shouldShowTooltip(movement.buyUnit)"
+                                name="quantityPackage{{i}}"
+                                placeholder="Digite aqui"
+                                class="input input-bordered input-xs w-24"
+                                #quantityPackage="ngModel"
+                            />
+                            <div *ngIf="quantityPackage.invalid && formSubmitted">
+                                <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento
+                                    obrigatório.</small>
+                            </div>
+                        } @else {
+                            <p class="input input-disabled input-xs">Não se aplica</p>
+                        }
+                    </td>
+                    <td><input
+                        required
+                        type="text"
+                        [(ngModel)]="movement.priceTotal"
+                        (input)="formatValue($event, i)"
+                        name="priceTotal{{i}}"
+                        placeholder="R$"
+                        class="input input-bordered input-xs w-24"
+                        #price="ngModel"
+                    />
+                        <div *ngIf="price.invalid && formSubmitted">
+                            <small *ngIf="price.errors?.['required']" class="text-red-600">Obrigatório.</small>
+                        </div>
+                    </td>
+                    <td>
+                        <select
+                            required
+                            [(ngModel)]="movement.supplierId"
+                            name="supplierId{{i}}"
+                            class="select select-bordered select-xs w-56 max-w-xs"
+                            #supplier="ngModel">
+                            <option value="" disabled>Selecione um Fornecedor</option>
+                            @for (s of suppliers; track s.id) {
+                                <option [value]="s.id">{{ s.name }}</option>
+                            }
+                        </select>
+                        <div *ngIf="supplier.invalid && formSubmitted">
+                            <small *ngIf="supplier.errors?.['required']" class="text-red-600">Obrigatório.</small>
+                        </div>
+                    </td>
+                    <td><input
+                        type="text"
+                        [(ngModel)]="movement.description"
+                        name="description{{i}}"
+                        placeholder="Digite aqui"
+                        class="input input-bordered input-xs  w-64 max-w-xs"
+                    />
+                    </td>
+                    <td>
+                        <select
+                            [disabled]="movement.buyUnit === ''"
+                            class="select select-bordered select-xs w-16"
+                            [(ngModel)]="movement.requestUnit"
+                            (change)="calculateQuantity(movement)"
+                            name="requestUnit{{i}}"
+                            required
+                            #requestUnit="ngModel">
+                            @for (unit of filterUnits(movement.buyUnit); track unit) {
+                                <option [value]="unit" [selected]="movement.requestUnit === unit">{{ unit }}</option>
+                            }
+                        </select>
+                        @if (requestUnit.invalid && formSubmitted) {
+                            @if (requestUnit.errors?.['required']) {
+                                <small class="text-red-600">Obrigatório.</small>
+                            }
+                        }
+                    </td>
+                    <td>
+                        <p class="input input-bordered input-xs">
+                            {{ movement.totalQuantity }}
+                        </p>
+                    </td>
+                </tr>
+            </app-table>
+            <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
+                <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor" class="w-full"
+                            classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-orange-500 rounded-none w-full"
+                            textColor="text-black"></app-button>
+                <app-button (click)="closeMovementModal()" title="Cancelar" class="w-full"
+                            classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-red-500 rounded-none w-full"
+                            textColor="text-black"></app-button>
+                <app-button typeButton="submit" title="Salvar Movimentação" class="w-full"
+                            classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
             </div>
-          </td>
-          <td><input
-            readonly
-            required
-            [ngModel]="movement.buyUnit"
-            class="input input-bordered input-xs w-12"
-            name="materialId{{i}}"
-            type="text"></td>
-          <td>
-          <td
-            [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
-            [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
-            @if (getOption(movement)) {
-              <input
-                required
-                (blur)="calculateQuantity(movement)"
-                type="text"
-                (input)="this.utils.formatNumber($event)"
-                [(ngModel)]="movement.quantityPackage"
-                [disabled]="movement.buyUnit === ''"
-                [readOnly]="!shouldShowTooltip(movement.buyUnit)"
-                name="quantityPackage{{i}}"
-                placeholder="Digite aqui"
-                class="input input-bordered input-xs w-24"
-                #quantityPackage="ngModel"
-              />
-              <div *ngIf="quantityPackage.invalid && formSubmitted">
-                <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-              </div>
-            } @else {
-              <p class="input input-disabled input-xs">Não se aplica</p>
-            }
-          </td>
-          <td><input
-            required
-            type="text"
-            [(ngModel)]="movement.priceTotal"
-            (input)="formatValue($event, i)"
-            name="priceTotal{{i}}"
-            placeholder="R$"
-            class="input input-bordered input-xs w-24"
-            #price="ngModel"
-          />
-            <div *ngIf="price.invalid && formSubmitted">
-              <small *ngIf="price.errors?.['required']" class="text-red-600">Obrigatório.</small>
+        </form>
+    </app-modal>
+
+    <p-toast/>
+
+    <!--    modal confirmation-->
+    <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">
+        <div>
+            <h3 class="text-center mb-7">Confirma a transação?</h3>
+            <div class="flex justify-around">
+                <app-button (click)="closeConfirmationModal()" title="Cancelar"
+                            classButton="btn bg-red-500 hover:bg-red-700"
+                            textColor="text-black"></app-button>
+                <app-button (click)="submitDataMovement()" title="Confirmar"></app-button>
             </div>
-          </td>
-          <td>
-            <select
-              required
-              [(ngModel)]="movement.supplierId"
-              name="supplierId{{i}}"
-              class="select select-bordered select-xs w-56 max-w-xs"
-              #supplier="ngModel">
-              <option value="" disabled>Selecione um Fornecedor</option>
-              @for (s of suppliers; track s.id) {
-                <option [value]="s.id">{{ s.name }}</option>
-              }
-            </select>
-            <div *ngIf="supplier.invalid && formSubmitted">
-              <small *ngIf="supplier.errors?.['required']" class="text-red-600">Obrigatório.</small>
+        </div>
+    </app-modal>
+
+    <app-modal [modalOpen]="openSupplierModal" (modalClose)="closeSupplierModal()">
+        <form #supplierForm="ngForm" (ngSubmit)="submitDataSupplier(supplierForm)">
+            <app-table>
+                <tr class="bg-indigo-700 text-white" header>
+                    <th>Nome*</th>
+                    <th>CNPJ</th>
+                    <th>Contato</th>
+                    <th>Endereço</th>
+                    <th>Telefone</th>
+                    <th>Email</th>
+                    <th></th>
+                </tr>
+                <tr *ngFor="let supplier of sendSuppliers; let i = index" class="odd:bg-neutral-100" body>
+                    <td>
+                        <input
+                            required
+                            [(ngModel)]="supplier.name"
+                            name="name{{i}}"
+                            type="text"
+                            placeholder="Digite aqui"
+                            class="input input-bordered input-xs"
+                            #ngSupplierName="ngModel"/>
+                        <div *ngIf="ngSupplierName.invalid && formSubmitted">
+                            <small *ngIf="ngSupplierName.errors?.['required']" class="text-red-600">Preenchimento
+                                obrigatório.</small>
+                        </div>
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="supplier.cnpj"
+                            name="cnpj{{i}}"
+                            type="text"
+                            placeholder="Digite aqui"
+                            class="input input-bordered input-xs"/>
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="supplier.contact"
+                            name="contact{{i}}"
+                            type="text"
+                            placeholder="Digite aqui"
+                            class="input input-bordered input-xs"/>
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="supplier.address"
+                            name="address{{i}}"
+                            type="text"
+                            placeholder="Digite aqui"
+                            class="input input-bordered input-xs"/>
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="supplier.phone"
+                            name="phone{{i}}"
+                            type="tel"
+                            placeholder="Digite aqui"
+                            class="input input-bordered input-xs"/>
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="supplier.email"
+                            name="email{{i}}"
+                            type="email"
+                            placeholder="Digite aqui"
+                            class="input input-bordered input-xs"/>
+                    </td>
+                    <td>
+                        <span class="btn btn-outline btn-xs btn-error" (click)="removeRow(i)">-</span>
+                    </td>
+                </tr>
+            </app-table>
+
+            <span class="btn btn-outline btn-primary" (click)="addSupplier()">Adicionar</span>
+
+            <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
+                <app-button (click)="closeSupplierModal()" title="Cancelar" class="w-full"
+                            classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
+                            textColor="text-black"></app-button>
+                <app-button typeButton="submit" title="Salvar Fornecedor" class="w-full"
+                            classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
             </div>
-          </td>
-          <td><input
-            type="text"
-            [(ngModel)]="movement.description"
-            name="description{{i}}"
-            placeholder="Digite aqui"
-            class="input input-bordered input-xs  w-64 max-w-xs"
-          />
-          </td>
-          <td>
-            <select
-              [disabled]="movement.buyUnit === ''"
-              class="select select-bordered select-xs w-16"
-              [(ngModel)]="movement.requestUnit"
-              (change)="calculateQuantity(movement)"
-              name="requestUnit{{i}}"
-              required
-              #requestUnit="ngModel">
-              @for (unit of filterUnits(movement.buyUnit); track unit) {
-                <option [value]="unit" [selected]="movement.requestUnit === unit">{{ unit }}</option>
-              }
-            </select>
-            @if (requestUnit.invalid && formSubmitted) {
-              @if (requestUnit.errors?.['required']) {
-                <small class="text-red-600">Obrigatório.</small>
-              }
-            }
-          </td>
-          <td>
-            <p class="input input-bordered input-xs">
-              {{ movement.totalQuantity }}
+        </form>
+    </app-modal>
+
+
+    <div
+        *ngIf="showQrCode"
+        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+
+        <!-- Caixa do modal -->
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative flex flex-col items-center">
+
+            <!-- Botão fechar -->
+            <button
+                type="button"
+                class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-lg font-bold"
+                (click)="showQrCode = false">
+                ✕
+            </button>
+
+            <!-- Ícone chamativo -->
+            <div class="flex items-center justify-center bg-amber-100 rounded-full w-16 h-16 mb-4">
+                <i class="pi pi-qrcode text-3xl text-amber-700"></i>
+            </div>
+
+            <!-- Título principal -->
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">
+                Escaneie e continue rapidamente!
+            </h2>
+
+            <!-- Subtítulo motivacional -->
+            <p class="text-center text-gray-600 mb-4">
+                Use seu celular para continuar o cadastro e ativar a <strong>leitura contínua de códigos de
+                barras</strong>.
             </p>
-          </td>
-        </tr>
-      </app-table>
-      <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
-        <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor" class="w-full"
-                    classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-orange-500 rounded-none w-full"
-                    textColor="text-black"></app-button>
-        <app-button (click)="closeMovementModal()" title="Cancelar" class="w-full"
-                    classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-red-500 rounded-none w-full"
-                    textColor="text-black"></app-button>
-        <app-button typeButton="submit" title="Salvar Movimentação" class="w-full"
-                    classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
-      </div>
-    </form>
-  </app-modal>
 
-  <p-toast/>
-
-  <!--    modal confirmation-->
-  <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">
-    <div>
-      <h3 class="text-center mb-7">Confirma a transação?</h3>
-      <div class="flex justify-around">
-        <app-button (click)="closeConfirmationModal()" title="Cancelar" classButton="btn bg-red-500 hover:bg-red-700"
-                    textColor="text-black"></app-button>
-        <app-button (click)="submitDataMovement()" title="Confirmar"></app-button>
-      </div>
-    </div>
-  </app-modal>
-
-  <app-modal [modalOpen]="openSupplierModal" (modalClose)="closeSupplierModal()">
-    <form #supplierForm="ngForm" (ngSubmit)="submitDataSupplier(supplierForm)">
-      <app-table>
-        <tr class="bg-indigo-700 text-white" header>
-          <th>Nome*</th>
-          <th>CNPJ</th>
-          <th>Contato</th>
-          <th>Endereço</th>
-          <th>Telefone</th>
-          <th>Email</th>
-          <th></th>
-        </tr>
-        <tr *ngFor="let supplier of sendSuppliers; let i = index" class="odd:bg-neutral-100" body>
-          <td>
-            <input
-              required
-              [(ngModel)]="supplier.name"
-              name="name{{i}}"
-              type="text"
-              placeholder="Digite aqui"
-              class="input input-bordered input-xs"
-              #ngSupplierName="ngModel"/>
-            <div *ngIf="ngSupplierName.invalid && formSubmitted">
-              <small *ngIf="ngSupplierName.errors?.['required']" class="text-red-600">Preenchimento
-                obrigatório.</small>
+            <!-- QR Code -->
+            <div class="flex justify-center bg-gray-100 p-4 rounded-lg mb-4">
+                <qrcode
+                    qrdata="https://lumos.thryon.com.br/estoque/cadastrar-material"
+                    [width]="200"
+                    [errorCorrectionLevel]="'M'">
+                </qrcode>
             </div>
-          </td>
-          <td>
-            <input
-              [(ngModel)]="supplier.cnpj"
-              name="cnpj{{i}}"
-              type="text"
-              placeholder="Digite aqui"
-              class="input input-bordered input-xs"/>
-          </td>
-          <td>
-            <input
-              [(ngModel)]="supplier.contact"
-              name="contact{{i}}"
-              type="text"
-              placeholder="Digite aqui"
-              class="input input-bordered input-xs"/>
-          </td>
-          <td>
-            <input
-              [(ngModel)]="supplier.address"
-              name="address{{i}}"
-              type="text"
-              placeholder="Digite aqui"
-              class="input input-bordered input-xs"/>
-          </td>
-          <td>
-            <input
-              [(ngModel)]="supplier.phone"
-              name="phone{{i}}"
-              type="tel"
-              placeholder="Digite aqui"
-              class="input input-bordered input-xs"/>
-          </td>
-          <td>
-            <input
-              [(ngModel)]="supplier.email"
-              name="email{{i}}"
-              type="email"
-              placeholder="Digite aqui"
-              class="input input-bordered input-xs"/>
-          </td>
-          <td>
-            <span class="btn btn-outline btn-xs btn-error" (click)="removeRow(i)">-</span>
-          </td>
-        </tr>
-      </app-table>
 
-      <span class="btn btn-outline btn-primary" (click)="addSupplier()">Adicionar</span>
+            <!-- Benefícios rápidos -->
+            <ul class="text-gray-600 text-sm list-disc list-inside mb-4 text-center">
+                <li>Funciona diretamente na câmera do celular</li>
+                <li>Permite escanear múltiplos códigos rapidamente</li>
+                <li>Sem instalar apps adicionais</li>
+            </ul>
 
-      <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
-        <app-button (click)="closeSupplierModal()" title="Cancelar" class="w-full"
-                    classButton="btn bg-neutral-300 hover:bg-red-500 rounded-none w-full"
-                    textColor="text-black"></app-button>
-        <app-button typeButton="submit" title="Salvar Fornecedor" class="w-full"
-                    classButton="btn bg-neutral-300 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
-      </div>
-    </form>
-  </app-modal>
+            <!-- Aviso sobre permissão da câmera -->
+            <p class="text-xs text-gray-500 text-center">
+                Certifique-se de permitir o acesso à câmera no seu celular para usar a função de scanner.
+            </p>
 
+            <!-- Destaque da revisão de itens -->
+            <div
+                class="mt-4 w-full bg-red-50 border border-red-200 rounded-lg p-3 flex flex-col items-center text-center"
+                *ngIf="missingBarcodesCount > 0">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="pi pi-exclamation-triangle text-red-600 text-lg"></i>
+                    <span class="text-red-700 font-semibold">
+          Atenção: {{ missingBarcodesCount }} itens sem código de barras!
+        </span>
+                </div>
+                <p class="text-gray-700 text-sm mb-2">
+                    Para que o catálogo funcione corretamente, todos os itens precisam ter código de barras cadastrado.
+                </p>
+                <button
+                    class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-md shadow-sm transition"
+                    (click)="router.navigate(['/estoque/catalogo-materiais'])">
+                    Revisar agora
+                </button>
+            </div>
 
+        </div>
+    </div>
+    <app-loading-overlay [loading]="loadingOverlay"></app-loading-overlay>
 </div>
