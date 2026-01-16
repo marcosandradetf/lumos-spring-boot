@@ -16,7 +16,6 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
     Optional<AppUser> findByUsernameIgnoreCase(String username);
     Optional<AppUser> findByCpfIgnoreCase(String cpf);
     Optional<AppUser> findByUsernameOrCpfIgnoreCase(String username, String cpf);
-    List<AppUser> findByStatusTrueOrderByNameAsc();
 
     @Query("""
         select distinct au.user_id, au."name" || ' ' || au.last_name as complete_name
@@ -24,8 +23,9 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
         join user_role ur on ur.id_user = au.user_id
         join role r on r.role_id = ur.id_role
         where r.role_name = 'ELETRICISTA' or r.role_name = 'MOTORISTA'
+            and au.tenant_id = :tenantId
     """)
-    List<OperationalUserResponse> getOperationalUsers();
+    List<OperationalUserResponse> getOperationalUsers(UUID tenantId);
 
     @Query("""
         select distinct au.user_id
@@ -33,8 +33,9 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
         join user_role ur on ur.id_user = au.user_id
         join role r on r.role_id = ur.id_role
         where r.role_name = 'RESPONSAVEL_TECNICO'
+            and au.tenant_id = :tenantId
     """)
-    List<UUID> getResponsibleTechUsers();
+    List<UUID> getResponsibleTechUsers(UUID tenantId);
 
     List<AppUser> findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(UUID tenantId, Boolean status, Boolean support);
 }

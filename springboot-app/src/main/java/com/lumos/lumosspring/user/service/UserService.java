@@ -456,7 +456,7 @@ public class UserService {
     }
 
     public ResponseEntity<?> getOperationalUsers() {
-        var operationalUsers = userRepository.getOperationalUsers();
+        var operationalUsers = userRepository.getOperationalUsers(Utils.INSTANCE.getCurrentTenantId());
         var teams = teamRepository.getTeams(Utils.INSTANCE.getCurrentTenantId());
 
         return ResponseEntity.ok().body(

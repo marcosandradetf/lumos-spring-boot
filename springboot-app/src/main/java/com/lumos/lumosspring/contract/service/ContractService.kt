@@ -71,7 +71,7 @@ class ContractService(
             contractItemsQuantitativeRepository.save(ci)
         }
 
-        for (notificationCode in userRepository.getResponsibleTechUsers()) {
+        for (notificationCode in userRepository.getResponsibleTechUsers(Utils.getCurrentTenantId())) {
             notificationService.sendNotificationForTopic(
                 title = "Novo contrato pendente para Pré-Medição",
                 body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
