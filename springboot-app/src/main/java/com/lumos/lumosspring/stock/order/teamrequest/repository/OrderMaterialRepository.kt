@@ -7,6 +7,8 @@ import com.lumos.lumosspring.stock.order.teamrequest.model.OrderMaterialItem
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
+import java.time.Instant
 import java.util.*
 
 @Repository
@@ -117,6 +119,40 @@ interface OrderMaterialRepository : CrudRepository<OrderMaterial, UUID> {
         reservationIds: List<Long>,
         ordersJson: String,
     ): List<OrdersByKeysView>
+
+    @Query(
+        """
+            select
+                om.order_code,
+                omi.quantity_released || ' - ' || m.request_unit as quantity_released,
+                m.material_name,
+                t.team_name as team_name,
+                omi.status,
+                om.created_at,
+                mcri.contract_reference_item_id
+            from order_material om
+            join order_material_item omi on omi.order_id = om.order_id
+            join team t on t.id_team = om.team_id
+            join material m on m.id_material = omi.material_id
+            join material_contract_reference_item mcri on mcri.material_id = omi.material_id
+            where
+                t.id_team = :teamId
+                and omi.status = :status
+                and mcri.contract_reference_item_id = :contractReferenceItemId
+            order by om.created_at desc
+            limit 5
+        """
+    )
+    fun getOrderHistoryByStatus(teamId: Long, status: String, contractReferenceItemId: Long): List<OrderHistory>
+    data class OrderHistory(
+        val orderCode: String,
+        val quantityReleased: String,
+        val materialName: String,
+        val teamName: String,
+        val status: String,
+        val createdAt: Instant,
+        val contractReferenceItemId: Long
+    )
 }
 
 @Repository

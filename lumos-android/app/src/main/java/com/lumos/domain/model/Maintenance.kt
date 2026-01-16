@@ -58,6 +58,7 @@ data class MaintenanceStreetItem(
     val maintenanceStreetId: String,
     val materialStockId: Long,
     val quantityExecuted: String = "0",
+    val truckStockControl: Boolean
 )
 
 data class MaintenanceJoin(

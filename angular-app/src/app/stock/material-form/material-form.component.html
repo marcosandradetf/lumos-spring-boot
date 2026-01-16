@@ -80,44 +80,65 @@
                 <!-- Fundo escuro -->
                 <div
                     *ngIf="showQrCode"
-                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
 
                     <!-- Caixa do modal -->
-                    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative flex flex-col items-center">
                         <!-- Botão fechar -->
                         <button
                             type="button"
-                            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                            class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-lg font-bold"
                             (click)="showQrCode = false">
                             ✕
                         </button>
 
-                        <!-- Título -->
-                        <h2 class="text-xl font-semibold text-center mb-4">
-                            Continue o cadastro pelo celular
+                        <div class="flex items-center justify-center bg-amber-100 rounded-full w-16 h-16 mb-4">
+                            <i class="pi pi-qrcode text-3xl text-amber-700"></i>
+                        </div>
+
+                        <!-- Título principal -->
+                        <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">
+                            Escaneie e continue rapidamente!
                         </h2>
 
-                        <!-- Texto explicativo -->
-                        <p class="text-gray-600 text-sm text-center">
-                            Para continuar o cadastro, escaneie o QR Code abaixo com seu celular,
-                            faça login e a função de <strong>leitura de código de barras</strong> estará funcionando</p>
-                        <p class="text-xs text-gray-500 mt-1 mb-6 text-center">
-                            Será necessário aceitar a permissão de acesso a câmera.
+                        <p class="text-center text-gray-600 mb-4">
+                            Use seu celular para continuar o cadastro e ativar a <strong>leitura de códigos de
+                            barras</strong>.
                         </p>
 
                         <!-- QR Code -->
-                        <div class="flex justify-center mb-6">
+                        <div class="flex justify-center bg-gray-100 p-4 rounded-lg mb-4 relative">
+
                             <qrcode
-                                qrdata="https://lumos.thryon.com.br/estoque/cadastrar-material"
+                                *ngIf="!qrExpired"
+                                [qrdata]="endpoint"
                                 [width]="200"
-                                [errorCorrectionLevel]="'M'">
+                                errorCorrectionLevel="M"
+                                [allowEmptyString]="true">
                             </qrcode>
+
+                            <div *ngIf="qrExpired"
+                                 (click)="checkBarcode()"
+                                 class="w-48 h-48 flex flex-col justify-center items-center
+                            cursor-pointer rounded-lg
+                            bg-white border border-dashed border-gray-400
+                            hover:bg-gray-50 hover:border-gray-600
+                            transition-all duration-200">
+                                <span class="pi pi-refresh text-gray-700 text-3xl mb-2"></span>
+                                <span class="text-sm text-gray-600 font-medium">Gerar novo QR Code</span>
+                            </div>
                         </div>
 
-                        <!-- Ajuda -->
+                        <!-- Benefícios rápidos -->
+                        <ul class="text-gray-600 text-sm list-disc list-inside mb-4 text-center">
+                            <li>Funciona diretamente na câmera do celular</li>
+                            <li>Permite escanear múltiplos códigos rapidamente</li>
+                            <li>Sem instalar apps adicionais</li>
+                        </ul>
+
+                        <!-- Aviso sobre permissão da câmera -->
                         <p class="text-xs text-gray-500 text-center">
-                            Você pode usar a câmera do celular ou um app leitor de QR Code.
+                            Certifique-se de permitir o acesso à câmera no seu celular para usar a função de scanner.
                         </p>
                     </div>
                 </div>
@@ -416,9 +437,9 @@
                 <button
                     pButton
                     type="button"
-                    label="Voltar para lista de materiais"
+                    label="Ir para catálogo de materiais"
                     class="p-button-text w-full"
-                    (click)="router.navigate(['/estoque/materiais'])">
+                    (click)="router.navigate(['/estoque/catalogo-materiais'])">
                 </button>
             </div>
         </div>

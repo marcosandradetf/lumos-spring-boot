@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.stock.materialstock.model;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -9,7 +10,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Table
-public class StockMovement {
+public class StockMovement extends TenantEntity {
     @Id
     private Long stockMovementId;
 
@@ -29,39 +30,15 @@ public class StockMovement {
 
     private BigDecimal totalQuantity;
 
-    private String buyUnit;
-
-    private String requestUnit;
-
     private BigDecimal quantityPackage;
 
     private BigDecimal pricePerItem;
 
     private BigDecimal priceTotal;
 
-    private Long supplierId;
-
     private String status;
 
     public StockMovement() {}
-
-    public StockMovement(Long stockMovementId, String stockMovementDescription, Long materialStockId, Instant stockMovementRefresh, UUID appUserCreatedId, UUID appUserFinishedId, BigDecimal inputQuantity, BigDecimal totalQuantity, String buyUnit, String requestUnit, BigDecimal quantityPackage, BigDecimal pricePerItem, BigDecimal priceTotal, Long supplierId, String status) {
-        this.stockMovementId = stockMovementId;
-        this.stockMovementDescription = stockMovementDescription;
-        this.materialStockId = materialStockId;
-        this.stockMovementRefresh = stockMovementRefresh;
-        this.appUserCreatedId = appUserCreatedId;
-        this.appUserFinishedId = appUserFinishedId;
-        this.inputQuantity = inputQuantity;
-        this.totalQuantity = totalQuantity;
-        this.buyUnit = buyUnit;
-        this.requestUnit = requestUnit;
-        this.quantityPackage = quantityPackage;
-        this.pricePerItem = pricePerItem;
-        this.priceTotal = priceTotal;
-        this.supplierId = supplierId;
-        this.status = status;
-    }
 
     public Long getStockMovementId() {
         return stockMovementId;
@@ -127,22 +104,6 @@ public class StockMovement {
         this.totalQuantity = totalQuantity;
     }
 
-    public String getBuyUnit() {
-        return buyUnit;
-    }
-
-    public void setBuyUnit(String buyUnit) {
-        this.buyUnit = buyUnit;
-    }
-
-    public String getRequestUnit() {
-        return requestUnit;
-    }
-
-    public void setRequestUnit(String requestUnit) {
-        this.requestUnit = requestUnit;
-    }
-
     public BigDecimal getQuantityPackage() {
         return quantityPackage;
     }
@@ -156,7 +117,7 @@ public class StockMovement {
     }
 
     public void setPricePerItem(BigDecimal pricePerItem) {
-        this.pricePerItem = pricePerItem;
+        this.pricePerItem = pricePerItem.divide(inputQuantity,2,BigDecimal.ROUND_HALF_UP);
     }
 
     public BigDecimal getPriceTotal() {
@@ -165,14 +126,6 @@ public class StockMovement {
 
     public void setPriceTotal(BigDecimal priceTotal) {
         this.priceTotal = priceTotal;
-    }
-
-    public Long getSupplierId() {
-        return supplierId;
-    }
-
-    public void setSupplierId(Long supplierId) {
-        this.supplierId = supplierId;
     }
 
     public String getStatus() {

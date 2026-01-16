@@ -23,6 +23,15 @@ class DirectExecutionRegisterController(
         @RequestPart("execution") execution: InstallationStreetRequest?
     ): ResponseEntity<Any> = registerService.saveStreetInstallation(photo, execution)
 
+    @PostMapping(
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
+        value = ["/mobile/execution/save-street-installation"]
+    )
+    fun saveStreetInstallationV2(
+        @RequestPart("photo") photo: MultipartFile,
+        @RequestPart("execution") execution: InstallationStreetRequest?
+    ): ResponseEntity<Any> = registerService.saveStreetInstallationV2(photo, execution)
+
     @PostMapping("/mobile/execution/finish-direct-execution/{directExecutionId}")
     fun finishDirectExecution(
         @PathVariable directExecutionId: Long,

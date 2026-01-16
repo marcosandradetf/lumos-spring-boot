@@ -22,7 +22,7 @@ public class CompanyService {
 
     @Cacheable("getAllCompanies")
     public Iterable<Company> findAll() {
-        return companyRepository.findAll();
+        return companyRepository.findAllByTenantId(Utils.INSTANCE.getCurrentTenantId());
     }
 
     public Company findById(Long id) {

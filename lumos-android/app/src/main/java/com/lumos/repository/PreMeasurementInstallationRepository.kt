@@ -117,7 +117,7 @@ class PreMeasurementInstallationRepository(
                         materialName = item.materialName,
                         materialQuantity = item.materialQuantity,
                         requestUnit = item.requestUnit,
-                        specs = item.specs,
+                        specs = null,
                     )
                 }
             }

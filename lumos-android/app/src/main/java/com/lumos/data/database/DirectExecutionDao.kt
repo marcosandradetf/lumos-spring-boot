@@ -82,8 +82,9 @@ interface DirectExecutionDao {
 
     @Query(
         """
-        SELECT reserveId, contractItemId, materialStockId as truckMaterialStockId, quantityExecuted, materialName
-        FROM direct_execution_street_item 
+        SELECT desi.reserveId, desi.contractItemId, desi.materialStockId as truckMaterialStockId, desi.quantityExecuted, desi.materialName, ms.truckStockControl
+        FROM direct_execution_street_item  desi
+        JOIN material_stock ms on desi.materialStockId = ms.materialStockId
         WHERE directStreetId = :streetId
     """
     )

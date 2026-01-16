@@ -132,13 +132,9 @@ fun StreetMaintenanceContent(
 
     val filteredStock = stockData.filter { item ->
         val name = item.materialName.replace("\\s".toRegex(), "").lowercase()
-        val specs = item.specs?.replace("\\s".toRegex(), "")?.lowercase()
-        val combined = name + (specs ?: "")
 
         (selectedOption.isBlank() || item.type == selectedOption) &&
-                (normalizedQuery.isBlank() || name.contains(normalizedQuery) || combined.contains(
-                    normalizedQuery
-                ))
+                (normalizedQuery.isBlank() || name.contains(normalizedQuery))
     }.distinctBy { it.materialStockId }
 
     var maintenanceStreetId by remember { mutableStateOf(UUID.randomUUID()) }
@@ -480,56 +476,53 @@ fun StreetMaintenanceContent(
                             overlineContent = {
                                 Column {
                                     // Tag de disponibilidade
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        when {
-                                            BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
-                                                Tag(
-                                                    "Sem estoque disponível",
-                                                    Color.Red,
-                                                    Icons.Default.Close
-                                                )
-                                            }
+                                    if (material.truckStockControl) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            when {
+                                                BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
+                                                    Tag(
+                                                        "Sem estoque disponível",
+                                                        Color.Red,
+                                                        Icons.Default.Close
+                                                    )
+                                                }
 
-                                            BigDecimal(material.stockAvailable) <= BigDecimal.TEN -> {
-                                                Tag(
-                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                    Color(0xFFFF9800),
-                                                    Icons.Default.Warning
-                                                )
-                                            }
+                                                BigDecimal(material.stockAvailable) <= BigDecimal.TEN -> {
+                                                    Tag(
+                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
+                                                        Color(0xFFFF9800),
+                                                        Icons.Default.Warning
+                                                    )
+                                                }
 
-                                            else -> {
-                                                Tag(
-                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                    MaterialTheme.colorScheme.primary,
-                                                    Icons.Default.Check
-                                                )
+                                                else -> {
+                                                    Tag(
+                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
+                                                        MaterialTheme.colorScheme.primary,
+                                                        Icons.Default.Check
+                                                    )
+                                                }
                                             }
                                         }
+
+                                        Spacer(Modifier.height(4.dp))
                                     }
 
-                                    Spacer(Modifier.height(4.dp))
-
                                     // Quantidade total, mais discreto
-                                    Text(
-                                        text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            },
-                            supportingContent = {
-                                material.specs?.let {
-                                    Tag(
-                                        text = it, color = MaterialTheme.colorScheme.outline
-                                    )
+                                    if (material.truckStockControl) {
+                                        Text(
+                                            text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             },
                             trailingContent = {
                                 IconToggleButton(
                                     checked = checked,
                                     onCheckedChange = { isChecked ->
-                                        if (BigDecimal(material.stockAvailable) == BigDecimal.ZERO) {
+                                        if (BigDecimal(material.stockAvailable) == BigDecimal.ZERO && material.truckStockControl) {
                                             alertMessage["title"] =
                                                 "Material sem estoque disponível"
                                             alertMessage["body"] =
@@ -542,7 +535,8 @@ fun StreetMaintenanceContent(
 
                                         items = if (isChecked) {
                                             val isScrew =
-                                                material.type.equals("parafuso", ignoreCase = true)
+                                                material.materialName.trim()
+                                                    .contains("parafuso", ignoreCase = true)
 
                                             val filteredItems = if (!isScrew) {
                                                 // Remove qualquer outro material desse tipo (exceto parafuso)
@@ -556,16 +550,26 @@ fun StreetMaintenanceContent(
                                                 items
                                             }
 
+                                            if (material.materialName.trim()
+                                                    .contains("led", ignoreCase = true)
+                                            ) {
+                                                street = street.copy(
+                                                    currentSupply = material.materialBrand,
+                                                    lastPower = material.materialPower
+                                                )
+                                            }
+
                                             filteredItems + MaintenanceStreetItem(
                                                 maintenanceId = maintenanceId.toString(),
                                                 maintenanceStreetId = maintenanceStreetId.toString(),
                                                 materialStockId = material.materialStockId,
                                                 quantityExecuted = if (
-                                                    material.type.equals(
+                                                    material.materialName.contains(
                                                         "cabo",
                                                         ignoreCase = true
                                                     ) || isScrew
-                                                ) BigDecimal.ZERO.toString() else BigDecimal.ONE.toString()
+                                                ) BigDecimal.ZERO.toString() else BigDecimal.ONE.toString(),
+                                                truckStockControl = material.truckStockControl
                                             )
                                         } else {
                                             // Apenas remove esse item
@@ -947,7 +951,7 @@ fun StreetMaintenanceContent(
                             },
                             label = {
                                 Text(
-                                    "Quantidade de parafuso de ${reference?.specs}",
+                                    "Quantidade de parafuso",
                                     fontSize = 14.sp
                                 )
                             },
@@ -1105,31 +1109,43 @@ fun PrevStreetMaintenance() {
                 materialId = 1,
                 materialStockId = 11,
                 materialName = "LUMINÁRIA LED",
-                specs = "120W",
-                stockQuantity = "12.0",
-                stockAvailable = "0.0",
+                stockQuantity = "12",
+                stockAvailable = "12",
                 requestUnit = "UN",
-                type = "LED"
+                type = "LED",
+                truckStockControl = false,
+                parentMaterialId = 3,
+                materialBaseName = "LUMINÁRIA",
+                materialPower = "",
+                materialBrand = "",
             ),
             MaterialStock(
                 materialId = 2,
                 materialStockId = 22,
                 materialName = "LÂMPADA DE SÓDIO TUBULAR",
-                specs = "400W",
-                stockQuantity = "15.0",
-                stockAvailable = "10.0",
+                stockQuantity = "15",
+                stockAvailable = "10",
                 requestUnit = "UN",
-                type = "LÂMPADA"
+                type = "LÂMPADA",
+                truckStockControl = false,
+                parentMaterialId = 2,
+                materialBaseName = "LÂMPADA",
+                materialPower = "",
+                materialBrand = "",
             ),
             MaterialStock(
                 materialId = 3,
                 materialStockId = 33,
                 materialName = "LÂMPADA DE MERCÚRIO",
-                specs = "250W",
-                stockQuantity = "62.0",
-                stockAvailable = "48.0",
+                stockQuantity = "62",
+                stockAvailable = "62",
                 requestUnit = "UN",
-                type = "LÂMPADA"
+                type = "LÂMPADA",
+                truckStockControl = true,
+                parentMaterialId = 1,
+                materialBaseName = "LÂMPADA",
+                materialPower = "",
+                materialBrand = "",
             ),
         ),
         contractor = "",

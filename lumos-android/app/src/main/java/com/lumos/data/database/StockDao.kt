@@ -20,10 +20,42 @@ interface StockDao {
 
     @Query(
         """
-        select * from material_stock order by stockAvailable, materialName
+        select * from material_stock 
+        order by stockAvailable, materialName
     """
     )
     fun getMaterialsFlow(): Flow<List<MaterialStock>>
+
+    @Query(
+        """
+        select * 
+        from material_stock 
+        where truckStockControl = 1
+        order by stockAvailable, materialName
+    """
+    )
+    fun getMaterialsTruckStockControlFlow(): Flow<List<MaterialStock>>
+
+    @Query(
+        """
+        select distinct 
+            parentMaterialId as materialId,
+            parentMaterialId as materialStockId,
+            '' as materialName,
+            0 as stockQuantity,
+            0 as stockAvailable,
+            requestUnit,
+            '' as type,
+            0 as truckStockControl,
+            parentMaterialId,
+            materialBaseName,
+            '' as materialPower,
+            '' as materialBrand
+        from material_stock
+        order by materialBaseName
+    """
+    )
+    fun getMaterialsOrderFlow(): Flow<List<MaterialStock>>
 
     @Query(
         """
@@ -68,12 +100,14 @@ interface StockDao {
     @Query("SELECT * FROM order_material WHERE orderId = :orderId")
     suspend fun getOrderWithItems(orderId: String): OrderWithItems
 
-    @Query("""
+    @Query(
+        """
         UPDATE material_stock
         SET stockQuantity = CAST(stockQuantity AS NUMERIC) - CAST(:quantityExecuted AS NUMERIC),
             stockAvailable = CAST(stockAvailable AS NUMERIC) - CAST(:quantityExecuted AS NUMERIC)
-        WHERE materialStockId = :materialStockId
-    """)
+        WHERE materialStockId = :materialStockId AND truckStockControl = 1
+    """
+    )
     suspend fun debitStock(
         materialStockId: Long,
         quantityExecuted: String

@@ -13,4 +13,13 @@ class OrderControllerView(
         @RequestParam depositId: Long,
         @RequestParam status: String,
     ) = orderServiceView.getReservationsByStatusAndStockist(depositId, status)
+
+    @GetMapping("/order/get-order-history-by-status")
+    fun getOrderHistoryByStatus(
+        @RequestParam teamId: Long,
+        @RequestParam status: String,
+        @RequestParam contractReferenceItemId: Long,
+    ) = orderServiceView.getOrderHistoryByStatus(teamId, status, contractReferenceItemId)
+
+
 }

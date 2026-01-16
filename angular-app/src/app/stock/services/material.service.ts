@@ -74,5 +74,11 @@ export class MaterialService {
         return this.http.post(this.apiUrl + "/import", materials);
     }
 
+    findByBarCodeAndDepositId(barcode: string, depositId: number) {
+        return this.http.get<MaterialStockResponse>(`${this.apiUrl}/find-by-barcode-and-deposit-id?barcode=${barcode}&depositId=${depositId}`);
+    }
 
+    getCatalogue() {
+        return this.http.get<any[]>(`${this.apiUrl}/get-catalogue`);
+    }
 }

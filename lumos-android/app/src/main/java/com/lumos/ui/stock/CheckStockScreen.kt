@@ -96,7 +96,9 @@ import java.math.BigDecimal
 
 @Composable
 fun CheckStockScreen(
-    navController: NavHostController, lastRoute: String? = null, stockViewModel: StockViewModel
+    navController: NavHostController,
+    lastRoute: String? = null,
+    stockViewModel: StockViewModel
 ) {
     val stock by stockViewModel.stock.collectAsState()
     val deposits by stockViewModel.deposits.collectAsState()
@@ -112,8 +114,8 @@ fun CheckStockScreen(
     var resync by remember { mutableIntStateOf(0) }
 
     var selectedMode by remember { mutableStateOf(false) }
+    var orderMaterials by remember { mutableStateOf(false) }
     var selectedMaterials by remember { mutableStateOf<List<Long>>(emptyList()) }
-
 
     val alertMessage = remember {
         mutableStateMapOf(
@@ -121,11 +123,13 @@ fun CheckStockScreen(
         )
     }
 
-    LaunchedEffect(Unit) {
-        stockViewModel.loadStockFlow()
-        stockViewModel.loadDepositsFlow()
-        stockViewModel.loadStockistsFlow()
+    LaunchedEffect(orderMaterials) {
+        if (orderMaterials) {
+            stockViewModel.loadMaterialsOrder()
+        }
+    }
 
+    LaunchedEffect(Unit) {
         if (ConnectivityUtils.hasRealInternetConnection()) {
             hasInternet = true
 
@@ -190,7 +194,11 @@ fun CheckStockScreen(
             alertModal = alertModal,
             closeAlertModal = {
                 alertModal = false
-            })
+            },
+            orderMaterials = {
+                orderMaterials = true
+            }
+        )
     } else {
         SelectDeposit(
             message = message,
@@ -236,7 +244,8 @@ fun CheckStockContent(
     next: (List<Long>) -> Unit,
     alertModal: Boolean,
     alertMessage: Map<String, String>,
-    closeAlertModal: () -> Unit
+    closeAlertModal: () -> Unit,
+    orderMaterials: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -252,11 +261,7 @@ fun CheckStockContent(
 
     val filteredStock = stockData.filter {
         val name = it.materialName.replace("\\s".toRegex(), "").lowercase()
-        val specs = it.specs?.replace("\\s".toRegex(), "")?.lowercase()
-
-        name.contains(normalizedQuery) || (name + specs).contains(normalizedQuery) || (specs?.contains(
-            normalizedQuery
-        ) ?: false)
+        name.contains(normalizedQuery)
     }.distinctBy { it.materialId }
 
     val navigateBack: (() -> Unit)? = if (lastRoute == Routes.MAINTENANCE) {
@@ -371,57 +376,52 @@ fun CheckStockContent(
                         ListItem(
                             headlineContent = {
                                 Text(
-                                    text = material.materialName,
+                                    text = if (!selectedMode) material.materialName else material.materialBaseName,
                                     modifier = Modifier.padding(vertical = 7.dp)
                                 )
                             },
                             overlineContent = {
-                                Column {
-                                    // Tag de disponibilidade
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        when {
-                                            BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
-                                                Tag(
-                                                    "Sem estoque disponível",
-                                                    Color.Red,
-                                                    Icons.Default.Close
-                                                )
-                                            }
+                                if (!selectedMode) {
+                                    Column {
+                                        // Tag de disponibilidade
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            when {
+                                                BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
+                                                    Tag(
+                                                        "Sem estoque disponível",
+                                                        Color.Red,
+                                                        Icons.Default.Close
+                                                    )
+                                                }
 
-                                            BigDecimal(material.stockAvailable) <= BigDecimal(10)
-                                                -> {
-                                                Tag(
-                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                    Color(0xFFFF9800),
-                                                    Icons.Default.Warning
-                                                )
-                                            }
+                                                BigDecimal(material.stockAvailable) <= BigDecimal(10)
+                                                    -> {
+                                                    Tag(
+                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
+                                                        Color(0xFFFF9800),
+                                                        Icons.Default.Warning
+                                                    )
+                                                }
 
-                                            else -> {
-                                                Tag(
-                                                    "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                    MaterialTheme.colorScheme.primary,
-                                                    Icons.Default.Check
-                                                )
+                                                else -> {
+                                                    Tag(
+                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
+                                                        MaterialTheme.colorScheme.primary,
+                                                        Icons.Default.Check
+                                                    )
+                                                }
                                             }
                                         }
+
+                                        Spacer(Modifier.height(4.dp))
+
+                                        // Quantidade total, mais discreto
+                                        Text(
+                                            text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-
-                                    Spacer(Modifier.height(4.dp))
-
-                                    // Quantidade total, mais discreto
-                                    Text(
-                                        text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            },
-                            supportingContent = {
-                                material.specs?.let {
-                                    Tag(
-                                        text = it, color = MaterialTheme.colorScheme.outline
-                                    )
                                 }
                             },
                             trailingContent = {
@@ -469,8 +469,6 @@ fun CheckStockContent(
                                 containerColor = MaterialTheme.colorScheme.surface
                             )
                         )
-
-
                     }
                 }
 
@@ -525,6 +523,7 @@ fun CheckStockContent(
                 if (!selectedMode) FloatingActionButton(
                     onClick = {
                         selectedMode = true
+                        orderMaterials()
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd) // <-- Aqui dentro de um Box
@@ -677,7 +676,7 @@ fun SelectDeposit(
                             }) {
                         val deposit = deposits.firstOrNull { it.depositId == selectedDepositId }
                         val depositName =
-                            if (!deposit?.depositPhone.isNullOrBlank()) "${deposit?.depositName} - ${deposit?.depositPhone}"
+                            if (!deposit?.depositPhone.isNullOrBlank()) "${deposit.depositName} - ${deposit.depositPhone}"
                             else deposit?.depositName
 
                         Text(
@@ -711,7 +710,7 @@ fun SelectDeposit(
                                 colors = ListItemDefaults.colors(MaterialTheme.colorScheme.background),
                                 headlineContent = {
                                     Text(
-                                        text = "${material.materialName} - ${material.specs ?: ""}".trim(),
+                                        text = material.materialBaseName.trim(),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         maxLines = 1,
@@ -948,31 +947,43 @@ fun PrevStockContent() {
                 materialId = 1,
                 materialStockId = 11,
                 materialName = "LUMINÁRIA LED",
-                specs = "120W",
                 stockQuantity = "12",
                 stockAvailable = "12",
                 requestUnit = "UN",
-                type = "LED"
+                type = "LED",
+                truckStockControl = true,
+                parentMaterialId = 3,
+                materialBaseName = "LUMINÁRIA",
+                materialPower = "",
+                materialBrand = "",
             ),
             MaterialStock(
                 materialId = 2,
                 materialStockId = 22,
                 materialName = "LÂMPADA DE SÓDIO TUBULAR",
-                specs = "400W",
                 stockQuantity = "15",
                 stockAvailable = "10",
                 requestUnit = "UN",
-                type = "LÂMPADA"
+                type = "LÂMPADA",
+                truckStockControl = false,
+                parentMaterialId = 2,
+                materialBaseName = "LÂMPADA",
+                materialPower = "",
+                materialBrand = "",
             ),
             MaterialStock(
                 materialId = 3,
                 materialStockId = 33,
                 materialName = "LÂMPADA DE MERCÚRIO",
-                specs = "250W",
                 stockQuantity = "62",
                 stockAvailable = "62",
                 requestUnit = "UN",
-                type = "LÂMPADA"
+                type = "LÂMPADA",
+                truckStockControl = true,
+                parentMaterialId = 1,
+                materialBaseName = "LÂMPADA",
+                materialPower = "",
+                materialBrand = "",
             ),
         ),
         selectedMaterials = listOf(1, 2, 3),

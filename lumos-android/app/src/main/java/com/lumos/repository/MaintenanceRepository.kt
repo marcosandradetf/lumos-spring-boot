@@ -48,14 +48,16 @@ class MaintenanceRepository(
 
     suspend fun insertMaintenanceStreet(
         maintenanceStreet: MaintenanceStreet,
-        items: List<MaintenanceStreetItem>
+        items: List<MaintenanceStreetItem>,
     ) {
         try {
             db.withTransaction {
                 db.maintenanceDao().insertMaintenanceStreet(maintenanceStreet)
                 db.maintenanceDao().insertMaintenanceStreetItems(items)
                 for (item in items) {
-                    db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
+                    if (item.truckStockControl) {
+                        db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
+                    }
                 }
 
                 SyncManager.queuePostMaintenanceStreet(

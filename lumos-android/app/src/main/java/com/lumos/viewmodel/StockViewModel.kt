@@ -8,14 +8,19 @@ import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.model.Stockist
 import com.lumos.utils.Utils.checkResponse
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class StockViewModel(
     private val repository: StockRepository
 ) : ViewModel() {
 
+    private var loadJob: Job? = null
     private val _stock = MutableStateFlow<List<MaterialStock>>(emptyList())
     val stock = _stock
 
@@ -38,7 +43,9 @@ class StockViewModel(
     val orderCode = _orderCode
 
     init {
-        loadStockFlow()
+        loadMaterialsTruckStockControlFlow()
+        loadDepositsFlow()
+        loadStockistsFlow()
     }
 
     private fun callSyncStock() {
@@ -56,15 +63,45 @@ class StockViewModel(
         }
     }
 
-    fun loadStockFlow() {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun loadMaterialsTruckStockControlFlow() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             try {
-                repository.getMaterialsFlow().collectLatest {
-                    _stock.value = it
-                }
+                repository.getMaterialsTruckStockControlFlow()
+                    .collectLatest {
+                        _stock.value = it
+                    }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _message.value = e.message ?: "ViewModel - Erro ao buscar materiais"
+                _message.value = e.message ?: "Erro ao buscar materiais"
             }
+        }
+    }
+
+    fun loadMaterialsOrder() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            var firstEmission = true
+
+            repository.getMaterialsOrder()
+                .onStart {
+                    _loading.value = true
+                }
+                .catch { e ->
+                    if (e !is CancellationException) {
+                        _loading.value = false
+                        _message.value = e.message ?: "Erro ao buscar materiais"
+                    }
+                }
+                .collectLatest { list ->
+                    _stock.value = list
+
+                    if (firstEmission) {
+                        _loading.value = false
+                        firstEmission = false
+                    }
+                }
         }
     }
 

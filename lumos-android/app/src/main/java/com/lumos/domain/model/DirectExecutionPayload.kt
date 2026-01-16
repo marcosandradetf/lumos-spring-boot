@@ -27,7 +27,8 @@ data class ReservePartial(
     val contractItemId: Long,
     val truckMaterialStockId: Long,
     val quantityExecuted: String,
-    val materialName: String
+    val materialName: String,
+    val truckStockControl: Boolean
 )
 
 data class ReserveMaterialJoin(

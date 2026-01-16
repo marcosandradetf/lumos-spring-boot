@@ -32,7 +32,6 @@ data class ItemsInstallationResponse(
     val materialName: String,
     val materialQuantity: BigDecimal,
     val requestUnit: String,
-    val specs: String?,
     val currentBalance: BigDecimal,
     val itemName: String
 )

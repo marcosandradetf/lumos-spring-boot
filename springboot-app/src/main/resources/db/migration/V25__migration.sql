@@ -741,7 +741,8 @@ $$
 
         if not exists(select 1
                       from information_schema.columns
-                      where column_name = 'truck_stock_control' and table_name = 'material') then
+                      where column_name = 'truck_stock_control'
+                        and table_name = 'material') then
             alter table material
                 add column if not exists truck_stock_control boolean not null default false;
 
@@ -756,6 +757,26 @@ $$
                    WHERE material_type_id = m.id_material_type) = 1;
             update material set truck_stock_control = true where id_material in (138, 342, 725);
         end if;
+
+        create table if not exists qrcode_token
+        (
+            token      uuid,
+            user_id    uuid,
+            expires_at timestamp with time zone not null,
+            FOREIGN KEY (user_id) references app_user (user_id),
+            PRIMARY KEY (token, user_id)
+        );
+
+        alter table stock_movement
+            drop column if exists buy_unit;
+        alter table stock_movement
+            drop column if exists request_unit;
+        alter table stock_movement
+            drop column if exists supplier_id cascade;
+        alter table stock_movement
+            alter column quantity_package drop not null;
+
+        update material set inactive = false where inactive is null;
 
     end;
 $$;

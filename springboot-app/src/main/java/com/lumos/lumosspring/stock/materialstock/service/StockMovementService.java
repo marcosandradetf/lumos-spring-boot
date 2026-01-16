@@ -5,6 +5,7 @@ import com.lumos.lumosspring.company.repository.CompanyRepository;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockViewRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.StockMovementRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.SupplierRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
@@ -12,6 +13,7 @@ import com.lumos.lumosspring.stock.materialstock.dto.StockMovementDTO;
 import com.lumos.lumosspring.stock.materialstock.dto.StockMovementResponse;
 import com.lumos.lumosspring.stock.materialstock.model.StockMovement;
 import com.lumos.lumosspring.util.Util;
+import com.lumos.lumosspring.util.Utils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -33,8 +35,9 @@ public class StockMovementService {
     private final MaterialReferenceRepository materialReferenceRepository;
     private final CompanyRepository companyRepository;
     private final DepositRepository depositRepository;
+    private final MaterialStockViewRepository materialStockViewRepository;
 
-    public StockMovementService(MaterialStockRegisterRepository materialStockRegisterRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util, MaterialReferenceRepository materialReferenceRepository, CompanyRepository companyRepository, DepositRepository depositRepository) {
+    public StockMovementService(MaterialStockRegisterRepository materialStockRegisterRepository1, StockMovementRepository stockMovementRepository, SupplierRepository supplierRepository, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtDecoder jwtDecoder, Util util, MaterialReferenceRepository materialReferenceRepository, CompanyRepository companyRepository, DepositRepository depositRepository, MaterialStockViewRepository materialStockViewRepository) {
         this.materialStockRegisterRepository = materialStockRegisterRepository1;
         this.stockMovementRepository = stockMovementRepository;
         this.supplierRepository = supplierRepository;
@@ -43,114 +46,50 @@ public class StockMovementService {
         this.materialReferenceRepository = materialReferenceRepository;
         this.companyRepository = companyRepository;
         this.depositRepository = depositRepository;
+        this.materialStockViewRepository = materialStockViewRepository;
     }
 
     public ResponseEntity<?> stockMovementGet() {
         // Busca todos os movimentos de estoque
-        var stockMovements = this.stockMovementRepository.findAllByStatus("PENDING");
-
-        // Criação da lista de resposta
-        List<StockMovementResponse> response = new ArrayList<>();
-        for (StockMovement movement : stockMovements) {
-            var userCreated = userRepository.findByUserId(movement.getAppUserCreatedId()).orElseThrow();
-            var materialStock = materialStockRegisterRepository.findById(movement.getMaterialStockId()).orElseThrow();
-            var material = materialReferenceRepository.findById(materialStock.getMaterialId()).orElseThrow();
-            var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
-            var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
-
-            // Formatação de preço para substituir ponto por vírgula
-            String employee = userCreated.getCompletedName();
-
-
-            // Marca do material (evitando NullPointerException)
-            String brand = "";
-
-            // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
-            String description = material.getMaterialPower();
-
-            if (description == null || description.isEmpty()) {
-                description = material.getMaterialLength();
-            }
-
-            if (description == null || description.isEmpty()) {
-                description = material.getMaterialAmps();
-            }
-
-            // Se ainda for null, define como string vazia
-            description = (description != null) ? " - " + description : "";
-
-
-            // Adiciona o movimento de estoque na resposta
-            response.add(new StockMovementResponse(
-                    movement.getStockMovementId(),
-                    movement.getStockMovementDescription(),
-                    material.getMaterialName().concat(description).concat(brand),
-                    movement.getTotalQuantity(),
-                    movement.getBuyUnit(),
-                    movement.getRequestUnit(),
-                    movement.getPricePerItem().toString(),
-                    supplier.getSupplierName(),
-                    deposit.getDepositName(),
-                    employee
-            ));
-        }
-
+        var stockMovements = this.stockMovementRepository.findAllByStatus("PENDING",Utils.INSTANCE.getCurrentTenantId());
         // Retorna a resposta com status OK
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(stockMovements, HttpStatus.OK);
     }
 
-    public ResponseEntity<?> createMovement(List<StockMovementDTO> stockMovementRequest, String refreshToken) {
-        ResponseEntity<String> validationError = validateStockMovementRequest(stockMovementRequest);
-        if (validationError != null) {
-            return validationError;
-        }
-        return convertToStockMovementAndSave(stockMovementRequest, util.getUserFromRToken(refreshToken));
-
-    }
-
-    private ResponseEntity<String> validateStockMovementRequest(List<StockMovementDTO> stockMovement) {
-        for (StockMovementDTO movement : stockMovement) {
-            if (!supplierRepository.existsById(Long.parseLong(movement.supplierId()))) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Fornecedor não encontrado.");
-            }
-        }
-        return null; // Indica que não houve erros
+    public ResponseEntity<?> createMovement(List<StockMovementDTO> stockMovementRequest) {
+        return convertToStockMovementAndSave(stockMovementRequest, Utils.INSTANCE.getCurrentUserId());
     }
 
     private ResponseEntity<String> convertToStockMovementAndSave(List<StockMovementDTO> stockMovement, UUID userUUID) {
         for (StockMovementDTO movement : stockMovement) {
-            var material = materialStockRegisterRepository.findById(movement.materialId());
+            var material = materialStockRegisterRepository.findById(movement.materialStockId());
             if (material.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Material ".concat(movement.materialId().toString()).concat(" não encontrado."));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Material ".concat(movement.materialStockId().toString()).concat(" não encontrado."));
             }
 
             // Verificar se já existe um movimento de estoque para o material
             var existingMovement = stockMovementRepository.findFirstByMaterial(material.get().getMaterialIdStock(), "APPROVED");
             if (existingMovement.isPresent()) {
                 // Se o movimento existente tem um tipo de compra diferente, retorna erro
-                if (!existingMovement.get().getRequestUnit().equals(movement.requestUnit())) {
+                if (!existingMovement.get().getTotalQuantity().equals(movement.totalQuantity())) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body("Não será possível criar o movimento para o material ".concat(movement.materialId().toString()).concat(" pois já existe histórico com a unidade de requisição ").concat(existingMovement.get().getRequestUnit()));
+                            .body("Não foi possível criar o movimento para o material ".concat(movement.materialStockId().toString()).concat(" pois já existe histórico pendente com a mesma quantidade."));
                 }
             }
 
             var newMovement = new StockMovement();
-
             newMovement.setStockMovementRefresh(Instant.now());
             newMovement.setStockMovementDescription(movement.description());
             newMovement.setInputQuantity(movement.inputQuantity());
-            newMovement.setBuyUnit(movement.buyUnit());
-            newMovement.setRequestUnit(movement.requestUnit());
             newMovement.setQuantityPackage(movement.quantityPackage());
             newMovement.setTotalQuantity(movement.totalQuantity());
             newMovement.setPricePerItem(util.convertToBigDecimal(movement.priceTotal()));
             newMovement.setPriceTotal(util.convertToBigDecimal(movement.priceTotal()));
             newMovement.setAppUserCreatedId(userUUID);
             newMovement.setMaterialStockId(material.get().getMaterialIdStock());
-            newMovement.setSupplierId(Long.valueOf(movement.supplierId()));
             newMovement.setStatus("PENDING");
             stockMovementRepository.save(newMovement);
+
         }
 
         return ResponseEntity.status(HttpStatus.OK).body("Movimento criado com sucesso.");
@@ -177,9 +116,6 @@ public class StockMovementService {
         materialStock.addStockAvailable(movement.getTotalQuantity());
         materialStock.setCostPerItem(movement.getPricePerItem());
         materialStock.setCostPrice(movement.getPriceTotal());
-        materialStock.setBuyUnit(movement.getBuyUnit());
-        materialStock.setRequestUnit(movement.getRequestUnit());
-
 
         stockMovementRepository.save(movement);
         materialStockRegisterRepository.save(materialStock);
@@ -218,64 +154,9 @@ public class StockMovementService {
         // Converter de volta para Instant
         Instant startInstant = startDate.toInstant();
 
-        List<StockMovement> stockMovements = this.stockMovementRepository.findApprovedBetweenDates(startInstant, endDate);
-
-        // Filtra os movimentos de estoque com status PENDING
-        List<StockMovement> approvedMovements = stockMovements.stream()
-                .filter(m -> m.getStatus().equals("APPROVED"))
-                .toList();
-
-        // Verifica se não existem movimentos aprovado
-        if (approvedMovements.isEmpty()) {
-            return new ResponseEntity<>("Nenhum movimento aprovado foi encontrado!", HttpStatus.NO_CONTENT);
-        }
-
-        // Criação da lista de resposta
-        List<StockMovementResponse> response = new ArrayList<>();
-        for (StockMovement movement : approvedMovements) {
-            var userFinished = userRepository.findByUserId(movement.getAppUserFinishedId()).orElseThrow();
-            var materialStock = materialStockRegisterRepository.findById(movement.getMaterialStockId()).orElseThrow();
-            var material = materialReferenceRepository.findById(materialStock.getMaterialId()).orElseThrow();
-            var supplier = supplierRepository.findById(movement.getSupplierId()).orElseThrow();
-            var deposit = depositRepository.findById(materialStock.getDepositId()).orElseThrow();
-
-            // Formatação de preço para substituir ponto por vírgula
-            String employee = userFinished.getCompletedName();
-            // Marca do material (evitando NullPointerException)
-
-            String brand = "";
-            //brand = (brand != null && !brand.isEmpty()) ? " (" + brand + ") " : "";
-
-            // Descrição do material (prioridade: materialPower > materialLength > materialAmps)
-            String description = material.getMaterialPower();
-
-            if (description == null || description.isEmpty()) {
-                description = material.getMaterialLength();
-            }
-
-            if (description == null || description.isEmpty()) {
-                description = material.getMaterialAmps();
-            }
-
-            // Se ainda for null, define como string vazia
-            description = (description != null) ? " - " + description : "";
-
-            // Adiciona o movimento de estoque na resposta
-            response.add(new StockMovementResponse(
-                    movement.getStockMovementId(),
-                    movement.getStockMovementDescription(),
-                    material.getMaterialName().concat(description).concat(brand),
-                    movement.getTotalQuantity(),
-                    movement.getBuyUnit(),
-                    movement.getRequestUnit(), // Note que este valor aparece duas vezes, verifique se é necessário
-                    movement.getPricePerItem().toString(),
-                    supplier.getSupplierName(),
-                    deposit.getDepositName(),
-                    employee
-            ));
-        }
+        var stockMovements = this.stockMovementRepository.findApprovedBetweenDates(startInstant, endDate, "APPROVED", Utils.INSTANCE.getCurrentTenantId());
 
         // Retorna a resposta com status OK
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(stockMovements, HttpStatus.OK);
     }
 }

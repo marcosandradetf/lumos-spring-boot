@@ -71,11 +71,13 @@ fun NotificationsScreen(
         clear = {
             notificationViewModel.deleteAll()
         },
-        onClick = {
-            notificationViewModel.delete(it)
-        },
-        onNavigate = {
-            navController.navigate(it)
+        onClick = { id, route ->
+            notificationViewModel.delete(id)
+            if (route.isNotBlank()) {
+                navController.navigate(route) {
+                    popUpTo(Routes.NOTIFICATIONS) { inclusive = true }
+                }
+            }
         },
         notificationsBadge = notifications.size.toString()
     )
@@ -89,8 +91,7 @@ fun NotificationsList(
     navController: NavHostController,
     notifications: List<NotificationItem>,
     clear: () -> Unit,
-    onClick: (Long) -> Unit,
-    onNavigate: (String) -> Unit,
+    onClick: (Long, String) -> Unit,
     notificationsBadge: String
 ) {
     AppLayout(
@@ -173,13 +174,9 @@ fun NotificationsList(
             items(notifications) { notification ->
                 NotificationCard(
                     notification,
-                    onClick = {
-                        onClick(it)
+                    onClick = { id, route ->
+                        onClick(id, route)
                     },
-                    onNavigate = {
-                        if (it.isNotEmpty())
-                            onNavigate(it)
-                    }
                 )
             }
         }
@@ -189,8 +186,7 @@ fun NotificationsList(
 @Composable
 fun NotificationCard(
     notification: NotificationItem,
-    onClick: (Long) -> Unit,
-    onNavigate: (String) -> Unit
+    onClick: (Long, String) -> Unit,
 ) {
     val icon: ImageVector = when (notification.type) {
         NotificationType.CONTRACT -> Icons.Default.Mail
@@ -207,8 +203,7 @@ fun NotificationCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                onClick(notification.id)
-                onNavigate(notification.action)
+                onClick(notification.id, notification.action)
             }
             .padding(4.dp),
         elevation = CardDefaults.cardElevation(6.dp),
@@ -275,19 +270,18 @@ fun PrevNotifications() {
                 body = "Houve uma tentativa de login suspeita.",
                 action = Routes.CONTRACT_SCREEN,
                 time = Instant.parse("2025-03-20T20:00:50.765Z").toString(),
-                type = "Alert"
+                type = NotificationType.WARNING
             ),
             NotificationItem(
                 title = "Alerta de segurança",
                 body = "Houve uma tentativa de login suspeita.",
                 action = Routes.CONTRACT_SCREEN,
                 time = Instant.parse("2025-03-20T20:00:50.765Z").toString(),
-                type = "Alert"
+                type = NotificationType.EVENT
             ),
         ),
         {},
-        {},
-        {},
+        { _, _ -> },
         "12"
     )
 }

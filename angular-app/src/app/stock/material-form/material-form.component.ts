@@ -18,6 +18,7 @@ import {ZXingScannerModule} from '@zxing/ngx-scanner';
 import {BarcodeFormat} from '@zxing/library';
 import {QRCodeModule} from 'angularx-qrcode';
 import {ActivatedRoute, Router} from '@angular/router';
+import {AuthService} from '../../core/auth/auth.service';
 
 @Component({
     selector: 'app-material-form',
@@ -59,6 +60,7 @@ export class MaterialFormComponent implements OnInit {
                 private stockService: StockService,
                 private materialService: MaterialService,
                 private route: ActivatedRoute,
+                private authService: AuthService,
     ) {
     }
 
@@ -106,7 +108,7 @@ export class MaterialFormComponent implements OnInit {
             this.materialTypes = types;
         });
 
-        this.isMobile = window.innerWidth <= 768;
+        this.isMobile = window.innerWidth <= 1024;
         this.scannerEnabled = this.isMobile;
 
         const materialId = this.route.snapshot.queryParamMap.get('materialId');
@@ -243,7 +245,7 @@ export class MaterialFormComponent implements OnInit {
         }
 
         this.loading = true;
-        this.stockService.createMaterial(this.form.getRawValue).subscribe({
+        this.stockService.createMaterial(this.form.getRawValue()).subscribe({
             error: (err) => {
                 this.loading = false;
                 this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, 'error', "Não foi possível salvar o material");
@@ -396,9 +398,42 @@ export class MaterialFormComponent implements OnInit {
 
     protected toggleScanner() {
         if (!this.isMobile) {
-            this.showQrCode = true;
+            this.checkBarcode();
             return;
         }
         this.scannerEnabled = !this.scannerEnabled;
+    }
+
+    qrExpired = false;
+    endpoint = "";
+    checkBarcode() {
+        this.loading = true;
+        this.qrExpired = false;
+        this.authService.getQrcodeToken().subscribe({
+            next: (data) => {
+                this.endpoint = `https://lumos.thryon.com.br/auth/login?token=${data.token}&redirect=/estoque/cadastrar-material`;
+                console.log(this.endpoint);
+                let expiresIn = data.expiresIn--;
+                const interval = setInterval(() => {
+                    expiresIn--;
+                    if (expiresIn <= 0) {
+                        this.qrExpired = true;
+                        clearInterval(interval);
+                    }
+                }, 1000);
+            },
+            error: (err) => {
+                this.loading = false;
+                this.utils.showMessage(
+                    err.error.message ?? err.error.error ?? err.error,
+                    'error'
+                );
+            },
+            complete: () => {
+                this.loading = false;
+                this.showQrCode = true;
+            }
+        })
+        this.showQrCode = true
     }
 }

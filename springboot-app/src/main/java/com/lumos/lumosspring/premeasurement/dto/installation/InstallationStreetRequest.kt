@@ -17,7 +17,8 @@ data class InstallationItemRequest(
     val contractItemId: Long,
     val truckMaterialStockId: Long,
     val quantityExecuted: BigDecimal,
-    val materialName: String
+    val materialName: String,
+    val truckStockControl: Boolean = true
 )
 
 data class InstallationRequest(

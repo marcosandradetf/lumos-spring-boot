@@ -58,7 +58,11 @@ public class UserService {
 
     @Cacheable("getAllUsers")
     public ResponseEntity<List<UserResponse>> findAll() {
-        List<AppUser> appUsers = userRepository.findByStatusTrueOrderByNameAsc();
+        List<AppUser> appUsers = userRepository.findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(
+                Utils.INSTANCE.getCurrentTenantId(),
+                true,
+                false
+        );
         List<UserResponse> userResponses = new ArrayList<>();
         for (AppUser appUser : appUsers) {
             if (appUser.getStatus()) {
@@ -288,8 +292,8 @@ public class UserService {
                                         .addValue("id_token", token.getIdToken());
 
                                 namedParameterJdbcTemplate.update("""
-                                    delete from refresh_token where id_token = :id_token
-                                """, params);
+                                            delete from refresh_token where id_token = :id_token
+                                        """, params);
                             }
                         }));
             }

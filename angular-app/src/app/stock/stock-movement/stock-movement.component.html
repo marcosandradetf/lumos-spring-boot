@@ -1,5 +1,26 @@
 <div class="h-full w-full p-4 relative">
-    <app-prime-breadcrumb title="" [path]="['Estoque', 'Movimentar Estoque']"></app-prime-breadcrumb>
+    <div class="flex justify-between item-center">
+        <app-prime-breadcrumb title="" [path]="['Estoque', 'Movimentar Estoque']"></app-prime-breadcrumb>
+        <span (click)="currentDeposit = undefined; loading = true; sendMovement = []; materials = [];"
+              class="p-5 cursor-pointer"
+              *ngIf="currentDeposit && !showFormMobile">Alterar Almoxarifado</span>
+        <span (click)="showFormMobile = false; scannerEnabled = true"
+              class="p-5 cursor-pointer flex items-center"
+              *ngIf="showFormMobile">
+            <svg
+                class="mr-2"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 -960 960 960"
+                height="24"
+                width="24"
+                fill="black">
+                    <path
+                        d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"
+                    />
+            </svg>
+            Reativar Modo Scanner
+        </span>
+    </div>
 
     <div class="p-2">
         <div class="card p-3">
@@ -8,12 +29,11 @@
 
         <div class="mb-2" *ngIf="!currentDeposit">
             <p-dropdown
-                (onChange)="loadMaterials()"
+                (onChange)="selectDeposit()"
                 [(ngModel)]="currentDeposit"
                 [options]="deposits"
                 placeholder="Selecione o Almoxarifado"
-                class="w-full">
-
+                class="w-full rounded-xl">
                 <!-- Label na lista -->
                 <ng-template let-deposit
                              pTemplate="item"> {{ deposit.teamName !== null ? 'CAMINHÃO ' + deposit.teamName?.toUpperCase() : deposit.depositName }}
@@ -31,37 +51,41 @@
 
             <!-- START: ações principais -->
             <ng-template #start>
-                <!-- Botão Adicionar -->
-                <p-button
-                    icon="pi pi-plus"
-                    label="Adicionar"
-                    class="mr-2"
-                    (click)="router.navigate(['/estoque/cadastrar-material'])"
-                ></p-button>
+                <div class="flex flex-col 2xl:flex-row items-center gap-1 2xl:gap-0">
+                    <!-- Botão Adicionar -->
+                    <p-button
+                        rounded
+                        icon="pi pi-plus"
+                        label="Adicionar"
+                        severity="contrast"
+                        class="mr-2"
+                        (click)="router.navigate(['/estoque/cadastrar-material'])"
+                    ></p-button>
 
-                <!-- Botão scanner contínuo -->
-                <p-button
-                    class="flex justify-between items-center w-full max-w-md"
-                    label="Ativar modo scanner contínuo"
-                    (click)="checkBarcode()"
-                >
-                    <!-- Ícone SVG dentro do botão -->
-                    <ng-template pTemplate="icon">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 -960 960 960"
-                            height="24"
-                            width="24"
-
-                        >
-                            <path
-                                d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"
-                            />
-                        </svg>
-                    </ng-template>
-                </p-button>
+                    <!-- Botão scanner contínuo -->
+                    <p-button
+                        severity="secondary"
+                        rounded
+                        class="flex justify-between items-center w-full max-w-md"
+                        label="Ativar modo scanner contínuo"
+                        (click)="checkBarcode()"
+                    >
+                        <!-- Ícone SVG dentro do botão -->
+                        <ng-template pTemplate="icon">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 -960 960 960"
+                                height="24"
+                                width="24"
+                                fill="black">
+                                <path
+                                    d="M40-120v-182h60v122h122v60H40Zm697 0v-60h122v-122h60v182H737ZM153-231v-499h80v499h-80Zm121 0v-499h42v499h-42Zm122 0v-499h83v499h-83Zm125 0v-499h121v499H521Zm163 0v-499h42v499h-42Zm83 0v-499h38v499h-38ZM40-658v-182h182v60H100v122H40Zm819 0v-122H737v-60h182v182h-60Z"
+                                />
+                            </svg>
+                        </ng-template>
+                    </p-button>
+                </div>
             </ng-template>
-
 
 
             <!-- CENTER: pesquisa + scanner + limpar filtros -->
@@ -86,7 +110,7 @@
                     offLabel="Apenas selecionados"
                     onIcon="pi pi-list"
                     offIcon="pi pi-check"
-                    styleClass="w-60"
+                    styleClass="w-60 rounded-3xl"
                 ></p-togglebutton>
             </ng-template>
 
@@ -94,7 +118,7 @@
 
 
         <p-table
-            *ngIf="currentDeposit"
+            *ngIf="currentDeposit && !isMobile"
             [value]="materials"
             [paginator]="true"
             [rows]="rows"
@@ -120,7 +144,7 @@
                             type="checkbox"
                             class="checkbox"
                             [checked]="isChecked(row.materialStockId)"
-                            (change)="toggleSelection(row)"
+                            (change)="addMovement(row, true)"
                         />
                     </td>
                     <td>
@@ -135,9 +159,9 @@
                             <button
                                 type="button"
                                 class="flex items-center gap-2 px-2 py-1 rounded-md
-             bg-amber-100 text-amber-700
-             hover:bg-amber-200 hover:text-amber-800
-             transition-colors text-sm font-semibold"
+                                        bg-amber-100 text-amber-700
+                                        hover:bg-amber-200 hover:text-amber-800
+                                        transition-colors text-sm font-semibold"
                                 (click)="goToCatalog(row)"
                             >
                                 <svg
@@ -166,15 +190,20 @@
 
         </p-table>
         <div class="sticky bottom-0 bg-[#ffffff] dark:bg-[#18181b] py-4 px-10 flex justify-end z-10"
-             *ngIf="currentDeposit">
-            <p-button label="Continuar" size="large"/>
+             *ngIf="currentDeposit && !isMobile">
+            <p-button
+                (onClick)="handleContinue()"
+                label="Continuar"
+                severity="contrast"
+                rounded
+                size="large"/>
         </div>
 
         <!--    table skeleton -->
         <p-table
             [value]="skeleton"
             [tableStyle]="{ 'min-width': '50rem' }"
-            *ngIf="loading">
+            *ngIf="loading && !isMobile">
             <ng-template pTemplate="header" *ngIf="!currentDeposit">
                 <tr>
                     <th></th>
@@ -218,171 +247,515 @@
 
 
     <!--    modal change -->
-    <app-modal [modalOpen]="openMovementModal" classModal="rounded-none" (modalClose)="closeMovementModal()">
-        <form #movementForm="ngForm" (ngSubmit)="submitFormMovement(movementForm)">
-            <app-table>
-                <tr header>
-                    <th>Codigo</th>
-                    <th class="min-w-64">Descrição</th>
-                    <th>Quantidade*</th>
-                    <th>UN. Compra*</th>
-                    <th>Qtde. p/ embalagem*</th>
-                    <th>Preço total*</th>
-                    <th>Fornecedor*</th>
-                    <th>Comentário</th>
-                    <th>UN. Requisição*</th>
-                    <th>Qtde. Total</th>
-                </tr>
-                <tr *ngFor="let movement of sendMovement; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral"
-                    body>
-                    <td><input
-                        readonly
-                        required
-                        [ngModel]="movement.materialStockId"
-                        class="input input-bordered input-xs w-12"
-                        name="materialId{{i}}"
-                        type="text"></td>
-                    <td>
-                        @if (openMovementModal) {
+    <!--    desktop-->
+    <p-dialog
+        [(visible)]="openMovementModal"
+        modal="true"
+        styleClass="p-fluid"
+        header="Movimentação"
+        (onHide)="openMovementModal = false">
+
+        <form #movementForm="ngForm">
+
+            <p-table
+                [value]="sendMovement"
+                responsiveLayout="scroll"
+                size="small"
+                tableStyleClass="p-table-fixed">
+
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 18rem;" class="text-xs">Descrição</th>
+                        <th style="width: 10rem;" class="text-xs">Quantidade*</th>
+                        <th style="width: 7rem;" class="text-xs">UN. Compra</th>
+                        <th style="width: 12rem;" class="text-xs">Qtde. p/ embalagem*</th>
+                        <th style="width: 10rem;" class="text-xs">Preço total*</th>
+                        <th style="width: 14rem;" class="text-xs">Comentário</th>
+                        <th style="width: 8rem;" class="text-xs">UN. Requisição</th>
+                        <th style="width: 8rem;" class="text-xs">Qtde. Total</th>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-movement let-i="rowIndex">
+                    <tr>
+
+                        <!-- Descrição -->
+                        <td style="width: 18rem;">
                             <input
+                                pInputText
+                                class="p-inputtext-sm w-full p-disabled"
                                 readonly
                                 [value]="movement.materialName"
-                                required
-                                class="input input-bordered input-xs min-w-64"
-                                name="materialId{{i}}"
-                                type="text">
-                        }
-                    </td>
+                                name="materialName{{ i }}"
+                                pTooltip="{{ movement.materialName }}"/>
+                        </td>
 
-                    <td><input
+                        <!-- Quantidade -->
+                        <td style="width: 10rem;">
+                            <input
+                                pInputText
+                                class="p-inputtext-sm w-full text-right"
+                                required
+                                [(ngModel)]="movement.inputQuantity"
+                                name="inputQuantity{{ i }}"
+                                (input)="utils.formatNumber($event)"
+                                (blur)="calculateQuantity(movement)"
+                                placeholder="Digite aqui"
+                                #inputQuantity="ngModel"/>
+                        </td>
+
+                        <!-- UN. Compra -->
+                        <td style="width: 7rem;">
+                            <input
+                                pInputText
+                                class="p-inputtext-sm w-full p-disabled text-center"
+                                readonly
+                                [ngModel]="movement.buyUnit"
+                                name="buyUnit{{ i }}"/>
+                        </td>
+
+                        <!-- Qtde. p/ embalagem -->
+                        <td style="width: 12rem;">
+                            <ng-container *ngIf="getOption(movement); else naTemplate">
+                                <input
+                                    pInputText
+                                    class="p-inputtext-sm w-full text-right"
+                                    required
+                                    [(ngModel)]="movement.quantityPackage"
+                                    name="quantityPackage{{ i }}"
+                                    (blur)="calculateQuantity(movement)"
+                                    (input)="utils.formatNumber($event)"
+                                    pTooltip="{{ getTooltipText(movement.buyUnit) }}"
+                                    tooltipPosition="right"
+                                    #quantityPackage="ngModel"/>
+                            </ng-container>
+
+                            <ng-template #naTemplate>
+                                <input
+                                    pInputText
+                                    class="p-inputtext-sm w-full p-disabled text-center"
+                                    readonly
+                                    value="N/A"
+                                    name="requestUnit{{ i }}"/>
+                            </ng-template>
+                        </td>
+
+                        <!-- Preço total -->
+                        <td style="width: 10rem;">
+                            <input
+                                pInputText
+                                class="p-inputtext-sm w-full text-right"
+                                required
+                                [(ngModel)]="movement.priceTotal"
+                                name="priceTotal{{ i }}"
+                                (input)="formatValue($event, i)"
+                                placeholder="R$"
+                                #price="ngModel"/>
+                        </td>
+
+                        <!-- Comentário -->
+                        <td style="width: 14rem;">
+                            <input
+                                pInputText
+                                class="p-inputtext-sm w-full"
+                                [(ngModel)]="movement.description"
+                                name="description{{ i }}"
+                                placeholder="Digite aqui"/>
+                        </td>
+
+                        <!-- UN. Requisição -->
+                        <td style="width: 8rem;">
+                            <input
+                                pInputText
+                                class="p-inputtext-sm w-full p-disabled text-center"
+                                readonly
+                                [ngModel]="movement.requestUnit"
+                                name="requestUnit{{ i }}"/>
+                        </td>
+
+                        <!-- Qtde. Total -->
+                        <td style="width: 8rem;">
+                            <input
+                                pInputText
+                                class="p-inputtext-sm w-full p-disabled text-right"
+                                readonly
+                                [ngModel]="movement.totalQuantity"
+                                name="totalQuantity{{ i }}"/>
+                        </td>
+
+                    </tr>
+                </ng-template>
+
+            </p-table>
+
+            <p-divider></p-divider>
+
+            <p-message
+                *ngIf="movementForm.invalid && formSubmitted"
+                severity="error"
+                styleClass="mb-2"
+                text="Preencha todos os campos obrigatórios (*)">
+            </p-message>
+
+            <div class="flex justify-end gap-2">
+                <p-button
+                    class="p-button-sm"
+                    type="button"
+                    label="Cancelar"
+                    severity="secondary"
+                    (onClick)="openMovementModal = false">
+                </p-button>
+
+                <p-confirmpopup #cp>
+                    <ng-template #headless let-message>
+                        <div class="rounded p-4">
+                            <span>{{ message.message }}</span>
+                            <div class="flex items-center gap-2 mt-4">
+                                <p-button (onClick)="cp.onAccept()" label="Salvar" size="small" [autofocus]="true"/>
+                                <p-button (onClick)="cp.onReject()" label="Cancelar" [text]="true" size="small"
+                                          severity="secondary"/>
+                            </div>
+                        </div>
+                    </ng-template>
+                </p-confirmpopup>
+                <p-button
+                    class="p-button-sm"
+                    type="button"
+                    label="Salvar Movimentação"
+                    (onClick)="submitFormMovement(movementForm, $event)"
+                    icon="pi pi-check">
+                </p-button>
+            </div>
+
+        </form>
+    </p-dialog>
+
+    <!--    mobile-->
+    <p-skeleton width="100%" height="calc(100vh - 20rem)" *ngIf="loading && isMobile"/>
+
+    <div class="relative w-full h-[calc(100vh-18rem)] bg-black" *ngIf="scannerEnabled">
+
+        <!-- Scanner -->
+        <zxing-scanner
+            [formats]="formats"
+            (scanSuccess)="onScanSuccess($event)"
+            class="absolute inset-0 w-full h-full object-cover">
+        </zxing-scanner>
+
+        <!-- Overlay escuro -->
+        <div class="absolute inset-0 bg-black/50 pointer-events-none"></div>
+
+        <!-- Área de foco -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div
+                class="relative w-72 h-72 border-2 rounded-xl transition-colors duration-200"
+                [ngClass]="{
+                'border-green-400': scanState === 'idle',
+                'border-blue-400': scanState === 'processing',
+                'border-red-400': scanState === 'error'
+            }">
+
+                <!-- Linha -->
+                <div
+                    class="absolute left-2 right-2 h-0.5 animate-scan-line"
+                    [ngClass]="{
+                    'bg-green-400': scanState === 'idle',
+                    'bg-blue-400': scanState === 'processing',
+                    'bg-red-400': scanState === 'error'
+                }">
+                </div>
+            </div>
+        </div>
+
+        <!-- Texto de instrução -->
+        <div class="absolute bottom-6 w-full text-center px-4">
+            <p class="text-white text-sm opacity-90 mb-10">
+                Aponte a câmera para o código de barras
+            </p>
+
+            <p-button
+                (onClick)="handleContinue()"
+                label="Finalizar Leitura"
+                severity="contrast"
+                rounded
+                size="large"/>
+        </div>
+
+        <!-- Indicador ativo -->
+        <div
+            class="absolute top-4 left-4 flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span class="text-xs text-white">Scanner ativo</span>
+        </div>
+
+    </div>
+
+    <div *ngIf="showFormMobile" class="flex flex-col items-center w-full px-4">
+
+        <div
+            *ngFor="let movement of sendMovement; let i = index"
+            class="w-full">
+
+            <div
+                [class.hidden]="movement.hidden"
+                class="flex flex-col border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md hover:shadow-lg bg-white dark:bg-gray-900 p-6 mb-4">
+
+                <!-- Título -->
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-neutral-100 mb-4">
+                    {{ movement.materialName }}
+                </h3>
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-neutral-100 mb-4 items-center flex">
+                    <span class="pi pi-barcode mr-2"></span>
+                    {{ movement.barcode }}
+                </h4>
+
+                <!-- Quantidade -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                        Quantidade*
+                    </label>
+                    <input
+                        pInputText
+                        class="w-full text-right"
+                        type="number"
+                        inputmode="numeric"
                         required
                         [(ngModel)]="movement.inputQuantity"
-                        (change)="movement.requestUnit = ''; movement.totalQuantity = 0;"
-                        name="inputQuantity{{i}}"
+                        name="inputQuantityMobile{{ i }}"
+                        (input)="utils.formatNumber($event); movement.invalid = false"
+                        (blur)="calculateQuantity(movement)"
+                    />
+                </div>
+
+                <!-- Quantidade por embalagem -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                        Qtde. por embalagem*
+                    </label>
+
+                    <ng-container *ngIf="getOption(movement); else na">
+                        <input
+                            type="number"
+                            inputmode="numeric"
+                            pInputText
+                            class="w-full text-right"
+                            required
+                            [(ngModel)]="movement.quantityPackage"
+                            name="quantityPackageMobile{{ i }}"
+                            (input)="utils.formatNumber($event); movement.invalid = false"
+                            (blur)="calculateQuantity(movement)"
+                            pTooltip="{{ getTooltipText(movement.buyUnit) }}"
+                        />
+                    </ng-container>
+
+                    <ng-template #na>
+                        <input
+                            pInputText
+                            class="w-full p-disabled text-center"
+                            readonly
+                            value="N/A"
+                        />
+                    </ng-template>
+                </div>
+
+                <!-- Preço total -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                        Preço total*
+                    </label>
+                    <input
                         type="text"
-                        (input)="this.utils.formatNumber($event)"
-                        placeholder="Digite aqui"
-                        class="input input-bordered input-xs w-24"
-                        #inputQuantity="ngModel"/>
-                        <div *ngIf="inputQuantity.invalid && formSubmitted">
-                            <small *ngIf="inputQuantity.errors?.['required']" class="text-red-600">Preenchimento
-                                obrigatório.</small>
-                        </div>
-                    </td>
-                    <td><input
-                        readonly
+                        inputmode="decimal"
+                        pInputText
+                        class="w-full text-right"
                         required
-                        [ngModel]="movement.buyUnit"
-                        class="input input-bordered input-xs w-12"
-                        name="materialId{{i}}"
-                        type="text"></td>
-                    <td>
-                    <td
-                        [ngClass]="shouldShowTooltip(movement.buyUnit) ? 'tooltip tooltip-right' : ''"
-                        [attr.data-tip]="shouldShowTooltip(movement.buyUnit) ? getTooltipText(movement.buyUnit) : null">
-                        @if (getOption(movement)) {
-                            <input
-                                required
-                                (blur)="calculateQuantity(movement)"
-                                type="text"
-                                (input)="this.utils.formatNumber($event)"
-                                [(ngModel)]="movement.quantityPackage"
-                                [disabled]="movement.buyUnit === ''"
-                                [readOnly]="!shouldShowTooltip(movement.buyUnit)"
-                                name="quantityPackage{{i}}"
-                                placeholder="Digite aqui"
-                                class="input input-bordered input-xs w-24"
-                                #quantityPackage="ngModel"
-                            />
-                            <div *ngIf="quantityPackage.invalid && formSubmitted">
-                                <small *ngIf="quantityPackage.errors?.['required']" class="text-red-600">Preenchimento
-                                    obrigatório.</small>
-                            </div>
-                        } @else {
-                            <p class="input input-disabled input-xs">Não se aplica</p>
-                        }
-                    </td>
-                    <td><input
-                        required
-                        type="text"
                         [(ngModel)]="movement.priceTotal"
-                        (input)="formatValue($event, i)"
-                        name="priceTotal{{i}}"
+                        name="priceTotalMobile{{ i }}"
+                        (input)="formatValue($event, i); movement.invalid = false"
                         placeholder="R$"
-                        class="input input-bordered input-xs w-24"
-                        #price="ngModel"
                     />
-                        <div *ngIf="price.invalid && formSubmitted">
-                            <small *ngIf="price.errors?.['required']" class="text-red-600">Obrigatório.</small>
-                        </div>
-                    </td>
-                    <td>
-                        <select
-                            required
-                            [(ngModel)]="movement.supplierId"
-                            name="supplierId{{i}}"
-                            class="select select-bordered select-xs w-56 max-w-xs"
-                            #supplier="ngModel">
-                            <option value="" disabled>Selecione um Fornecedor</option>
-                            @for (s of suppliers; track s.id) {
-                                <option [value]="s.id">{{ s.name }}</option>
-                            }
-                        </select>
-                        <div *ngIf="supplier.invalid && formSubmitted">
-                            <small *ngIf="supplier.errors?.['required']" class="text-red-600">Obrigatório.</small>
-                        </div>
-                    </td>
-                    <td><input
-                        type="text"
+                </div>
+
+                <!-- Comentário -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                        Comentário
+                    </label>
+                    <input
+                        pInputText
+                        class="w-full"
                         [(ngModel)]="movement.description"
-                        name="description{{i}}"
-                        placeholder="Digite aqui"
-                        class="input input-bordered input-xs  w-64 max-w-xs"
+                        name="descriptionMobile{{ i }}"
                     />
-                    </td>
-                    <td>
-                        <select
-                            [disabled]="movement.buyUnit === ''"
-                            class="select select-bordered select-xs w-16"
-                            [(ngModel)]="movement.requestUnit"
-                            (change)="calculateQuantity(movement)"
-                            name="requestUnit{{i}}"
-                            required
-                            #requestUnit="ngModel">
-                            @for (unit of filterUnits(movement.buyUnit); track unit) {
-                                <option [value]="unit" [selected]="movement.requestUnit === unit">{{ unit }}</option>
-                            }
-                        </select>
-                        @if (requestUnit.invalid && formSubmitted) {
-                            @if (requestUnit.errors?.['required']) {
-                                <small class="text-red-600">Obrigatório.</small>
-                            }
-                        }
-                    </td>
-                    <td>
-                        <p class="input input-bordered input-xs">
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+
+                <!-- Resumo -->
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">UN. Compra</p>
+                        <p class="font-medium text-gray-800 dark:text-neutral-100">
+                            {{ movement.buyUnit }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">UN. Requisição</p>
+                        <p class="font-medium text-gray-800 dark:text-neutral-100">
+                            {{ movement.requestUnit }}
+                        </p>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-gray-500 dark:text-gray-400">Qtde. Total</p>
+                        <p class="font-medium text-gray-800 dark:text-neutral-100">
                             {{ movement.totalQuantity }}
                         </p>
-                    </td>
-                </tr>
-            </app-table>
-            <div class="flex justify-around mt-10 w-full flex-col sm:flex-row">
-                <app-button (click)="handleOpenSupplierModal()" title="Cadastrar Fornecedor" class="w-full"
-                            classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-orange-500 rounded-none w-full"
-                            textColor="text-black"></app-button>
-                <app-button (click)="closeMovementModal()" title="Cancelar" class="w-full"
-                            classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-red-500 rounded-none w-full"
-                            textColor="text-black"></app-button>
-                <app-button typeButton="submit" title="Salvar Movimentação" class="w-full"
-                            classButton="btn bg-neutral-300 dark:bg-gray-800 hover:bg-indigo-700 hover:text-white rounded-none w-full"></app-button>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                <div class="w-full">
+                    <p-button
+                        (click)="hideMovement(i)"
+                        label="Confirmar"
+                        rounded
+                        severity="contrast"
+                        styleClass="w-full block">
+                    </p-button>
+
+                    <p-button
+                        (click)="deleteMovement(i)"
+                        label="Remover"
+                        rounded
+                        severity="secondary"
+                        styleClass="w-full block mt-4">
+                    </p-button>
+                </div>
+
+                <div class="w-full" *ngIf="movement.invalid">
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                    <p-message
+                        severity="error"
+                        styleClass="mb-2"
+                        text="Preencha todos os campos obrigatórios (*)">
+                    </p-message>
+                </div>
+
             </div>
-        </form>
-    </app-modal>
+        </div>
+
+    </div>
+
+    <div
+        *ngIf="showFinishOption"
+        class="flex flex-col items-center w-full px-4 py-6 animate-fadein">
+
+        <div
+            class="w-full rounded-2xl border border-gray-200 dark:border-gray-700 shadow-md bg-white dark:bg-gray-900 p-6">
+
+            <!-- Ícone / Destaque -->
+            <div class="flex justify-center mb-4">
+                <i class="pi pi-exclamation-circle text-4xl text-blue-600 dark:text-blue-400"></i>
+            </div>
+
+            <!-- Título -->
+            <h2 class="text-center text-xl font-semibold mb-2">
+                Confirmar movimentação
+            </h2>
+
+            <!-- Mensagem -->
+            <p class="text-center text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Você está prestes a salvar a movimentação de estoque.
+                <br/>
+                Selecione a opção desejada abaixo.
+            </p>
+
+            <!-- Ações -->
+            <div class="flex flex-col gap-3">
+
+                <!-- Confirmar -->
+                <p-button
+                    (click)="submitDataMovement()"
+                    label="Confirmar movimentação"
+                    severity="success"
+                    class="w-full"
+                    styleClass="w-full">
+                </p-button>
+
+                <!-- Revisar -->
+                <p-button
+                    (click)="reShowItems()"
+                    label="Revisar itens"
+                    severity="secondary"
+                    class="w-full"
+                    styleClass="w-full"
+                    type="button">
+                </p-button>
+
+            </div>
+        </div>
+    </div>
+
+    <div
+        *ngIf="successMessage"
+        class="flex flex-col items-center w-full px-4 py-6 animate-fadein">
+
+        <div
+            class="w-full rounded-2xl border border-green-200 dark:border-green-700 shadow-md bg-white dark:bg-gray-900 p-6">
+
+            <!-- Ícone de sucesso -->
+            <div class="flex justify-center mb-4">
+                <i class="pi pi-check-circle text-4xl text-green-600 dark:text-green-400"></i>
+            </div>
+
+            <!-- Título -->
+            <h2 class="text-center text-xl font-semibold mb-2">
+                Movimentação concluída
+            </h2>
+
+            <!-- Mensagem -->
+            <p class="text-center text-sm text-gray-600 dark:text-gray-300 mb-6">
+                A movimentação de estoque foi registrada com sucesso.
+                <br/>
+                Você pode continuar com uma nova operação ou voltar.
+            </p>
+
+            <!-- Ações -->
+            <div class="flex flex-col gap-3">
+
+                <!-- Nova movimentação -->
+                <p-button
+                    label="Nova movimentação"
+                    (click)="restart()"
+                    severity="success"
+                    class="w-full"
+                    styleClass="w-full"
+                    type="button">
+                </p-button>
+
+                <!-- Voltar -->
+                <p-button
+                    (click)="router.navigate(['/'])"
+                    label="Sair"
+                    severity="secondary"
+                    class="w-full"
+                    styleClass="w-full"
+                    type="button">
+                </p-button>
+
+            </div>
+        </div>
+    </div>
 
     <p-toast/>
 
     <!--    modal confirmation-->
-    <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="closeConfirmationModal()">
+    <app-modal classModal="z-50" [modalOpen]="openConfirmationModal" [confirmation]="true"
+               (modalClose)="closeConfirmationModal()">
         <div>
             <h3 class="text-center mb-7">Confirma a transação?</h3>
             <div class="flex justify-around">
@@ -512,12 +885,26 @@
             </p>
 
             <!-- QR Code -->
-            <div class="flex justify-center bg-gray-100 p-4 rounded-lg mb-4">
+            <div class="flex justify-center bg-gray-100 p-4 rounded-lg mb-4 relative">
+
                 <qrcode
-                    qrdata="https://lumos.thryon.com.br/estoque/cadastrar-material"
+                    *ngIf="!qrExpired"
+                    [qrdata]="endpoint"
                     [width]="200"
-                    [errorCorrectionLevel]="'M'">
+                    errorCorrectionLevel="M"
+                    [allowEmptyString]="true">
                 </qrcode>
+
+                <div *ngIf="qrExpired"
+                     (click)="checkBarcode()"
+                     class="w-48 h-48 flex flex-col justify-center items-center
+                            cursor-pointer rounded-lg
+                            bg-white border border-dashed border-gray-400
+                            hover:bg-gray-50 hover:border-gray-600
+                            transition-all duration-200">
+                    <span class="pi pi-refresh text-gray-700 text-3xl mb-2"></span>
+                    <span class="text-sm text-gray-600 font-medium">Gerar novo QR Code</span>
+                </div>
             </div>
 
             <!-- Benefícios rápidos -->
@@ -539,8 +926,8 @@
                 <div class="flex items-center gap-2 mb-2">
                     <i class="pi pi-exclamation-triangle text-red-600 text-lg"></i>
                     <span class="text-red-700 font-semibold">
-          Atenção: {{ missingBarcodesCount }} itens sem código de barras!
-        </span>
+                        Atenção: {{ missingBarcodesCount }} itens sem código de barras!
+                    </span>
                 </div>
                 <p class="text-gray-700 text-sm mb-2">
                     Para que o catálogo funcione corretamente, todos os itens precisam ter código de barras cadastrado.

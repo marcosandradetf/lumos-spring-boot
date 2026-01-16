@@ -56,8 +56,8 @@ export class ExecutionService {
     return this.http.get<ReserveRequest[]>(this.baseUrl + `/execution/get-reservations/${userUUID}`);
   }
 
-  public getStockMaterialForLinking(linking: string, type: string, teamId: number) {
-    return this.http.get<MaterialInStockDTO[]>(this.baseUrl + `/execution/get-stock-materials/${linking}/${type}/${teamId}`);
+  public findMaterialsByContractReference(contractReferenceItemId: number, teamId: number) {
+    return this.http.get<MaterialInStockDTO[]>(this.baseUrl + `/stock/find-materials-by-contract-reference/${contractReferenceItemId}/${teamId}`);
   }
 
   reserveMaterialsForExecution(currentStreet: ReserveRequest, userUUID: string) {

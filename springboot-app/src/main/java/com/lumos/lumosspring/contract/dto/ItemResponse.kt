@@ -8,5 +8,7 @@ data class ItemResponseDTO(
     val quantity: BigDecimal,
     val type: String,
     val linking: String?,
-    val currentBalance: BigDecimal
+    val currentBalance: BigDecimal,
+    val contractReferenceItemId: Long,
+    val truckStockControl: Boolean,
 )

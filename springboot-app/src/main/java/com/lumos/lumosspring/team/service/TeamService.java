@@ -1,5 +1,8 @@
 package com.lumos.lumosspring.team.service;
 
+import com.lumos.lumosspring.notifications.service.NotificationService;
+import com.lumos.lumosspring.notifications.service.NotificationType;
+import com.lumos.lumosspring.notifications.service.Routes;
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
@@ -23,6 +26,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -33,12 +37,13 @@ public class TeamService {
     private final TeamQueryRepository teamQueryRepository;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final MaterialStockRegisterRepository materialStockRegisterRepository;
+    private final NotificationService notificationService;
 
     public TeamService(TeamRepository teamRepository,
                        RegionRepository regionRepository,
                        DepositRepository depositRepository,
                        TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
-                       MaterialStockRegisterRepository materialStockRegisterRepository) {
+                       MaterialStockRegisterRepository materialStockRegisterRepository, NotificationService notificationService) {
 
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
@@ -46,6 +51,7 @@ public class TeamService {
         this.teamQueryRepository = teamQueryRepository;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.materialStockRegisterRepository = materialStockRegisterRepository;
+        this.notificationService = notificationService;
     }
 
     @Cacheable("getAllTeams")
@@ -217,6 +223,29 @@ public class TeamService {
     public ResponseEntity<?> updateTeam(TeamEdit team) {
         teamQueryRepository.renewTeam(team.idTeam(), team.userIds());
 
+        return ResponseEntity.noContent().build();
+    }
+
+    public ResponseEntity<?> sendStockNotification(String description, String notificationCode, String materialName) {
+        notificationService.sendNotificationForTopic(
+                "Verificar material para instalação",
+                """
+                        Será feita a instalação:
+                        %s
+                        
+                        Material necessário:
+                        %s
+                        
+                        Confiram se têm esse material.
+                        Se não tiverem, solicitem pelo aplicativo.
+                        
+                        Obrigado.
+                        """.formatted(description, materialName),
+                Routes.STOCK,
+                notificationCode,
+                Instant.now(),
+                NotificationType.WARNING
+        );
         return ResponseEntity.noContent().build();
     }
 }

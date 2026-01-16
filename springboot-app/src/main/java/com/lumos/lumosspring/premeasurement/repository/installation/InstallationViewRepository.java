@@ -68,7 +68,6 @@ public class InstallationViewRepository {
                                                i.measured_item_quantity,
                                                r.truck_material_stock_id,
                                                ms.request_unit,
-                                               COALESCE(m.material_power, m.material_length) AS specs,
                                                ci.contracted_quantity - ci.quantity_executed as current_balance,
                                                COALESCE(cri.name_for_import, cri.description) as item_name
                                         FROM pre_measurement_street_item i
@@ -93,7 +92,6 @@ public class InstallationViewRepository {
                                                 rs3.getString("material_name"),
                                                 rs3.getBigDecimal("measured_item_quantity"),
                                                 rs3.getString("request_unit"),
-                                                rs3.getString("specs"),
                                                 rs3.getBigDecimal("current_balance"),
                                                 rs3.getString("item_name")
                                         )

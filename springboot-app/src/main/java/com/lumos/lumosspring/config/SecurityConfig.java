@@ -41,8 +41,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
                     // Definindo comportamento de CORS baseado no caminho
-//                    String path = request.getRequestURI();
-                    configuration.setAllowedOrigins(List.of("https://lumos.thryon.com.br", "http://localhost:4200","http://192.168.1.101:4200"));
+                    configuration.setAllowedOrigins(List.of(
+                            "https://lumos.thryon.com.br",
+                            "http://localhost:4200"
+                    ));
                     configuration.setAllowCredentials(true); // Para permitir cookies e headers com credenciais
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
@@ -52,7 +54,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/mobile/auth/**").permitAll()
                         .requestMatchers("/ping").permitAll()
-//                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)

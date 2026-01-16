@@ -105,9 +105,11 @@ interface PreMeasurementInstallationDao {
                 i.contractItemId as contractItemId,
                 i.materialStockId as truckMaterialStockId,
                 i.executedQuantity as quantityExecuted,
-                i.materialName as materialName
+                i.materialName as materialName,
+                ms.truckStockControl as truckStockControl
             from premeasurementinstallationitem i
             join premeasurementinstallationstreet s on s.preMeasurementStreetId = i.preMeasurementStreetId
+            join material_stock ms on ms.materialStockId = i.materialStockId
             where s.preMeasurementStreetId = :streetId
         """
     )

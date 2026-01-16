@@ -1,9 +1,11 @@
 package com.lumos.lumosspring.stock.materialsku.service;
 
+import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
 import com.lumos.lumosspring.stock.materialsku.model.Material;
 import com.lumos.lumosspring.stock.materialsku.model.MaterialContractReferenceItem;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractReferenceItemRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
+import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.stock.materialsku.dto.MaterialRequest;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,12 +30,13 @@ public class MaterialReferenceService {
     private final LogRepository logRepository;
     private final MaterialReferenceRepository materialReferenceRepository;
     private final MaterialContractReferenceItemRepository materialContractReferenceItemRepository;
+    private final DepositRepository depositRepository;
 
     public MaterialReferenceService(MaterialStockRegisterRepository materialStockRegisterRepository,
                                     UserRepository userRepository,
                                     LogRepository logRepository,
                                     MaterialReferenceRepository materialReferenceRepository,
-                                    MaterialContractReferenceItemRepository materialContractReferenceItemRepository) {
+                                    MaterialContractReferenceItemRepository materialContractReferenceItemRepository, DepositRepository depositRepository) {
 
         this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.userRepository = userRepository;
@@ -40,6 +44,7 @@ public class MaterialReferenceService {
 
         this.materialReferenceRepository = materialReferenceRepository;
         this.materialContractReferenceItemRepository = materialContractReferenceItemRepository;
+        this.depositRepository = depositRepository;
     }
 
     @Transactional
@@ -93,15 +98,15 @@ public class MaterialReferenceService {
         return ResponseEntity.ok(materialsDTO);
     }
 
-
+    @Transactional
     public ResponseEntity<?> create(MaterialRequest material) {
         // Cria e salva o log de atualização
         var user = userRepository.findByUserId(Utils.INSTANCE.getCurrentUserId()).orElseThrow();
+        Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName(), Utils.INSTANCE.getCurrentTenantId());
         var log = new Log();
         String logMessage;
 
         if (material.materialId() == null) {
-            Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName());
             if (baseMaterialId == null) {
                 var baseMaterial = new Material(
                         material.materialBaseName(),
@@ -145,6 +150,22 @@ public class MaterialReferenceService {
                 );
             });
 
+            var depositsIds = depositRepository.findAllDepositIds();
+            for (Long depositId : depositsIds) {
+                var materialStock = new MaterialStock(
+                        materialId,
+                        depositId,
+                        material.buyUnit(),
+                        material.requestUnit(),
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        null,
+                        null,
+                        false
+                );
+                materialStockRegisterRepository.save(materialStock);
+            }
+
             logMessage = String.format("Usuário %s criou o material %d - %s com sucesso.",
                     user.getUsername(),
                     materialId,
@@ -154,7 +175,6 @@ public class MaterialReferenceService {
         } else {
             Long materialId = material.materialId();
             var materialSku = materialReferenceRepository.findById(materialId).orElseThrow();
-            Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName());
             if (baseMaterialId == null) {
                 var baseMaterial = new Material(
                         material.materialBaseName(),
@@ -285,5 +305,11 @@ public class MaterialReferenceService {
 
         return ResponseEntity.ok(response);
     }
+
+    public ResponseEntity<?> getCatalogue() {
+        var materials = materialReferenceRepository.getCatalogue(Utils.INSTANCE.getCurrentTenantId());
+        return ResponseEntity.ok(materials);
+    }
+
 
 }

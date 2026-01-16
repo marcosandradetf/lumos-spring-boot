@@ -101,7 +101,6 @@ public class DirectExecutionManagementService {
                 step
         );
 
-
         directExecution = directExecutionRepository.save(directExecution);
         Long directExecutionId = directExecution.getDirectExecutionId();
         if (directExecutionId == null) {

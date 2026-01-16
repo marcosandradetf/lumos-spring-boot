@@ -66,17 +66,46 @@ class NotificationService(
 }
 
 object Routes {
+    const val AUTH_FLOW = "auth-flow"
     const val LOGIN = "login"
     const val MAIN = "main"
     const val HOME = "home"
-    const val MENU = "menu"
+    const val NO_ACCESS = "no-access"
+    const val MORE = "more"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
     const val CONTRACT_SCREEN = "contract-screen"
+    const val PRE_MEASUREMENT_FLOW = "pre-measurement-flow"
     const val PRE_MEASUREMENTS = "pre-measurements"
     const val PRE_MEASUREMENT_PROGRESS = "pre-measurement-progress"
-    const val PRE_MEASUREMENT_STREET_HOME = "pre-measurement-home"
     const val PRE_MEASUREMENT_STREET = "pre-measurement-street"
-    const val PRE_MEASUREMENT_STREET_PROGRESS = "pre-measurement-street"
-    const val STOCK_CHECK = "stock-check"
+    const val INSTALLATION_HOLDER = "installation-holder-screen"
+    const val MAINTENANCE = "maintenance"
+    const val STOCK = "stock"
+    const val ORDER = "order"
+
+    // -> pre-measurement-installations
+    const val PRE_MEASUREMENT_INSTALLATION_FLOW = "pre-measurement-installation-flow"
+    const val PRE_MEASUREMENT_INSTALLATION_STREETS = "pre-measurement-installation-streets"
+    const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
+
+    // -> direct-installations
+    const val DIRECT_EXECUTION_FLOW = "direct-execution-flow"
+    const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
+    const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
+    const val UPDATE = "update"
+    const val SYNC_FLOW = "sync-flow"
+    const val SYNC = "sync"
+    const val TEAM_SCREEN = "team-screen"
+}
+
+object NotificationType {
+    const val CONTRACT = "CONTRACT"
+    const val UPDATE = "UPDATE"
+    const val EVENT = "EVENT"
+    const val WARNING = "WARNING"
+    const val CASH = "CASH"
+    const val ALERT = "ALERT"
+    const val EXECUTION = "EXECUTION"
+    const val CHANGE_TEAM = "CHANGE_TEAM"
 }

@@ -14,6 +14,8 @@ public interface RefreshTokenRepository extends CrudRepository<RefreshToken, Lon
     Optional<RefreshToken> findByToken(String token);
     Optional<List<RefreshToken>> findByAppUser(UUID appUser);
 
+    void deleteByToken(String token);
+
 //    @Query("DELETE FROM refresh_token WHERE expiry_date < :now OR revoked = true")
 //    void deleteExpiredOrRevokedTokens(@Param("now") Instant now);
 

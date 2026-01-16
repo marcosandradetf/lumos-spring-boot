@@ -268,3 +268,20 @@ svg path {
   padding-left: 10px;
 }
 
+@keyframes scan-line {
+    0% {
+        top: 10%;
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        top: 90%;
+        opacity: 0;
+    }
+}
+
+.animate-scan-line {
+    animation: scan-line 2s linear infinite;
+}

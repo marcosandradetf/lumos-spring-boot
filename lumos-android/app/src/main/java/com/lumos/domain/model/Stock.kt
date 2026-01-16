@@ -14,11 +14,15 @@ data class MaterialStock(
     val materialId: Long,
     val materialStockId: Long,
     val materialName: String,
-    val specs: String?,
     val stockQuantity: String,
     val stockAvailable: String,
     val requestUnit: String,
     val type: String,
+    val truckStockControl: Boolean,
+    val parentMaterialId: Long,
+    val materialBaseName: String,
+    val materialPower: String?,
+    val materialBrand: String?,
 )
 
 @Entity(tableName = "stockist")

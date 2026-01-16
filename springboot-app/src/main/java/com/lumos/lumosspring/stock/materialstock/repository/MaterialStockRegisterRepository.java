@@ -57,6 +57,5 @@ public interface MaterialStockRegisterRepository extends CrudRepository<Material
             """
     )
     void insertMaterials(Long depositId, UUID tenantId);
-
 }
 

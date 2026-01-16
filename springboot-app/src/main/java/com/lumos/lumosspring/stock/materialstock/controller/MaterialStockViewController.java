@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api")
 public class MaterialStockViewController {
@@ -14,7 +16,6 @@ public class MaterialStockViewController {
     public MaterialStockViewController(MaterialStockViewService materialStockViewService) {
         this.materialStockViewService = materialStockViewService;
     }
-
 
     // Endpoint para retornar todos os materiais
     @GetMapping("/material/find-stock-by-deposit-id")
@@ -36,6 +37,39 @@ public class MaterialStockViewController {
             @RequestParam(value = "depositId", required = false, defaultValue = "-1") Long depositId) {  // 'size' com valor padrão
 
         return materialStockViewService.getMaterialsBySearchWithPagination(name, page, size, depositId);  // Retorna os materiais no formato de resposta
+    }
+
+
+    @GetMapping("/find-by-barcode-and-deposit-id")
+    public ResponseEntity<?> findByBarcode(
+            @RequestParam("barcode") String barcode,
+            @RequestParam("depositId") Long depositId
+    ) {
+        return materialStockViewService.findByBarcodeAndDepositId(barcode, depositId);
+    }
+
+    @GetMapping("/stock/find-materials-by-contract-reference/{contractReferenceItemId}/{teamId}")
+    public ResponseEntity<?> findMaterialsByContractReference(
+            @PathVariable Long contractReferenceItemId,
+            @PathVariable Long teamId
+    ) {
+        return materialStockViewService.findMaterialsByContractReference(
+                contractReferenceItemId,
+                teamId
+        );
+    }
+
+    @GetMapping("/mobile/stock/get-truck-stock")
+    public ResponseEntity<?> getStock(
+            @RequestParam(value = "uuid") UUID uuid,
+            @RequestParam(value = "teamId", required = false) Long teamId
+    ) {
+        return materialStockViewService.getMaterialsForMaintenance(uuid, teamId);
+    }
+
+    @GetMapping("/mobile/stock/v2/get-truck-stock")
+    public ResponseEntity<?> getStockV2() {
+        return materialStockViewService.getTruckStock();
     }
 
 }

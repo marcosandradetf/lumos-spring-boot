@@ -29,7 +29,6 @@ data class ItemsInstallationResponse(
     val materialName: String,
     val materialQuantity: String,
     val requestUnit: String,
-    val specs: String?,
     val currentBalance: String,
     val itemName: String
 )

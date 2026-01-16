@@ -33,7 +33,7 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const isMobile = window.innerWidth <= 768;
+    const isMobile = window.innerWidth <= 1024;
 
     this.utils.menuState$.subscribe((isOpen: boolean) => {
       this.menuOpen = isOpen;

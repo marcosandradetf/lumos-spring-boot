@@ -35,4 +35,6 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
         where r.role_name = 'RESPONSAVEL_TECNICO'
     """)
     List<UUID> getResponsibleTechUsers();
+
+    List<AppUser> findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(UUID tenantId, Boolean status, Boolean support);
 }

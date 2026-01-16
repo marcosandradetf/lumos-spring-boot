@@ -358,7 +358,6 @@ fun PrevStreetsScreen() {
             materialName = "CABO DE ENERGIA",
             materialQuantity = "50",
             requestUnit = "M",
-            specs = "10MM",
             stockQuantity = "0"
         ),
         ItemView(
@@ -368,7 +367,6 @@ fun PrevStreetsScreen() {
             materialName = "POSTE DE CONCRETO",
             materialQuantity = "3",
             requestUnit = "UN",
-            specs = "9M",
             stockQuantity = "0"
         ),
         ItemView(
@@ -378,7 +376,6 @@ fun PrevStreetsScreen() {
             materialName = "LUMINÁRIA LED",
             materialQuantity = "5",
             requestUnit = "UN",
-            specs = "150W",
             stockQuantity = "0"
         ),
         ItemView(
@@ -388,7 +385,6 @@ fun PrevStreetsScreen() {
             materialName = "PARAFUSO E ARRUELA",
             materialQuantity = "100",
             requestUnit = "UN",
-            specs = "M8",
             stockQuantity = "0"
         ),
         ItemView(
@@ -398,7 +394,6 @@ fun PrevStreetsScreen() {
             materialName = "DISJUNTOR",
             materialQuantity = "2",
             requestUnit = "UN",
-            specs = "40A",
             stockQuantity = "0"
         ),
         ItemView(
@@ -408,7 +403,6 @@ fun PrevStreetsScreen() {
             materialName = "TERMINAL DE CABO",
             materialQuantity = "200",
             requestUnit = "UN",
-            specs = "10MM",
             stockQuantity = "0"
         )
     )

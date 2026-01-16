@@ -42,6 +42,8 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
 
     private Long teamId;
 
+    private Boolean support;
+
     public UUID getUserId() {
         return userId;
     }

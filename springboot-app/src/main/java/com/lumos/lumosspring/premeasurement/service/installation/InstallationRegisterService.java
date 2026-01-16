@@ -73,10 +73,12 @@ public class InstallationRegisterService {
             );
             saveLinkedItems(r.getContractItemId(), r.getQuantityExecuted(), installation.preMeasurementStreetId());
 
-            materialStockRegisterRepository.debitStock(
-                    r.getQuantityExecuted(),
-                    r.getTruckMaterialStockId()
-            );
+            if(r.getTruckStockControl()) {
+                materialStockRegisterRepository.debitStock(
+                        r.getQuantityExecuted(),
+                        r.getTruckMaterialStockId()
+                );
+            }
         }
 
         String fileUri = null;

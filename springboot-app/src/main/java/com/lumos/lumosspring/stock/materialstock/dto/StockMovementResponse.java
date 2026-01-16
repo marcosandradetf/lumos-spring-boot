@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.materialstock.dto;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public record StockMovementResponse(
         Long id,
@@ -9,8 +10,12 @@ public record StockMovementResponse(
         BigDecimal inputQuantity,
         String buyUnit,
         String requestUnit,
+        String priceTotal,
         String pricePerItem,
-        String supplierName,
         String deposit,
-        String employee
-) { }
+        String responsible,
+        Instant dateOf,
+        BigDecimal totalQuantity,
+        BigDecimal quantityPackage
+) {
+}

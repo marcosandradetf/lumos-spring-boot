@@ -725,7 +725,6 @@ fun MaterialItem(
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
-            if (material.specs != null) Tag(material.specs, MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = """
@@ -928,7 +927,6 @@ fun PrevMScreen() {
             materialName = "CABO DE ENERGIA",
             materialQuantity = "50",
             requestUnit = "M",
-            specs = "10MM",
             executedQuantity = "0"
         ),
         ItemView(
@@ -938,7 +936,6 @@ fun PrevMScreen() {
             materialName = "POSTE DE CONCRETO",
             materialQuantity = "3",
             requestUnit = "UN",
-            specs = "9M",
             executedQuantity = "0"
         ),
         ItemView(
@@ -948,7 +945,6 @@ fun PrevMScreen() {
             materialName = "LUMINÁRIA LED",
             materialQuantity = "5",
             requestUnit = "UN",
-            specs = "150W",
             executedQuantity = "0"
         ),
         ItemView(
@@ -958,7 +954,6 @@ fun PrevMScreen() {
             materialName = "PARAFUSO E ARRUELA",
             materialQuantity = "100",
             requestUnit = "UN",
-            specs = "M8",
             executedQuantity = "0"
         ),
         ItemView(
@@ -968,7 +963,6 @@ fun PrevMScreen() {
             materialName = "DISJUNTOR",
             materialQuantity = "2",
             requestUnit = "UN",
-            specs = "40A",
             executedQuantity = "0"
         ),
         ItemView(
@@ -978,7 +972,6 @@ fun PrevMScreen() {
             materialName = "TERMINAL DE CABO",
             materialQuantity = "200",
             requestUnit = "UN",
-            specs = "10MM",
             executedQuantity = "0"
         )
     )

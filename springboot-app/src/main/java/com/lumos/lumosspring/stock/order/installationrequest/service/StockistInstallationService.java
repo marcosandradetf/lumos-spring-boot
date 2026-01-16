@@ -4,8 +4,10 @@ import com.lumos.lumosspring.contract.dto.ItemResponseDTO;
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository;
 import com.lumos.lumosspring.directexecution.model.DirectExecution;
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepository;
+import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryItem;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurement;
 import com.lumos.lumosspring.premeasurement.repository.premeasurement.PreMeasurementRepository;
+import com.lumos.lumosspring.premeasurement.repository.premeasurement.PreMeasurementStreetItemRepository;
 import com.lumos.lumosspring.stock.materialsku.model.Material;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
@@ -14,6 +16,7 @@ import com.lumos.lumosspring.stock.order.installationrequest.dto.ReserveDTOCreat
 import com.lumos.lumosspring.stock.order.installationrequest.dto.ReserveDTOResponse;
 import com.lumos.lumosspring.stock.order.installationrequest.model.MaterialReservation;
 import com.lumos.lumosspring.stock.order.installationrequest.repository.MaterialReservationRepository;
+import com.lumos.lumosspring.stock.order.installationrequest.repository.ReservationManagementRepository;
 import com.lumos.lumosspring.util.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -34,8 +37,11 @@ public class StockistInstallationService {
     private final MaterialReservationRepository materialReservationRepository;
     private final MaterialStockRegisterRepository materialStockRegisterRepository;
     private final MaterialReferenceRepository materialReferenceRepository;
+    private final ReservationManagementRepository reservationManagementRepository;
+    private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
+    private final DirectExecutionRepositoryItem directExecutionRepositoryItem;
 
-    public StockistInstallationService(NamedParameterJdbcTemplate namedJDBC, PreMeasurementRepository preMeasurementRepository, DirectExecutionRepository directExecutionRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository, MaterialReservationRepository materialReservationRepository, MaterialStockRegisterRepository materialStockRegisterRepository, MaterialReferenceRepository materialReferenceRepository) {
+    public StockistInstallationService(NamedParameterJdbcTemplate namedJDBC, PreMeasurementRepository preMeasurementRepository, DirectExecutionRepository directExecutionRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository, MaterialReservationRepository materialReservationRepository, MaterialStockRegisterRepository materialStockRegisterRepository, MaterialReferenceRepository materialReferenceRepository, ReservationManagementRepository reservationManagementRepository, PreMeasurementStreetItemRepository preMeasurementStreetItemRepository, DirectExecutionRepositoryItem directExecutionRepositoryItem) {
         this.namedJdbc = namedJDBC;
         this.preMeasurementRepository = preMeasurementRepository;
         this.directExecutionRepository = directExecutionRepository;
@@ -43,151 +49,59 @@ public class StockistInstallationService {
         this.materialReservationRepository = materialReservationRepository;
         this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.materialReferenceRepository = materialReferenceRepository;
+        this.reservationManagementRepository = reservationManagementRepository;
+        this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
+        this.directExecutionRepositoryItem = directExecutionRepositoryItem;
     }
 
     public ResponseEntity<?> getPendingReservesForStockist(UUID userUUID) {
         var response = new ArrayList<ReserveDTOResponse>();
-
-        var pendingManagement = JdbcUtil.INSTANCE.getRawData(
-                namedJdbc,
-                """
-                        select rm.reservation_management_id, rm.description
-                        from reservation_management rm
-                        where rm.status = :status and rm.stockist_id = :stockist_id
-                        """,
-                Map.of("status", ReservationStatus.PENDING, "stockist_id", userUUID)
-        );
+        var pendingManagement = reservationManagementRepository.findAllByStatusAndStockistId(ReservationStatus.PENDING, userUUID);
 
         for (var pRow : pendingManagement) {
-            Object value = pRow.get("reservation_management_id");
-            long reservationManagementId = value instanceof Number n ? n.longValue() : 0L;
-            String description = Objects.toString(pRow.get("description"), "");
+            long reservationManagementId = Objects.requireNonNull(pRow.getReservationManagementId());
+            String description = pRow.getDescription();
+            var installations = reservationManagementRepository.getInstallations(reservationManagementId);
 
-            namedJdbc.query(
-                    """
-                                             select p.pre_measurement_id, null as direct_execution_id, p.comment,\s
-                                                    au.name || ' ' || au.last_name as completedName,\s
-                                                    t.id_team, t.team_name, d.deposit_name \s
-                                             from pre_measurement p \s
-                                             inner join team t on t.id_team = p.team_id \s
-                                             inner join deposit d on d.id_deposit = t.deposit_id_deposit \s
-                                             inner join app_user au on au.user_id = p.assign_by_user_id \s
-                                             where p.reservation_management_id = :reservation_management_id
-                            \s
-                                             union all
-                            \s
-                                             select null as pre_measurement_id, de.direct_execution_id, de.instructions as comment,\s
-                                                    au.name || ' ' || au.last_name as completedName, \s
-                                                    t.id_team, t.team_name, d.deposit_name\s
-                                             from direct_execution de\s
-                                             inner join team t on t.id_team = de.team_id\s
-                                             inner join deposit d on d.id_deposit = t.deposit_id_deposit\s
-                                             inner join app_user au on au.user_id = de.assigned_user_id\s
-                                             where de.reservation_management_id = :reservation_management_id
-                                            \s""",
-                    Map.of("reservation_management_id", reservationManagementId),
-                    (rs, rowNum) -> {
-                        long preMeasurementID = rs.getLong("pre_measurement_id");
-                        long directExecutionID = rs.getLong("direct_execution_id");
+            for (var rs : installations) {
+                Long preMeasurementID = rs.getPreMeasurementId();
+                Long directExecutionID = rs.getDirectExecutionId();
 
-                        ReserveDTOResponse reserveResponse;
+                if (preMeasurementID != null) {
+                    // Consulta para itens de pré-medição
+                    var items = preMeasurementStreetItemRepository.getItemsByPreMeasurementId(preMeasurementID, ReservationStatus.PENDING);
 
-                        if (preMeasurementID != 0L) {
-                            // Consulta para itens de pré-medição
-                            var items = namedJdbc.query(
-                                    """
-                                            select ci.contract_item_id,
-                                                   coalesce(cri.name_for_import, cri.description) as description,
-                                                   sum(pmsi.measured_item_quantity) as quantity,
-                                                   sum(ci.contracted_quantity - ci.quantity_executed) as total_current_balance,
-                                                   cri.type,
-                                                   cri.linking
-                                            from pre_measurement_street_item pmsi
-                                            join contract_item ci on ci.contract_item_id = pmsi.contract_item_id
-                                            join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
-                                            where pmsi.pre_measurement_id = :preMeasurementID
-                                              and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG', 'CABO', 'FITA ISOLANTE', 'FITA ISOLANTE AUTOFUSÃO')
-                                            group by ci.contracted_quantity, ci.quantity_executed, cri.description, cri.contract_reference_item_id, ci.contract_item_id
-                                            """,
-                                    new MapSqlParameterSource(
-                                            Map.of(
-                                                    "preMeasurementID", preMeasurementID,
-                                                    "itemStatus", ReservationStatus.PENDING
-                                            )
-                                    ),
-                                    (rs2, rowNum2) -> new ItemResponseDTO(
-                                            rs2.getLong("contract_item_id"),
-                                            rs2.getString("description"),
-                                            rs2.getBigDecimal("quantity"),
-                                            rs2.getString("type"),
-                                            rs2.getString("linking"),
-                                            rs2.getBigDecimal("total_current_balance")
-                                    )
-                            );
+                    response.add(new ReserveDTOResponse(
+                            preMeasurementID,
+                            null,
+                            description,
+                            rs.getComment(),
+                            rs.getCompletedName(),
+                            rs.getTeamId(),
+                            rs.getTeamName(),
+                            rs.getNotificationCode(),
+                            rs.getDepositName(),
+                            items
+                    ));
 
-                            reserveResponse = new ReserveDTOResponse(
-                                    preMeasurementID,
-                                    null,
-                                    description,
-                                    rs.getString("comment"),
-                                    rs.getString("completedName"),
-                                    rs.getLong("id_team"),
-                                    rs.getString("team_name"),
-                                    rs.getString("deposit_name"),
-                                    items
-                            );
+                } else if (directExecutionID != null) {
+                    // Consulta para itens de execução direta
+                    var items = directExecutionRepositoryItem.getItemsByDirectExecutionId(directExecutionID, ReservationStatus.PENDING);
 
-                        } else {
-                            // Consulta para itens de execução direta
-                            var items = namedJdbc.query(
-                                    """
-                                            select ci.contract_item_id,
-                                                   coalesce(cri.name_for_import, cri.description) as description,
-                                                   dei.measured_item_quantity as quantity,
-                                                   cri.type,
-                                                   cri.linking,
-                                                   ci.contracted_quantity - ci.quantity_executed as total_current_balance
-                                            from direct_execution_item dei
-                                            inner join contract_item ci on ci.contract_item_id = dei.contract_item_id
-                                            inner join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
-                                            where dei.direct_execution_id = :direct_execution_id
-                                              and dei.item_status = :itemStatus
-                                              and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG', 'CABO', 'FITA ISOLANTE', 'FITA ISOLANTE AUTOFUSÃO')
-                                            order by cri.name_for_import
-                                            """,
-                                    new MapSqlParameterSource(
-                                            Map.of(
-                                                    "direct_execution_id", directExecutionID,
-                                                    "itemStatus", ReservationStatus.PENDING
-                                            )
-                                    ),
-                                    (rs2, rowNum2) -> new ItemResponseDTO(
-                                            rs2.getLong("contract_item_id"),
-                                            rs2.getString("description"),
-                                            rs2.getBigDecimal("quantity"),
-                                            rs2.getString("type"),
-                                            rs2.getString("linking"),
-                                            rs2.getBigDecimal("total_current_balance")
-                                    )
-                            );
-
-                            reserveResponse = new ReserveDTOResponse(
-                                    null,
-                                    directExecutionID,
-                                    description,
-                                    rs.getString("comment"),
-                                    rs.getString("completedName"),
-                                    rs.getLong("id_team"),
-                                    rs.getString("team_name"),
-                                    rs.getString("deposit_name"),
-                                    items
-                            );
-                        }
-
-                        response.add(reserveResponse);
-                        return reserveResponse;
-                    }
-            );
+                    response.add(new ReserveDTOResponse(
+                            null,
+                            directExecutionID,
+                            description,
+                            rs.getComment(),
+                            rs.getCompletedName(),
+                            rs.getTeamId(),
+                            rs.getTeamName(),
+                            rs.getNotificationCode(),
+                            rs.getDepositName(),
+                            items
+                    ));
+                }
+            }
         }
 
         return ResponseEntity.ok(response);
@@ -251,6 +165,9 @@ public class StockistInstallationService {
             long contractItemId = item.getContractItemId();
 
             for (var materialReserve : item.getMaterials()) {
+                if(!materialReserve.getTruckStockControl()) {
+                    continue;
+                }
 
                 // Quantidade disponível do item (saldo contratual)
                 BigDecimal available = contractItemsQuantitativeRepository.getTotalBalance(contractItemId);
@@ -531,10 +448,10 @@ public class StockistInstallationService {
         // marca itens da execução direta como finalizados
         namedJdbc.update(
                 """
-                UPDATE direct_execution_item
-                SET item_status = :status
-                WHERE direct_execution_id = :directExecutionId
-                """,
+                        UPDATE direct_execution_item
+                        SET item_status = :status
+                        WHERE direct_execution_id = :directExecutionId
+                        """,
                 Map.of(
                         "status", ReservationStatus.FINISHED,
                         "directExecutionId", directExecution.getDirectExecutionId()
@@ -688,7 +605,9 @@ public class StockistInstallationService {
 //        }
     }
 
-    /** Helper para converter objetos de resultado JDBC em Long de forma segura. */
+    /**
+     * Helper para converter objetos de resultado JDBC em Long de forma segura.
+     */
     private static Long toLong(Object value) {
         if (value == null) return null;
         if (value instanceof Number n) return n.longValue();

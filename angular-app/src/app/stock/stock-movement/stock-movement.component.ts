@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {catchError, tap, throwError} from 'rxjs';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
@@ -13,7 +13,7 @@ import {MaterialService} from '../services/material.service';
 import {StockService} from '../services/stock.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {Steps} from 'primeng/steps';
-import {MenuItem} from 'primeng/api';
+import {ConfirmationService, MenuItem} from 'primeng/api';
 import {TableModule} from 'primeng/table';
 import {Skeleton} from 'primeng/skeleton';
 import {Toast} from 'primeng/toast';
@@ -21,14 +21,22 @@ import {DropdownModule} from 'primeng/dropdown';
 import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 import {ActivatedRoute, Router} from '@angular/router';
 import {InputText} from 'primeng/inputtext';
-import {Button, ButtonDirective} from 'primeng/button';
+import {Button} from 'primeng/button';
 import {ToggleButton} from 'primeng/togglebutton';
-import {SpeedDial} from 'primeng/speeddial';
 import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {Toolbar} from 'primeng/toolbar';
 import {QRCodeModule} from 'angularx-qrcode';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+import {AuthService} from '../../core/auth/auth.service';
+import {Message} from 'primeng/message';
+import {Divider} from 'primeng/divider';
+import {Tooltip} from 'primeng/tooltip';
+import {Dialog} from 'primeng/dialog';
+import {ZXingScannerModule} from '@zxing/ngx-scanner';
+import {BarcodeFormat} from '@zxing/library';
+import {StyleClass} from 'primeng/styleclass';
+import {ConfirmPopup, ConfirmPopupModule} from 'primeng/confirmpopup';
 
 @Component({
     selector: 'app-stock-movement',
@@ -49,16 +57,21 @@ import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/l
         PrimeBreadcrumbComponent,
         InputText,
         ToggleButton,
-        SpeedDial,
         Button,
         IconField,
         InputIcon,
         Toolbar,
         QRCodeModule,
         LoadingOverlayComponent,
-        ButtonDirective,
         ReactiveFormsModule,
+        Message,
+        Divider,
+        Tooltip,
+        Dialog,
+        ZXingScannerModule,
+        ConfirmPopupModule,
     ],
+    providers:[ConfirmationService],
     templateUrl: './stock-movement.component.html',
     styleUrl: './stock-movement.component.scss'
 })
@@ -69,21 +82,6 @@ export class StockMovementComponent implements OnInit {
     rows: number = 15;
     loading: boolean = true;
     loadingOverlay: boolean = false;
-
-    items: MenuItem[] = [
-        {
-            label: 'Selecionar itens',
-            routerLink: '/estoque/movimentar-estoque'
-        },
-        {
-            label: 'Pendente de Aprovação',
-            routerLink: '/estoque/movimentar-estoque-pendente'
-        },
-        {
-            label: 'Aprovado',
-            routerLink: '/estoque/movimentar-estoque-aprovado'
-        },
-    ];
     deposits: Deposit[] = [];
     materials: MaterialStockResponse[] = [];
 
@@ -95,15 +93,15 @@ export class StockMovementComponent implements OnInit {
     openSupplierModal: boolean = false;
     formSubmitted: boolean = false;
     isMobile = false;
-    scannerMode = false;
+    items: MenuItem[] | undefined = undefined;
 
     private validate(): boolean {
         for (let item of this.sendMovement) {
             if (item.inputQuantity.length === 0) {
                 this.utils.showMessage("A quantidade não pode ser igual a 0 ou estar inválida.", 'warn', 'Atenção');
                 return false; // Aqui retorna e sai da função
-            } else if (item.quantityPackage.length === 0) {
-                this.utils.showMessage("A quantidade por embalagem não pode ser igual a 0 ou estar inválida.", 'warn', 'Atenção');
+            } else if (item.requestUnit !== item.buyUnit && item.quantityPackage.length === 0) {
+                this.utils.showMessage("A quantidade por embalagem não pode ser igual a 0 ou estar inválida no item " + item.description, 'warn', 'Atenção');
                 return false; // Aqui também retorna e sai da função
             }
         }
@@ -118,18 +116,43 @@ export class StockMovementComponent implements OnInit {
         private titleService: Title,
         protected router: Router,
         protected route: ActivatedRoute,
+        private authService: AuthService,
+        private confirmationService: ConfirmationService
     ) {
     }
 
     ngOnInit() {
-        this.isMobile = window.innerWidth <= 768;
+        this.isMobile = window.innerWidth <= 1024;
         this.titleService.setTitle("Movimentar Estoque");
-        this.stockService.getDeposits().subscribe(d => this.deposits = d);
-        const depositId = this.route.snapshot.queryParamMap.get('almoxarifado')
-        if(depositId) {
-            this.currentDeposit = this.deposits.find(d => d.idDeposit === Number(depositId));
-        }
-        this.scannerEnabled = this.isMobile;
+        this.items = [
+            {
+                label: this.isMobile ? 'Escanear itens' : 'Selecionar itens',
+                routerLink: '/estoque/movimentar-estoque'
+            },
+            {
+                label: 'Pendente de Aprovação',
+                routerLink: '/estoque/movimentar-estoque-pendente'
+            },
+            {
+                label: 'Aprovado',
+                routerLink: '/estoque/movimentar-estoque-aprovado'
+            },
+        ];
+
+        const depositId = this.route.snapshot.queryParamMap.get('almoxarifado');
+        this.stockService.getDeposits().subscribe({
+            next: (d) => {
+                this.deposits = d;
+                if (depositId) {
+                    this.currentDeposit = this.deposits.find(d => d.idDeposit === Number(depositId));
+                    this.loadMaterials();
+                    this.scannerEnabled = this.isMobile;
+                }
+            },
+            error: (err) => {
+                this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, "error");
+            }
+        });
     }
 
     loadMaterials() {
@@ -161,36 +184,40 @@ export class StockMovementComponent implements OnInit {
         }
     }
 
-    toggleSelection(item: MaterialStockResponse) {
+    addMovement(item: MaterialStockResponse, toggle: boolean) {
         const index = this.sendMovement.findIndex(s => s.materialStockId === item.materialStockId);
 
         if (index === -1) {
             const newMovement: StockMovementDTO = {
                 materialStockId: item.materialStockId,
                 materialName: item.materialName,
+                barcode: item.barcode,
                 description: '',
                 buyUnit: item.buyUnit,
                 requestUnit: item.requestUnit,
                 inputQuantity: '',
                 priceTotal: '',
                 quantityPackage: '',
-                supplierId: '',
-                totalQuantity: 0
+                totalQuantity: '',
+                hidden: false,
+                invalid: false,
             };
             this.sendMovement.push(newMovement);
-        } else {
+        } else if (toggle) {
             this.sendMovement = this.sendMovement.filter(movement => movement.materialStockId !== item.materialStockId);
         }
     }
 
+    successMessage = false;
     submitDataMovement(): void {
         this.stockService.stockMovement(this.sendMovement).pipe(
-            tap(response => {
-                this.utils.showMessage(response, 'success', 'Movimentação salva');
+            tap(() => {
                 this.formSubmitted = false;
                 this.closeConfirmationModal();
-                this.closeMovementModal();
-                this.clearSelection();
+                this.openMovementModal = false;
+                this.sendMovement = [];
+                this.showFinishOption = false;
+                this.successMessage = true;
             }),
             catchError(err => {
                 this.utils.showMessage(err.error.message, 'error', 'Erro ao salvar movimentação');
@@ -201,23 +228,14 @@ export class StockMovementComponent implements OnInit {
         ).subscribe();
     }
 
-
-    closeMovementModal() {
-        this.openMovementModal = false;
-    }
-
     handleOpenSupplierModal() {
         this.openSupplierModal = true;
     }
-
 
     closeConfirmationModal() {
         this.openConfirmationModal = false;
     }
 
-    clearSelection(): void {
-        this.sendMovement = [];
-    }
 
     closeSupplierModal() {
         this.openSupplierModal = false;
@@ -264,15 +282,35 @@ export class StockMovementComponent implements OnInit {
     }
 
 
-    submitFormMovement(form: NgForm) {
+    // submitFormMovement(form: NgForm) {
+    //     this.formSubmitted = true;
+    //
+    //     if (form.invalid) {
+    //         console.log("invalid form");
+    //         return;
+    //     }
+    //
+    //     this.handleConfirmMovement();
+    // }
+    @ViewChild('confirmPopup') confirmPopup!: ConfirmPopup;
+    submitFormMovement(form: NgForm, event: Event) {
         this.formSubmitted = true;
 
         if (form.invalid) {
-            console.log("invalid form");
+            console.log('invalid form');
             return;
         }
+        this.confirm(event);
+    }
 
-        this.handleConfirmMovement();
+    confirm(event: Event) {
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: 'Deseja confirmar a movimentação de estoque?',
+            accept: () => {
+                this.submitDataMovement();
+            },
+        });
     }
 
     formatValue(event: Event, index: number) {
@@ -308,7 +346,7 @@ export class StockMovementComponent implements OnInit {
                 case 'ML':
                     movement.quantityPackage = '1';
                     this.calculateQuantity(movement);
-                    movement.totalQuantity = Number(movement.inputQuantity);
+                    movement.totalQuantity = Number(movement.inputQuantity).toString();
                     movement.requestUnit = this.filterUnits(movement.buyUnit.toUpperCase())[0];
                     console.log(movement);
                     break;
@@ -322,30 +360,7 @@ export class StockMovementComponent implements OnInit {
     }
 
     getOption(movement: StockMovementDTO) {
-        switch (movement.buyUnit.toUpperCase()) {
-            case 'UN':
-            case 'PÇ':
-            case 'PAR':
-            case 'KIT':
-            case 'M':
-            case 'CM':
-            case 'KG':
-            case 'T':
-            case 'L':
-            case 'ML':
-                return false;
-            default:
-                return true;
-        }
-    }
-
-    shouldShowTooltip(buyUnit
-                      :
-                      string
-    ):
-        boolean | string {
-        const unitsWithTooltip = ["CX", "ROLO"];
-        return buyUnit && unitsWithTooltip.includes(buyUnit.toUpperCase());
+        return movement.buyUnit !== movement.requestUnit;
     }
 
     getTooltipText(buyUnit
@@ -364,34 +379,10 @@ export class StockMovementComponent implements OnInit {
     }
 
     calculateQuantity(movement: StockMovementDTO) {
-        switch (movement.requestUnit.toUpperCase()) {
-            case 'UN':
-            case 'PÇ':
-                movement.totalQuantity = Number(movement.inputQuantity) * Number(movement.quantityPackage);
-                break;
-            case 'CM':
-            case 'KG':
-                if (movement.buyUnit === 'CM' || movement.buyUnit === 'KG') {
-                    movement.totalQuantity = Number(movement.inputQuantity) * 100;
-                } else if (movement.buyUnit === 'Rolo') {
-                    movement.totalQuantity = Number(movement.inputQuantity) * (Number(movement.quantityPackage) * 100);
-                } else {
-                    movement.totalQuantity = Number(movement.inputQuantity);
-                }
-                break;
-            case 'M':
-            case 'T':
-                if (movement.buyUnit === 'CM' || movement.buyUnit === 'KG') {
-                    movement.totalQuantity = Number(movement.inputQuantity) / 100;
-                } else if (movement.buyUnit === 'Rolo') {
-                    movement.totalQuantity = Number(movement.inputQuantity) * Number(movement.quantityPackage);
-                } else {
-                    movement.totalQuantity = Number(movement.inputQuantity);
-                }
-                break;
-            default:
-                movement.totalQuantity = Number(movement.inputQuantity);
-                break;
+        if (['CX', 'PCT', 'M', 'SACO', 'L', 'PAR', 'ROLO'].includes(movement.buyUnit) && ['UN', 'PÇ', 'CM', 'KG', 'ML', 'M'].includes(movement.requestUnit)) {
+            movement.totalQuantity = (Number(movement.inputQuantity) * Number(movement.quantityPackage)).toString();
+        } else {
+            movement.totalQuantity = Number(movement.inputQuantity).toString();
         }
     }
 
@@ -430,8 +421,17 @@ export class StockMovementComponent implements OnInit {
     skeleton: any[] = Array.from({length: 7}).map((_, i) => `Item #${i}`);
     onlySelected = false;
     scannerEnabled = false;
-    showQrCode= false;
+    formats = [
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.ITF
+    ];
+    qrExpired = false;
+    showQrCode = false;
     missingBarcodesCount: number = 0;
+    endpoint = "";
+    showFormMobile = false;
 
     protected isChecked(materialStockId: number) {
         return this.sendMovement.findIndex(s => s.materialStockId === materialStockId) !== -1;
@@ -453,6 +453,146 @@ export class StockMovementComponent implements OnInit {
     }
 
     checkBarcode() {
+        this.loadingOverlay = true;
+        this.qrExpired = false;
+        this.authService.getQrcodeToken().subscribe({
+            next: (data) => {
+                const origin = window.location.origin;
+                const redirect = `/estoque/movimentar-estoque?almoxarifado=${this.currentDeposit?.idDeposit}`;
+                this.endpoint =
+                    `${origin}/auth/login` +
+                    `?token=${data.token}` +
+                    `&redirect=${encodeURIComponent(redirect)}`;
+                console.log(this.endpoint);
+
+                let expiresIn = data.expiresIn--;
+                const interval = setInterval(() => {
+                    expiresIn--;
+                    if (expiresIn <= 0) {
+                        this.qrExpired = true;
+                        clearInterval(interval);
+                    }
+                }, 1000);
+            },
+            error: (err) => {
+                this.loadingOverlay = false;
+                this.utils.showMessage(
+                    err.error.message ?? err.error.error ?? err.error,
+                    'error'
+                );
+            },
+            complete: () => {
+                this.loadingOverlay = false;
+                this.showQrCode = true;
+            }
+        })
         this.showQrCode = true
     }
+
+
+    scanState: ScanState = 'idle';
+    private isProcessing = false;
+
+    protected onScanSuccess(code: string) {
+        if (this.isProcessing) {
+            return;
+        }
+
+        this.isProcessing = true;
+        this.scanState = 'processing';
+
+        this.materialService
+            .findByBarCodeAndDepositId(code, this.currentDeposit?.idDeposit ?? 0)
+            .subscribe({
+                next: (material) => {
+                    this.utils.playSound('bip');
+                    this.addMovement(material, false);
+
+                    this.scanState = 'idle';
+                    this.isProcessing = false;
+                },
+                error: () => {
+                    this.scanState = 'error';
+                    this.utils.playSound('error');
+                    this.utils.showMessage(
+                        'O código lido não está cadastrado.',
+                        'error',
+                        'Código inválido'
+                    );
+
+                    setTimeout(() => {
+                        this.scanState = 'idle';
+                        this.isProcessing = false;
+                    }, 1200);
+                }
+            });
+    }
+
+    handleContinue() {
+        const message: string = this.isMobile ? 'Para prosseguir, pelo menos um item deve ser escaneado com sucesso.'
+            : 'Para prosseguir, pelo menos um item deve ser selecionado.';
+
+        if (this.sendMovement.length === 0) {
+            this.utils.showMessage(message, 'warn', 'Atenção');
+            return;
+        }
+
+        if (this.isMobile) {
+            this.showFormMobile = true;
+            this.scannerEnabled = false;
+        } else {
+            this.openMovementModal = true;
+        }
+    }
+
+    selectDeposit() {
+        if (this.isMobile) {
+            this.loading = false;
+            this.scannerEnabled = true;
+        } else {
+            this.loadMaterials();
+        }
+    }
+
+    showFinishOption = false;
+
+    hideMovement(i: number) {
+        const movement = this.sendMovement[i];
+        const lastHidden = this.sendMovement.filter(m => !m.hidden).length === 1;
+
+        if (movement.inputQuantity === "" || Number(movement.inputQuantity) <= 0) {
+            this.sendMovement[i].invalid = true;
+        } else if (movement.priceTotal === "" || Number(movement.priceTotal) <= 0) {
+            this.sendMovement[i].invalid = true;
+        } else if (this.getOption(movement) && (movement.quantityPackage === "" || Number(movement.quantityPackage) <= 0)) {
+            this.sendMovement[i].invalid = true;
+        } else if (lastHidden) {
+            this.sendMovement[i].hidden = true;
+            this.showFormMobile = false;
+            this.showFinishOption = true;
+        } else {
+            this.sendMovement[i].hidden = true;
+        }
+    }
+
+    deleteMovement(i: number) {
+        this.sendMovement.splice(i, 1);
+    }
+
+    reShowItems() {
+        this.sendMovement.forEach((item) => {
+            item.hidden = false;
+        });
+        this.showFinishOption = false;
+        this.showFormMobile = true;
+    }
+
+    restart() {
+        this.currentDeposit = undefined;
+        this.materials = [];
+        this.successMessage = false;
+        this.loading = true;
+    }
 }
+
+type ScanState = 'idle' | 'processing' | 'error';

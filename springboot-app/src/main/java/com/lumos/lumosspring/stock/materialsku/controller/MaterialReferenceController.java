@@ -48,5 +48,8 @@ public class MaterialReferenceController {
         return materialReferenceService.findAllForImportPreMeasurement();
     }
 
-
+    @GetMapping("/get-catalogue")
+    public ResponseEntity<?> getCatalogue() {
+        return materialReferenceService.getCatalogue();
+    }
 }

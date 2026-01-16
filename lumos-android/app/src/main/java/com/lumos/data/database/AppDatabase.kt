@@ -73,7 +73,7 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
         (PreMeasurementInstallationStreet::class),
         (PreMeasurementInstallationItem::class),
     ],
-    version = 17,
+    version = 18,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -731,6 +731,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_17_18 = object : Migration(17,18) {
+            override fun migrate(db: SupportSQLiteDatabase){
+                db.execSQL("drop table if exists material_stock")
+                db.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS material_stock (
+                            materialId INTEGER NOT NULL,
+                            materialStockId INTEGER NOT NULL,
+                            materialName TEXT NOT NULL,
+                            stockQuantity TEXT NOT NULL,
+                            stockAvailable TEXT NOT NULL,
+                            requestUnit TEXT NOT NULL,
+                            type TEXT NOT NULL,
+                            truckStockControl INTEGER NOT NULL,
+                            parentMaterialId INTEGER NOT NULL,
+                            materialBaseName TEXT NOT NULL,
+                            materialPower TEXT,
+                            materialBrand TEXT,
+                            PRIMARY KEY (materialId, materialStockId)
+                        );
+                """.trimIndent()
+                )
+                db.execSQL("alter table MaintenanceStreetItem add column truckStockControl INTEGER not null default 1")
+            }
+        }
+
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -755,6 +781,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_14_15,
                     MIGRATION_15_16,
                     MIGRATION_16_17,
+                    MIGRATION_17_18,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

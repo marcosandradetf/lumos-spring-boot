@@ -43,4 +43,5 @@ data class MaintenanceStreetItemDTO(
     val maintenanceStreetId: String,
     val materialStockId: Long,
     val quantityExecuted: BigDecimal,
+    val truckStockControl: Boolean = true,
 )

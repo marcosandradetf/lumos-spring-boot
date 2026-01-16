@@ -19,7 +19,7 @@ interface DirectExecutionApi {
     ): Response<List<DirectExecutionDTOResponse>>
     
     @Multipart
-    @POST("api/mobile/execution/upload-direct-execution")
+    @POST("api/mobile/execution/save-street-installation")
     suspend fun submitDirectExecutionStreet(
         @Part photo: MultipartBody.Part,
         @Part("execution") execution: RequestBody

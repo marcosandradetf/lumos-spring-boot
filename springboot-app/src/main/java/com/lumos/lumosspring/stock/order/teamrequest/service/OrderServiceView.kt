@@ -49,4 +49,9 @@ class OrderServiceView(
 
         return ResponseEntity.ok().body(response)
     }
+
+    fun getOrderHistoryByStatus(teamId: Long, status: String, contractReferenceItemId: Long) : ResponseEntity<Any> {
+        val response = orderMaterialRepository.getOrderHistoryByStatus(teamId, status, contractReferenceItemId)
+        return ResponseEntity.ok().body(response)
+    }
 }

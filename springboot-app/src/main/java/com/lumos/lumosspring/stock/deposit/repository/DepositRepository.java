@@ -35,4 +35,7 @@ public interface DepositRepository extends CrudRepository<Deposit, Long> {
         where deposit_id_deposit = :id
     """)
     Boolean hasTeam(@Param("id") Long id);
+
+    @Query("select id_deposit from deposit")
+    List<Long> findAllDepositIds();
 }

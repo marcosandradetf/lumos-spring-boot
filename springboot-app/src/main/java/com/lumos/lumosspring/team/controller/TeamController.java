@@ -36,4 +36,12 @@ public class TeamController {
         return teamService.updateTeam(team);
     }
 
+    @PostMapping("/teams/send-stock-notification")
+    public ResponseEntity<?> sendStockNotification(
+            @RequestParam String description,
+            @RequestParam String notificationCode,
+            @RequestParam String materialName) {
+        return teamService.sendStockNotification(description, notificationCode, materialName);
+    }
+
 }

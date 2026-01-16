@@ -21,29 +21,31 @@ class MaintenanceQueryRepository(
 ) {
     fun debitStock(items: List<MaintenanceStreetItemDTO>, maintenanceStreetId: UUID) {
         for (item in items) {
-            materialHistoryRepository.save(
-                MaterialHistory(
-                    materialHistoryId = UUID.randomUUID(),
-                    materialStockId = item.materialStockId,
-                    maintenanceStreetId = maintenanceStreetId,
-                    usedQuantity = item.quantityExecuted,
-                    usedDate = Instant.now(),
-                    isNewEntry = true
+            if (item.truckStockControl) {
+                materialHistoryRepository.save(
+                    MaterialHistory(
+                        materialHistoryId = UUID.randomUUID(),
+                        materialStockId = item.materialStockId,
+                        maintenanceStreetId = maintenanceStreetId,
+                        usedQuantity = item.quantityExecuted,
+                        usedDate = Instant.now(),
+                        isNewEntry = true
+                    )
                 )
-            )
 
-            jdbcTemplate.update(
-                """
-                update material_stock
-                set stock_quantity = stock_quantity - :quantityExecuted,
-                stock_available = stock_available - :quantityExecuted
-                where material_id_stock = :materialStockId
-            """.trimIndent(),
-                mapOf(
-                    "materialStockId" to item.materialStockId,
-                    "quantityExecuted" to item.quantityExecuted
+                jdbcTemplate.update(
+                    """
+                    update material_stock
+                    set stock_quantity = stock_quantity - :quantityExecuted,
+                    stock_available = stock_available - :quantityExecuted
+                    where material_id_stock = :materialStockId
+                """.trimIndent(),
+                    mapOf(
+                        "materialStockId" to item.materialStockId,
+                        "quantityExecuted" to item.quantityExecuted
+                    )
                 )
-            )
+            }
         }
     }
 

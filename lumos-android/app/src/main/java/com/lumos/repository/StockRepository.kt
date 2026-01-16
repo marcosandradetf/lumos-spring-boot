@@ -44,6 +44,14 @@ class StockRepository(
         return db.stockDao().getMaterialsFlow()
     }
 
+    fun getMaterialsTruckStockControlFlow(): Flow<List<MaterialStock>> {
+        return db.stockDao().getMaterialsTruckStockControlFlow()
+    }
+
+    fun getMaterialsOrder(): Flow<List<MaterialStock>> {
+        return db.stockDao().getMaterialsOrderFlow()
+    }
+
     fun getDepositsFlow(): Flow<List<Deposit>> {
         return db.stockDao().getDepositsFlow()
     }
@@ -53,14 +61,8 @@ class StockRepository(
     }
 
     suspend fun callGetStock(): RequestResult<Unit> {
-        val uuid = secureStorage.getUserUuid()
-        val teamId = secureStorage.getTeamId()
-
         val response = ApiExecutor.execute {
-            stockApi.getStock(
-                uuid ?: throw IllegalStateException("UUID do usuário atual não encontrado"),
-                if (teamId == 0L) null else teamId
-            )
+            stockApi.getStock()
         }
 
         return when (response) {

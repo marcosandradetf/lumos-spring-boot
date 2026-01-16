@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.directexecution.repository
 
+import com.lumos.lumosspring.contract.dto.ItemResponseDTO
 import com.lumos.lumosspring.directexecution.model.*
 import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
@@ -56,6 +57,26 @@ interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Lo
     """
     )
     fun getByDirectExecutionId(directExecutionId: Long): List<InstallationRow>
+
+    @Query("""
+        select
+            ci.contract_item_id,
+            cri.description,
+            dei.measured_item_quantity as quantity,
+            cri.type,
+            cri.linking,
+            ci.contracted_quantity - ci.quantity_executed as current_balance,
+            cri.contract_reference_item_id,
+            cri.truck_stock_control
+        from direct_execution_item dei
+        inner join contract_item ci on ci.contract_item_id = dei.contract_item_id
+        inner join contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
+        where dei.direct_execution_id = :directExecutionId
+            and dei.item_status = :itemStatus
+            and cri.type not in ('SERVIÇO', 'PROJETO', 'MANUTENÇÃO','EXTENSÃO DE REDE', 'TERCEIROS', 'CEMIG')
+        order by description
+    """)
+    fun getItemsByDirectExecutionId(directExecutionId: Long, itemStatus: String): List<ItemResponseDTO>
 
 }
 
