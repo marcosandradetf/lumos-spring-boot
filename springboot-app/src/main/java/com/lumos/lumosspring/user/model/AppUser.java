@@ -153,6 +153,14 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
         isNewEntry = newEntry;
     }
 
+    public Boolean getSupport() {
+        return support;
+    }
+
+    public void setSupport(Boolean support) {
+        this.support = support;
+    }
+
     @Override
     public UUID getId() {
         return userId;

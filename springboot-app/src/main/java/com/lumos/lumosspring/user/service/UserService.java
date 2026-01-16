@@ -392,6 +392,7 @@ public class UserService {
         user.setCpf(u.cpf());
         user.setDateOfBirth(date);
         user.setStatus(u.status());
+        user.setSupport(false);
         user = userRepository.save(user);
 
         for (Role role : userRoles) {
