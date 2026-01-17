@@ -61,11 +61,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -86,10 +83,8 @@ import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
 import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
-import com.lumos.utils.Utils.sanitizeDecimalInput
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.UUID
 
 @Composable
@@ -178,38 +173,38 @@ fun StreetMaintenanceContent(
         }
     }
 
-    val cableItem by remember(selectedIds, stockData) {
-        derivedStateOf {
-            stockData
-                .find {
-                    it.materialStockId in selectedIds && it.materialName.contains(
-                        "cabo",
-                        ignoreCase = true
-                    )
-                }
-                ?.materialStockId
-                ?.let { id -> items.find { it.materialStockId == id } }
-        }
-    }
+//    val cableItem by remember(selectedIds, stockData) {
+//        derivedStateOf {
+//            stockData
+//                .find {
+//                    it.materialStockId in selectedIds && it.materialName.contains(
+//                        "cabo",
+//                        ignoreCase = true
+//                    )
+//                }
+//                ?.materialStockId
+//                ?.let { id -> items.find { it.materialStockId == id } }
+//        }
+//    }
 
-    val screws by remember(selectedIds, stockData) {
-        derivedStateOf {
-            val screwIds = stockData
-                .filter {
-                    it.materialStockId in selectedIds &&
-                            it.materialName.contains("parafuso", ignoreCase = true)
-                }
-                .map { it.materialStockId }
-
-            items.filter { it.materialStockId in screwIds }
-        }
-    }
+//    val screws by remember(selectedIds, stockData) {
+//        derivedStateOf {
+//            val screwIds = stockData
+//                .filter {
+//                    it.materialStockId in selectedIds &&
+//                            it.materialName.contains("parafuso", ignoreCase = true)
+//                }
+//                .map { it.materialStockId }
+//
+//            items.filter { it.materialStockId in screwIds }
+//        }
+//    }
 
     var lastPowerError by remember { mutableStateOf<String?>(null) }
     var currentSupplyError by remember { mutableStateOf<String?>(null) }
     var reasonError by remember { mutableStateOf<String?>(null) }
-    var cableError by remember { mutableStateOf<String?>(null) }
-    val screwErrors = remember { mutableStateMapOf<Long, String?>() }
+//    var cableError by remember { mutableStateOf<String?>(null) }
+//    val screwErrors = remember { mutableStateMapOf<Long, String?>() }
     var loadingCoordinates by remember { mutableStateOf(false) }
     var address by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -504,7 +499,6 @@ fun StreetMaintenanceContent(
                                                 }
                                             }
                                         }
-
                                         Spacer(Modifier.height(4.dp))
                                     }
 
@@ -563,12 +557,7 @@ fun StreetMaintenanceContent(
                                                 maintenanceId = maintenanceId.toString(),
                                                 maintenanceStreetId = maintenanceStreetId.toString(),
                                                 materialStockId = material.materialStockId,
-                                                quantityExecuted = if (
-                                                    material.materialName.contains(
-                                                        "cabo",
-                                                        ignoreCase = true
-                                                    ) || isScrew
-                                                ) BigDecimal.ZERO.toString() else BigDecimal.ONE.toString(),
+                                                quantityExecuted = BigDecimal.ONE.toString(),
                                                 truckStockControl = material.truckStockControl
                                             )
                                         } else {
@@ -841,138 +830,6 @@ fun StreetMaintenanceContent(
                     )
                 }
 
-                if (cableItem != null) {
-                    var text by remember {
-                        mutableStateOf(TextFieldValue("0"))
-                    }
-                    Text(
-                        text = "Informações referente a cabo",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(
-                        isError = cableError != null,
-                        supportingText = {
-                            if (cableError != null) {
-                                Text(
-                                    text = cableError ?: "",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        trailingIcon = { Text("cm") },
-                        value = text,
-                        onValueChange = { newValue ->
-                            cableError = null
-                            val sanitized = sanitizeDecimalInput(newValue.text)
-                            val quantityInMeters: BigDecimal = try {
-                                BigDecimal(sanitized).divide(
-                                    BigDecimal(100),
-                                    2,
-                                    RoundingMode.HALF_UP
-                                )
-                            } catch (e: NumberFormatException) {
-                                BigDecimal.ZERO
-                            }
-                            text = TextFieldValue(sanitized, TextRange(sanitized.length))
-
-                            items = items.map {
-                                if (it.materialStockId == cableItem?.materialStockId)
-                                    it.copy(quantityExecuted = quantityInMeters.toString())
-                                else it
-                            }
-                        },
-                        label = { Text("Quantidade de cabo (cm)", fontSize = 14.sp) },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary
-                        ),
-                        textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
-                            fontSize = 14.sp
-                        ),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                    )
-                }
-                if (screws.isNotEmpty()) {
-                    Text(
-                        text = "Informações referente a parafuso",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    screws.forEach { screw ->
-                        var text by remember(screw.materialStockId) {
-                            mutableStateOf(TextFieldValue("0"))
-                        }
-
-                        val reference =
-                            stockData.find { it.materialStockId == screw.materialStockId }
-
-                        OutlinedTextField(
-                            isError = screwErrors[screw.materialStockId] != null,
-                            supportingText = {
-                                screwErrors[screw.materialStockId]?.let { errorMsg ->
-                                    Text(
-                                        text = errorMsg,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            },
-                            trailingIcon = { Text(reference?.requestUnit?.lowercase() ?: "un") },
-                            value = text,
-                            onValueChange = { newValue ->
-                                val sanitized = sanitizeDecimalInput(newValue.text)
-                                text = TextFieldValue(sanitized, TextRange(sanitized.length))
-
-                                if (sanitized.toDoubleOrNull() == null || (sanitized.toDoubleOrNull()
-                                        ?: 0.0) <= 0.0
-                                ) {
-                                    screwErrors[screw.materialStockId] =
-                                        "Informe uma quantidade válida"
-                                } else {
-                                    screwErrors[screw.materialStockId] = null
-                                }
-
-                                items = items.map {
-                                    if (it.materialStockId == screw.materialStockId)
-                                        it.copy(
-                                            quantityExecuted = BigDecimal(sanitized).toString()
-                                        )
-                                    else it
-                                }
-                            },
-                            label = {
-                                Text(
-                                    "Quantidade de parafuso",
-                                    fontSize = 14.sp
-                                )
-                            },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth(0.7f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary
-                            ),
-                            textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
-                                fontSize = 14.sp
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                        )
-                    }
-                }
                 Text(
                     text = "Comentários adiconais",
                     style = MaterialTheme.typography.titleMedium
@@ -1046,34 +903,6 @@ fun StreetMaintenanceContent(
                             error = true
                         }
 
-                        if (cableItem != null) {
-                            val material =
-                                stockData.find { it.materialStockId == cableItem?.materialStockId }
-
-                            if (BigDecimal(cableItem?.quantityExecuted) == BigDecimal.ZERO) {
-                                cableError = "Informe a quantidade"
-                                error = true
-                            } else if (BigDecimal(material?.stockAvailable) < BigDecimal(cableItem?.quantityExecuted)) {
-                                cableError = "Quantidade informada indisponível"
-                                error = true
-                            }
-                        }
-
-                        screws.forEach { screw ->
-                            val item = items.find { it.materialStockId == screw.materialStockId }
-                            val material =
-                                stockData.find { it.materialStockId == screw.materialStockId }
-
-                            if (item?.quantityExecuted == null || BigDecimal(item.quantityExecuted) == BigDecimal.ZERO) {
-                                screwErrors[screw.materialStockId] = "Informe a quantidade"
-                                error = true
-                            } else if (BigDecimal(material?.stockAvailable) < BigDecimal(screw.quantityExecuted)) {
-                                cableError = "Quantidade informada indisponível"
-                                error = true
-                            } else {
-                                screwErrors[screw.materialStockId] = null
-                            }
-                        }
 
                         if (error) return@Button
 

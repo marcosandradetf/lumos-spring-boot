@@ -19,7 +19,10 @@ public class GroupService {
     @Autowired
     private TypeRepository typeRepository;
 
-    @Cacheable("getAllGroups")
+    @Cacheable(
+            value = "getAllGroups",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public List<MaterialGroup> findAll() {
         return groupRepository.findAllByOrderByIdGroupAsc();
     }
@@ -42,7 +45,7 @@ public class GroupService {
         return ResponseEntity.ok(this.findAll());
     }
 
-    public ResponseEntity<?> update(Long typeId , String groupName) {
+    public ResponseEntity<?> update(Long typeId, String groupName) {
         var group = groupRepository.findById(typeId).orElse(null);
         if (group == null) {
             return ResponseEntity.notFound().build();

@@ -56,7 +56,10 @@ public class UserService {
         this.teamRepository = teamRepository;
     }
 
-    @Cacheable("getAllUsers")
+    @Cacheable(
+            value = "getAllUsers",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public ResponseEntity<List<UserResponse>> findAll() {
         List<AppUser> appUsers = userRepository.findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(
                 Utils.INSTANCE.getCurrentTenantId(),
@@ -96,7 +99,10 @@ public class UserService {
     }
 
 
-    @Cacheable("getUserByUUID")
+    @Cacheable(
+            value = "getUserByUUID",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public ResponseEntity<UserResponse> find(String uuid) {
         var user = userRepository.findByUserId(UUID.fromString(uuid));
         if (user.isEmpty()) {

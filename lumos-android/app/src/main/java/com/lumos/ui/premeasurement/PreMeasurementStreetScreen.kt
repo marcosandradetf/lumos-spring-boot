@@ -367,11 +367,11 @@ fun PreMeasurementStreetScreen(
                         },
                         isError = triedToSubmit && preMeasurementViewModel.street?.lastPower.isNullOrBlank(),
                         singleLine = true,
-                        label = { Text("Potência anterior") },
+                        label = { Text("Potência atual") },
                         supportingText = {
                             if (triedToSubmit && preMeasurementViewModel.street?.lastPower.isNullOrBlank()) {
                                 Text(
-                                    "Informe a potência anterior",
+                                    "Informe a potência atual",
                                     color = MaterialTheme.colorScheme.error
                                 )
                             }

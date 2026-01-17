@@ -45,7 +45,10 @@ public class DepositService {
     @Autowired
     private MaterialStockViewRepository materialStockViewRepository;
 
-    @Cacheable("getAllDeposits")
+    @Cacheable(
+            value = "getAllDeposits",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public List<DepositResponse> findAll() {
         return depositRepository.findAllByOrderByIdDeposit(Utils.INSTANCE.getCurrentTenantId());
     }
@@ -134,9 +137,9 @@ public class DepositService {
 
         namedJdbc.update(
                 """
-                        delete from material_stock
-                        where deposit_id = :deposit_id
-                """,
+                                delete from material_stock
+                                where deposit_id = :deposit_id
+                        """,
                 Map.of("deposit_id", id)
         );
 

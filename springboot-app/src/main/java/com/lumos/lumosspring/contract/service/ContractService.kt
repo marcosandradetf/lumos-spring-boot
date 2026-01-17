@@ -32,7 +32,6 @@ class ContractService(
 ) {
 
 
-
     @Transactional
     fun deleteById(contractId: Long): ResponseEntity<Any> {
         try {
@@ -253,7 +252,10 @@ class ContractService(
                 })
     }
 
-    @Cacheable("GetContractsForPreMeasurement")
+    @Cacheable(
+        value = ["GetContractsForPreMeasurement"],
+        key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     fun getContractsForPreMeasurement(): ResponseEntity<Any> {
         data class ContractForPreMeasurementDTO(
             val contractId: Long,
@@ -315,7 +317,10 @@ class ContractService(
     }
 
 
-    @Cacheable("GetItemsForMobPreMeasurement")
+    @Cacheable(
+        value = ["GetItemsForMobPreMeasurement"],
+        key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     fun getItemsForMob(): ResponseEntity<List<PContractReferenceItemDTO>> {
         val items = contractReferenceItemRepository.findAllByTenantId(Utils.getCurrentTenantId())
             .map {

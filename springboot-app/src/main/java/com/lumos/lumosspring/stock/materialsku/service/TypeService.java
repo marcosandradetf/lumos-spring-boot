@@ -29,15 +29,24 @@ public class TypeService {
         this.materialStockViewRepository = materialStockViewRepository;
     }
 
-    @Cacheable("getAllTypes")
+    @Cacheable(
+            value = "getAllTypes",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public List<MaterialType> findAll() {
         return typeRepository.findAllByOrderByIdTypeAsc();
     }
 
-    record sypTypeResponse(Long subtypeId, String subtypeName) {}
-    public record TypeResponse(Long typeId, String typeName, List<sypTypeResponse> subtypes) {}
+    record sypTypeResponse(Long subtypeId, String subtypeName) {
+    }
 
-    @Cacheable("getAllTypes")
+    public record TypeResponse(Long typeId, String typeName, List<sypTypeResponse> subtypes) {
+    }
+
+    @Cacheable(
+            value = "getAllTypes",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public List<TypeResponse> findAllTypeSubtype() {
         var types = typeRepository.findAllTypeSubtype();
 
@@ -64,7 +73,9 @@ public class TypeService {
     }
 
     public ResponseEntity<?> findUnitsByTypeId(Long typeId) {
-        record UnitResponse(List<TypeRepository.TypeUnitResponse> buyUnits, List<TypeRepository.TypeUnitResponse> requestUnits) {}
+        record UnitResponse(List<TypeRepository.TypeUnitResponse> buyUnits,
+                            List<TypeRepository.TypeUnitResponse> requestUnits) {
+        }
 
         var units = typeRepository.findUnitsByTypeId(typeId);
         var response = new UnitResponse(

@@ -20,7 +20,10 @@ public class CompanyService {
     @Autowired
     private MinioService minioService;
 
-    @Cacheable("getAllCompanies")
+    @Cacheable(
+            value = "getAllCompanies",
+            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+    )
     public Iterable<Company> findAll() {
         return companyRepository.findAllByTenantId(Utils.INSTANCE.getCurrentTenantId());
     }
