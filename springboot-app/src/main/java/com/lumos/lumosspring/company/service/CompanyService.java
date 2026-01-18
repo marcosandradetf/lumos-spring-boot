@@ -25,7 +25,7 @@ public class CompanyService {
             key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public Iterable<Company> findAll() {
-        return companyRepository.findAllByTenantId(Utils.INSTANCE.getCurrentTenantId());
+        return companyRepository.findAllByTenantId(Utils.getCurrentTenantId());
     }
 
     public Company findById(Long id) {
