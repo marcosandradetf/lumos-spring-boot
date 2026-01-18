@@ -36,6 +36,7 @@
               </label>
 
               <input pInputText
+                     (input)="authError = null"
                      name="username"
                      [(ngModel)]="username"
                      required
@@ -54,6 +55,7 @@
               </label>
 
               <p-password
+                (input)="authError = null"
                 name="password"
                 [(ngModel)]="password"
                 required
@@ -283,4 +285,6 @@
       </p-accordion>
     </div>
   </div>
+
+  <p-toast></p-toast>
 </section>

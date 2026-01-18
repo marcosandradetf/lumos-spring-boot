@@ -14,6 +14,7 @@ import {ConfirmationService, MessageService} from 'primeng/api';
 import {StockService} from '../services/stock.service';
 import {MaterialService} from '../services/material.service';
 import {UtilsService} from '../../core/service/utils.service';
+import {StyleClass} from 'primeng/styleclass';
 
 
 @Component({
@@ -22,7 +23,7 @@ import {UtilsService} from '../../core/service/utils.service';
     templateUrl: './material-page.component.html',
     styleUrls: ['./material-page.component.scss'],
     providers: [],
-    imports: [CommonModule, ReactiveFormsModule, ButtonDirective, LoadingOverlayComponent, Toast, TableModule, InputText, DropdownModule, PrimeBreadcrumbComponent, FormsModule] // Adicionando os módulos aqui
+    imports: [CommonModule, ReactiveFormsModule, ButtonDirective, LoadingOverlayComponent, Toast, TableModule, InputText, DropdownModule, PrimeBreadcrumbComponent, FormsModule, StyleClass] // Adicionando os módulos aqui
 })
 export class MaterialPageComponent implements OnInit {
     materials: any[] = [];

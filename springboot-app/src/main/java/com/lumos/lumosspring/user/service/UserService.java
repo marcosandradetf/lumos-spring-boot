@@ -62,7 +62,7 @@ public class UserService {
     )
     public ResponseEntity<List<UserResponse>> findAll() {
         List<AppUser> appUsers = userRepository.findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(
-                Utils.INSTANCE.getCurrentTenantId(),
+                Utils.getCurrentTenantId(),
                 true,
                 false
         );

@@ -67,6 +67,7 @@ class PreMeasurementViewModel(
                     Routes.PRE_MEASUREMENT_PROGRESS -> {
                         preMeasurementStreetId = null
                         street = null
+                        hasPosted = false
                         streetItems = emptyList()
                     }
                 }

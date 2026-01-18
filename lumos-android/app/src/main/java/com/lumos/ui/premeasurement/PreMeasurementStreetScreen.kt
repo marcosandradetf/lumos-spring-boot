@@ -281,7 +281,6 @@ fun PreMeasurementStreetScreen(
                         onClick = {
                             navController.popBackStack()
                         },
-                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -292,11 +291,6 @@ fun PreMeasurementStreetScreen(
                             disabledContentColor = MaterialTheme.colorScheme.onPrimary,
                         )
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
                         Text(
                             "Voltar a tela anterior"
                         )
@@ -317,7 +311,6 @@ fun PreMeasurementStreetScreen(
                                 preMeasurementViewModel.nextStep = false
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),

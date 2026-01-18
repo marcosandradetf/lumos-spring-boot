@@ -2,7 +2,7 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Title } from '@angular/platform-browser';
+import {Meta, Title} from '@angular/platform-browser';
 import { map } from 'rxjs';
 
 import { AuthService } from '../../auth.service';
@@ -109,9 +109,10 @@ export class LoginComponent implements OnInit {
     constructor(
         private authService: AuthService,
         private router: Router,
-        private titleService: Title,
+        private title: Title,
         protected utils: UtilsService,
         private route: ActivatedRoute,
+        private meta: Meta
     ) {
         // se já estiver logado, manda pra home
         this.authService.isLoggedIn$.pipe(
@@ -123,7 +124,20 @@ export class LoginComponent implements OnInit {
     }
 
     async ngOnInit(): Promise<void> {
-        this.titleService.setTitle('Lumos - Login');
+        this.title.setTitle(
+            'Lumos – Sistema de Gestão de Iluminação Pública | Acesso'
+        );
+
+        this.meta.addTags([
+            {
+                name: 'description',
+                content: 'Lumos é um sistema de gestão operacional para iluminação pública, com controle de contratos, estoque, equipes, ordens de serviço e relatórios.'
+            },
+            {
+                name: 'keywords',
+                content: 'iluminação pública, sistema de gestão, contratos públicos, estoque, ordem de serviço, manutenção, iluminação LED'
+            }
+        ]);
 
         // redirect e token (seu fluxo atual)
         const redirect = this.route.snapshot.queryParamMap.get('redirect');
@@ -188,8 +202,14 @@ export class LoginComponent implements OnInit {
     }
 
     // ================= CTA / MODAIS =================
-    openDemoModal() { this.demoModal = true; }
-    openSubscriptionModal() { this.subscriptionModal = true; }
+    openDemoModal() {
+        this.utils.showMessage('A versão de demonstração estará disponível em breve, aguarde!', 'info', 'Lumos SaaS');
+    }
+
+    openSubscriptionModal() {
+        window.open('https://api.whatsapp.com/send?phone=5531996808280&text=Olá, tenho interesse em saber mais sobre o Lumos.',
+            '_blank');
+    }
 
     startDemo() {
         this.demoModal = false;

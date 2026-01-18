@@ -2,33 +2,62 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Lumos</title>
+
+  <title>Lumos – Sistema de Gestão de Iluminação Pública</title>
+
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <!-- Tamanhos comuns de ícones -->
+  <!-- SEO -->
+  <meta name="description"
+        content="Lumos é um sistema de gestão operacional para iluminação pública, com controle de contratos, estoque, equipes, ordens de serviço, relatórios e execução em campo." />
+
+  <link rel="canonical" href="https://lumos.thryon.com.br/" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Lumos – Sistema de Gestão de Iluminação Pública" />
+  <meta property="og:description" content="Plataforma de gestão operacional para contratos, estoque, equipes e ordens de serviço em iluminação pública." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://lumos.thryon.com.br/" />
+  <meta property="og:image" content="https://lumos.thryon.com.br/og-image.png" />
+
+  <!-- PWA / Icons -->
+  <link rel="icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="public/icon-192.png">
   <link rel="icon" type="image/png" sizes="16x16" href="public/icon-192.png">
-  <!-- Apple touch icon -->
   <link rel="apple-touch-icon" sizes="180x180" href="public/apple-touch-icon.png">
-  <!-- Máscara de ícone (para Android, por exemplo) -->
-  <link rel="icon" type="image/png" sizes="192x192" href="public/icon-192-maskable.png">
-  <!-- Favicon para dispositivos Android (192x192) -->
   <link rel="icon" type="image/png" sizes="192x192" href="public/icon-192.png">
-  <!-- Favicon para dispositivos Android (512x512) -->
   <link rel="icon" type="image/png" sizes="512x512" href="public/icon-512.png">
-  <!-- Máscara de ícone para Android (512x512) -->
-  <link rel="icon" type="image/png" sizes="512x512" href="public/icon-512-maskable.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="public/icon-192-maskable.png" purpose="maskable">
+  <link rel="icon" type="image/png" sizes="512x512" href="public/icon-512-maskable.png" purpose="maskable">
 
+  <meta name="theme-color" content="#0f172a">
 
-
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
 </head>
+
 <body class="mat-typography">
-  <app-root></app-root>
+<app-root></app-root>
+
+<!-- Schema.org -->
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Lumos",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "description": "Sistema de gestão operacional para iluminação pública, com controle de contratos, estoque, equipes, ordens de serviço e execução de serviços.",
+    "url": "https://lumos.thryon.com.br",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL"
+    }
+  }
+</script>
 </body>
 </html>

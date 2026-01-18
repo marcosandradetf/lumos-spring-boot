@@ -65,10 +65,11 @@ export class MaterialFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
+
         this.form = this.fb.group({
             materialId: [null],
-            materialBaseName: [{value: '', disabled: false}],
-            materialName: [{value: '', disabled: false}],
+            materialBaseName: [''],
+            materialName: [''],
             materialType: [null, Validators.required],
             materialSubtype: [
                 null,
@@ -88,19 +89,20 @@ export class MaterialFormComponent implements OnInit {
             buyUnit: [null, Validators.required],
             requestUnit: [null, Validators.required],
             truckStockControl: [true, Validators.required],
-            contractItems: [[], Validators.required], // multiselect
+            contractItems: [[], Validators.required],
         });
 
+        // ✅ Apenas um subscribe
         this.form.valueChanges.subscribe(() => {
             this.generateMaterialName();
         });
 
         this.title.setTitle('Cadastrar Material');
+
         this.contractService.getContractReferenceItems().subscribe(items => {
             this.items = items.filter(i =>
-                !['SERVIÇO', 'CEMIG', 'PROJETO', 'MANUTENÇÃO'].includes(
-                    (i.type ?? '').toUpperCase()
-                )
+                !['SERVIÇO', 'CEMIG', 'PROJETO', 'MANUTENÇÃO']
+                    .includes((i.type ?? '').toUpperCase())
             );
         });
 
@@ -116,47 +118,20 @@ export class MaterialFormComponent implements OnInit {
         if (materialId) {
             this.materialService.findById(materialId).subscribe({
                 next: (data) => {
-                    this.form = this.fb.group({
-                        materialId: [data.materialId],
-                        materialBaseName: [{value: data.materialBaseName, disabled: false}],
-                        materialName: [{value: data.materialBaseName, disabled: false}],
-                        materialType: [data.materialType, Validators.required],
-                        materialSubtype: [
-                            data.materialSubtype,
-                            this.subtypeValidatorFactory(() => this.availableSubtypes)
-                        ],
-                        materialFunction: [data.materialFunction],
-                        materialModel: [data.materialModel],
-                        materialBrand: [data.materialBrand, Validators.required],
-                        materialAmps: [data.materialAmps],
-                        materialLength: [data.materialLength],
-                        materialWidth: [data.materialWidth],
-                        materialPower: [data.materialPower],
-                        materialGauge: [data.materialGauge],
-                        materialWeight: [data.materialWeight],
-                        barcode: [data.barcode, [Validators.required, this.barcodeValidator]],
-                        inactive: [data.inactive],
-                        buyUnit: [data.buyUnit, Validators.required],
-                        requestUnit: [data.requestUnit, Validators.required],
-                        truckStockControl: [data.truckStockControl, Validators.required],
-                        contractItems: [data.contractItems, Validators.required], // multiselect
-                    });
+                    this.form.patchValue(data);
                 },
-                error: (err) => {
-                    this.loading = false;
+                error: () => {
                     this.utils.showMessage(
-                        'Nenhum material foi encontrado. Você pode continuar o cadastro normalmente.',
+                        'Nenhum material foi encontrado.',
                         'error',
                         'Busca por Código'
                     );
                 },
                 complete: () => {
-                    this.generateMaterialName();
                     this.loading = false;
                 }
             });
         }
-
     }
 
     lastTypeId = 0;
@@ -292,72 +267,44 @@ export class MaterialFormComponent implements OnInit {
 
 
     protected findMaterial(value: string) {
-        // const input = event.target as HTMLInputElement;
-        // const value = input.value;
-
         if (![8, 12, 13, 14].includes(value.length)) {
             return;
         }
 
+        const v = this.form.getRawValue();
         this.loading = true;
         this.materialService.findByBarCode(value).subscribe({
             next: (data) => {
-                this.form = this.fb.group({
-                    materialId: [data.materialId],
-                    materialBaseName: [{value: data.materialBaseName, disabled: false}],
-                    materialName: [{value: data.materialBaseName, disabled: false}],
-                    materialType: [data.materialType, Validators.required],
-                    materialSubtype: [
-                        data.materialSubtype,
-                        this.subtypeValidatorFactory(() => this.availableSubtypes)
-                    ],
-                    materialFunction: [data.materialFunction],
-                    materialModel: [data.materialModel],
-                    materialBrand: [data.materialBrand, Validators.required],
-                    materialAmps: [data.materialAmps],
-                    materialLength: [data.materialLength],
-                    materialWidth: [data.materialWidth],
-                    materialPower: [data.materialPower],
-                    materialGauge: [data.materialGauge],
-                    materialWeight: [data.materialWeight],
-                    barcode: [data.barcode, [Validators.required, this.barcodeValidator]],
-                    inactive: [data.inactive],
-                    buyUnit: [data.buyUnit, Validators.required],
-                    requestUnit: [data.requestUnit, Validators.required],
-                    truckStockControl: [data.truckStockControl, Validators.required],
-                    contractItems: [data.contractItems, Validators.required], // multiselect
-                });
-            },
-            error: (err) => {
-                this.loading = false;
-                const v = this.form.getRawValue();
-                if (v.materialId !== null) {
+                if (v.materialId === null) {
                     this.form = this.fb.group({
-                        materialId: [null],
-                        materialBaseName: [{value: '', disabled: false}],
-                        materialName: [{value: '', disabled: false}],
-                        materialType: [null, Validators.required],
+                        materialId: [data.materialId],
+                        materialBaseName: [{value: data.materialBaseName, disabled: false}],
+                        materialName: [{value: data.materialBaseName, disabled: false}],
+                        materialType: [data.materialType, Validators.required],
                         materialSubtype: [
-                            null,
+                            data.materialSubtype,
                             this.subtypeValidatorFactory(() => this.availableSubtypes)
                         ],
-                        materialFunction: [null],
-                        materialModel: [null],
-                        materialBrand: [null, Validators.required],
-                        materialAmps: [null],
-                        materialLength: [null],
-                        materialWidth: [null],
-                        materialPower: [null],
-                        materialGauge: [null],
-                        materialWeight: [null],
-                        barcode: [value, [Validators.required, this.barcodeValidator]],
-                        inactive: [false],
-                        buyUnit: [null, Validators.required],
-                        requestUnit: [null, Validators.required],
-                        contractItems: [[], Validators.required], // multiselect
+                        materialFunction: [data.materialFunction],
+                        materialModel: [data.materialModel],
+                        materialBrand: [data.materialBrand, Validators.required],
+                        materialAmps: [data.materialAmps],
+                        materialLength: [data.materialLength],
+                        materialWidth: [data.materialWidth],
+                        materialPower: [data.materialPower],
+                        materialGauge: [data.materialGauge],
+                        materialWeight: [data.materialWeight],
+                        barcode: [data.barcode, [Validators.required, this.barcodeValidator]],
+                        inactive: [data.inactive],
+                        buyUnit: [data.buyUnit, Validators.required],
+                        requestUnit: [data.requestUnit, Validators.required],
+                        truckStockControl: [data.truckStockControl, Validators.required],
+                        contractItems: [data.contractItems, Validators.required], // multiselect
                     });
                 }
-
+            },
+            error: () => {
+                this.loading = false;
                 this.utils.showMessage(
                     'Nenhum material foi encontrado com este código de barras. Você pode continuar o cadastro normalmente.',
                     'info',
@@ -365,14 +312,22 @@ export class MaterialFormComponent implements OnInit {
                 );
             },
             complete: () => {
-                this.generateMaterialName();
                 this.loading = false;
-                this.utils.showMessage(
-                    'Já existe um material cadastrado com este código de barras. Caso precise, você pode ajustar as informações antes de salvar.',
-                    'info',
-                    'Busca por código de barras'
-                );
-
+                if (v.materialId === null) {
+                    this.generateMaterialName();
+                    this.utils.showMessage(
+                        'Já existe um material cadastrado com este código de barras. Caso precise, você pode ajustar as informações antes de salvar.',
+                        'info',
+                        'Busca por código de barras'
+                    );
+                } else {
+                    this.form.patchValue({barcode: ''});
+                    this.utils.showMessage(
+                        'Já existe um material cadastrado com este código de barras. Não será permitido utilizar, caso necessário modifique o material antes de utilizar este código de barras..',
+                        'info',
+                        'Busca por código de barras'
+                    );
+                }
             }
         });
 
@@ -406,6 +361,7 @@ export class MaterialFormComponent implements OnInit {
 
     qrExpired = false;
     endpoint = "";
+
     checkBarcode() {
         this.loading = true;
         this.qrExpired = false;

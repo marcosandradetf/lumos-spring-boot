@@ -53,7 +53,9 @@
   </div>
 
   <!-- Desktop Table -->
-  <p-table [value]="filteredMaterials" [loading]="loading" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+  <p-table
+    pStyleClass="hidden md:block"
+    [value]="filteredMaterials" [loading]="loading" [paginator]="true" [rows]="10" responsiveLayout="scroll">
     <ng-template pTemplate="header">
       <tr>
         <th>Código de Barras</th>
