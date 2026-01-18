@@ -4,13 +4,15 @@ root = true
 [*]
 charset = utf-8
 indent_style = space
-indent_size = 4
+indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
 [*.ts]
 ij_typescript_use_double_quotes = false
+indent_size = 4
 
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+indent_size = 4

@@ -292,12 +292,13 @@ $$
             from material m;
 
             insert into material_contract_reference_item
-                (material_id, contract_reference_item_id)
-            select distinct m.id_material, mcri.contract_reference_item_id
+            (material_id, contract_reference_item_id)
+            select distinct m.id_material, cri.contract_reference_item_id
             from material_contract_reference_item mcri
                      join material m on m.material_name = mcri.material_name
                      join contract_reference_item cri on cri.description = mcri.description
-            where m.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c';
+            where m.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c'
+                and cri.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c';
 
             insert into contract_item_dependency(contract_item_reference_id,
                                                  contract_item_reference_id_dependency,

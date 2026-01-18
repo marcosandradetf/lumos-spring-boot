@@ -12,6 +12,12 @@ export const routes: Routes = [
     },
     // end
 
+    // doc
+    {
+        path: 'documentacao',
+        loadComponent: () => import('./doc/doc.component').then(m => m.DocComponent)
+    },
+
     {
         path: 'acesso-negado/:section',
         loadComponent: () => import('./shared/components/no-access/no-access.component').then(n => n.NoAccessComponent),

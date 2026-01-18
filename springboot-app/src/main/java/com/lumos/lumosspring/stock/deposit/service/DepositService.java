@@ -150,12 +150,11 @@ public class DepositService {
 
     public ResponseEntity<?> getStockists() {
         List<StockistModel> stockistsDto = new ArrayList<>();
-        Iterable<Stockist> allStockists = stockistRepository.findAll();
+        List<Stockist> allStockists = stockistRepository.findAllByTenantId(
+                Utils.INSTANCE.getCurrentTenantId()
+        );
 
-        List<Stockist> allStockistsList = new ArrayList<>();
-        allStockists.forEach(allStockistsList::add);
-
-        List<Stockist> distinctStockists = allStockistsList.stream()
+        List<Stockist> distinctStockists = allStockists.stream()
                 .collect(Collectors.toMap(
                         Stockist::getUserId,
                         Function.identity(),

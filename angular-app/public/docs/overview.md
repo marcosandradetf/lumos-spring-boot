@@ -4,7 +4,6 @@ Bem-vindo ao **Lumos**, a plataforma de **gestão operacional completa para ilum
 
 O Lumos foi projetado para centralizar **contratos, estoque, equipes e execução em campo**, garantindo **rastreabilidade**, **controle operacional** e **dados confiáveis** para a tomada de decisão.
 
-
 > 🎯 **Objetivo do sistema**  
 > Reduzir perdas operacionais, aumentar a produtividade em campo e assegurar conformidade contratual.
 
@@ -14,11 +13,11 @@ O Lumos foi projetado para centralizar **contratos, estoque, equipes e execuçã
 
 Com o Lumos, sua operação passa a contar com:
 
-- ✔ Controle de acesso por perfil  
-- ✔ Gestão de estoque central e móvel (caminhões)  
-- ✔ Execução de serviços com evidências e geolocalização  
-- ✔ Relatórios operacionais e fotográficos  
-- ✔ Acompanhamento de saldo contratual em tempo real  
+- ✔ Controle de acesso por perfil
+- ✔ Gestão de estoque central e móvel (caminhões)
+- ✔ Execução de serviços com evidências e geolocalização
+- ✔ Relatórios operacionais e fotográficos
+- ✔ Acompanhamento de saldo contratual em tempo real
 
 Tudo integrado em **um único fluxo operacional**, do planejamento à execução.
 
@@ -140,9 +139,9 @@ Se você é um usuário novo ou está em período de avaliação:
 ## 🧠 Checklist de domínio do sistema
 
 > Se você domina:
-> - Gestão de usuários  
-> - Movimentação de estoque  
-> - Execução de OS com evidências  
-> - Relatórios operacionais e fotográficos  
+> - Gestão de usuários
+> - Movimentação de estoque
+> - Execução de OS com evidências
+> - Relatórios operacionais e fotográficos
 >
 > 👉 Você domina o Lumos.

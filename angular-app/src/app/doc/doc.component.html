@@ -1,0 +1,74 @@
+<section class="min-h-screen bg-surface-50 dark:bg-surface-950 px-4 py-8">
+  <!-- BRAND -->
+  <div class="flex flex-col items-center gap-3 text-center mb-2">
+    <img ngSrc="/public/icon-192.png"
+         width="48"
+         height="48"
+         alt="Lumos"/>
+
+    <h1 class="text-2xl font-semibold tracking-tight">
+      Lumos<span class="text-primary">™</span>
+    </h1>
+  </div>
+
+  <div class="hidden lg:grid lg:grid-cols-[280px_1fr] gap-8" #doc>
+
+    <!-- SIDEBAR -->
+    <aside class="sticky top-8 h-fit">
+      <p-card>
+        <h3 class="text-sm font-medium mb-4">Documentação</h3>
+
+        <input pInputText
+               class="w-full mb-4"
+               placeholder="Buscar..."
+               [(ngModel)]="docQuery"
+               (input)="filterDocs()"/>
+
+        <ul class="space-y-1 text-sm">
+          <li *ngFor="let doc of filteredDocs"
+              (click)="selectDoc(doc)"
+              class="cursor-pointer px-3 py-2 rounded-lg
+                   hover:bg-surface-200 dark:hover:bg-surface-800"
+              [class.bg-surface-200]="doc.id === activeDoc"
+              [class.dark:bg-surface-800]="doc.id === activeDoc">
+            {{ doc.title }}
+            <div class="text-xs text-surface-500">{{ doc.group }}</div>
+          </li>
+        </ul>
+      </p-card>
+    </aside>
+
+    <!-- CONTENT -->
+    <main>
+      <p-card>
+        <h1 class="text-2xl font-semibold mb-2">
+          {{ activeDocTitle }}
+        </h1>
+        <p class="text-sm text-surface-500 mb-6">
+          {{ activeDocSubtitle }}
+        </p>
+
+        <div class="prose prose-slate dark:prose-invert max-w-none
+            prose-headings:scroll-mt-24
+            prose-h1:mb-6 prose-h2:mb-5 prose-h3:mb-4
+            prose-p:leading-relaxed
+            prose-ul:my-4 prose-li:my-1">
+
+          <markdown [data]="markdownContent"></markdown>
+        </div>
+      </p-card>
+    </main>
+
+  </div>
+  <div class="lg:hidden">
+    <p-accordion>
+      <p-accordionTab *ngFor="let doc of filteredDocs"
+                      header="{{ doc.title }}"
+                      (click)="selectDoc(doc)">
+        <div class="prose dark:prose-invert max-w-none">
+          <markdown [data]="markdownContent"></markdown>
+        </div>
+      </p-accordionTab>
+    </p-accordion>
+  </div>
+</section>

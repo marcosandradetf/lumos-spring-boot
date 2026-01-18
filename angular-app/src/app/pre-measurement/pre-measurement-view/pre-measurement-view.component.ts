@@ -144,12 +144,12 @@ export class PreMeasurementViewComponent implements OnInit {
   itemStatus(item: CheckBalanceRequest) {
     const totalBalance = Number(item.totalBalance);
     if (totalBalance < 0) {
-      return 'Sem Saldo';
+      return 'Indisponível';
     } else if (totalBalance < 10) {
-      return 'Saldo Baixo';
+      return 'Baixo';
     }
 
-    return 'Saldo Disponivel';
+    return 'Disponivel';
   }
 
   openConfirmation() {

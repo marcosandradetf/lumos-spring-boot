@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {MessageService} from 'primeng/api';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {BehaviorSubject, firstValueFrom, Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
 import {NgModel} from '@angular/forms';
@@ -235,7 +235,7 @@ export class UtilsService {
             const audio = new Audio('/public/bip.mp3');
             audio.play().catch(err => {
             });
-        }else if (type === 'error') {
+        } else if (type === 'error') {
             const audio = new Audio('/public/error.mp3');
             audio.play().catch(err => {
             });
@@ -280,6 +280,48 @@ export class UtilsService {
 
     clearToast(key: string) {
         this.messageService.clear(key);
+    }
+
+    abbreviate(name: string): string {
+        const tokens = name.split(" ")
+        const result: string[] = [];
+
+        let replace = false
+
+        for (let token in tokens) {
+            const word = token.toLowerCase()
+
+            if (word == "prefeitura") {
+                result.push("PREF.")
+                replace = true
+            } else if (word == "municipal" && replace) {
+                result.push("MUN.")
+            } else if (word == "de" && replace) {
+                // ignora "DE" após PREFEITURA ou MUNICIPAL
+            } else {
+                result.push(token)
+                replace = false
+            }
+        }
+
+        return result.join(" ").toUpperCase();
+    }
+
+    private cache = new Map<string, string>();
+
+
+    async loadFromAssets(file: string): Promise<string> {
+        // file ex.: "overview.md"
+        if (this.cache.has(file)) return this.cache.get(file)!;
+
+        const path = `/public/docs/${file}`;
+        const md = await firstValueFrom(this.http.get(path, { responseType: 'text' }));
+        this.cache.set(file, md);
+        return md;
+    }
+
+    clearCache() {
+        this.cache.clear();
     }
 
 }

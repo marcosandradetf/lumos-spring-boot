@@ -1,79 +1,286 @@
-@if (!loading) {
-  <section
-    class="flex flex-col justify-center lg:justify-evenly lg:flex-row lg:items-start h-[92.6vh] items-center"
-    [class.blur]="finished">
-    <div class="flex flex-col justify-center lg:mt-52">
-      <h3 class="poppins-regular">Lumos™</h3>
-      <p class="roboto-light select-none text-3xl leading-4">Insira suas credenciais<br><br>para acessar o sistema.</p>
-    </div>
-    <div class="flex justify-center">
-      <div class="card w-96 bg-base-100 shadow mt-20 mb-20 lg:mt-40 rounded">
-        <form #myForm="ngForm" (ngSubmit)="login(myForm)" class="card-body">
-          <div class="items-center
-         mt-2">
-            <label class="input input-bordered flex items-center gap-2 mb-2">
-              <span class="material-icons">person</span>
-              <input type="text" class="grow" placeholder="Usuário ou CPF" name="username"
+<section class="min-h-screen bg-surface-50 dark:bg-surface-950 px-4 py-8">
+  <div class="max-w-7xl mx-auto space-y-16">
+    <div class="grid gap-10 lg:grid-cols-2 items-start">
+
+      <!-- LOGIN -->
+      <p-card class="w-full max-w-md mx-auto shadow-xl rounded-3xl
+              bg-surface-0 dark:bg-surface-900">
+
+        <div class="flex flex-col gap-8 px-6 py-8">
+
+          <!-- BRAND -->
+          <div class="flex flex-col items-center gap-3 text-center">
+            <img ngSrc="/public/icon-192.png"
+                 width="48"
+                 height="48"
+                 alt="Lumos"/>
+
+            <h1 class="text-2xl font-semibold tracking-tight">
+              Lumos<span class="text-primary">™</span>
+            </h1>
+
+            <p class="text-sm text-surface-500 max-w-xs">
+              Gestão operacional em iluminação pública
+            </p>
+          </div>
+
+          <!-- FORM -->
+          <form #form="ngForm"
+                (ngSubmit)="login(form)"
+                class="flex flex-col gap-6">
+
+            <!-- USER -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-surface-500">
+                Usuário ou CPF
+              </label>
+
+              <input pInputText
+                     name="username"
                      [(ngModel)]="username"
-                     #user="ngModel"
-                     required/>
-            </label>
-            <div *ngIf="user.invalid && myForm.submitted ">
-              <div *ngIf="user.invalid && myForm.submitted">
-                <small *ngIf="user.errors?.['required']" class="text-red-600" #error>Preenchimento obrigatório.</small>
-              </div>
+                     required
+                     class="w-full rounded-xl
+                      bg-surface-100 dark:bg-surface-800
+                      border border-surface-200 dark:border-surface-700
+                      focus:ring-2 focus:ring-primary/30
+                      focus:border-primary
+                      transition-colors"/>
             </div>
-            <small class="text-red-600" #error></small>
-            <label class="input input-bordered flex items-center gap-2 mb-2">
-              <span class="material-icons">key</span>
-              <input [type]="showPassword ? 'text' : 'password'" placeholder="********" class="grow" name="password"
-                     [(ngModel)]="password"
-                     #pass="ngModel"
-                     required/>
-            </label>
-            <div *ngIf="pass.invalid && myForm.submitted">
-              <small *ngIf="pass.errors?.['required']" class="text-red-600">Preenchimento obrigatório.</small>
+
+            <!-- PASSWORD -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-surface-500">
+                Senha
+              </label>
+
+              <p-password
+                name="password"
+                [(ngModel)]="password"
+                required
+                [toggleMask]="true"
+                [feedback]="false"
+                fluid
+                inputStyleClass="w-full rounded-xl
+                      bg-surface-100 dark:bg-surface-800
+                      border border-surface-200 dark:border-surface-700
+                      focus:ring-2 focus:ring-primary/30
+                      focus:border-primary">
+              </p-password>
             </div>
-            <div class="flex my-4">
-              <input type="checkbox" class="checkbox mr-2" (change)="togglePasswordVisibility()"><span
-              class="poppins-light">Mostrar Senha</span>
+
+            <!-- ERROR -->
+            <p-message *ngIf="authError"
+                       severity="error"
+                       text="{{ authError }}">
+            </p-message>
+
+            <!-- PRIMARY CTA -->
+            <p-button
+              label="Entrar"
+              type="submit"
+              [loading]="authLoading"
+              [disabled]="!username || !password"
+              styleClass="w-full rounded-xl py-3 text-base
+                    bg-primary text-white
+                    hover:bg-primary-600
+                    transition-colors">
+            </p-button>
+
+            <!-- LINKS -->
+            <div class="flex justify-between items-center text-xs">
+
+              <button type="button"
+                      class="text-primary hover:underline"
+                      (click)="forgetPassword()">
+                Esqueci minha senha
+              </button>
+
+              <button type="button"
+                      class="text-surface-500 hover:text-primary transition-colors"
+                      (click)="openDemoModal()">
+                Acessar demonstração
+              </button>
+
             </div>
-          </div>
-          <div class="card-actions justify-end">
-            <button class="btn btn-primary w-full" type="submit">Entrar</button>
-          </div>
-          <div class="mt-5">
-            <p class="hover:underline cursor-pointer text-center select-none" (click)="forgetPassword(error)">Esqueceu a
-              senha?</p>
-          </div>
-        </form>
+
+            <!-- SECONDARY CTA -->
+            <p-button
+              label="Solicitar assinatura"
+              outlined
+              styleClass="w-full rounded-xl
+                    border-primary text-primary
+                    hover:bg-primary/10
+                    transition-colors"
+              type="button"
+              (click)="openSubscriptionModal()">
+            </p-button>
+
+          </form>
+        </div>
+      </p-card>
+
+      <!-- MARKETING -->
+      <div class="flex flex-col justify-between h-full">
+
+        <div class="space-y-6 max-w-xl mx-auto">
+
+          <h2 class="text-2xl font-semibold leading-snug">
+            Controle contratos, estoque, equipes e ordens de serviço
+            em um único fluxo operacional.
+          </h2>
+
+          <p class="text-surface-600 dark:text-surface-300">
+            O Lumos™ foi projetado para concessionárias e prestadores
+            de serviços de iluminação pública que precisam de
+            rastreabilidade, controle e dados confiáveis.
+          </p>
+
+          <ul class="grid sm:grid-cols-2 gap-4 text-sm">
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-users text-primary mt-1"></i>
+              Controle de acesso por perfil
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-sitemap text-primary mt-1"></i>
+              Gestão e confirmação de equipes em campo
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-box text-primary mt-1"></i>
+              Controle de estoque central
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-truck text-primary mt-1"></i>
+              Estoque móvel por caminhão
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-mobile text-primary mt-1"></i>
+              Aplicativo mobile com suporte offline (offline-first)
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-map-marker text-primary mt-1"></i>
+              Captura automática de coordenadas geográficas
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-camera text-primary mt-1"></i>
+              Pré-medições com registro fotográfico
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-pencil text-primary mt-1"></i>
+              Coleta de assinatura digital integrada ao aplicativo
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-file text-primary mt-1"></i>
+              Relatórios operacionais padrão
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-images text-primary mt-1"></i>
+              Relatórios fotográficos consolidados
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-wrench text-primary mt-1"></i>
+              Gestão de serviços de manutenção
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-bolt text-primary mt-1"></i>
+              Gestão de serviços de instalação
+            </li>
+
+            <li class="flex gap-2 items-start">
+              <i class="pi pi-briefcase text-primary mt-1"></i>
+              Gestão de contratos e saldos contratuais
+            </li>
+
+          </ul>
+
+        </div>
+
+        <!-- SCROLL CUE -->
+        <div class="mt-10 flex flex-col items-center gap-2
+            text-surface-500 dark:text-surface-400 cursor-pointer select-none" (click)="scrollToDocs()">
+
+          <span class="text-xs tracking-wide uppercase">
+            Continue explorando
+          </span>
+
+          <i class="pi pi-chevron-down animate-bounce text-lg"></i>
+        </div>
+
+
       </div>
+
     </div>
-  </section>
-  <dialog [open]="finished" class="modal">
-    <div class="modal-box rounded-xl shadow border">
-      <h3 class="font-bold text-lg mb-4 text-neutral">Nova senha enviada</h3>
 
-      <div class="w-full pb-2">
-        <p>{{ message }}</p>
-      </div>
+    <div class="hidden lg:grid lg:grid-cols-[280px_1fr] gap-8" #doc>
 
-      <div class="flex justify-end gap-4 pt-4">
-        <button
-          (click)="finished = false"
-          class="btn btn-primary px-12">
-          Ok
-        </button>
-      </div>
+      <!-- SIDEBAR -->
+      <aside class="sticky top-8 h-fit">
+        <p-card>
+          <h3 class="text-sm font-medium mb-4">Documentação</h3>
+
+          <input pInputText
+                 class="w-full mb-4"
+                 placeholder="Buscar..."
+                 [(ngModel)]="docQuery"
+                 (input)="filterDocs()"/>
+
+          <ul class="space-y-1 text-sm">
+            <li *ngFor="let doc of filteredDocs"
+                (click)="selectDoc(doc)"
+                class="cursor-pointer px-3 py-2 rounded-lg
+                   hover:bg-surface-200 dark:hover:bg-surface-800"
+                [class.bg-surface-200]="doc.id === activeDoc"
+                [class.dark:bg-surface-800]="doc.id === activeDoc">
+              {{ doc.title }}
+              <div class="text-xs text-surface-500">{{ doc.group }}</div>
+            </li>
+          </ul>
+        </p-card>
+      </aside>
+
+      <!-- CONTENT -->
+      <main>
+        <p-card>
+        <h1 class="text-2xl font-semibold mb-2">
+            {{ activeDocTitle }}
+          </h1>
+          <p class="text-sm text-surface-500 mb-6">
+            {{ activeDocSubtitle }}
+          </p>
+
+          <div class="prose prose-slate dark:prose-invert max-w-none
+            prose-headings:scroll-mt-24
+            prose-h1:mb-6 prose-h2:mb-5 prose-h3:mb-4
+            prose-p:leading-relaxed
+            prose-ul:my-4 prose-li:my-1">
+
+          <markdown [data]="markdownContent"></markdown>
+          </div>
+        </p-card>
+      </main>
+
     </div>
-  </dialog>
-}
-
-@if (loading) {
-  <section class="h-[92.6vh] flex items-center justify-center flex-col">
-    <p>Verificando suas credenciais</p>
-    <span class="loading loading-infinity loading-lg"></span>
-  </section>
-}
-
-<p-toast />
+    <div class="lg:hidden">
+      <p-accordion>
+        <p-accordionTab *ngFor="let doc of filteredDocs"
+                        header="{{ doc.title }}"
+                        (click)="selectDoc(doc)">
+          <div class="prose dark:prose-invert max-w-none">
+            <markdown [data]="markdownContent"></markdown>
+          </div>
+        </p-accordionTab>
+      </p-accordion>
+    </div>
+  </div>
+</section>

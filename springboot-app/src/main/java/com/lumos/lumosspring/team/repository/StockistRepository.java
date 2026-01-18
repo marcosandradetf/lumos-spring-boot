@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.team.repository;
 
 import com.lumos.lumosspring.team.model.Stockist;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +12,6 @@ import java.util.UUID;
 @Repository
 public interface StockistRepository extends CrudRepository<Stockist, Long> {
     List<Stockist> findAllByUserId(UUID userId);
+
+    List<Stockist> findAllByTenantId(UUID currentTenantId);
 }
