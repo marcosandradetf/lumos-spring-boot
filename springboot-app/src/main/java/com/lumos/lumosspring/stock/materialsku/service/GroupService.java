@@ -21,7 +21,7 @@ public class GroupService {
 
     @Cacheable(
             value = "getAllGroups",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public List<MaterialGroup> findAll() {
         return groupRepository.findAllByOrderByIdGroupAsc();

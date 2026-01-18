@@ -58,7 +58,7 @@ public class UserService {
 
     @Cacheable(
             value = "getAllUsers",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public ResponseEntity<List<UserResponse>> findAll() {
         List<AppUser> appUsers = userRepository.findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(
@@ -101,7 +101,7 @@ public class UserService {
 
     @Cacheable(
             value = "getUserByUUID",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public ResponseEntity<UserResponse> find(String uuid) {
         var user = userRepository.findByUserId(UUID.fromString(uuid));

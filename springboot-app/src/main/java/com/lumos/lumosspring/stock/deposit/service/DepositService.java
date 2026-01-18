@@ -47,7 +47,7 @@ public class DepositService {
 
     @Cacheable(
             value = "getAllDeposits",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public List<DepositResponse> findAll() {
         return depositRepository.findAllByOrderByIdDeposit(Utils.INSTANCE.getCurrentTenantId());

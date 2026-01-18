@@ -31,7 +31,7 @@ public class TypeService {
 
     @Cacheable(
             value = "getAllTypes",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public List<MaterialType> findAll() {
         return typeRepository.findAllByOrderByIdTypeAsc();
@@ -45,7 +45,7 @@ public class TypeService {
 
     @Cacheable(
             value = "getAllTypes",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public List<TypeResponse> findAllTypeSubtype() {
         var types = typeRepository.findAllTypeSubtype();

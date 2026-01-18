@@ -254,7 +254,7 @@ class ContractService(
 
     @Cacheable(
         value = ["GetContractsForPreMeasurement"],
-        key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+        key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     fun getContractsForPreMeasurement(): ResponseEntity<Any> {
         data class ContractForPreMeasurementDTO(
@@ -319,7 +319,7 @@ class ContractService(
 
     @Cacheable(
         value = ["GetItemsForMobPreMeasurement"],
-        key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+        key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     fun getItemsForMob(): ResponseEntity<List<PContractReferenceItemDTO>> {
         val items = contractReferenceItemRepository.findAllByTenantId(Utils.getCurrentTenantId())

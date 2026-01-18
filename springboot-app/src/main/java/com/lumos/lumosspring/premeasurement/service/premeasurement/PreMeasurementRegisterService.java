@@ -222,7 +222,7 @@ public class PreMeasurementRegisterService {
 
     @Cacheable(
             value = "getPreMeasurements",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public ResponseEntity<?> getAll(String status) {
 
@@ -235,7 +235,7 @@ public class PreMeasurementRegisterService {
 
     @Cacheable(
             value = "getPreMeasurementById",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public ResponseEntity<?> findById(long preMeasurementID) {
         return ResponseEntity.ok(viewRepository.findById(preMeasurementID));

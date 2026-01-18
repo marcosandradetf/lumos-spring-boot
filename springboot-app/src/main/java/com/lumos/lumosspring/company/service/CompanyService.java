@@ -22,7 +22,7 @@ public class CompanyService {
 
     @Cacheable(
             value = "getAllCompanies",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public Iterable<Company> findAll() {
         return companyRepository.findAllByTenantId(Utils.INSTANCE.getCurrentTenantId());

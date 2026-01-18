@@ -56,7 +56,7 @@ public class TeamService {
 
     @Cacheable(
             value = "getAllTeams",
-            key = "T(com.lumos.lumosspring.util.Utils).currentTenantId()"
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
     public ResponseEntity<?> getAll() {
         var teamsIterable = teamRepository.findAllByTenantId(Utils.INSTANCE.getCurrentTenantId());
