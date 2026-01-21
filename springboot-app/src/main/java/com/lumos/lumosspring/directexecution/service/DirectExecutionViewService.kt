@@ -20,7 +20,13 @@ class DirectExecutionViewService(
             throw IllegalArgumentException("Usuário não encontrado")
         }
 
-        val executions = viewRepository.getDirectExecutions(userUUID)
+        val executions = viewRepository.getDirectExecutions(operatorUUID = userUUID)
+
+        return ResponseEntity.ok().body(executions)
+    }
+
+    fun getDirectExecutionsV2(teamId: Long, status: String): ResponseEntity<List<DirectExecutionDTOResponse>> {
+        val executions = viewRepository.getDirectExecutions(teamId = teamId, status = status)
 
         return ResponseEntity.ok().body(executions)
     }

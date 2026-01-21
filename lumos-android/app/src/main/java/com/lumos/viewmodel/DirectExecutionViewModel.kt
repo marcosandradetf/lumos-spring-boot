@@ -16,7 +16,6 @@ import com.lumos.domain.service.CoordinatesService
 import com.lumos.navigation.Routes
 import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
-import com.lumos.utils.NavEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +27,7 @@ import java.util.UUID
 class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository?,
     private val contractRepository: ContractRepository?,
-    private val savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle? = null,
     mockContractor: String? = null,
     mockCreationDate: String? = null,
     mockStreets: List<DirectExecutionStreet> = emptyList(),
@@ -38,11 +37,11 @@ class DirectExecutionViewModel(
 ) : ViewModel() {
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError
-    var installationId by mutableStateOf(savedStateHandle.get<Long>("id"))
-    var creationDate by mutableStateOf(savedStateHandle.get<String>("creationDate"))
-    var contractId by mutableStateOf(savedStateHandle.get<String>("contractId")?.toLongOrNull())
-    var contractor by mutableStateOf(savedStateHandle.get<String>("contractor"))
-    var instructions by mutableStateOf(savedStateHandle.get<String>("instructions"))
+    var installationId by mutableStateOf(savedStateHandle?.get<Long>("id"))
+    var creationDate by mutableStateOf(savedStateHandle?.get<String>("creationDate"))
+    var contractId by mutableStateOf(savedStateHandle?.get<String>("contractId")?.toLongOrNull())
+    var contractor by mutableStateOf(savedStateHandle?.get<String>("contractor"))
+    var instructions by mutableStateOf(savedStateHandle?.get<String>("instructions"))
 
     var street by mutableStateOf<DirectExecutionStreet?>(null)
     var streets by mutableStateOf(mockStreets)
@@ -77,8 +76,8 @@ class DirectExecutionViewModel(
         setStreets()
         viewModelScope.launch {
             savedStateHandle
-                .getStateFlow("route_event", null as String?)
-                .collect { route ->
+                ?.getStateFlow("route_event", null as String?)
+                ?.collect { route ->
                     when (route) {
                         Routes.INSTALLATION_HOLDER -> {
                             installationId = null
@@ -103,17 +102,28 @@ class DirectExecutionViewModel(
                             responsible = null
                             signPath = null
                             signDate = null
-
                             sameStreet = false
+                            triedToSubmit = false
+
                             stockCount = 0
                         }
 
                         Routes.DIRECT_EXECUTION_HOME_SCREEN -> {
+                            alertModal = false
+                            hasPosted = false
+                            confirmModal = false
                             showSignScreen = false
                             showFinishForm = false
-                            hasPosted = false
+
                             street = null
                             streetItems = emptyList()
+
+                            hasResponsible = null
+                            responsible = null
+                            signPath = null
+                            signDate = null
+                            sameStreet = false
+                            triedToSubmit = false
 
                             setStreets()
                             loadExecutionData()
@@ -144,6 +154,31 @@ class DirectExecutionViewModel(
         }
     }
 
+    fun initializeExecutionSameStreet(currentAddress: String) {
+        alertModal = false
+        hasPosted = false
+        confirmModal = false
+        showSignScreen = false
+        showFinishForm = false
+
+        hasResponsible = null
+        responsible = null
+        signPath = null
+        signDate = null
+        sameStreet = false
+        triedToSubmit = false
+
+        street =
+            street?.copy(
+                address = currentAddress,
+                photoUri = null,
+                deviceId = UUID.randomUUID().toString(),
+                lastPower = null,
+                finishAt = null,
+                currentSupply = null,
+            )
+    }
+
 //    fun checkUpdate(currentVersion: Long, callback: (Long?, String?) -> Unit) {
 //        viewModelScope.launch(Dispatchers.IO) {
 //            _syncError.value = null
@@ -170,36 +205,6 @@ class DirectExecutionViewModel(
 //        }
 //    }
 
-    fun syncExecutions() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _syncError.value = null
-            try {
-                isLoading = true
-                when (val response = repository?.syncDirectExecutions()) {
-                    is RequestResult.Timeout -> _syncError.value =
-                        "A internet está lenta e não conseguimos buscar os dados mais recentes. Mas você pode continuar com o que tempos aqui — ou puxe para atualizar agora mesmo."
-
-                    is RequestResult.NoInternet -> _syncError.value =
-                        "Você já pode começar com o que temos por aqui! Assim que a conexão voltar, buscamos o restante automaticamente — ou puxe para atualizar agora mesmo."
-
-                    is ServerError -> _syncError.value = response.message
-                    is RequestResult.Success -> _syncError.value = null
-                    is RequestResult.UnknownError -> _syncError.value = null
-                    is RequestResult.SuccessEmptyBody -> {
-                        ServerError(204, "Resposta 204 inesperada")
-                    }
-
-                    null -> null
-                }
-            } catch (e: Exception) {
-                isLoading = false
-                _syncError.value = e.message ?: "Erro inesperado."
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
     private suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> {
         return withContext(Dispatchers.IO) {
             if (contractRepository?.checkBalance() == true) {
@@ -211,11 +216,11 @@ class DirectExecutionViewModel(
         }
     }
 
-    fun saveAndPost(coordinates: CoordinatesService) {
+    fun saveAndPost(coordinates: CoordinatesService?) {
         viewModelScope.launch {
             isLoading = true
             try {
-                val (lat, long) = coordinates.execute()
+                val (lat, long) = coordinates?.execute() ?: Pair(null, null)
                 if (lat != null && long != null) {
                     street = street?.copy(
                         latitude = lat,
@@ -265,35 +270,30 @@ class DirectExecutionViewModel(
     }
 
     fun loadExecutionData() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                isLoading = true
-                repository?.setStatus(installationId!!, "IN_PROGRESS")
-                reserves = getReservesOnce(installationId!!)
-            } catch (e: Exception) {
-                errorMessage = e.message
-            } finally {
-                isLoading = false
-            }
+        val id = installationId ?: run {
+            errorMessage = "Instalação inválida"
+            return
         }
-    }
 
-
-    fun countStock() {
         viewModelScope.launch {
             try {
-                val countStock = withContext(Dispatchers.IO) {
-                    repository?.countStock() ?: 0
+                isLoading = true
+
+                withContext(Dispatchers.IO) {
+                    repository?.setStatus(id, "IN_PROGRESS")
+                    getReservesOnce(id)
+                }.also { reservesIO ->
+                    reserves = reservesIO
                 }
 
-                stockCount = countStock
             } catch (e: Exception) {
-                errorMessage = e.message
+                errorMessage = e.message ?: "Erro inesperado"
             } finally {
                 isLoading = false
             }
         }
     }
+
 
     fun setStreets() {
         viewModelScope.launch {
@@ -301,9 +301,9 @@ class DirectExecutionViewModel(
             errorMessage = null
             try {
                 withContext(Dispatchers.IO) {
-                    streets = repository?.getStreets(installationId) ?: emptyList()
-                    println(installationId)
-                    println(streets)
+                    repository?.getStreets(installationId) ?: emptyList()
+                }.also {
+                    streets = it
                 }
             } catch (e: Exception) {
                 errorMessage = e.message ?: "Erro ao carregar as ruas da pré-medição"

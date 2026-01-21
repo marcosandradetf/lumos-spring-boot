@@ -72,4 +72,9 @@ public class MaterialStockViewController {
         return materialStockViewService.getTruckStock();
     }
 
+    @GetMapping("/mobile/stock/v3/get-truck-stock")
+    public ResponseEntity<?> getStockV3(@RequestParam(value = "teamId") Long teamId) {
+        return materialStockViewService.getTruckStock(teamId);
+    }
+
 }

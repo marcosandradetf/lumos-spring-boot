@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.android.gms.location.LocationServices
@@ -99,14 +100,15 @@ import com.lumos.utils.Utils.sanitizeDecimalInput
 import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.math.BigDecimal
+import java.util.UUID
 
 @Composable
 fun StreetMaterialScreen(
     directExecutionViewModel: DirectExecutionViewModel,
     context: Context,
     navController: NavHostController,
-    coordinates: CoordinatesService,
-    addressService: AddressService
+    coordinates: CoordinatesService? = null,
+    addressService: AddressService? = null
 ) {
     var currentAddress by remember { mutableStateOf("") }
     val contractor = directExecutionViewModel.contractor
@@ -118,27 +120,16 @@ fun StreetMaterialScreen(
         )
     }
 
-    LaunchedEffect(directExecutionViewModel.reserves.size) {
-        if (directExecutionViewModel.sameStreet) {
-            directExecutionViewModel.street =
-                directExecutionViewModel.street?.copy(
-                    address = currentAddress
-                )
-
-            val (lat, long) = coordinates.execute()
-            if (lat != null && long != null) {
-                directExecutionViewModel.street =
-                    directExecutionViewModel.street?.copy(
-                        latitude = lat,
-                        longitude = long
-                    )
-            }
-
-        } else if (directExecutionViewModel.reserves.isNotEmpty()) {
+    LaunchedEffect(directExecutionViewModel.reserves) {
+        if (directExecutionViewModel.reserves.isEmpty()) {
+            return@LaunchedEffect
+        } else if (directExecutionViewModel.sameStreet) {
+            directExecutionViewModel.initializeExecutionSameStreet(currentAddress)
+        } else {
             directExecutionViewModel.loadingCoordinates = true
-            val (lat, long) = coordinates.execute()
+            val (lat, long) = coordinates?.execute() ?: Pair(null, null)
             if (lat != null && long != null) {
-                val addr = addressService.execute(lat, long)
+                val addr = addressService?.execute(lat, long)
 
                 if (addr != null && addr.size >= 4) {
                     val streetName = addr[0]
@@ -417,7 +408,7 @@ fun StreetMaterialScreen(
             closeAlertModal = {
                 directExecutionViewModel.alertModal = false
             },
-            changeMaterial = { selected, reserveId, contractItemId, materialStockId, materialName, stockAvailable ->
+            changeMaterial = { selected, reserveId, contractItemId, materialStockId, materialName, stockAvailable, brand ->
                 if (selected) {
                     if (stockAvailable == BigDecimal.ZERO) {
                         message["title"] = "Quantidade indisponível"
@@ -433,6 +424,8 @@ fun StreetMaterialScreen(
                             materialName = materialName
                         )
                         directExecutionViewModel.streetItems += newItem
+                        directExecutionViewModel.street =
+                            directExecutionViewModel.street?.copy(currentSupply = brand)
                     }
 
                 } else {
@@ -516,7 +509,7 @@ fun StreetMaterialsContent(
     openModal: (String) -> Unit,
     alertModal: Boolean,
     closeAlertModal: () -> Unit,
-    changeMaterial: (Boolean, Long, Long, Long, String, BigDecimal) -> Unit,
+    changeMaterial: (Boolean, Long, Long, Long, String, BigDecimal, String?) -> Unit,
     changeQuantity: (Long, BigDecimal, BigDecimal, BigDecimal) -> Unit,
     errorMessage: String?,
     alertMessage: MutableMap<String, String>,
@@ -670,7 +663,7 @@ fun StreetMaterialsContent(
                                     stockAvailable
                                 )
                             },
-                            changeMaterial = { selected, reserveId, contractItemId, materialStockId, materialName, stockAvailable ->
+                            changeMaterial = { selected, reserveId, contractItemId, materialStockId, materialName, stockAvailable, brand ->
                                 changeMaterial(
                                     selected,
                                     reserveId,
@@ -678,6 +671,7 @@ fun StreetMaterialsContent(
                                     materialStockId,
                                     materialName,
                                     stockAvailable,
+                                    brand
                                 )
                             },
                             streetItems = streetItems,
@@ -795,7 +789,7 @@ fun StreetMaterialsContent(
 @Composable
 fun MaterialItem(
     material: ReserveMaterialJoin,
-    changeMaterial: (Boolean, Long, Long, Long, String, BigDecimal) -> Unit,
+    changeMaterial: (Boolean, Long, Long, Long, String, BigDecimal, String?) -> Unit,
     changeQuantity: (Long, BigDecimal, BigDecimal, BigDecimal) -> Unit,
     streetItems: List<DirectExecutionStreetItem>
 ) {
@@ -934,7 +928,8 @@ fun MaterialItem(
                         material.contractItemId,
                         material.materialStockId,
                         material.materialName,
-                        BigDecimal(material.stockAvailable)
+                        BigDecimal(material.stockAvailable),
+                        material.materialBrand
                     )
                 },
                 modifier = Modifier
@@ -974,7 +969,7 @@ fun MaterialItem(
 fun InstallationData(
     viewModel: DirectExecutionViewModel,
     navController: NavHostController,
-    coordinatesService: CoordinatesService
+    coordinatesService: CoordinatesService?
 ) {
     val contractor = viewModel.contractor
 
@@ -1041,12 +1036,18 @@ fun InstallationData(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Text(
-                        text = "Para finalizar o ponto atual, Preencha os dados abaixo.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Dados da substituição do LED",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "Informe os dados do LED instalado e do LED anterior.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1079,16 +1080,31 @@ fun InstallationData(
                             )
 
                             OutlinedTextField(
-                                value = viewModel.street?.lastPower ?: "",
-                                onValueChange = {
+                                value = viewModel.street?.lastPower
+                                    ?.removeSuffix("W")
+                                    ?.trim()
+                                    ?: "",
+                                onValueChange = { input ->
                                     viewModel.triedToSubmit = false
-                                    viewModel.street =
-                                        viewModel.street?.copy(lastPower = it)
+
+                                    val onlyNumbers = input.filter { it.isDigit() }
+
+                                    viewModel.street = viewModel.street?.copy(
+                                        lastPower = if (onlyNumbers.isNotEmpty())
+                                            "${onlyNumbers}W"
+                                        else
+                                            ""
+                                    )
                                 },
                                 label = { Text("Potência anterior") },
-                                isError = viewModel.triedToSubmit && viewModel.street?.lastPower.isNullOrBlank(),
+                                suffix = { Text("W") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                isError = viewModel.triedToSubmit &&
+                                        viewModel.street?.lastPower.isNullOrBlank(),
                                 supportingText = {
-                                    if (viewModel.triedToSubmit && viewModel.street?.lastPower.isNullOrBlank()) {
+                                    if (viewModel.triedToSubmit &&
+                                        viewModel.street?.lastPower.isNullOrBlank()
+                                    ) {
                                         Text("Informe a potência anterior")
                                     }
                                 },
@@ -1213,23 +1229,23 @@ fun PrevMStreetScreen() {
         )
     )
 
-//    StreetMaterialScreen(
-//        directExecutionViewModel = DirectExecutionViewModel(
-//            null, null,
-//            mockItems = mockItems,
-//            mockStreetItems = listOf(
-//                DirectExecutionStreetItem(
-//                    directStreetItemId = 1,
-//                    reserveId = 1,
-//                    materialStockId = 10,
-//                    materialName = "",
-//                    contractItemId = -1,
-//                    directStreetId = 1,
-//                    quantityExecuted = "12"
-//                )
-//            )
-//        ),
-//        context = LocalContext.current,
-//        navController = rememberNavController()
-//    )
+    StreetMaterialScreen(
+        directExecutionViewModel = DirectExecutionViewModel(
+            null, null,
+            mockItems = mockItems,
+            mockStreetItems = listOf(
+                DirectExecutionStreetItem(
+                    directStreetItemId = 1,
+                    reserveId = 1,
+                    materialStockId = 10,
+                    materialName = "",
+                    contractItemId = -1,
+                    directStreetId = 1,
+                    quantityExecuted = "12"
+                )
+            )
+        ),
+        context = LocalContext.current,
+        navController = rememberNavController(),
+    )
 }

@@ -21,10 +21,12 @@ class DirectExecutionViewRepository(
     val teamRepository: TeamRepository,
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
-    fun getDirectExecutions(operatorUUID: UUID): List<DirectExecutionDTOResponse> {
-        val teamId = teamRepository.getCurrentTeamId(operatorUUID) ?: return emptyList()
+    fun getDirectExecutions(operatorUUID: UUID? = null, teamId: Long? = null, status: String = ExecutionStatus.AVAILABLE_EXECUTION): List<DirectExecutionDTOResponse> {
+        val resolvedTeamId = teamId
+            ?: operatorUUID?.let { teamRepository.getCurrentTeamId(it).orElse(null) }
+            ?: return emptyList()
 
-        val directExecutions = getDirectExecutionsByTeam(teamId.get())
+        val directExecutions = getDirectExecutionsByTeam(resolvedTeamId, status)
         val directExecutionsIds = directExecutions.map { it["direct_execution_id"] as Long }
 
         if (directExecutionsIds.isEmpty()) return emptyList()
@@ -46,7 +48,7 @@ class DirectExecutionViewRepository(
         }
     }
 
-    private fun getDirectExecutionsByTeam(teamId: Long): List<Map<String, Any>> {
+    private fun getDirectExecutionsByTeam(teamId: Long, status: String): List<Map<String, Any>> {
         return JdbcUtil.getRawData(
             namedJdbc,
             """
@@ -54,7 +56,7 @@ class DirectExecutionViewRepository(
                 FROM direct_execution de
                 WHERE de.team_id = :teamId AND de.direct_execution_status = :status
             """.trimIndent(),
-            mapOf("teamId" to teamId, "status" to ExecutionStatus.AVAILABLE_EXECUTION)
+            mapOf("teamId" to teamId, "status" to status)
         )
     }
 
@@ -82,14 +84,7 @@ class DirectExecutionViewRepository(
         return raw.groupBy { it["direct_execution_id"] as Long }
             .mapValues { (_, reservations) ->
                 reservations.map { r ->
-                    var name = r["material_name"] as String
-                    val length = r["material_length"] as String?
-                    val power = r["material_power"] as String?
-                    if (power != null) {
-                        name += " $power"
-                    } else if (length != null) {
-                        name += " $length"
-                    }
+                    val name = r["material_name"] as String
 
                     DirectReserve(
                         reserveId = r["material_id_reservation"] as Long,

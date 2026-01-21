@@ -15,6 +15,10 @@ class DirectExecutionViewController(
     fun getDirectExecutions(@RequestParam uuid: String?): ResponseEntity<List<DirectExecutionDTOResponse>> =
         viewService.getDirectExecutions(uuid)
 
+    @GetMapping("/mobile/v2/execution/get-direct-executions")
+    fun getDirectExecutionsV2(@RequestParam teamId: Long, @RequestParam status: String): ResponseEntity<List<DirectExecutionDTOResponse>> =
+        viewService.getDirectExecutionsV2(teamId, status)
+
 
     @GetMapping("/execution/get-finished")
     fun getGroupedInstallations(): ResponseEntity<List<Map<String, JsonNode>>> =

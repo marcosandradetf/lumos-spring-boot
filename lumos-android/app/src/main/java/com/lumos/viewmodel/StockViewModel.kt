@@ -142,7 +142,7 @@ class StockViewModel(
         }
     }
 
-    fun saveOrder(materials: List<Long>, depositId: Long) {
+    fun saveOrder(materials: Set<Long>, depositId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _loading.value = true

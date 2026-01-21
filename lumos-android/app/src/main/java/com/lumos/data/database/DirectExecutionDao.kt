@@ -47,7 +47,7 @@ interface DirectExecutionDao {
         SELECT de.reserveId as reserveId, de.directExecutionId as directExecutionId, de.materialStockId,
         de.contractItemId, de.materialName as materialName, de.materialQuantity as materialQuantity, 
         de.requestUnit as requestUnit,  ms.stockAvailable as stockAvailable, cib.currentBalance as currentBalance,
-        cib.itemName as itemName
+        cib.itemName as itemName, ms.materialBrand as materialBrand
         from direct_reserve de
         JOIN material_stock ms on ms.materialStockId = de.materialStockId
         LEFT JOIN ContractItemBalance cib on cib.contractItemId = de.contractItemId

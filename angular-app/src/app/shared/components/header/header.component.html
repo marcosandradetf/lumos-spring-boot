@@ -1,22 +1,83 @@
 <header>
   @if (authService.isLoggedIn$ | async) {
     <div class="card">
-      <p-menubar>
+      <p-menubar styleClass="rounded-none border-none">
         <ng-template #start>
-          <div
-            class="text-center select-none poppins-medium flex cursor-pointer items-center"
-            (click)="toggleMenu()">
-            <span class="pi pi-bars px-4"></span>
-            <h3 class="bg-gradient-to-r from-indigo-800 via-indigo-500 to-indigo-300 text-transparent bg-clip-text">
-              Thryon System™</h3>
+          <div class="flex items-center w-full">
+            <div
+              (click)="toggleMenu()"
+              [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'"
+              class="
+                  hidden md:block
+                  flex items-center justify-center
+                  rounded-lg
+                  p-1
+                  bg-gray-100 border border-gray-200
+                  dark:bg-zinc-800 dark:border-zinc-700
+                "
+            >
+              <button
+
+                type="button"
+                class="
+                    flex items-center justify-center
+                    w-7 h-7
+                    rounded-md
+                    bg-white text-gray-600
+                    hover:bg-gray-50 hover:text-gray-900
+                    dark:bg-zinc-900 dark:text-zinc-300
+                    dark:hover:bg-zinc-700 dark:hover:text-white
+                    transition-colors transition-transform duration-200
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500
+                  "
+              >
+                <span [ngClass]="menuOpen ? 'pi-chevron-left' : 'pi-chevron-right'" class="pi text-sm"></span>
+              </button>
+            </div>
+
+            <div
+              (click)="SharedState.showMenuDrawer$.next(true);"
+              [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'"
+              class="
+                  md:hidden
+                  flex items-center justify-center
+                  rounded-lg
+                  p-1
+                  bg-gray-100 border border-gray-200
+                  dark:bg-zinc-800 dark:border-zinc-700
+                "
+            >
+              <button
+                (click)="SharedState.showMenuDrawer$.next(true);"
+                type="button"
+                class="
+                    flex items-center justify-center
+                    w-7 h-7
+                    rounded-md
+                    bg-white text-gray-600
+                    hover:bg-gray-50 hover:text-gray-900
+                    dark:bg-zinc-900 dark:text-zinc-300
+                    dark:hover:bg-zinc-700 dark:hover:text-white
+                    transition-colors transition-transform duration-200
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500
+                  "
+              >
+                <span class="pi pi-bars text-sm"></span>
+              </button>
+            </div>
+            <app-prime-breadcrumb
+              [path]="(SharedState.currentPath$ | async) ?? []">
+            </app-prime-breadcrumb>
+            <h3 class="text-medium pr-5 font-medium">{{ (SharedState.title$ | async) ?? '' }}</h3>
+
           </div>
 
 
         </ng-template>
         <ng-template #end>
           <div class="flex items-center justify-center">
-            <div class="flex items-center justify-center gap-2">
-              <span class="pi pi-bell cursor-pointer mr-2 text-xl" (click)="op.toggle($event)"></span>
+            <div class="flex items-center justify-center dark:bg-gray-800 bg-gray-300 rounded-full p-3 mr-2">
+              <span class="pi pi-bell cursor-pointer text-xl" (click)="op.toggle($event)"></span>
               <p-menu class="flex justify-center" styleClass="w-full md:w-60" #op [popup]="true">
                 <ng-template #item let-options>
                   <a pRipple class="flex items-center p-menu-item-link" (click)="options.command()">
@@ -32,40 +93,6 @@
                     <i class="fas fa-bell-slash"></i>
                     <p class="text-xs text-center">Nenhuma notificação no momento</p>
                   </div>
-                  <!--                <div>-->
-                  <!--                  <span class="font-medium text-surface-900 dark:text-surface-0 block mb-2">Share this document</span>-->
-                  <!--                  <p-inputgroup>-->
-                  <!--                    <input pInputText value="https://primeng.org/12323ff26t2g243g423g234gg52hy25XADXAG3" readonly class="w-[25rem]" />-->
-                  <!--                    <p-inputgroup-addon>-->
-                  <!--                      <i class="pi pi-copy"></i>-->
-                  <!--                    </p-inputgroup-addon>-->
-                  <!--                  </p-inputgroup>-->
-                  <!--                </div>-->
-                  <!--                <div>-->
-                  <!--                  <span class="font-medium text-surface-900 dark:text-surface-0 block mb-2">Invite Member</span>-->
-                  <!--                  <div class="flex">-->
-                  <!--                    <p-inputgroup>-->
-                  <!--                      <input pInputText disabled />-->
-                  <!--                      <button pButton label="Invite" icon="pi pi-users"></button>-->
-                  <!--                    </p-inputgroup>-->
-                  <!--                  </div>-->
-                  <!--                </div>-->
-                  <!--                <div>-->
-                  <!--                  <span class="font-medium text-surface-900 dark:text-surface-0 block mb-2">Team Members</span>-->
-                  <!--                  <ul class="list-none p-0 m-0 flex flex-col gap-4">-->
-                  <!--                    <li *ngFor="let member of members" class="flex items-center gap-2">-->
-                  <!--                      <img [src]="'https://primefaces.org/cdn/primeng/images/demo/avatar/' + member.image" style="width: 32px" />-->
-                  <!--                      <div>-->
-                  <!--                        <span class="font-medium">{{ member.name }}</span>-->
-                  <!--                        <div class="text-sm text-muted-color">{{ member.email }}</div>-->
-                  <!--                      </div>-->
-                  <!--                      <div class="flex items-center gap-2 text-muted-color ml-auto text-sm">-->
-                  <!--                        <span>{{ member.role }}</span>-->
-                  <!--                        <i class="pi pi-angle-down"></i>-->
-                  <!--                      </div>-->
-                  <!--                    </li>-->
-                  <!--                  </ul>-->
-                  <!--                </div>-->
                 </ng-template>
               </p-menu>
             </div>
@@ -97,9 +124,10 @@
               </p-menu>
               <p-avatar
                 [label]="authService.getUser().username.charAt(0).toUpperCase()"
-                image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png" shape="circle"
+                image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
+                shape="circle"
                 (click)="menu.toggle($event)"
-                class="cursor-pointer bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"/>
+                styleClass="cursor-pointer dark:bg-gray-200 bg-gray-700 dark:text-gray-800 text-white p-5 text-xl font-semibold"/>
             </div>
           </div>
         </ng-template>

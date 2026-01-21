@@ -13,9 +13,10 @@ import retrofit2.http.Query
 
 interface DirectExecutionApi {
 
-    @GET("api/mobile/execution/get-direct-executions")
+    @GET("api/mobile/v2/execution/get-direct-executions")
     suspend fun getDirectExecutions(
-        @Query("uuid") uuid: String
+        @Query("teamId") teamId: Long,
+        @Query("status") status: String,
     ): Response<List<DirectExecutionDTOResponse>>
     
     @Multipart

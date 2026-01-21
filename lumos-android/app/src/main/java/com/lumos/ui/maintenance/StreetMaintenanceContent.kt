@@ -1,11 +1,14 @@
 package com.lumos.ui.maintenance
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,10 +17,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -27,19 +30,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.TaskAlt
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.IconToggleButtonColors
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -54,16 +58,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,7 +85,6 @@ import com.lumos.ui.components.Alert
 import com.lumos.ui.components.AppLayout
 import com.lumos.ui.components.Confirm
 import com.lumos.ui.components.Loading
-import com.lumos.ui.components.Tag
 import com.lumos.utils.Utils
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -117,7 +120,15 @@ fun StreetMaintenanceContent(
             back
         }
 
-    val types = stockData.distinctBy { it.type }.map { it.type }.sortedBy { it }
+    var onlyHasStock by remember { mutableStateOf(true) }
+
+    val types = stockData
+        .filter {
+            !onlyHasStock || BigDecimal(it.stockAvailable) > BigDecimal.ZERO
+        }
+        .distinctBy { it.type }
+        .map { it.type }
+        .sortedBy { it }
     val (selectedOption, onOptionSelected) = remember {
         mutableStateOf(types.firstOrNull() ?: "")
     }
@@ -129,6 +140,7 @@ fun StreetMaintenanceContent(
         val name = item.materialName.replace("\\s".toRegex(), "").lowercase()
 
         (selectedOption.isBlank() || item.type == selectedOption) &&
+                (!onlyHasStock || BigDecimal(item.stockAvailable) > BigDecimal.ZERO) &&
                 (normalizedQuery.isBlank() || name.contains(normalizedQuery))
     }.distinctBy { it.materialStockId }
 
@@ -173,38 +185,9 @@ fun StreetMaintenanceContent(
         }
     }
 
-//    val cableItem by remember(selectedIds, stockData) {
-//        derivedStateOf {
-//            stockData
-//                .find {
-//                    it.materialStockId in selectedIds && it.materialName.contains(
-//                        "cabo",
-//                        ignoreCase = true
-//                    )
-//                }
-//                ?.materialStockId
-//                ?.let { id -> items.find { it.materialStockId == id } }
-//        }
-//    }
-
-//    val screws by remember(selectedIds, stockData) {
-//        derivedStateOf {
-//            val screwIds = stockData
-//                .filter {
-//                    it.materialStockId in selectedIds &&
-//                            it.materialName.contains("parafuso", ignoreCase = true)
-//                }
-//                .map { it.materialStockId }
-//
-//            items.filter { it.materialStockId in screwIds }
-//        }
-//    }
-
     var lastPowerError by remember { mutableStateOf<String?>(null) }
     var currentSupplyError by remember { mutableStateOf<String?>(null) }
     var reasonError by remember { mutableStateOf<String?>(null) }
-//    var cableError by remember { mutableStateOf<String?>(null) }
-//    val screwErrors = remember { mutableStateMapOf<Long, String?>() }
     var loadingCoordinates by remember { mutableStateOf(false) }
     var address by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -420,224 +403,256 @@ fun StreetMaintenanceContent(
                     )
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Selecione os materiais trocados",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                LazyRow {
-                    items(
-                        types
-                    ) { type ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .selectable(
-                                    selected = (type == selectedOption),
-                                    onClick = { onOptionSelected(type) },
-                                    role = Role.RadioButton
+                Row(
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Filtre os materiais",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Switch(
+                            modifier = Modifier.size(40.dp),
+                            checked = onlyHasStock,
+                            onCheckedChange = {
+                                onlyHasStock = !onlyHasStock
+                            })
+
+                        Text(
+                            text =
+                                "Somente com estoque",
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+
+                Box {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(types) { type ->
+                            FilterChip(
+                                selected = type == selectedOption,
+                                onClick = { onOptionSelected(type) },
+                                label = { Text(type) },
+                                leadingIcon = if (type == selectedOption) {
+                                    {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(
+                                        .9f
+                                    ),
+                                    selectedLabelColor = Color.White,
+                                    selectedLeadingIconColor = Color.White
                                 )
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = (type == selectedOption),
-                                onClick = null // null recommended for accessibility with screen readers
-                            )
-                            Text(
-                                text = type,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = 16.dp)
                             )
                         }
                     }
+
+                    Box(
+                        Modifier
+                            .align(Alignment.CenterStart)
+                            .width(16.dp)
+                            .fillMaxHeight()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        MaterialTheme.colorScheme.background,
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+
+                    Box(
+                        Modifier
+                            .align(Alignment.CenterEnd)
+                            .width(16.dp)
+                            .fillMaxHeight()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.background
+                                    )
+                                )
+                            )
+                    )
                 }
+                Text(
+                    text = "Deslize horizontalmente para ver mais",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+
                 Spacer(modifier = Modifier.height(10.dp))
-                LazyRow {
+
+                Text(
+                    text = "Selecione os materiais",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     items(
                         filteredStock,
                         key = { it.materialStockId }
                     ) { material ->
 
-                        val checked = items.any { it.materialStockId == material.materialStockId }
+                        val checked =
+                            items.any { it.materialStockId == material.materialStockId }
 
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = material.materialName,
-                                    modifier = Modifier.padding(vertical = 7.dp)
-                                )
-                            },
-                            overlineContent = {
-                                Column {
-                                    // Tag de disponibilidade
-                                    if (material.truckStockControl) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            when {
-                                                BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
-                                                    Tag(
-                                                        "Sem estoque disponível",
-                                                        Color.Red,
-                                                        Icons.Default.Close
-                                                    )
-                                                }
+                        OutlinedCard(
+                            colors = CardDefaults.cardColors(
+                                containerColor =
+                                    if (checked)
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                    else
+                                        MaterialTheme.colorScheme.surface,
+                                contentColor = if (checked)
+                                    Color.White
+                                else
+                                    MaterialTheme.colorScheme.onBackground,
 
-                                                BigDecimal(material.stockAvailable) <= BigDecimal.TEN -> {
-                                                    Tag(
-                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                        Color(0xFFFF9800),
-                                                        Icons.Default.Warning
-                                                    )
-                                                }
-
-                                                else -> {
-                                                    Tag(
-                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                        MaterialTheme.colorScheme.primary,
-                                                        Icons.Default.Check
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        Spacer(Modifier.height(4.dp))
+                                ),
+                            border = if (checked)
+                                BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(.9f))
+                            else
+                                BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.onBackground.copy(.5f)
+                                ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .width(350.dp)
+                                .height(110.dp)
+                                .animateContentSize()
+                                .clickable {
+                                    // espelha exatamente o toggle atual
+                                    if (BigDecimal(material.stockAvailable) == BigDecimal.ZERO &&
+                                        material.truckStockControl
+                                    ) {
+                                        alertMessage["title"] =
+                                            "Material sem estoque disponível"
+                                        alertMessage["body"] =
+                                            "Para selecionar esse material é necessário haver estoque disponível."
+                                        alertModal = true
+                                        return@clickable
                                     }
 
-                                    // Quantidade total, mais discreto
-                                    if (material.truckStockControl) {
-                                        Text(
-                                            text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            },
-                            trailingContent = {
-                                IconToggleButton(
-                                    checked = checked,
-                                    onCheckedChange = { isChecked ->
-                                        if (BigDecimal(material.stockAvailable) == BigDecimal.ZERO && material.truckStockControl) {
-                                            alertMessage["title"] =
-                                                "Material sem estoque disponível"
-                                            alertMessage["body"] =
-                                                "Para selecionar esse material é necessário haver estoque disponível."
-                                            alertModal = true
-                                            return@IconToggleButton
-                                        }
+                                    val isChecked = !checked
+                                    val type = material.type
 
-                                        val type = material.type
+                                    items = if (isChecked) {
+                                        val isScrew =
+                                            material.materialName.trim()
+                                                .contains("parafuso", ignoreCase = true)
 
-                                        items = if (isChecked) {
-                                            val isScrew =
-                                                material.materialName.trim()
-                                                    .contains("parafuso", ignoreCase = true)
-
-                                            val filteredItems = if (!isScrew) {
-                                                // Remove qualquer outro material desse tipo (exceto parafuso)
-                                                items.filterNot {
-                                                    stockData.find { stock -> stock.materialStockId == it.materialStockId }?.type == type &&
-                                                            it.maintenanceStreetId == maintenanceStreetId.toString() &&
-                                                            it.maintenanceId == maintenanceId.toString()
-                                                }
-                                            } else {
-                                                // Mantém todos os outros materiais
-                                                items
-                                            }
-
-                                            if (material.materialName.trim()
-                                                    .contains("led", ignoreCase = true)
-                                            ) {
-                                                street = street.copy(
-                                                    currentSupply = material.materialBrand,
-                                                    lastPower = material.materialPower
-                                                )
-                                            }
-
-                                            filteredItems + MaintenanceStreetItem(
-                                                maintenanceId = maintenanceId.toString(),
-                                                maintenanceStreetId = maintenanceStreetId.toString(),
-                                                materialStockId = material.materialStockId,
-                                                quantityExecuted = BigDecimal.ONE.toString(),
-                                                truckStockControl = material.truckStockControl
-                                            )
-                                        } else {
-                                            // Apenas remove esse item
+                                        val filteredItems = if (!isScrew) {
                                             items.filterNot {
-                                                it.materialStockId == material.materialStockId &&
+                                                stockData.find { stock ->
+                                                    stock.materialStockId == it.materialStockId
+                                                }?.type == type &&
                                                         it.maintenanceStreetId == maintenanceStreetId.toString() &&
                                                         it.maintenanceId == maintenanceId.toString()
                                             }
+                                        } else items
+
+                                        if (material.materialName
+                                                .contains("led", ignoreCase = true)
+                                        ) {
+                                            street = street.copy(
+                                                currentSupply = material.materialBrand,
+                                                lastPower = material.materialPower
+                                            )
                                         }
-                                    },
-                                    colors = IconToggleButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.background,
-                                        contentColor = MaterialTheme.colorScheme.onBackground,
-                                        disabledContentColor = MaterialTheme.colorScheme.background,
-                                        disabledContainerColor = MaterialTheme.colorScheme.background,
-                                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedContainerColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    modifier = Modifier
-                                        .border(
-                                            border = BorderStroke(
-                                                if (checked) 2.dp else 0.dp,
-                                                MaterialTheme.colorScheme.onBackground.copy(
-                                                    alpha = 0.6f
-                                                )
-                                            ), shape = CircleShape
+
+                                        filteredItems + MaintenanceStreetItem(
+                                            maintenanceId = maintenanceId.toString(),
+                                            maintenanceStreetId = maintenanceStreetId.toString(),
+                                            materialStockId = material.materialStockId,
+                                            quantityExecuted = BigDecimal.ONE.toString(),
+                                            truckStockControl = material.truckStockControl
                                         )
-                                        .size(30.dp)
+                                    } else {
+                                        items.filterNot {
+                                            it.materialStockId == material.materialStockId &&
+                                                    it.maintenanceStreetId == maintenanceStreetId.toString() &&
+                                                    it.maintenanceId == maintenanceId.toString()
+                                        }
+                                    }
+                                },
+
+                            ) {
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp)
+                            ) {
+
+                                Column(
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
-                                    if (checked) Icon( // true = selected
+
+                                    // Nome
+                                    Text(
+                                        text = material.materialName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        minLines = 2,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    // KPI
+                                    if (checked) {
+                                        Text(
+                                            text = "Selecionado",
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    } else if (material.truckStockControl) {
+                                        Text(
+                                            text = "Estoque: ${material.stockQuantity} ${material.requestUnit}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "N/A",
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    }
+                                }
+
+                                // Check overlay
+                                if (checked) {
+                                    Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Check",
-                                        tint = MaterialTheme.colorScheme.onPrimary
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(18.dp)
                                     )
                                 }
-                            },
-                            modifier = Modifier
-//                                .height(160.dp)
-                                .padding(bottom = 10.dp)
-                                .padding(end = 10.dp)
-                                .clip(RoundedCornerShape(10.dp)),
-                            shadowElevation = 10.dp,
-                            colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        )
+                            }
+                        }
                     }
                 }
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = {
-                        Text(
-                            "Pesquisar ${selectedOption.lowercase()}...",
-                            style = MaterialTheme.typography.bodySmall.copy( // Texto menor
-                                fontSize = 13.sp
-                            )
-                        )
-                    },
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f) // ajusta a largura
-                        .height(48.dp),     // ajusta a altura
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary
-                    ),
-                    textStyle = MaterialTheme.typography.bodySmall.copy( // Texto menor
-                        fontSize = 13.sp
-                    ),
-                )
+
                 Spacer(Modifier.height(20.dp))
                 if (hasLed) {
                     Text(
@@ -916,6 +931,49 @@ fun StreetMaintenanceContent(
 
     }
 
+}
+
+@Composable
+fun StockStatusChip(material: MaterialStock) {
+    when {
+        BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
+            AssistChip(
+                onClick = {},
+                label = { Text("Sem estoque") },
+                leadingIcon = {
+                    Icon(Icons.Default.Close, null, Modifier.size(16.dp))
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = Color.Red.copy(alpha = 0.1f),
+                    labelColor = Color.Red
+                )
+            )
+        }
+
+        BigDecimal(material.stockAvailable) <= BigDecimal.TEN -> {
+            AssistChip(
+                onClick = {},
+                label = { Text("Baixo estoque") },
+                leadingIcon = {
+                    Icon(Icons.Default.Warning, null, Modifier.size(16.dp))
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = Color(0xFFFF9800).copy(alpha = 0.15f),
+                    labelColor = Color(0xFFFF9800)
+                )
+            )
+        }
+
+        else -> {
+            AssistChip(
+                onClick = {},
+                label = { Text("Disponível") },
+                leadingIcon = {
+                    Icon(Icons.Default.Check, null, Modifier.size(16.dp))
+                }
+            )
+        }
+    }
 }
 
 

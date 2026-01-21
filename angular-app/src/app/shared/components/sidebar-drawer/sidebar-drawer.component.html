@@ -1,0 +1,19 @@
+<div class="card flex justify-center">
+  <p-drawer   [visible]="(SharedState.showMenuDrawer$ | async) ?? false"
+              (visibleChange)="onDrawerChange($event)" [closable]="false">
+    <ng-template #header>
+      <div
+        class="flex items-center gap-2 px-3 py-2 border border-neutral-200 dark:border-neutral-800 m-2 rounded cursor-pointer w-full"
+        (click)="router.navigate(['/']);SharedState.showMenuDrawer$.next(false)">
+        <img
+          ngSrc="/public/icon-192.png"
+          alt="Lumos"
+          height="32" width="32"/>
+        <span class="font-semibold text-lg ml-1 text-gray-800 dark:text-neutral-200 select-none">Lumos™</span>
+      </div>
+    </ng-template>
+
+    <app-sidebar></app-sidebar>
+  </p-drawer>
+</div>
+

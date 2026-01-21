@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -33,6 +34,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -46,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -58,6 +62,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -92,6 +97,7 @@ import com.lumos.ui.components.Tag
 import com.lumos.viewmodel.StockViewModel
 import com.lumos.utils.ConnectivityUtils
 import com.lumos.worker.SyncTypes
+import kotlinx.coroutines.selects.select
 import java.math.BigDecimal
 
 @Composable
@@ -115,7 +121,7 @@ fun CheckStockScreen(
 
     var selectedMode by remember { mutableStateOf(false) }
     var orderMaterials by remember { mutableStateOf(false) }
-    var selectedMaterials by remember { mutableStateOf<List<Long>>(emptyList()) }
+    var selectedMaterials by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     val alertMessage = remember {
         mutableStateMapOf(
@@ -218,7 +224,7 @@ fun CheckStockScreen(
             },
             back = {
                 if (orderCode.isNotBlank()) {
-                    selectedMaterials = emptyList()
+                    selectedMaterials = emptySet()
                     selectedMode = false
                     stockViewModel.clear()
                 }
@@ -232,7 +238,7 @@ fun CheckStockScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckStockContent(
-    selectedMaterialsCopy: List<Long>,
+    selectedMaterialsCopy: Set<Long>,
     selectedModeCopy: Boolean,
     navController: NavHostController,
     lastRoute: String?,
@@ -241,7 +247,7 @@ fun CheckStockContent(
     loading: Boolean,
     stockData: List<MaterialStock>,
     resync: () -> Unit,
-    next: (List<Long>) -> Unit,
+    next: (Set<Long>) -> Unit,
     alertModal: Boolean,
     alertMessage: Map<String, String>,
     closeAlertModal: () -> Unit,
@@ -253,7 +259,7 @@ fun CheckStockContent(
     var selectedMode by remember { mutableStateOf(selectedModeCopy) }
 
     val selectedMaterials =
-        remember { mutableStateListOf<Long>().apply { addAll(selectedMaterialsCopy) } }
+        remember { mutableStateSetOf<Long>().apply { addAll(selectedMaterialsCopy) } }
 
     var searchQuery by remember { mutableStateOf("") }
 
@@ -355,119 +361,25 @@ fun CheckStockContent(
 
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .padding(bottom = 60.dp)
-                        .nestedScroll(remember {
-                            object : NestedScrollConnection {
-                                override fun onPreScroll(
-                                    available: Offset, source: NestedScrollSource
-                                ): Offset {
-                                    focusManager.clearFocus()
-                                    return Offset.Zero
-                                }
-                            }
-                        })
+                    modifier = Modifier.padding(bottom = 60.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
                     items(
                         items = filteredStock,
                         key = { it.materialStockId },
                     ) { material ->
-
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = if (!selectedMode) material.materialName else material.materialBaseName,
-                                    modifier = Modifier.padding(vertical = 7.dp)
-                                )
+                        MaterialKpiCard(
+                            material,
+                            selectedMode,
+                            selectedMaterials = selectedMaterials,
+                            modifier = Modifier,
+                            select = {
+                                selectedMaterials.add(it)
                             },
-                            overlineContent = {
-                                if (!selectedMode) {
-                                    Column {
-                                        // Tag de disponibilidade
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            when {
-                                                BigDecimal(material.stockAvailable) == BigDecimal.ZERO -> {
-                                                    Tag(
-                                                        "Sem estoque disponível",
-                                                        Color.Red,
-                                                        Icons.Default.Close
-                                                    )
-                                                }
-
-                                                BigDecimal(material.stockAvailable) <= BigDecimal(10)
-                                                    -> {
-                                                    Tag(
-                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                        Color(0xFFFF9800),
-                                                        Icons.Default.Warning
-                                                    )
-                                                }
-
-                                                else -> {
-                                                    Tag(
-                                                        "Disponível: ${material.stockAvailable} ${material.requestUnit}",
-                                                        MaterialTheme.colorScheme.primary,
-                                                        Icons.Default.Check
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        Spacer(Modifier.height(4.dp))
-
-                                        // Quantidade total, mais discreto
-                                        Text(
-                                            text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            },
-                            trailingContent = {
-                                if (selectedMode) IconToggleButton(
-                                    checked = selectedMaterials.contains(material.materialId),
-                                    onCheckedChange = { isChecked ->
-                                        if (isChecked) {
-                                            selectedMaterials.add(material.materialId)
-                                        } else {
-                                            selectedMaterials.remove(material.materialId)
-                                        }
-                                    },
-                                    colors = IconToggleButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.background,
-                                        contentColor = MaterialTheme.colorScheme.onBackground,
-                                        disabledContentColor = MaterialTheme.colorScheme.background,
-                                        disabledContainerColor = MaterialTheme.colorScheme.background,
-                                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedContainerColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    modifier = Modifier
-                                        .border(
-                                            border = BorderStroke(
-                                                if (!selectedMaterials.contains(material.materialId)) 2.dp else 0.dp,
-                                                MaterialTheme.colorScheme.onBackground.copy(
-                                                    alpha = 0.6f
-                                                )
-                                            ), shape = CircleShape
-                                        )
-                                        .size(30.dp)
-                                ) {
-                                    if (selectedMaterials.contains(material.materialId)) Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Check",
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 10.dp)
-                                .clip(RoundedCornerShape(10.dp)),
-                            shadowElevation = 10.dp,
-                            colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
+                            unSelect = {
+                                selectedMaterials.remove(it)
+                            }
                         )
                     }
                 }
@@ -580,7 +492,7 @@ fun SelectDeposit(
     message: String,
     navController: NavHostController,
     stockData: List<MaterialStock>,
-    selectedMaterials: List<Long>,
+    selectedMaterials: Set<Long>,
     deposits: List<Deposit>,
     stockists: List<Stockist>,
     finish: (Long) -> Unit,
@@ -930,9 +842,105 @@ fun SelectDeposit(
 
         }
     }
-
-
 }
+
+@Composable
+fun MaterialKpiCard(
+    material: MaterialStock,
+    selectedMode: Boolean,
+    selectedMaterials: MutableSet<Long>,
+    modifier: Modifier = Modifier,
+    select: (Long) -> Unit,
+    unSelect: (Long) -> Unit,
+) {
+    val isSelected = selectedMaterials.contains(material.materialId)
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .clickable(enabled = selectedMode) {
+                if (isSelected) {
+                    unSelect(material.materialId)
+                } else {
+                    select(material.materialId)
+                }
+            },
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                selectedMode && isSelected ->
+                    MaterialTheme.colorScheme.surfaceVariant
+
+                else ->
+                    MaterialTheme.colorScheme.surface
+            }
+        ),
+        border = if (selectedMode && isSelected)
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f))
+        else null
+    ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                // Título
+                Text(
+                    text = if (!selectedMode)
+                        material.materialName
+                    else
+                        material.materialBaseName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (!selectedMode) {
+                    // Valor principal (KPI)
+                    Text(
+                        text = "${material.stockAvailable} ${material.requestUnit}",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+
+                    Text(
+                        text = "Total em estoque: ${material.stockQuantity} ${material.requestUnit}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    // Modo seleção
+                    Text(
+                        text = "Selecionar material",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Check de seleção (overlay)
+            if (selectedMode && isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(18.dp)
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 @Preview
@@ -986,7 +994,7 @@ fun PrevStockContent() {
                 materialBrand = "",
             ),
         ),
-        selectedMaterials = listOf(1, 2, 3),
+        selectedMaterials = setOf(1, 2, 3),
         deposits = listOf(
             Deposit(
                 depositId = 1,

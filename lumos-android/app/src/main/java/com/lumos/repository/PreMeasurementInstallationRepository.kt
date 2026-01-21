@@ -42,10 +42,12 @@ class PreMeasurementInstallationRepository(
     private val minioApi = retrofit.create(MinioApi::class.java)
 
     suspend fun syncExecutions(): RequestResult<Unit> {
+        val teamId = secureStorage.getTeamId()
         val executorsIds = secureStorage.getOperationalUsers().toList()
+        println("entrou syncExecutions")
         if (executorsIds.isEmpty() || isStaleCheckTeam(secureStorage)) RequestResult.Success(Unit)
 
-        val response = ApiExecutor.execute { api.getInstallations("AVAILABLE_EXECUTION") }
+        val response = ApiExecutor.execute { api.getInstallations("AVAILABLE_EXECUTION", teamId) }
         return when (response) {
             is RequestResult.Success -> {
                 saveExecutionsToDb(response.data, executorsIds)

@@ -7,11 +7,12 @@ import {AsyncPipe, NgClass, NgIf} from '@angular/common';
 import {SidebarComponent} from './shared/components/sidebar/sidebar.component';
 import {filter} from 'rxjs';
 import {UtilsService} from './core/service/utils.service';
+import {SidebarDrawerComponent} from './shared/components/sidebar-drawer/sidebar-drawer.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf],
+    imports: [RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

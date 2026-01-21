@@ -24,28 +24,30 @@ import {Textarea} from 'primeng/textarea';
 import {StockService} from '../../stock/services/stock.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {ExecutionService} from '../execution.service';
+import {HeaderComponent} from "../../shared/components/header/header.component";
 
 @Component({
   selector: 'app-execution-no-pre-measurement',
   standalone: true,
-  imports: [
-    Breadcrumb,
-    LoadingComponent,
-    NgIf,
-    PrimeTemplate,
-    Skeleton,
-    TableModule,
-    Toast,
-    Tag,
-    Button,
-    InputText,
-    ReactiveFormsModule,
-    FormsModule,
-    Select,
-    Tooltip,
-    FloatLabel,
-    Textarea
-  ],
+    imports: [
+        Breadcrumb,
+        LoadingComponent,
+        NgIf,
+        PrimeTemplate,
+        Skeleton,
+        TableModule,
+        Toast,
+        Tag,
+        Button,
+        InputText,
+        ReactiveFormsModule,
+        FormsModule,
+        Select,
+        Tooltip,
+        FloatLabel,
+        Textarea,
+        HeaderComponent
+    ],
   templateUrl: './execution-no-pre-measurement.component.html',
   styleUrl: './execution-no-pre-measurement.component.scss'
 })

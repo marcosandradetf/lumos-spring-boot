@@ -300,23 +300,23 @@ $$
             where m.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c'
                 and cri.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c';
 
-            insert into contract_item_dependency(contract_item_reference_id,
-                                                 contract_item_reference_id_dependency,
-                                                 factor)
-            select distinct new_item.contract_reference_item_id       as contract_item_reference_id,
-                            new_dependency.contract_reference_item_id as contract_item_reference_id_dependency,
-                            coalesce(new_dependency.factor, 1)        as factor
-            from contract_item_dependency cid
-                     join contract_reference_item item
-                          on item.contract_reference_item_id = cid.contract_item_reference_id
-                     join contract_reference_item dependency
-                          on dependency.contract_reference_item_id = cid.contract_item_reference_id_dependency
-                     join contract_reference_item new_item
-                          on new_item.description = item.description
-                     join contract_reference_item new_dependency
-                          on new_dependency.description = dependency.description
-            where new_item.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c'
-              and new_dependency.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c';
+--             insert into contract_item_dependency(contract_item_reference_id,
+--                                                  contract_item_reference_id_dependency,
+--                                                  factor)
+--             select distinct new_item.contract_reference_item_id       as contract_item_reference_id,
+--                             new_dependency.contract_reference_item_id as contract_item_reference_id_dependency,
+--                             coalesce(new_dependency.factor, 1)        as factor
+--             from contract_item_dependency cid
+--                      join contract_reference_item item
+--                           on item.contract_reference_item_id = cid.contract_item_reference_id
+--                      join contract_reference_item dependency
+--                           on dependency.contract_reference_item_id = cid.contract_item_reference_id_dependency
+--                      join contract_reference_item new_item
+--                           on new_item.description = item.description
+--                      join contract_reference_item new_dependency
+--                           on new_dependency.description = dependency.description
+--             where new_item.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c'
+--               and new_dependency.tenant_id = '5b435381-e1ce-4e75-86da-fc237ef22b4c';
 
             WITH deposits AS (SELECT id_deposit
                               FROM deposit

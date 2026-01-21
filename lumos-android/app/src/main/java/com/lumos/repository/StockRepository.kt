@@ -61,8 +61,9 @@ class StockRepository(
     }
 
     suspend fun callGetStock(): RequestResult<Unit> {
+        val teamId = secureStorage.getTeamId()
         val response = ApiExecutor.execute {
-            stockApi.getStock()
+            stockApi.getStock(teamId)
         }
 
         return when (response) {
@@ -95,7 +96,7 @@ class StockRepository(
         }
     }
 
-    suspend fun saveOrder(materials: List<Long>, depositId: Long): String {
+    suspend fun saveOrder(materials: Set<Long>, depositId: Long): String {
         val orderId = UUID.randomUUID().toString()
         val orderCode = uuidToShortCodeWithPrefix("REQ", orderId)
 

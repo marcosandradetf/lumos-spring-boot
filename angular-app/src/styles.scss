@@ -180,26 +180,27 @@ html, body { height: 100%; }
 html {
   font-size: 16px; // base
 
-  @media (max-width: 1440px) {
-    font-size: 15px;
-  }
-
-  @media (max-width: 1280px) {
-    font-size: 14px;
-  }
-
-  @media (max-width: 1024px) {
-    font-size: 13px;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
+  //@media (max-width: 1440px) {
+  //  font-size: 15px;
+  //}
+  //
+  //@media (max-width: 1280px) {
+  //  font-size: 14px;
+  //}
+  //
+  //@media (max-width: 1024px) {
+  //  font-size: 13px;
+  //}
+  //
+  //@media (max-width: 768px) {
+  //  font-size: 12px;
+  //}
 }
 
 
 body {
   margin: 0;
+  font-size: 1rem;
   font-family: "Poppins", sans-serif;
   font-weight: 400;
   font-style: normal;

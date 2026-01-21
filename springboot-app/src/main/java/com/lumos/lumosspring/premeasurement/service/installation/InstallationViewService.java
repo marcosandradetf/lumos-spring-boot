@@ -16,9 +16,14 @@ public class InstallationViewService {
     }
 
     public ResponseEntity<?> getInstallations(String status) {
-        UUID userID = Utils.INSTANCE.getCurrentUserId();
+        UUID userID = Utils.getCurrentUserId();
+        var executions = viewRepository.getInstallations(userID, status, null);
 
-        var executions = viewRepository.getInstallations(userID, status);
+        return ResponseEntity.ok().body(executions);
+    }
+
+    public ResponseEntity<?> getInstallationsV2(String status, Long teamId) {
+        var executions = viewRepository.getInstallations(null, status, teamId);
 
         return ResponseEntity.ok().body(executions);
     }

@@ -52,6 +52,8 @@ class StockQueryRepository(
         val truckStockControl: Boolean,
         val parentMaterialId: Long,
         val materialBaseName: String,
+        val materialBrand: String?,
+        val materialPower: String?,
     )
 
     data class StockResponseV2(
@@ -138,7 +140,9 @@ class StockQueryRepository(
                     mt.type_name,
                     m.truck_stock_control,
                     m.parent_material_id,
-                    g.material_name as material_base_name
+                    g.material_name as material_base_name,
+                    m.material_brand,
+                    m.material_power
                 FROM material_stock ms
                     INNER JOIN material m ON m.id_material = ms.material_id
                     INNER JOIN material_type mt ON mt.id_type = m.id_material_type
@@ -158,6 +162,8 @@ class StockQueryRepository(
                 truckStockControl = rs.getBoolean("truck_stock_control"),
                 parentMaterialId = rs.getLong("parent_material_id"),
                 materialBaseName = rs.getString("material_base_name"),
+                materialBrand = rs.getString("material_brand"),
+                materialPower = rs.getString("material_power"),
             )
         }
 

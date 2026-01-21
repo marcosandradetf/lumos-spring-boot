@@ -1,3 +1,14 @@
-<div class="h-screen transition-all duration-300 ease-in-out" [class.w-fit]="menuOpen" >
-  <p-panelmenu [multiple]="true" [model]="items"  styleClass="text-xs p-2" *ngIf="menuOpen"></p-panelmenu>
+<div class="h-screen transition-all duration-300 ease-in-out hidden md:block">
+  <div
+    class="flex items-center gap-2 px-3 py-2 border border-neutral-200 dark:border-neutral-800 m-2 rounded cursor-pointer"
+    (click)="router.navigate(['/'])">
+    <img
+      ngSrc="/public/icon-192.png"
+      alt="Lumos"
+      height="32" width="32"/>
+    <span class="font-semibold text-lg ml-1 text-gray-800 dark:text-neutral-200 select-none">Lumos™</span>
+  </div>
+  <p-panelmenu [multiple]="true" [model]="items" styleClass="text-xs p-2" *ngIf="menuOpen"></p-panelmenu>
 </div>
+<p-panelmenu [multiple]="true" [model]="items" styleClass="text-xs p-2 md:hidden"
+             *ngIf="showDrawer"></p-panelmenu>

@@ -119,10 +119,12 @@ class MaterialStockViewService(
     }
 
 
-    fun getTruckStock(): ResponseEntity<Any> {
+    fun getTruckStock(pTeamId: Long? = null): ResponseEntity<Any> {
         val userId = Utils.getCurrentUserId()
-        val teamId = teamQueryRepository.getTeamIdByUserId(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body("Equipe enviada não encontrada, informe ao Administrador do sistema")
+        val teamId =
+            pTeamId ?: teamQueryRepository.getTeamIdByUserId(userId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Equipe enviada não encontrada, informe ao Administrador do sistema")
 
         val depositId =
             depositRepository.getDepositIdByTeamId(teamId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)

@@ -18,5 +18,10 @@ public class InstallationViewController {
         return viewService.getInstallations(status);
     }
 
+    @GetMapping("/mobile/v2/pre-measurement/installation/get-all/{status}/{teamId}")
+    public ResponseEntity<?> getInstallations(@PathVariable String status, @PathVariable Long teamId) {
+        return viewService.getInstallationsV2(status, teamId);
+    }
+
 
 }

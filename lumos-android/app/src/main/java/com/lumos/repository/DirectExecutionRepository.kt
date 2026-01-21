@@ -71,13 +71,11 @@ class DirectExecutionRepository(
 //    }
 
     suspend fun syncDirectExecutions(): RequestResult<Unit> {
-        val uuid = secureStorage.getUserUuid()
-            ?: return ServerError(-1, "UUID Não encontrado")
-
+        val teamId = secureStorage.getTeamId()
         val executorsIds = secureStorage.getOperationalUsers().toList()
         if (executorsIds.isEmpty() || isStaleCheckTeam(secureStorage)) RequestResult.Success(Unit)
 
-        val response = ApiExecutor.execute { api.getDirectExecutions(uuid) }
+        val response = ApiExecutor.execute { api.getDirectExecutions(teamId, "AVAILABLE_EXECUTION") }
         return when (response) {
             is RequestResult.Success -> {
                 saveDirectExecutionsToDb(response.data, executorsIds)

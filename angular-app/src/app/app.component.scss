@@ -1,0 +1,26 @@
+/* estilo macOS-like */
+.mac-scroll {
+  scrollbar-width: thin; /* Firefox */
+}
+
+.mac-scroll:hover {
+  scrollbar-color: rgba(120, 120, 120, .6) transparent;
+}
+
+/* Chrome / Edge / Safari */
+.mac-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mac-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mac-scroll::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+}
+
+.mac-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 120, 120, .6);
+}
