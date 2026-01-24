@@ -6,8 +6,13 @@ import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class SecureStorage(private val context: Context) {
+    private val _appLocked = MutableStateFlow(isAppLocked())
+    val appLocked: StateFlow<Boolean> = _appLocked.asStateFlow()
 
     companion object {
         private const val SECURE_PREFS_NAME = "secure_prefs"
@@ -29,6 +34,7 @@ class SecureStorage(private val context: Context) {
         private const val KEY_AUTO_CALCULATE_ITEMS_PRE_MEASUREMENT =
             "key_auto_calculate_items_pre_measurement"
         private const val SUBSCRIBED_TEAM_TOPIC = "subscribed-team-topic"
+        private const val UPDATE_TYPE = "update-type"
     }
 
     // Cache de instâncias
@@ -258,5 +264,52 @@ class SecureStorage(private val context: Context) {
     fun setTeamSubscribedTopic(topic: String) {
         getNormalPrefs().edit { putString(SUBSCRIBED_TEAM_TOPIC, topic) }
     }
+
+    fun setUpdateType(updateType: String) {
+        getNormalPrefs().edit { putString(UPDATE_TYPE, updateType) }
+    }
+
+    fun getUpdateType() = getNormalPrefs().getString(UPDATE_TYPE, null) ?: "FLEXIBLE"
+    fun setActionsIds(ids: Set<String>) {
+        getNormalPrefs().edit {
+            putStringSet("actions-ids", ids)
+        }
+    }
+
+    fun getActionIds(): Set<String> =
+        getNormalPrefs().getStringSet("actions-ids", emptySet()) ?: emptySet()
+
+    fun setForceUpdate(forceUpdate: Boolean) {
+        getNormalPrefs().edit {
+            putBoolean("force-update", forceUpdate)
+        }
+    }
+
+    fun getForceUpdate() =
+        getNormalPrefs().getBoolean("force-update", false)
+
+    fun setMinBuild(minBuild: Long) {
+        getNormalPrefs().edit {
+            putLong("min-build", minBuild)
+        }
+    }
+
+    fun getMinBuild() =
+        getNormalPrefs().getLong("min-build", 0L)
+
+    fun setTenant(tenant: String) = getNormalPrefs().edit {
+        putString("tenant", tenant)
+    }
+
+    fun getTenant() = getNormalPrefs().getString("tenant", null)
+
+    fun setAppLocked(locked: Boolean) {
+        getNormalPrefs().edit { putBoolean("app_locked", locked) }
+        _appLocked.value = locked
+    }
+
+    private fun isAppLocked(): Boolean =
+        getNormalPrefs().getBoolean("app_locked", false)
+
 
 }

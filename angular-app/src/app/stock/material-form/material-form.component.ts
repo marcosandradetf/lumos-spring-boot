@@ -19,6 +19,7 @@ import {BarcodeFormat} from '@zxing/library';
 import {QRCodeModule} from 'angularx-qrcode';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthService} from '../../core/auth/auth.service';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
     selector: 'app-material-form',
@@ -65,6 +66,7 @@ export class MaterialFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        SharedState.setCurrentPath(['Estoque', 'Cadastro de Materiais']);
 
         this.form = this.fb.group({
             materialId: [null],

@@ -10,6 +10,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -18,13 +22,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
 import com.lumos.MyApp
 import com.lumos.api.ContractApi
 import com.lumos.api.DirectExecutionApi
 import com.lumos.api.PreMeasurementApi
 import com.lumos.domain.service.AddressService
+import com.lumos.domain.service.AppInitCoordinator
 import com.lumos.domain.service.CoordinatesService
+import com.lumos.domain.service.DefaultRemoteActionExecutor
 import com.lumos.midleware.SecureStorage
 import com.lumos.notifications.FCMService
 import com.lumos.notifications.FCMService.FCMBus
@@ -37,6 +44,7 @@ import com.lumos.repository.MaintenanceRepository
 import com.lumos.repository.NotificationRepository
 import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.PreMeasurementRepository
+import com.lumos.repository.RemoteConfigRepository
 import com.lumos.repository.StockRepository
 import com.lumos.repository.TeamRepository
 import com.lumos.repository.ViewRepository
@@ -46,6 +54,7 @@ import com.lumos.ui.directexecution.DirectExecutionHomeScreen
 import com.lumos.ui.directexecution.StreetMaterialScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.installationholder.InstallationHolderScreen
+import com.lumos.ui.lockscreen.LockedAppScreen
 import com.lumos.ui.maintenance.MaintenanceScreen
 import com.lumos.ui.menu.MenuScreen
 import com.lumos.ui.noAccess.NoAccessScreen
@@ -79,6 +88,7 @@ import com.lumos.worker.SyncManager.enqueueSync
 import com.lumos.worker.SyncManager.schedulePeriodicSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class BottomBar(val value: Int) {
@@ -130,6 +140,7 @@ fun AppNavigation(
     actionState: MutableState<String?>
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val notificationItem by FCMBus.notificationItem.collectAsState()
     val navController = rememberNavController()
     val loggedIn by SessionManager.loggedIn.collectAsState()
@@ -137,6 +148,7 @@ fun AppNavigation(
     val sessionExpired by SessionManager.sessionExpired.collectAsState()
     val checkingSession by SessionManager.checkingSession.collectAsState()
     val notificationManager = remember { NotificationManager() }
+    val isLocked by secureStorage.appLocked.collectAsState()
 
     val viewRepository = remember { ViewRepository(app.database) }
     val authRepository =
@@ -215,6 +227,31 @@ fun AppNavigation(
         )
     }
 
+    // 👇 AQUI você monta (uma vez só)
+    val remoteConfigRepository = remember {
+        RemoteConfigRepository(
+            retrofit = app.remoteConfigRetrofit,
+        )
+    }
+
+    val actionExecutor = remember {
+        DefaultRemoteActionExecutor(
+            db = app.database,
+            remoteConfigRepository = remoteConfigRepository,
+            secureStorage = secureStorage,
+            appContext = app.applicationContext
+        )
+    }
+
+    val appInitCoordinator = remember {
+        AppInitCoordinator(
+            remoteConfigRepository,
+            actionExecutor,
+            secureStorage = secureStorage
+        )
+    }
+
+
     val notificationViewModel: NotificationViewModel = viewModel {
 
         NotificationViewModel(
@@ -226,6 +263,8 @@ fun AppNavigation(
 
     LaunchedEffect(Unit) {
         if (secureStorage.getAccessToken() != null) {
+            appInitCoordinator.onAppStart()
+
             SessionManager.setSessionExpired(false)
             SessionManager.setLoggedOut(false)
             SessionManager.setLoggedIn(true)
@@ -321,6 +360,22 @@ fun AppNavigation(
         onDispose { navController.removeOnDestinationChangedListener(listener) }
     }
 
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                lifecycleOwner.lifecycleScope.launch {
+                    appInitCoordinator.onForeground()
+                }
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     if (sessionExpired) {
         Toast.makeText(
             context,
@@ -329,10 +384,18 @@ fun AppNavigation(
         ).show()
     }
 
+
     // Rotas protegidas
     if (checkingSession) {
         SplashScreen()
 
+    } else if (isLocked && loggedIn) {
+        LockedAppScreen(
+            reason = null,
+            appInitCoordinator,
+            authRepository
+        )
+        return
     } else {
 
         NavHost(
@@ -835,7 +898,8 @@ fun AppNavigation(
                 CheckStockScreen(
                     navController = navController,
                     lastRoute = lastRoute,
-                    stockViewModel = stockViewModel
+                    stockViewModel = stockViewModel,
+                    connectivityGate = app.connectivityGate
                 )
             }
 
@@ -878,7 +942,8 @@ fun AppNavigation(
                     viewModel = teamViewModel,
                     navController = navController,
                     currentScreen = currentScreen!!,
-                    secureStorage = secureStorage
+                    secureStorage = secureStorage,
+                    connectivityGate = app.connectivityGate
                 )
 
             }

@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import {Title} from '@angular/platform-browser';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
   selector: 'app-execution-progress',
@@ -8,5 +10,8 @@ import { Component } from '@angular/core';
   styleUrl: './execution-progress.component.scss'
 })
 export class ExecutionProgressComponent {
-
+    constructor(private title: Title) {
+        this.title.setTitle('Instações em Curso');
+        SharedState.setCurrentPath(["Instalações","Em Curso"]);
+    }
 }

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.lumos.domain.model.InstallationItemRequest
 import com.lumos.domain.model.InstallationRequest
@@ -179,6 +180,18 @@ interface PreMeasurementInstallationDao {
         WHERE preMeasurementId = :preMeasurementId
     """)
     suspend fun getInstallationRequest(preMeasurementId: String): InstallationRequest?
+
+    @Query("DELETE FROM premeasurementinstallation where preMeasurementId in (:ids)")
+    suspend fun deleteInstallations(ids: List<String>)
+
+    @Query("DELETE FROM premeasurementinstallationstreet where preMeasurementId in (:ids)")
+    suspend fun deleteStreets(ids: List<String>)
+
+    @Transaction
+    suspend fun deleteAllInstallations(ids: List<String>) {
+        deleteStreets(ids)
+        deleteInstallations(ids)
+    }
 
 
 }

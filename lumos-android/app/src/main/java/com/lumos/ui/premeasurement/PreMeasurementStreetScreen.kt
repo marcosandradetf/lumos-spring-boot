@@ -110,6 +110,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.math.BigDecimal
 import java.util.UUID
+import kotlin.text.isDigit
 
 @Composable
 fun PreMeasurementStreetScreen(
@@ -120,7 +121,7 @@ fun PreMeasurementStreetScreen(
     coordinates: CoordinatesService,
     addressService: AddressService
 ) {
-    var currentAddress by remember { mutableStateOf("") }
+    var currentAddress by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     val message = remember {
@@ -154,26 +155,29 @@ fun PreMeasurementStreetScreen(
         preMeasurementViewModel.loading = false
 
         preMeasurementViewModel.locationLoading = true
-
+        currentAddress = null
         val (latitude, longitude) = coordinates.execute()
         if (latitude != null && longitude != null) {
             preMeasurementViewModel.latitude = latitude
             preMeasurementViewModel.longitude = longitude
             val addr = addressService.execute(latitude, longitude)
 
-            val street = addr?.get(0).toString()
-            val neighborhood = addr?.get(1).toString()
-            val city = addr?.get(2).toString()
+            if (addr != null && addr.size >= 4) {
+                val streetName = addr[0]
+                val neighborhood = addr[1]
+                val city = addr[2]
 
-            currentAddress = "$street, $neighborhood, $city"
+                currentAddress = "$streetName, $neighborhood, $city"
+            } else {
+                preMeasurementViewModel.message =
+                    "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
+            }
 
             preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
                 latitude = latitude,
                 longitude = longitude,
                 address = currentAddress
             )
-        } else {
-            preMeasurementViewModel.message = "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
         }
         preMeasurementViewModel.locationLoading = false
 
@@ -203,27 +207,27 @@ fun PreMeasurementStreetScreen(
                 navController.popBackStack()
             },
             navigateToMaintenance = {
-                navController.navigate(Routes.MAINTENANCE){
+                navController.navigate(Routes.MAINTENANCE) {
                     popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                 }
             },
             navigateToHome = {
-                navController.navigate(Routes.HOME){
+                navController.navigate(Routes.HOME) {
                     popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                 }
             },
             navigateToMore = {
-                navController.navigate(Routes.MORE){
+                navController.navigate(Routes.MORE) {
                     popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                 }
             },
             navigateToStock = {
-                navController.navigate(Routes.STOCK){
+                navController.navigate(Routes.STOCK) {
                     popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                 }
             },
             navigateToExecutions = {
-                navController.navigate(Routes.INSTALLATION_HOLDER){
+                navController.navigate(Routes.INSTALLATION_HOLDER) {
                     popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                 }
             }
@@ -304,7 +308,8 @@ fun PreMeasurementStreetScreen(
                                     preMeasurementViewModel.street?.copy(
                                         preMeasurementStreetId = preMeasurementViewModel.preMeasurementStreetId.toString(),
                                         address = currentAddress,
-                                        photoUri = null
+                                        photoUri = null,
+                                        lastPower = null
                                     )
                                 preMeasurementViewModel.streetItems = emptyList()
                                 preMeasurementViewModel.hasPosted = false
@@ -335,7 +340,7 @@ fun PreMeasurementStreetScreen(
                     verticalArrangement = Arrangement.Top
                 ) {
                     Text(
-                        text = "Dados da Pré-medição",
+                        text = "Dados da substituição do LED",
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -343,7 +348,7 @@ fun PreMeasurementStreetScreen(
                     )
 
                     Text(
-                        text = "Preencha os dados abaixo",
+                        text = "Informe os dados do LED atualmente instalado.",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -352,15 +357,26 @@ fun PreMeasurementStreetScreen(
 
 
                     OutlinedTextField(
-                        value = preMeasurementViewModel.street?.lastPower ?: "",
-                        onValueChange = {
+                        value = preMeasurementViewModel.street?.lastPower
+                            ?.removeSuffix("W")
+                            ?.trim()
+                            ?: "",
+                        onValueChange = { input ->
                             triedToSubmit = false
-                            preMeasurementViewModel.street =
-                                preMeasurementViewModel.street?.copy(lastPower = it)
+
+                            val onlyNumbers = input.filter { it.isDigit() }
+
+                            preMeasurementViewModel.street = preMeasurementViewModel.street?.copy(
+                                lastPower = if (onlyNumbers.isNotEmpty())
+                                    "${onlyNumbers}W"
+                                else
+                                    ""
+                            )
                         },
                         isError = triedToSubmit && preMeasurementViewModel.street?.lastPower.isNullOrBlank(),
                         singleLine = true,
                         label = { Text("Potência atual") },
+                        suffix = { Text("W") },
                         supportingText = {
                             if (triedToSubmit && preMeasurementViewModel.street?.lastPower.isNullOrBlank()) {
                                 Text(
@@ -553,7 +569,7 @@ fun StreetItemsContent(
                     if (action == "back") {
                         navController.popBackStack()
                     } else {
-                        navController.navigate(action!!){
+                        navController.navigate(action!!) {
                             popUpTo(Routes.PRE_MEASUREMENT_FLOW) { inclusive = true }
                         }
                     }
@@ -843,7 +859,7 @@ fun ContractItem(
     ListItem(
         headlineContent = {
             Text(
-                text = item.nameForImport,
+                text = item.description,
                 style = MaterialTheme.typography.titleMedium,
                 overflow = TextOverflow.Ellipsis
             )

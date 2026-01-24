@@ -1,6 +1,4 @@
 <div class="h-full w-full relative" #top>
-  <app-prime-breadcrumb title="Selecione uma cidade" [path]="['Pré-medições', currentPath]"></app-prime-breadcrumb>
-
   <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
   <div *ngIf="preMeasurements.length === 0 && !loading">

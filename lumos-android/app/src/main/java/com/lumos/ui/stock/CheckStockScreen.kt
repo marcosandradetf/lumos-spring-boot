@@ -2,7 +2,6 @@ package com.lumos.ui.stock
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,17 +20,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,15 +37,12 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -59,7 +52,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
@@ -69,11 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,6 +73,7 @@ import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.Deposit
 import com.lumos.domain.model.MaterialStock
 import com.lumos.domain.model.Stockist
+import com.lumos.domain.service.ConnectivityGate
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.Alert
@@ -95,16 +84,14 @@ import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.components.Tag
 import com.lumos.viewmodel.StockViewModel
-import com.lumos.utils.ConnectivityUtils
 import com.lumos.worker.SyncTypes
-import kotlinx.coroutines.selects.select
-import java.math.BigDecimal
 
 @Composable
 fun CheckStockScreen(
     navController: NavHostController,
     lastRoute: String? = null,
-    stockViewModel: StockViewModel
+    stockViewModel: StockViewModel,
+    connectivityGate: ConnectivityGate
 ) {
     val stock by stockViewModel.stock.collectAsState()
     val deposits by stockViewModel.deposits.collectAsState()
@@ -136,7 +123,7 @@ fun CheckStockScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (ConnectivityUtils.hasRealInternetConnection()) {
+        if (connectivityGate.canReachServer()) {
             hasInternet = true
 
             stockViewModel.hasTypesInQueue(
@@ -154,7 +141,7 @@ fun CheckStockScreen(
 
     LaunchedEffect(resync) {
         if (resync > 0) {
-            if (ConnectivityUtils.hasRealInternetConnection()) {
+            if (connectivityGate.canReachServer()) {
                 hasInternet = true
 
                 stockViewModel.hasTypesInQueue(

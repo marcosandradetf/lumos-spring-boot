@@ -37,6 +37,7 @@ import {ZXingScannerModule} from '@zxing/ngx-scanner';
 import {BarcodeFormat} from '@zxing/library';
 import {StyleClass} from 'primeng/styleclass';
 import {ConfirmPopup, ConfirmPopupModule} from 'primeng/confirmpopup';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
     selector: 'app-stock-movement',
@@ -124,6 +125,7 @@ export class StockMovementComponent implements OnInit {
     ngOnInit() {
         this.isMobile = window.innerWidth <= 1024;
         this.titleService.setTitle("Movimentar Estoque");
+        SharedState.setCurrentPath(['Estoque', 'Movimentar Estoque']);
         this.items = [
             {
                 label: this.isMobile ? 'Escanear itens' : 'Selecionar itens',

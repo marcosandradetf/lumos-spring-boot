@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
@@ -92,7 +95,7 @@ fun CategoryMenu(navController: NavHostController, context: Context) {
             "Pré-medição",
             listOf("Nova pré-medição", "Pré-medições em andamento"),
             action = listOf(Routes.CONTRACT_SCREEN, Routes.PRE_MEASUREMENTS),
-            icons = listOf(Icons.Default.Mail, Icons.Default.Map)
+            icons = listOf(Icons.AutoMirrored.Filled.Assignment, Icons.Default.Map)
         ),
     )
 

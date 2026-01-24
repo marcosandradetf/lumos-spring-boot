@@ -69,7 +69,7 @@ public class MaterialStockViewController {
 
     @GetMapping("/mobile/stock/v2/get-truck-stock")
     public ResponseEntity<?> getStockV2() {
-        return materialStockViewService.getTruckStock();
+        return materialStockViewService.getTruckStock(null);
     }
 
     @GetMapping("/mobile/stock/v3/get-truck-stock")

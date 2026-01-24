@@ -9,8 +9,10 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface StockApi {
-    @GET("api/mobile/stock/v2/get-truck-stock")
-    suspend fun getStock(): Response<StockResponse>
+    @GET("api/mobile/stock/v3/get-truck-stock")
+    suspend fun getStock(
+        @Query("teamId") teamId: Long,
+    ): Response<StockResponse>
 
     @POST("api/mobile/stock/send-order")
     suspend fun sendOrder(

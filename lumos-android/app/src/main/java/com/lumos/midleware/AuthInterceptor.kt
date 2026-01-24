@@ -28,8 +28,11 @@ class AuthInterceptor(
         val accessToken = secureStorage.getAccessToken()
 
         // Não intercepta rotas de auth
-        val isAuthEndpoint = url.startsWith("/spring/api/mobile/auth")
+        val isAuthEndpoint =
+            url.startsWith("/spring/api/mobile/auth")
+
         val isAuthEndpointDebug = url.startsWith("/api/mobile/auth")
+
         if (isAuthEndpoint || isAuthEndpointDebug) {
             return chain.proceed(chain.request())
         }

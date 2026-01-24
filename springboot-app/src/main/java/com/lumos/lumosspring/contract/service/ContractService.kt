@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.contract.service
 
 import com.lumos.lumosspring.contract.dto.ContractDTO
-import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.entities.Contract
 import com.lumos.lumosspring.contract.entities.ContractItem
@@ -12,7 +11,9 @@ import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.*
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -44,6 +45,12 @@ class ContractService(
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
+    @Caching(
+        evict = [CacheEvict(
+            cacheNames = ["GetContractsForPreMeasurement"],
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
+        )]
+    )
     fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         var contract = Contract()
         val user = userRepository.findByUserId(Utils.getCurrentUserId())

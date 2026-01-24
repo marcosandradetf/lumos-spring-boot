@@ -64,6 +64,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.OperationalUser
 import com.lumos.domain.model.Team
+import com.lumos.domain.service.ConnectivityGate
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
@@ -75,7 +76,6 @@ import com.lumos.ui.components.NoInternet
 import com.lumos.ui.components.NothingData
 import com.lumos.ui.components.Tag
 import com.lumos.ui.components.UserAvatar
-import com.lumos.utils.ConnectivityUtils
 import com.lumos.viewmodel.TeamViewModel
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -86,7 +86,8 @@ fun CheckTeamScreen(
     viewModel: TeamViewModel,
     navController: NavHostController,
     currentScreen: Int,
-    secureStorage: SecureStorage
+    secureStorage: SecureStorage,
+    connectivityGate: ConnectivityGate
 ) {
     var showBottomSheet by remember { mutableStateOf(false) }
     var confirmModal by remember { mutableStateOf(false) }
@@ -126,7 +127,7 @@ fun CheckTeamScreen(
 
 
     LaunchedEffect(Unit) {
-        hasInternet = ConnectivityUtils.hasRealInternetConnection()
+        hasInternet = connectivityGate.canReachServer()
         if (hasInternet) viewModel.callGetOperationalAndTeams()
 
         if (currentUserId != null) {
@@ -270,7 +271,7 @@ fun CheckTeamScreen(
                     isRefreshing = viewModel.loading,
                     onRefresh = {
                         scope.launch {
-                            hasInternet = ConnectivityUtils.hasRealInternetConnection()
+                            hasInternet = connectivityGate.canReachServer()
                             if (hasInternet) viewModel.callGetOperationalAndTeams()
                         }
                     },
@@ -676,12 +677,13 @@ fun PrevTeam() {
         initialTeams = fakeTeams,
         initialOperationalUsers = fakeUsers
     )
-
-    CheckTeamScreen(
-        viewModel = viewModel,
-        navController = rememberNavController(),
-        currentScreen = BottomBar.MAINTENANCE.value,
-        secureStorage = SecureStorage(LocalContext.current)
-    )
+//
+//    CheckTeamScreen(
+//        viewModel = viewModel,
+//        navController = rememberNavController(),
+//        currentScreen = BottomBar.MAINTENANCE.value,
+//        secureStorage = SecureStorage(LocalContext.current),
+//
+//    )
 }
 

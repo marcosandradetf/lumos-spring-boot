@@ -127,6 +127,7 @@ fun StreetMaterialScreen(
             directExecutionViewModel.initializeExecutionSameStreet(currentAddress)
         } else {
             directExecutionViewModel.loadingCoordinates = true
+            currentAddress = ""
             val (lat, long) = coordinates?.execute() ?: Pair(null, null)
             if (lat != null && long != null) {
                 val addr = addressService?.execute(lat, long)
@@ -137,17 +138,17 @@ fun StreetMaterialScreen(
                     val city = addr[2]
 
                     currentAddress = "$streetName, $neighborhood, $city"
-
-                    directExecutionViewModel.street =
-                        directExecutionViewModel.street?.copy(
-                            address = currentAddress,
-                            latitude = lat,
-                            longitude = long
-                        )
                 } else {
                     directExecutionViewModel.errorMessage =
                         "Geolocalização salva! Não foi possível identificar o endereço. Insira manualmente."
                 }
+
+                directExecutionViewModel.street =
+                    directExecutionViewModel.street?.copy(
+                        address = currentAddress,
+                        latitude = lat,
+                        longitude = long
+                    )
             }
             directExecutionViewModel.loadingCoordinates = false
         }

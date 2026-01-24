@@ -22,4 +22,10 @@ interface TeamDao {
     @Query("SELECT * FROM Team")
     fun getTeamsFlow(): Flow<List<Team>>
 
+    @Query("DELETE FROM team")
+    suspend fun deleteTeams()
+
+    @Query("DELETE FROM operationaluser")
+    suspend fun deleteUsers()
+
 }

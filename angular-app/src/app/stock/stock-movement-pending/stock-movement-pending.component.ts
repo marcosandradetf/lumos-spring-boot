@@ -20,6 +20,7 @@ import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Message} from 'primeng/message';
 import {Tooltip} from 'primeng/tooltip';
+import {SharedState} from '../../core/service/shared-state';
 
 
 @Component({
@@ -90,6 +91,8 @@ export class StockMovementPendingComponent implements OnInit {
                 routerLink: '/estoque/movimentar-estoque-aprovado'
             },
         ];
+
+        SharedState.setCurrentPath(['Estoque', 'Pendente de Aprovação']);
 
         this.isMobile = window.innerWidth <= 1024;
     }

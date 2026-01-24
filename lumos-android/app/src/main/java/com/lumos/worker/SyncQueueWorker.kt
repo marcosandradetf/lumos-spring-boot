@@ -33,7 +33,6 @@ import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.PreMeasurementRepository
 import com.lumos.repository.StockRepository
 import com.lumos.repository.TeamRepository
-import com.lumos.utils.ConnectivityUtils
 import com.lumos.utils.SyncLoading
 import com.lumos.utils.Utils
 import com.lumos.utils.Utils.parseToAny
@@ -78,6 +77,7 @@ class SyncQueueWorker(
     private val db = app.database
     private val queueDao = db.queueDao()
     private val retrofit = app.retrofit
+    private val connectivityGate = app.connectivityGate
     private val secureStorage = app.secureStorage
     private val preMeasurementRepository: PreMeasurementRepository
     private val contractRepository: ContractRepository
@@ -230,7 +230,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (ConnectivityUtils.hasRealInternetConnection()) {
+            if (connectivityGate.canReachServer()) {
                 Log.e("postGeneric", "Internet")
                 queueDao.update(inProgressItem)
                 val request = UpdateEntity(
@@ -248,7 +248,6 @@ class SyncQueueWorker(
                 Result.retry()
             }
         } catch (e: Exception) {
-            Log.e("postGeneric", "Erro ao sincronizar: ${e.message}")
             queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
             Result.failure()
         }
@@ -264,7 +263,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.hasRealInternetConnection()) {
+            if (!connectivityGate.canReachServer()) {
                 return Result.retry()
             }
 
@@ -320,7 +319,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if (ConnectivityUtils.hasRealInternetConnection()) {
+            if (connectivityGate.canReachServer()) {
                 Log.e("SyncStock", "Internet")
                 queueDao.update(inProgressItem)
                 val response = contractRepository.syncContractItems()
@@ -357,7 +356,7 @@ class SyncQueueWorker(
                 return Result.success() // não tenta mais esse
             }
 
-            if (ConnectivityUtils.hasRealInternetConnection()) {
+            if (connectivityGate.canReachServer()) {
                 Log.e("syncContract", "Internet")
                 queueDao.update(inProgressItem)
                 val response = contractRepository.syncContracts()
@@ -390,7 +389,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -434,7 +433,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -486,7 +485,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -533,7 +532,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -586,7 +585,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -636,7 +635,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -678,7 +677,7 @@ class SyncQueueWorker(
         )
 
         return try {
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -719,7 +718,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa
@@ -766,7 +765,7 @@ class SyncQueueWorker(
                 return Result.success()
             }
 
-            if (!ConnectivityUtils.hasRealInternetConnection()) return Result.retry()
+            if (!connectivityGate.canReachServer()) return Result.retry()
 
             queueDao.update(inProgressItem)
             // Atualiza o item com novo status e tentativa

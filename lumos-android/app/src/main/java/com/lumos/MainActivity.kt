@@ -21,7 +21,6 @@ import com.lumos.ui.theme.LumosTheme
 
 
 class MainActivity : ComponentActivity() {
-    //    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,21 +79,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Verifica se a permissão de Estado do Telefone foi concedida
-        if (permissionsResult[Manifest.permission.READ_PHONE_STATE] == true) {
-            // A permissão de estado do telefone foi concedida
-            println("Permissão de estado do telefone concedida.")
-        } else {
-            // A permissão de estado do telefone não foi concedida
-            if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
-                // O usuário marcou "Não perguntar novamente"
-                showSettingsDialog()
-            } else {
-                // Solicita novamente a permissão de estado do telefone
-                showPermissionRationale("READ_PHONE_STATE")
-            }
-        }
-
         if (permissionsResult[Manifest.permission.CAMERA] == false) {
             if (!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
                 // O usuário marcou "Não perguntar novamente"
@@ -131,15 +115,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Adiciona a permissão de estado do telefone
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissions.add(Manifest.permission.READ_PHONE_STATE)
-        }
-
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
@@ -166,7 +141,7 @@ class MainActivity : ComponentActivity() {
             "LOCATION" -> {
                 title = "Permissão Necessária"
                 message =
-                    "O aplicativo precisa de permissão de localização para funcionar corretamente. Por favor, permita o acesso."
+                    "O Lumos precisa de permissão de localização para capturar coordenadas durante as instalações e manutenções. Por favor, permita o acesso."
                 permission = Manifest.permission.ACCESS_FINE_LOCATION
             }
 
@@ -174,24 +149,17 @@ class MainActivity : ComponentActivity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     title = "Permissão de Notificações"
                     message =
-                        "Para receber notificações, o app precisa da sua permissão. Deseja permitir?"
+                        "Para receber notificações importantes, o Lumos precisa da sua permissão. Deseja permitir?"
                     permission = Manifest.permission.POST_NOTIFICATIONS
                 } else {
                     return
                 }
             }
 
-            "READ_PHONE_STATE" -> {
-                title = "Permissão de Rede"
-                message =
-                    "Para evitar instabilidade durante a sincronização, o app precisa dessa permissão. Por favor, permita o acesso."
-                permission = Manifest.permission.READ_PHONE_STATE
-            }
-
             "CAMERA" -> {
                 title = "Permissão de Câmera"
                 message =
-                    "Para tirar fotos das pré-medições, o app precisa dessa permissão. Por favor, permita o acesso."
+                    "Para tirar fotos das instalações e manutenções, o Lumos precisa dessa permissão. Por favor, permita o acesso."
                 permission = Manifest.permission.READ_PHONE_STATE
             }
 

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
+import androidx.room.Transaction
 import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionRequest
 import com.lumos.domain.model.DirectExecutionStreet
@@ -165,4 +166,16 @@ interface DirectExecutionDao {
 
     @Query("SELECT * from direct_execution_street where directExecutionId = :installationID")
     suspend fun getStreetsByInstallationId(installationID: Long?): List<DirectExecutionStreet>
+
+    @Transaction
+    suspend fun deleteAllInstallations(ids: List<Long>) {
+        deleteStreets(ids)
+        deleteInstallations(ids)
+    }
+
+    @Query("DELETE FROM direct_execution_street WHERE directExecutionId = (:ids)")
+    suspend fun deleteStreets(ids: List<Long>)
+
+    @Query("DELETE FROM direct_execution WHERE directExecutionId = (:ids)")
+    suspend fun deleteInstallations(ids: List<Long>)
 }

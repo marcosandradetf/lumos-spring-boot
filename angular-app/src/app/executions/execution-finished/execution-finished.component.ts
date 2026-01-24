@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import {SharedState} from '../../core/service/shared-state';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-execution-finished',
@@ -8,5 +10,8 @@ import { Component } from '@angular/core';
   styleUrl: './execution-finished.component.scss'
 })
 export class ExecutionFinishedComponent {
-
+    constructor(private title: Title) {
+        this.title.setTitle("Execuções - Finalizadas")
+        SharedState.setCurrentPath(["Execuções","Finalizadas"]);
+    }
 }

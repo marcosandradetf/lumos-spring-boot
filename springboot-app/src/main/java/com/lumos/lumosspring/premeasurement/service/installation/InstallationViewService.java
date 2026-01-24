@@ -2,6 +2,7 @@ package com.lumos.lumosspring.premeasurement.service.installation;
 
 import com.lumos.lumosspring.premeasurement.repository.installation.InstallationViewRepository;
 import com.lumos.lumosspring.util.Utils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,10 @@ public class InstallationViewService {
         this.viewRepository = viewRepository;
     }
 
+    @Cacheable(
+            value = "getPreMeasurementInstallations",
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
+    )
     public ResponseEntity<?> getInstallations(String status) {
         UUID userID = Utils.getCurrentUserId();
         var executions = viewRepository.getInstallations(userID, status, null);
@@ -22,6 +27,10 @@ public class InstallationViewService {
         return ResponseEntity.ok().body(executions);
     }
 
+    @Cacheable(
+            value = "getPreMeasurementInstallations",
+            key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
+    )
     public ResponseEntity<?> getInstallationsV2(String status, Long teamId) {
         var executions = viewRepository.getInstallations(null, status, teamId);
 

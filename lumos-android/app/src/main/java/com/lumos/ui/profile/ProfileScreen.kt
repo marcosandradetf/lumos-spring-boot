@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.lumos.BuildConfig
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -39,8 +40,7 @@ fun ProfileScreen(
     val currentVersionName =
         packageInfo.versionName
 
-    val currentVersionCode =
-        packageInfo.longVersionCode
+    val currentVersionCode = BuildConfig.VERSION_CODE
 
 
     AppLayout(
@@ -57,12 +57,12 @@ fun ProfileScreen(
             }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER){
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
                 popUpTo(Routes.AUTH_FLOW) { inclusive = true }
             }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE){
+            navController.navigate(Routes.MAINTENANCE) {
                 popUpTo(Routes.AUTH_FLOW) { inclusive = true }
             }
         }

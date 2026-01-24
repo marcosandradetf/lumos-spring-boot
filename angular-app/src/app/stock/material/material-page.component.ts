@@ -15,6 +15,7 @@ import {StockService} from '../services/stock.service';
 import {MaterialService} from '../services/material.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {StyleClass} from 'primeng/styleclass';
+import {SharedState} from '../../core/service/shared-state';
 
 
 @Component({
@@ -49,6 +50,7 @@ export class MaterialPageComponent implements OnInit {
         this.loading = true;
         this.loadMaterialTypes();
         this.loadMaterials();
+        SharedState.setCurrentPath(['Estoque', 'Catálogo']);
     }
 
     // Simula carregamento de materiais

@@ -31,6 +31,7 @@ import {DropdownModule} from 'primeng/dropdown';
 import {Textarea} from 'primeng/textarea';
 import {Message} from 'primeng/message';
 import {TeamService} from '../../manage/team/team-service.service';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
     selector: 'app-reservation-management-select',
@@ -132,6 +133,7 @@ export class ReservationManagementSelectComponent {
                 private executionService: ExecutionService) {
 
         this.title.setTitle('Gerenciamento de Estoque - Pré-instalação');
+        SharedState.setCurrentPath(['Solicitações ao Estoquista', 'Gerenciamento de estoque - Pré-instalação']);
 
         this.formWhatsapp = this.fb.group({
             phone: [

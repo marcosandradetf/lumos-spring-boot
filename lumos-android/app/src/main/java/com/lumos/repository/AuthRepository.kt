@@ -16,6 +16,8 @@ import com.lumos.api.RequestResult.UnknownError
 import com.lumos.domain.model.LoginRequest
 import com.lumos.midleware.SecureStorage
 import com.lumos.notifications.NotificationManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 
 
@@ -89,7 +91,7 @@ class AuthRepository(
                 loginValue
         println(finalValue)
 
-        val loginRequest = LoginRequest(finalValue, finalValue, password)
+        val loginRequest = LoginRequest(finalValue, password)
 
         return try {
             val response = ApiExecutor.execute { authApi.login(request = loginRequest) }
@@ -110,6 +112,7 @@ class AuthRepository(
                     val roles = jwt.getClaim("scope").asString()?.split(" ") ?: emptyList()
                     val fullName = jwt.getClaim("fullname").asString()
                     val emailDecoded = jwt.getClaim("email").asString()
+                    val tenant = jwt.getClaim("tenant").asString()
 
                     // ------------------------------
                     // 2. Save on SecureStorage
@@ -122,6 +125,9 @@ class AuthRepository(
                     secureStorage.saveRoles(roles.toSet())
                     secureStorage.setFullName(fullName ?: "")
                     secureStorage.saveEmail(emailDecoded ?: "")
+                    tenant?.let {
+                        secureStorage.setTenant(it)
+                    }
 
                     Success(Unit)
                 }
@@ -139,7 +145,7 @@ class AuthRepository(
     }
 
 
-    suspend fun logout(onComplete: () -> Unit) {
+    suspend fun logout(onComplete: () -> Unit) = withContext(Dispatchers.IO) {
         val refreshToken = secureStorage.getRefreshToken()
 
         try {

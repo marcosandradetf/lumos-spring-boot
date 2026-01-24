@@ -1,25 +1,9 @@
 <div class="flex" #top>
   <div class="w-full h-full">
 
-    <div class="pt-2 w-full pl-2 flex items-center justify-between">
-      <div class="breadcrumbs text-sm">
-        <ul class="select-none">
-          <li><a>Início</a></li>
-          <li><a>Configurações</a></li>
-          <li>Usuários</li>
-        </ul>
-      </div>
-    </div>
-
     @if (loading) {
       <app-loading></app-loading>
     } @else {
-      <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5 mt-5">
-        <input type="radio" class="tab" aria-label="Usuários" checked/>
-        <input type="radio" class="tab" aria-label="Equipes" (click)="router.navigate(['/configuracoes/equipes'])"/>
-        <input type="radio" class="tab" aria-label="Empresa" disabled
-               (click)="router.navigate(['/configuracoes/empresa'])"/>
-      </div>
 
       <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)"
             class="w-full pl-2">

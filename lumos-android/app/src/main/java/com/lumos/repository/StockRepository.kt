@@ -25,7 +25,7 @@ class StockRepository(
     private val db: AppDatabase,
     api: Retrofit,
     private val secureStorage: SecureStorage,
-    private val app: Application
+    private val app: Application,
 ) {
     private val stockApi = api.create(StockApi::class.java)
 

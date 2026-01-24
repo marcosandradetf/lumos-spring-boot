@@ -1,12 +1,14 @@
 package com.lumos.ui.premeasurement
 
 import android.content.Context
+import android.widget.Button
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -167,6 +170,7 @@ fun PMPContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(2.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp) // Espaço entre os cards
             ) {
                 item {
@@ -177,8 +181,8 @@ fun PMPContent(
                                 .padding(6.dp),
                             elevation = CardDefaults.cardElevation(4.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                containerColor = MaterialTheme.colorScheme.inverseSurface,
+                                contentColor = MaterialTheme.colorScheme.background
                             )
                         ) {
                             Column(
@@ -196,7 +200,6 @@ fun PMPContent(
                                         text = Utils.abbreviate(measurement.contractor),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
 
                                     Column(
@@ -206,14 +209,12 @@ fun PMPContent(
                                         Text(
                                             text = "Contrato",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.padding(bottom = 2.dp) // Pequeno espaço entre o texto e o ícone
                                         )
 
                                         Icon(
                                             imageVector = Icons.Default.Downloading,
                                             contentDescription = "Baixar Contrato",
-                                            tint = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.size(24.dp) // Ajuste do tamanho do ícone
                                         )
                                     }
@@ -232,28 +233,23 @@ fun PMPContent(
                 item {
                     AnimatedVisibility(
                         visible = !expanded,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp)
-                            .align(Alignment.BottomCenter)
                     ) {
-                        Button(
-                            onClick = {
-                                onNavigateToStreet(measurement.preMeasurementId)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Azul
+                        FilledTonalButton(
+                            onClick = { onNavigateToStreet(measurement.preMeasurementId) },
+                            modifier = Modifier
+                                .padding(top = 20.dp)
+                                .align(Alignment.Center)
+                                .fillMaxWidth(.85f),
+                            contentPadding = PaddingValues(
+                                horizontal = 14.dp,
+                                vertical = 6.dp
+                            )
                         ) {
-                            Text(
-                                text = "Adicionar ponto",
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Spacer(Modifier.width(5.dp))
-                            Icon(
-                                imageVector = Icons.Default.AddCircle,
-                                contentDescription = "Adicionar",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
+                            Text("Adicionar ponto")
+                            Spacer(Modifier.width(4.dp))
+                            Icon(Icons.Default.AddCircle, null, Modifier.size(18.dp))
                         }
+
                     }
 
                 }
@@ -360,7 +356,7 @@ fun Streets(
 
 @Composable
 fun FinishPreMeasurementButton(onClick: () -> Unit) {
-    TextButton (
+    Button (
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -369,11 +365,9 @@ fun FinishPreMeasurementButton(onClick: () -> Unit) {
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onPrimary,
                 text = "Finalizar Pré-Medição",
-                fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyLarge,
-                textDecoration = TextDecoration.Underline
             )
         }
     }

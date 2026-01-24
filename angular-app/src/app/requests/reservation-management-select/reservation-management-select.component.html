@@ -1,552 +1,551 @@
 <div class="h-full w-full relative" [class.overflow-hidden]="message !== null">
-    <app-prime-breadcrumb [path]="['Solicitações ao Estoquista', 'Gerenciamento de estoque - Pré-instalação']"
-                          [title]='reserve.description'/>
+  <h4>{{reserve.description}}</h4>
 
-    <!-- Overlay de Loading -->
-    <app-loading-overlay [loading]="loading"></app-loading-overlay>
+  <!-- Overlay de Loading -->
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
-    <div *ngIf="message !== null" class="w-full h-full flex flex-col justify-center items-center gap-4">
-        <i class="pi pi-check-circle" style="font-size: 4rem; color: green;"></i>
-        <h2 class="text-2xl font-semibold text-center max-w-[95%]"> {{ message }} </h2>
-        <p-button label="Voltar para solicitações" rounded
-                  routerLink="/requisicoes/instalacoes/gerenciamento-estoque"></p-button>
+  <div *ngIf="message !== null" class="w-full h-full flex flex-col justify-center items-center gap-4">
+    <i class="pi pi-check-circle" style="font-size: 4rem; color: green;"></i>
+    <h2 class="text-2xl font-semibold text-center max-w-[95%]"> {{ message }} </h2>
+    <p-button label="Voltar para solicitações" rounded
+              routerLink="/requisicoes/instalacoes/gerenciamento-estoque"></p-button>
 
-    </div>
+  </div>
 
-    <div *ngIf="(preMeasurementId !== null || directExecutionId !== null) && message === null">
-        <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="preMeasurementId === null && directExecutionId === null"
-                 [value]="tableSk">
-            <ng-template pTemplate="header">
-                <tr>
+  <div *ngIf="(preMeasurementId !== null || directExecutionId !== null) && message === null">
+    <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="preMeasurementId === null && directExecutionId === null"
+             [value]="tableSk">
+      <ng-template pTemplate="header">
+        <tr>
+          <th></th>
+          <th colspan="" pSortableColumn="description">Descrição
+            <p-sortIcon field="description"/>
+          </th>
+          <th pSortableColumn="category">Equipe Responsável
+            <p-sortIcon field="category"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Necessária
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Alocada
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="inventoryStatus">Status
+            <p-sortIcon field="inventoryStatus"/>
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-tbSk>
+        <tr>
+          <td class="p-4">
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p-table *ngIf="(preMeasurementId !== null || directExecutionId !== null)" #table_parent [value]="reserve.items"
+             dataKey="contractItemId" [tableStyle]="{ 'min-width': '60rem' }" [expandedRowKeys]="expandedRows"
+             editMode="row"
+             (onRowExpand)="onRowExpand($event.data)">
+
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 5rem"></th>
+          <!--          <th pSortableColumn="itemId">Id-->
+          <!--            <p-sortIcon field="itemId"/>-->
+          <!--          </th>-->
+          <th pSortableColumn="description">Descrição
+            <p-sortIcon field="description"/>
+          </th>
+          <th pSortableColumn="category">Equipe Responsável
+            <p-sortIcon field="category"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Necessária
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Alocada
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="currentBalance">Saldo Contratual
+            <p-sortIcon field="currentBalance"/>
+          </th>
+          <th pSortableColumn="inventoryStatus">Status
+            <p-sortIcon field="inventoryStatus"/>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item let-expanded="expanded">
+        <tr>
+          <td>
+            <p-button type="button" pRipple [pRowToggler]="item" [text]="true" [rounded]="false"
+                      [plain]="true"
+                      [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"/>
+          </td>
+          <!--          <td>{{ item.itemId }}</td>-->
+          <td>{{ item.description }}</td>
+          <td (click)="verifyTeamData()">
+            <p-tag severity="info" styleClass="cursor-pointer"
+                   pTooltip="Clique para detalhes">{{ reserve.teamName }}
+            </p-tag>
+          </td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ getTotalQuantity(item.materials) }}</td>
+          <td>{{ item.currentBalance }}</td>
+          <td>
+            <p-tag [value]="item.materials?.length > 0 ? 'CONCLUÍDO' : 'PENDENTE'"
+                   [severity]="item.materials?.length > 0 ? 'success' : 'danger'"/>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="rowexpansion">
+        @if (truckStockControl) {
+          <tr>
+            <td colspan="8">
+              <p-table #table_collapse [value]="filteredMaterials" editMode="row" selectionMode="single"
+                       [(selection)]="selectedMaterial" dataKey="materialStockId">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>Descrição</th>
+                    <th>Estoque</th>
+                    <th>Almoxarifado</th>
+                    <th>Quantidade</th>
                     <th></th>
-                    <th colspan="" pSortableColumn="description">Descrição
-                        <p-sortIcon field="description"/>
-                    </th>
-                    <th pSortableColumn="category">Equipe Responsável
-                        <p-sortIcon field="category"/>
-                    </th>
-                    <th pSortableColumn="quantity">Quantidade Necessária
-                        <p-sortIcon field="quantity"/>
-                    </th>
-                    <th pSortableColumn="quantity">Quantidade Alocada
-                        <p-sortIcon field="quantity"/>
-                    </th>
-                    <th pSortableColumn="inventoryStatus">Status
-                        <p-sortIcon field="inventoryStatus"/>
-                    </th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-tbSk>
-                <tr>
-                    <td class="p-4">
-                        <p-skeleton/>
+                  </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-material>
+                  <tr #rowElement [pEditableRow]="material" [pSelectableRow]="material"
+                      (click)="onRowClick($event, material)">
+                    <td>
+                      {{ material.materialName }}
                     </td>
                     <td>
-                        <p-skeleton/>
+                      <p-tag
+                        [value]="material.stockAvailable <= 0 ? 'Sem Estoque' : material.stockAvailable + ' ' + material.requestUnit"
+                        [severity]="material.stockAvailable ? 'success' : 'danger'"></p-tag>
                     </td>
                     <td>
-                        <p-skeleton/>
+                      <p-tag #tag
+                             [value]="material.isTruck ? 'CAMINHÃO PLACA - ' + material.plateVehicle : material.depositName"
+                             [severity]="material.isTruck ? 'info' : 'warn'"/>
                     </td>
                     <td>
-                        <p-skeleton/>
+                      <p-cellEditor>
+                        <ng-template pTemplate="output">{{ getQuantity(material) ?? 0 }}
+                        </ng-template>
+                        <ng-template pTemplate="input">
+                          <input pInputText #qtyInput
+                                 (keydown.enter)="Confirm(material, rowElement)"
+                                 (keydown.escape)="Cancel(material,rowElement)"
+                                 (input)="utils.formatFloatNumber($event)"
+                                 placeholder="Informe a quantidade" [(ngModel)]="quantity"/>
+                        </ng-template>
+                      </p-cellEditor>
                     </td>
-                    <td>
-                        <p-skeleton/>
+                    <td class="space-x-2">
+                      <p-button *ngIf="currentMaterialStockId === material.materialStockId"
+                                [label]="existsMaterial(material) ? 'Remover' : 'Cancelar'"
+                                size="small" variant="text"
+                                severity="contrast" (click)="Cancel(material, rowElement)"/>
+                      <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"
+                                *ngIf="currentMaterialStockId === material.materialStockId"
+                                (click)="Confirm(material, rowElement)"/>
                     </td>
-                </tr>
-            </ng-template>
-        </p-table>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </td>
+          </tr>
+        } @else if (showWhatsApp) {
+          <tr>
+            <td colspan="8">
+              <div class="flex justify-center w-full py-6">
 
-        <p-table *ngIf="(preMeasurementId !== null || directExecutionId !== null)" #table_parent [value]="reserve.items"
-                 dataKey="contractItemId" [tableStyle]="{ 'min-width': '60rem' }" [expandedRowKeys]="expandedRows"
-                 editMode="row"
-                 (onRowExpand)="onRowExpand($event.data)">
+                <form
+                  [formGroup]="formWhatsapp"
+                  (ngSubmit)="onSubmit()"
+                  class="flex flex-col gap-4 w-full max-w-xl">
 
+                  <!-- Telefone -->
+                  <div>
+                    <label class="block text-sm font-medium mb-1">
+                      Telefone
+                    </label>
 
-            <ng-template pTemplate="header">
-                <tr>
-                    <th style="width: 5rem"></th>
-                    <!--          <th pSortableColumn="itemId">Id-->
-                    <!--            <p-sortIcon field="itemId"/>-->
-                    <!--          </th>-->
-                    <th pSortableColumn="description">Descrição
-                        <p-sortIcon field="description"/>
-                    </th>
-                    <th pSortableColumn="category">Equipe Responsável
-                        <p-sortIcon field="category"/>
-                    </th>
-                    <th pSortableColumn="quantity">Quantidade Necessária
-                        <p-sortIcon field="quantity"/>
-                    </th>
-                    <th pSortableColumn="quantity">Quantidade Alocada
-                        <p-sortIcon field="quantity"/>
-                    </th>
-                    <th pSortableColumn="currentBalance">Saldo Contratual
-                        <p-sortIcon field="currentBalance"/>
-                    </th>
-                    <th pSortableColumn="inventoryStatus">Status
-                        <p-sortIcon field="inventoryStatus"/>
-                    </th>
-                </tr>
-            </ng-template>
+                    <input
+                      pInputText
+                      formControlName="phone"
+                      placeholder="Insira o telefone da equipe"
+                      maxlength="12"
+                      minlength="10"
+                      class="w-full"
+                      (input)="utils.formatNumber($event)"
+                    />
 
-            <ng-template pTemplate="body" let-item let-expanded="expanded">
-                <tr>
-                    <td>
-                        <p-button type="button" pRipple [pRowToggler]="item" [text]="true" [rounded]="false"
-                                  [plain]="true"
-                                  [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"/>
-                    </td>
-                    <!--          <td>{{ item.itemId }}</td>-->
-                    <td>{{ item.description }}</td>
-                    <td (click)="verifyTeamData()">
-                        <p-tag severity="info" styleClass="cursor-pointer"
-                               pTooltip="Clique para detalhes">{{ reserve.teamName }}
-                        </p-tag>
-                    </td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ getTotalQuantity(item.materials) }}</td>
-                    <td>{{ item.currentBalance }}</td>
-                    <td>
-                        <p-tag [value]="item.materials?.length > 0 ? 'CONCLUÍDO' : 'PENDENTE'"
-                               [severity]="item.materials?.length > 0 ? 'success' : 'danger'"/>
-                    </td>
-                </tr>
-            </ng-template>
+                    @if (isInvalid('phone')) {
+                      <p-message severity="error" size="small" variant="simple">
+                        Telefone obrigatório (DDD + número)
+                      </p-message>
+                    }
+                  </div>
 
-            <ng-template pTemplate="rowexpansion">
-                @if (truckStockControl) {
-                    <tr>
-                        <td colspan="8">
-                            <p-table #table_collapse [value]="filteredMaterials" editMode="row" selectionMode="single"
-                                     [(selection)]="selectedMaterial" dataKey="materialStockId">
-                                <ng-template pTemplate="header">
-                                    <tr>
-                                        <th>Descrição</th>
-                                        <th>Estoque</th>
-                                        <th>Almoxarifado</th>
-                                        <th>Quantidade</th>
-                                        <th></th>
-                                    </tr>
-                                </ng-template>
+                  <!-- Mensagem -->
+                  <div>
+                    <label class="block text-sm font-medium mb-1">
+                      Mensagem
+                    </label>
 
-                                <ng-template pTemplate="body" let-material>
-                                    <tr #rowElement [pEditableRow]="material" [pSelectableRow]="material"
-                                        (click)="onRowClick($event, material)">
-                                        <td>
-                                            {{ material.materialName }}
-                                        </td>
-                                        <td>
-                                            <p-tag
-                                                [value]="material.stockAvailable <= 0 ? 'Sem Estoque' : material.stockAvailable + ' ' + material.requestUnit"
-                                                [severity]="material.stockAvailable ? 'success' : 'danger'"></p-tag>
-                                        </td>
-                                        <td>
-                                            <p-tag #tag
-                                                   [value]="material.isTruck ? 'CAMINHÃO PLACA - ' + material.plateVehicle : material.depositName"
-                                                   [severity]="material.isTruck ? 'info' : 'warn'"/>
-                                        </td>
-                                        <td>
-                                            <p-cellEditor>
-                                                <ng-template pTemplate="output">{{ getQuantity(material) ?? 0 }}
-                                                </ng-template>
-                                                <ng-template pTemplate="input">
-                                                    <input pInputText #qtyInput
-                                                           (keydown.enter)="Confirm(material, rowElement)"
-                                                           (keydown.escape)="Cancel(material,rowElement)"
-                                                           (input)="utils.formatFloatNumber($event)"
-                                                           placeholder="Informe a quantidade" [(ngModel)]="quantity"/>
-                                                </ng-template>
-                                            </p-cellEditor>
-                                        </td>
-                                        <td class="space-x-2">
-                                            <p-button *ngIf="currentMaterialStockId === material.materialStockId"
-                                                      [label]="existsMaterial(material) ? 'Remover' : 'Cancelar'"
-                                                      size="small" variant="text"
-                                                      severity="contrast" (click)="Cancel(material, rowElement)"/>
-                                            <p-button label="Confirmar" icon="pi pi-check" size="small" [raised]="true"
-                                                      *ngIf="currentMaterialStockId === material.materialStockId"
-                                                      (click)="Confirm(material, rowElement)"/>
-                                        </td>
-                                    </tr>
-                                </ng-template>
-                            </p-table>
-                        </td>
-                    </tr>
-                } @else if (showWhatsApp) {
-                    <tr>
-                        <td colspan="8">
-                            <div class="flex justify-center w-full py-6">
-
-                                <form
-                                    [formGroup]="formWhatsapp"
-                                    (ngSubmit)="onSubmit()"
-                                    class="flex flex-col gap-4 w-full max-w-xl">
-
-                                    <!-- Telefone -->
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">
-                                            Telefone
-                                        </label>
-
-                                        <input
-                                            pInputText
-                                            formControlName="phone"
-                                            placeholder="Insira o telefone da equipe"
-                                            maxlength="12"
-                                            minlength="10"
-                                            class="w-full"
-                                            (input)="utils.formatNumber($event)"
-                                        />
-
-                                        @if (isInvalid('phone')) {
-                                            <p-message severity="error" size="small" variant="simple">
-                                                Telefone obrigatório (DDD + número)
-                                            </p-message>
-                                        }
-                                    </div>
-
-                                    <!-- Mensagem -->
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">
-                                            Mensagem
-                                        </label>
-
-                                        <textarea
-                                            rows="13"
-                                            pTextarea
-                                            formControlName="text"
-                                            placeholder="Mensagem"
-                                            class="w-full">
+                    <textarea
+                      rows="13"
+                      pTextarea
+                      formControlName="text"
+                      placeholder="Mensagem"
+                      class="w-full">
                                         </textarea>
 
-                                        @if (isInvalid('text')) {
-                                            <p-message severity="error" size="small" variant="simple">
-                                                Mensagem obrigatória
-                                            </p-message>
-                                        }
-                                    </div>
+                    @if (isInvalid('text')) {
+                      <p-message severity="error" size="small" variant="simple">
+                        Mensagem obrigatória
+                      </p-message>
+                    }
+                  </div>
 
-                                    <!-- Botão -->
-                                    <button
-                                        pButton
-                                        type="submit"
-                                        severity="secondary"
-                                        class="w-full">
-                                        Enviar via WhatsApp
-                                    </button>
+                  <!-- Botão -->
+                  <button
+                    pButton
+                    type="submit"
+                    severity="secondary"
+                    class="w-full">
+                    Enviar via WhatsApp
+                  </button>
 
-                                </form>
+                </form>
 
-                            </div>
-                        </td>
-                    </tr>
+              </div>
+            </td>
+          </tr>
 
-                } @else {
+        } @else {
+          <tr>
+            <td colspan="8">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="text-sm font-semibold ">
+                      Movimentações do Material
+                    </h4>
+                    <p class="text-xs ">
+                      Registros de requisições atendidas vinculados a equipes.
+                    </p>
+                  </div>
+
+                  <p-tag
+                    value="Histórico Operacional"
+                    severity="info"
+                    class="text-xs">
+                  </p-tag>
+                </div>
+
+
+                <p-table
+                  [value]="filteredMaterialHistory"
+                  dataKey="orderCode"
+                  responsiveLayout="scroll"
+                  class="p-datatable-sm">
+
+                  <!-- HEADER -->
+                  <ng-template pTemplate="header">
                     <tr>
-                        <td colspan="8">
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="text-sm font-semibold ">
-                                            Movimentações do Material
-                                        </h4>
-                                        <p class="text-xs ">
-                                            Registros de requisições atendidas vinculados a equipes.
-                                        </p>
-                                    </div>
-
-                                    <p-tag
-                                        value="Histórico Operacional"
-                                        severity="info"
-                                        class="text-xs">
-                                    </p-tag>
-                                </div>
-
-
-                                <p-table
-                                    [value]="filteredMaterialHistory"
-                                    dataKey="orderCode"
-                                    responsiveLayout="scroll"
-                                    class="p-datatable-sm">
-
-                                    <!-- HEADER -->
-                                    <ng-template pTemplate="header">
-                                        <tr>
-                                            <th>OS / Requisição</th>
-                                            <th>Material</th>
-                                            <th>Equipe</th>
-                                            <th>Quantidade</th>
-                                            <th>Status</th>
-                                            <th>Data</th>
-                                        </tr>
-                                    </ng-template>
-
-                                    <!-- BODY -->
-                                    <ng-template pTemplate="body" let-item>
-                                        <tr #rowElement>
-                                            <td class="font-medium">
-                                                {{ item.orderCode }}
-                                            </td>
-
-                                            <td>
-                                                {{ item.materialName }}
-                                            </td>
-
-                                            <td>
-                                                <p-tag
-                                                    [value]="item.teamName"
-                                                    severity="info"
-                                                    class="text-xs">
-                                                </p-tag>
-                                            </td>
-
-                                            <td>
-                                                {{ item.quantityReleased }}
-                                            </td>
-
-                                            <td>
-                                                <p-tag
-                                                    value="COLETADO"
-                                                    severity="success">
-                                                </p-tag>
-                                            </td>
-
-                                            <td>
-                                                {{ item.createdAt | date:'dd/MM/yyyy' }}
-                                            </td>
-                                        </tr>
-                                    </ng-template>
-
-                                    <!-- EMPTY -->
-                                    <ng-template pTemplate="emptymessage">
-                                        <tr>
-                                            <td colspan="6" class="py-10">
-
-                                                <div class="flex flex-col items-center gap-3 text-center">
-
-                                                    <i class="pi pi-exclamation-triangle text-3xl text-amber-400"></i>
-
-                                                    <p class="text-sm font-semibold">
-                                                        Nenhuma movimentação registrada
-                                                    </p>
-
-                                                    <p class="text-sm max-w-md leading-relaxed">
-                                                        Não há registros operacionais para este material até o momento.
-                                                        Antes de prosseguir, confirme com a equipe responsável se há
-                                                        material
-                                                        disponível ou em uso em campo.
-                                                    </p>
-
-                                                    <p class="text-xs">
-                                                        Esta validação evita divergências entre sistema e operação.
-                                                    </p>
-
-                                                </div>
-
-                                            </td>
-                                        </tr>
-                                    </ng-template>
-
-                                </p-table>
-                            </div>
-
-                        </td>
+                      <th>OS / Requisição</th>
+                      <th>Material</th>
+                      <th>Equipe</th>
+                      <th>Quantidade</th>
+                      <th>Status</th>
+                      <th>Data</th>
                     </tr>
+                  </ng-template>
+
+                  <!-- BODY -->
+                  <ng-template pTemplate="body" let-item>
+                    <tr #rowElement>
+                      <td class="font-medium">
+                        {{ item.orderCode }}
+                      </td>
+
+                      <td>
+                        {{ item.materialName }}
+                      </td>
+
+                      <td>
+                        <p-tag
+                          [value]="item.teamName"
+                          severity="info"
+                          class="text-xs">
+                        </p-tag>
+                      </td>
+
+                      <td>
+                        {{ item.quantityReleased }}
+                      </td>
+
+                      <td>
+                        <p-tag
+                          value="COLETADO"
+                          severity="success">
+                        </p-tag>
+                      </td>
+
+                      <td>
+                        {{ item.createdAt | date:'dd/MM/yyyy' }}
+                      </td>
+                    </tr>
+                  </ng-template>
+
+                  <!-- EMPTY -->
+                  <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="8">
-                            <div class="flex gap-3 justify-end">
-                                <div class="relative inline-flex group">
-                                    <button
-                                        rounded
-                                        (click)="ignore(true)"
-                                        pButton
-                                        label="Possui estoque no caminhão"
-                                        icon="pi pi-check"
-                                        class="p-button-secondary">
-                                    </button>
+                      <td colspan="6" class="py-10">
 
-                                    <!-- Tooltip -->
-                                    <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3
-                                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
-                                        transition-all duration-150 ease-out
-                                        bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl
-                                        min-w-[180px] max-w-[250px]
-                                        leading-relaxed text-center z-50">
-                                        Confirma que a equipe possui este material em estoque.
-                                    </div>
-                                </div>
+                        <div class="flex flex-col items-center gap-3 text-center">
 
-                                <div class="relative inline-flex group">
-                                    <button
-                                        rounded
-                                        pButton
-                                        (click)="notifyTeam()"
-                                        label="Notificar Equipe"
-                                        icon="pi pi-bell"
-                                        class="p-button-contrast">
-                                    </button>
+                          <i class="pi pi-exclamation-triangle text-3xl text-amber-400"></i>
 
-                                    <!-- Tooltip -->
-                                    <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3
-                                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
-                                        transition-all duration-150 ease-out
-                                        bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl
-                                        min-w-[180px] max-w-[250px]
-                                        leading-relaxed text-center z-50">
-                                        Envia uma notificação via aplicativo para a equipe fazer a requisição do
-                                        material.
-                                    </div>
-                                </div>
+                          <p class="text-sm font-semibold">
+                            Nenhuma movimentação registrada
+                          </p>
 
-                                <div class="relative inline-flex group">
-                                    <button
-                                        rounded
-                                        pButton
-                                        (click)="openWhatsApp()"
-                                        label="Notificar Via WhatsApp"
-                                        icon="pi pi-whatsapp"
-                                        class="p-button-primary">
-                                    </button>
+                          <p class="text-sm max-w-md leading-relaxed">
+                            Não há registros operacionais para este material até o momento.
+                            Antes de prosseguir, confirme com a equipe responsável se há
+                            material
+                            disponível ou em uso em campo.
+                          </p>
 
-                                    <!-- Tooltip -->
-                                    <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3
-                                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
-                                        transition-all duration-150 ease-out
-                                        bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl
-                                        min-w-[180px] max-w-[250px]
-                                        leading-relaxed text-center z-50">
-                                        Solicitar verificação via WhatsApp.
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
+                          <p class="text-xs">
+                            Esta validação evita divergências entre sistema e operação.
+                          </p>
+
+                        </div>
+
+                      </td>
                     </tr>
-                }
-            </ng-template>
-        </p-table>
+                  </ng-template>
 
-        <!--        finish buttons-->
-        <div class="w-full flex justify-center mt-10 gap-4" *ngIf="Object.keys(this.expandedRows).length === 0">
-            <!--      <p-skeleton *ngIf="streetId === 0" width="20" height="100px" class="mr-2"></p-skeleton>-->
-            <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
-                <p-skeleton height="2.5rem"/>
-            </button>
+                </p-table>
+              </div>
 
-            <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
-                <p-skeleton height="2.5rem"/>
-            </button>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="8">
+              <div class="flex gap-3 justify-end">
+                <div class="relative inline-flex group">
+                  <button
+                    rounded
+                    (click)="ignore(true)"
+                    pButton
+                    label="Possui estoque no caminhão"
+                    icon="pi pi-check"
+                    class="p-button-secondary">
+                  </button>
 
-            <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
-                <p-skeleton height="2.5rem"/>
-            </button>
+                  <!-- Tooltip -->
+                  <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3
+                                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                                        transition-all duration-150 ease-out
+                                        bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl
+                                        min-w-[180px] max-w-[250px]
+                                        leading-relaxed text-center z-50">
+                    Confirma que a equipe possui este material em estoque.
+                  </div>
+                </div>
 
-            <p-button type="button" label="Exibir comentários" [loading]="loading" (click)="showComment()" rounded
-                      severity="secondary"
-                      *ngIf="preMeasurementId !== null || directExecutionId !== null">
-            </p-button>
+                <div class="relative inline-flex group">
+                  <button
+                    rounded
+                    pButton
+                    (click)="notifyTeam()"
+                    label="Notificar Equipe"
+                    icon="pi pi-bell"
+                    class="p-button-contrast">
+                  </button>
 
-            <p-button type="button" label="Voltar para solicitações" [loading]="loading"
-                      routerLink="/requisicoes/instalacoes/gerenciamento-estoque" rounded severity="secondary"
-                      *ngIf="preMeasurementId !== null || directExecutionId !== null">
-            </p-button>
+                  <!-- Tooltip -->
+                  <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3
+                                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                                        transition-all duration-150 ease-out
+                                        bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl
+                                        min-w-[180px] max-w-[250px]
+                                        leading-relaxed text-center z-50">
+                    Envia uma notificação via aplicativo para a equipe fazer a requisição do
+                    material.
+                  </div>
+                </div>
 
-            <p-button type="button" label="Salvar tudo" [loading]="loading" (click)="sendData()" rounded
-                      severity="contrast"
-                      *ngIf="preMeasurementId !== null || directExecutionId !== null">
-            </p-button>
-        </div>
+                <div class="relative inline-flex group">
+                  <button
+                    rounded
+                    pButton
+                    (click)="openWhatsApp()"
+                    label="Notificar Via WhatsApp"
+                    icon="pi pi-whatsapp"
+                    class="p-button-primary">
+                  </button>
+
+                  <!-- Tooltip -->
+                  <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3
+                                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                                        transition-all duration-150 ease-out
+                                        bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl
+                                        min-w-[180px] max-w-[250px]
+                                        leading-relaxed text-center z-50">
+                    Solicitar verificação via WhatsApp.
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        }
+      </ng-template>
+    </p-table>
+
+    <!--        finish buttons-->
+    <div class="w-full flex justify-center mt-10 gap-4" *ngIf="Object.keys(this.expandedRows).length === 0">
+      <!--      <p-skeleton *ngIf="streetId === 0" width="20" height="100px" class="mr-2"></p-skeleton>-->
+      <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
+        <p-skeleton height="2.5rem"/>
+      </button>
+
+      <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
+        <p-skeleton height="2.5rem"/>
+      </button>
+
+      <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
+        <p-skeleton height="2.5rem"/>
+      </button>
+
+      <p-button type="button" label="Exibir comentários" [loading]="loading" (click)="showComment()" rounded
+                severity="secondary"
+                *ngIf="preMeasurementId !== null || directExecutionId !== null">
+      </p-button>
+
+      <p-button type="button" label="Voltar para solicitações" [loading]="loading"
+                routerLink="/requisicoes/instalacoes/gerenciamento-estoque" rounded severity="secondary"
+                *ngIf="preMeasurementId !== null || directExecutionId !== null">
+      </p-button>
+
+      <p-button type="button" label="Salvar tudo" [loading]="loading" (click)="sendData()" rounded
+                severity="contrast"
+                *ngIf="preMeasurementId !== null || directExecutionId !== null">
+      </p-button>
     </div>
+  </div>
 
-    <p-dialog [header]="'Equipe ' + reserve.teamName" [modal]="true" [(visible)]="showModalTeam" position="bottom"
-              [style]="{ width: '25rem', padding: '1rem' }" [dismissableMask]="true">
-        <ng-container *ngIf="loading">
-            <div class="flex h-40 w-full justify-center items-center">
-                <app-loading></app-loading>
-            </div>
-        </ng-container>
+  <p-dialog [header]="'Equipe ' + reserve.teamName" [modal]="true" [(visible)]="showModalTeam" position="bottom"
+            [style]="{ width: '25rem', padding: '1rem' }" [dismissableMask]="true">
+    <ng-container *ngIf="loading">
+      <div class="flex h-40 w-full justify-center items-center">
+        <app-loading></app-loading>
+      </div>
+    </ng-container>
 
-        <ng-container *ngIf="!loading && filteredUsers.length > 0">
-            <div *ngFor="let user of filteredUsers; index as i;" class="mb-4 border-b pb-3">
-                <div class="flex items-center gap-3">
-                    <i class="pi pi-phone"></i>
-                    <div class="flex flex-col">
+    <ng-container *ngIf="!loading && filteredUsers.length > 0">
+      <div *ngFor="let user of filteredUsers; index as i;" class="mb-4 border-b pb-3">
+        <div class="flex items-center gap-3">
+          <i class="pi pi-phone"></i>
+          <div class="flex flex-col">
             <span class="font-semibold text-gray-800 dark:text-neutral-100">{{
-                    user.name + ' ' + user.last_name
-                }}</span>
-                        <div class="flex items-center gap-2 group" *ngIf="user.phone_number">
+                user.name + ' ' + user.last_name
+              }}</span>
+            <div class="flex items-center gap-2 group" *ngIf="user.phone_number">
 
-                            <!-- LIGAR -->
-                            <a
-                                class="text-sm font-medium">
-                                {{ user.phone_number | mask: '(00) 00000-0000' }}
-                            </a>
+              <!-- LIGAR -->
+              <a
+                class="text-sm font-medium">
+                {{ user.phone_number | mask: '(00) 00000-0000' }}
+              </a>
 
-                            <!-- COPIAR -->
-                            <button
-                                type="button"
-                                (click)="copyPhone(user.phone_number)"
-                                class="relative flex items-center justify-center
+              <!-- COPIAR -->
+              <button
+                type="button"
+                (click)="copyPhone(user.phone_number)"
+                class="relative flex items-center justify-center
                                     w-7 h-7 rounded-md
                                     text-gray-500 hover:text-gray-800
                                     hover:bg-gray-100 transition">
 
-                                <i class="pi pi-copy text-sm"></i>
-                                                            <!-- TOOLTIP -->
-                                    <span
-                                        class="pointer-events-none absolute bottom-full mb-2
+                <i class="pi pi-copy text-sm"></i>
+                <!-- TOOLTIP -->
+                <span
+                  class="pointer-events-none absolute bottom-full mb-2
                                             opacity-0 group-hover:opacity-100
                                             transition text-xs
                                             bg-gray-900 text-white px-2 py-1 rounded">
                                             Copiar número
                                     </span>
-                            </button>
-                        </div>
-                        <p *ngIf="!user.phone_number">
-                            Telefone não cadastrado
-                        </p>
-
-                    </div>
-                </div>
+              </button>
             </div>
-        </ng-container>
+            <p *ngIf="!user.phone_number">
+              Telefone não cadastrado
+            </p>
 
-        <ng-container *ngIf="!loading && filteredUsers.length === 0">
-            <div class="flex h-32 w-full justify-center items-center">
-                <p>Cadastro não encontrado para essa equipe</p>
-            </div>
-        </ng-container>
+          </div>
+        </div>
+      </div>
+    </ng-container>
 
-    </p-dialog>
+    <ng-container *ngIf="!loading && filteredUsers.length === 0">
+      <div class="flex h-32 w-full justify-center items-center">
+        <p>Cadastro não encontrado para essa equipe</p>
+      </div>
+    </ng-container>
 
-    <p-toast/>
+  </p-dialog>
 
-    <p-toast [position]="'bottom-center'" key="quantityAlert">
-        <ng-template let-message pTemplate="message">
-            <div class="flex flex-col w-full">
-                <div class="flex items-center mb-4 justify-center">
-                    <i class="pi pi-exclamation-triangle mr-2" style="font-size: 2rem"></i>
-                    <h2>{{ message.summary }}</h2>
-                </div>
+  <p-toast/>
 
-                <p class="mb-4 text-center">
-                    {{ message.detail }}
-                </p>
+  <p-toast [position]="'bottom-center'" key="quantityAlert">
+    <ng-template let-message pTemplate="message">
+      <div class="flex flex-col w-full">
+        <div class="flex items-center mb-4 justify-center">
+          <i class="pi pi-exclamation-triangle mr-2" style="font-size: 2rem"></i>
+          <h2>{{ message.summary }}</h2>
+        </div>
 
-                <div class="flex justify-end gap-2">
-                    <p-button size="small" icon="pi pi-ban" label="Não mostrar novamente" severity="secondary" rounded
-                              (click)="utils.clearToast('quantityAlert'); allowMeasuredMessage = false">
-                    </p-button>
+        <p class="mb-4 text-center">
+          {{ message.detail }}
+        </p>
 
-                    <p-button size="small" icon="pi pi-check" label="Ok" severity="contrast" rounded
-                              (click)="utils.clearToast('quantityAlert')">
-                    </p-button>
-                </div>
-            </div>
-        </ng-template>
-    </p-toast>
+        <div class="flex justify-end gap-2">
+          <p-button size="small" icon="pi pi-ban" label="Não mostrar novamente" severity="secondary" rounded
+                    (click)="utils.clearToast('quantityAlert'); allowMeasuredMessage = false">
+          </p-button>
 
-    <p-toast [position]="'bottom-center'" key="comment"/>
+          <p-button size="small" icon="pi pi-check" label="Ok" severity="contrast" rounded
+                    (click)="utils.clearToast('quantityAlert')">
+          </p-button>
+        </div>
+      </div>
+    </ng-template>
+  </p-toast>
+
+  <p-toast [position]="'bottom-center'" key="comment"/>
 
 
 </div>

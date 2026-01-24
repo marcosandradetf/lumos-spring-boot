@@ -69,6 +69,7 @@ class PreMeasurementViewModel(
                         street = null
                         hasPosted = false
                         streetItems = emptyList()
+                        nextStep = false
                     }
                 }
             }

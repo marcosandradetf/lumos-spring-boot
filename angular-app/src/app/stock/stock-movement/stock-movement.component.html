@@ -1,6 +1,5 @@
 <div class="h-full w-full p-4 relative">
-    <div class="flex justify-between item-center">
-        <app-prime-breadcrumb title="" [path]="['Estoque', 'Movimentar Estoque']"></app-prime-breadcrumb>
+    <div class="flex justify-center item-center">
         <span (click)="currentDeposit = undefined; loading = true; sendMovement = []; materials = [];"
               class="p-5 cursor-pointer"
               *ngIf="currentDeposit && !showFormMobile">Alterar Almoxarifado</span>

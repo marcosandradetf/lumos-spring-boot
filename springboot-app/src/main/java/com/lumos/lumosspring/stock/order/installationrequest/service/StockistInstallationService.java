@@ -18,6 +18,8 @@ import com.lumos.lumosspring.stock.order.installationrequest.model.MaterialReser
 import com.lumos.lumosspring.stock.order.installationrequest.repository.MaterialReservationRepository;
 import com.lumos.lumosspring.stock.order.installationrequest.repository.ReservationManagementRepository;
 import com.lumos.lumosspring.util.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -107,6 +109,11 @@ public class StockistInstallationService {
         return ResponseEntity.ok(response);
     }
 
+
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "getPreMeasurementInstallations", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"),
+            @CacheEvict(cacheNames = "getDirectExecutionInstallations", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"),
+    })
     @Transactional
     public ResponseEntity<?> reserveMaterialsForExecution(ReserveDTOCreate executionReserve, String strUserUUID) {
 

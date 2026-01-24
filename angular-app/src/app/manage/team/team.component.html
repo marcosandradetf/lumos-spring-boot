@@ -1,25 +1,6 @@
 <div class="flex" #top>
   <div class="w-full h-full">
 
-    <div class="pt-2 w-full pl-2 flex items-center justify-between">
-      <div class="breadcrumbs text-sm">
-        <ul class="select-none">
-          <li><a>Início</a></li>
-          <li><a>Configurações</a></li>
-          <li>Equipes Operacionais</li>
-        </ul>
-      </div>
-      <h3 class="text-medium pr-5 hidden lg:block">Equipes Operacionais</h3>
-    </div>
-
-
-    <div role="tablist" class="tabs tabs-lifted w-full justify-center mb-5 mt-5">
-      <input type="radio" class="tab" aria-label="Usuários" (click)="router.navigate(['/configuracoes/usuarios'])"/>
-      <input type="radio" class="tab" aria-label="Equipes" checked/>
-      <input type="radio" class="tab" aria-label="Empresa" disabled
-             (click)="router.navigate(['/configuracoes/empresa'])"/>
-    </div>
-
     <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)"
           class="w-full pl-2 items-center justify-center">
 

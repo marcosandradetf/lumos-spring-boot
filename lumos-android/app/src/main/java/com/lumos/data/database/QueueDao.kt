@@ -53,10 +53,12 @@ interface QueueDao {
     suspend fun countPendingItemsByTypes(types: List<String>): Int
 
 
-    @Query("""
+    @Query(
+        """
     SELECT COUNT(*) FROM sync_queue_entity 
     WHERE type = :type AND (relatedId = :id OR relatedUuid = :uuid)
-""")
+"""
+    )
     suspend fun countPendingItemsByTypeAndId(
         type: String,
         id: Long? = null,
@@ -108,7 +110,7 @@ interface QueueDao {
     ): Boolean
 
     @Query("DELETE FROM sync_queue_entity WHERE relatedId = :id and type = :type")
-    suspend fun deleteDirectExecution(id: Long,  type: String)
+    suspend fun deleteDirectExecution(id: Long, type: String)
 
     @Query(
         """
@@ -146,6 +148,17 @@ interface QueueDao {
     suspend fun existsById(
         id: Long
     ): Boolean
+
+    @Query(
+        """
+            SELECT * FROM sync_queue_entity
+            WHERE status = :status
+            ORDER BY priority ASC, createdAt ASC
+        """
+    )
+    suspend fun getItems(
+        status: String
+    ): List<SyncQueueEntity>
 
 
 }

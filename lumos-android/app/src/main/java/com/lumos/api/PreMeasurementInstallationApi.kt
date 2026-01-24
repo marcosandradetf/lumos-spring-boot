@@ -11,7 +11,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface PreMeasurementInstallationApi {
-    @GET("api/mobile/v2/pre-measurement/installation/get-all/{status}")
+    @GET("api/mobile/v2/pre-measurement/installation/get-all/{status}/{teamId}")
     suspend fun getInstallations(@Path("status") status: String, @Path("teamId") teamId: Long): Response<List<InstallationResponse>>
 
     @Multipart

@@ -14,6 +14,7 @@ import {AlertMessageComponent} from '../../shared/components/alert-message/alert
 import {ufRequest} from '../../core/uf-request.dto';
 import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
   selector: 'app-deposits',
@@ -64,6 +65,8 @@ export class TruckDepositComponent {
     this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {
       this.ufs = ufs;
     });
+
+    SharedState.setCurrentPath(["Estoque", "Caminhões"]);
   }
 
   setOpen() {

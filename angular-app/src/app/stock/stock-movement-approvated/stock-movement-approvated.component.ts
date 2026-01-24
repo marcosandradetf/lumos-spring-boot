@@ -8,6 +8,7 @@ import {MenuItem, PrimeTemplate} from 'primeng/api';
 import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 import {TableModule} from 'primeng/table';
 import {Toast} from 'primeng/toast';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
     selector: 'app-stock-movement-approvated',
@@ -64,6 +65,7 @@ export class StockMovementApprovatedComponent implements OnInit {
             },
         ];
         this.isMobile = window.innerWidth <= 1024;
+        SharedState.setCurrentPath(['Estoque', 'Movimentações Aprovadas']);
     }
 
     protected readonly Number = Number;

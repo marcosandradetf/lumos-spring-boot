@@ -4,11 +4,10 @@ import {RequestService} from '../request.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthService} from '../../core/auth/auth.service';
 import {UtilsService} from '../../core/service/utils.service';
-import {Breadcrumb} from 'primeng/breadcrumb';
 import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {NgForOf, NgIf} from '@angular/common';
-import {MenuItem, PrimeTemplate} from 'primeng/api';
+import {PrimeTemplate} from 'primeng/api';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Select} from 'primeng/select';
 import {Skeleton} from 'primeng/skeleton';
@@ -24,12 +23,12 @@ import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {isEqual} from 'lodash';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
+import {SharedState} from '../../core/service/shared-state';
 
 @Component({
   selector: 'app-reservation-pending',
   standalone: true,
   imports: [
-    Breadcrumb,
     Button,
     NgIf,
     PrimeTemplate,
@@ -64,9 +63,6 @@ export class ReservationPendingComponent implements OnInit {
     materialId: number,
     stockQuantity: number
   }[] = [];
-
-  home: MenuItem = {icon: 'pi pi-home', routerLink: '/'};
-  items: MenuItem[] | undefined = undefined;
 
   replies: {
     approved: {
@@ -113,16 +109,10 @@ export class ReservationPendingComponent implements OnInit {
 
       if (this.status === "PENDING") {
         this.titleService.setTitle("Materiais Pendentes de Aprovação");
-        this.items = [
-          {label: 'Requisições'},
-          {label: 'Materiais Pendentes de Aprovação'},
-        ];
+        SharedState.setCurrentPath(["Requisições","Materiais Pendentes de Aprovação"]);
       } else {
         this.titleService.setTitle("Materiais Disponíveis para Coleta");
-        this.items = [
-          {label: 'Requisições'},
-          {label: 'Materiais Disponíveis para Coleta'},
-        ];
+          SharedState.setCurrentPath(["Requisições","Materiais Disponíveis para Coleta"]);
       }
 
       this.stockService.getDepositsByStockist(this.authService.getUser().uuid).subscribe({

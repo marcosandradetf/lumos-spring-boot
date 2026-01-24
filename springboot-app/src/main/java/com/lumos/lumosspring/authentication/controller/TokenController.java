@@ -1,7 +1,6 @@
 package com.lumos.lumosspring.authentication.controller;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
-import com.lumos.lumosspring.authentication.dto.LoginResponse;
 import com.lumos.lumosspring.authentication.service.TokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
