@@ -1,27 +1,29 @@
-@if(currentUrl !== "/app/download") {
+@if (currentUrl !== "/app/download") {
   <div class="flex flex-col space-y-2 max-h-screen overflow-auto">
     @if (authService.isLoading$ | async) {
       <div class="h-screen w-screen flex justify-center items-center max-h-screen overflow-auto">
         <span class="loading loading-infinity loading-lg"></span>
       </div>
     } @else {
-      @if (authService.isLoggedIn$ | async) {
-<!--        <app-header></app-header>-->
-      }
-
       <!-- Conteúdo principal -->
       <div class="flex h-screen overflow-auto">
         @if (authService.isLoggedIn$ | async) {
           <div *ngIf="menuOpen" class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
-            <app-sidebar ></app-sidebar>
+            <app-sidebar></app-sidebar>
           </div>
         }
         <div class="max-h-screen overflow-auto w-screen mac-scroll">
           <app-sidebar-drawer></app-sidebar-drawer>
-          <app-header></app-header>
+          <app-notification-drawer></app-notification-drawer>
+          <app-account-drawer></app-account-drawer>
+
+          @if (authService.isLoggedIn$ | async) {
+            <div *ngIf="menuOpen" class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
+              <app-header></app-header>
+            </div>
+          }
           <router-outlet></router-outlet>
         </div>
-
       </div>
 
       <!--    <div class="border rounded max-h-screen overflow-none" >-->

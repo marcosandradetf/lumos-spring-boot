@@ -3,7 +3,7 @@
     <div class="card">
       <p-menubar styleClass="rounded-none border-none">
         <ng-template #start>
-          <div class="flex items-center w-full">
+          <div class="flex items-center w-full min-w-0">
             <div
               (click)="toggleMenu()"
               [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'"
@@ -75,58 +75,17 @@
 
         </ng-template>
         <ng-template #end>
+
           <div class="flex items-center justify-center">
             <div class="flex items-center justify-center dark:bg-gray-800 bg-gray-300 rounded-full p-3 mr-2">
-              <span class="pi pi-bell cursor-pointer text-xl" (click)="op.toggle($event)"></span>
-              <p-menu class="flex justify-center" styleClass="w-full md:w-60" #op [popup]="true">
-                <ng-template #item let-options>
-                  <a pRipple class="flex items-center p-menu-item-link" (click)="options.command()">
-                    <span [class]="options.icon"></span>
-                    <span class="ml-2">{{ options.label }}</span>
-                    <p-badge *ngIf="options.badge" class="ml-auto" [value]="options.badge"/>
-                    <span *ngIf="options.shortcut"
-                          class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1">{{ options.shortcut }}</span>
-                  </a>
-                </ng-template>
-                <ng-template #end>
-                  <div class="flex flex-col items-center justify-center h-full p-4 gap-2">
-                    <i class="fas fa-bell-slash"></i>
-                    <p class="text-xs text-center">Nenhuma notificação no momento</p>
-                  </div>
-                </ng-template>
-              </p-menu>
+              <span class="pi pi-bell cursor-pointer text-xl" (click)="SharedState.toggleNotificationDrawer()"></span>
             </div>
             <div class="flex items-center justify-center gap-2">
-              <p-menu [model]="options" class="flex justify-center" styleClass="w-full md:w-60" #menu [popup]="true">
-                <ng-template #item let-options>
-                  <a pRipple class="flex items-center p-menu-item-link" (click)="options.command()">
-                    <span [class]="options.icon"></span>
-                    <span class="ml-2">{{ options.label }}</span>
-                    <p-badge *ngIf="options.badge" class="ml-auto" [value]="options.badge"/>
-                    <span *ngIf="options.shortcut"
-                          class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1">{{ options.shortcut }}</span>
-                  </a>
-                </ng-template>
-                <ng-template #end>
-                  <button pRipple
-                          class="relative overflow-hidden w-full border-0 bg-transparent flex items-start p-2 pl-4 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-none cursor-pointer transition-colors duration-200">
-                    <p-avatar
-                      [label]="authService.getUser().fullName.charAt(0).toUpperCase()"
-                      image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png" shape="circle"
-                      (click)="menu.toggle($event)"
-                      class="cursor-pointer bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white mr-2"/>
-                    <span class="inline-flex flex-col">
-                    <span class="font-bold">{{ authService.getUser().fullName }}</span>
-                    <span class="text-sm" *ngFor="let role of authService.getUser().getRoles()">{{ role }}</span>
-                  </span>
-                  </button>
-                </ng-template>
-              </p-menu>
               <p-avatar
                 [label]="authService.getUser().username.charAt(0).toUpperCase()"
                 image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
                 shape="circle"
-                (click)="menu.toggle($event)"
+                (click)="SharedState.toggleAccountDrawer()"
                 styleClass="cursor-pointer dark:bg-gray-200 bg-gray-700 dark:text-gray-800 text-white p-5 text-xl font-semibold"/>
             </div>
           </div>

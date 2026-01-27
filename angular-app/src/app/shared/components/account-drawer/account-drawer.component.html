@@ -1,0 +1,89 @@
+<div class="card flex justify-center">
+  <p-drawer
+    position="right"
+    [visible]="(SharedState.showAccountDrawer$ | async) ?? false"
+    (visibleChange)="onDrawerChange($event)"
+    [closable]="false"
+    styleClass="w-80 max-w-full">
+
+    <!-- HEADER -->
+    <ng-template #header>
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+        <p-avatar
+          [label]="authService.getUser().fullName.charAt(0).toUpperCase()"
+          image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
+          shape="circle"
+          size="large"
+          class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white">
+        </p-avatar>
+
+        <div class="flex flex-col min-w-0">
+        <span class="font-semibold truncate">
+          {{ authService.getUser().fullName }}
+        </span>
+          <span class="text-sm text-gray-500 truncate">
+          {{ authService.getUser().username }}
+        </span>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- CONTENT -->
+    <div class="flex flex-col py-2">
+
+      <!-- SECTION -->
+      <div class="px-4 py-2 text-xs uppercase tracking-wide text-gray-400">
+        Conta
+      </div>
+
+      <button
+        (click)="navigate('/configuracoes/conta')"
+        pRipple
+        class="flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-800 transition">
+        <i class="pi pi-user text-sm"></i>
+        <span>Perfil</span>
+      </button>
+
+      <button
+        pRipple
+        class="flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-800 transition">
+        <i class="pi pi-cog text-sm"></i>
+        <span>Configurações</span>
+      </button>
+
+      <!-- DIVIDER -->
+      <div class="my-2 border-t border-neutral-200 dark:border-neutral-800"></div>
+
+      <!-- SECTION -->
+      <div class="px-4 py-2 text-xs uppercase tracking-wide text-gray-400">
+        Segurança
+      </div>
+
+      <button
+        pRipple
+        class="flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-800 transition">
+        <i class="pi pi-shield text-sm"></i>
+        <span>Alterar senha</span>
+      </button>
+
+      <button
+        (click)="logout()"
+        pRipple
+        class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+        <i class="pi pi-sign-out text-sm"></i>
+        <span>Sair</span>
+      </button>
+
+    </div>
+
+    <!-- FOOTER -->
+    <ng-template #footer>
+      <div class="px-4 py-2 text-xs text-gray-400 border-t border-neutral-200 dark:border-neutral-800">
+        Lumos © 2026 · v1.0.0
+      </div>
+    </ng-template>
+
+  </p-drawer>
+
+</div>
+

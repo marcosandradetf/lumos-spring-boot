@@ -231,6 +231,7 @@ fun AppNavigation(
     val remoteConfigRepository = remember {
         RemoteConfigRepository(
             retrofit = app.remoteConfigRetrofit,
+            authenticatedRetrofit = app.retrofit
         )
     }
 

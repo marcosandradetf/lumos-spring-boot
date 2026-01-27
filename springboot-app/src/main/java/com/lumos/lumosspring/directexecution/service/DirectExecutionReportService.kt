@@ -8,6 +8,7 @@ import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.util.Utils
 import com.lumos.lumosspring.util.Utils.formatMoney
 import com.lumos.lumosspring.util.Utils.replacePlaceholders
+import com.lumos.lumosspring.util.Utils.sanitizeFilename
 import com.lumos.lumosspring.util.Utils.sendHtmlToPuppeteer
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -150,10 +152,25 @@ class DirectExecutionReportService(
 
         try {
             val response = sendHtmlToPuppeteer(templateHtml)
+//            val responseHeaders = HttpHeaders().apply {
+//                contentType = MediaType.APPLICATION_PDF
+//                contentDisposition = ContentDisposition.inline()
+//                    .filename("RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText() + ".pdf")
+//                    .build()
+//            }
+
+            val date = DateTimeFormatter
+                .ofPattern("ddMMyyyy")
+                .withZone(ZoneId.of("America/Sao_Paulo"))
+                .format(Instant.now())
+
+            val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
+
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
-                contentDisposition = ContentDisposition.inline()
-                    .filename("RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText() + ".pdf")
+                contentDisposition = ContentDisposition
+                    .attachment()
+                    .filename("relatorio_instalacao_leds_${safeContract}_$date.pdf")
                     .build()
             }
 
@@ -268,10 +285,25 @@ class DirectExecutionReportService(
 
         try {
             val response = sendHtmlToPuppeteer(templateHtml, "portrait")
+//            val responseHeaders = HttpHeaders().apply {
+//                contentType = MediaType.APPLICATION_PDF
+//                contentDisposition = ContentDisposition.inline()
+//                    .filename("RELATÓRIO FOTOGRÁFICO - CONTRATO Nº: " + contract["contract_number"].asText() + ".pdf")
+//                    .build()
+//            }
+
+            val date = DateTimeFormatter
+                .ofPattern("ddMMyyyy")
+                .withZone(ZoneId.of("America/Sao_Paulo"))
+                .format(Instant.now())
+
+            val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
+
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
-                contentDisposition = ContentDisposition.inline()
-                    .filename("RELATÓRIO FOTOGRÁFICO - CONTRATO Nº: " + contract["contract_number"].asText() + ".pdf")
+                contentDisposition = ContentDisposition
+                    .attachment()
+                    .filename("relatorio_fotografico_${safeContract}_$date.pdf")
                     .build()
             }
 

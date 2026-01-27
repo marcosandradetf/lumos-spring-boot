@@ -36,7 +36,9 @@ class DefaultRemoteActionExecutor(
         when (action.type) {
 
             "SET_TENANT" -> {
-                secureStorage.setTenant(action.target)
+                if (secureStorage.getTenant() == null) {
+                    secureStorage.setTenant(action.target)
+                }
             }
 
             "CLEAR_TABLE" -> clearTable(action)

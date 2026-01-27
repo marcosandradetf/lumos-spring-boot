@@ -12,6 +12,12 @@ import {AuthService} from '../../core/auth/auth.service';
 import {Title} from '@angular/platform-browser';
 import {catchError, tap, throwError} from 'rxjs';
 import {SharedState} from '../../core/service/shared-state';
+import {Chip} from 'primeng/chip';
+import {Dialog} from 'primeng/dialog';
+import {Password} from 'primeng/password';
+import {Message} from 'primeng/message';
+import {Divider} from 'primeng/divider';
+import {Button} from 'primeng/button';
 
 @Component({
     selector: 'app-account',
@@ -22,7 +28,13 @@ import {SharedState} from '../../core/service/shared-state';
         FormsModule,
         ModalComponent,
         NgForOf,
-        NgIf
+        NgIf,
+        Chip,
+        Dialog,
+        Password,
+        Message,
+        Divider,
+        Button
     ],
     templateUrl: './account.component.html',
     styleUrl: './account.component.scss'

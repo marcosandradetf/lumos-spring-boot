@@ -12,6 +12,7 @@ import com.lumos.lumosspring.maintenance.model.MaintenanceStreetItem
 import com.lumos.lumosspring.maintenance.repository.*
 import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.util.Utils
+import com.lumos.lumosspring.util.Utils.sanitizeFilename
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -306,10 +308,24 @@ class MaintenanceService(
 
         try {
             val response = Utils.sendHtmlToPuppeteer(templateHtml)
+//            val responseHeaders = HttpHeaders().apply {
+//                contentType = MediaType.APPLICATION_PDF
+//                contentDisposition = ContentDisposition.inline()
+//                    .filename("relatorio.pdf")
+//                    .build()
+//            }
+            val date = DateTimeFormatter
+                .ofPattern("ddMMyyyy")
+                .withZone(ZoneId.of("America/Sao_Paulo"))
+                .format(Instant.now())
+
+            val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
+
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
-                contentDisposition = ContentDisposition.inline()
-                    .filename("relatorio.pdf")
+                contentDisposition = ContentDisposition
+                    .attachment()
+                    .filename("relatorio_manutencao_convencional_${safeContract}_$date.pdf")
                     .build()
             }
 
@@ -477,10 +493,25 @@ class MaintenanceService(
 
         try {
             val response = Utils.sendHtmlToPuppeteer(templateHtml)
+//            val responseHeaders = HttpHeaders().apply {
+//                contentType = MediaType.APPLICATION_PDF
+//                contentDisposition = ContentDisposition.inline()
+//                    .filename("relatorio.pdf")
+//                    .build()
+//            }
+
+            val date = DateTimeFormatter
+                .ofPattern("ddMMyyyy")
+                .withZone(ZoneId.of("America/Sao_Paulo"))
+                .format(Instant.now())
+
+            val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
+
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
-                contentDisposition = ContentDisposition.inline()
-                    .filename("relatorio.pdf")
+                contentDisposition = ContentDisposition
+                    .attachment()
+                    .filename("relatorio_manutencao_leds_${safeContract}_$date.pdf")
                     .build()
             }
 

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
 import java.math.BigDecimal
+import java.text.Normalizer
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDateTime
@@ -145,8 +146,12 @@ object Utils {
         }
     }
 
-
-
-
+    fun sanitizeFilename(input: String): String {
+        return Normalizer.normalize(input, Normalizer.Form.NFD)
+            .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "") // remove acentos
+            .replace("[^a-zA-Z0-9._-]".toRegex(), "_") // troca lixo por _
+            .replace("_+".toRegex(), "_") // evita ___
+            .lowercase()
+    }
 
 }

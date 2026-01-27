@@ -12,4 +12,5 @@
 
 	Mas isso é **outro assunto**, não Remote Config.
 
+- Baixar fontes offline e colocar no build
 - 

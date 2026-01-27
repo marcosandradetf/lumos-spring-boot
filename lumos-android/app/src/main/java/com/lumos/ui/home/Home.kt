@@ -106,6 +106,7 @@ fun HomeScreen(
         exitProcess(0)
     }
     val scope = rememberCoroutineScope()
+    var updateType = "FLEXIBLE"
 
     AppLayout(
         title = "Início",
@@ -127,12 +128,10 @@ fun HomeScreen(
             navController.navigate(Routes.MAINTENANCE) {
                 popUpTo(Routes.HOME) { inclusive = true }
             }
-        }
-    ) { modifier, showSnackBar ->
+        }) { modifier, showSnackBar ->
 
         suspend fun checkUpdate(
-            buttonClick: Boolean = false,
-            updateType: Int = AppUpdateType.IMMEDIATE // padrão
+            buttonClick: Boolean = false, updateType: Int
         ) {
             if (BuildConfig.DEBUG) {
                 return
@@ -140,8 +139,9 @@ fun HomeScreen(
             val appUpdateInfo = appUpdateManager.appUpdateInfo.await()
             val options = AppUpdateOptions.newBuilder(updateType).build()
 
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
-                appUpdateInfo.isUpdateTypeAllowed(updateType)
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE && appUpdateInfo.isUpdateTypeAllowed(
+                    updateType
+                )
             ) {
                 if (updateType == AppUpdateType.FLEXIBLE) {
                     // mostra modal se for flexible
@@ -159,19 +159,16 @@ fun HomeScreen(
                                 if (updateType == AppUpdateType.FLEXIBLE) {
                                     // aqui você pode pedir para o usuário reiniciar
                                     showSnackBar(
-                                        "Atualização instalada. Reinicie o app.",
-                                        null,
-                                        null
+                                        "Atualização instalada. Reinicie o app.", null, null
                                     )
                                 }
                             }
 
-                            InstallStatus.DOWNLOADING,
-                            InstallStatus.INSTALLING -> {
+                            InstallStatus.DOWNLOADING, InstallStatus.INSTALLING -> {
                                 if (updateType == AppUpdateType.FLEXIBLE) {
-                                    val progress = if (state.totalBytesToDownload() > 0)
-                                        (state.bytesDownloaded() * 100 / state.totalBytesToDownload()).toInt()
-                                    else 0
+                                    val progress =
+                                        if (state.totalBytesToDownload() > 0) (state.bytesDownloaded() * 100 / state.totalBytesToDownload()).toInt()
+                                        else 0
                                     updateProgress = progress
                                 }
                             }
@@ -191,9 +188,7 @@ fun HomeScreen(
 
                 try {
                     appUpdateManager.startUpdateFlow(
-                        appUpdateInfo,
-                        activity!!,
-                        options
+                        appUpdateInfo, activity!!, options
                     )
                 } catch (e: IntentSender.SendIntentException) {
                     updateModal = false
@@ -208,16 +203,17 @@ fun HomeScreen(
 
         LaunchedEffect(Unit) {
             val now = System.currentTimeMillis()
-
-            val lastCheck = secureStorage.getLastUpdateCheck()
-            val isStaleCheck = now >= lastCheck && (now - lastCheck > TWELVE_HOURS)
-
             val lastTeamCheck = secureStorage.getLastTeamCheck()
             val isStaleCheckTeam = now >= lastTeamCheck && (now - lastTeamCheck > TWELVE_HOURS)
+            val forceUpdate = secureStorage.getForceUpdate()
 
-            if (isStaleCheck) {
-                secureStorage.setLastUpdateCheck()
-                checkUpdate()
+            if (forceUpdate) {
+                updateType = secureStorage.getUpdateType()
+                checkUpdate(
+                    false,
+                    if (updateType == "FLEXIBLE") AppUpdateType.FLEXIBLE else AppUpdateType.IMMEDIATE
+                )
+                secureStorage.setForceUpdate(false)
                 homeViewModel.syncContracts()
             }
 
@@ -230,8 +226,7 @@ fun HomeScreen(
 
 
         Column(
-            modifier = modifier
-                .verticalScroll(rememberScrollState())
+            modifier = modifier.verticalScroll(rememberScrollState())
         ) {
             Card(
                 modifier = Modifier
@@ -299,7 +294,10 @@ fun HomeScreen(
             Button(
                 onClick = {
                     scope.launch {
-                        checkUpdate(true)
+                        checkUpdate(
+                            true,
+                            if (updateType == "FLEXIBLE") AppUpdateType.FLEXIBLE else AppUpdateType.IMMEDIATE
+                        )
                     }
                 },
                 modifier = Modifier
@@ -312,8 +310,7 @@ fun HomeScreen(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 4.dp,
-                    pressedElevation = 8.dp
+                    defaultElevation = 4.dp, pressedElevation = 8.dp
                 )
             ) {
                 Icon(
@@ -343,8 +340,7 @@ fun HomeScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ),
                     elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
+                        defaultElevation = 4.dp, pressedElevation = 8.dp
                     )
                 ) {
                     Icon(
@@ -375,8 +371,7 @@ fun HomeScreen(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 4.dp,
-                    pressedElevation = 8.dp
+                    defaultElevation = 4.dp, pressedElevation = 8.dp
                 )
             ) {
                 Icon(
@@ -400,8 +395,7 @@ fun HomeScreen(
                 onRestart = {
                     updateModal = false
                     restartApp()
-                }
-            )
+                })
         }
 
         if (noUpdateModal) {
@@ -411,8 +405,7 @@ fun HomeScreen(
                 icon = Icons.Default.SecurityUpdateGood,
                 confirm = {
                     noUpdateModal = false
-                }
-            )
+                })
         }
 
         if (confirmTeamModal) {
@@ -424,16 +417,14 @@ fun HomeScreen(
                 },
                 cancel = {
                     confirmTeamModal = false
-                }
-            )
+                })
         }
     }
 }
 
 @Composable
 fun MaintenanceStatusCard(
-    executions: List<InstallationView>,
-    navController: NavHostController
+    executions: List<InstallationView>, navController: NavHostController
 ) {
     val text = if (executions.size > 1) "Sua equipe possui ${executions.size} instalações alocadas"
     else if (executions.size == 1) "Sua equipe possui ${executions.size} instalação alocada"
@@ -483,22 +474,20 @@ fun MaintenanceStatusCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (executions.isNotEmpty())
-                Text(
-                    text = "Clique para iniciar",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                    textDecoration = TextDecoration.Underline
-                )
+            if (executions.isNotEmpty()) Text(
+                text = "Clique para iniciar",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                textDecoration = TextDecoration.Underline
+            )
         }
     }
 }
 
 @Composable
 fun PreMeasurementCard(
-    contracts: List<Contract>,
-    navController: NavHostController
+    contracts: List<Contract>, navController: NavHostController
 ) {
     val text =
         if (contracts.size > 1) "${contracts.size} contratos estão disponíveis para pré-medição"
