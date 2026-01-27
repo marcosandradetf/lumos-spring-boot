@@ -1,0 +1,178 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import PricingTable from '@sections/pricing/PricingTable.astro';
+import ComparisonTable from '@sections/pricing/ComparisonTable.astro';
+import TrustBadges from '@sections/pricing/TrustBadges.astro';
+import FAQSection from '@sections/content/FAQSection.astro';
+import CTA from '@sections/marketing/CTA.astro';
+import { siteConfig } from '@/config';
+
+const planNames = ['Essencial', 'Profissional', 'Enterprise'];
+
+const plans = [
+  {
+    name: 'Essencial',
+    monthlyPrice: 167,
+    description: 'Até 5 usuários',
+    features: [
+      'Gestão completa de contratos e saldos',
+      'Estoque por almoxarifado e veículo',
+      'Ordens de serviço',
+      'Aplicativo de campo',
+      'Gestão avançada de equipes',
+      'Relatórios operacionais',
+    ],
+    highlighted: false,
+    cta: {
+      label: 'Iniciar teste grátis',
+      href: '/register',
+    },
+  },
+  {
+    name: 'Profissional',
+    monthlyPrice: 329,
+    description: 'Até 10 usuários',
+    features: [
+      'Todos os recursos do plano Essencial',
+      'Coleta de coordenadas geográficas',
+      'Relatórios fotográficos',
+      'Assinatura digital em campo',
+      'Coleta de coordenadas geográficas',
+    ],
+    highlighted: true,
+    cta: {
+      label: 'Iniciar teste grátis',
+      href: '/register',
+    },
+  },
+  {
+    name: 'Enterprise',
+    monthlyPrice: 410,
+    description: 'Até 10 usuários',
+    features: [
+      'Todos os recursos do plano Profissional',
+      'Dashboard gerencial',
+      'Suporte dedicado',
+      'Customizações sob demanda',
+      'Uso offline no aplicativo',
+    ],
+    highlighted: false,
+    cta: {
+      label: 'Iniciar Teste Grátis',
+      href: '/contato',
+    },
+  },
+];
+
+const faqs = [
+  {
+    question: 'Posso alterar meu plano posteriormente?',
+    answer:
+      'Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. Ao fazer upgrade, será cobrada a diferença proporcional. Ao fazer downgrade, a nova tarifa será aplicada no seu próximo ciclo de faturamento.',
+  },
+  {
+    question: 'O que acontece se eu exceder meu limite de usuários?',
+    answer:
+      'Notificaremos você quando estiver se aproximando do seu limite. Se você chegar no limite, não irá ser possível cadastrar novos usuários — entraremos em contato para discutir a possibilidade de fazer upgrade do seu plano.',
+  },
+  {
+    question: 'Vocês oferecem descontos para faturamento anual?',
+    answer:
+      'Sim! Os planos anuais oferecem 20% de desconto. Você pode optar pelo faturamento anual nas configurações da sua conta a qualquer momento.',
+  },
+  {
+    question: 'Há um período de teste gratuito para os planos?',
+    answer:
+      'Com certeza. Todos os planos incluem um período de teste gratuito de 14 dias. Não é necessário cartão de crédito para começar — você só será cobrado se decidir continuar após o período de teste.',
+  },
+  {
+    question: 'Quais métodos de pagamento vocês aceitam?',
+    answer:
+      'Aceitamos todos os principais cartões de crédito (Visa, Mastercard, American Express) e PayPal.',
+  },
+  {
+    question: 'Posso receber um reembolso se não estiver satisfeito?',
+    answer:
+      'Sim, oferecemos uma garantia de reembolso de 30 dias para todos os planos. Se você não estiver satisfeito com o Lumos, entre em contato com o suporte para obter um reembolso total.',
+  },
+];
+
+const comparisonCategories = [
+  {
+    name: 'Uso',
+    features: [{ name: 'Usuários', values: ['5', '10', '10'] }],
+  },
+  {
+    name: 'Recursos',
+    features: [
+      { name: 'Gestão completa de contratos e saldos', values: [true, true, true] },
+      { name: 'Estoque por almoxarifado e veículo', values: [true, true, true] },
+      { name: 'Ordens de serviço', values: [true, true, true] },
+      { name: 'Gestão avançada de equipes', values: [true, true, true] },
+      { name: 'Relatórios operacionais', values: [true, true, true] },
+
+      { name: 'Coleta de coordenadas geográficas', values: [false, true, true] },
+      { name: 'Relatórios fotográficos', values: [false, true, true] },
+      { name: 'Assinatura digital em campo', values: [false, true, true] },
+      { name: 'Coleta de coordenadas geográficas', values: [false, true, true] },
+
+      { name: 'Dashboard gerencial', values: [false, false, true] },
+      { name: 'Suporte dedicado', values: [false, false, true] },
+      { name: 'Customizações sob demanda', values: [false, false, true] },
+      { name: 'Uso offline no aplicativo', values: [false, false, true] },
+    ],
+  },
+  {
+    name: 'Suporte',
+    features: [
+      { name: 'Suporte por Email', values: [true, true, true] },
+      { name: 'Suporte por WhatsApp', values: [false, true, true] },
+      { name: 'Suporte prioritário', values: [false, false, true] },
+    ],
+  },
+];
+---
+
+<MarketingLayout
+  title={`Pricing - ${siteConfig.name}`}
+  description="Preços simples e transparentes para empresas de todos os tamanhos. Comece gratuitamente e expanda conforme sua equipe cresce."
+>
+  <PricingTable
+    title="Preços simples e transparentes"
+    subtitle="Faça um teste grátis e decida se quer continuar. Sem taxas ocultas."
+    plans={plans}
+    annualDiscount={20}
+    defaultPeriod="monthly"
+  />
+
+  <TrustBadges
+    guarantee={{
+      title: 'Garantia de reembolso de 30 dias',
+      description:
+        'Experimente sem riscos. Não ficou satisfeito? Receba um reembolso total em até 30 dias, sem perguntas.',
+    }}
+  />
+
+  <ComparisonTable
+    title="Compare os planos detalhadamente"
+    subtitle="Veja exatamente o que está incluído em cada plano."
+    plans={planNames}
+    categories={comparisonCategories}
+    highlightedPlan={1}
+    background="default"
+  />
+
+  <FAQSection
+    title="Perguntas frequentes"
+    faqs={faqs}
+    variant="simple"
+    background="default"
+  />
+
+  <CTA
+    title="Precisa de algo personalizado?"
+    description="Tem requisitos específicos ou precisa de uma solução personalizada? Nossa equipe terá prazer em discutir suas necessidades e criar um plano que funcione para você."
+    action={{ label: 'Contatar Vendas', href: '/contact' }}
+    background="muted"
+  />
+</MarketingLayout>
