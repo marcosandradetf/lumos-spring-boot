@@ -16,11 +16,44 @@
       <h3 class="text-lg font-semibold mb-8 dark:text-white">Nenhuma manutenção finalizada</h3>
     </div>
   } @else if (pdfUrl) {
-    <p-button *ngIf="isIOS" (click)="downloadPdf()">
-      Baixar PDF
-    </p-button>
-<!--    <iframe [src]="pdfUrl | safeUrl" width="100%" height="100%"></iframe>-->
-    <canvas id="pdfCanvas"></canvas>
+    <div class="w-full h-[100svh] overflow-hidden bg-slate-100 dark:bg-slate-900">
+      <iframe
+        [src]="pdfUrl | safeUrl"
+        class="w-full h-full rounded-none"
+      ></iframe>
+
+      <!-- Botão flutuante -->
+      <button
+        (click)="sharePdf()"
+        class="
+    fixed bottom-4 right-4 z-50
+    flex items-center gap-2
+    px-4 py-3 rounded-full
+
+    backdrop-blur-md
+
+    bg-white/70 dark:bg-slate-800/70
+    border border-black/5 dark:border-white/10
+
+    shadow-[0_8px_24px_rgba(0,0,0,0.12)]
+    dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)]
+
+    active:scale-95 transition
+
+    text-slate-800 dark:text-slate-100
+  "
+      >
+
+        @if(isApple) {
+          <span class="material-icons">ios_share</span>
+        } @else {
+          <span class="material-icons">share</span>
+        }
+        Compartilhar
+      </button>
+    </div>
+
+
   } @else {
     <div class="px-10 pb-5">
       <p-iconfield iconPosition="left">
@@ -37,7 +70,14 @@
         <h2 class="text-center pb-4 text-2xl font-semibold">{{ d.contract.contractor }}</h2>
         <ol class="flex flex-wrap justify-center gap-4 pb-4">
           <li *ngFor="let m of d.maintenances; index as i"
-              class="relative w-full max-w-sm min-w-96 cursor-pointer transition-transform duration-300 hover:scale-105 hover:-translate-y-1"
+              class="
+              relative w-full max-w-sm min-w-96 cursor-pointer
+              transition-transform duration-200
+
+              active:scale-95
+              md:hover:scale-105
+              md:hover:-translate-y-1
+            "
           >
 
             <!-- Botão do menu com position absolute -->

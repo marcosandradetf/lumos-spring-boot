@@ -2,11 +2,14 @@ package com.lumos.lumosspring.contract.repository;
 
 import com.lumos.lumosspring.contract.dto.ContractItemBalance;
 import com.lumos.lumosspring.contract.entities.Contract;
+import kotlin.Triple;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,4 +51,26 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
         """
     )
     List<ContractItemBalance> getContractItemBalance(long contractId);
+
+    @Query(
+            """
+        select distinct c.contract_id, c.contractor, 'INSTALLATION' as type
+        from direct_execution de
+        join contract c on de.contract_id = c.contract_id
+        where de.direct_execution_status = 'FINISHED' and de.tenant_id = :tenantId
+        UNION
+        select distinct c.contract_id, c.contractor, 'INSTALLATION' as type
+        from pre_measurement p
+        join contract c on p.contract_contract_id = c.contract_id
+        where p.status = 'FINISHED' and p.tenant_id = :tenantId
+        UNION
+        select distinct c.contract_id, c.contractor, 'INSTALLATION' as type
+        from maintenance m
+        join contract c on c.contract_id = m.contract_id
+        where m.status = 'FINISHED' and m.tenant_id = :tenantId
+        order by contractor
+    """
+    )
+    List<ContractWithExecutionResponse> getContractsWithExecution(UUID tenantId);
+    record ContractWithExecutionResponse(Long contractId, String contractor, String type){}
 }

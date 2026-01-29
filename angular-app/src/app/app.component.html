@@ -18,7 +18,7 @@
           <app-account-drawer></app-account-drawer>
 
           @if (authService.isLoggedIn$ | async) {
-            <div *ngIf="menuOpen" class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
+            <div class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
               <app-header></app-header>
             </div>
           }

@@ -12,7 +12,7 @@ const planNames = ['Essencial', 'Profissional', 'Enterprise'];
 const plans = [
   {
     name: 'Essencial',
-    monthlyPrice: 167,
+    monthlyPrice: 105 * 5,
     description: 'Até 5 usuários',
     features: [
       'Gestão completa de contratos e saldos',
@@ -30,8 +30,8 @@ const plans = [
   },
   {
     name: 'Profissional',
-    monthlyPrice: 329,
-    description: 'Até 10 usuários',
+    monthlyPrice: 140 * 7,
+    description: 'Até 7 usuários',
     features: [
       'Todos os recursos do plano Essencial',
       'Coleta de coordenadas geográficas',
@@ -47,8 +47,8 @@ const plans = [
   },
   {
     name: 'Enterprise',
-    monthlyPrice: 410,
-    description: 'Até 10 usuários',
+    monthlyPrice: 170.41 * 7,
+    description: 'Até 7 usuários',
     features: [
       'Todos os recursos do plano Profissional',
       'Dashboard gerencial',
@@ -100,7 +100,7 @@ const faqs = [
 const comparisonCategories = [
   {
     name: 'Uso',
-    features: [{ name: 'Usuários', values: ['5', '10', '10'] }],
+    features: [{ name: 'Usuários', values: ['5', '7', '7'] }],
   },
   {
     name: 'Recursos',
@@ -162,12 +162,7 @@ const comparisonCategories = [
     background="default"
   />
 
-  <FAQSection
-    title="Perguntas frequentes"
-    faqs={faqs}
-    variant="simple"
-    background="default"
-  />
+  <FAQSection title="Perguntas frequentes" faqs={faqs} variant="simple" background="default" />
 
   <CTA
     title="Precisa de algo personalizado?"

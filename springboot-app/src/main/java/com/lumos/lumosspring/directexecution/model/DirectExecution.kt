@@ -21,5 +21,8 @@ data class DirectExecution(
     var assignedBy: UUID,
     var assignedAt: Instant,
     var reservationManagementId: Long,
-    var step: Int
+    var step: Int,
+    var reportViewAt: Instant? = null,
+    var availableAt: Instant? = null,
+    var finishedAt: Instant? = null
 ): TenantEntity()

@@ -98,7 +98,10 @@ public class DirectExecutionManagementService {
                 currentUserUUID,
                 Instant.now(),
                 managementId,
-                step
+                step,
+                null,
+                null,
+                null
         );
 
         directExecution = directExecutionRepository.save(directExecution);

@@ -49,8 +49,8 @@ class MaintenanceQueryRepository(
         }
     }
 
-    fun getGroupedMaintenances(): List<Map<String, JsonNode>> {
-        val sql = """
+    fun getGroupedMaintenances(contractId: Long? = null, startDate: Instant? = null, endDate: Instant? = null): List<Map<String, JsonNode>> {
+        var sql = """
             SELECT
               json_build_object(
                 'contract_id', c.contract_id,
@@ -95,12 +95,31 @@ class MaintenanceQueryRepository(
                 ) t
             ) execs ON TRUE
             WHERE m.status = 'FINISHED'
-                AND m.tenant_id = :tenantId
-            GROUP BY c.contract_id, c.contractor
-            ORDER BY c.contract_id;
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, mapOf("tenantId" to Utils.getCurrentTenantId())) { rs, _ ->
+        sql += if (contractId == null)
+            """
+                    AND m.tenant_id = :tenantId
+                GROUP BY c.contract_id, c.contractor, m.finished_at
+                ORDER BY c.contractor, m.finished_at desc
+                LIMIT 100;
+            """.trimIndent()
+        else
+            """
+                    AND m.contract_id = :contractId
+                    AND m.finished_at >= :startDate 
+                    AND m.finished_at < (:endDate + INTERVAL '1 day')
+                GROUP BY c.contract_id, c.contractor, m.finished_at
+                ORDER BY c.contractor, m.finished_at desc;
+            """.trimIndent()
+
+
+        return jdbcTemplate.query(sql, mapOf(
+            "tenantId" to Utils.getCurrentTenantId(),
+            "contractId" to contractId,
+            "startDate" to startDate,
+            "endDate" to endDate
+        )) { rs, _ ->
             val contractorJson = rs.getString("contract")
             val maintenanceJson = rs.getString("maintenances")
 

@@ -1,12 +1,19 @@
 package com.lumos.lumosspring.report.service
 
+import com.lumos.lumosspring.contract.repository.ContractRepository
+import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
+import com.lumos.lumosspring.report.controller.ReportController
+import com.lumos.lumosspring.util.Utils
 import org.springframework.http.*
 import org.springframework.stereotype.Service
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 
 @Service
-class ReportService {
+class ReportService(
+    private val maintenanceRepository: MaintenanceQueryRepository,
+    private val contractRepository: ContractRepository
+) {
     fun generatePdf(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
         return try {
             val html = """
@@ -104,24 +111,43 @@ class ReportService {
         }
     }
 
-//    fun generatePdfWithPuppeteer(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
-//        val client = WebClient.create("http://puppeteer-service:3000")
-//
-//        val response = client.post()
-//        .uri("/generate-pdf")
-//        .setContentType(MediaType.APPLICATION_JSON)
-//        .bodyValue(mapOf(
-//            "url" to "http://localhost:8080/report?id=123"
-//        ))
-//        .accept(MediaType.APPLICATION_PDF)
-//        .retrieve()
-//        .bodyToMono(ByteArray::class.java)
-//        .block()
-//
-//        if (response == null) {
-//            throw RuntimeException("Erro ao gerar PDF com Puppeteer")
-//        }
-//
-//        ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(response)
-//    }
+    fun generateExecutionReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+        return generateGroupedMaintenanceReport(filtersRequest)
+        return if (filtersRequest.type == "MAINTENANCE") {
+            generateGroupedMaintenanceReport(filtersRequest)
+        } else {
+            generateGroupedInstallationReport(filtersRequest)
+        }
+    }
+
+//        val contractId: Long,
+//        val type: String, // MAINTENANCE: CONVENTIONAL | LED || INSTALLATION: LED | PHOTO
+//        val startDate: Instant,
+//        val endDate: Instant,
+//        val viewMode: String, // LIST | GROUPED
+//        val scope: String // MAINTENANCE | INSTALLATION
+
+    private fun generateGroupedMaintenanceReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+        return if (filtersRequest.viewMode == "LIST") {
+            ResponseEntity.ok().body(
+                maintenanceRepository.getGroupedMaintenances(
+                    filtersRequest.contractId,
+                    filtersRequest.startDate,
+                    filtersRequest.endDate
+                )
+            )
+        } else {
+            ResponseEntity.noContent().build()
+        }
+    }
+
+    private fun generateGroupedInstallationReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+        throw RuntimeException("Not implemented yet")
+    }
+
+    fun getContracts(): ResponseEntity<Any> {
+        return ResponseEntity.ok().body(contractRepository.getContractsWithExecution(Utils.getCurrentTenantId()))
+    }
+
+
 }

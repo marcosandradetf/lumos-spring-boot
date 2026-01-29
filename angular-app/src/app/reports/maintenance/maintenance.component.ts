@@ -1,11 +1,10 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {SafeUrlPipe} from '../../safe-url.pipe';
 import {ReportService} from '../report.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {Title} from '@angular/platform-browser';
-import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {DatePipe, NgForOf} from '@angular/common';
 import {Toast} from 'primeng/toast';
 import {Menu} from 'primeng/menu';
 import {MenuItem} from 'primeng/api';
@@ -15,8 +14,7 @@ import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {InputText} from 'primeng/inputtext';
 import {SharedState} from '../../core/service/shared-state';
-import {Button} from 'primeng/button';
-import * as pdfjsLib from 'pdfjs-dist';
+import {Utils} from '../../core/service/utils';
 
 
 @Component({
@@ -32,9 +30,7 @@ import * as pdfjsLib from 'pdfjs-dist';
         PrimeConfirmDialogComponent,
         IconField,
         InputIcon,
-        InputText,
-        Button,
-        NgIf
+        InputText
     ],
     providers: [SafeUrlPipe],
     templateUrl: './maintenance.component.html',
@@ -112,8 +108,9 @@ export class MaintenanceComponent implements OnInit {
     maintenanceId: string | null = null;
     currentContractId: number | null = null;
     action: string | null = null;
-    isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    canShare = false;
+    isApple = false;
 
 
     openContextMenu(event: MouseEvent, maintenanceId: string, contractId: number) {
@@ -185,6 +182,12 @@ export class MaintenanceComponent implements OnInit {
     ngOnInit() {
         this.title.setTitle('Relatórios de manutenções');
         SharedState.setCurrentPath(["Relatórios", "Manutenções"]);
+
+        const ua = navigator.userAgent;
+        this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);
+
+        this.canShare = !!navigator.share;
+
         this.loading = true;
         this.loadMaintenances();
     }
@@ -197,6 +200,7 @@ export class MaintenanceComponent implements OnInit {
             },
             error: (err) => {
                 this.utilService.showMessage(err.error.message || err.error, 'error', 'Erro ao Manutenções finalizadas');
+                this.loading = false
             },
             complete: () => {
                 this.loading = false
@@ -206,6 +210,7 @@ export class MaintenanceComponent implements OnInit {
 
     pdfBlob: Blob | null = null;
     fileName: string | null = null;
+    shareText: string | null = null;
 
     public loadPdf(maintenanceId: string, type: string) {
         const desc = type === 'led' ? 'Led' : 'Convencional';
@@ -224,10 +229,15 @@ export class MaintenanceComponent implements OnInit {
 
                 // filename
                 const cd = resp.headers.get('content-disposition');
-                this.fileName = this.extractFilename(cd) ?? 'relatorio.pdf';
-
-                // 👉 renderiza com PDF.js
-                await this.renderPdf(this.pdfBlob);
+                const contractName = this.data
+                    .find(c => c.contract.contract_id === this.currentContractId)?.contract
+                    .contractor;
+                this.fileName = this.extractFilename(cd) ??
+                    `relatorio_${desc.toLowerCase()}_${Utils.normalizeString(contractName ?? '')}_${Utils.formatNowToDDMMYYHHmm()}.pdf`;
+                this.shareText =
+                    `Relatório de Manutenção ${type === 'led' ? 'em LEDs' : 'Convencional'}\n` +
+                    `${contractName ? `Contrato: ${contractName}\n` : ''}` +
+                    `Gerado pelo sistema Lumos às ${Utils.formatNowToDDMMYYHHmm(true)}`;
             },
             error: (err) => {
                 this.utilService.showMessage(
@@ -243,30 +253,27 @@ export class MaintenanceComponent implements OnInit {
         });
     }
 
-    @ViewChild('pdfCanvas', {static: true})
-    canvasRef!: ElementRef<HTMLCanvasElement>;
+    async sharePdf() {
+        if (!this.pdfBlob) return;
 
-    async renderPdf(blob: Blob) {
-        const url = URL.createObjectURL(blob);
+        const file = new File(
+            [this.pdfBlob],
+            this.fileName ?? 'relatorio.pdf',
+            { type: 'application/pdf' }
+        );
 
-        const pdf = await pdfjsLib.getDocument(url).promise;
-        const page = await pdf.getPage(1);
-
-        const viewport = page.getViewport({ scale: 1.2 });
-        const canvas = this.canvasRef.nativeElement;
-
-        const context = canvas.getContext('2d')!;
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({
-            canvasContext: context,
-            canvas,
-            viewport
-        }).promise;
-
-        URL.revokeObjectURL(url);
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+            await navigator.share({
+                title: 'Relatório Lumos',
+                text: this.shareText ?? 'Relatório de manutenção',
+                files: [file]
+            });
+        } else {
+            // fallback
+            this.downloadPdf();
+        }
     }
+
 
 
     private extractFilename(cd: string | null): string | null {

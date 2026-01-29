@@ -73,6 +73,7 @@ class MaintenanceService(
             signatureUri = fileUri,
             responsible = maintenance.responsible,
             signDate = signDate ?: Instant.now(),
+            finishedAt = Instant.now(),
 
             isNewEntry = false,
         )

@@ -3,24 +3,21 @@ import {SafeUrlPipe} from '../../safe-url.pipe';
 import {ReportService} from '../report.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {Title} from '@angular/platform-browser';
-import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {NgForOf} from '@angular/common';
 import {Toast} from 'primeng/toast';
-import {ContextMenu} from 'primeng/contextmenu';
 import {MenuItem} from 'primeng/api';
-import {Button} from 'primeng/button';
 import {Menu} from 'primeng/menu';
 import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {InputText} from 'primeng/inputtext';
 import {SharedState} from '../../core/service/shared-state';
+import {Utils} from '../../core/service/utils';
 
 @Component({
     selector: 'app-installation',
     standalone: true,
     imports: [
-        PrimeBreadcrumbComponent,
         LoadingComponent,
         NgForOf,
         SafeUrlPipe,
@@ -97,6 +94,7 @@ export class InstallationComponent implements OnInit {
     ];
 
     selectedStep: any = null;
+    isApple = false;
 
     openContextMenu(event: MouseEvent, step: any) {
         event.preventDefault();
@@ -126,6 +124,9 @@ export class InstallationComponent implements OnInit {
     ngOnInit() {
         SharedState.setCurrentPath(["Relatórios", "Instalações"]);
         this.title.setTitle('Relatórios de instalações');
+        const ua = navigator.userAgent;
+        this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);
+
         this.loading = true;
         this.loadInstallations();
     }
@@ -145,14 +146,29 @@ export class InstallationComponent implements OnInit {
         });
     }
 
+    pdfBlob: Blob | null = null;
+    fileName: string | null = null;
+    descTitle: string | null = null;
     public loadPdf(executionId: number, type: string) {
+        const desc = type === 'data' ? 'led' : 'fotografico';
+        this.descTitle = type === 'data' ? 'Relatório de Instalação de LEDs' : 'Relatório Fotográfico';
+
         this.loading = true;
         this.reportService.getInstallationPdf(executionId, type).subscribe({
-            next: (res) => {
+            next: (resp) => {
+                // limpa URL antiga
                 if (this.pdfUrl) {
-                    URL.revokeObjectURL(this.pdfUrl);  // limpa URL anterior
+                    URL.revokeObjectURL(this.pdfUrl);
                 }
-                this.pdfUrl = URL.createObjectURL(res.body!);
+
+                // blob
+                this.pdfBlob = resp.body!;
+                this.pdfUrl = URL.createObjectURL(this.pdfBlob);
+
+                // filename
+                const cd = resp.headers.get('content-disposition');
+                this.fileName = this.extractFilename(cd) ??
+                    `relatorio_${desc}_${Utils.normalizeString(this.selectedStep.description ?? '')}_etapa_${this.selectedStep.step}.pdf`;
             },
             error: (err) => {
                 this.utilService.showMessage(err.error.message || err.error, 'error', 'Erro ao gerar gerar PDF');
@@ -164,12 +180,48 @@ export class InstallationComponent implements OnInit {
         });
     }
 
-    public downloadPdf() {
-        if (!this.pdfUrl) return;
+    async sharePdf() {
+        if (!this.pdfBlob) return;
+
+        const file = new File(
+            [this.pdfBlob],
+            this.fileName ?? 'relatorio.pdf',
+            { type: 'application/pdf' }
+        );
+
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+            const shareText =
+                `${this.descTitle}\n` +
+                `${this.selectedStep.description ?? ''}` +
+                `Gerado pelo sistema Lumos às ${Utils.formatNowToDDMMYYHHmm(true)}`;
+
+            await navigator.share({
+                title: 'Relatório Lumos',
+                text: shareText,
+                files: [file]
+            });
+        } else {
+            // fallback
+            this.downloadPdf();
+        }
+    }
+
+    private extractFilename(cd: string | null): string | null {
+        if (!cd) return null;
+        const match = cd.match(/filename="?([^"]+)"?/i);
+        return match?.[1] ?? null;
+    }
+
+    downloadPdf() {
+        if (!this.pdfBlob || !this.fileName) return;
+
+        const url = window.URL.createObjectURL(this.pdfBlob);
         const a = document.createElement('a');
-        a.href = this.pdfUrl;
-        a.download = `maintenance.pdf`;
+        a.href = url;
+        a.download = this.fileName;
+        a.target = '_blank'; // 👈 ESSENCIAL no iOS
         a.click();
+        window.URL.revokeObjectURL(url);
     }
 
 

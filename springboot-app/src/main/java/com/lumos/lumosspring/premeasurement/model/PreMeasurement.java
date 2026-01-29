@@ -46,6 +46,10 @@ public class PreMeasurement extends TenantEntity {
 
     private String comment;
 
+    private Instant availableAt;
+    private Instant reportViewAt;
+    private Instant finishedAt;
+
     public Long getPreMeasurementId() {
         return preMeasurementId;
     }
@@ -180,6 +184,30 @@ public class PreMeasurement extends TenantEntity {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public Instant getAvailableAt() {
+        return availableAt;
+    }
+
+    public void setAvailableAt(Instant availableAt) {
+        this.availableAt = availableAt;
+    }
+
+    public Instant getReportViewAt() {
+        return reportViewAt;
+    }
+
+    public void setReportViewAt(Instant reportViewAt) {
+        this.reportViewAt = reportViewAt;
+    }
+
+    public Instant getFinishedAt() {
+        return finishedAt;
+    }
+
+    public void setFinishedAt(Instant finishedAt) {
+        this.finishedAt = finishedAt;
     }
 }
 

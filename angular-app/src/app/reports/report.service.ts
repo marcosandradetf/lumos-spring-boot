@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {environment} from '../../environments/environment';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient, HttpParams, HttpResponse} from '@angular/common/http';
+import {Observable} from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
@@ -49,5 +50,41 @@ export class ReportService {
             action: action
         });
     }
+
+
+    // 🔒 chamadas tipadas corretamente
+    private getReportJson(filters: any) {
+        return this.http.post<any[]>(
+            `${this.endpoint}/api/report/execution/generate-report`,
+            filters
+        );
+    }
+
+    private getReportPdf(filters: any) {
+        return this.http.post(
+            `${this.endpoint}/api/report/execution/generate-report`,
+            filters,
+            {
+                responseType: 'blob',
+                observe: 'response'
+            }
+        );
+    }
+
+    // 🌟 função pública
+    getReport(filters: any): Observable<any[] | HttpResponse<Blob>> {
+        if (filters.viewMode === 'GROUPED') {
+            return this.getReportPdf(filters) as Observable<HttpResponse<Blob>>;
+        }
+
+        return this.getReportJson(filters) as Observable<any[]>;
+    }
+
+    getContracts() {
+        return this.http.get<any[]>(
+            `${this.endpoint}/api/report/execution/get-contracts`
+        );
+    }
+
 
 }

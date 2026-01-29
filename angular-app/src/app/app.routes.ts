@@ -247,6 +247,15 @@ export const routes: Routes = [
 
     //reports
     {
+        path: 'relatorios/gerenciamento',
+        loadComponent: () => import('./reports/manage/report-manage.component').then(r => r.ReportManageComponent),
+        canActivate: [AuthGuard],
+        data: {
+            role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
+            path: 'relatorios'
+        },
+    },
+    {
         path: 'relatorios/manutencoes',
         loadComponent: () => import('./reports/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
         canActivate: [AuthGuard],

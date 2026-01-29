@@ -72,7 +72,8 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
                 SET signature_uri = :fileUri,
                     sign_date = :signDate,
                     responsible = :responsible,
-                    status = :installationStatus
+                    status = :installationStatus,
+                    finished_at = now()
                 WHERE pre_measurement_id = :installationId
             """
     )

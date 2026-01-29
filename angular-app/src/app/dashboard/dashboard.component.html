@@ -1,52 +1,96 @@
-<div class="flex h-fit " #top>
-  <div class="w-full">
-<!--    <div class="border-b w-full pl-2 flex h-screen items-center justify-center">-->
-<!--      Módulo em desenvolvimento-->
-<!--    </div>-->
+<div class="min-h-screen">
+  <main class="px-5 pt-6 pb-10 max-w-7xl mx-auto">
 
-    <!-- Conteúdo Principal -->
-    <main class="px-6 py-8">
-      <h2 class="text-3xl font-semibold mb-6">Visão Geral</h2>
+    <!-- Header -->
+    <h2 class="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+      Visão Geral
+    </h2>
 
-      <!-- Cards de Informações -->
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="bg-gray-100 p-6 rounded-lg shadow dark:bg-gray-800">
-          <h3 class="text-lg font-semibold mb-2">Execuções</h3>
-          <p class="text-3xl font-bold">0</p>
-          <p>Em aberto</p>
-        </div>
+    <!-- Cards métricas -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        <div class="bg-gray-100 p-6 rounded-lg shadow dark:bg-gray-800">
-          <h3 class="text-lg font-semibold mb-2">Itens com baixo estoque</h3>
-          <p class="text-3xl font-bold text-red-500">0</p>
-          <p>Precisam de atenção</p>
-        </div>
+      <ng-container *ngFor="let metric of metrics">
+        <a
+          [routerLink]="metric.routerLink || null"
+          [queryParams]="metric.queryParams"
+          [class.pointer-events-none]="!metric.routerLink"
+          [ngClass]="metric.value > 0 ? classificationClass[metric.classification] : ''"
+          class="
+              rounded-2xl p-5
+              backdrop-blur-md
+              border border-black/5 dark:border-white/10
+              shadow-[0_4px_20px_rgba(0,0,0,0.08)]
+            "
+        >
 
-        <div class="bg-gray-100 p-6 rounded-lg shadow dark:bg-gray-800">
-          <h3 class="text-lg font-semibold mb-2">Relatórios Gerados</h3>
-          <p class="text-3xl font-bold">0</p>
-          <p>Últimos 30 dias</p>
-        </div>
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              {{ metric.label }}
+            </p>
+
+            <span
+              *ngIf="metric.value > 0"
+              class="text-[10px] font-medium px-2 py-0.5 rounded-full"
+              [ngClass]="metric.value > 0 ? labelClasses[metric.classification] : ''">
+                {{ metric.classification }}
+              </span>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <p class="text-3xl font-semibold mt-1 text-slate-900 dark:text-slate-100">
+              {{metric.value}}
+            </p>
+            <span class="material-icons text-slate-400" *ngIf="metric.routerLink">
+              chevron_right
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            {{metric.description}}
+          </p>
+        </a>
+      </ng-container>
+
+    </section>
+
+    <!-- Ações rápidas -->
+    <section class="mt-8">
+      <h3
+        class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3"
+      >
+        Ações rápidas
+      </h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <ng-container *ngFor="let action of actions">
+          <a
+            [href]="action.routerLink"
+            class="
+            flex items-center justify-between
+            rounded-2xl p-5
+            backdrop-blur-md
+            border border-black/5 dark:border-white/10
+            shadow-[0_4px_20px_rgba(0,0,0,0.08)]
+            active:scale-[0.97]
+            transition
+          "
+          >
+            <div>
+              <p class="font-medium text-slate-900 dark:text-slate-100">
+                {{ action.label }}
+              </p>
+              <p class="text-sm text-slate-500">
+                {{ action.description }}
+              </p>
+            </div>
+            <span class="material-icons text-slate-400">
+              chevron_right
+            </span>
+          </a>
+        </ng-container>
+
       </div>
+    </section>
 
-      <!-- Links rápidos -->
-      <section class="mt-8 grid md:grid-cols-3 gap-6">
-        <a href="/relatorios" class="bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 transition block text-center">
-          <h3 class="text-xl font-semibold">Relatórios</h3>
-          <p class="text-gray-200">Acesse estatísticas detalhadas</p>
-        </a>
-
-        <a href="/gestao" class="bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 transition block text-center">
-          <h3 class="text-xl font-semibold">Gestão de execuções</h3>
-          <p class="text-gray-200">Gerencie execuções em andamento</p>
-        </a>
-
-        <a href="/mapa" class="bg-gray-700 text-white p-6 rounded-lg shadow hover:bg-gray-800 transition block text-center">
-          <h3 class="text-xl font-semibold">Mapa</h3>
-          <p class="text-gray-200">Visualize o mapa de execuções</p>
-        </a>
-      </section>
-    </main>
-
-  </div>
+  </main>
 </div>

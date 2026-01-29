@@ -30,7 +30,8 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
         SET direct_execution_status = :status,
             responsible = :responsible,
             signature_uri = :signatureUri,
-            sign_date = :signDate
+            sign_date = :signDate,
+            finished_at = now()
         WHERE direct_execution_id = :id
     """
     )

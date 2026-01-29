@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 
 
@@ -359,6 +360,7 @@ public class StockistInstallationService {
 
         if (allInStock) {
             preMeasurement.setStatus(ExecutionStatus.AVAILABLE_EXECUTION);
+            preMeasurement.setAvailableAt(Instant.now());
             responseMessage =
                     "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. " +
                             "A equipe pode iniciar a execução.";
@@ -421,6 +423,7 @@ public class StockistInstallationService {
 
         if (allInStock) {
             directExecution.setDirectExecutionStatus(ExecutionStatus.AVAILABLE_EXECUTION);
+            directExecution.setAvailableAt(Instant.now());
             responseMessage =
                     "Como todos os itens estão no caminhão, nenhuma ação adicional será necessária. " +
                             "A equipe pode iniciar a execução.";
