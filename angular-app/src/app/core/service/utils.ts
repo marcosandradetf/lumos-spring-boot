@@ -28,5 +28,44 @@ export class Utils {
         return Math.floor(diff / msPerDay);
     }
 
+    static diffInHours(start: Date | string, end: Date | string): number {
+        const s = new Date(start).getTime();
+        const e = new Date(end).getTime();
+        return Math.floor((e - s) / 3_600_000);
+    }
+
+    static abbreviate(name: string): string {
+        const tokens = name.split(' ');
+        const result: string[] = [];
+
+        let replace = false;
+
+        for (const token of tokens) {
+            const word = token.toLowerCase();
+
+            if (word === 'prefeitura') {
+                result.push('PREF.');
+                replace = true;
+
+            } else if (word === 'municipal' && replace) {
+                result.push('MUN.');
+
+            } else if (word === 'de' && replace) {
+                // ignora "de"
+
+            } else if (word.split('-').length > 1) {
+                result.push(word.split('-')[0]);
+
+            } else if (word === "manutenção") {
+
+            } else {
+                result.push(token);
+                replace = false;
+            }
+        }
+
+        return result.join(' ').toUpperCase();
+    }
+
 
 }

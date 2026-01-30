@@ -282,7 +282,7 @@ export class MaintenanceComponent implements OnInit {
         return match?.[1] ?? null;
     }
 
-    downloadPdf() {
+    private downloadPdf() {
         if (!this.pdfBlob || !this.fileName) return;
 
         const url = window.URL.createObjectURL(this.pdfBlob);

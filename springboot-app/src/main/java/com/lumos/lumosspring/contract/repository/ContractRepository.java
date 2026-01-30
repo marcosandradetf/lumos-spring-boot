@@ -54,17 +54,17 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
 
     @Query(
             """
-        select distinct c.contract_id, c.contractor, 'INSTALLATION' as type
+        select distinct c.contract_id, upper(c.contractor) as contractor, 'INSTALLATION' as type, c.contract_number
         from direct_execution de
         join contract c on de.contract_id = c.contract_id
         where de.direct_execution_status = 'FINISHED' and de.tenant_id = :tenantId
         UNION
-        select distinct c.contract_id, c.contractor, 'INSTALLATION' as type
+        select distinct c.contract_id, upper(c.contractor) as contractor, 'INSTALLATION' as type, c.contract_number
         from pre_measurement p
         join contract c on p.contract_contract_id = c.contract_id
         where p.status = 'FINISHED' and p.tenant_id = :tenantId
         UNION
-        select distinct c.contract_id, c.contractor, 'INSTALLATION' as type
+        select distinct c.contract_id, upper(c.contractor) as contractor, 'MAINTENANCE' as type, c.contract_number
         from maintenance m
         join contract c on c.contract_id = m.contract_id
         where m.status = 'FINISHED' and m.tenant_id = :tenantId
@@ -72,5 +72,5 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
     """
     )
     List<ContractWithExecutionResponse> getContractsWithExecution(UUID tenantId);
-    record ContractWithExecutionResponse(Long contractId, String contractor, String type){}
+    record ContractWithExecutionResponse(Long contractId, String contractor, String type, String contractNumber){}
 }

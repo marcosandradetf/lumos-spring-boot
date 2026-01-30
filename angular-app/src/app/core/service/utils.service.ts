@@ -282,31 +282,6 @@ export class UtilsService {
         this.messageService.clear(key);
     }
 
-    abbreviate(name: string): string {
-        const tokens = name.split(" ")
-        const result: string[] = [];
-
-        let replace = false
-
-        for (let token in tokens) {
-            const word = token.toLowerCase()
-
-            if (word == "prefeitura") {
-                result.push("PREF.")
-                replace = true
-            } else if (word == "municipal" && replace) {
-                result.push("MUN.")
-            } else if (word == "de" && replace) {
-                // ignora "DE" após PREFEITURA ou MUNICIPAL
-            } else {
-                result.push(token)
-                replace = false
-            }
-        }
-
-        return result.join(" ").toUpperCase();
-    }
-
     private cache = new Map<string, string>();
 
 

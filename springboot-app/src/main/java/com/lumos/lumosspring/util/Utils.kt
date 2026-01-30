@@ -56,7 +56,11 @@ object Utils {
         return result
     }
 
-    fun sendHtmlToPuppeteer(templateHtml: String, orientation: String = "landscape"): ByteArray? {
+    fun sendHtmlToPuppeteer(
+        templateHtml: String,
+        orientation: String = "landscape",
+        url: String = "http://puppeteer-service:3000/generate-pdf"
+    ): ByteArray? {
         val restTemplate = RestTemplate()
 
         val headers = HttpHeaders().apply {
@@ -71,7 +75,7 @@ object Utils {
         val request = HttpEntity(body, headers)
 
         val url = UriComponentsBuilder
-            .fromHttpUrl("http://puppeteer-service:3000/generate-pdf")
+            .fromHttpUrl(url)
             .build()
             .toUri()
 

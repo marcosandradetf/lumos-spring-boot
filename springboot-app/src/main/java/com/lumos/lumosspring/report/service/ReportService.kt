@@ -2,17 +2,22 @@ package com.lumos.lumosspring.report.service
 
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.maintenance.repository.MaintenanceQueryRepository
+import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.report.controller.ReportController
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.*
 import org.springframework.stereotype.Service
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 @Service
 class ReportService(
     private val maintenanceRepository: MaintenanceQueryRepository,
-    private val contractRepository: ContractRepository
+    private val contractRepository: ContractRepository,
+    private val minioService: MinioService,
 ) {
     fun generatePdf(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
         return try {
@@ -112,33 +117,330 @@ class ReportService(
     }
 
     fun generateExecutionReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
-        return generateGroupedMaintenanceReport(filtersRequest)
-        return if (filtersRequest.type == "MAINTENANCE") {
-            generateGroupedMaintenanceReport(filtersRequest)
+        return if (filtersRequest.scope == "MAINTENANCE") {
+            generateMaintenanceReport(filtersRequest)
         } else {
             generateGroupedInstallationReport(filtersRequest)
         }
     }
 
-//        val contractId: Long,
-//        val type: String, // MAINTENANCE: CONVENTIONAL | LED || INSTALLATION: LED | PHOTO
-//        val startDate: Instant,
-//        val endDate: Instant,
-//        val viewMode: String, // LIST | GROUPED
-//        val scope: String // MAINTENANCE | INSTALLATION
+    private fun generateMaintenanceReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+        return if (filtersRequest.viewMode == "LIST") {
+
+            val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
+            val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+
+            val response = maintenanceRepository.getGroupedMaintenances(
+                filtersRequest.contractId,
+                start,
+                end,
+                "%${filtersRequest.type}%"
+            )
+
+            ResponseEntity.ok().body(response)
+        } else {
+            generateGroupedMaintenanceReport(filtersRequest)
+        }
+    }
 
     private fun generateGroupedMaintenanceReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
-        return if (filtersRequest.viewMode == "LIST") {
-            ResponseEntity.ok().body(
-                maintenanceRepository.getGroupedMaintenances(
-                    filtersRequest.contractId,
-                    filtersRequest.startDate,
-                    filtersRequest.endDate
+        when (filtersRequest.type) {
+            "led" -> {
+                var html =
+                    this::class.java.getResource("/templates/maintenance/conventional_grouped.html")!!.readText()
+
+                val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
+                val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+
+                val data = maintenanceRepository
+                    .getGroupedConventionalMaintenances(start, end, filtersRequest.contractId)
+
+                if (data.isEmpty()) {
+                    throw IllegalArgumentException("Nenhum dado encontrado para os parâmetros fornecidos")
+                }
+
+                val root = data.first()
+                val company = root["company"]!!
+                val contract = root["contract"]!!
+                val maintenances = root["maintenances"]!!
+
+                val logoUrl = minioService.getPresignedObjectUrl(
+                    Utils.getCurrentBucket(),
+                    company["company_logo"].asText()
                 )
-            )
-        } else {
-            ResponseEntity.noContent().build()
+
+                html = html
+                    .replace("{{LOGO_IMAGE}}", logoUrl)
+                    .replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
+                    .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"].asText())
+                    .replace("{{COMPANY_CNPJ}}", company["company_cnpj"].asText())
+                    .replace("{{COMPANY_ADDRESS}}", company["company_address"].asText())
+                    .replace("{{COMPANY_PHONE}}", company["company_phone"].asText())
+                    .replace("{{CONTRACTOR_SOCIAL_REASON}}", contract["contractor"].asText())
+                    .replace("{{CONTRACTOR_CNPJ}}", contract["cnpj"].asText())
+                    .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
+                    .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
+
+                val maintenanceBlocks = maintenances.joinToString("\n") { m ->
+
+                    val dateOfVisit = Utils.convertToSaoPauloLocal(
+                        Instant.parse(m["date_of_visit"].asText())
+                    ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+
+                    val signDate = if (!m["sign_date"].isNull)
+                        Utils.convertToSaoPauloLocal(
+                            Instant.parse(m["sign_date"].asText())
+                        ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    else "—"
+
+                    val streets = m["streets"]
+                    val team = m["team"]
+
+                    val streetRows = streets.mapIndexed { i, s ->
+                        """
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td class="left">${s["address"].asText()}</td>
+                                <td>${s["relay"].asText()}</td>
+                                <td>${s["connection"].asText()}</td>
+                                <td>${s["bulb"].asText()}</td>
+                                <td>${s["sodium"].asText()}</td>
+                                <td>${s["mercury"].asText()}</td>
+                                <td>${s["power"].asText()}</td>
+                                <td>${s["external_reactor"].asText()}</td>
+                                <td>${s["internal_reactor"].asText()}</td>
+                                <td>${s["relay_base"].asText()}</td>
+                            </tr>
+                            """.trimIndent()
+                    }.joinToString("\n")
+
+                    val observations = streets
+                        .filter { it.has("comment") && !it["comment"].isNull }
+                        .joinToString(" ") { it["comment"].asText() }
+
+                    val teamRows = team.joinToString("\n") {
+                        """
+                            <tr>
+                                <td>${it["role"].asText()}</td>
+                                <td>${it["name"].asText()} ${it["last_name"].asText()}</td>
+                            </tr>
+                        """.trimIndent()
+                    }
+
+                    val signSection =
+                        if (!m["signature_uri"].isNull) {
+                            val signUrl = minioService.getPresignedObjectUrl(
+                                Utils.getCurrentBucket(),
+                                m["signature_uri"].asText()
+                            )
+                            """
+                <div class="signature">
+                    <img src="$signUrl">
+                    <div>Assinado em $signDate</div>
+                </div>
+                """.trimIndent()
+                        } else ""
+
+                    """
+        <div class="maintenance">
+            <div class="maintenance-header">
+                <div>Data: $dateOfVisit</div>
+                <div>Tipo: ${m["type"].asText()} | Responsável: ${m["responsible"].asText()}</div>
+            </div>
+
+            <div class="maintenance-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº</th><th>Endereço</th><th>Relé</th><th>Conexão</th>
+                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
+                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        $streetRows
+                    </tbody>
+                </table>
+
+                <div class="observations">
+                    <strong>Observações:</strong><br>
+                    $observations
+                </div>
+
+                <table class="team-table" style="margin-top:10px">
+                    <thead>
+                        <tr><th>Função</th><th>Nome</th></tr>
+                    </thead>
+                    <tbody>
+                        $teamRows
+                    </tbody>
+                </table>
+
+                $signSection
+            </div>
+        </div>
+        """.trimIndent()
+                }
+
+                html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
+
+                val pdf = Utils.sendHtmlToPuppeteer(html, "http://localhost:3000/generate-pdf")
+
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.pdf")
+                    .body(pdf)
+
+            }
+
+            else -> {
+                var html =
+                    this::class.java.getResource("/templates/maintenance/conventional_grouped.html")!!.readText()
+
+                val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
+                val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+
+                val data = maintenanceRepository
+                    .getGroupedConventionalMaintenances(start, end, filtersRequest.contractId)
+
+                if (data.isEmpty()) {
+                    throw IllegalArgumentException("Nenhum dado encontrado para os parâmetros fornecidos")
+                }
+
+                val root = data.first()
+                val company = root["company"]!!
+                val contract = root["contract"]!!
+                val maintenances = root["maintenances"]!!
+
+                val logoUrl = minioService.getPresignedObjectUrl(
+                    Utils.getCurrentBucket(),
+                    company["company_logo"].asText()
+                )
+
+                html = html
+                    .replace("{{LOGO_IMAGE}}", logoUrl)
+                    .replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
+                    .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"].asText())
+                    .replace("{{COMPANY_CNPJ}}", company["company_cnpj"].asText())
+                    .replace("{{COMPANY_ADDRESS}}", company["company_address"].asText())
+                    .replace("{{COMPANY_PHONE}}", company["company_phone"].asText())
+                    .replace("{{CONTRACTOR_SOCIAL_REASON}}", contract["contractor"].asText())
+                    .replace("{{CONTRACTOR_CNPJ}}", contract["cnpj"].asText())
+                    .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
+                    .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
+
+                val maintenanceBlocks = maintenances.joinToString("\n") { m ->
+
+                    val dateOfVisit = Utils.convertToSaoPauloLocal(
+                        Instant.parse(m["date_of_visit"].asText())
+                    ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+
+                    val signDate = if (!m["sign_date"].isNull)
+                        Utils.convertToSaoPauloLocal(
+                            Instant.parse(m["sign_date"].asText())
+                        ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    else "—"
+
+                    val streets = m["streets"]
+                    val team = m["team"]
+
+                    val streetRows = streets.mapIndexed { i, s ->
+                        """
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td class="left">${s["address"].asText()}</td>
+                                <td>${s["relay"].asText()}</td>
+                                <td>${s["connection"].asText()}</td>
+                                <td>${s["bulb"].asText()}</td>
+                                <td>${s["sodium"].asText()}</td>
+                                <td>${s["mercury"].asText()}</td>
+                                <td>${s["power"].asText()}</td>
+                                <td>${s["external_reactor"].asText()}</td>
+                                <td>${s["internal_reactor"].asText()}</td>
+                                <td>${s["relay_base"].asText()}</td>
+                            </tr>
+                            """.trimIndent()
+                    }.joinToString("\n")
+
+                    val observations = streets
+                        .filter { it.has("comment") && !it["comment"].isNull }
+                        .joinToString(" ") { it["comment"].asText() }
+
+                    val teamRows = team.joinToString("\n") {
+                        """
+                            <tr>
+                                <td>${it["role"].asText()}</td>
+                                <td>${it["name"].asText()} ${it["last_name"].asText()}</td>
+                            </tr>
+                        """.trimIndent()
+                    }
+
+                    val signSection =
+                        if (!m["signature_uri"].isNull) {
+                            val signUrl = minioService.getPresignedObjectUrl(
+                                Utils.getCurrentBucket(),
+                                m["signature_uri"].asText()
+                            )
+                            """
+                <div class="signature">
+                    <img src="$signUrl">
+                    <div>Assinado em $signDate</div>
+                </div>
+                """.trimIndent()
+                        } else ""
+
+                    """
+        <div class="maintenance">
+            <div class="maintenance-header">
+                <div>Data: $dateOfVisit</div>
+                <div>Tipo: ${m["type"].asText()} | Responsável: ${m["responsible"].asText()}</div>
+            </div>
+
+            <div class="maintenance-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº</th><th>Endereço</th><th>Relé</th><th>Conexão</th>
+                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
+                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        $streetRows
+                    </tbody>
+                </table>
+
+                <div class="observations">
+                    <strong>Observações:</strong><br>
+                    $observations
+                </div>
+
+                <table class="team-table" style="margin-top:10px">
+                    <thead>
+                        <tr><th>Função</th><th>Nome</th></tr>
+                    </thead>
+                    <tbody>
+                        $teamRows
+                    </tbody>
+                </table>
+
+                $signSection
+            </div>
+        </div>
+        """.trimIndent()
+                }
+
+                html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
+
+                val pdf = Utils.sendHtmlToPuppeteer(html, "http://localhost:3000/generate-pdf")
+
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.pdf")
+                    .body(pdf)
+            }
         }
+
     }
 
     private fun generateGroupedInstallationReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
