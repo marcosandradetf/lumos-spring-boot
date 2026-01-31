@@ -13,6 +13,7 @@ import {Title} from '@angular/platform-browser';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 import {SharedState} from '../../core/service/shared-state';
+import {Utils} from '../../core/service/utils';
 
 @Component({
     selector: 'app-pre-measurement-home',
@@ -165,4 +166,5 @@ export class PreMeasurementComponent implements OnInit {
         );
     }
 
+    protected readonly Utils = Utils;
 }

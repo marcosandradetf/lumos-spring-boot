@@ -9,6 +9,7 @@ import org.springframework.http.*
 import org.springframework.stereotype.Service
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -331,18 +332,41 @@ class ReportService(
 
                 val maintenanceBlocks = maintenances.joinToString("\n") { m ->
 
-                    val dateOfVisit = Utils.convertToSaoPauloLocal(
-                        Instant.parse(m["date_of_visit"].asText())
-                    ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    // Início da execução
+                    val start = Utils.convertToSaoPauloLocal(
+                        Instant.parse(m.path("date_of_visit").asText())
+                    )
 
-                    val signDate = if (!m["sign_date"].isNull)
+                    // Fim da execução (fallback se não houver assinatura)
+                    val end = if (m.hasNonNull("sign_date"))
                         Utils.convertToSaoPauloLocal(
-                            Instant.parse(m["sign_date"].asText())
-                        ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-                    else "—"
+                            Instant.parse(m.path("sign_date").asText())
+                        )
+                    else
+                        start
+
+                    // Datas formatadas (para exibição)
+                    val dateOfVisit = start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    val signDate = end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+
+                    // Cálculo da duração
+                    val duration = Duration.between(start, end)
+
+
+                    // Evita duração negativa (defensivo)
+                    val totalMinutes = maxOf(duration.toMinutes(), 0)
+
+                    // Converte para horas + minutos
+                    val hours = totalMinutes / 60
+                    val minutes = totalMinutes % 60
+
+                    // Texto final para relatório
+                    val durationFormatted = "${hours}h ${minutes}min"
+
 
                     val streets = m["streets"]
                     val team = m["team"]
+                    val total = m["total_by_maintenance"]
 
                     val streetRows = streets.mapIndexed { i, s ->
                         """
@@ -359,7 +383,7 @@ class ReportService(
                                 <td>${s["internal_reactor"].asText()}</td>
                                 <td>${s["relay_base"].asText()}</td>
                             </tr>
-                            """.trimIndent()
+                        """.trimIndent()
                     }.joinToString("\n")
 
                     val observations = streets
@@ -382,55 +406,71 @@ class ReportService(
                                 m["signature_uri"].asText()
                             )
                             """
-                <div class="signature">
-                    <img src="$signUrl">
-                    <div>Assinado em $signDate</div>
-                </div>
-                """.trimIndent()
+                                <div class="signature">
+                                    <img src="$signUrl">
+                                    <div>Assinado em $signDate</div>
+                                </div>
+                            """.trimIndent()
                         } else ""
 
                     """
-        <div class="maintenance">
-            <div class="maintenance-header">
-                <div>Data: $dateOfVisit</div>
-                <div>Tipo: ${m["type"].asText()} | Responsável: ${m["responsible"].asText()}</div>
-            </div>
-
-            <div class="maintenance-body">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nº</th><th>Endereço</th><th>Relé</th><th>Conexão</th>
-                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
-                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        $streetRows
-                    </tbody>
-                </table>
-
-                <div class="observations">
-                    <strong>Observações:</strong><br>
-                    $observations
-                </div>
-
-                <table class="team-table" style="margin-top:10px">
-                    <thead>
-                        <tr><th>Função</th><th>Nome</th></tr>
-                    </thead>
-                    <tbody>
-                        $teamRows
-                    </tbody>
-                </table>
-
-                $signSection
-            </div>
-        </div>
-        """.trimIndent()
+                        <div class="maintenance">
+                            <div class="maintenance-header">
+                                <div>Período: De $dateOfVisit às $signDate (Produtividade: $durationFormatted)</div>
+                                <div>Tipo: ${m["type"].asText()} | Responsável pelo acompanhamento: ${m["responsible"].asText()}</div>
+                            </div>
+                
+                            <div class="maintenance-body">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nº</th><th>Endereço</th><th>Relé</th><th>Conexão</th>
+                                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
+                                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        $streetRows
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="2">Total por item</th>
+                                            <th>${total["relay"].asText()}</th>
+                                            <th>${total["connection"].asText()}</th>
+                                            <th>${total["bulb"].asText()}</th>
+                                            <th>${total["sodium"].asText()}</th>
+                                            <th>${total["mercury"].asText()}</th>
+                                            <th>N/A</th>
+                                            <th>${total["external_reactor"].asText()}</th>
+                                            <th>${total["internal_reactor"].asText()}</th>
+                                            <th>${total["relay_base"].asText()}</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                
+                                <div class="observations">
+                                    <strong>Observações:</strong><br>
+                                    $observations
+                                </div>
+                
+                                <table class="data-table" style="margin-top:10px">
+                                    <thead>
+                                        <tr><th>Função</th><th>Nome</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        $teamRows
+                                    </tbody>
+                                </table>
+                
+                                $signSection
+                            </div>
+                        </div>
+                    """.trimIndent()
                 }
 
                 html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
+
+                println(html)
 
                 val pdf = Utils.sendHtmlToPuppeteer(html, "http://localhost:3000/generate-pdf")
 

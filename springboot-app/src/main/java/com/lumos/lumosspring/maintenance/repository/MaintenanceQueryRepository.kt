@@ -498,7 +498,7 @@ class MaintenanceQueryRepository(
                     sign_date
                 FROM maintenance
                 WHERE contract_id = :contractId
-                  AND date_of_visit >= :startDate 
+                  AND date_of_visit >= :startDate
                   AND date_of_visit < (:endDate + INTERVAL '1 day')
                   AND EXISTS(
                       SELECT 1
@@ -507,117 +507,228 @@ class MaintenanceQueryRepository(
                          AND maintenance_street.maintenance_id = maintenance.maintenance_id
                 )
             ),
-                 items_by_street AS (
-                     SELECT
-                         msi.maintenance_street_id,
-                         material_name_unaccent,
-                         COALESCE(mat.material_power, ms.last_power) AS material_power
-                     FROM maintenance_street_item msi
-                          JOIN maintenance_street ms ON ms.maintenance_street_id = msi.maintenance_street_id
-                          JOIN filtered_maintenance m ON m.maintenance_id = ms.maintenance_id
-                          JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
-                          JOIN material mat ON mat.id_material = mstk.material_id
-                 ),
-                 team_by_maintenance AS (
-                     SELECT
-                         x.maintenance_id,
-                         json_agg(
-                                 json_build_object(
-                                         'name', x.name,
-                                         'last_name', x.last_name,
-                                         'role', x.role_name
-                                 )
-                         ) AS team
-                     FROM (
-                              SELECT DISTINCT ON (me.maintenance_id, au.user_id)
-                                  me.maintenance_id,
-                                  au.name,
-                                  au.last_name,
-                                  r.role_name
-                              FROM maintenance_executor me
-                                       JOIN filtered_maintenance m ON m.maintenance_id = me.maintenance_id
-                                       JOIN app_user au ON au.user_id = me.user_id
-                                       JOIN user_role ur ON ur.id_user = au.user_id
-                                       JOIN role r ON r.role_id = ur.id_role
-                              ORDER BY me.maintenance_id, au.user_id, r.role_name
-                          ) x
-                     GROUP BY maintenance_id
-                 ),
-                 streets_by_maintenance AS (
-                     SELECT
-                         ms.maintenance_id,
-                         json_agg(
-                                 json_build_object(
-                                         'address', ms.address,
-                                         'comment', ms.comment,
-                                         'relay', CASE WHEN EXISTS (
+             items_by_street AS (
+                 SELECT
+                     msi.maintenance_id,
+                     msi.maintenance_street_id,
+                     material_name_unaccent,
+                     COALESCE(mat.material_power, ms.last_power) AS material_power
+                 FROM maintenance_street_item msi
+                      JOIN maintenance_street ms ON ms.maintenance_street_id = msi.maintenance_street_id
+                      JOIN filtered_maintenance m ON m.maintenance_id = ms.maintenance_id
+                      JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
+                      JOIN material mat ON mat.id_material = mstk.material_id
+                 WHERE ms.reason IS NULL
+             ),
+             team_by_maintenance AS (
+                 SELECT
+                     x.maintenance_id,
+                     json_agg(
+                             json_build_object(
+                                     'name', x.name,
+                                     'last_name', x.last_name,
+                                     'role', x.role_name
+                             )
+                     ) AS team
+                 FROM (
+                          SELECT DISTINCT ON (me.maintenance_id, au.user_id)
+                              me.maintenance_id,
+                              au.name,
+                              au.last_name,
+                              r.role_name
+                          FROM maintenance_executor me
+                                   JOIN filtered_maintenance m ON m.maintenance_id = me.maintenance_id
+                                   JOIN app_user au ON au.user_id = me.user_id
+                                   JOIN user_role ur ON ur.id_user = au.user_id
+                                   JOIN role r ON r.role_id = ur.id_role
+                          ORDER BY me.maintenance_id, au.user_id, r.role_name
+                      ) x
+                 GROUP BY maintenance_id
+             ),
+             streets_by_maintenance AS (
+                 SELECT
+                     ms.maintenance_id,
+                     json_agg(
+                             json_build_object(
+                                 'address', ms.address,
+                                 'comment', ms.comment,
+                                 'relay', CASE WHEN EXISTS (
                                      SELECT 1 FROM items_by_street ibs
                                      WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                                        AND ibs.material_name_unaccent LIKE '%rele%'
                                        AND ibs.material_name_unaccent NOT LIKE '%base%'
                                  ) THEN 'X' ELSE '' END,
-                                         'connection', CASE WHEN EXISTS (
+                                 'connection', CASE WHEN EXISTS (
                                      SELECT 1 FROM items_by_street ibs
                                      WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                                        AND ibs.material_name_unaccent LIKE '%conector%'
                                  ) THEN 'X' ELSE '' END,
-                                         'power', COALESCE((
-                                                               SELECT ibs.material_power
-                                                               FROM items_by_street ibs
-                                                               WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                                                 AND ibs.material_power IS NOT NULL
-                                                               LIMIT 1
-                                                           ), '')
-                                 )
-                         ) AS streets
-                     FROM maintenance_street ms
-                              JOIN filtered_maintenance m ON m.maintenance_id = ms.maintenance_id
-                     WHERE ms.reason IS NULL
-                     GROUP BY ms.maintenance_id
-                 ),
-                 maintenance_json AS (
-                     SELECT
-                         m.maintenance_id,
-                         json_build_object(
-                                 'date_of_visit', m.date_of_visit,
-                                 'pending_points', m.pending_points,
-                                 'quantity_pending_points', COALESCE(m.quantity_pending_points, 0),
-                                 'type', m.type,
-                                 'responsible', m.responsible,
-                                 'signature_uri', m.signature_uri,
-                                 'sign_date', m.sign_date,
-                                 'team', tbm.team,
-                                 'streets', sbm.streets
-                         ) AS maintenance
-                     FROM filtered_maintenance m
-                              LEFT JOIN team_by_maintenance tbm ON tbm.maintenance_id = m.maintenance_id
-                              LEFT JOIN streets_by_maintenance sbm ON sbm.maintenance_id = m.maintenance_id
-                 )
-            
-                SELECT json_build_object(
-                               'social_reason', com.social_reason,
-                               'company_cnpj', com.company_cnpj,
-                               'company_address', com.company_address,
-                               'company_phone', COALESCE(com.company_phone, ''),
-                               'company_logo', com.company_logo
-                       )                                                   AS company,
-            
-                       json_build_object(
-                               'contract_number', c.contract_number,
-                               'contractor', c.contractor,
-                               'cnpj', c.cnpj,
-                               'address', c.address,
-                               'phone', COALESCE(c.phone, '')
-                       )                                                   AS contract,
-            
-                       json_agg(mj.maintenance ORDER BY mj.maintenance_id) AS maintenances
-            
-                FROM contract c
-                         JOIN company com ON com.id_company = c.company_id
-                         LEFT JOIN maintenance_json mj ON TRUE
-                WHERE c.contract_id = :contractId
-                GROUP BY com.social_reason, com.company_cnpj, com.company_address, com.company_phone, com.company_logo,
-                         c.contract_number, c.contractor, c.cnpj, c.address, c.phone;
+                                 'bulb', CASE WHEN EXISTS (
+                                     SELECT 1 FROM items_by_street ibs
+                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                       AND ibs.material_name_unaccent LIKE '%lampada%'
+                                       AND ibs.material_name_unaccent NOT LIKE '%sodio%'
+                                       AND ibs.material_name_unaccent NOT LIKE '%mercurio%'
+                                 ) THEN 'X' ELSE '' END,
+        
+                                 'sodium', CASE WHEN EXISTS (
+                                     SELECT 1 FROM items_by_street ibs
+                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                       AND ibs.material_name_unaccent LIKE '%lampada%'
+                                       AND ibs.material_name_unaccent LIKE '%sodio%'
+                                 ) THEN 'X' ELSE '' END,
+        
+                                 'mercury', CASE WHEN EXISTS (
+                                     SELECT 1 FROM items_by_street ibs
+                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                       AND ibs.material_name_unaccent LIKE '%lampada%'
+                                       AND ibs.material_name_unaccent LIKE '%mercurio%'
+                                 ) THEN 'X' ELSE '' END,
+                                 'power', COALESCE((
+                                           SELECT ibs.material_power
+                                           FROM items_by_street ibs
+                                           WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                             AND ibs.material_power IS NOT NULL
+                                           LIMIT 1
+                                       ), ''),
+                                 'external_reactor', CASE WHEN EXISTS (
+                                     SELECT 1 FROM items_by_street ibs
+                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                       AND ibs.material_name_unaccent LIKE '%reator%'
+                                       AND ibs.material_name_unaccent LIKE '%externo%'
+                                 ) THEN 'X' ELSE '' END,
+        
+                                 'internal_reactor', CASE WHEN EXISTS (
+                                     SELECT 1 FROM items_by_street ibs
+                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                       AND ibs.material_name_unaccent LIKE '%reator%'
+                                       AND ibs.material_name_unaccent LIKE '%interno%'
+                                 ) THEN 'X' ELSE '' END,
+        
+                                 'relay_base', CASE WHEN EXISTS (
+                                     SELECT 1 FROM items_by_street ibs
+                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                       AND ibs.material_name_unaccent LIKE '%rele%'
+                                       AND ibs.material_name_unaccent LIKE '%base%'
+                                 ) THEN 'X' ELSE '' END
+                             )
+                     ) AS streets
+                 FROM maintenance_street ms
+                 JOIN filtered_maintenance m ON m.maintenance_id = ms.maintenance_id
+                 WHERE ms.reason IS NULL
+                 GROUP BY ms.maintenance_id
+            ),
+
+             total_item_by_maintenance as (
+                 SELECT
+                     items_by_street.maintenance_id,
+                     json_build_object(
+                             'relay', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent NOT LIKE '%base%'),
+                             'connection', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%conector%'),
+                             'bulb', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%lampada%'
+                             AND material_name_unaccent NOT LIKE '%sodio%'
+                             AND material_name_unaccent NOT LIKE '%mercurio%'
+                         ),
+                             'sodium', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%sodio%'
+                         ),
+                             'mercury', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%mercurio%'
+                         ),
+                             'external_reactor', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%externo%'
+                         ),
+                             'internal_reactor', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%interno%'
+                         ),
+                             'relay_base', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent LIKE '%base%'
+                         )
+                     ) as total
+                 FROM items_by_street
+                 group by maintenance_id
+             ),
+     
+     
+             general_total_json as (
+                 SELECT
+                     json_build_object(
+                         'relay', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent NOT LIKE '%base%'),
+                         'connection', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%conector%'),
+                         'bulb', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%lampada%'
+                             AND material_name_unaccent NOT LIKE '%sodio%'
+                             AND material_name_unaccent NOT LIKE '%mercurio%'
+                         ),
+                         'sodium', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%sodio%'
+                         ),
+                         'mercury', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%mercurio%'
+                         ),
+                         'external_reactor', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%externo%'
+                         ),
+                         'internal_reactor', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%interno%'
+                         ),
+                         'relay_base', COUNT(*) FILTER (
+                         WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent LIKE '%base%'
+                         )
+                     ) as total
+                 FROM items_by_street
+             ),
+
+             maintenance_json AS (
+                 SELECT
+                     m.date_of_visit,
+                     json_build_object(
+                             'date_of_visit', m.date_of_visit,
+                             'pending_points', m.pending_points,
+                             'quantity_pending_points', COALESCE(m.quantity_pending_points, 0),
+                             'type', m.type,
+                             'responsible', m.responsible,
+                             'signature_uri', m.signature_uri,
+                             'sign_date', m.sign_date,
+                             'team', tbm.team,
+                             'streets', sbm.streets,
+                             'total_by_maintenance', tibm.total
+                     ) AS maintenance
+                 FROM filtered_maintenance m
+                          LEFT JOIN team_by_maintenance tbm ON tbm.maintenance_id = m.maintenance_id
+                          LEFT JOIN streets_by_maintenance sbm ON sbm.maintenance_id = m.maintenance_id
+                          LEFT JOIN total_item_by_maintenance tibm ON tibm.maintenance_id = m.maintenance_id
+             )
+
+            SELECT json_build_object(
+                           'social_reason', com.social_reason,
+                           'company_cnpj', com.company_cnpj,
+                           'company_address', com.company_address,
+                           'company_phone', COALESCE(com.company_phone, ''),
+                           'company_logo', com.company_logo
+                   )                                                   AS company,
+        
+                   json_build_object(
+                           'contract_number', c.contract_number,
+                           'contractor', c.contractor,
+                           'cnpj', c.cnpj,
+                           'address', c.address,
+                           'phone', COALESCE(c.phone, '')
+                   )                                                   AS contract,
+        
+                   json_agg(mj.maintenance ORDER BY mj.date_of_visit) AS maintenances,
+                   json_build_object(
+                            'values', gtj.total
+                   ) AS general_total
+        
+            FROM contract c
+                     JOIN company com ON com.id_company = c.company_id
+                     LEFT JOIN maintenance_json mj ON TRUE
+                     LEFT JOIN general_total_json gtj ON TRUE
+            WHERE c.contract_id = :contractId
+            GROUP BY com.social_reason, com.company_cnpj, com.company_address, com.company_phone, com.company_logo,
+                     c.contract_number, c.contractor, c.cnpj, c.address, c.phone;
         """.trimIndent()
 
         return jdbcTemplate.query(
@@ -631,11 +742,13 @@ class MaintenanceQueryRepository(
             val company = objectMapper.readTree(rs.getString("company"))
             val contract = objectMapper.readTree(rs.getString("contract"))
             val maintenances = objectMapper.readTree(rs.getString("maintenances"))
+            val generalTotal = objectMapper.readTree(rs.getString("general_total"))
 
             mapOf(
                 "company" to company,
                 "contract" to contract,
-                "maintenances" to maintenances
+                "maintenances" to maintenances,
+                "generalTotal" to generalTotal,
             )
         }
 
