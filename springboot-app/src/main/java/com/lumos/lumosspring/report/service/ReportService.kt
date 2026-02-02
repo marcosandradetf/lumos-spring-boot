@@ -182,17 +182,24 @@ class ReportService(
                     .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
                     .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
 
+                var startDate: String? = null
+                var endDate: String? = null
                 val maintenanceBlocks = maintenances.joinToString("\n") { m ->
 
                     val dateOfVisit = Utils.convertToSaoPauloLocal(
                         Instant.parse(m["date_of_visit"].asText())
                     ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
 
+                    if (startDate == null) {
+                        startDate = dateOfVisit
+                    }
+
                     val signDate = if (!m["sign_date"].isNull)
                         Utils.convertToSaoPauloLocal(
                             Instant.parse(m["sign_date"].asText())
                         ).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
                     else "—"
+                    endDate = signDate
 
                     val streets = m["streets"]
                     val team = m["team"]
@@ -235,52 +242,52 @@ class ReportService(
                                 m["signature_uri"].asText()
                             )
                             """
-                <div class="signature">
-                    <img src="$signUrl">
-                    <div>Assinado em $signDate</div>
-                </div>
-                """.trimIndent()
+                                <div class="signature">
+                                    <img src="$signUrl">
+                                    <div>Assinado em $signDate</div>
+                                </div>
+                                """.trimIndent()
                         } else ""
 
                     """
-        <div class="maintenance">
-            <div class="maintenance-header">
-                <div>Data: $dateOfVisit</div>
-                <div>Tipo: ${m["type"].asText()} | Responsável: ${m["responsible"].asText()}</div>
-            </div>
-
-            <div class="maintenance-body">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nº</th><th>Endereço</th><th>Relé</th><th>Conexão</th>
-                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
-                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        $streetRows
-                    </tbody>
-                </table>
-
-                <div class="observations">
-                    <strong>Observações:</strong><br>
-                    $observations
-                </div>
-
-                <table class="team-table" style="margin-top:10px">
-                    <thead>
-                        <tr><th>Função</th><th>Nome</th></tr>
-                    </thead>
-                    <tbody>
-                        $teamRows
-                    </tbody>
-                </table>
-
-                $signSection
-            </div>
-        </div>
-        """.trimIndent()
+                        <div class="maintenance">
+                            <div class="maintenance-header">
+                                <div>Data: $dateOfVisit</div>
+                                <div>Tipo: ${m["type"].asText()} | Responsável: ${m["responsible"].asText()}</div>
+                            </div>
+                
+                            <div class="maintenance-body">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nº</th><th>Endereço</th><th>Relé</th><th>Conexão</th>
+                                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
+                                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        $streetRows
+                                    </tbody>
+                                </table>
+                
+                                <div class="observations">
+                                    <strong>Observações:</strong><br>
+                                    $observations
+                                </div>
+                
+                                <table class="team-table" style="margin-top:10px">
+                                    <thead>
+                                        <tr><th>Função</th><th>Nome</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        $teamRows
+                                    </tbody>
+                                </table>
+                
+                                $signSection
+                            </div>
+                        </div>
+                        """.trimIndent()
                 }
 
                 html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
@@ -329,6 +336,7 @@ class ReportService(
                     .replace("{{CONTRACTOR_CNPJ}}", contract["cnpj"].asText())
                     .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
                     .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
+
 
                 val maintenanceBlocks = maintenances.joinToString("\n") { m ->
 
@@ -468,7 +476,43 @@ class ReportService(
                     """.trimIndent()
                 }
 
+                val noGeneralTotal = root["generalTotal"]!!["values"]!!
+                val generalTotal = """
+                        <div class="maintenance">
+                            <div class="maintenance-header">
+                                <div>Total geral - Manutenções realizadas no período de ${startDate} a date</div>
+                                <div>Tipo: tipo de manutenção</div>
+                            </div>
+                
+                            <div class="maintenance-body">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Relé</th><th>Conexão</th>
+                                            <th>Lâmp.</th><th>Sódio</th><th>Merc.</th>
+                                            <th>Pot.</th><th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>${noGeneralTotal["relay"].asText()}</td>
+                                            <td>${noGeneralTotal["connection"].asText()}</td>
+                                            <td>${noGeneralTotal["bulb"].asText()}</td>
+                                            <td>${noGeneralTotal["sodium"].asText()}</td>
+                                            <td>${noGeneralTotal["mercury"].asText()}</td>
+                                            <td>N/A</th>
+                                            <td>${noGeneralTotal["external_reactor"].asText()}</td>
+                                            <td>${noGeneralTotal["internal_reactor"].asText()}</td>
+                                            <td>${noGeneralTotal["relay_base"].asText()}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    """.trimIndent()
+
                 html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
+                html = html.replace("{{GENERAL_TOTAL}}", generalTotal)
 
                 println(html)
 

@@ -718,14 +718,16 @@ class MaintenanceQueryRepository(
                    )                                                   AS contract,
         
                    json_agg(mj.maintenance ORDER BY mj.date_of_visit) AS maintenances,
-                   json_build_object(
-                            'values', gtj.total
+                   
+                   json_agg(mj.maintenance ORDER BY mj.date_of_visit) AS maintenances,
+                   (
+                       SELECT json_build_object('values', total)
+                       FROM general_total_json
                    ) AS general_total
         
             FROM contract c
                      JOIN company com ON com.id_company = c.company_id
                      LEFT JOIN maintenance_json mj ON TRUE
-                     LEFT JOIN general_total_json gtj ON TRUE
             WHERE c.contract_id = :contractId
             GROUP BY com.social_reason, com.company_cnpj, com.company_address, com.company_phone, com.company_logo,
                      c.contract_number, c.contractor, c.cnpj, c.address, c.phone;

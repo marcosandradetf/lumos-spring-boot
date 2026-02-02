@@ -200,23 +200,23 @@ export class SidebarComponent implements OnInit {
                 style: {
                     border: ''
                 },
-                label: 'Relatórios',
+                label: 'Execuções Realizadas',
                 expanded: this.bToggleReports,
                 command: () => {
                     this.toggleReports(!this.bToggleReports);
                 },
                 items: [
                     {
-                        disabled: true,
-                        label: 'Pré-medição',
+                        disabled: false,
+                        label: 'Relatórios Personalizados',
                         icon: 'pi pi-chart-bar text-black text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/relatorios/manutencoes'],
+                        routerLink: ['/relatorios/gerenciamento'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        label: 'Manutenções',
+                        label: 'Manutenções (últimos 30 dias)',
                         icon: 'fa-solid fa-wrench text-base text-neutral-800 dark:text-neutral-200',
                         routerLink: ['/relatorios/manutencoes'],
                         command: () => {
@@ -224,7 +224,7 @@ export class SidebarComponent implements OnInit {
                         }
                     },
                     {
-                        label: 'Instalações',
+                        label: 'Instalações (últimos 30 dias)',
                         icon: 'pi pi-lightbulb text-black text-neutral-800 dark:text-neutral-200',
                         routerLink: ['/relatorios/instalacoes'],
                         command: () => {
