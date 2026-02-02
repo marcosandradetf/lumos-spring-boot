@@ -839,9 +839,16 @@ class MaintenanceService(
 
         val pdf = Utils.sendHtmlToPuppeteer(html)
 
+        val responseHeaders = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_PDF
+            contentDisposition = ContentDisposition
+                .attachment()
+                .filename("report.pdf")
+                .build()
+        }
+
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.pdf")
+            .headers(responseHeaders)
             .body(pdf)
     }
 
