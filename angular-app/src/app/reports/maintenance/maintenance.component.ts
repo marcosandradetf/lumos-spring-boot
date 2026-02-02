@@ -181,7 +181,7 @@ export class MaintenanceComponent implements OnInit {
 
     ngOnInit() {
         this.title.setTitle('Relatórios de manutenções');
-        SharedState.setCurrentPath(["Relatórios", "Manutenções"]);
+        SharedState.setCurrentPath(["Execuções Realizadas", "Relatórios de Manutenções (30 dias)"]);
 
         const ua = navigator.userAgent;
         this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);

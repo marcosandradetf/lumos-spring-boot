@@ -41,9 +41,8 @@ class MaintenanceController(
         @PathVariable maintenanceId: UUID,
     ): ResponseEntity<ByteArray> {
         return when (type.lowercase()) {
-            "conventional" -> maintenanceService.conventionalReport(maintenanceId)
             "led" -> maintenanceService.ledReport(maintenanceId) // Supondo que exista outro método
-            else -> ResponseEntity.badRequest().body(ByteArray(0))
+            else -> maintenanceService.conventionalReport(maintenanceId)
         }
     }
 

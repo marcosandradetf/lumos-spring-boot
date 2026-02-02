@@ -107,7 +107,7 @@ class MaintenanceQueryRepository(
         sql += if (contractId == null)
             """
                     AND m.tenant_id = :tenantId
-                    AND m.date_of_visit >= (now() - INTERVAL '90 day') 
+                    AND m.date_of_visit >= (now() - INTERVAL '31 day') 
                     AND m.date_of_visit < (now() + INTERVAL '1 day')
                 GROUP BY c.contract_id, c.contractor
                 ORDER BY c.contractor
@@ -480,10 +480,11 @@ class MaintenanceQueryRepository(
         }
     }
 
-    fun getGroupedConventionalMaintenances(
+    fun getGroupedMaintenances(
         startDate: OffsetDateTime,
         endDate: OffsetDateTime,
-        contractId: Long
+        contractId: Long,
+        type: String
     ): List<Map<String, JsonNode>> {
         val sql = """
             WITH filtered_maintenance AS (
@@ -503,7 +504,7 @@ class MaintenanceQueryRepository(
                   AND EXISTS(
                       SELECT 1
                       FROM maintenance_street
-                      WHERE reason IS NULL
+                      WHERE ${if (type == "led") " reason IS NOT NULL" else " reason IS NULL"}
                          AND maintenance_street.maintenance_id = maintenance.maintenance_id
                 )
             ),
@@ -518,7 +519,7 @@ class MaintenanceQueryRepository(
                       JOIN filtered_maintenance m ON m.maintenance_id = ms.maintenance_id
                       JOIN material_stock mstk ON mstk.material_id_stock = msi.material_stock_id
                       JOIN material mat ON mat.id_material = mstk.material_id
-                 WHERE ms.reason IS NULL
+                 WHERE ${if (type == "led") " reason IS NOT NULL" else " reason IS NULL"}
              ),
              team_by_maintenance AS (
                  SELECT
@@ -563,59 +564,78 @@ class MaintenanceQueryRepository(
                                      WHERE ibs.maintenance_street_id = ms.maintenance_street_id
                                        AND ibs.material_name_unaccent LIKE '%conector%'
                                  ) THEN 'X' ELSE '' END,
-                                 'bulb', CASE WHEN EXISTS (
-                                     SELECT 1 FROM items_by_street ibs
-                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                       AND ibs.material_name_unaccent LIKE '%lampada%'
-                                       AND ibs.material_name_unaccent NOT LIKE '%sodio%'
-                                       AND ibs.material_name_unaccent NOT LIKE '%mercurio%'
-                                 ) THEN 'X' ELSE '' END,
-        
-                                 'sodium', CASE WHEN EXISTS (
-                                     SELECT 1 FROM items_by_street ibs
-                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                       AND ibs.material_name_unaccent LIKE '%lampada%'
-                                       AND ibs.material_name_unaccent LIKE '%sodio%'
-                                 ) THEN 'X' ELSE '' END,
-        
-                                 'mercury', CASE WHEN EXISTS (
-                                     SELECT 1 FROM items_by_street ibs
-                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                       AND ibs.material_name_unaccent LIKE '%lampada%'
-                                       AND ibs.material_name_unaccent LIKE '%mercurio%'
-                                 ) THEN 'X' ELSE '' END,
-                                 'power', COALESCE((
-                                           SELECT ibs.material_power
-                                           FROM items_by_street ibs
-                                           WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                             AND ibs.material_power IS NOT NULL
-                                           LIMIT 1
-                                       ), ''),
-                                 'external_reactor', CASE WHEN EXISTS (
-                                     SELECT 1 FROM items_by_street ibs
-                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                       AND ibs.material_name_unaccent LIKE '%reator%'
-                                       AND ibs.material_name_unaccent LIKE '%externo%'
-                                 ) THEN 'X' ELSE '' END,
-        
-                                 'internal_reactor', CASE WHEN EXISTS (
-                                     SELECT 1 FROM items_by_street ibs
-                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                       AND ibs.material_name_unaccent LIKE '%reator%'
-                                       AND ibs.material_name_unaccent LIKE '%interno%'
-                                 ) THEN 'X' ELSE '' END,
-        
-                                 'relay_base', CASE WHEN EXISTS (
-                                     SELECT 1 FROM items_by_street ibs
-                                     WHERE ibs.maintenance_street_id = ms.maintenance_street_id
-                                       AND ibs.material_name_unaccent LIKE '%rele%'
-                                       AND ibs.material_name_unaccent LIKE '%base%'
-                                 ) THEN 'X' ELSE '' END
+                                 
+                                 ${if (type == "led") {
+                                     """
+                                        'last_supply', ms.last_supply,
+                                        'current_supply', ms.current_supply,
+                                        'last_power', ms.last_power,
+                                        'power', COALESCE((
+                                            SELECT ibs.material_power
+                                            FROM items_by_street ibs
+                                            WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                                AND ibs.material_power IS NOT NULL
+                                            LIMIT 1
+                                        ), ''),
+                                        'reason', coalesce(ms.reason, '')
+                                     """.trimIndent()
+                                 } else {
+                                     """
+                                         'bulb', CASE WHEN EXISTS (
+                                             SELECT 1 FROM items_by_street ibs
+                                             WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                               AND ibs.material_name_unaccent LIKE '%lampada%'
+                                               AND ibs.material_name_unaccent NOT LIKE '%sodio%'
+                                               AND ibs.material_name_unaccent NOT LIKE '%mercurio%'
+                                         ) THEN 'X' ELSE '' END,
+                
+                                         'sodium', CASE WHEN EXISTS (
+                                             SELECT 1 FROM items_by_street ibs
+                                             WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                               AND ibs.material_name_unaccent LIKE '%lampada%'
+                                               AND ibs.material_name_unaccent LIKE '%sodio%'
+                                         ) THEN 'X' ELSE '' END,
+                
+                                         'mercury', CASE WHEN EXISTS (
+                                             SELECT 1 FROM items_by_street ibs
+                                             WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                               AND ibs.material_name_unaccent LIKE '%lampada%'
+                                               AND ibs.material_name_unaccent LIKE '%mercurio%'
+                                         ) THEN 'X' ELSE '' END,
+                                         'power', COALESCE((
+                                                   SELECT ibs.material_power
+                                                   FROM items_by_street ibs
+                                                   WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                                     AND ibs.material_power IS NOT NULL
+                                                   LIMIT 1
+                                               ), ''),
+                                         'external_reactor', CASE WHEN EXISTS (
+                                             SELECT 1 FROM items_by_street ibs
+                                             WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                               AND ibs.material_name_unaccent LIKE '%reator%'
+                                               AND ibs.material_name_unaccent LIKE '%externo%'
+                                         ) THEN 'X' ELSE '' END,
+                
+                                         'internal_reactor', CASE WHEN EXISTS (
+                                             SELECT 1 FROM items_by_street ibs
+                                             WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                               AND ibs.material_name_unaccent LIKE '%reator%'
+                                               AND ibs.material_name_unaccent LIKE '%interno%'
+                                         ) THEN 'X' ELSE '' END,
+                
+                                         'relay_base', CASE WHEN EXISTS (
+                                             SELECT 1 FROM items_by_street ibs
+                                             WHERE ibs.maintenance_street_id = ms.maintenance_street_id
+                                               AND ibs.material_name_unaccent LIKE '%rele%'
+                                               AND ibs.material_name_unaccent LIKE '%base%'
+                                         ) THEN 'X' ELSE '' END
+                                     """.trimIndent()
+                                 }}
                              )
                      ) AS streets
                  FROM maintenance_street ms
                  JOIN filtered_maintenance m ON m.maintenance_id = ms.maintenance_id
-                 WHERE ms.reason IS NULL
+                 WHERE ${if (type == "led") " ms.reason IS NOT NULL" else " ms.reason IS NULL"}
                  GROUP BY ms.maintenance_id
             ),
 
@@ -623,28 +643,35 @@ class MaintenanceQueryRepository(
                  SELECT
                      items_by_street.maintenance_id,
                      json_build_object(
-                             'relay', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent NOT LIKE '%base%'),
-                             'connection', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%conector%'),
-                             'bulb', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%lampada%'
-                             AND material_name_unaccent NOT LIKE '%sodio%'
-                             AND material_name_unaccent NOT LIKE '%mercurio%'
-                         ),
-                             'sodium', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%sodio%'
-                         ),
-                             'mercury', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%mercurio%'
-                         ),
-                             'external_reactor', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%externo%'
-                         ),
-                             'internal_reactor', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%interno%'
-                         ),
-                             'relay_base', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent LIKE '%base%'
-                         )
+                         'relay', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent NOT LIKE '%base%'),
+                         'connection', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%conector%')
+                         ${if (type == "led") {
+                             """
+                             """.trimIndent()
+                         } else {
+                             """
+                                 ,'bulb', COUNT(*) FILTER (
+                                     WHERE material_name_unaccent LIKE '%lampada%'
+                                         AND material_name_unaccent NOT LIKE '%sodio%'
+                                         AND material_name_unaccent NOT LIKE '%mercurio%'
+                                 ),
+                                 'sodium', COUNT(*) FILTER (
+                                     WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%sodio%'
+                                 ),
+                                 'mercury', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%mercurio%'
+                                 ),
+                                 'external_reactor', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%externo%'
+                                 ),
+                                 'internal_reactor', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%interno%'
+                                 ),
+                                 'relay_base', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent LIKE '%base%'
+                                 )
+                             """.trimIndent()
+                         }}
                      ) as total
                  FROM items_by_street
                  group by maintenance_id
@@ -656,26 +683,34 @@ class MaintenanceQueryRepository(
                      json_build_object(
                          'relay', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent NOT LIKE '%base%'),
                          'connection', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%conector%'),
-                         'bulb', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%lampada%'
-                             AND material_name_unaccent NOT LIKE '%sodio%'
-                             AND material_name_unaccent NOT LIKE '%mercurio%'
-                         ),
-                         'sodium', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%sodio%'
-                         ),
-                         'mercury', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%mercurio%'
-                         ),
-                         'external_reactor', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%externo%'
-                         ),
-                         'internal_reactor', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%interno%'
-                         ),
-                         'relay_base', COUNT(*) FILTER (
-                         WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent LIKE '%base%'
-                         )
+                         ${if (type == "led") {
+                             """
+                                 'led', COUNT(*) FILTER (WHERE material_name_unaccent LIKE '%led%')
+                             """.trimIndent()
+                         } else {
+                             """
+                                 'bulb', COUNT(*) FILTER (
+                                     WHERE material_name_unaccent LIKE '%lampada%'
+                                        AND material_name_unaccent NOT LIKE '%sodio%'
+                                        AND material_name_unaccent NOT LIKE '%mercurio%'
+                                 ),
+                                 'sodium', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%sodio%'
+                                 ),
+                                 'mercury', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%lampada%' AND material_name_unaccent LIKE '%mercurio%'
+                                 ),
+                                 'external_reactor', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%externo%'
+                                 ),
+                                 'internal_reactor', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%reator%' AND material_name_unaccent LIKE '%interno%'
+                                 ),
+                                 'relay_base', COUNT(*) FILTER (
+                                    WHERE material_name_unaccent LIKE '%rele%' AND material_name_unaccent LIKE '%base%'
+                                 )
+                             """.trimIndent()
+                         }}
                      ) as total
                  FROM items_by_street
              ),
@@ -717,8 +752,6 @@ class MaintenanceQueryRepository(
                            'phone', COALESCE(c.phone, '')
                    )                                                   AS contract,
         
-                   json_agg(mj.maintenance ORDER BY mj.date_of_visit) AS maintenances,
-                   
                    json_agg(mj.maintenance ORDER BY mj.date_of_visit) AS maintenances,
                    (
                        SELECT json_build_object('values', total)

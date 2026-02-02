@@ -121,8 +121,8 @@ export class ReportManageComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        SharedState.setCurrentPath(["Relatórios", "Gerenciamento"]);
-        this.title.setTitle("Gerenciamento de Relatórios");
+        SharedState.setCurrentPath(["Execuções Realizadas", "Relatórios Personalizados"]);
+        this.title.setTitle("Gerenciamento de Execuções");
         this.loading = true
         const ua = navigator.userAgent;
         this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);
@@ -164,7 +164,12 @@ export class ReportManageComponent implements OnInit {
         const days = Utils.diffInDays(this.filters.startDate!, this.filters.endDate!);
 
         if (days > 31) {
-            this.utils.showMessage("O Período máximo é de 31 dias.", 'warn', 'Período inválido')
+            this.utils.showMessage("O Período máximo é de 31 dias.", 'warn', 'Período inválido');
+            return;
+        }
+
+        if (this.filters.scope == 'INSTALLATION') {
+            this.utils.showMessage("Relatórios personalizados de instalações em desenvolvimento.", 'warn', 'Lumos Relatórios');
             return;
         }
 

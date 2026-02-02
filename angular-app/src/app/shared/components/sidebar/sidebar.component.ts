@@ -216,7 +216,7 @@ export class SidebarComponent implements OnInit {
                         }
                     },
                     {
-                        label: 'Manutenções (últimos 30 dias)',
+                        label: 'Manutenções - 30 dias',
                         icon: 'fa-solid fa-wrench text-base text-neutral-800 dark:text-neutral-200',
                         routerLink: ['/relatorios/manutencoes'],
                         command: () => {
@@ -224,7 +224,7 @@ export class SidebarComponent implements OnInit {
                         }
                     },
                     {
-                        label: 'Instalações (últimos 30 dias)',
+                        label: 'Instalações - 90 dias',
                         icon: 'pi pi-lightbulb text-black text-neutral-800 dark:text-neutral-200',
                         routerLink: ['/relatorios/instalacoes'],
                         command: () => {

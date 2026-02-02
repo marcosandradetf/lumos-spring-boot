@@ -143,9 +143,10 @@ class DirectExecutionViewRepository(
             ) execs ON TRUE
             WHERE de.direct_execution_status = 'FINISHED'
                 AND de.tenant_id = :tenantId
-            GROUP BY c.contract_id, c.contractor, de.direct_execution_id
-            ORDER BY c.contractor, de.direct_execution_id 
-            LIMIT 100;            
+                    AND de.available_at >= (now() - INTERVAL '90 day') 
+                    AND de.available_at < (now() + INTERVAL '1 day')
+            GROUP BY c.contract_id, c.contractor
+            ORDER BY c.contractor;         
         """.trimIndent()
 
         return namedJdbc.query(sql, mapOf("tenantId" to Utils.getCurrentTenantId())) { rs, _ ->
