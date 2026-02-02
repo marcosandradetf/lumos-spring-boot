@@ -837,7 +837,7 @@ class MaintenanceService(
         html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
         html = html.replace("{{GENERAL_TOTAL}}", generalTotal)
 
-        val pdf = Utils.sendHtmlToPuppeteer(html, "http://localhost:3000/generate-pdf")
+        val pdf = Utils.sendHtmlToPuppeteer(html)
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
