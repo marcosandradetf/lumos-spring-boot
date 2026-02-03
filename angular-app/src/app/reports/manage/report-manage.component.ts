@@ -315,6 +315,7 @@ export class ReportManageComponent implements OnInit {
         if (this.pdfUrl) {
             URL.revokeObjectURL(this.pdfUrl);
             this.pdfUrl = null;
+            this.filters.executionId = null;
         }
     }
 }

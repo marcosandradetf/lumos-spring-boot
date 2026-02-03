@@ -513,8 +513,9 @@ class MaintenanceService(
         val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
 
         val data = maintenanceQueryRepository.getGroupedMaintenances(
-                start, end, filtersRequest.contractId, filtersRequest.type, UUID.fromString(filtersRequest.executionId)
-            )
+            start, end, filtersRequest.contractId, filtersRequest.type,
+            filtersRequest.executionId?.let { UUID.fromString(it) }
+        )
 
         if (data.isEmpty()) {
             throw IllegalArgumentException("Nenhum dado encontrado para os parâmetros fornecidos")
@@ -735,7 +736,7 @@ class MaintenanceService(
 
         val noGeneralTotal = root["generalTotal"]!!["values"]!!
         val generalTotal = if (filtersRequest.executionId == null)
-                            """
+            """
                                 <div class="pdf-page">
                                 <div class="page-content">
                                 <div class="maintenance">
@@ -749,30 +750,34 @@ class MaintenanceService(
                                             <thead>
                                                 <tr>
                                                 <tr>
-                                                    ${if (filtersRequest.type == "led") {
-                                                        """
+                                                    ${
+                if (filtersRequest.type == "led") {
+                    """
                                                             <th>Relé</th>
                                                             <th>Conexão</th>
                                                             <th>Led</th>
-                                                        """.trimIndent() 
-                                                    } else {
-                                                        """
+                                                        """.trimIndent()
+                } else {
+                    """
                                                             <th>Relé</th><th>Conexão</th>
                                                             <th>Lâmpada</th><th>Sódio</th><th>Mercúrio</th>
                                                             <th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
-                                                        """.trimIndent() }}
+                                                        """.trimIndent()
+                }
+            }
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    ${if (filtersRequest.type == "led") {
-                                                        """
+                                                    ${
+                if (filtersRequest.type == "led") {
+                    """
                                                             <td>${noGeneralTotal["relay"].asText()}</td>
                                                             <td>${noGeneralTotal["connection"].asText()}</td>
                                                             <td>${noGeneralTotal["led"].asText()}</td>
-                                                        """.trimIndent() } 
-                                                    else {
-                                                        """
+                                                        """.trimIndent()
+                } else {
+                    """
                                                             <td>${noGeneralTotal["relay"].asText()}</td>
                                                             <td>${noGeneralTotal["connection"].asText()}</td>
                                                             <td>${noGeneralTotal["bulb"].asText()}</td>
@@ -781,7 +786,9 @@ class MaintenanceService(
                                                             <td>${noGeneralTotal["external_reactor"].asText()}</td>
                                                             <td>${noGeneralTotal["internal_reactor"].asText()}</td>
                                                             <td>${noGeneralTotal["relay_base"].asText()}</td>
-                                                        """.trimIndent() }}
+                                                        """.trimIndent()
+                }
+            }
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -793,8 +800,6 @@ class MaintenanceService(
 
         html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
         html = html.replace("{{GENERAL_TOTAL}}", generalTotal)
-
-        println(html)
 
         val pdf = Utils.sendHtmlToPuppeteer(html)
 
