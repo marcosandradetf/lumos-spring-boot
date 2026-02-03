@@ -2,7 +2,6 @@ package com.lumos.lumosspring.report.service
 
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.maintenance.service.MaintenanceService
-import com.lumos.lumosspring.premeasurement.service.installation.InstallationReportService
 import com.lumos.lumosspring.report.controller.ReportController
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.*
@@ -15,7 +14,6 @@ import java.time.ZoneOffset
 class ReportService(
     private val maintenanceService: MaintenanceService,
     private val contractRepository: ContractRepository,
-    private val installationReportService: InstallationReportService
 ) {
     fun generatePdf(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
         return try {
