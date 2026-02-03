@@ -74,7 +74,7 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
                     responsible = :responsible,
                     status = :installationStatus,
                     finished_at = now()
-                WHERE pre_measurement_id = :installationId
+                WHERE pre_measurement_id = :installationId;
             """
     )
     void saveInstallationSignPhotoUri(
@@ -84,6 +84,22 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
             String installationStatus,
             Long installationId
     );
+
+    @Modifying
+    @Query("REFRESH MATERIALIZED VIEW installation_mv")
+    void refreshInstallationMv();
+
+    @Modifying
+    @Query("REFRESH MATERIALIZED VIEW installation_street_mv")
+    void refreshInstallationStreetMv();
+
+    @Modifying
+    @Query("REFRESH MATERIALIZED VIEW installation_street_item_mv")
+    void refreshInstallationStreetItemMv();
+
+    @Modifying
+    @Query("REFRESH MATERIALIZED VIEW installation_executor_mv")
+    void refreshInstallationExecutorMv();
 
 
 }

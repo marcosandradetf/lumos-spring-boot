@@ -46,8 +46,7 @@ class MaintenanceService(
 ) {
     @Transactional
     fun finishMaintenance(
-        maintenance: SendMaintenanceDTO?,
-        signature: MultipartFile?
+        maintenance: SendMaintenanceDTO?, signature: MultipartFile?
     ): ResponseEntity<Any> {
         var dateOfVisit: Instant
         var signDate: Instant?
@@ -234,17 +233,13 @@ class MaintenanceService(
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
         val hasPending = maintenance["pending_points"].asBoolean()
 
-        val signDate =
-            if (maintenance["sign_date"].asText() != "null")
-                Utils.convertToSaoPauloLocal(
-                    Instant.parse(maintenance["sign_date"].asText())
-                )
-            else
-                dateOfVisit
+        val signDate = if (maintenance["sign_date"].asText() != "null") Utils.convertToSaoPauloLocal(
+            Instant.parse(maintenance["sign_date"].asText())
+        )
+        else dateOfVisit
 
 
-        templateHtml = templateHtml
-            .replace("{{LOGO_IMAGE}}", companyLink)
+        templateHtml = templateHtml.replace("{{LOGO_IMAGE}}", companyLink)
             .replace("{{CONTRACT_NUMBER}}", contract["contract_number"]?.asText() ?: "")
             .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"]?.asText() ?: "")
             .replace("{{COMPANY_CNPJ}}", company["company_cnpj"]?.asText() ?: "")
@@ -263,8 +258,7 @@ class MaintenanceService(
             .replace("{{EXTERNAL_REACTOR_TOTAL}}", total_by_item["external_reactor"]?.asText() ?: "")
             .replace("{{INTERNAL_REACTOR_TOTAL}}", total_by_item["internal_reactor"]?.asText() ?: "")
             .replace("{{BASE_TOTAL}}", total_by_item["relay_base"]?.asText() ?: "")
-            .replace("{{OBSERVATIONS}}", observations)
-            .replace("{{PENDING}}", if (hasPending) "checked" else "")
+            .replace("{{OBSERVATIONS}}", observations).replace("{{PENDING}}", if (hasPending) "checked" else "")
             .replace("{{NO_PENDING}}", if (!hasPending) "checked" else "")
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
@@ -272,17 +266,14 @@ class MaintenanceService(
             .replace(
                 "{{SIGN_DATE}}",
                 if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yy 'às' HH:mm")) else "Sem registro"
-            )
-            .replace("{{TEAM_ROWS}}", teamRows)
+            ).replace("{{TEAM_ROWS}}", teamRows)
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = minioService.getPresignedObjectUrl(
-                Utils.getCurrentBucket(),
-                maintenance["signature_uri"]?.asText() ?: ""
+                Utils.getCurrentBucket(), maintenance["signature_uri"]?.asText() ?: ""
             )
 
-            val signSection =
-                """
+            val signSection = """
             <table >
               <thead>
                   <tr>
@@ -314,11 +305,9 @@ class MaintenanceService(
               </tbody>
             </table>
             """.trimIndent()
-            templateHtml = templateHtml
-                .replace("{{SIGN_SECTION}}", signSection)
+            templateHtml = templateHtml.replace("{{SIGN_SECTION}}", signSection)
         } else {
-            templateHtml = templateHtml
-                .replace("{{SIGN_SECTION}}", "")
+            templateHtml = templateHtml.replace("{{SIGN_SECTION}}", "")
         }
 
         try {
@@ -329,24 +318,18 @@ class MaintenanceService(
 //                    .filename("relatorio.pdf")
 //                    .build()
 //            }
-            val date = DateTimeFormatter
-                .ofPattern("ddMMyyyy")
-                .withZone(ZoneId.of("America/Sao_Paulo"))
-                .format(Instant.now())
+            val date =
+                DateTimeFormatter.ofPattern("ddMMyyyy").withZone(ZoneId.of("America/Sao_Paulo")).format(Instant.now())
 
             val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
 
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
-                contentDisposition = ContentDisposition
-                    .attachment()
-                    .filename("relatorio_manutencao_convencional_${safeContract}_$date.pdf")
-                    .build()
+                contentDisposition = ContentDisposition.attachment()
+                    .filename("relatorio_manutencao_convencional_${safeContract}_$date.pdf").build()
             }
 
-            return ResponseEntity.ok()
-                .headers(responseHeaders)
-                .body(response)
+            return ResponseEntity.ok().headers(responseHeaders).body(response)
         } catch (e: Exception) {
             throw RuntimeException(e.message, e.cause)
         }
@@ -418,17 +401,13 @@ class MaintenanceService(
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
-        val signDate =
-            if (maintenance["sign_date"].asText() != "null")
-                Utils.convertToSaoPauloLocal(
-                    Instant.parse(maintenance["sign_date"].asText())
-                )
-            else
-                dateOfVisit
+        val signDate = if (maintenance["sign_date"].asText() != "null") Utils.convertToSaoPauloLocal(
+            Instant.parse(maintenance["sign_date"].asText())
+        )
+        else dateOfVisit
         val hasPending = maintenance["pending_points"].asBoolean()
 
-        templateHtml = templateHtml
-            .replace("{{LOGO_IMAGE}}", companyLink)
+        templateHtml = templateHtml.replace("{{LOGO_IMAGE}}", companyLink)
             .replace("{{CONTRACT_NUMBER}}", contract["contract_number"]?.asText() ?: "")
             .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"]?.asText() ?: "")
             .replace("{{COMPANY_CNPJ}}", company["company_cnpj"]?.asText() ?: "")
@@ -447,8 +426,7 @@ class MaintenanceService(
             .replace("{{EXTERNAL_REACTOR_TOTAL}}", total_by_item["external_reactor"]?.asText() ?: "")
             .replace("{{INTERNAL_REACTOR_TOTAL}}", total_by_item["internal_reactor"]?.asText() ?: "")
             .replace("{{BASE_TOTAL}}", total_by_item["relay_base"]?.asText() ?: "")
-            .replace("{{OBSERVATIONS}}", observations)
-            .replace("{{PENDING}}", if (hasPending) "checked" else "")
+            .replace("{{OBSERVATIONS}}", observations).replace("{{PENDING}}", if (hasPending) "checked" else "")
             .replace("{{NO_PENDING}}", if (!hasPending) "checked" else "")
             .replace("{{PENDING_QUANTITY}}", maintenance["quantity_pending_points"]?.asText() ?: "")
             .replace("{{LOCAL}}", maintenance["type"]?.asText() ?: "")
@@ -456,18 +434,15 @@ class MaintenanceService(
             .replace(
                 "{{SIGN_DATE}}",
                 if (signDate != dateOfVisit) signDate.format(DateTimeFormatter.ofPattern("dd/MM/yy 'às' HH:mm")) else "Sem registro"
-            )
-            .replace("{{TEAM_ROWS}}", teamRows)
+            ).replace("{{TEAM_ROWS}}", teamRows)
 
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = minioService.getPresignedObjectUrl(
-                Utils.getCurrentBucket(),
-                maintenance["signature_uri"]?.asText() ?: ""
+                Utils.getCurrentBucket(), maintenance["signature_uri"]?.asText() ?: ""
             )
 
-            val signSection =
-                """
+            val signSection = """
             <table >
               <thead>
                   <tr>
@@ -499,11 +474,9 @@ class MaintenanceService(
               </tbody>
             </table>
             """.trimIndent()
-            templateHtml = templateHtml
-                .replace("{{SIGN_SECTION}}", signSection)
+            templateHtml = templateHtml.replace("{{SIGN_SECTION}}", signSection)
         } else {
-            templateHtml = templateHtml
-                .replace("{{SIGN_SECTION}}", "")
+            templateHtml = templateHtml.replace("{{SIGN_SECTION}}", "")
         }
 
         try {
@@ -515,24 +488,19 @@ class MaintenanceService(
 //                    .build()
 //            }
 
-            val date = DateTimeFormatter
-                .ofPattern("ddMMyyyy")
-                .withZone(ZoneId.of("America/Sao_Paulo"))
-                .format(Instant.now())
+            val date =
+                DateTimeFormatter.ofPattern("ddMMyyyy").withZone(ZoneId.of("America/Sao_Paulo")).format(Instant.now())
 
             val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
 
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
-                contentDisposition = ContentDisposition
-                    .attachment()
-                    .filename("relatorio_manutencao_leds_${safeContract}_$date.pdf")
-                    .build()
+                contentDisposition =
+                    ContentDisposition.attachment().filename("relatorio_manutencao_leds_${safeContract}_$date.pdf")
+                        .build()
             }
 
-            return ResponseEntity.ok()
-                .headers(responseHeaders)
-                .body(response)
+            return ResponseEntity.ok().headers(responseHeaders).body(response)
         } catch (e: Exception) {
             throw RuntimeException(e.message, e.cause)
         }
@@ -544,12 +512,8 @@ class MaintenanceService(
         val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
         val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
 
-        val data = maintenanceQueryRepository
-            .getGroupedMaintenances(
-                start,
-                end,
-                filtersRequest.contractId,
-                filtersRequest.type
+        val data = maintenanceQueryRepository.getGroupedMaintenances(
+                start, end, filtersRequest.contractId, filtersRequest.type, UUID.fromString(filtersRequest.maintenanceId)
             )
 
         if (data.isEmpty()) {
@@ -562,19 +526,15 @@ class MaintenanceService(
         val maintenances = root["maintenances"]!!
 
         val logoUrl = minioService.getPresignedObjectUrl(
-            Utils.getCurrentBucket(),
-            company["company_logo"].asText()
+            Utils.getCurrentBucket(), company["company_logo"].asText()
         )
 
         val titleDoc = if (filtersRequest.type == "led") "Relatório de Manutenções de LEDs"
         else "Relatório de Manutenções Convencionais"
         val titlePdf = if (filtersRequest.type == "led") "RELATÓRIO DE MANUTENÇÕES DE LEDS"
         else "RELATÓRIO DE MANUTENÇÕES CONVENCIONAIS"
-        html = html
-            .replace("{{TITLE_DOC}}", titleDoc)
-            .replace("{{TITLE_PDF}}", titlePdf)
-            .replace("{{LOGO_IMAGE}}", logoUrl)
-            .replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
+        html = html.replace("{{TITLE_DOC}}", titleDoc).replace("{{TITLE_PDF}}", titlePdf)
+            .replace("{{LOGO_IMAGE}}", logoUrl).replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
             .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"].asText())
             .replace("{{COMPANY_CNPJ}}", company["company_cnpj"].asText())
             .replace("{{COMPANY_ADDRESS}}", company["company_address"].asText())
@@ -594,12 +554,10 @@ class MaintenanceService(
             )
 
             // Fim da execução (fallback se não houver assinatura)
-            val end = if (m.hasNonNull("sign_date"))
-                Utils.convertToSaoPauloLocal(
-                    Instant.parse(m.path("sign_date").asText())
-                )
-            else
-                start
+            val end = if (m.hasNonNull("sign_date")) Utils.convertToSaoPauloLocal(
+                Instant.parse(m.path("sign_date").asText())
+            )
+            else start
 
             // Datas formatadas (para exibição)
             val dateOfVisit = start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
@@ -664,8 +622,7 @@ class MaintenanceService(
                 }.joinToString("\n")
             }
 
-            val observations = streets
-                .filter { it.has("comment") && !it["comment"].isNull }
+            val observations = streets.filter { it.has("comment") && !it["comment"].isNull }
                 .joinToString(". ") { it["comment"].asText().uppercase() }
 
             val teamRows = team.joinToString("\n") {
@@ -677,21 +634,20 @@ class MaintenanceService(
                         """.trimIndent()
             }
 
-            val signSection =
-                if (!m["signature_uri"].isNull) {
-                    val signUrl = minioService.getPresignedObjectUrl(
-                        Utils.getCurrentBucket(),
-                        m["signature_uri"].asText()
-                    )
-                    """
+            val signSection = if (!m["signature_uri"].isNull) {
+                val signUrl = minioService.getPresignedObjectUrl(
+                    Utils.getCurrentBucket(), m["signature_uri"].asText()
+                )
+                """
                                 <div class="signature">
                                     <img src="$signUrl">
                                     <div>Assinado em $signDate</div>
                                 </div>
                             """.trimIndent()
-                } else ""
+            } else ""
 
-            """
+            """     <div class="pdf-page">
+                        <div class="page-content">
                         <div class="maintenance">
                             <div class="maintenance-header">
                                 <div>Período: De $dateOfVisit às $signDate (Produtividade: $durationFormatted)</div>
@@ -772,84 +728,82 @@ class MaintenanceService(
                                 $signSection
                             </div>
                         </div>
+                        </div>
+                        </div>
                     """.trimIndent()
         }
 
         val noGeneralTotal = root["generalTotal"]!!["values"]!!
-        val generalTotal = """
-                        <div class="maintenance">
-                            <div class="maintenance-header">
-                                <div>Total geral - Manutenções realizadas no período de $startDate à $endDate</div>
-                                <div>Tipo: tipo de manutenção</div>
-                            </div>
-                
-                            <div class="maintenance-body">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                        <tr>
-                                            ${
-            if (filtersRequest.type == "led") {
-                """
-                                                    <th>Relé</th>
-                                                    <th>Conexão</th>
-                                                    <th>Led</th>
-                                                """.trimIndent()
-            } else {
-                """
-                                                    <th>Relé</th><th>Conexão</th>
-                                                    <th>Lâmpada</th><th>Sódio</th><th>Mercúrio</th>
-                                                    <th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
-                                                """.trimIndent()
-            }
-        }
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            ${
-            if (filtersRequest.type == "led") {
-                """
-                                                    <td>${noGeneralTotal["relay"].asText()}</td>
-                                                    <td>${noGeneralTotal["connection"].asText()}</td>
-                                                    <td>${noGeneralTotal["led"].asText()}</td>
-                                                """.trimIndent()
-            } else {
-                """
-                                                    <td>${noGeneralTotal["relay"].asText()}</td>
-                                                    <td>${noGeneralTotal["connection"].asText()}</td>
-                                                    <td>${noGeneralTotal["bulb"].asText()}</td>
-                                                    <td>${noGeneralTotal["sodium"].asText()}</td>
-                                                    <td>${noGeneralTotal["mercury"].asText()}</td>
-                                                    <td>${noGeneralTotal["external_reactor"].asText()}</td>
-                                                    <td>${noGeneralTotal["internal_reactor"].asText()}</td>
-                                                    <td>${noGeneralTotal["relay_base"].asText()}</td>
-                                                """.trimIndent()
-            }
-        }
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    """.trimIndent()
+        val generalTotal = if (filtersRequest.maintenanceId == null)
+                            """
+                                <div class="pdf-page">
+                                <div class="page-content">
+                                <div class="maintenance">
+                                    <div class="maintenance-header">
+                                        <div>Total geral - Manutenções realizadas no período de $startDate à $endDate</div>
+                                        <div>Tipo: tipo de manutenção</div>
+                                    </div>
+                        
+                                    <div class="maintenance-body">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                <tr>
+                                                    ${if (filtersRequest.type == "led") {
+                                                        """
+                                                            <th>Relé</th>
+                                                            <th>Conexão</th>
+                                                            <th>Led</th>
+                                                        """.trimIndent() 
+                                                    } else {
+                                                        """
+                                                            <th>Relé</th><th>Conexão</th>
+                                                            <th>Lâmpada</th><th>Sódio</th><th>Mercúrio</th>
+                                                            <th>Reator Ext.</th><th>Reator Int.</th><th>Base</th>
+                                                        """.trimIndent() }}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    ${if (filtersRequest.type == "led") {
+                                                        """
+                                                            <td>${noGeneralTotal["relay"].asText()}</td>
+                                                            <td>${noGeneralTotal["connection"].asText()}</td>
+                                                            <td>${noGeneralTotal["led"].asText()}</td>
+                                                        """.trimIndent() } 
+                                                    else {
+                                                        """
+                                                            <td>${noGeneralTotal["relay"].asText()}</td>
+                                                            <td>${noGeneralTotal["connection"].asText()}</td>
+                                                            <td>${noGeneralTotal["bulb"].asText()}</td>
+                                                            <td>${noGeneralTotal["sodium"].asText()}</td>
+                                                            <td>${noGeneralTotal["mercury"].asText()}</td>
+                                                            <td>${noGeneralTotal["external_reactor"].asText()}</td>
+                                                            <td>${noGeneralTotal["internal_reactor"].asText()}</td>
+                                                            <td>${noGeneralTotal["relay_base"].asText()}</td>
+                                                        """.trimIndent() }}
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                </div>
+                                </div>
+                        """.trimIndent() else ""
 
         html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
         html = html.replace("{{GENERAL_TOTAL}}", generalTotal)
+
+        println(html)
 
         val pdf = Utils.sendHtmlToPuppeteer(html)
 
         val responseHeaders = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_PDF
-            contentDisposition = ContentDisposition
-                .attachment()
-                .filename("report.pdf")
-                .build()
+            contentDisposition = ContentDisposition.attachment().filename("report.pdf").build()
         }
 
-        return ResponseEntity.ok()
-            .headers(responseHeaders)
-            .body(pdf)
+        return ResponseEntity.ok().headers(responseHeaders).body(pdf)
     }
 
     @Transactional
@@ -864,8 +818,7 @@ class MaintenanceService(
                     update maintenance 
                     set status = 'ARCHIVED'
                     WHERE maintenance_id = :maintenanceId
-                """.trimIndent(),
-                mapOf("maintenanceId" to maintenanceId)
+                """.trimIndent(), mapOf("maintenanceId" to maintenanceId)
             )
         } else {
             namedParameterJdbcTemplate.query(
@@ -873,8 +826,7 @@ class MaintenanceService(
                 select material_stock_id, quantity_executed, maintenance_street_id
                 from maintenance_street_item
                 where maintenance_id = :maintenanceId
-            """.trimIndent(),
-                mapOf("maintenanceId" to maintenanceId)
+            """.trimIndent(), mapOf("maintenanceId" to maintenanceId)
             ) { rs, _ ->
                 val materialStockId = rs.getLong("material_stock_id")
                 val maintenanceStreetId = UUID.fromString(rs.getString("maintenance_street_id"))
@@ -884,8 +836,7 @@ class MaintenanceService(
                     """
                     delete from material_history
                     WHERE maintenance_street_id = :maintenance_street_id
-                """.trimIndent(),
-                    mapOf("maintenance_street_id" to maintenanceStreetId)
+                """.trimIndent(), mapOf("maintenance_street_id" to maintenanceStreetId)
                 )
 
                 namedParameterJdbcTemplate.update(
@@ -894,10 +845,8 @@ class MaintenanceService(
                         set stock_quantity = stock_quantity + :quantity_executed,
                             stock_available = stock_available + :quantity_executed
                         where material_id_stock = :material_stock_id
-                    """.trimIndent(),
-                    mapOf(
-                        "material_stock_id" to materialStockId,
-                        "quantity_executed" to quantityExecuted
+                    """.trimIndent(), mapOf(
+                        "material_stock_id" to materialStockId, "quantity_executed" to quantityExecuted
                     )
                 )
             }
@@ -906,32 +855,28 @@ class MaintenanceService(
                 """
                     delete from maintenance_street_item 
                     WHERE maintenance_id = :maintenanceId
-                """.trimIndent(),
-                mapOf("maintenanceId" to maintenanceId)
+                """.trimIndent(), mapOf("maintenanceId" to maintenanceId)
             )
 
             namedParameterJdbcTemplate.update(
                 """
                     delete from maintenance_street
                     WHERE maintenance_id = :maintenanceId
-                """.trimIndent(),
-                mapOf("maintenanceId" to maintenanceId)
+                """.trimIndent(), mapOf("maintenanceId" to maintenanceId)
             )
 
             namedParameterJdbcTemplate.update(
                 """
                     delete from maintenance 
                     WHERE maintenance_id = :maintenanceId
-                """.trimIndent(),
-                mapOf("maintenanceId" to maintenanceId)
+                """.trimIndent(), mapOf("maintenanceId" to maintenanceId)
             )
 
             namedParameterJdbcTemplate.update(
                 """
                     delete from maintenance_executor 
                     WHERE maintenance_id = :maintenanceId
-                """.trimIndent(),
-                mapOf("maintenanceId" to maintenanceId)
+                """.trimIndent(), mapOf("maintenanceId" to maintenanceId)
             )
         }
 

@@ -2,12 +2,7 @@ package com.lumos.lumosspring.report.controller
 
 import com.lumos.lumosspring.report.service.ReportService
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
 @RestController
@@ -27,8 +22,10 @@ class ReportController(
         val startDate: Instant,
         val endDate: Instant,
         val viewMode: String, // LIST | GROUPED
-        val scope: String // MAINTENANCE | INSTALLATION
+        val scope: String, // MAINTENANCE | INSTALLATION
+        val maintenanceId: String? = null
     )
+
     @PostMapping("/execution/generate-report")
     fun generateReport(@RequestBody filtersRequest: FiltersRequest): ResponseEntity<Any> {
         return reportService.generateExecutionReport(filtersRequest)

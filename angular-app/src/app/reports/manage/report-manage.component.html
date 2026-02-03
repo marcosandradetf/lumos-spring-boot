@@ -8,7 +8,10 @@
     *ngIf="!showMenu"
   >
     <button
-      (click)="showMenu = true"
+      (click)="
+        results.length > 1 && pdfUrl ? revokeUrl()
+        : showMenu = true
+      "
       type="button"
       class="flex items-center gap-2 px-3 py-2 rounded-lg
          text-sm font-medium
@@ -19,7 +22,7 @@
     >
 
     <span>
-      Mostrar filtros
+      {{ results.length > 1 && pdfUrl ? 'Mostrar dados' : 'Mostrar filtros' }}
     </span>
 
       <i
@@ -254,12 +257,15 @@
                 text-slate-800 dark:text-slate-100
               ">
 
-        @if(isApple) {
+        @if (isApple) {
           <span class="material-icons">ios_share</span>
-        } @else {
+        } @else if (isAndroid) {
           <span class="material-icons">share</span>
+        } @else () {
+          <span class="material-icons">download</span>
         }
-        Compartilhar
+
+        {{ isAndroid || isApple ? 'Compartilhar' : 'Baixar PDF' }}
       </button>
     </div>
 
@@ -270,7 +276,7 @@
       <ng-container *ngFor="let rs of results">
         <div
           *ngFor="let r of rs.maintenances"
-          (click)="generateReportById(r.maintenance_id)"
+          (click)="generateIndividualPdf(r.maintenance_id)"
           class="relative flex flex-col gap-3
            rounded-2xl border border-slate-200 bg-white p-5 shadow-sm
            dark:border-white/10 dark:bg-slate-900 cursor-pointer">

@@ -484,7 +484,8 @@ class MaintenanceQueryRepository(
         startDate: OffsetDateTime,
         endDate: OffsetDateTime,
         contractId: Long,
-        type: String
+        type: String,
+        maintenanceId: UUID? = null
     ): List<Map<String, JsonNode>> {
         val sql = """
             WITH filtered_maintenance AS (
@@ -498,15 +499,24 @@ class MaintenanceQueryRepository(
                     signature_uri,
                     sign_date
                 FROM maintenance
-                WHERE contract_id = :contractId
-                  AND date_of_visit >= :startDate
-                  AND date_of_visit < (:endDate + INTERVAL '1 day')
+                ${if(maintenanceId != null) {
+                    """
+                        WHERE maintenance_id = :maintenanceId
+                    """.trimIndent()
+                } else {
+                    """
+                        WHERE contract_id = :contractId
+                          AND date_of_visit >= :startDate
+                          AND date_of_visit < (:endDate + INTERVAL '1 day')
+                    """.trimIndent()
+                }}
                   AND EXISTS(
                       SELECT 1
                       FROM maintenance_street
                       WHERE ${if (type == "led") " reason IS NOT NULL" else " reason IS NULL"}
                          AND maintenance_street.maintenance_id = maintenance.maintenance_id
                 )
+                ORDER BY date_of_visit ASC
             ),
              items_by_street AS (
                  SELECT
@@ -771,7 +781,8 @@ class MaintenanceQueryRepository(
             mapOf(
                 "contractId" to contractId,
                 "startDate" to startDate,
-                "endDate" to endDate
+                "endDate" to endDate,
+                "maintenanceId" to maintenanceId,
             )
         ) { rs, _ ->
             val company = objectMapper.readTree(rs.getString("company"))

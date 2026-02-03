@@ -73,7 +73,7 @@ export class ReportService {
 
     // 🌟 função pública
     getReport(filters: any): Observable<any[] | HttpResponse<Blob>> {
-        if (filters.viewMode === 'GROUPED') {
+        if (filters.viewMode === 'GROUP') {
             return this.getReportPdf(filters) as Observable<HttpResponse<Blob>>;
         }
 

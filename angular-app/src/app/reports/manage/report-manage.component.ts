@@ -20,7 +20,6 @@ import {SafeUrlPipe} from '../../safe-url.pipe';
     standalone: true,
     imports: [
         CommonModule,
-        NgClass,
         Calendar,
         FormsModule,
         DropdownModule,
@@ -49,19 +48,21 @@ export class ReportManageComponent implements OnInit {
 
 
     filters: {
-        contractId: string | null;
+        contractId: number | null;
         type: string | null;
         startDate: Date | null;
         endDate: Date | null;
-        viewMode: 'LIST' | 'GROUPED';
+        viewMode: 'LIST' | 'GROUP';
         scope: 'MAINTENANCE' | 'INSTALLATION';
+        executionId: string | null;
     } = {
         contractId: null,
         type: null,
         startDate: null,
         endDate: null,
         viewMode: 'LIST',
-        scope: 'MAINTENANCE'
+        scope: 'MAINTENANCE',
+        executionId: null
     };
 
     contracts: any[] = [];
@@ -124,8 +125,11 @@ export class ReportManageComponent implements OnInit {
         SharedState.setCurrentPath(["Execuções Realizadas", "Relatórios Personalizados"]);
         this.title.setTitle("Gerenciamento de Execuções");
         this.loading = true
+
         const ua = navigator.userAgent;
-        this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);
+        this.isAndroid = /Android/i.test(ua);
+        this.isApple = /iPhone|iPad|iPod|Macintosh/i.test(ua);
+
         this.reportService.getContracts().subscribe({
             next: (data) => {
                 data.forEach(c => {
@@ -153,6 +157,7 @@ export class ReportManageComponent implements OnInit {
     loading = false;
     showMenu = true;
     isApple = false;
+    isAndroid = false;
 
     applyFilters() {
         this.submitted = true;
@@ -173,8 +178,9 @@ export class ReportManageComponent implements OnInit {
             return;
         }
 
-        // this.loading = true;
-        const type = this.filters.type ?? '';
+        this.loading = true;
+        let type = this.filters.type ?? '';
+        type = type === 'led' ? 'led' : 'convencional';
         this.reportService.getReport(this.filters).subscribe({
             next: (resp) => {
                 if (resp instanceof HttpResponse) {
@@ -190,13 +196,13 @@ export class ReportManageComponent implements OnInit {
                     // filename
                     const cd = resp.headers.get('content-disposition');
                     const contractName = this.results[0].contract.contractor;
-                    this.fileName = this.extractFilename(cd) ??
-                        `relatorio_${type.toLowerCase()}_${Utils.normalizeString(contractName ?? '')}_${Utils.formatNowToDDMMYYHHmm()}.pdf`;
+                    const startsName = this.filters.executionId === null ? "relatorio_" : "relatorio_mensal_";
+                    this.fileName = `${startsName}${type.toLowerCase()}_${Utils.normalizeString(contractName ?? '')}_${Utils.formatNowToDDMMYYHHmm()}.pdf`;
+
                     this.shareText =
                         `Relatório de Manutenção ${type === 'led' ? 'em LEDs' : 'Convencional'}\n` +
                         `${contractName ? `Contrato: ${contractName}\n` : ''}` +
                         `Gerado pelo sistema Lumos às ${Utils.formatNowToDDMMYYHHmm(true)}`;
-
 
                     this.showMenu = false;
                     this.loading = false;
@@ -238,6 +244,7 @@ export class ReportManageComponent implements OnInit {
             endDate: null,
             viewMode: 'LIST',
             scope: scope,
+            executionId: null
         };
         this.filteredContracts = this.contracts
             .filter(c => c.type === this.filters.scope);
@@ -258,71 +265,6 @@ export class ReportManageComponent implements OnInit {
     fileName: string | null = null;
     shareText: string | null = null;
     pdfUrl: string | null = null;
-    protected generateReportById(executionId: string | number) {
-        const type = this.filters.type ?? '';
-        this.loading = true;
-        if (this.filters.scope == 'MAINTENANCE') {
-            this.reportService.getMaintenancePdf(
-                executionId as string,
-                type
-            ).subscribe({
-                next: (resp) => {
-
-                    // limpa URL antiga
-                    if (this.pdfUrl) {
-                        URL.revokeObjectURL(this.pdfUrl);
-                    }
-
-                    // blob
-                    this.pdfBlob = resp.body!;
-                    this.pdfUrl = URL.createObjectURL(this.pdfBlob);
-
-                    // filename
-                    const cd = resp.headers.get('content-disposition');
-                    const contractName = this.results[0].contract.contractor;
-                    this.fileName = this.extractFilename(cd) ??
-                        `relatorio_${type.toLowerCase()}_${Utils.normalizeString(contractName ?? '')}_${Utils.formatNowToDDMMYYHHmm()}.pdf`;
-                    this.shareText =
-                        `Relatório de Manutenção ${type === 'led' ? 'em LEDs' : 'Convencional'}\n` +
-                        `${contractName ? `Contrato: ${contractName}\n` : ''}` +
-                        `Gerado pelo sistema Lumos às ${Utils.formatNowToDDMMYYHHmm(true)}`;
-
-                },
-                error: (error) => {
-                    this.loading = false;
-                    this.utils.showMessage(
-                        error.error.message ?? error.error.error,
-                        'error',
-                        'Erro'
-                    );
-                },
-                complete: () => {
-                    this.loading = false;
-                }
-            });
-        } else {
-            this.reportService.getInstallationPdf(
-                executionId as number,
-                this.filters.type ?? ''
-            ).subscribe({
-                next: (res) => {
-
-                },
-                error: (error) => {
-                    this.loading = false;
-                    this.utils.showMessage(
-                        error.error.message ?? error.error.error,
-                        'error',
-                        'Erro'
-                    );
-                },
-                complete: () => {
-                    this.loading = false;
-                }
-            });
-        }
-
-    }
 
     async sharePdf() {
         if (!this.pdfBlob) return;
@@ -333,7 +275,7 @@ export class ReportManageComponent implements OnInit {
             { type: 'application/pdf' }
         );
 
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        if (this.isApple || this.isAndroid) {
             await navigator.share({
                 title: 'Relatório Lumos',
                 text: this.shareText ?? 'Relatório de manutenção',
@@ -344,8 +286,6 @@ export class ReportManageComponent implements OnInit {
             this.downloadPdf();
         }
     }
-
-
 
     private extractFilename(cd: string | null): string | null {
         if (!cd) return null;
@@ -363,5 +303,18 @@ export class ReportManageComponent implements OnInit {
         a.target = '_blank'; // 👈 ESSENCIAL no iOS
         a.click();
         window.URL.revokeObjectURL(url);
+    }
+
+    protected generateIndividualPdf(maintenanceId: string) {
+        this.filters.executionId = maintenanceId;
+        this.filters.viewMode = 'GROUP';
+        this.applyFilters();
+    }
+
+    protected revokeUrl() {
+        if (this.pdfUrl) {
+            URL.revokeObjectURL(this.pdfUrl);
+            this.pdfUrl = null;
+        }
     }
 }

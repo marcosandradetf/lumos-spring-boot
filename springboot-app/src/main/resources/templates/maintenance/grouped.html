@@ -7,29 +7,76 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
+        @page {
+            size: auto;
+            margin: 0;
+        }
+
+        /* ================= PRINT ================= */
+        @media print {
+
+            table {
+                page-break-inside: auto;
+            }
+
+            thead {
+                /* repete  */
+                display: table-header-group;
+                /* não repete */
+                /* display: table-row-group; */
+            }
+
+            tbody {
+                display: table-row-group;
+            }
+
+            tfoot {
+                display: table-row-group;    /* NÃO repete */
+            }
+
+            tr {
+                page-break-inside: avoid;
+                /* linha nunca quebra */
+            }
+
+            .page-content {
+                padding: 6mm 6mm 0mm 6mm;
+            }
+        }
+
+
+        /* ================= BASE ================= */
         body {
             font-family: 'Roboto', Arial, sans-serif;
             font-size: 11px;
             margin: 0;
             color: #0f172a;
-            background-color: #e5e9f0; /* fundo corporativo, NÃO branco */
+
+            background: #e5e9f0;
+            /* fundo corporativo */
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        /* ===== HEADER ===== */
+        /* ================= HEADER DO RELATÓRIO ================= */
         .report-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #0b2f4a; /* azul escuro institucional */
+
+            background: linear-gradient(90deg, #0b2f4a, #123e63);
             color: #ffffff;
-            padding: 12px;
+            padding: 18px 30px 12px 30px;
+            /* menos exagero lateral */
             border-bottom: 3px solid #081f33;
         }
 
+        /* Logo */
         .report-header img {
-            height: 55px;
+            height: 52px;
         }
 
+        /* Título */
         .report-title {
             text-align: right;
         }
@@ -38,157 +85,232 @@
             margin: 0;
             font-size: 18px;
             font-weight: 700;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.06em;
         }
 
+        /* Subtítulo */
         .report-title span {
             display: block;
-            margin-top: 2px;
-            font-size: 12px;
+            margin-top: 4px;
+
+            font-size: 11.5px;
             font-weight: 500;
+            letter-spacing: 0.04em;
+
             opacity: 0.9;
         }
 
-        /* ===== CONTAINER ===== */
+        /* ================= CONTAINER DE CONTEÚDO ================= */
         .container {
-            padding: 10px;
+            padding: 10px 12px;
+            box-sizing: border-box;
         }
 
-        /* ===== INFO TABLE ===== */
+        /* ===== INFO TABLE – BLOCO INSTITUCIONAL ===== */
         .info-table {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-            background-color: #f1f5f9;
+            border-collapse: separate;
+            border-spacing: 0;
+
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+
+            overflow: hidden;
+            margin-top: 10px;
         }
 
+        /* Cabeçalho do bloco */
         .info-table th {
-            background-color: #1e3a5f;
+            background: linear-gradient(90deg, #1e3a5f, #274c77);
             color: #ffffff;
+
             font-size: 11px;
             font-weight: 700;
-            padding: 6px;
-            text-align: left;
-            letter-spacing: 0.04em;
-        }
-
-        .info-table td {
-            padding: 6px;
-            border-bottom: 1px solid #cbd5e1;
-            vertical-align: top;
-        }
-
-        .label {
-            font-size: 10px;
-            color: #475569;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.08em;
+
+            padding: 8px 10px;
+            text-align: left;
+
+            border-bottom: 1px solid #1e3a5f;
+        }
+
+        /* Células */
+        .info-table td {
+            padding: 8px 10px;
+            vertical-align: top;
+
+            font-size: 11.5px;
+            color: #0f172a;
+
+            border-bottom: 1px solid #e2e8f0;
+            min-width: 70vw;
+        }
+
+        /* Remove borda da última linha */
+        .info-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Label interno */
+        .label {
+            display: block;
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #475569;
             margin-bottom: 2px;
         }
 
+        /* Valor interno */
         .value {
+            display: block;
             font-size: 11.5px;
             font-weight: 500;
             color: #0f172a;
         }
 
-        /* ===== MAINTENANCE BLOCK ===== */
+
+        /* ===== MAINTENANCE BLOCK – CARD OPERACIONAL ===== */
         .maintenance {
-            margin-top: 14px;
-            border: 1px solid #94a3b8;
-            background-color: #f8fafc;
-            page-break-inside: avoid;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            margin-bottom: 12px;
+            overflow: hidden;
         }
 
+        /* Cabeçalho do bloco */
         .maintenance-header {
-            background-color: #1e3a5f;
+            background: linear-gradient(90deg, #1e3a5f, #274c77);
             color: #ffffff;
-            padding: 6px;
+
+            padding: 8px 10px;
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 600;
+
             display: flex;
             justify-content: space-between;
+            gap: 12px;
+
+            border-bottom: 1px solid #1e3a5f;
         }
 
+        /* Corpo */
         .maintenance-body {
-            padding: 6px;
+            padding: 8px 10px;
         }
 
-        /* ===== TABLE ===== */
+        /* ===== TABELA DE DADOS ===== */
         table.data-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 6px;
+
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            overflow: hidden;
         }
 
+        /* Cabeçalho da tabela */
         table.data-table th {
-            background-color: #334e68;
+            background: #334e68;
             color: #ffffff;
+
             font-size: 10px;
             font-weight: 700;
-            padding: 4px;
-            border: 1px solid #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+
+            padding: 6px;
             text-align: center;
+
+            border-bottom: 1px solid #1e293b;
         }
 
+        /* Células */
         table.data-table td {
             font-size: 10.5px;
-            padding: 4px;
-            border: 1px solid #cbd5e1;
+            padding: 6px;
             text-align: center;
-            background-color: #ffffff;
+
+            color: #0f172a;
+            background: #ffffff;
+
+            border-bottom: 1px solid #e2e8f0;
         }
 
+        /* Última linha sem borda */
+        table.data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Alinhamento de texto */
         table.data-table td.left {
             text-align: left;
         }
 
-        /* ===== OBS ===== */
+        /* ===== OBSERVAÇÕES ===== */
         .observations {
-            margin-top: 6px;
-            padding: 6px;
-            background-color: #e2e8f0;
+            margin-top: 8px;
+            padding: 8px 10px;
+
+            background: #eef2f7;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+
             font-size: 10.5px;
-            border: 1px solid #94a3b8;
+            color: #0f172a;
         }
 
-        /* ===== TEAM ===== */
+        /* ===== EQUIPE ===== */
         .team-table {
-            margin-top: 8px;
+            margin-top: 10px;
         }
 
         .team-table th {
-            background-color: #1e3a5f;
+            background: #1e3a5f;
             color: #ffffff;
+
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
         .team-table td {
-            background-color: #ffffff;
+            background: #ffffff;
             text-align: left;
+            font-size: 10.5px;
         }
 
-        /* ===== SIGN ===== */
+        /* ===== ASSINATURA ===== */
         .signature {
-            margin-top: 10px;
+            margin-top: 12px;
             text-align: center;
+
             font-size: 10px;
-            color: #1e293b;
+            color: #334155;
         }
 
         .signature img {
-            max-width: 240px;
-            margin: 4px 0;
+            max-width: 220px;
+            margin: 6px 0;
         }
 
         /* ===== FOOTER ===== */
         .footer {
-            margin-top: 18px;
-            padding: 8px;
-            background-color: #0b2f4a;
-            color: #ffffff;
+            margin-top: 16px;
+            padding-top: 8px;
+
+            border-top: 1px solid #cbd5e1;
+
+            color: #334155;
             text-align: center;
             font-size: 10px;
-            opacity: 0.95;
         }
     </style>
 </head>
@@ -196,75 +318,57 @@
 <body>
 
 <!-- HEADER -->
-<div class="report-header">
-    <img src="{{LOGO_IMAGE}}" alt="Logo">
-    <div class="report-title">
-        <h1>{{TITLE_PDF}}</h1>
-        <span>Contrato nº {{CONTRACT_NUMBER}}</span>
+<div class="pdf-page">
+    <div class="report-header">
+        <img src="{{LOGO_IMAGE}}">
+        <div class="report-title">
+            <h1>{{TITLE_PDF}}</h1>
+            <span>Contrato nº {{CONTRACT_NUMBER}}</span>
+        </div>
+    </div>
+    <div class="page-content">
+        <table class="info-table">
+            <tr>
+                <th colspan="2">EMPRESA PRESTADORA</th>
+            </tr>
+            <tr>
+                <td>{{COMPANY_SOCIAL_REASON}}</td>
+                <td>{{COMPANY_CNPJ}}</td>
+            </tr>
+            <tr>
+                <td>{{COMPANY_ADDRESS}}</td>
+                <td>{{COMPANY_PHONE}}</td>
+            </tr>
+        </table>
+
+        <table class="info-table">
+            <tr>
+                <th colspan="2">CONTRATANTE</th>
+            </tr>
+            <tr>
+                <td>{{CONTRACTOR_SOCIAL_REASON}}</td>
+                <td>{{CONTRACTOR_CNPJ}}</td>
+            </tr>
+            <tr>
+                <td>{{CONTRACTOR_ADDRESS}}</td>
+                <td>{{CONTRACTOR_PHONE}}</td>
+            </tr>
+        </table>
     </div>
 </div>
 
-<div class="container">
+<!-- MANUTENÇÕES -->
+{{MAINTENANCE_BLOCKS}}
+<!--  TOTAL GERAL  -->
+{{GENERAL_TOTAL}}
 
-    <!-- EMPRESA -->
-    <table class="info-table">
-        <tr><th colspan="2">EMPRESA PRESTADORA</th></tr>
-        <tr>
-            <td>
-                <div class="label">Razão Social</div>
-                <div class="value">{{COMPANY_SOCIAL_REASON}}</div>
-            </td>
-            <td>
-                <div class="label">CNPJ</div>
-                <div class="value">{{COMPANY_CNPJ}}</div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="label">Endereço</div>
-                <div class="value">{{COMPANY_ADDRESS}}</div>
-            </td>
-            <td>
-                <div class="label">Telefone</div>
-                <div class="value">{{COMPANY_PHONE}}</div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- CONTRATANTE -->
-    <table class="info-table">
-        <tr><th colspan="2">CONTRATANTE</th></tr>
-        <tr>
-            <td>
-                <div class="label">Razão Social</div>
-                <div class="value">{{CONTRACTOR_SOCIAL_REASON}}</div>
-            </td>
-            <td>
-                <div class="label">CNPJ</div>
-                <div class="value">{{CONTRACTOR_CNPJ}}</div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="label">Endereço</div>
-                <div class="value">{{CONTRACTOR_ADDRESS}}</div>
-            </td>
-            <td>
-                <div class="label">Telefone</div>
-                <div class="value">{{CONTRACTOR_PHONE}}</div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- MANUTENÇÕES -->
-    {{MAINTENANCE_BLOCKS}}
-    <!--  TOTAL GERAL  -->
-    {{GENERAL_TOTAL}}
-
-</div>
-
-<div class="footer">
-    Relatório gerado por <strong>Lumos</strong> • <a target="_blank" href="https://lumos.thryon.com.br" style="color: white; text-decoration: none">https://lumos.thryon.com.br</a>
+<div class="pdf-page">
+    <div class="page-content">
+        <div class="footer">
+            Relatório gerado por <strong>Lumos</strong> • <a target="_blank" href="https://lumos.thryon.com.br"
+                                                             style="color: black; text-decoration: none">https://lumos.thryon.com.br</a>
+        </div>
+    </div>
 </div>
 
 </body>
