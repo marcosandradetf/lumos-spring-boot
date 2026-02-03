@@ -23,7 +23,7 @@ class ReportController(
         val endDate: Instant,
         val viewMode: String, // LIST | GROUPED
         val scope: String, // MAINTENANCE | INSTALLATION
-        val maintenanceId: String? = null
+        val executionId: String? = null
     )
 
     @PostMapping("/execution/generate-report")

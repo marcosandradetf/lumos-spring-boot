@@ -513,7 +513,7 @@ class MaintenanceService(
         val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
 
         val data = maintenanceQueryRepository.getGroupedMaintenances(
-                start, end, filtersRequest.contractId, filtersRequest.type, UUID.fromString(filtersRequest.maintenanceId)
+                start, end, filtersRequest.contractId, filtersRequest.type, UUID.fromString(filtersRequest.executionId)
             )
 
         if (data.isEmpty()) {
@@ -734,7 +734,7 @@ class MaintenanceService(
         }
 
         val noGeneralTotal = root["generalTotal"]!!["values"]!!
-        val generalTotal = if (filtersRequest.maintenanceId == null)
+        val generalTotal = if (filtersRequest.executionId == null)
                             """
                                 <div class="pdf-page">
                                 <div class="page-content">
