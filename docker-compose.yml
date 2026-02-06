@@ -31,7 +31,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=production
       - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - DB_HOST=172.17.0.1
+      - DB_HOST=${DB_HOST}
       - DB_PORT=5432
       - DB_USER=${DB_USER}
       - DB_NAME=${DB_NAME}
@@ -39,12 +39,15 @@ services:
       - MINIO_URL=http://minio:9000
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - MINIO_PASSWORD=${MINIO_PASSWORD}
+      - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+      - R2_ACCESS_KEY=${R2_ACCESS_KEY}
+      - R2_SECRET_KEY=${R2_SECRET_KEY}
       - JAVA_TOOL_OPTIONS=-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:+ExitOnOutOfMemoryError -XX:+AlwaysPreTouch --enable-preview
-    mem_limit: 512m
+    mem_limit: 1024m
     restart: always
     depends_on:
-      - minio
       - puppeteer-service
+      #- minio
 
   puppeteer-service:
     build:
@@ -54,23 +57,23 @@ services:
       - "3000"
     environment:
       - NODE_ENV=production
-    mem_limit: 350m
-    restart: always
-
-  minio:
-    image: minio/minio
-    container_name: minio
-    ports:
-      - "9000:9000" # API MinIO
-      - "9090:9090" # Console MinIO
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
-    command: server --console-address ":9090" /data
-    volumes:
-      - ./minio-data:/data
     mem_limit: 512m
     restart: always
+
+  #minio:
+    #image: minio/minio
+    #container_name: minio
+    #ports:
+     # - "9000:9000" # API MinIO
+      #- "9090:9090" # Console MinIO
+    #environment:
+     # MINIO_ROOT_USER: admin
+      #MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    #command: server --console-address ":9090" /data
+    #volumes:
+     # - ./minio-data:/data
+    #mem_limit: 512m
+    #restart: always
 
 networks:
   default:
