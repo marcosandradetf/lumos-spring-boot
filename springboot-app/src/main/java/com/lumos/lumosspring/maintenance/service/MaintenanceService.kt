@@ -10,10 +10,9 @@ import com.lumos.lumosspring.maintenance.model.MaintenanceExecutor
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreetItem
 import com.lumos.lumosspring.maintenance.repository.*
-import com.lumos.lumosspring.minio.service.MinioService
 import com.lumos.lumosspring.report.controller.ReportController
+import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
-import com.lumos.lumosspring.util.Utils.sanitizeFilename
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -25,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -39,7 +37,7 @@ class MaintenanceService(
     private val maintenanceStreetRepository: MaintenanceStreetRepository,
     private val maintenanceStreetItemRepository: MaintenanceStreetItemRepository,
     private val maintenanceQueryRepository: MaintenanceQueryRepository,
-    private val minioService: MinioService,
+    private val s3Service: S3Service,
     private val objectMapper: ObjectMapper,
     private val maintenanceExecutorRepository: MaintenanceExecutorRepository,
     private val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
@@ -64,7 +62,7 @@ class MaintenanceService(
 
         val fileUri = signature?.let {
             val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
-            minioService.uploadFile(it, Utils.getCurrentBucket(), folder, "maintenance")
+            s3Service.uploadFile(it, Utils.getCurrentBucket(), folder, "maintenance")
         }
 
         val newMaintenance = Maintenance(
@@ -79,7 +77,7 @@ class MaintenanceService(
             signatureUri = fileUri,
             responsible = maintenance.responsible,
             signDate = signDate ?: Instant.now(),
-            finishedAt = Instant.now(),
+            finishedAt = signDate ?: Instant.now(),
 
             isNewEntry = false,
         )
@@ -226,7 +224,7 @@ class MaintenanceService(
             """.trimIndent()
         }.joinToString("\n")
 
-        val companyLink = minioService.getPresignedObjectUrl(
+        val companyLink = s3Service.getPresignedObjectUrl(
             Utils.getCurrentBucket(),
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
@@ -269,7 +267,7 @@ class MaintenanceService(
             ).replace("{{TEAM_ROWS}}", teamRows)
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
-            val signatureImage = minioService.getPresignedObjectUrl(
+            val signatureImage = s3Service.getPresignedObjectUrl(
                 Utils.getCurrentBucket(), maintenance["signature_uri"]?.asText() ?: ""
             )
 
@@ -312,21 +310,18 @@ class MaintenanceService(
 
         try {
             val response = Utils.sendHtmlToPuppeteer(templateHtml)
-//            val responseHeaders = HttpHeaders().apply {
-//                contentType = MediaType.APPLICATION_PDF
-//                contentDisposition = ContentDisposition.inline()
-//                    .filename("relatorio.pdf")
-//                    .build()
-//            }
-            val date =
-                DateTimeFormatter.ofPattern("ddMMyyyy").withZone(ZoneId.of("America/Sao_Paulo")).format(Instant.now())
 
-            val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
+            maintenanceRepository.registerGeneration(
+                0,
+                Instant.now().atOffset(ZoneOffset.UTC),
+                Instant.now().atOffset(ZoneOffset.UTC),
+                maintenanceId
+            )
 
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
                 contentDisposition = ContentDisposition.attachment()
-                    .filename("relatorio_manutencao_convencional_${safeContract}_$date.pdf").build()
+                    .filename("report.pdf").build()
             }
 
             return ResponseEntity.ok().headers(responseHeaders).body(response)
@@ -396,7 +391,7 @@ class MaintenanceService(
             """.trimIndent()
         }.joinToString("\n")
 
-        val companyLink = minioService.getPresignedObjectUrl(
+        val companyLink = s3Service.getPresignedObjectUrl(
             Utils.getCurrentBucket(),
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
@@ -438,7 +433,7 @@ class MaintenanceService(
 
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
-            val signatureImage = minioService.getPresignedObjectUrl(
+            val signatureImage = s3Service.getPresignedObjectUrl(
                 Utils.getCurrentBucket(), maintenance["signature_uri"]?.asText() ?: ""
             )
 
@@ -481,22 +476,18 @@ class MaintenanceService(
 
         try {
             val response = Utils.sendHtmlToPuppeteer(templateHtml)
-//            val responseHeaders = HttpHeaders().apply {
-//                contentType = MediaType.APPLICATION_PDF
-//                contentDisposition = ContentDisposition.inline()
-//                    .filename("relatorio.pdf")
-//                    .build()
-//            }
 
-            val date =
-                DateTimeFormatter.ofPattern("ddMMyyyy").withZone(ZoneId.of("America/Sao_Paulo")).format(Instant.now())
-
-            val safeContract = sanitizeFilename(contract["contractor"]?.asText() ?: "")
+            maintenanceRepository.registerGeneration(
+                0,
+                Instant.now().atOffset(ZoneOffset.UTC),
+                Instant.now().atOffset(ZoneOffset.UTC),
+                maintenanceId
+            )
 
             val responseHeaders = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_PDF
                 contentDisposition =
-                    ContentDisposition.attachment().filename("relatorio_manutencao_leds_${safeContract}_$date.pdf")
+                    ContentDisposition.attachment().filename("report.pdf")
                         .build()
             }
 
@@ -511,10 +502,14 @@ class MaintenanceService(
 
         val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
         val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+        val executionId = filtersRequest.executionId?.let { UUID.fromString(it) }
 
         val data = maintenanceQueryRepository.getGroupedMaintenances(
-            start, end, filtersRequest.contractId, filtersRequest.type,
-            filtersRequest.executionId?.let { UUID.fromString(it) }
+            start,
+            end,
+            filtersRequest.contractId,
+            filtersRequest.type,
+            executionId
         )
 
         if (data.isEmpty()) {
@@ -526,7 +521,7 @@ class MaintenanceService(
         val contract = root["contract"]!!
         val maintenances = root["maintenances"]!!
 
-        val logoUrl = minioService.getPresignedObjectUrl(
+        val logoUrl = s3Service.getPresignedObjectUrl(
             Utils.getCurrentBucket(), company["company_logo"].asText()
         )
 
@@ -636,7 +631,7 @@ class MaintenanceService(
             }
 
             val signSection = if (!m["signature_uri"].isNull) {
-                val signUrl = minioService.getPresignedObjectUrl(
+                val signUrl = s3Service.getPresignedObjectUrl(
                     Utils.getCurrentBucket(), m["signature_uri"].asText()
                 )
                 """
@@ -652,7 +647,7 @@ class MaintenanceService(
                         <div class="maintenance">
                             <div class="maintenance-header">
                                 <div>Período: De $dateOfVisit às $signDate (Produtividade: $durationFormatted)</div>
-                                <div>Tipo: ${m["type"].asText()} | Responsável pelo acompanhamento: ${m["responsible"].asText()}</div>
+                                <div>Tipo: ${m["type"].asText()} ${if (!m["responsible"].isNull) " | Responsável pelo acompanhamento: ${m["responsible"].asText()}" else ""}</div>
                             </div>
                 
                             <div class="maintenance-body">
@@ -798,10 +793,17 @@ class MaintenanceService(
                                 </div>
                         """.trimIndent() else ""
 
-        html = html.replace("{{MAINTENANCE_BLOCKS}}", maintenanceBlocks)
+        html = html.replace("{{EXECUTIONS_BLOCK}}", maintenanceBlocks)
         html = html.replace("{{GENERAL_TOTAL}}", generalTotal)
 
         val pdf = Utils.sendHtmlToPuppeteer(html)
+
+        maintenanceRepository.registerGeneration(
+            filtersRequest.contractId,
+            start,
+            end,
+            executionId
+        )
 
         val responseHeaders = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_PDF
@@ -887,6 +889,5 @@ class MaintenanceService(
 
         return ResponseEntity.noContent().build()
     }
-
 
 }

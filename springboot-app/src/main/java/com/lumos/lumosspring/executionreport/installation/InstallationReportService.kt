@@ -1,185 +1,282 @@
 package com.lumos.lumosspring.executionreport.installation
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.lumos.lumosspring.common.service.InstallationReportService
-import com.lumos.lumosspring.directexecution.repository.DirectExecutionReportRepository
-import com.lumos.lumosspring.minio.service.MinioService
+import com.fasterxml.jackson.databind.JsonNode
+import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepository
+import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementInstallationRepository
+import com.lumos.lumosspring.report.controller.ReportController
+import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
-import com.lumos.lumosspring.util.Utils.replacePlaceholders
+import com.lumos.lumosspring.util.Utils.formatMoney
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-//
-//@Service
-//class InstallationReportService(
-//    private val minioService: MinioService,
-//    private val directExecutionReportRepository: DirectExecutionReportRepository,
-//    private val objectMapper: ObjectMapper,
-//) : InstallationReportService {
-//
-//    override fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
-//        var templateHtml = this::class.java.getResource("/templates/installation/data.html")!!.readText()
-//
-//        val data = directExecutionReportRepository.getDataForReport(executionId)
-//        val jsonData = data.first() // Pega o único resultado
-//
-//        val company = jsonData["company"]!!
-//        val contract = jsonData["contract"]!!
-//        val values = jsonData["values"]!!
-//        val columns = jsonData["columns"]!!
-//        val streets = jsonData["streets"]!!
-//        val streetSums = jsonData["street_sums"]!!
-//        val total = jsonData["total"]!!
-//
-//        val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-//        val companyLogoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
-//
-//        val team = jsonData["team"]!!
-//        val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
-//        val teamRows = teamArray.joinToString("\n") { member ->
-//            val role = when (member["role"]?.asText()?.lowercase()) {
-//                "electrician" -> "Eletricista"
-//                "driver" -> "Motorista"
-//                "eletricista" -> "Eletricista"
-//                "motorista" -> "Motorista"
-//                else -> "Executor"
-//            }
-//            val fullName = "${member["name"]?.asText().orEmpty()} ${member["last_name"]?.asText().orEmpty()}".trim()
-//
-//            """
-//                <tr>
-//                    <td>
-//                        <p class="label">$role:</p>
-//                        <p class="cell-text">$fullName</p>
-//                    </td>
-//                </tr>
-//            """.trimIndent()
-//        }
-//
-//        val replacements = mapOf(
-//            "TITLE" to "RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText(),
-//            "CONTRACT_NUMBER" to contract["contract_number"].asText(),
-//            "COMPANY_SOCIAL_REASON" to company["social_reason"].asText(),
-//            "COMPANY_CNPJ" to company["company_cnpj"].asText(),
-//            "COMPANY_ADDRESS" to company["company_address"].asText(),
-//            "COMPANY_PHONE" to company["company_phone"].asText(),
-//            "CONTRACTOR_SOCIAL_REASON" to contract["contractor"].asText(),
-//            "CONTRACTOR_CNPJ" to contract["cnpj"].asText(),
-//            "CONTRACTOR_ADDRESS" to contract["address"].asText(),
-//            "CONTRACTOR_PHONE" to contract["phone"].asText(),
-//            "LOGO_IMAGE" to companyLogoUrl,
-//            "TOTAL_VALUE" to Utils.formatMoney(total["total_price"].asDouble()),
-//        )
-//
-//        templateHtml = templateHtml.replacePlaceholders(replacements)
-//
-//        val valuesLines = values.mapIndexed { index, line ->
-//            """
-//                    <tr>
-//                        <td style="text-align: center;">${index + 1}</td>
-//                        <td style="text-align: left;">${line["description"].asText()}</td>
-//                        <td style="text-align: right;">${Utils.formatMoney(line["unit_price"].asDouble())}</td>
-//                        <td style="text-align: right;">${line["quantity_executed"].asText()}</td>
-//                        <td style="text-align: right;">${Utils.formatMoney(line["total_price"].asDouble())}</td>
-//                    </tr>
-//                """.trimIndent()
-//        }.joinToString("\n")
-//
-//        val columnsList = columns.map { it.asText() }
-//
-//        val streetColumnsHtml = columnsList.mapIndexed { index, columnName ->
-//            if (index == 0)
-//                "<th colspan=\"2\" style=\"text-align: left; font-weight: bold; min-width: 240px; max-width: 480px;\">$columnName</th>"
-//            else
-//                "<th style=\"text-align: center; font-weight: bold;width:40px;\">$columnName</th>"
-//        }.joinToString("")
-//
-//
-//        var dates: String? = null
-//
-//        val streetLinesHtml = streets.mapIndexed { index, line ->
-//            val address = line[0].asText()
-//            val lastPower = line[1].asText()
-//            val items = line[2]  // ArrayNode
-//
-//            val date = Utils.convertToSaoPauloLocal(Instant.parse(line[3].asText()))
-//                .format(DateTimeFormatter.ofPattern("dd/MM/yy"))
-//
-//            val supplier = line[4].asText()
-//
-//            if (index == 0) {
-//                dates = "Execuções realizadas de $date"
-//            } else if (index == streets.size() - 1) {
-//                dates = "$dates à $date"
-//            }
-//
-//            val quantityCells = items.joinToString("") { "<td style=\"text-align: right;\">${it.asText()}</td>" }
-//
-//            """
-//                <tr>
-//                    <td style="text-align: center;">${index + 1}</td>
-//                    <td style="text-align: left; min-width: 240px; max-width: 480px; word-break: break-word;">$address</td>
-//                    <td style="text-align: left;">$lastPower</td>
-//                    $quantityCells
-//                    <td style="text-align: right;">$date</td>
-//                    <td style="text-align: left;">$supplier</td>
-//                </tr>
-//            """.trimIndent()
-//        }.joinToString("\n")
-//
-//
-//        val streetFooterHtml = streetSums.joinToString("") {
-//            "<td style=\"text-align: right; font-weight: bold;\">${it.asText()}</td>"
-//        }
-//
-//        templateHtml = templateHtml
-//            .replace("{{VALUE_LINES}}", valuesLines)
-//            .replace("{{STREET_COLUMNS}}", streetColumnsHtml)
-//            .replace("{{STREET_LINES}}", streetLinesHtml)
-//            .replace("{{STREET_FOOTER}}", streetFooterHtml)
-//            .replace("{{COLUMN_LENGTH}}", (columnsList.size + 1).toString())
-//            .replace("{{EXECUTION_DATE}}", dates ?: "")
-//            .replace("{{TEAM_ROWS}}", teamRows)
-//
-//        try {
-//            val response = Utils.sendHtmlToPuppeteer(templateHtml)
-////            val responseHeaders = HttpHeaders().apply {
-////                contentType = MediaType.APPLICATION_PDF
-////                contentDisposition = ContentDisposition.inline()
-////                    .filename("RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText() + ".pdf")
-////                    .build()
-////            }
-//
-//            val date = DateTimeFormatter
-//                .ofPattern("ddMMyyyy")
-//                .withZone(ZoneId.of("America/Sao_Paulo"))
-//                .format(Instant.now())
-//
-//            val safeContract = Utils.sanitizeFilename(contract["contractor"]?.asText() ?: "")
-//
-//            val responseHeaders = HttpHeaders().apply {
-//                contentType = MediaType.APPLICATION_PDF
-//                contentDisposition = ContentDisposition
-//                    .attachment()
-//                    .filename("relatorio_instalacao_leds_${safeContract}_$date.pdf")
-//                    .build()
-//            }
-//
-//            return ResponseEntity.ok()
-//                .headers(responseHeaders)
-//                .body(response)
-//        } catch (e: Exception) {
-//            throw RuntimeException(e.message, e.cause)
-//        }
-//    }
-//
-//    override fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
+
+@Service
+class InstallationReportService(
+    private val s3Service: S3Service,
+    private val installationReportRepository: InstallationReportRepository,
+    private val directExecutionRepository: DirectExecutionRepository,
+    private val preMeasurementInstallationRepository: PreMeasurementInstallationRepository,
+)  {
+
+    fun generateDataReport(
+        filtersRequest: ReportController.FiltersRequest
+    ): ResponseEntity<Any> {
+        var html = this::class.java.getResource("/templates/maintenance/grouped.html")!!.readText()
+
+        val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
+        val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+        val executionId = filtersRequest.executionId?.toLong()
+        val contractId = filtersRequest.contractId
+
+        val data = installationReportRepository.getDataForReport(
+            startDate = start,
+            endDate = end,
+            contractId = contractId,
+            installationId = executionId,
+            installationType = filtersRequest.executionType
+        )
+
+        if (data.isEmpty()) {
+            throw IllegalArgumentException("Nenhum dado encontrado para os parâmetros fornecidos")
+        }
+
+        val root = data.first() // Pega o único resultado
+
+        val company = root["company"]!!
+        val contract = root["contract"]!!
+        val executions = root["executions"]!!
+
+        val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
+        val logoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
+
+        val titleDoc = if (filtersRequest.type == "data") "Relatório de Instalações de LEDs"
+        else "Relatório Fotográfico"
+        val titlePdf = if (filtersRequest.type == "led") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
+        else "RELATÓRIO FOTOGRÁFICO"
+
+        html = html.replace("{{TITLE_DOC}}", titleDoc).replace("{{TITLE_PDF}}", titlePdf)
+            .replace("{{LOGO_IMAGE}}", logoUrl).replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
+            .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"].asText())
+            .replace("{{COMPANY_CNPJ}}", company["company_cnpj"].asText())
+            .replace("{{COMPANY_ADDRESS}}", company["company_address"].asText())
+            .replace("{{COMPANY_PHONE}}", company["company_phone"].asText())
+            .replace("{{CONTRACTOR_SOCIAL_REASON}}", contract["contractor"].asText())
+            .replace("{{CONTRACTOR_CNPJ}}", contract["cnpj"].asText())
+            .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
+            .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
+
+        var startDate: String? = null
+        var endDate: String? = null
+        val updateReportView: MutableSet<Pair<String, Long>> = mutableSetOf()
+        val executionsBlock = executions.joinToString("\n") { e ->
+            updateReportView.add(Pair(e["installation_type"].asText(), e["installation_id"].asLong()))
+
+            // Início da execução
+            val start = Utils.convertToSaoPauloLocal(
+                Instant.parse(e.path("started_at").asText())
+            )
+
+            // Fim da execução (fallback se não houver assinatura)
+            val end = if (e.hasNonNull("finished_at")) Utils.convertToSaoPauloLocal(
+                Instant.parse(e.path("finished_at").asText())
+            )
+            else start
+
+            // Datas formatadas (para exibição)
+            val dateOfVisit = start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            if (startDate == null) {
+                startDate = start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            }
+            val signDate = end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            endDate = end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+
+            // Cálculo da duração
+            val duration = Duration.between(start, end)
+
+
+            // Evita duração negativa (defensivo)
+            val totalMinutes = maxOf(duration.toMinutes(), 0)
+
+            // Converte para horas + minutos
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+
+            // Texto final para relatório
+            val durationFormatted = "${hours}h ${minutes}min"
+
+            val values = e["values"]
+            val valuesLines = values.mapIndexed { index, it ->
+                """
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td style="text-align:left">${it["description"].asText()}</td>
+                        <td>${formatMoney(it["unit_price"].asDouble())}</td>
+                        <td>${it["quantity_executed"].asText()}</td>
+                        <td>${formatMoney(it["total_price"].asDouble())}</td>
+                    </tr>
+                """.trimIndent()
+            }.joinToString("\n")
+
+            val valuesTable = """
+                <table class="data-table">
+                    <thead>
+                        <th colspan="2">ITEM CONTRATUAL</th>
+                        <th>PREÇO UNITÁRIO</th>
+                        <th>QUANTIDADE EXECUTADA</th>
+                        <th>VALOR TOTAL</th>
+                    </thead>
+                    <tbody>
+                        $valuesLines
+                    </tbody>
+                </table>
+            """.trimIndent()
+
+            val columns = e["columns"]
+            val columnsList = columns.map { it.asText() }
+            val streetColumns = columnsList.mapIndexed { index, columnName ->
+                if (index == 0)
+                    "<th colspan=\"2\">$columnName</th>"
+                else
+                    "<th>$columnName</th>"
+            }.joinToString("")
+
+            val streets = e["streets"]
+            val streetLines = streets.mapIndexed { index, line ->
+                val address = line["address"].asText()
+                val lastPower = line["last_power"].asText()
+                val items = line["items"]  // ArrayNode
+
+                val date = Utils.convertToSaoPauloLocal(Instant.parse(line["finished_at"].asText()))
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yy"))
+
+                val supplier = line["current_supply"].asText()
+
+                val quantityCells = items.joinToString("") { "<td>${it.asText()}</td>" }
+
+                """
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td style="text-align:left">$address</td>
+                        <td>$lastPower</td>
+                        $quantityCells
+                        <td>$date</td>
+                        <td style="text-align:left">${supplier.uppercase()}</td>
+                    </tr>
+                """.trimIndent()
+            }.joinToString("\n")
+
+            val installationsTable = """
+                <table class="data-table">
+                    <thead>
+                        <tr>$streetColumns</tr>
+                    </thead>
+                    <tbody>
+                        $streetLines
+                    </tbody>
+                </table>
+            """.trimIndent()
+
+            // team section
+            val team = e["team"]
+            val teamRows = team.joinToString("\n") {
+                """
+                    <tr>
+                        <td>${it["role"].asText()}</td>
+                        <td>${it["name"].asText()} ${it["last_name"].asText()}</td>
+                    </tr>
+                """.trimIndent()
+            }
+            val teamTable =
+                """
+                    <table class="data-table" style="margin-top:10px">
+                        <thead>
+                            <tr><th>Função</th><th>Nome</th></tr>
+                        </thead>
+                        <tbody>
+                            $teamRows
+                        </tbody>
+                    </table>
+                """.trimIndent()
+
+            // signSection
+            val signSection = if (!e["signature_uri"].isNull) {
+                val signUrl = s3Service.getPresignedObjectUrl(
+                    Utils.getCurrentBucket(), e["signature_uri"].asText()
+                )
+                """
+                    <div class="signature">
+                        <img src="$signUrl">
+                        <div>Assinado em $signDate</div>
+                    </div>
+                """.trimIndent()
+            } else ""
+
+            """
+                <div class="pdf-page">
+                    <div class="page-content">
+                        <div class="maintenance-header">
+                            <div>Período: De $dateOfVisit às $signDate (Produtividade: $durationFormatted)</div>
+                            ${if(!e["responsible"].isNull) "<div>Responsável pelo acompanhamento: ${e["responsible"].asText()}</div>" else ""}
+                        </div>
+                        
+                        <div class="maintenance-body">
+                            <div class="signature">
+                                <h2>Valores para emissão de nota fiscal</h2>
+                            </div>
+                            $valuesTable
+                            
+                            <div class="signature">
+                                <h2>Instalações realizadas</h2>
+                            </div>
+                            $installationsTable
+                            
+                            <div class="signature">
+                                <h2>Equipe Executante</h2>
+                            </div>
+                            $teamTable
+                            
+                            $signSection
+                        </div>
+                    </div>
+                </div>
+            """.trimIndent()
+
+        }
+
+        html = html.replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
+        println(html)
+        val pdf = Utils.sendHtmlToPuppeteer(html)
+
+        updateReportView
+            .filter { it.first == "DIRECT_EXECUTION" }
+            .map { it.second }
+            .takeIf { it.isNotEmpty() }
+            ?.let { directExecutionRepository.registerGeneration(it) }
+
+
+        updateReportView
+            .filter { it.first != "DIRECT_EXECUTION" }
+            .map { it.second }
+            .takeIf { it.isNotEmpty() }
+            ?.let { preMeasurementInstallationRepository.registerGeneration(it) }
+
+        val responseHeaders = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_PDF
+            contentDisposition = ContentDisposition.attachment().filename("report.pdf").build()
+        }
+
+        return ResponseEntity.ok().headers(responseHeaders).body(pdf)
+    }
+
+    fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
 //        var templateHtml = this::class.java.getResource("/templates/installation/photos.html")!!.readText()
 //
 //        val data = directExecutionReportRepository.getDataPhotoReport(executionId)
@@ -310,5 +407,14 @@ import java.time.format.DateTimeFormatter
 //        } catch (e: Exception) {
 //            throw RuntimeException(e.message, e.cause)
 //        }
-//    }
-//}
+
+
+        TODO()
+    }
+
+    fun getInstallationsData(contractId: Long, startDate: OffsetDateTime, endDate: OffsetDateTime): List<Map<String, JsonNode>> {
+        return installationReportRepository.getInstallationsData(
+            contractId, startDate, endDate
+        )
+    }
+}

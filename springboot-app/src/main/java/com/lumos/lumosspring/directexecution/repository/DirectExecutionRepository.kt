@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.OffsetDateTime
 
 @Repository
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
@@ -31,7 +32,8 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
             responsible = :responsible,
             signature_uri = :signatureUri,
             sign_date = :signDate,
-            finished_at = now()
+            finished_at = :finishedAt,
+            started_at = COALESCE(:startedAt, available_at + interval '45 minutes')
         WHERE direct_execution_id = :id
     """
     )
@@ -40,8 +42,20 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
         @Param("status") status: String,
         @Param("signatureUri") signatureUri: String?,
         @Param("signDate") signDate: Instant?,
+        @Param("finishedAt") finishedAt: Instant,
+        @Param("startedAt") startedAt: Instant?,
         @Param("responsible") responsible: String?
     )
+
+    @Modifying
+    @Query(
+        """
+            update direct_execution
+            set report_view_at = now()
+            where direct_execution_id in (:ids) and report_view_at is null
+        """
+    )
+    fun registerGeneration(ids: List<Long>)
 }
 
 @Repository

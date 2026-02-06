@@ -56,7 +56,7 @@ class MaintenanceQueryRepository(
         endDate: OffsetDateTime? = null,
         type: String? = null
     ): List<Map<String, JsonNode>> {
-        var sql = """
+        val sql = """
             SELECT
               json_build_object(
                 'contract_id', c.contract_id,
@@ -65,18 +65,30 @@ class MaintenanceQueryRepository(
 
               json_agg(
                 json_build_object(
-                  'maintenance_id', m.maintenance_id,
+                  'execution_id', m.maintenance_id,
                   'streets', (
                     SELECT json_agg(DISTINCT ms.maintenance_street_id)
                     FROM maintenance_street ms
                     WHERE ms.maintenance_id = m.maintenance_id
+                    ${if (contractId == null) "" else {
+                        """
+                            AND EXISTS(
+                                SELECT 1
+                                FROM maintenance_street_item msi
+                                JOIN material_stock ms on ms.material_id_stock = msi.material_stock_id
+                                JOIN material mat on mat.id_material = ms.material_id
+                                WHERE mat.material_name_unaccent like :type
+                                    AND msi.maintenance_id = m.maintenance_id
+                            )
+                        """.trimIndent()
+                    }}
                   ),
                   'date_of_visit', m.date_of_visit,
-                  'sign_date', m.sign_date,
+                  'finished_at', m.finished_at,
                   'team', execs.executors
                 )
                 ORDER BY m.maintenance_id
-              ) AS maintenances
+              ) AS executions
 
             FROM maintenance m
             JOIN contract c ON c.contract_id = m.contract_id
@@ -102,33 +114,32 @@ class MaintenanceQueryRepository(
                 ) t
             ) execs ON TRUE
             WHERE m.status = 'FINISHED'
+            ${if(contractId == null) {
+                """
+                        AND m.tenant_id = :tenantId
+                        AND m.date_of_visit >= (now() - INTERVAL '31 day') 
+                        AND m.date_of_visit < (now() + INTERVAL '1 day')
+                    GROUP BY c.contract_id, c.contractor
+                    ORDER BY c.contractor
+                """.trimIndent()
+            } else {
+                """
+                        AND m.contract_id = :contractId
+                        AND m.date_of_visit >= :startDate 
+                        AND m.date_of_visit < (:endDate + INTERVAL '1 day')
+                        AND EXISTS(
+                            SELECT 1
+                            FROM maintenance_street_item msi
+                            JOIN material_stock ms on ms.material_id_stock = msi.material_stock_id
+                            JOIN material mat on mat.id_material = ms.material_id
+                            WHERE mat.material_name_unaccent like :type
+                                AND msi.maintenance_id = m.maintenance_id
+                        )
+                    GROUP BY c.contract_id, c.contractor, m.date_of_visit
+                    ORDER BY c.contractor, m.date_of_visit desc;
+                """.trimIndent()
+            }}
         """.trimIndent()
-
-        sql += if (contractId == null)
-            """
-                    AND m.tenant_id = :tenantId
-                    AND m.date_of_visit >= (now() - INTERVAL '31 day') 
-                    AND m.date_of_visit < (now() + INTERVAL '1 day')
-                GROUP BY c.contract_id, c.contractor
-                ORDER BY c.contractor
-            """.trimIndent()
-        else
-            """
-                    AND m.contract_id = :contractId
-                    AND m.date_of_visit >= :startDate 
-                    AND m.date_of_visit < (:endDate + INTERVAL '1 day')
-                    AND EXISTS(
-                        SELECT 1
-                        FROM maintenance_street_item msi
-                        JOIN material_stock ms on ms.material_id_stock = msi.material_stock_id
-                        JOIN material mat on mat.id_material = ms.material_id
-                        WHERE mat.material_name_unaccent like :type
-                            AND msi.maintenance_id = m.maintenance_id
-                    )
-                GROUP BY c.contract_id, c.contractor, m.date_of_visit
-                ORDER BY c.contractor, m.date_of_visit desc;
-            """.trimIndent()
-
 
         return jdbcTemplate.query(
             sql, mapOf(
@@ -140,14 +151,14 @@ class MaintenanceQueryRepository(
             )
         ) { rs, _ ->
             val contractorJson = rs.getString("contract")
-            val maintenanceJson = rs.getString("maintenances")
+            val maintenanceJson = rs.getString("executions")
 
             val contractNode = objectMapper.readTree(contractorJson)
             val maintenanceNode = objectMapper.readTree(maintenanceJson)
 
             mapOf(
                 "contract" to contractNode,
-                "maintenances" to maintenanceNode,
+                "executions" to maintenanceNode,
             )
         }
     }

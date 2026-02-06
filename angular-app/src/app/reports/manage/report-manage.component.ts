@@ -55,6 +55,7 @@ export class ReportManageComponent implements OnInit {
         viewMode: 'LIST' | 'GROUP';
         scope: 'MAINTENANCE' | 'INSTALLATION';
         executionId: string | null;
+        executionType: string | null;
     } = {
         contractId: null,
         type: null,
@@ -62,7 +63,8 @@ export class ReportManageComponent implements OnInit {
         endDate: null,
         viewMode: 'LIST',
         scope: 'MAINTENANCE',
-        executionId: null
+        executionId: null,
+        executionType: null
     };
 
     contracts: any[] = [];
@@ -95,11 +97,12 @@ export class ReportManageComponent implements OnInit {
             contract_id: number,
             contractor: string,
         },
-        maintenances: {
-            maintenance_id: string,
+        executions: {
+            execution_id: string | null,
+            execution_type: string | null,
             streets: string[],
             date_of_visit: Date,
-            sign_date: Date,
+            finished_at: Date,
             team: {
                 name: string,
                 last_name: string,
@@ -111,7 +114,7 @@ export class ReportManageComponent implements OnInit {
             contract_id: 0,
             contractor: ''
         },
-        maintenances: []
+        executions: []
     }];
 
     constructor(
@@ -173,10 +176,6 @@ export class ReportManageComponent implements OnInit {
             return;
         }
 
-        if (this.filters.scope == 'INSTALLATION') {
-            this.utils.showMessage("Relatórios personalizados de instalações em desenvolvimento.", 'warn', 'Lumos Relatórios');
-            return;
-        }
 
         this.loading = true;
         let type = this.filters.type ?? '';
@@ -244,7 +243,8 @@ export class ReportManageComponent implements OnInit {
             endDate: null,
             viewMode: 'LIST',
             scope: scope,
-            executionId: null
+            executionId: null,
+            executionType: null
         };
         this.filteredContracts = this.contracts
             .filter(c => c.type === this.filters.scope);
@@ -272,7 +272,7 @@ export class ReportManageComponent implements OnInit {
         const file = new File(
             [this.pdfBlob],
             this.fileName ?? 'relatorio.pdf',
-            { type: 'application/pdf' }
+            {type: 'application/pdf'}
         );
 
         if (this.isApple || this.isAndroid) {
@@ -305,8 +305,11 @@ export class ReportManageComponent implements OnInit {
         window.URL.revokeObjectURL(url);
     }
 
-    protected generateIndividualPdf(maintenanceId: string) {
-        this.filters.executionId = maintenanceId;
+    protected generateIndividualPdf(
+        executionId: string | null,
+        executionType: string | null) {
+        this.filters.executionId = executionId;
+        this.filters.executionType = executionType;
         this.filters.viewMode = 'GROUP';
         this.applyFilters();
     }
@@ -316,6 +319,7 @@ export class ReportManageComponent implements OnInit {
             URL.revokeObjectURL(this.pdfUrl);
             this.pdfUrl = null;
             this.filters.executionId = null;
+            this.filters.executionType = null;
         }
     }
 }

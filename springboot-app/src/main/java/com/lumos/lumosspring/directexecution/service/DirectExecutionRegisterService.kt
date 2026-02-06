@@ -8,7 +8,7 @@ import com.lumos.lumosspring.directexecution.model.DirectExecutionExecutor
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreet
 import com.lumos.lumosspring.directexecution.model.DirectExecutionStreetItem
 import com.lumos.lumosspring.directexecution.repository.*
-import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil
@@ -22,11 +22,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
+import java.time.Instant
 import java.util.*
 
 @Service
 class DirectExecutionRegisterService(
-    private val minioService: MinioService,
+    private val s3Service: S3Service,
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val directExecutionRepositoryStreet: DirectExecutionRepositoryStreet,
     private val directExecutionRepositoryStreetItem: DirectExecutionRepositoryStreetItem,
@@ -71,7 +72,7 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+        val fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
         installationStreet.executionPhotoUri = fileUri
 
         try {
@@ -233,7 +234,10 @@ class DirectExecutionRegisterService(
     }
 
     @Transactional
-    fun saveStreetInstallationV2(photo: MultipartFile, installationReq: InstallationStreetRequest?): ResponseEntity<Any> {
+    fun saveStreetInstallationV2(
+        photo: MultipartFile,
+        installationReq: InstallationStreetRequest?
+    ): ResponseEntity<Any> {
         if (installationReq == null) {
             return ResponseEntity.badRequest().body("payload vazio.")
         }
@@ -266,7 +270,7 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+        val fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
         installationStreet.executionPhotoUri = fileUri
 
         try {
@@ -371,6 +375,8 @@ class DirectExecutionRegisterService(
             status = ExecutionStatus.FINISHED,
             signatureUri = null,
             signDate = null,
+            finishedAt = Instant.now(),
+            startedAt = null,
             responsible = null
         )
 
@@ -404,7 +410,7 @@ class DirectExecutionRegisterService(
                     folder += "/${request.responsible.replace("\\s+".toRegex(), "_")}"
                 }
 
-                minioService.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+                s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
             } else null
 
         directExecutionRepository.finishDirectExecution(
@@ -412,7 +418,9 @@ class DirectExecutionRegisterService(
             status = ExecutionStatus.FINISHED,
             signatureUri = fileUri,
             signDate = request.signDate,
-            responsible = request.responsible
+            finishedAt = request.signDate ?: Instant.now(),
+            startedAt = request.startedAt,
+            responsible = request.responsible,
         )
 
         request.operationalUsers?.let { users ->

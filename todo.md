@@ -12,5 +12,6 @@
 
 	Mas isso é **outro assunto**, não Remote Config.
 
-- Baixar fontes offline e colocar no build
-- 
+- Corrigir erro ao gerar relatorio escolhendo list e depois group (front)
+- Realizar Correcao da quantidade de pontos ![[Pasted image 20260203205742.png]]
+- Modificar payload instalações (direta e pre-medição) enviar startedAt

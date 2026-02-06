@@ -1,9 +1,9 @@
 package com.lumos.lumosspring.premeasurement.repository.installation;
 
-import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.dto.installation.StreetsInstallationResponse;
 import com.lumos.lumosspring.premeasurement.dto.installation.ItemsInstallationResponse;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationResponse;
+import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.team.repository.TeamRepository;
 import com.lumos.lumosspring.util.Utils;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,12 +18,12 @@ import java.util.UUID;
 public class InstallationViewRepository {
     private final NamedParameterJdbcTemplate namedJDBC;
     private final TeamRepository teamRepository;
-    private final MinioService minioService;
+    private final S3Service s3Service;
 
-    public InstallationViewRepository(NamedParameterJdbcTemplate namedJDBC, TeamRepository teamRepository, MinioService minioService) {
+    public InstallationViewRepository(NamedParameterJdbcTemplate namedJDBC, TeamRepository teamRepository, S3Service s3Service) {
         this.namedJDBC = namedJDBC;
         this.teamRepository = teamRepository;
-        this.minioService = minioService;
+        this.s3Service = s3Service;
     }
 
     public List<InstallationResponse> getInstallations(UUID userId, String status, Long teamId) {
@@ -99,7 +99,7 @@ public class InstallationViewRepository {
                                         )
                                 );
 
-                                var publicUrl = minioService.getPublicUrl(Utils.getCurrentBucket(), rs2.getString("pre_measurement_photo_uri"), 2 * 24 * 60 * 60); // 2 dias
+                                var publicUrl = s3Service.getPublicUrl(Utils.getCurrentBucket(), rs2.getString("pre_measurement_photo_uri"), 2 * 24 * 60 * 60); // 2 dias
                                 return new StreetsInstallationResponse(
                                         rs.getObject("device_pre_measurement_id", UUID.class),
                                         rs2.getObject("device_pre_measurement_street_id", UUID.class),

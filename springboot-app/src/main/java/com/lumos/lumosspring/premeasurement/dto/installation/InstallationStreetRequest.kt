@@ -25,5 +25,6 @@ data class InstallationRequest(
     val installationId: UUID,
     val responsible: String? = null,
     val signDate: Instant? = null,
+    val startedAt: Instant? = null,
     val operationalUsers: List<UUID>
 )

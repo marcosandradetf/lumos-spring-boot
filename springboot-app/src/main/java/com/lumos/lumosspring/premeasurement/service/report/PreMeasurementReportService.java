@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.repository.report.PreMeasurementReportRepository;
+import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.util.Utils;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +21,12 @@ import java.util.stream.StreamSupport;
 public class PreMeasurementReportService {
     private final PreMeasurementReportRepository repository;
     private final ObjectMapper objectMapper;
-    private final MinioService minioService;
+    private final S3Service s3Service;
 
-    public PreMeasurementReportService(PreMeasurementReportRepository preMeasurementReportRepository, ObjectMapper objectMapper, MinioService minioService) {
+    public PreMeasurementReportService(PreMeasurementReportRepository preMeasurementReportRepository, ObjectMapper objectMapper, S3Service s3Service) {
         this.repository = preMeasurementReportRepository;
         this.objectMapper = objectMapper;
-        this.minioService = minioService;
+        this.s3Service = s3Service;
     }
 
     public void getDataForReport(Long preMeasurementId) throws JsonProcessingException {
@@ -54,7 +54,7 @@ public class PreMeasurementReportService {
         JsonNode totalNode = root.get("total");
 
         String logoUri = companyNode.get("logoUri").asText();
-        String companyLogoUrl = minioService.getPresignedObjectUrl(Utils.INSTANCE.getCurrentBucket(), logoUri, 5 * 60);
+        String companyLogoUrl = s3Service.getPresignedObjectUrl(Utils.INSTANCE.getCurrentBucket(), logoUri, 5 * 60);
         String teamRows = StreamSupport
                 .stream(teamArray.spliterator(), false)
                 .map(member -> {

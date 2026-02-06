@@ -1,6 +1,6 @@
-package com.lumos.lumosspring.minio.controller
+package com.lumos.lumosspring.s3.controller
 
-import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders
@@ -14,18 +14,18 @@ import java.nio.file.Paths
 
 @RestController
 @RequestMapping("/api/minio")
-class MinioController(private val minioService: MinioService) {
+class S3Controller(private val service: S3Service) {
 
     @PostMapping("/upload")
     fun uploadFile(@RequestParam("file") file: MultipartFile): ResponseEntity<String> {
-        val response = minioService.uploadFile(file, Utils.getCurrentBucket(),"documents", "document")
+        val response = service.uploadFile(file, Utils.getCurrentBucket(),"documents", "document")
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/upload-files")
     fun uploadFiles(@RequestParam("files") files: List<MultipartFile>): ResponseEntity<Any> {
         val responses = files.map { file ->
-            minioService.uploadFile(file, Utils.getCurrentBucket(), "documents", "document")
+            service.uploadFile(file, Utils.getCurrentBucket(), "documents", "document")
         }
 
 
@@ -35,7 +35,7 @@ class MinioController(private val minioService: MinioService) {
 
     @GetMapping("/download/{fileName}")
     fun downloadFile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> {
-        val inputStream: InputStream = minioService.downloadFile(fileName, Utils.getCurrentBucket())
+        val inputStream: InputStream = service.downloadFile(fileName, Utils.getCurrentBucket())
         val resource = InputStreamResource(inputStream)
 
         // Detecta o MIME type automaticamente

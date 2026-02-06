@@ -3,7 +3,6 @@ package com.lumos.lumosspring.directexecution.repository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.lumos.lumosspring.common.repository.InstallationReportRepository
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 
@@ -11,9 +10,9 @@ import org.springframework.stereotype.Repository
 class DirectExecutionReportRepository(
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
-): InstallationReportRepository {
+) {
 
-    override fun getDataForReport(directExecutionId: Long): List<Map<String, JsonNode>> {
+    fun getDataForReport(directExecutionId: Long): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
               SELECT
@@ -195,7 +194,7 @@ class DirectExecutionReportRepository(
         }
     }
 
-    override fun getDataPhotoReport(directExecutionId: Long): List<Map<String, JsonNode>> {
+    fun getDataPhotoReport(directExecutionId: Long): List<Map<String, JsonNode>> {
         val sql = """
             SELECT
               json_build_object(

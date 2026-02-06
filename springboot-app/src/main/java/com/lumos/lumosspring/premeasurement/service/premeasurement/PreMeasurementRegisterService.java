@@ -2,11 +2,11 @@ package com.lumos.lumosspring.premeasurement.service.premeasurement;
 
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.premeasurement.dto.premeasurement.PreMeasurementRequest;
-import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurement;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurementStreetItem;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurementStreet;
 import com.lumos.lumosspring.premeasurement.repository.premeasurement.*;
+import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.util.*;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,7 +29,7 @@ public class PreMeasurementRegisterService {
     private final PreMeasurementRepository preMeasurementRepository;
     private final PreMeasurementStreetItemRepository preMeasurementStreetItemRepository;
     private final ContractRepository contractRepository;
-    private final MinioService minioService;
+    private final S3Service s3Service;
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final PreMeasurementViewRepository viewRepository;
@@ -39,14 +39,14 @@ public class PreMeasurementRegisterService {
                                          PreMeasurementRepository preMeasurementRepository,
                                          PreMeasurementStreetItemRepository preMeasurementStreetItemRepository,
                                          ContractRepository contractRepository,
-                                         MinioService minioService, JdbcTemplate jdbcTemplate,
+                                         S3Service s3Service, JdbcTemplate jdbcTemplate,
                                          NamedParameterJdbcTemplate namedParameterJdbcTemplate,
                                          PreMeasurementViewRepository viewRepository, PreMeasurementManagementRepository managementRepository) {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
         this.preMeasurementRepository = preMeasurementRepository;
         this.preMeasurementStreetItemRepository = preMeasurementStreetItemRepository;
         this.contractRepository = contractRepository;
-        this.minioService = minioService;
+        this.s3Service = s3Service;
         this.jdbcTemplate = jdbcTemplate;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.viewRepository = viewRepository;
@@ -206,7 +206,7 @@ public class PreMeasurementRegisterService {
                 }
 
                 // Salva a nova foto
-                String photoUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), "photos/pre_measurement", "ponto");
+                String photoUri = s3Service.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), "photos/pre_measurement", "ponto");
 
                 String updateSql = "UPDATE pre_measurement_street SET pre_measurement_photo_uri = ? WHERE device_pre_measurement_street_id = ?";
                 jdbcTemplate.update(updateSql, photoUri, deviceStreetId);

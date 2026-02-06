@@ -8,8 +8,8 @@ import com.lumos.lumosspring.directexecution.model.DirectExecution;
 import com.lumos.lumosspring.directexecution.model.DirectExecutionItem;
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepository;
 import com.lumos.lumosspring.directexecution.repository.DirectExecutionRepositoryItem;
-import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.notifications.service.NotificationService;
+import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.stock.order.installationrequest.model.ReservationManagement;
 import com.lumos.lumosspring.stock.order.installationrequest.repository.ReservationManagementRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
@@ -36,9 +36,10 @@ public class DirectExecutionManagementService {
     private final NotificationService notificationService;
     private final ContractItemsQuantitativeRepository contractItemsQuantitativeRepository;
     private final DirectExecutionRepositoryItem directExecutionItemRepository;
-    private final MinioService minioService;
+    private final S3Service s3Service;
 
-    public DirectExecutionManagementService(UserRepository userRepository, ContractRepository contractRepository, ReservationManagementRepository reservationManagementRepository, DirectExecutionRepository directExecutionRepository, NamedParameterJdbcTemplate namedJdbc, ContractService contractService, NotificationService notificationService, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository, DirectExecutionRepositoryItem directExecutionItemRepository, MinioService minioService) {
+    public DirectExecutionManagementService(UserRepository userRepository, ContractRepository contractRepository, ReservationManagementRepository reservationManagementRepository, DirectExecutionRepository directExecutionRepository, NamedParameterJdbcTemplate namedJdbc, ContractService contractService, NotificationService notificationService, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository, DirectExecutionRepositoryItem directExecutionItemRepository,
+                                            S3Service s3Service) {
         this.userRepository = userRepository;
         this.contractRepository = contractRepository;
         this.reservationManagementRepository = reservationManagementRepository;
@@ -48,7 +49,7 @@ public class DirectExecutionManagementService {
         this.notificationService = notificationService;
         this.contractItemsQuantitativeRepository = contractItemsQuantitativeRepository;
         this.directExecutionItemRepository = directExecutionItemRepository;
-        this.minioService = minioService;
+        this.s3Service = s3Service;
     }
 
     @Transactional
@@ -318,7 +319,7 @@ public class DirectExecutionManagementService {
                     Map.of("direct_execution_id", directExecutionId)
             );
 
-            minioService.deleteFiles(Utils.INSTANCE.getCurrentBucket(), uriObject);
+            s3Service.deleteFiles(Utils.INSTANCE.getCurrentBucket(), uriObject);
 
             namedJdbc.update(
                     """

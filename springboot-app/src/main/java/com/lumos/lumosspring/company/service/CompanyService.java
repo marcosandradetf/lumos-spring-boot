@@ -3,8 +3,7 @@ package com.lumos.lumosspring.company.service;
 import com.lumos.lumosspring.company.dto.CompanyRequest;
 import com.lumos.lumosspring.company.model.Company;
 import com.lumos.lumosspring.company.repository.CompanyRepository;
-import com.lumos.lumosspring.minio.service.MinioService;
-import com.lumos.lumosspring.util.DefaultResponse;
+import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -18,7 +17,7 @@ public class CompanyService {
     private CompanyRepository companyRepository;
 
     @Autowired
-    private MinioService minioService;
+    private S3Service s3Service;
 
     @Cacheable(
             value = "getAllCompanies",
@@ -33,7 +32,7 @@ public class CompanyService {
     }
 
     public ResponseEntity<Long> save(CompanyRequest req, MultipartFile logo) {
-        var logoUri = this.minioService.uploadFile(logo, Utils.INSTANCE.getCurrentBucket(), "photos/logo", req.fantasyName());
+        var logoUri = this.s3Service.uploadFile(logo, Utils.INSTANCE.getCurrentBucket(), "photos/logo", req.fantasyName());
 
         var company = new Company(
                 req.socialReason(),

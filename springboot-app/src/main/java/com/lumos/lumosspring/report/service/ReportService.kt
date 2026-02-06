@@ -1,7 +1,9 @@
 package com.lumos.lumosspring.report.service
 
 import com.lumos.lumosspring.contract.repository.ContractRepository
+import com.lumos.lumosspring.executionreport.installation.InstallationReportService
 import com.lumos.lumosspring.maintenance.service.MaintenanceService
+
 import com.lumos.lumosspring.report.controller.ReportController
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.*
@@ -14,6 +16,7 @@ import java.time.ZoneOffset
 class ReportService(
     private val maintenanceService: MaintenanceService,
     private val contractRepository: ContractRepository,
+    private val installationReportService: InstallationReportService,
 ) {
     fun generatePdf(htmlRequest: String, title: String): ResponseEntity<ByteArray?> {
         return try {
@@ -140,7 +143,23 @@ class ReportService(
     }
 
     private fun generateGroupedInstallationReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
-        throw RuntimeException("Not implemented yet")
+        return if (filtersRequest.viewMode == "LIST") {
+
+            val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
+            val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+
+            val response = installationReportService.getInstallationsData(
+                filtersRequest.contractId,
+                start,
+                end
+            )
+
+            ResponseEntity.ok().body(response)
+        } else if(filtersRequest.type == "data") {
+            installationReportService.generateDataReport(filtersRequest)
+        } else {
+            installationReportService.generateDataReport(filtersRequest)
+        }
     }
 
     fun getContracts(): ResponseEntity<Any> {

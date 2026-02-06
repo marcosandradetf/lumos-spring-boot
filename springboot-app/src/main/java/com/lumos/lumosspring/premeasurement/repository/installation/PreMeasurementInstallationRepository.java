@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.premeasurement.repository.installation;
 
 import com.lumos.lumosspring.premeasurement.model.PreMeasurement;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -8,9 +9,20 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public interface PreMeasurementInstallationRepository extends CrudRepository<PreMeasurement, Long> {
+    @Modifying
+    @Query(
+        """
+            update pre_measurement
+            set report_view_at = now()
+            where pre_measurement_id in (:ids) and report_view_at is null
+        """
+    )
+    void registerGeneration(List<Long> ids);
+
     record PreMeasurementRow(Long preMeasurementId, String status, String description, String preMeasurementPhotoUri, Long preMeasurementStreetId) {}
 
     @Query(
@@ -73,7 +85,8 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
                     sign_date = :signDate,
                     responsible = :responsible,
                     status = :installationStatus,
-                    finished_at = now()
+                    finished_at = :finishedAt,
+                    started_at = COALESCE(:startedAt, available_at + interval '45 minutes')
                 WHERE pre_measurement_id = :installationId;
             """
     )
@@ -82,24 +95,8 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
             Instant signDate,
             String responsible,
             String installationStatus,
-            Long installationId
+            Long installationId,
+            Instant finishedAt,
+            Instant startedAt
     );
-
-    @Modifying
-    @Query("REFRESH MATERIALIZED VIEW installation_mv")
-    void refreshInstallationMv();
-
-    @Modifying
-    @Query("REFRESH MATERIALIZED VIEW installation_street_mv")
-    void refreshInstallationStreetMv();
-
-    @Modifying
-    @Query("REFRESH MATERIALIZED VIEW installation_street_item_mv")
-    void refreshInstallationStreetItemMv();
-
-    @Modifying
-    @Query("REFRESH MATERIALIZED VIEW installation_executor_mv")
-    void refreshInstallationExecutorMv();
-
-
 }

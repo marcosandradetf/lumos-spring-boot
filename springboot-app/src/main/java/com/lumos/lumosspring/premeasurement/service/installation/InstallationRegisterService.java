@@ -2,13 +2,13 @@ package com.lumos.lumosspring.premeasurement.service.installation;
 
 import com.lumos.lumosspring.contract.repository.ContractItemDependencyRepository;
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository;
-import com.lumos.lumosspring.minio.service.MinioService;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationItemRequest;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationRequest;
 import com.lumos.lumosspring.premeasurement.dto.installation.InstallationStreetRequest;
 import com.lumos.lumosspring.premeasurement.model.PreMeasurementExecutor;
 import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementExecutorRepository;
 import com.lumos.lumosspring.premeasurement.repository.installation.PreMeasurementInstallationRepository;
+import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.util.ExecutionStatus;
 import com.lumos.lumosspring.util.Utils;
@@ -18,12 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
 @Service
 public class InstallationRegisterService {
-    private final MinioService minioService;
+    private final S3Service s3Service;
     private final PreMeasurementInstallationRepository preMeasurementInstallationRepository;
     private final MaterialStockRegisterRepository materialStockRegisterRepository;
     private final PreMeasurementExecutorRepository preMeasurementExecutorRepository;
@@ -31,12 +32,12 @@ public class InstallationRegisterService {
     private final ContractItemsQuantitativeRepository contractItemsQuantitativeRepository;
 
     public InstallationRegisterService(
-            MinioService minioService,
+            S3Service s3Service,
             PreMeasurementInstallationRepository preMeasurementInstallationRepository,
             MaterialStockRegisterRepository materialStockRegisterRepository,
             PreMeasurementExecutorRepository preMeasurementExecutorRepository,
             ContractItemDependencyRepository contractItemDependencyRepository, ContractItemsQuantitativeRepository contractItemsQuantitativeRepository) {
-        this.minioService = minioService;
+        this.s3Service = s3Service;
         this.preMeasurementInstallationRepository = preMeasurementInstallationRepository;
         this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.preMeasurementExecutorRepository = preMeasurementExecutorRepository;
@@ -92,9 +93,9 @@ public class InstallationRegisterService {
                         .append(description.replaceAll("\\s+", "_"));
             }
 
-            fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution");
+            fileUri = s3Service.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution");
         }
-        minioService.deleteFiles(Utils.INSTANCE.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
+        s3Service.deleteFiles(Utils.INSTANCE.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
 
         preMeasurementInstallationRepository.finishInstallationStreet(
                 fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId(), installationReq.getCurrentSupply(),
@@ -134,7 +135,7 @@ public class InstallationRegisterService {
                         .append(installationReq.getResponsible().replaceAll("\\s+", "_"));
             }
 
-            fileUri = minioService.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "installation");
+            fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder.toString(), "installation");
         }
 
         preMeasurementInstallationRepository.saveInstallationSignPhotoUri(
@@ -142,7 +143,9 @@ public class InstallationRegisterService {
                 installationReq.getSignDate(),
                 installationReq.getResponsible(),
                 ExecutionStatus.FINISHED,
-                installationId
+                installationId,
+                Objects.requireNonNullElse(installationReq.getSignDate(), Instant.now()),
+                installationReq.getStartedAt()
         );
 
         var executors = installationReq.getOperationalUsers()

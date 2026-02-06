@@ -2,9 +2,8 @@ package com.lumos.lumosspring.directexecution.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.lumos.lumosspring.common.service.InstallationReportService
-import com.lumos.lumosspring.directexecution.repository.*
-import com.lumos.lumosspring.minio.service.MinioService
+import com.lumos.lumosspring.directexecution.repository.DirectExecutionReportRepository
+import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
 import com.lumos.lumosspring.util.Utils.formatMoney
 import com.lumos.lumosspring.util.Utils.replacePlaceholders
@@ -21,12 +20,12 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class DirectExecutionReportService(
-    private val minioService: MinioService,
+    private val s3Service: S3Service,
     private val directExecutionReportRepository: DirectExecutionReportRepository,
     private val objectMapper: ObjectMapper,
-) : InstallationReportService {
+)  {
 
-    override fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
+    fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
         var templateHtml = this::class.java.getResource("/templates/installation/data.html")!!.readText()
 
         val data = directExecutionReportRepository.getDataForReport(executionId)
@@ -41,7 +40,7 @@ class DirectExecutionReportService(
         val total = jsonData["total"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
+        val companyLogoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
 
         val team = jsonData["team"]!!
         val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
@@ -182,7 +181,7 @@ class DirectExecutionReportService(
         }
     }
 
-    override fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
+    fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
         var templateHtml = this::class.java.getResource("/templates/installation/photos.html")!!.readText()
 
         val data = directExecutionReportRepository.getDataPhotoReport(executionId)
@@ -193,10 +192,10 @@ class DirectExecutionReportService(
         val streets = jsonData["streets"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
+        val companyLogoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
 
         val streetLinesHtml = streets.joinToString("\n") { line ->
-            val photoUrl = minioService.getPresignedObjectUrl(Utils.getCurrentBucket(), line["execution_photo_uri"].asText())
+            val photoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), line["execution_photo_uri"].asText())
             """
                 <div style="
                       page-break-inside: avoid;
