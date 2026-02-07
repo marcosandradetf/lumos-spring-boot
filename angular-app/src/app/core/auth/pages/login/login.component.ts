@@ -16,12 +16,7 @@ import { Button } from 'primeng/button';
 import { Card } from 'primeng/card';
 import { Password } from 'primeng/password';
 import { InputText } from 'primeng/inputtext';
-import { Checkbox } from 'primeng/checkbox';
 import {Message} from 'primeng/message';
-import {TabPanel, TabView} from 'primeng/tabview';
-import {ProgressSpinner} from 'primeng/progressspinner';
-import {Accordion, AccordionTab} from 'primeng/accordion';
-import {StyleClass} from 'primeng/styleclass';
 
 
 export type DocItem = {
@@ -45,16 +40,9 @@ export type DocItem = {
         Card,
         Password,
         InputText,
-        Checkbox,
         MarkdownModule,
         Message,
-        TabView,
-        TabPanel,
-        ProgressSpinner,
-        Accordion,
-        AccordionTab,
         NgOptimizedImage,
-        StyleClass,
     ],
     templateUrl: './login.component.html',
     styleUrl: './login.component.scss',

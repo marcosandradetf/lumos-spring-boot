@@ -45,8 +45,8 @@ export class MaintenanceComponent implements OnInit {
             contract_id: number;
             contractor: string;
         },
-        maintenances: {
-            maintenance_id: string;
+        executions: {
+            execution_id: string;
             streets: string[];
             date_of_visit: string;
             team: {
@@ -62,8 +62,8 @@ export class MaintenanceComponent implements OnInit {
             contract_id: number;
             contractor: string;
         },
-        maintenances: {
-            maintenance_id: string;
+        executions: {
+            execution_id: string;
             streets: string[];
             date_of_visit: string;
             team: {
@@ -150,11 +150,11 @@ export class MaintenanceComponent implements OnInit {
             next: () => {
                 const index = this.data.findIndex(c => c.contract.contract_id === this.currentContractId);
                 if (index !== -1) {
-                    this.data[index].maintenances = this.data[index].maintenances
-                        .filter(m => m.maintenance_id !== this.maintenanceId!!);
+                    this.data[index].executions = this.data[index].executions
+                        .filter(m => m.execution_id !== this.maintenanceId!!);
 
                     // remove o contrato se não restar nenhuma manutenção
-                    if (this.data[index].maintenances.length === 0) {
+                    if (this.data[index].executions.length === 0) {
                         this.data.splice(index, 1);
                     }
                 }
