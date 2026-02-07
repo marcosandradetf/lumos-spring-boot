@@ -23,26 +23,24 @@ services:
     #restart: on-failure
 
   springboot-app:
-  build: ./springboot-app
-  container_name: springboot-app
-  network_mode: host
-
-  environment:
-    SPRING_PROFILES_ACTIVE: production
-    SMTP_PASSWORD: ${SMTP_PASSWORD}
-    DB_HOST: ${DB_HOST}
-    DB_PORT: 5432
-    DB_USER: ${DB_USER}
-    DB_NAME: ${DB_NAME}
-    DB_PASSWORD: ${DB_PASSWORD}
-
-    JAVA_TOOL_OPTIONS: >
-      -XX:+UseG1GC
-      -XX:InitialRAMPercentage=30.0
-      -XX:MaxRAMPercentage=70.0
-      -XX:MaxMetaspaceSize=256m
-      -XX:+ExitOnOutOfMemoryError
-      --enable-preview
+    build: ./springboot-app
+    container_name: springboot-app
+    network_mode: host
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: >
+        -XX:+UseG1GC
+        -XX:InitialRAMPercentage=30.0
+        -XX:MaxRAMPercentage=70.0
+        -XX:MaxMetaspaceSize=256m
+        -XX:+ExitOnOutOfMemoryError
+        --enable-preview
 
   restart: always
   depends_on:
