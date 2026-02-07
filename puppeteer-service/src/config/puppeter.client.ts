@@ -14,11 +14,13 @@ export const getBrowser = async (): Promise<Browser> => {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--no-zygote',
+        '--single-process'
       ]
     });
   }
-  scheduleClose(); // Reinicia o timer
-  return browser;
+  scheduleClose(); 
+  return browser!;
 };
 
 const scheduleClose = () => {
