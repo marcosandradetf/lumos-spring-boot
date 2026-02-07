@@ -23,38 +23,38 @@ services:
     #restart: on-failure
 
   springboot-app:
-    build: ./springboot-app
-    container_name: springboot-app
-    expose:
-      - "8080"
-    environment:
-      SPRING_PROFILES_ACTIVE: production
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_NAME: ${DB_NAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+  build: ./springboot-app
+  container_name: springboot-app
+  network_mode: host
 
-      JAVA_TOOL_OPTIONS: >
-        -XX:+UseG1GC
-        -XX:InitialRAMPercentage=30.0
-        -XX:MaxRAMPercentage=70.0
-        -XX:MaxMetaspaceSize=256m
-        -XX:+ExitOnOutOfMemoryError
-        --enable-preview
-    mem_limit: 1024m
-    restart: always
-    depends_on:
-      - puppeteer-service
-      #- minio
+  environment:
+    SPRING_PROFILES_ACTIVE: production
+    SMTP_PASSWORD: ${SMTP_PASSWORD}
+    DB_HOST: ${DB_HOST}
+    DB_PORT: 5432
+    DB_USER: ${DB_USER}
+    DB_NAME: ${DB_NAME}
+    DB_PASSWORD: ${DB_PASSWORD}
+
+    JAVA_TOOL_OPTIONS: >
+      -XX:+UseG1GC
+      -XX:InitialRAMPercentage=30.0
+      -XX:MaxRAMPercentage=70.0
+      -XX:MaxMetaspaceSize=256m
+      -XX:+ExitOnOutOfMemoryError
+      --enable-preview
+
+  restart: always
+  depends_on:
+    - puppeteer-service
+    #-minio
 
   puppeteer-service:
     build:
       context: ./puppeteer-service
     container_name: puppeteer-service
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=production
     mem_limit: 400m

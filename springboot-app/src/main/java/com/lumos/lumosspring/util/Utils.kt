@@ -59,7 +59,7 @@ object Utils {
     fun sendHtmlToPuppeteer(
         templateHtml: String,
         orientation: String = "landscape",
-        url: String = "http://puppeteer-service:3000/generate-pdf"
+        url: String = "http://localhost:3000/generate-pdf"
     ): ByteArray? {
         val restTemplate = RestTemplate()
 
