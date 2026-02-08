@@ -18,6 +18,7 @@ import java.time.ZonedDateTime
 import java.util.*
 
 object Utils {
+
     @JvmStatic
     fun getCurrentUserId(): UUID {
         val authentication = SecurityContextHolder.getContext().authentication
@@ -38,14 +39,7 @@ object Utils {
 
     @JvmStatic
     fun getCurrentBucket(): String {
-        val authentication = SecurityContextHolder.getContext().authentication
-
-        if (authentication is JwtAuthenticationToken) {
-            val jwt = authentication.token
-            return jwt.getClaimAsString("bucket") ?: "scl-construtora"
-        }
-
-        throw IllegalStateException("Usuário não autenticado ou bucket inválido")
+        return "lumos"
     }
 
     fun String.replacePlaceholders(values: Map<String, String>): String {

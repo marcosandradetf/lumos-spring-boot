@@ -93,7 +93,7 @@ public class InstallationRegisterService {
                         .append(description.replaceAll("\\s+", "_"));
             }
 
-            fileUri = s3Service.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution");
+            fileUri = s3Service.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution", Utils.getCurrentTenantId());
         }
         s3Service.deleteFiles(Utils.INSTANCE.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
 
@@ -135,7 +135,7 @@ public class InstallationRegisterService {
                         .append(installationReq.getResponsible().replaceAll("\\s+", "_"));
             }
 
-            fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder.toString(), "installation");
+            fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder.toString(), "installation", Utils.getCurrentTenantId());
         }
 
         preMeasurementInstallationRepository.saveInstallationSignPhotoUri(

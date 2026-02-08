@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.io.InputStream
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 
 @Service
 class S3Service(
@@ -24,7 +25,8 @@ class S3Service(
         file: MultipartFile,
         bucketName: String,
         folder: String,
-        fileName: String
+        fileName: String,
+        tenantId: UUID,
     ): String {
         val extension = file.originalFilename
             ?.substringAfterLast('.', "")
@@ -32,7 +34,7 @@ class S3Service(
             ?: ""
 
         val objectName =
-            "$folder/${fileName}_file_${System.currentTimeMillis()}.$extension"
+            "tenants/$tenantId/$folder/${fileName}_file_${System.currentTimeMillis()}.$extension"
 
         s3Client.putObject(
             PutObjectRequest.builder()

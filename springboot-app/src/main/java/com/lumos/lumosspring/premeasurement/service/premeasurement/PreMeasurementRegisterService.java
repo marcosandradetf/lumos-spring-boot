@@ -206,7 +206,7 @@ public class PreMeasurementRegisterService {
                 }
 
                 // Salva a nova foto
-                String photoUri = s3Service.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), "photos/pre_measurement", "ponto");
+                String photoUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), "photos/pre_measurement", "ponto", Utils.getCurrentTenantId());
 
                 String updateSql = "UPDATE pre_measurement_street SET pre_measurement_photo_uri = ? WHERE device_pre_measurement_street_id = ?";
                 jdbcTemplate.update(updateSql, photoUri, deviceStreetId);

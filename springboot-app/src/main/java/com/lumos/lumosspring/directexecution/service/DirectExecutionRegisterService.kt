@@ -72,7 +72,12 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+        val fileUri = s3Service.uploadFile(
+            photo,
+            Utils.getCurrentBucket(),
+            folder,
+            "installation",
+            Utils.getCurrentTenantId())
         installationStreet.executionPhotoUri = fileUri
 
         try {
@@ -270,7 +275,7 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+        val fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation",Utils.getCurrentTenantId())
         installationStreet.executionPhotoUri = fileUri
 
         try {
@@ -410,7 +415,7 @@ class DirectExecutionRegisterService(
                     folder += "/${request.responsible.replace("\\s+".toRegex(), "_")}"
                 }
 
-                s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation")
+                s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder, "installation", Utils.getCurrentTenantId())
             } else null
 
         directExecutionRepository.finishDirectExecution(

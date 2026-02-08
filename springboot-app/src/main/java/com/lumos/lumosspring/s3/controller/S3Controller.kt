@@ -18,14 +18,14 @@ class S3Controller(private val service: S3Service) {
 
     @PostMapping("/upload")
     fun uploadFile(@RequestParam("file") file: MultipartFile): ResponseEntity<String> {
-        val response = service.uploadFile(file, Utils.getCurrentBucket(),"documents", "document")
+        val response = service.uploadFile(file, Utils.getCurrentBucket(),"documents", "document", Utils.getCurrentTenantId())
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/upload-files")
     fun uploadFiles(@RequestParam("files") files: List<MultipartFile>): ResponseEntity<Any> {
         val responses = files.map { file ->
-            service.uploadFile(file, Utils.getCurrentBucket(), "documents", "document")
+            service.uploadFile(file, Utils.getCurrentBucket(), "documents", "document", Utils.getCurrentTenantId())
         }
 
 

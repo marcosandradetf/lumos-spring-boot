@@ -62,7 +62,7 @@ class MaintenanceService(
 
         val fileUri = signature?.let {
             val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
-            s3Service.uploadFile(it, Utils.getCurrentBucket(), folder, "maintenance")
+            s3Service.uploadFile(it, Utils.getCurrentBucket(), folder, "maintenance", Utils.getCurrentTenantId())
         }
 
         val newMaintenance = Maintenance(
