@@ -1,162 +1,461 @@
-<div class="w-full h-full" #top>
+<div>
+  <div
+    class="pt-3 px-4 w-full flex flex-col items-center justify-center gap-2 text-center"
+    *ngIf="!loading">
+    @if (showItems) {
 
-  <div class="pt-2 w-full pl-2 flex items-center justify-center">
-    <h3
-      class="text-medium pr-5 hidden lg:block font-medium  ">{{
-        reason === 'view' ? 'Selecione um contrato para ver os detalhes' :
-          reason === 'preMeasurement' ? 'Selecione um contrato para importar a pré-medição'
-            : 'Selecione um contrato para iniciar execução'
-      }}</h3>
+    } @else if (!showMenu) {
+      <!-- Mensagem principal -->
+      <h3
+        class="hidden lg:block text-base font-medium
+         text-gray-700 dark:text-gray-200"
+      >
+        <ng-container *ngIf="reason === 'view'">
+          <i class="pi pi-ellipsis-v align-middle mr-1"></i>
+          <span class="align-middle">
+            Use os três pontinhos do contrato para ver as opções
+          </span>
+        </ng-container>
+
+        <ng-container *ngIf="reason === 'preMeasurement'">
+          Selecione um contrato para importar a pré-medição
+        </ng-container>
+
+        <ng-container *ngIf="reason !== 'view' && reason !== 'preMeasurement'">
+          Selecione um contrato para iniciar a execução
+        </ng-container>
+      </h3>
+
+      <!-- Período -->
+      <div
+        class="flex flex-wrap items-center justify-center gap-2 text-sm
+           text-gray-500 dark:text-gray-400"
+      >
+        <span>Exibindo contratos criados no período de</span>
+
+        <span
+          class="px-2 py-1 rounded-md font-medium
+             bg-gray-100 text-gray-700
+             dark:bg-gray-800 dark:text-gray-200"
+        >
+      {{ filters.startDate | date: 'dd/MM/yyyy' }}
+    </span>
+
+        <span>até</span>
+
+        <span
+          class="px-2 py-1 rounded-md font-medium
+             bg-gray-100 text-gray-700
+             dark:bg-gray-800 dark:text-gray-200"
+        >
+      {{ filters.endDate | date: 'dd/MM/yyyy' }}
+    </span>
+      </div>
+
+      <!-- Hint de filtro -->
+      <span class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+      <i
+        class="pi pi-info-circle align-middle"
+        style="font-size: 1rem; vertical-align: middle;"
+      ></i>
+      <span class="align-middle">
+        Para alterar o período, utilize o botão de filtro abaixo
+      </span>
+    </span>
+    } @else {
+      <h3
+        class="hidden lg:block text-base font-medium text-gray-700 dark:text-gray-200">
+        Exibindo filtros de contratos
+      </h3>
+    }
   </div>
+
+  <div #filterTitle></div>
 
 
   <app-loading *ngIf="loading" text="Carregando"></app-loading>
 
+  <div *ngIf="showMenu" class="px-4">
+    <div class="w-full flex justify-center py-4">
+      <button
+        (click)="showMenu = false"
+        type="button"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg
+          text-sm font-medium
+          bg-slate-50 dark:bg-white/5
+          text-slate-600 dark:text-slate-300
+          hover:bg-slate-100 dark:hover:bg-white/10
+          transition">
 
-  <div class="w-full" *ngIf="!loading">
-    <div class="px-10 pb-5">
+        <span>Mostrar dados</span>
+
+        <i
+          class="pi pi-chevron-down text-xs transition-transform duration-200"
+        ></i>
+      </button>
+    </div>
+
+    <section
+      *ngIf="showMenu"
+      class="rounded-2xl border border-slate-200 dark:border-white/10
+         bg-white dark:bg-slate-900 shadow-sm">
+
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-white/10">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">
+          Filtros
+        </h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Refine os resultados por status, período de criação, razão social e número do contrato
+        </p>
+      </div>
+
+      <!-- Campos -->
+      <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+
+        <!-- Tipo de serviço -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+            Status
+          </label>
+          <p-dropdown
+            [options]="statuses"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="filters.status"
+            placeholder="Selecione o tipo"
+            class="w-full">
+          </p-dropdown>
+
+          <p-message severity="error" styleClass="mt-1" *ngIf="!filters.status && submitted">Filtro obrigatório
+          </p-message>
+        </div>
+
+        <!-- Data inicial -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+            Data inicial
+          </label>
+          <p-calendar
+            [(ngModel)]="filters.startDate"
+            placeholder="dd/mm/aaaa"
+            dateFormat="dd/mm/yy"
+            fluid
+            class="w-full">
+          </p-calendar>
+
+          <p-message severity="error" styleClass="mt-1" *ngIf="!filters.startDate && submitted">Filtro obrigatório
+          </p-message>
+        </div>
+
+        <!-- Data final -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+            Data final
+          </label>
+          <p-calendar
+            [(ngModel)]="filters.endDate"
+            placeholder="dd/mm/aaaa"
+            dateFormat="dd/mm/yy"
+            fluid
+            class="w-full">
+          </p-calendar>
+
+          <p-message severity="error" styleClass="mt-1" *ngIf="!filters.endDate && submitted">Filtro obrigatório
+          </p-message>
+        </div>
+
+        <!-- Modo de visualização -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+            Razão Social
+          </label>
+
+        </div>
+
+      </div>
+
+      <!-- Ações -->
+      <div
+        class="px-6 py-4 flex flex-col sm:flex-row justify-end gap-3
+           border-t border-slate-200 dark:border-white/10">
+
+        <button
+          class="px-4 py-2 rounded-lg border text-sm
+             border-slate-300 dark:border-white/20
+             text-slate-600 dark:text-slate-300
+             hover:bg-slate-50 dark:hover:bg-white/5"
+          (click)="resetFilters()">
+          Limpar filtros
+        </button>
+
+        <button
+          (click)="applyFilters()"
+          class="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm
+             hover:bg-blue-700 transition">
+          Filtrar contratos
+        </button>
+
+      </div>
+
+    </section>
+  </div>
+
+  <div class="w-full px-4" *ngIf="!loading && !showMenu && !showItems">
+
+    <div class="w-full flex justify-center py-4">
+      <button
+        (click)="showMenu = true"
+        type="button"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg
+          text-sm font-medium
+          bg-slate-50 dark:bg-white/5
+          text-slate-600 dark:text-slate-300
+          hover:bg-slate-100 dark:hover:bg-white/10
+          transition">
+
+        <span>Mostrar filtros</span>
+
+        <i
+          class="pi pi-chevron-down text-xs transition-transform duration-200"
+        ></i>
+      </button>
+    </div>
+
+    <div class="pb-5">
       <p-iconfield iconPosition="left">
         <p-inputicon class="pi pi-search"/>
         <input (input)="filterData($event)" type="text" pInputText placeholder="Pesquisar"
                class="w-full"/>
       </p-iconfield>
     </div>
-    <ol class="flex flex-wrap justify-center pb-4" aria-haspopup="true" #card>
-      <p-contextmenu [target]="card" [model]="contextItems" #menu></p-contextmenu>
+    <p-contextmenu
+      [target]="card"
+      [model]="contextItems"
+      #menu
+      *ngIf="reason === 'view'"
+    ></p-contextmenu>
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4"
+      aria-haspopup="true"
+      #card
+    >
 
-      <li *ngFor="let c of contracts; index as i; "
-          (contextmenu)="onRightClick($event, c)"
-          (click)="reason === 'view' ? showItems(c.contractId) : reason === 'preMeasurement' ?
-              router.navigate(['/pre-medicao/importar/contrato/' + c.contractId])
-                : router.navigate(['/execucoes/iniciar-sem-pre-medicao/'],{queryParams: { codigo: c.contractId, nome: c.contractor }})">
+      <div
+        *ngFor="let c of contracts; index as i"
+        (contextmenu)="onRightClick($event, c)"
+        (click)="onCardClick(c)"
+        [class.cursor-pointer]="reason !== 'view'"
+        class="relative flex flex-col gap-4
+           rounded-2xl border border-slate-200 bg-white p-5 shadow-sm
+           hover:shadow-mddark:border-white/10 dark:bg-slate-900">
 
-        <div
-          class="flex border mr-4 mb-4 min-h-64  border-gray-200 dark:border-gray-700 rounded-2xl shadow-md hover:shadow-lg bg-white dark:bg-gray-900 p-6 relative">
+        <!-- Menu três pontinhos -->
+        <button
+          *ngIf="reason === 'view'"
+          (click)="openContextMenu($event, c)"
+          class="absolute top-3 right-3 p-2
+             text-slate-400 hover:text-slate-700
+             dark:hover:text-slate-200"
+        >
+          <i class="fa fa-ellipsis-v text-lg"></i>
+        </button>
 
-          <div class="absolute top-4 right-4 z-10">
-            <button (click)="openContextMenu($event, c)"
-                    class="text-gray-500 hover:text-gray-800 focus:outline-none dark:hover:text-gray-200 p-2">
-              <i class="fa fa-ellipsis-v text-2xl"></i>
-            </button>
-          </div>
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+      <span
+        class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium
+               bg-slate-100 text-slate-700
+               dark:bg-slate-800 dark:text-slate-300"
+      >
+        {{ utils.getStatus(c.contractStatus) }}
+      </span>
 
-          <div class="flex flex-col items-center justify-center mr-10">
-            <div class="h-full w-1 bg-neutral dark:bg-neutral-100 dark:text-neutral"></div>
-            <div class="rounded-full bg-neutral text-neutral-100 dark:bg-neutral-100 dark:text-neutral p-1">
-              <i class="fa-solid fa-gavel w-6 text-center text-lg"></i>
-            </div>
-          </div>
-
-          <div class="flex flex-col mr-10 w-96">
-            <div class="flex items-center justify-between">
-                <span class="badge rounded mb-4 mt-2">
-                  {{ utils.getStatus(c.contractStatus) }}
-                </span>
-              <h2 class="text-xl   leading-[3rem] font-semibold">{{ c.itemQuantity }} itens</h2>
-            </div>
-            <div class="flex item-center justify-between leading-[3rem]">
-              <h3 class="text-xl   font-semibold">Contrato {{ c.number }}</h3>
-              <h3
-                pButton
-                class="text-lg font-normal badge rounded p-3">{{ c.contractValue | currency:'BRL':'symbol':'1.2-2' }}</h3>
-            </div>
-            <h3 class="text-lg   leading-[1.3rem] font-normal py-2">{{ c.contractor }}</h3>
-            <h3 class="text-base   leading-[1.3rem] font-light">{{ c.address }}</h3>
-            <h3 class="text-base   leading-[1.3rem] font-light">{{ c.cnpj }}</h3>
-            <h3 class="text-base   leading-[3rem] font-light">{{ c.phone }}</h3>
-
-            <span class="text-sm   flex items-center">Criado por {{ c.createdBy }}<span
-              class="material-icons text-sm ml-1 text-blue-500">verified</span></span>
-            <!--            <span class="text-xs">{{ p.createdAt }} em {{ c. }}</span>-->
-          </div>
         </div>
-      </li>
-    </ol>
+
+        <!-- Contrato -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+            Contrato {{ c.number }}
+          </h3>
+
+          <span class="text-sm font-medium text-slate-600 dark:text-slate-300">
+            Quantidade de itens: {{ c.itemQuantity }}
+          </span>
+
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ c.contractor }}
+          </p>
+        </div>
+
+        <!-- Valor -->
+        <div>
+      <span class="block text-xs text-slate-500 dark:text-slate-400">
+        Valor do contrato
+      </span>
+          <span class="text-lg font-semibold text-slate-900 dark:text-white">
+        {{ c.contractValue | currency:'BRL':'symbol':'1.2-2' }}
+      </span>
+        </div>
+
+        <!-- Informações -->
+        <div class="text-sm text-slate-500 dark:text-slate-400 space-y-1">
+          <p>{{ c.address }}</p>
+          <p>{{ c.cnpj }}</p>
+          <p>{{ c.phone }}</p>
+        </div>
+
+        <!-- Criador -->
+        <div class="pt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
+          Criado por {{ c.createdBy }}
+          <span class="material-icons text-sm ml-1 text-blue-500">verified</span>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
-  <p-dialog
-    [resizable]="false"
-    [modal]="true"
-    [maximizable]="true"
-    appendTo="body"
-    [(visible)]="dialogVisible"
-    [style]="{ width: '75vw' }"
-    [contentStyle]="{ height: '300px' }"
-  >
-    <ng-template pTemplate="header">
-      <div class="flex items-center w-full space-x-10">
-        <span class="text-lg font-semibold">Itens do Contrato</span>
-        <div class="flex gap-2">
-          <button
-            (click)="download('contract')"
-            pButton
-            type="button"
-            icon="pi pi-download"
-            label="Baixar Contrato"
-            class="p-button-sm"
-          ></button>
-          <button
-            (click)="download('notice')"
-            pButton
-            type="button"
-            icon="pi pi-download"
-            label="Baixar Edital"
-            class="p-button-sm p-button-secondary"
-          ></button>
-          <button
-            (click)="download('additive')"
-            pButton
-            type="button"
-            icon="pi pi-download"
-            label="Baixar Aditivo"
-            class="p-button-sm p-button-secondary"
-          ></button>
-        </div>
+  <div class="px-4 py-3" *ngIf="showItems">
+
+    <!-- HEADER -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-base font-semibold text-surface-900 dark:text-surface-0">
+          Itens do Contrato
+        </h2>
+        <p class="text-sm text-surface-600 dark:text-surface-400">
+          {{ selectedContract.number }} • {{ selectedContract.contractor }}
+        </p>
       </div>
-    </ng-template>
 
+      <div class="flex gap-2 flex-wrap">
+        <button
+          pButton
+          icon="pi pi-arrow-left"
+          label="Exibir Contratos"
+          class="p-button-sm p-button-text sm:p-button-outlined p-button-info"
+          (click)="showItems = false"
+        ></button>
 
+        <button pButton icon="pi pi-download" label="Contrato"
+                class="p-button-sm p-button-text sm:p-button-outlined"
+                (click)="download('contract')"></button>
+
+        <button pButton icon="pi pi-download" label="Edital"
+                class="p-button-sm p-button-text sm:p-button-outlined"
+                (click)="download('notice')"></button>
+      </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- MOBILE – CARDS -->
+    <!-- ===================== -->
+    <div class="mt-4 flex flex-col gap-3 sm:hidden">
+      <div
+        *ngFor="let item of contractItems; let ri = index"
+        class="rounded-lg border border-surface-200 dark:border-surface-700 p-3 bg-surface-0 dark:bg-surface-900"
+      >
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="text-sm font-semibold">Item {{ item.number }}</span>
+            <p class="text-xs text-surface-500 dark:text-surface-400 line-clamp-2">
+              {{ item.description }}
+            </p>
+          </div>
+
+          <div class="flex gap-1">
+            <button pButton icon="pi pi-pencil"
+                    class="p-button-text p-button-sm"
+                    (click)="onRowEditInit(item)"></button>
+
+            <button pButton icon="pi pi-trash"
+                    class="p-button-text p-button-sm p-button-danger"></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span class="text-xs text-surface-500">Contratada</span>
+            <p class="font-medium">{{ item.contractedQuantity }}</p>
+          </div>
+
+          <div>
+            <span class="text-xs text-surface-500">Executado</span>
+            <p class="font-medium">{{ item.totalExecuted }}</p>
+          </div>
+
+          <div>
+            <span class="text-xs text-surface-500">Saldo</span>
+            <p class="font-medium">
+              {{ item.contractedQuantity - item.totalExecuted }}
+            </p>
+          </div>
+
+          <div>
+            <span class="text-xs text-surface-500">Valor Total</span>
+            <p class="font-medium">
+              {{ Number(item.unitPrice) * item.contractedQuantity | currency:'BRL' }}
+            </p>
+          </div>
+        </div>
+
+        <button
+          pButton
+          label="Ver etapas"
+          icon="pi pi-chevron-down"
+          class="p-button-text p-button-sm mt-2 w-full"
+          (click)="item.showSteps = !item.showSteps"
+        ></button>
+
+        <div *ngIf="item.showSteps" class="mt-2 border-t pt-2">
+          <div
+            *ngFor="let step of item.executedQuantity; let i = index"
+            class="flex justify-between text-sm py-1"
+          >
+            <span class="text-surface-500">{{ i + 1 }}ª Etapa</span>
+            <span class="font-medium">{{ step.quantity }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- DESKTOP – TABELA -->
+    <!-- ===================== -->
     <p-table
+      class="hidden sm:block mt-4 text-sm"
       [value]="contractItems"
       dataKey="id"
       editMode="row"
-      [tableStyle]="{ 'min-width': '60rem' }"
+      responsiveLayout="scroll"
     >
       <ng-template pTemplate="header">
         <tr>
           <th>Item</th>
           <th>Descrição</th>
-          <th>Qtde. Contratada</th>
-          <th *ngFor="let _ of [].constructor(maxExecutedSteps); let i = index">
-            {{ i + 1 }}ª Etapa
-          </th>
-          <th>Total Executado</th>
-          <th>Saldo</th>
-          <th>Preço Unitário</th>
-          <th>Preço Total</th>
-          <th>Saldo Monetário</th>
-          <th>Ações</th>
+          <th class="text-right">Qtde</th>
+          <th class="text-right">Executado</th>
+          <th class="text-right">Saldo</th>
+          <th class="text-right">Unit.</th>
+          <th class="text-right">Total</th>
+          <th class="text-right">Saldo R$</th>
+          <th class="text-center">Etapas</th>
+          <th class="text-center">Ações</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-item let-editing="editing" let-ri="rowIndex">
         <tr [pEditableRow]="item">
-          <td>
-            {{ item.number }}
-          </td>
+          <td class="font-medium">{{ item.number }}</td>
+          <td class="max-w-xs truncate">{{ item.description }}</td>
 
-          <td>
-            {{ item.description }}
-          </td>
-
-          <td>
+          <td class="text-right">
             <p-cellEditor>
               <ng-template pTemplate="input">
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="item.contractedQuantity"
-                />
+                <input pInputText type="number" class="w-20"
+                       [(ngModel)]="item.contractedQuantity" />
               </ng-template>
               <ng-template pTemplate="output">
                 {{ item.contractedQuantity }}
@@ -164,85 +463,73 @@
             </p-cellEditor>
           </td>
 
-          <td *ngFor="let _ of [].constructor(maxExecutedSteps); let idx = index">
-            {{ item.executedQuantity[idx].quantity }}
-          </td>
-
-          <td>
-            {{ item.totalExecuted }}
-          </td>
-
-          <td>
+          <td class="text-right">{{ item.totalExecuted }}</td>
+          <td class="text-right">
             {{ item.contractedQuantity - item.totalExecuted }}
           </td>
 
-          <td>
-            <p-cellEditor>
-              <ng-template pTemplate="input">
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="item.unitPrice"
-                />
-              </ng-template>
-              <ng-template pTemplate="output">
-                {{ item.unitPrice | currency: 'BRL' }}
-              </ng-template>
-            </p-cellEditor>
+          <td class="text-right">
+            {{ item.unitPrice | currency:'BRL' }}
           </td>
 
-          <td>
-            {{ item.unitPrice * item.contractedQuantity | currency: 'BRL' }}
+          <td class="text-right">
+            {{ item.unitPrice * item.contractedQuantity | currency:'BRL' }}
           </td>
 
-          <td>
-            {{ item.unitPrice * (item.contractedQuantity - item.totalExecuted) | currency: 'BRL' }}
+          <td class="text-right">
+            {{ item.unitPrice * (item.contractedQuantity - item.totalExecuted) | currency:'BRL' }}
           </td>
 
-          <td>
-            <div class="flex items-center justify-center gap-2">
-              <button
-                *ngIf="!editing"
-                type="button"
-                pInitEditableRow
-                class="pi pi-pencil"
-                (click)="onRowEditInit(item)"
-              ></button>
-              <button
-                *ngIf="!editing"
-                type="button"
-                pInitEditableRow
-                class="pi pi-trash"
-                (click)="onRowEditInit(item)"
-              ></button>
+          <td class="text-center">
+            <button
+              pButton
+              icon="pi pi-list"
+              class="p-button-text p-button-sm"
+              (click)="op.toggle($event)"
+            ></button>
 
-              <button
-                *ngIf="editing"
-                type="button"
-                pSaveEditableRow
-                class="pi pi-check"
-                (click)="onRowEditSave(item)"
-              ></button>
-              <button
-                *ngIf="editing"
-                type="button"
-                pCancelEditableRow
-                class="pi pi-times"
-                (click)="onRowEditCancel(item, ri)"
-              ></button>
+            <p-overlayPanel #op>
+              <div class="flex flex-col gap-2 min-w-[180px]">
+                <div
+                  *ngFor="let step of item.executedQuantity; let i = index"
+                  class="flex justify-between text-sm"
+                >
+                  <span>{{ i + 1 }}ª Etapa</span>
+                  <span class="font-medium">{{ step.quantity }}</span>
+                </div>
+              </div>
+            </p-overlayPanel>
+          </td>
+
+          <td class="text-center">
+            <div class="flex justify-center gap-1">
+              <button *ngIf="!editing"
+                      pButton icon="pi pi-pencil"
+                      class="p-button-text p-button-sm"
+                      (click)="onRowEditInit(item)"></button>
+
+              <button *ngIf="!editing"
+                      pButton icon="pi pi-trash"
+                      class="p-button-text p-button-sm p-button-danger"></button>
+
+              <button *ngIf="editing"
+                      pButton icon="pi pi-check"
+                      class="p-button-text p-button-sm p-button-success"
+                      (click)="onRowEditSave(item)"></button>
+
+              <button *ngIf="editing"
+                      pButton icon="pi pi-times"
+                      class="p-button-text p-button-sm"
+                      (click)="onRowEditCancel(item, ri)"></button>
             </div>
           </td>
         </tr>
-
       </ng-template>
     </p-table>
+  </div>
 
-    <ng-template #footer>
-      <p-button label="Ok" icon="pi pi-check" (onClick)="dialogVisible = false"/>
-    </ng-template>
-  </p-dialog>
 
-  <app-prime-confirm-dialog *ngIf="openModal" [message]="message" (action)="handleAction($event)"  type="confirm">
+  <app-prime-confirm-dialog *ngIf="openModal" [message]="message" (action)="handleAction($event)" type="confirm">
 
   </app-prime-confirm-dialog>
 

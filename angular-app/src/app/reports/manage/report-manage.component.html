@@ -8,16 +8,13 @@
     *ngIf="!showMenu"
   >
     <button
-      (click)="
-        results.length > 1 && pdfUrl ? revokeUrl()
-        : showMenu = true
-      "
+      (click)="revokeUrl()"
       type="button"
       class="flex items-center gap-2 px-3 py-2 rounded-lg
          text-sm font-medium
          bg-slate-50 dark:bg-white/5
          text-slate-600 dark:text-slate-300
-         hover:bg-slate-100 dark:hover:bg-NG white/10
+         hover:bg-slate-100 dark:hover:bg-white/10
          transition"
     >
 
@@ -170,6 +167,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Modo de retorno"
+            (onChange)="filters.viewMode === 'GROUP' ? results = [] : null"
             class="w-full">
           </p-dropdown>
         </div>

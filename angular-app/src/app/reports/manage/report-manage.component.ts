@@ -169,13 +169,18 @@ export class ReportManageComponent implements OnInit {
             return;
         }
 
+        if (this.filters.type === 'photo') {
+            this.utils.showMessage("Relatório fotográfico em desenvolvimento. Por favor aguarde ou utilize a opção 'Relatórios de Instalações (90 dias)'.",
+                'info', 'Relatório indisponível');
+            return;
+        }
+
         const days = Utils.diffInDays(this.filters.startDate!, this.filters.endDate!);
 
         if (days > 31) {
             this.utils.showMessage("O Período máximo é de 31 dias.", 'warn', 'Período inválido');
             return;
         }
-
 
         this.loading = true;
         let type = this.filters.type ?? '';
@@ -318,8 +323,15 @@ export class ReportManageComponent implements OnInit {
         if (this.pdfUrl) {
             URL.revokeObjectURL(this.pdfUrl);
             this.pdfUrl = null;
+        }
+
+        if (this.results.length > 0) {
             this.filters.executionId = null;
             this.filters.executionType = null;
+            this.filters.viewMode = 'LIST';
+            this.showMenu = true
+        } else {
+            this.showMenu = true
         }
     }
 }

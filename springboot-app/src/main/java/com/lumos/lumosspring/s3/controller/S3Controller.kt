@@ -13,27 +13,23 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 @RestController
-@RequestMapping("/api/minio")
+@RequestMapping("/api")
 class S3Controller(private val service: S3Service) {
 
-    @PostMapping("/upload")
+    @PostMapping("/s3/upload")
     fun uploadFile(@RequestParam("file") file: MultipartFile): ResponseEntity<String> {
-        val response = service.uploadFile(file, Utils.getCurrentBucket(),"documents", "document", Utils.getCurrentTenantId())
+        val response = service.uploadFile(
+            file,
+            Utils.getCurrentBucket(),
+            "documents",
+            "document",
+            Utils.getCurrentTenantId()
+        )
         return ResponseEntity.ok(response)
     }
 
-    @PostMapping("/upload-files")
-    fun uploadFiles(@RequestParam("files") files: List<MultipartFile>): ResponseEntity<Any> {
-        val responses = files.map { file ->
-            service.uploadFile(file, Utils.getCurrentBucket(), "documents", "document", Utils.getCurrentTenantId())
-        }
 
-
-        return ResponseEntity.ok(responses)
-    }
-
-
-    @GetMapping("/download/{fileName}")
+    @GetMapping("/s3/download/{fileName}")
     fun downloadFile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> {
         val inputStream: InputStream = service.downloadFile(fileName, Utils.getCurrentBucket())
         val resource = InputStreamResource(inputStream)
@@ -47,4 +43,7 @@ class S3Controller(private val service: S3Service) {
             .contentType(MediaType.parseMediaType(contentType))
             .body(resource)
     }
+
+    @GetMapping("/mobile/s3/download/{fileName}")
+    fun downloadFileMobile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> = downloadFile(fileName)
 }

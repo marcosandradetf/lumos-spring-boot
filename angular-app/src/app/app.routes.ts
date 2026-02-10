@@ -113,6 +113,12 @@ export const routes: Routes = [
         data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
     {
+        path: 'contratos/editar',
+        loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+    },
+    {
         path: 'contratos/listar',
         loadComponent: () => import('./contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
         canActivate: [AuthGuard],

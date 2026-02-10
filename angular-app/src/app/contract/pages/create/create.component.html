@@ -1,18 +1,18 @@
 <div class="flex relative" #top xmlns="http://www.w3.org/1999/html">
   <div class="w-full">
-    <div class="pt-2 w-full pl-2 flex items-center justify-center">
-      <h3 class="text-medium pr-5 hidden lg:block">Novo Contrato</h3>
-    </div>
-
 
     <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
 
     <p-stepper [value]="1" class="basis-[50rem]" *ngIf="!finish">
       <p-step-list class="px-10">
-        <p-step [value]="1">Inserir dados</p-step>
-        <p-step [value]="2" (click)="selectedIndex = null;">Selecionar Itens</p-step>
-        <p-step [value]="3" (click)="selectedIndex = null; getTotalValue()">Revisão</p-step>
+        <p-step [value]="1">{{ currentUrl === '/contratos/editar' ? 'Editar dados' : 'Inserir dados' }}</p-step>
+        <p-step [value]="2"
+                (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Adicionar Itens' : 'Selecionar Itens' }}
+        </p-step>
+        <p-step [value]="3"
+                (click)="selectedIndex = null; getTotalValue()">{{ currentUrl === '/contratos/editar' ? 'Editar Itens' : 'Revisão' }}
+        </p-step>
       </p-step-list>
       <p-step-panels>
         <p-step-panel [value]="1">
@@ -21,7 +21,7 @@
 
               <!-- Título -->
               <div class="text-center mt-4 mb-2 text-lg sm:text-xl font-semibold">
-                Digite os dados do contrato
+                {{ currentUrl === '/contratos/editar' ? 'Editar os dados do contrato' : 'Digite os dados do contrato' }}
               </div>
 
               <!-- Número do contrato -->
@@ -118,33 +118,48 @@
 
               <!-- Arquivos e botão unificado -->
               <div class="flex flex-col sm:flex-row gap-4 mt-6">
-                <input type="file"
-                       class="file-input file-input-sm hidden"
-                       accept=".pdf"
-                       #inputFile
-                       (change)="onFileSelected($event, typeSelect)"/>
-
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
-                  <label for="noticeFile">Edital</label>
-                  <span type="button"
-                        [class.btn-outline]="!noticeFile"
-                        class="btn btn-accent btn-sm text-xs w-full sm:w-64 h-12 flex items-center justify-center gap-2"
-                        (click)="typeSelect = 'notice'; inputFile.click()">
-                    <span class="material-icons" *ngIf="!noticeFile">cloud_upload</span>
-                    {{ noticeFile?.name || 'Clique para selecionar' }}
-                  </span>
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">
+                    Arquivos do Contrato
+                  </label>
+
+                  <div
+                    class="rounded-lg border border-dashed border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 p-3 sm:p-4">
+                    <!-- input file escondido -->
+                    <input
+                      #fileInput
+                      type="file"
+                      multiple
+                      accept=".pdf,.zip,application/pdf,application/zip"
+                      (change)="onFilesSelected($event)"
+                      class="hidden"
+                      [attr.maxFileSize]="maxFileSize"
+                    />
+
+                    <!-- botão custom -->
+                    <button
+                      type="button"
+                      class="p-button p-component p-button-sm p-button-success w-full flex items-center justify-center gap-2"
+                      (click)="fileInput.click()"
+                    >
+                      <i class="pi pi-paperclip"></i>
+                      Selecionar arquivos
+                    </button>
+
+                    <!-- feedback dos arquivos selecionados -->
+                    <div *ngIf="selectedFiles.length === 0"
+                         class="mt-2 text-xs text-center text-surface-500 dark:text-surface-400">
+                      Aceita PDF ou ZIP • até 10MB
+                    </div>
+                    <ul *ngIf="selectedFiles.length > 0"
+                        class="mt-2 text-xs text-surface-700 dark:text-surface-300 list-disc list-inside">
+                      <li *ngFor="let file of selectedFiles">
+                        {{ file.name }} ({{ (file.size / 1024 / 1024) | number:'1.1-2' }} MB)
+                      </li>
+                    </ul>
+                  </div>
                 </div>
 
-                <div class="flex flex-col gap-1 w-full sm:w-auto">
-                  <label for="contractFile">Contrato</label>
-                  <span type="button"
-                        [class.btn-outline]="!contractFile"
-                        class="btn btn-accent btn-sm text-xs w-full sm:w-64 h-12 flex items-center justify-center gap-2"
-                        (click)="typeSelect = 'contract'; inputFile.click()">
-                    <span class="material-icons" *ngIf="!contractFile">cloud_upload</span>
-                    {{ contractFile?.name || 'Clique para selecionar' }}
-                  </span>
-                </div>
 
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                   <label>Serviço Unificado</label>
@@ -159,6 +174,9 @@
               </div>
 
               <!-- Botão continuar -->
+              @if (currentUrl.startsWith("/contratos/editar")) {
+
+              }
               <div class="flex justify-end pt-6">
                 <p-button label="Continuar"
                           icon="pi pi-arrow-right"
@@ -191,13 +209,24 @@
                     [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
                     [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
                     class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
-                  <td class="px-4 py-2">
-                    <span
-                      class="material-icons text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
-                      (click)="addItem(item, i)">
-                        add
-                    </span>
+                  <td class="px-4 py-2 text-center">
+                    <button
+                      type="button"
+                      aria-label="Adicionar item"
+                      class="flex items-center justify-center
+                               text-white bg-blue-600
+                               hover:bg-blue-700 active:bg-blue-800
+                               rounded-full p-2
+                               transition-all transform hover:scale-110
+                               focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                          (click)="addItem(item, i)">
+
+                        <span class="material-icons text-sm">
+                          add
+                        </span>
+                    </button>
                   </td>
+
 
                   <td class="px-4 py-2 text-base">{{ item.description }}</td>
 
@@ -257,6 +286,9 @@
                     <th class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"></th>
                     <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Descrição</th>
                     <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Quantidade</th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"
+                        *ngIf="currentUrl === '/contratos/editar'">Qtde. Executada
+                    </th>
                     <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Valor unitário
                     </th>
                   </tr>
@@ -267,23 +299,40 @@
                       (click)="selectedIndex = i"
                       [class.fade-out]="removingIndexContract === i"
                       class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
-                    <td class="px-4 py-2">
-                      <span
-                        class="material-icons text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-full p-1 transition-all transform hover:scale-110 cursor-pointer"
-                        (click)="removeItem(item, i)">
-                        remove
-                      </span>
+                    <td class="px-4 py-2 text-center">
+                      <button
+                        type="button"
+                        aria-label="Remover item"
+                        class="flex items-center justify-center
+                        text-white bg-red-600
+                        hover:bg-red-700 active:bg-red-800
+                          rounded-full p-2
+                          transition-all transform hover:scale-110
+                          focus:outline-none focus:ring-2 focus:ring-red-400"
+                          (click)="removeItem(item, i)">
+
+                        <span class="material-icons text-sm">
+                          delete
+                        </span>
+                      </button>
                     </td>
+
                     <td class="px-3 py-2">{{ item.description }}</td>
 
                     <td class="px-4 py-2">
 
                       <input type="text" placeholder="Ex.: 2" #inputField
-                             (input)="removeLeadingZeros(inputField); getTotalValue();" [(ngModel)]="item.quantity"
+                             [value]="item.quantity"
+                             (input)="utils.formatFloatNumber($event);"
+                             (blur)="setQuantity(inputField, item.contractReferenceItemId); getTotalValue();"
                              name="quantity{{i}}"
                              class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                              required/>
                     </td>
+
+                    <td class="px-3 py-2" *ngIf="currentUrl === '/contratos/editar'">{{ item.executedQuantity ?? 0 }}
+                    </td>
+
                     <td class="px-4 py-2">
                       <input type="text" placeholder="Ex.: R$" #inputField
                              (input)="formatValue($event, item.contractReferenceItemId); getTotalValue();"
@@ -487,7 +536,7 @@
                  class="file-input file-input-sm hidden"
                  accept=".png,.jpg"
                  #inputLogo
-                 (change)="onFileSelected($event, 'logo')"/>
+                 (change)="onLogoSelected($event)"/>
 
           <label for="contractFile" [class.text-red-500]="companyFormSubmit && !logoFile">Logo da Empresa*</label>
           <span

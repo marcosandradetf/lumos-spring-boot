@@ -23,7 +23,6 @@ import {Dialog} from 'primeng/dialog';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {NgxMaskPipe, provideNgxMask} from 'ngx-mask';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
-import {PrimeBreadcrumbComponent} from "../../shared/components/prime-breadcrumb/prime-breadcrumb.component";
 import {Title} from '@angular/platform-browser';
 import {RouterLink} from '@angular/router';
 import {RequestService} from '../request.service';
@@ -52,7 +51,6 @@ import {SharedState} from '../../core/service/shared-state';
         LoadingComponent,
         NgxMaskPipe,
         LoadingOverlayComponent,
-        PrimeBreadcrumbComponent,
         RouterLink,
         DatePipe,
         ButtonDirective,

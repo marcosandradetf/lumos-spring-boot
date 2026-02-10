@@ -120,7 +120,7 @@ class InstallationReportRepository(
                                              )
                                              ORDER BY description
                                      ) AS values
-                                 FROM (
+                                     FROM (
                                           SELECT
                                               installation_id,
                                               installation_type,
@@ -129,8 +129,29 @@ class InstallationReportRepository(
                                               SUM(executed_quantity) AS total_quantity
                                           FROM items_by_street
                                           GROUP BY installation_id, installation_type,description, unit_price
-                                      ) agg
+                                     ) agg
                                  GROUP BY installation_id, installation_type
+                             ),
+                             
+                             general_values as (
+                                SELECT
+                                     json_agg(
+                                             json_build_object(
+                                                     'description', description,
+                                                     'unit_price', unit_price,
+                                                     'quantity_executed', total_quantity,
+                                                     'total_price', ROUND(total_quantity * unit_price, 2)
+                                             )
+                                             ORDER BY description
+                                     ) AS values
+                                     FROM (
+                                          SELECT
+                                              description,
+                                              unit_price as unit_price,
+                                              SUM(executed_quantity) AS total_quantity
+                                          FROM items_by_street
+                                          GROUP BY description, unit_price
+                                     ) agg
                              ),
                         
                              columns_by_execution AS (
@@ -224,18 +245,19 @@ class InstallationReportRepository(
                                     'address', c.address,
                                     'phone', COALESCE(c.phone, '')
                             )                                                   AS contract,
-                            json_agg(ej.execution ORDER BY ej.execution->>'finished_at') AS executions
+                            json_agg(ej.execution ORDER BY ej.execution->>'finished_at') AS executions,
+                            json_build_object(
+                                'values', ANY_VALUE(gv.values)
+                            ) AS general_values
                         FROM contract c
-                                 JOIN company com
-                                      ON com.id_company = c.company_id
-                                 LEFT JOIN execution_json ej
-                                           ON TRUE
+                        JOIN company com
+                            ON com.id_company = c.company_id
+                        LEFT JOIN execution_json ej ON TRUE
+                        LEFT JOIN general_values gv ON TRUE
                         WHERE c.contract_id = :contractId
                         GROUP BY com.social_reason, com.company_cnpj, com.company_address, com.company_phone, com.company_logo,
                                  c.contract_number, c.contractor, c.cnpj, c.address, c.phone;
         """.trimIndent()
-
-        println(sql)
 
         return namedJdbc.query(sql,
             mapOf(
@@ -249,11 +271,13 @@ class InstallationReportRepository(
             val company = objectMapper.readTree(rs.getString("company"))
             val contract = objectMapper.readTree(rs.getString("contract"))
             val executions = objectMapper.readTree(rs.getString("executions"))
+            val generalValues = objectMapper.readTree(rs.getString("general_values"))
 
             mapOf(
                 "company" to company,
                 "contract" to contract,
                 "executions" to executions,
+                "general_values" to generalValues,
             )
         }
     }

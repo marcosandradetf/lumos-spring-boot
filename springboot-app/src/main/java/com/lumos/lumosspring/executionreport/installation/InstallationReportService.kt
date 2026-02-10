@@ -62,17 +62,6 @@ class InstallationReportService(
         val titlePdf = if (filtersRequest.type == "led") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
         else "RELATÓRIO FOTOGRÁFICO"
 
-        html = html.replace("{{TITLE_DOC}}", titleDoc).replace("{{TITLE_PDF}}", titlePdf)
-            .replace("{{LOGO_IMAGE}}", logoUrl).replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
-            .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"].asText())
-            .replace("{{COMPANY_CNPJ}}", company["company_cnpj"].asText())
-            .replace("{{COMPANY_ADDRESS}}", company["company_address"].asText())
-            .replace("{{COMPANY_PHONE}}", company["company_phone"].asText())
-            .replace("{{CONTRACTOR_SOCIAL_REASON}}", contract["contractor"].asText())
-            .replace("{{CONTRACTOR_CNPJ}}", contract["cnpj"].asText())
-            .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
-            .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
-
         var startDate: String? = null
         var endDate: String? = null
         val updateReportView: MutableSet<Pair<String, Long>> = mutableSetOf()
@@ -118,9 +107,9 @@ class InstallationReportService(
                     <tr>
                         <td>${index + 1}</td>
                         <td style="text-align:left">${it["description"].asText()}</td>
-                        <td>${formatMoney(it["unit_price"].asDouble())}</td>
-                        <td>${it["quantity_executed"].asText()}</td>
-                        <td>${formatMoney(it["total_price"].asDouble())}</td>
+                        <td style="text-align:right">${formatMoney(it["unit_price"].asDouble())}</td>
+                        <td style="text-align:right">${it["quantity_executed"].asText()}</td>
+                        <td style="text-align:right">${formatMoney(it["total_price"].asDouble())}</td>
                     </tr>
                 """.trimIndent()
             }.joinToString("\n")
@@ -129,13 +118,19 @@ class InstallationReportService(
                 <table class="data-table">
                     <thead>
                         <th colspan="2">ITEM CONTRATUAL</th>
-                        <th>PREÇO UNITÁRIO</th>
-                        <th>QUANTIDADE EXECUTADA</th>
-                        <th>VALOR TOTAL</th>
+                        <th style="text-align:right">PREÇO UNITÁRIO</th>
+                        <th style="text-align:right">QUANTIDADE EXECUTADA</th>
+                        <th style="text-align:right">VALOR TOTAL</th>
                     </thead>
                     <tbody>
                         $valuesLines
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="4" style="text-align:left">SOMA TOTAL</th>
+                            <th style="text-align:right">${formatMoney(values.sumOf { it["total_price"].asDouble() })}</th>
+                        </tr>
+                    </tfoot>
                 </table>
             """.trimIndent()
 
@@ -229,7 +224,7 @@ class InstallationReportService(
                         
                         <div class="maintenance-body">
                             <div class="signature">
-                                <h2>Valores para emissão de nota fiscal</h2>
+                                <h2>Resumo financeiro consolidado da competência</h2>
                             </div>
                             $valuesTable
                             
@@ -251,8 +246,64 @@ class InstallationReportService(
 
         }
 
-        html = html.replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
-        println(html)
+        val values = root["general_values"]!!["values"]!!
+        val valuesLines = values.mapIndexed { index, it ->
+            """         
+                <tr>
+                    <td>${index + 1}</td>
+                    <td style="text-align:left">${it["description"].asText()}</td>
+                    <td style="text-align:right">${formatMoney(it["unit_price"].asDouble())}</td>
+                    <td style="text-align:right">${it["quantity_executed"].asText()}</td>
+                    <td style="text-align:right">${formatMoney(it["total_price"].asDouble())}</td>
+                </tr>
+            """.trimIndent()
+        }.joinToString("\n")
+
+        val valuesTable =
+            """
+                <div class="pdf-page">
+                    <div class="page-content">
+                        <div class="maintenance-header">
+                            <div>Valores totais - Instalações realizadas no período de $startDate à $endDate</div>
+                        </div>
+                        <div class="maintenance-body">
+                            <table class="data-table">
+                                <thead>
+                                    <th colspan="2">ITEM CONTRATUAL</th>
+                                    <th style="text-align:right">PREÇO UNITÁRIO</th>
+                                    <th style="text-align:right">QUANTIDADE EXECUTADA</th>
+                                    <th style="text-align:right">VALOR TOTAL</th>
+                                </thead>
+                                <tbody>
+                                    $valuesLines
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" style="text-align:left">SOMA TOTAL</th>
+                                        <th style="text-align:right">${formatMoney(values.sumOf { it["total_price"].asDouble() })}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            """.trimIndent()
+
+        html = html.replace("{{TITLE_DOC}}", titleDoc)
+            .replace("{{TITLE_PDF}}", titlePdf)
+            .replace("{{LOGO_IMAGE}}", logoUrl)
+            .replace("{{CONTRACT_NUMBER}}", contract["contract_number"].asText())
+            .replace("{{COMPANY_SOCIAL_REASON}}", company["social_reason"].asText())
+            .replace("{{COMPANY_CNPJ}}", company["company_cnpj"].asText())
+            .replace("{{COMPANY_ADDRESS}}", company["company_address"].asText())
+            .replace("{{COMPANY_PHONE}}", company["company_phone"].asText())
+            .replace("{{CONTRACTOR_SOCIAL_REASON}}", contract["contractor"].asText())
+            .replace("{{CONTRACTOR_CNPJ}}", contract["cnpj"].asText())
+            .replace("{{CONTRACTOR_ADDRESS}}", contract["address"].asText())
+            .replace("{{CONTRACTOR_PHONE}}", contract["phone"].asText())
+            .replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
+            .replace("{{GENERAL_TOTAL}}", valuesTable)
+
         val pdf = Utils.sendHtmlToPuppeteer(html)
 
         updateReportView

@@ -3,9 +3,11 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false,
-  springboot: "http://localhost:8080",
-  minio: "http://localhost:9000",
+    production: false,
+    // springboot: "http://localhost:8080",
+    // minio: "http://localhost:9000",
+    springboot: "",
+    minio: "",
 };
 
 /*

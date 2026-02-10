@@ -1,20 +1,19 @@
 import {Component, OnInit} from '@angular/core';
-import {CurrencyPipe, NgForOf, NgIf} from "@angular/common";
+import {CurrencyPipe, DatePipe, NgForOf, NgIf} from "@angular/common";
 import {UtilsService} from '../../../../core/service/utils.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ContractService} from '../../../services/contract.service';
 import {
-    ContractItemsResponseWithExecutionsSteps,
+    ContractItemsResponseWithExecutionsSteps, ContractReferenceItemsDTO,
     ContractResponse
 } from '../../../contract-models';
 import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
 import {Dialog} from 'primeng/dialog';
 import {TableModule} from 'primeng/table';
-import {Button, ButtonDirective, ButtonIcon, ButtonLabel} from 'primeng/button';
+import {Button, ButtonDirective} from 'primeng/button';
 import {FormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Toast} from 'primeng/toast';
-import {Breadcrumb} from 'primeng/breadcrumb';
 import {MenuItem} from 'primeng/api';
 import {Title} from '@angular/platform-browser';
 import {FileService} from '../../../../core/service/file-service.service';
@@ -26,6 +25,10 @@ import {ViewChild} from '@angular/core';
 import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {SharedState} from '../../../../core/service/shared-state';
+import {Calendar} from 'primeng/calendar';
+import {DropdownModule} from 'primeng/dropdown';
+import {Message} from 'primeng/message';
+import {OverlayPanelModule} from 'primeng/overlaypanel';
 
 
 @Component({
@@ -36,18 +39,20 @@ import {SharedState} from '../../../../core/service/shared-state';
         NgIf,
         LoadingComponent,
         CurrencyPipe,
-        Dialog,
         TableModule,
-        Button,
         ButtonDirective,
         FormsModule,
         InputText,
         Toast,
-        Breadcrumb,
         ContextMenu,
         PrimeConfirmDialogComponent,
         IconField,
-        InputIcon
+        InputIcon,
+        Calendar,
+        DropdownModule,
+        Message,
+        DatePipe,
+        OverlayPanelModule
     ],
     templateUrl: './contract-list.component.html',
     styleUrl: './contract-list.component.scss'
@@ -68,15 +73,53 @@ export class ContractListComponent implements OnInit {
 
     message = "";
     contextItems: MenuItem[] = [
-        {label: 'Novo Contrato', icon: 'pi pi-plus', command: () => this.router.navigate(['/contratos/criar']),},
         {
-            label: 'Excluir Contrato', icon: 'pi pi-trash', command: () => {
+            label: 'Exibir Itens', icon:
+                'pi pi-list',
+            command: async () => this.getItems(this.selectedContract.contractId),
+        },
+        {
+            label: 'Editar Contrato', icon:
+                'pi pi-pencil',
+            command: async () => {
+                await this.getItems(this.selectedContract.contractId);
+
+                const items: ContractReferenceItemsDTO[] = [];
+                this.contractItems.forEach((item) => {
+                    items.push({
+                        contractReferenceItemId: item.contractReferenceItemId,
+                        description: item.description,
+                        nameForImport: item.nameForImport ?? '',
+                        type: item.type,
+                        linking: item.linking ?? '',
+                        itemDependency: '',
+                        quantity: item.contractedQuantity,
+                        price: item.unitPrice,
+                        executedQuantity: item.totalExecuted,
+                        contractItemId: item.contractItemId
+                    });
+                });
+
+                void this.router.navigate(['/contratos/editar'], {
+                    state: {
+                        contract: this.selectedContract,
+                        items: items
+                    }
+                })
+            },
+        },
+        {
+            label: 'Excluir Contrato',
+            icon: 'pi pi-trash',
+            command: () => {
                 this.message = "Confirma a exclusão do contrato " + this.selectedContract.contractor + "?"
                 this.openModal = true;
             }
         },
         {
-            label: 'Arquivar', icon: 'pi pi-folder-open', command: () => {
+            label: 'Arquivar',
+            icon: 'pi pi-folder-open',
+            command: () => {
                 this.archive = true
                 this.message = "Confirma o arquivamento do contrato " + this.selectedContract.contractor + "?"
                 this.openModal = true;
@@ -150,39 +193,37 @@ export class ContractListComponent implements OnInit {
     // }
 
 
-    showItems(contractId: number): void {
-        if (contractId === 0) return;
+    async getItems(contractId: number): Promise<void> {
+        if (contractId === 0 || this.contractId === contractId) return;
 
         this.contractId = contractId;
         this.loading = true;
 
-        this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
-            next: items => {
-                this.contractItems = items || [];
-                this.normalizeExecutedQuantities(); // 🔧 Preenche etapas faltantes com 0
-                this.showDialog();                  // 💬 Abre o modal
-            },
-            error: err => {
-                console.error('Erro ao carregar itens do contrato:', err);
-            },
-            complete: () => {
-                this.loading = false;
-            }
+        return new Promise<void>((resolve, reject) => {
+            this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
+                next: items => {
+                    this.contractItems = items || [];
+                    this.normalizeExecutedQuantities(); // 🔧 Preenche etapas faltantes com 0
+                    this.showItems = true;
+                },
+                error: err => {
+                    console.error('Erro ao carregar itens do contrato:', err);
+                    reject(err);
+                },
+                complete: () => {
+                    this.loading = false;
+                    resolve();
+                }
+            });
         });
     }
 
 
-    protected readonly parseFloat = parseFloat;
-
     contractId: number = 0;
-    dialogVisible: boolean = false;
+    showItems: boolean = false;
 
     getTotalPrice() {
         return this.contracts.find(c => c.contractId == this.contractId)?.contractValue || "0.00";
-    }
-
-    showDialog() {
-        this.dialogVisible = true;
     }
 
     onRowEditInit(item: any) {
@@ -367,4 +408,63 @@ export class ContractListComponent implements OnInit {
 
         this.contracts = this.contractsBackup.filter(c => c.contractor.toLowerCase().includes(value.toLowerCase()));
     }
+
+    onCardClick(c: ContractResponse): void {
+        if (this.reason === 'view') {
+            return; // não faz nada
+        }
+
+        if (this.reason === 'preMeasurement') {
+            void this.router.navigate([
+                `/pre-medicao/importar/contrato/${c.contractId}`
+            ]);
+            return;
+        }
+
+        this.router.navigate(
+            ['/execucoes/iniciar-sem-pre-medicao/'],
+            {
+                queryParams: {
+                    codigo: c.contractId,
+                    nome: c.contractor
+                }
+            }
+        );
+    }
+
+
+    // new filters
+    submitted = false;
+    showMenu = false;
+    statuses = [
+        {label: 'Ativo', value: 'ACTIVE'},
+        {label: 'Arquivado', value: 'ARCHIVED'}
+    ];
+    filters: {
+        contractor: string | null;
+        startDate: Date | null;
+        endDate: Date | null;
+        status: 'ACTIVE' | 'ARCHIVED';
+    } = {
+        contractor: null,
+        startDate: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+        endDate: new Date(),
+        status: 'ACTIVE',
+    };
+
+    protected applyFilters() {
+
+    }
+
+
+    protected resetFilters() {
+        this.filters = {
+            contractor: null,
+            startDate: null,
+            endDate: null,
+            status: 'ACTIVE',
+        };
+    }
+
+    protected readonly Number = Number;
 }

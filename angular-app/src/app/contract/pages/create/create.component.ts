@@ -1,11 +1,11 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {CurrencyPipe, NgClass, NgForOf, NgIf} from '@angular/common';
+import {CurrencyPipe, DecimalPipe, formatNumber, NgClass, NgForOf, NgIf} from '@angular/common';
 import {ContractService} from '../../services/contract.service';
 import {UtilsService} from '../../../core/service/utils.service';
 import {FileService} from '../../../core/service/file-service.service';
 import {Router} from '@angular/router';
-import {ContractReferenceItemsDTO, CreateContractDTO} from '../../contract-models';
+import {ContractReferenceItemsDTO, ContractResponse, CreateContractDTO} from '../../contract-models';
 import {Toast} from 'primeng/toast';
 import {Title} from '@angular/platform-browser';
 import {Step, StepList, StepPanel, StepPanels, Stepper} from 'primeng/stepper';
@@ -42,15 +42,17 @@ import {SharedState} from '../../../core/service/shared-state';
         PrimeConfirmDialogComponent,
         Select,
         Dialog,
-        LoadingOverlayComponent
+        LoadingOverlayComponent,
+        DecimalPipe
     ],
     templateUrl: './create.component.html',
     styleUrl: './create.component.scss'
 })
-export class CreateComponent {
+export class CreateComponent implements OnInit {
     selectedIndex: number | null = null;
 
     contract: CreateContractDTO = {
+        contractId: null,
         number: null,
         contractor: null,
         address: null,
@@ -63,8 +65,6 @@ export class CreateComponent {
         companyId: null,
     }
 
-    noticeFile: File | null = null;
-    contractFile: File | null = null;
     logoFile: File | null = null;
 
     items: ContractReferenceItemsDTO[] = [];
@@ -90,61 +90,105 @@ export class CreateComponent {
                 private fileService: FileService,
                 protected router: Router,
                 private companyService: CompanyService,
-                private title: Title) {
-        this.title.setTitle('Cadastrar Contrato');
-        this.contractService.getContractReferenceItems().subscribe(
-            items => {
-                this.items = items;
-            }
-        );
-
-        SharedState.setCurrentPath(["Contratos", "Novo"]);
-        this.companyService.getCompanies().subscribe(companies => this.companies = companies);
-
+                private title: Title,) {
     }
 
+    currentUrl = "";
 
-    submitContract() {
-        if (this.loading) return;
+    ngOnInit() {
+        this.currentUrl = this.router.url;
 
-        this.loading = true;
-        this.openModal = false;
-        const files: File[] = [];
+        if (this.currentUrl === '/contratos/editar') {
+            const state = history.state as {
+                contract?: ContractResponse;
+                items?: ContractReferenceItemsDTO[];
+            };
 
-        if (this.contractFile) {
-            files.push(this.contractFile);
+            if (state?.contract && state?.items) {
+                const contract = state.contract;
+                const items = state.items;
+
+                this.contract = {
+                    contractId: contract.contractId,
+                    number: contract.number,
+                    contractor: contract.contractor,
+                    address: contract.address,
+                    phone: contract.phone,
+                    cnpj: contract.cnpj,
+                    unifyServices: false,
+                    noticeFile: null,
+                    contractFile: contract.contractFile,
+                    items: items,
+                    companyId: contract.companyId,
+                };
+            } else {
+                void this.router.navigate(['/contratos/listar'], {
+                    queryParams: {for: 'view'}
+                });
+            }
+
+            SharedState.setCurrentPath(['Contratos', 'Editar']);
+        } else {
+            SharedState.setCurrentPath(['Contratos', 'Novo']);
         }
 
-        if (this.noticeFile) {
-            files.push(this.noticeFile);
-        }
 
-        if (files.length > 0) {
-            this.fileService.sendFiles(files).subscribe({
-                next: responses => {
-                    let responseIndex = 0;
+        this.title.setTitle('Cadastrar Contrato');
 
-                    if (this.contractFile && responseIndex < responses.length) {
-                        this.contract.contractFile = responses[responseIndex];
-                        responseIndex++;
-                    }
+        this.contractService.getContractReferenceItems()
+            .subscribe({
+                next: result => {
+                    result.forEach(item => {
+                        const index = this.contract.items.findIndex(i => i.contractReferenceItemId === item.contractReferenceItemId);
+                        const ci = this.contract.items[index];
 
-                    if (this.noticeFile && responseIndex < responses.length) {
-                        this.contract.noticeFile = responses[responseIndex];
-                    }
-
-                    this.sendContract(); // Envia o formulário após o envio dos arquivos
-                },
-                error: error => {
-                    this.loading = false;
-                    this.utils.showMessage(error.error.message, 'error');
+                        if (index !== -1) {
+                            this.items.push({
+                                contractReferenceItemId: item.contractReferenceItemId,
+                                description: item.description,
+                                nameForImport: item.nameForImport,
+                                type: item.type,
+                                linking: item.linking,
+                                itemDependency: item.itemDependency,
+                                quantity: item.quantity,
+                                price: item.price,
+                                executedQuantity: ci.executedQuantity,
+                                contractItemId: ci.contractItemId
+                            });
+                        } else {
+                            this.items.push();
+                        }
+                    });
                 }
             });
-        } else {
-            this.sendContract();
-        }
 
+        this.companyService.getCompanies()
+            .subscribe(companies => this.companies = companies);
     }
+
+
+    async submitContract() {
+        if (this.loading) return;
+        this.loading = true;
+        this.openModal = false;
+
+        try {
+            if (this.selectedFiles.length > 0) {
+                this.contract.contractFile = await this.fileService.sendFile(this.selectedFiles);
+            }
+
+            this.sendContract(); // envia formulário após upload
+        } catch (error: any) {
+            this.utils.showMessage(error?.error?.message || 'Erro ao enviar arquivo', 'error');
+        } finally {
+            this.loading = false;
+        }
+    }
+
+    onLogoSelected(event: any) {
+        this.logoFile = event.target.files[0];
+    }
+
 
     sendContract() {
         this.contractService.createContract(this.contract).subscribe({
@@ -160,6 +204,7 @@ export class CreateComponent {
     resetForm() {
         this.openModal = false;
         this.contract = {
+            contractId: null,
             number: null,
             contractor: null,
             address: null,
@@ -250,6 +295,10 @@ export class CreateComponent {
     companyFormSubmit = false;
 
     removeItem(item: ContractReferenceItemsDTO, index: number) {
+        if ((item.executedQuantity ?? 0) > 0) {
+            this.utils.showMessage('Não é permitido remover um item com registro de execução.', 'warn', "Atenção");
+            return;
+        }
 
         this.removingIndexContract = index;
         setTimeout(() => {
@@ -305,6 +354,24 @@ export class CreateComponent {
         input.value = input.value.replace(/^0+/, '');
     }
 
+    setQuantity(input: HTMLInputElement, contractReferenceItemId: number) {
+        const index = this.contract.items.findIndex(i => i.contractReferenceItemId === contractReferenceItemId);
+
+        if (index !== -1) {
+            const item = this.contract.items[index];
+            const oldValue = item.quantity;
+            const value = Number(input.value.replace(/^0+/, ''));
+
+            if ((item.executedQuantity ?? 0) > 0 && value < (item.executedQuantity ?? 0)) {
+                this.utils.showMessage(`A nova quantidade do item ${item.description} não pode ser menor que a quantidade executada.`, 'warn', 'Atenção');
+                input.value = oldValue.toString();
+                return;
+            }
+
+            this.contract.items[index].quantity = value
+        }
+    }
+
     reviewItems(contractItems: HTMLDivElement, steepFinal: HTMLDivElement) {
         if (this.contract.items.length > 0) {
             contractItems.classList.add('hidden');
@@ -350,16 +417,6 @@ export class CreateComponent {
         }
     }
 
-    onFileSelected(event: any, fileType: string) {
-        const file = event.target.files[0];
-        if (fileType === 'notice') {
-            this.noticeFile = file;
-        } else if (fileType === 'contract') {
-            this.contractFile = file;
-        } else if (fileType === 'logo') {
-            this.logoFile = file;
-        }
-    }
 
     styleField(unify: HTMLSpanElement) {
         if (unify.classList.contains('btn-outline')) {
@@ -506,4 +563,34 @@ export class CreateComponent {
 
         return true;
     }
+
+
+    selectedFiles: File[] = [];
+    maxFileSize = 10 * 1024 * 1024; // 10MB
+
+    onFilesSelected(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (!input.files) {
+            this.selectedFiles = [];
+            return;
+        }
+
+        // filtra arquivos por tamanho e tipo
+        const allowedTypes = ['application/pdf', 'application/zip'];
+        const files = Array.from(input.files).filter(file => {
+            const isAllowedType = allowedTypes.includes(file.type);
+            const isAllowedSize = file.size <= this.maxFileSize;
+            return isAllowedType && isAllowedSize;
+        });
+
+        this.selectedFiles = files;
+
+        if (files.length < input.files.length) {
+            // opcional: avisar que algum arquivo foi rejeitado
+            alert('Alguns arquivos foram ignorados por tipo ou tamanho.');
+        }
+    }
+
+
+    protected readonly formatNumber = formatNumber;
 }

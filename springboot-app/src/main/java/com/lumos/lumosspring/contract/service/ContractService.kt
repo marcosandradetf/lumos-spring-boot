@@ -9,6 +9,7 @@ import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.notifications.service.Routes
+import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.*
 import org.springframework.cache.annotation.CacheEvict
@@ -30,6 +31,7 @@ class ContractService(
     private val userRepository: UserRepository,
     private val notificationService: NotificationService,
     private val namedJdbc: NamedParameterJdbcTemplate,
+    private val s3Service: S3Service,
 ) {
 
 
@@ -51,7 +53,95 @@ class ContractService(
             key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
         )]
     )
+    @Transactional
     fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
+        return if(contractDTO.contractId != null) {
+            updateContract(contractDTO)
+        } else {
+            createContract(contractDTO)
+        }
+    }
+
+
+    private fun updateContract(contractDTO: ContractDTO): ResponseEntity<Any> {
+        val contractId = contractDTO.contractId!!
+        val contract = contractRepository.findById(contractId).orElseThrow()
+        val user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow()
+
+        contract.contractNumber = contractDTO.number
+        contract.contractor = contractDTO.contractor
+        contract.cnpj = contractDTO.cnpj
+        contract.address = contractDTO.address
+        contract.createdBy = user.userId
+        contract.unifyServices = contractDTO.unifyServices
+
+        if((contractDTO.contractFile?.length ?: 0) > 0){
+            val filesToDelete = buildSet {
+                contract.contractFile
+                    ?.takeIf { it != contractDTO.contractFile }
+                    ?.let { add(it) }
+
+                contract.noticeFile
+                    ?.takeIf { it != contractDTO.noticeFile }
+                    ?.let { add(it) }
+            }
+
+            if (filesToDelete.isNotEmpty()) {
+                s3Service.deleteFiles(Utils.getCurrentBucket(), filesToDelete)
+            }
+
+            contract.contractFile = contractDTO.contractFile
+            contract.noticeFile = contractDTO.noticeFile
+        } else {
+            val filesToDelete = buildSet {
+                contract.noticeFile
+                    ?.takeIf { it != contractDTO.noticeFile }
+                    ?.let { add(it) }
+            }
+
+            if (filesToDelete.isNotEmpty()) {
+                s3Service.deleteFiles(Utils.getCurrentBucket(), filesToDelete)
+            }
+        }
+
+        contract.companyId = contractDTO.companyId
+
+        contractRepository.save(contract)
+
+        contractDTO.items.forEach { item ->
+            val ci = if(item.contractItemId != null) {
+                contractItemsQuantitativeRepository.findById(item.contractItemId).orElseThrow()
+            } else {
+                ContractItem()
+            }
+
+            if(item.contractItemId != null && item.quantity!! < ci.quantityExecuted) {
+                throw Utils.BusinessException("A nova quantidade do item ${item.description} não pode ser menor que a quantidade executada.");
+            }
+
+            TODO() // IMPLEMENTS DELETE ITEM
+
+            ci.referenceItemId = item.contractReferenceItemId
+            ci.contractId = contractId
+            ci.contractedQuantity = item.quantity!!
+            ci.setPrices(util.convertToBigDecimal(item.price)!!)
+            contractItemsQuantitativeRepository.save(ci)
+        }
+
+        for (notificationCode in userRepository.getResponsibleTechUsers(Utils.getCurrentTenantId())) {
+            notificationService.sendNotificationForTopic(
+                title = "Novo contrato pendente para Pré-Medição",
+                body = "${user.name} atualizou o contrato de ${contract.contractor}",
+                action = Routes.CONTRACT_SCREEN,
+                notificationCode = notificationCode.toString(),
+                type = NotificationType.CONTRACT
+            )
+        }
+
+        return ResponseEntity.ok(DefaultResponse("Contrato atualizado com sucesso!"))
+    }
+
+    private fun createContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         var contract = Contract()
         val user = userRepository.findByUserId(Utils.getCurrentUserId())
             ?: throw IllegalStateException("Usuário não encontrado")
@@ -62,7 +152,6 @@ class ContractService(
         contract.address = contractDTO.address
         contract.createdBy = user.get().userId
         contract.unifyServices = contractDTO.unifyServices
-        contract.noticeFile = if ((contractDTO.noticeFile?.length ?: 0) > 0) contractDTO.noticeFile else null
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
         contract.companyId = contractDTO.companyId
 
@@ -174,6 +263,7 @@ class ContractService(
             val contractStatus: String,
             val contractValue: String,
             val additiveFile: String,
+            val companyId: Long
         )
 
         return ResponseEntity.ok()
@@ -203,7 +293,8 @@ class ContractService(
                     createdBy = user.get().completedName,
                     contractStatus = it.status,
                     contractValue = it.contractValue.toString(),
-                    additiveFile = ""
+                    additiveFile = "",
+                    companyId = it.companyId
                 )
             })
     }
@@ -350,6 +441,7 @@ class ContractService(
 
     fun getContractItemsWithExecutionsSteps(contractId: Long): ResponseEntity<Any> {
         data class ContractItemsResponseWithExecutions(
+            val contractReferenceItemId: Long,
             val number: Int,
             val contractItemId: Long,
             val description: String,
@@ -373,6 +465,7 @@ class ContractService(
                 )
                 .mapIndexed { index, it ->
                     ContractItemsResponseWithExecutions(
+                        contractReferenceItemId = it["contract_reference_item_id"] as Long,
                         number = index + 1,
                         contractItemId = it["contract_item_id"] as Long,
                         description = it["description"] as String,
