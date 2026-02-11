@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ContractItemsQuantitativeRepository extends CrudRepository<ContractItem, Long> {
+    List<ContractItem> findAllByContractId(Long contractId);
+
     record ItemDistributionRow(BigDecimal quantity, BigDecimal correction,  Long contractItemId){}
 
     void deleteByContractId(Long contractId);

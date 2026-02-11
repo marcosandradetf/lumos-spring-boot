@@ -33,8 +33,6 @@ class ContractService(
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val s3Service: S3Service,
 ) {
-
-
     @Transactional
     fun deleteById(contractId: Long): ResponseEntity<Any> {
         try {
@@ -61,7 +59,6 @@ class ContractService(
             createContract(contractDTO)
         }
     }
-
 
     private fun updateContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         val contractId = contractDTO.contractId!!
@@ -105,12 +102,27 @@ class ContractService(
         }
 
         contract.companyId = contractDTO.companyId
-
         contractRepository.save(contract)
+
+        val currentContractItems = contractItemsQuantitativeRepository.findAllByContractId(contractId)
+        val deleteContractItemsIds =
+            currentContractItems
+                .filterNot { currentItem ->
+                    contractDTO.items.filter { it.contractItemId != null }
+                        .map { it.contractItemId }.contains(currentItem.contractItemId)
+                }
+                .map { it.contractItemId }
+
+        try {
+            contractItemsQuantitativeRepository.deleteAllById(deleteContractItemsIds)
+        } catch (_: Exception) {
+            throw Utils.BusinessException("Não é possível excluir itens com registro de execução")
+        }
 
         contractDTO.items.forEach { item ->
             val ci = if(item.contractItemId != null) {
-                contractItemsQuantitativeRepository.findById(item.contractItemId).orElseThrow()
+                currentContractItems.find { it.contractItemId == item.contractItemId }
+                    ?: throw Utils.BusinessException("Não foi possível encontrar o item ${item.description} na coleção")
             } else {
                 ContractItem()
             }
@@ -118,8 +130,6 @@ class ContractService(
             if(item.contractItemId != null && item.quantity!! < ci.quantityExecuted) {
                 throw Utils.BusinessException("A nova quantidade do item ${item.description} não pode ser menor que a quantidade executada.");
             }
-
-            TODO() // IMPLEMENTS DELETE ITEM
 
             ci.referenceItemId = item.contractReferenceItemId
             ci.contractId = contractId
