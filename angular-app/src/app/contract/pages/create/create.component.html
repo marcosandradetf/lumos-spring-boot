@@ -26,7 +26,7 @@
 
               <!-- Número do contrato -->
               <div class="flex flex-col gap-1">
-                <label for="number">N.º Contrato*</label>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">N.º Contrato*</label>
                 <input [(ngModel)]="contract.number"
                        id="number"
                        type="text"
@@ -39,7 +39,7 @@
 
               <!-- Contratante -->
               <div class="flex flex-col gap-1">
-                <label for="contractor">Contratante*</label>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Contratante*</label>
                 <input [(ngModel)]="contract.contractor"
                        id="contractor"
                        type="text"
@@ -51,7 +51,7 @@
 
               <!-- Endereço -->
               <div class="flex flex-col gap-1">
-                <label for="address">Endereço do contratante*</label>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Endereço do contratante*</label>
                 <input [(ngModel)]="contract.address"
                        id="address"
                        type="text"
@@ -64,7 +64,7 @@
               <!-- Telefone e CNPJ - lado a lado no desktop -->
               <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex flex-col gap-1 w-full">
-                  <label for="phone">Telefone do Contratante*</label>
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Telefone do Contratante*</label>
                   <input [(ngModel)]="contract.phone"
                          id="phone"
                          type="text"
@@ -78,7 +78,7 @@
                 </div>
 
                 <div class="flex flex-col gap-1 w-full">
-                  <label for="cnpj">CNPJ do Contratante*</label>
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">CNPJ do Contratante*</label>
                   <input [(ngModel)]="contract.cnpj"
                          id="cnpj"
                          type="text"
@@ -94,7 +94,7 @@
 
               <!-- Empresa contratada -->
               <div class="flex flex-col gap-1">
-                <label for="companyId">Empresa contratada*</label>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Empresa contratada*</label>
                 <p-select id="companyId"
                           [options]="companies"
                           [(ngModel)]="contract.companyId"
@@ -117,8 +117,8 @@
               </div>
 
               <!-- Arquivos e botão unificado -->
-              <div class="flex flex-col sm:flex-row gap-4 mt-6">
-                <div class="flex flex-col gap-1 w-full sm:w-auto">
+              <div class="flex flex-col gap-4 mt-6">
+                <div class="flex flex-col gap-1 w-full ">
                   <label class="text-sm font-medium text-surface-700 dark:text-surface-300">
                     Arquivos do Contrato
                   </label>
@@ -161,10 +161,10 @@
                 </div>
 
 
-                <div class="flex flex-col gap-1 w-full sm:w-auto">
-                  <label>Serviço Unificado</label>
+                <div class="flex flex-col gap-1 w-full ">
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Serviço Unificado</label>
                   <span type="button"
-                        class="btn btn-outline btn-primary btn-sm text-xs h-12 w-full sm:w-64 flex items-center justify-center"
+                        class="btn btn-outline btn-primary btn-sm text-xs h-12 w-full flex items-center justify-center"
                         #unify
                         (click)="styleField(unify)">
                     Clique para ativar serviço unificado
@@ -212,6 +212,7 @@
                   <td class="px-4 py-2 text-center">
                     <button
                       type="button"
+                      [disabled]="item.type === 'SERVIÇO' && contract.unifyServices"
                       aria-label="Adicionar item"
                       class="flex items-center justify-center
                                text-white bg-blue-600
@@ -390,7 +391,11 @@
           </svg>
           <div>
             <h3 class="text-lg font-semibold">Sucesso!</h3>
-            <p class="text-sm">O contrato foi criado com sucesso.</p>
+            @if(currentUrl === '/contratos/editar') {
+              <p class="text-sm">O contrato foi atualizado com sucesso.</p>
+            } @else {
+              <p class="text-sm">O contrato foi criado com sucesso.</p>
+            }
           </div>
         </div>
       </div>
@@ -400,7 +405,7 @@
           Criar Novo Contrato
         </button>
         <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-                (click)="router.navigate(['execucao/pre-medicao'],{ queryParams: { for: 'view' } });">
+                (click)="router.navigate(['contratos/listar'],{ queryParams: { for: 'view' } });">
           Ver Contratos Criados
         </button>
       </div>

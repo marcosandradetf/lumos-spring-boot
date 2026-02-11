@@ -128,3 +128,6 @@ lumos-android/.gradle/8.14/fileChanges/last-build.bin
 lumos-android/.gradle/buildOutputCleanup/cache.properties
 lumos-android/.gradle/buildOutputCleanup/cache.properties
 lumos-android/.gradle/buildOutputCleanup/cache.properties
+
+# env
+.env

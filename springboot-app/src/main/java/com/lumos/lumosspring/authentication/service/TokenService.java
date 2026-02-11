@@ -245,7 +245,7 @@ public class TokenService {
         }
 
         if (!user.get().getStatus()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possuí permissão de acesso."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possui permissão de acesso."));
         }
 
         if (isMobile) {

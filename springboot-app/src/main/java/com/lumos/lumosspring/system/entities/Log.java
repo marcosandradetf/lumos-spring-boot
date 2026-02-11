@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.system.entities;
 
+import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -7,7 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Table
-public class Log {
+public class Log extends TenantEntity {
     @Id
     private Long idLog;
 

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -62,8 +63,9 @@ public class MaterialReferenceService {
 
                 log.setMessage(logMessage);
                 log.setIdUser(user.get().getUserId());
-                log.setCategory("Estoque");
-                log.setType("Sucess");
+                log.setCategory("stock");
+                log.setType("delete");
+                log.setCreationTimestamp(Instant.now());
                 logRepository.save(log);
 
             } else {
@@ -171,7 +173,7 @@ public class MaterialReferenceService {
                     materialId,
                     material.materialName()
             );
-            log.setType("Criação");
+            log.setType("create");
         } else {
             Long materialId = material.materialId();
             var materialSku = materialReferenceRepository.findById(materialId).orElseThrow();
@@ -224,12 +226,14 @@ public class MaterialReferenceService {
                     material.materialId(),
                     material.materialName()
             );
-            log.setType("Atualização");
+            log.setType("update");
         }
 
         log.setMessage(logMessage);
         log.setIdUser(user.getUserId());
-        log.setCategory("Estoque");
+        log.setCategory("stock");
+        log.setType("create");
+        log.setCreationTimestamp(Instant.now());
         logRepository.save(log);
 
         return ResponseEntity.noContent().build();

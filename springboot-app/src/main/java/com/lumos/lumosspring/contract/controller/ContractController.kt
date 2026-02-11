@@ -1,11 +1,11 @@
 package com.lumos.lumosspring.contract.controller
 
 import com.lumos.lumosspring.contract.dto.ContractDTO
-import com.lumos.lumosspring.contract.dto.ContractItemBalance
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.service.ContractService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.time.Instant
 
 @RestController
 @RequestMapping("/api")
@@ -32,9 +32,15 @@ class ContractController(
     fun getContract(@PathVariable contractId: Long): ResponseEntity<Any> =
          contractService.getContract(contractId)
 
-    @GetMapping("/contracts/get-AllContracts")
-    fun getAllActiveContracts(): ResponseEntity<Any> =
-        contractService.getAllActiveContracts()
+    @PostMapping("/contracts/get-AllContracts")
+    fun getAllActiveContracts(@RequestBody filters: FilterRequest): ResponseEntity<Any> =
+        contractService.getAllActiveContracts(filters)
+    data class FilterRequest(
+        val contractor: String?,
+        val startDate: Instant?,
+        val endDate: Instant?,
+        val status: String
+    )
 
     @GetMapping("/contracts/get-contract-items/{contractId}")
     fun getContractItems(@PathVariable contractId: Long): ResponseEntity<Any> =

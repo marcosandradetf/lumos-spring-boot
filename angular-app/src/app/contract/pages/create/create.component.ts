@@ -121,6 +121,7 @@ export class CreateComponent implements OnInit {
                     items: items,
                     companyId: contract.companyId,
                 };
+
             } else {
                 void this.router.navigate(['/contratos/listar'], {
                     queryParams: {for: 'view'}
@@ -156,7 +157,7 @@ export class CreateComponent implements OnInit {
                                 contractItemId: ci.contractItemId
                             });
                         } else {
-                            this.items.push();
+                            this.items.push(item);
                         }
                     });
                 }
@@ -263,7 +264,6 @@ export class CreateComponent implements OnInit {
         // Atualiza o valor no modelo e no campo de input
         item.price = formattedValue;
         (event.target as HTMLInputElement).value = formattedValue; // Exibe o valor formatado no campo de input
-        console.log(this.items);
     }
 
 
@@ -401,7 +401,6 @@ export class CreateComponent implements OnInit {
             .forEach((i) => {
                 if (i.linking) { // Verifica se linking é uma string válida
                     if (i.linking.startsWith('1')) {
-                        console.log(i.quantity);
                         quantity += i.quantity * 2.5;
                     } else if (i.linking.startsWith('2')) {
                         quantity += i.quantity * 8.5;

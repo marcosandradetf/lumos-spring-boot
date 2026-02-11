@@ -5,9 +5,12 @@ import com.lumos.lumosspring.contract.entities.Contract;
 import kotlin.Triple;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +21,58 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
 
     Optional<Contract> findContractByContractId(long contractId);
 
-    List<Contract> findAllByTenantIdAndStatus(UUID tenantId, String status);
+    @Query("""
+        select
+            c.contract_id,
+            c.contract_number as number,
+            c.contractor,
+            c.address,
+            c.phone,
+            c.cnpj,
+            c.contract_file,
+            creator.name || ' ' || creator.last_name as created_by,
+            count(ci.*) as item_quantity,
+            c.status as contract_status,
+            SUM(ci.total_price) AS contract_value,
+            c.company_id,
+            updated.name || ' ' || updated.last_name as last_updated_by
+        from contract c
+        join contract_item ci on ci.contract_contract_id = c.contract_id
+        join app_user creator on c.created_by_id_user = creator.user_id
+        left join app_user updated on c.last_updated_by = updated.user_id
+        where
+            (
+                (:contractor IS NOT NULL AND c.tenant_id = :tenantId AND (lower(c.contractor) like '%' || :contractor || '%' OR c.contract_number = :contractor ))
+                OR (:contractor IS NULL AND c.tenant_id = :tenantId
+                    AND c.status = :status
+                    AND c.creation_date >= :start
+                    AND c.creation_date < :end)
+            )
+        group by c.contract_id, c.contractor, creator.name, creator.last_name, updated.name, updated.last_name
+        order by c.contractor
+    """)
+    List<ContractResponseDTO> findAllByTenantIdAndStatus(
+            @Param("tenantId") UUID tenantId,
+            @Param("status") String status,
+            @Param("start") Instant start,
+            @Param("end") Instant end,
+            @Param("contractor") String contractor
+    );
+    record ContractResponseDTO (
+            long contractId,
+            String number,
+            String contractor,
+            String address,
+            String phone,
+            String cnpj,
+            String contractFile,
+            String createdBy,
+            int itemQuantity,
+            String contractStatus,
+            BigDecimal contractValue,
+            long companyId,
+            String lastUpdatedBy
+    ){}
 
     @Query("""
         select true from contract

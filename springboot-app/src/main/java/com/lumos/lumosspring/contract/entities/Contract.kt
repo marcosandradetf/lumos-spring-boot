@@ -23,16 +23,11 @@ class Contract : TenantEntity() {
     @Column("created_by_id_user")
     var createdBy: UUID? = null
 
-    var contractValue : BigDecimal = BigDecimal.ZERO
     var unifyServices : Boolean = false
     var noticeFile : String? = null
     var contractFile : String? = null
     var status : String = ContractStatus.ACTIVE
     var companyId: Long = -1L
+    var lastUpdatedBy: UUID? = null
 
-    fun sumTotalPrice(totalPrice: BigDecimal?) {
-        if (totalPrice != null) {
-            this.contractValue = this.contractValue.add(totalPrice)
-        }
-    }
 }

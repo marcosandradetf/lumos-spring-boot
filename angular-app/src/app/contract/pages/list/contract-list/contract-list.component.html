@@ -120,6 +120,7 @@
           </label>
           <p-dropdown
             [options]="statuses"
+            [disabled]="(filters.contractor?.length ?? 0) > 0"
             optionLabel="label"
             optionValue="value"
             [(ngModel)]="filters.status"
@@ -138,6 +139,7 @@
           </label>
           <p-calendar
             [(ngModel)]="filters.startDate"
+            [disabled]="(filters?.contractor?.length ?? 0) > 0"
             placeholder="dd/mm/aaaa"
             dateFormat="dd/mm/yy"
             fluid
@@ -158,6 +160,7 @@
             placeholder="dd/mm/aaaa"
             dateFormat="dd/mm/yy"
             fluid
+            [disabled]="(filters?.contractor?.length ?? 0) > 0"
             class="w-full">
           </p-calendar>
 
@@ -166,11 +169,14 @@
         </div>
 
         <!-- Modo de visualização -->
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
-            Razão Social
+        <div class="flex flex-col gap-1 w-full">
+          <label class="text-xs font-medium text-slate-600 dark:text-slate-400 w-full">
+            Razão Social ou Nº do contrato
           </label>
+          <input
 
+            type="text"
+            pInputText [(ngModel)]="filters.contractor"/>
         </div>
 
       </div>
@@ -306,10 +312,20 @@
         </div>
 
         <!-- Criador -->
-        <div class="pt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
-          Criado por {{ c.createdBy }}
-          <span class="material-icons text-sm ml-1 text-blue-500">verified</span>
+        <div class="pt-2 flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+          <!-- Criador -->
+          <div class="flex items-center">
+            <span class="material-icons text-sm text-blue-500 mr-1" title="Criado por">verified</span>
+            <span>Criado por {{ c.createdBy }}</span>
+          </div>
+
+          <!-- Última atualização -->
+          <div class="flex items-center" *ngIf="c.lastUpdatedBy">
+            <span class="material-icons text-sm mr-1" title="Última atualização">edit</span>
+            <span>Última atualização por {{ c.lastUpdatedBy }}</span>
+          </div>
         </div>
+
 
       </div>
     </div>
@@ -338,13 +354,9 @@
           (click)="showItems = false"
         ></button>
 
-        <button pButton icon="pi pi-download" label="Contrato"
+        <button pButton icon="pi pi-download" label="Arquivos do Contrato"
                 class="p-button-sm p-button-text sm:p-button-outlined"
-                (click)="download('contract')"></button>
-
-        <button pButton icon="pi pi-download" label="Edital"
-                class="p-button-sm p-button-text sm:p-button-outlined"
-                (click)="download('notice')"></button>
+                (click)="downloadContractFiles()"></button>
       </div>
     </div>
 
@@ -370,7 +382,7 @@
                     (click)="onRowEditInit(item)"></button>
 
             <button pButton icon="pi pi-trash"
-                    class="p-button-text p-button-sm p-button-danger"></button>
+                    class="p-button-text p-button-sm p-button-danger" (click)="deleteItem(item)"></button>
           </div>
         </div>
 
@@ -425,16 +437,17 @@
     <!-- DESKTOP – TABELA -->
     <!-- ===================== -->
     <p-table
+      #dt
       class="hidden sm:block mt-4 text-sm"
       [value]="contractItems"
-      dataKey="id"
+      dataKey="contractItemId"
       editMode="row"
       responsiveLayout="scroll"
     >
       <ng-template pTemplate="header">
         <tr>
           <th>Item</th>
-          <th>Descrição</th>
+          <th class="text-left">Descrição</th>
           <th class="text-right">Qtde</th>
           <th class="text-right">Executado</th>
           <th class="text-right">Saldo</th>
@@ -447,30 +460,138 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-item let-editing="editing" let-ri="rowIndex">
-        <tr [pEditableRow]="item">
+        <tr [pEditableRow]="item" #rowElement>
           <td class="font-medium">{{ item.number }}</td>
           <td class="max-w-xs truncate">{{ item.description }}</td>
 
-          <td class="text-right">
+          <td class="text-right" [pEditableColumn]="item.contractedQuantity" pEditableColumnField="contractedQuantity">
             <p-cellEditor>
+
+              <!-- INPUT -->
               <ng-template pTemplate="input">
-                <input pInputText type="number" class="w-20"
-                       [(ngModel)]="item.contractedQuantity" />
+                <input
+                  pInputText
+                  type="number"
+                  pSize="small"
+                  class="w-20 text-right"
+                  [(ngModel)]="item.contractedQuantity"
+                />
               </ng-template>
+
+              <!-- OUTPUT -->
               <ng-template pTemplate="output">
-                {{ item.contractedQuantity }}
+                <div
+                  class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+               cursor-pointer transition-all duration-200
+
+               hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+               dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40"
+                >
+                <span class="text-gray-800 dark:text-gray-100">
+                  {{ item.contractedQuantity }}
+                </span>
+
+                  <i
+                    class="pi pi-pencil text-xs
+                 text-gray-400 dark:text-gray-500
+                 opacity-0 group-hover:opacity-100
+                 transition-opacity duration-200"
+                  ></i>
+                </div>
               </ng-template>
+
             </p-cellEditor>
           </td>
 
-          <td class="text-right">{{ item.totalExecuted }}</td>
+          <td
+            class="text-right relative cursor-pointer"
+            (mouseenter)="op.show($event, anchor)"
+            (mouseleave)="op.hide()">
+
+            <span
+              #anchor
+              class="inline-block">
+              {{ item.totalExecuted }}
+            </span>
+
+            <p-overlayPanel
+              #op
+              [dismissable]="false"
+              [showCloseIcon]="false"
+              appendTo="body"
+            >
+              <div
+                class="flex flex-col gap-2 min-w-[180px]
+             text-sm
+             text-gray-800 dark:text-gray-100"
+              >
+
+                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.totalExecuted === 0">
+                  Nenhuma execução
+                </span>
+
+                <div
+                  *ngFor="let step of item.executedQuantity; let i = index"
+                  class="flex justify-between"
+                >
+                <span class="text-gray-500 dark:text-gray-400">
+                  {{ i + 1 }}ª Etapa
+                </span>
+                          <span class="font-medium">
+                  {{ step.quantity }}
+                </span>
+                </div>
+              </div>
+            </p-overlayPanel>
+
+          </td>
+
+
+
+
           <td class="text-right">
             {{ item.contractedQuantity - item.totalExecuted }}
           </td>
 
-          <td class="text-right">
-            {{ item.unitPrice | currency:'BRL' }}
+          <td class="text-right" [pEditableColumn]="item.unitPrice" pEditableColumnField="unitPrice">
+            <p-cellEditor>
+
+              <!-- INPUT -->
+              <ng-template pTemplate="input">
+                <input
+                  pInputText
+                  type="number"
+                  pSize="small"
+                  class="w-20 text-right"
+                  [(ngModel)]="item.unitPrice"
+                />
+              </ng-template>
+
+              <!-- OUTPUT -->
+              <ng-template pTemplate="output">
+                <div
+                  class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+               cursor-pointer transition-all duration-200
+
+               hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+               dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40"
+                >
+                <span class="text-gray-800 dark:text-gray-100">
+                  {{ item.unitPrice | currency:'BRL' }}
+                </span>
+
+                  <i
+                    class="pi pi-pencil text-xs
+                 text-gray-400 dark:text-gray-500
+                 opacity-0 group-hover:opacity-100
+                 transition-opacity duration-200"
+                  ></i>
+                </div>
+              </ng-template>
+
+            </p-cellEditor>
           </td>
+
 
           <td class="text-right">
             {{ item.unitPrice * item.contractedQuantity | currency:'BRL' }}
@@ -490,6 +611,9 @@
 
             <p-overlayPanel #op>
               <div class="flex flex-col gap-2 min-w-[180px]">
+                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.totalExecuted === 0">
+                  Nenhuma execução
+                </span>
                 <div
                   *ngFor="let step of item.executedQuantity; let i = index"
                   class="flex justify-between text-sm"
@@ -510,17 +634,17 @@
 
               <button *ngIf="!editing"
                       pButton icon="pi pi-trash"
-                      class="p-button-text p-button-sm p-button-danger"></button>
+                      class="p-button-text p-button-sm p-button-danger" (click)="deleteItem(item)"></button>
 
               <button *ngIf="editing"
                       pButton icon="pi pi-check"
                       class="p-button-text p-button-sm p-button-success"
-                      (click)="onRowEditSave(item)"></button>
+                      (click)="onRowEditSave(item, rowElement)"></button>
 
               <button *ngIf="editing"
                       pButton icon="pi pi-times"
                       class="p-button-text p-button-sm"
-                      (click)="onRowEditCancel(item, ri)"></button>
+                      (click)="onRowEditCancel(item)"></button>
             </div>
           </td>
         </tr>

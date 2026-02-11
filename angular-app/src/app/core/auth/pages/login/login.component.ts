@@ -1,17 +1,13 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
+import {NgIf, NgOptimizedImage} from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {Meta, Title} from '@angular/platform-browser';
 import { map } from 'rxjs';
-
 import { AuthService } from '../../auth.service';
 import { UtilsService } from '../../../service/utils.service';
-
 import { MarkdownModule } from 'ngx-markdown';
-
 import { Toast } from 'primeng/toast';
-import { Dialog } from 'primeng/dialog';
 import { Button } from 'primeng/button';
 import { Card } from 'primeng/card';
 import { Password } from 'primeng/password';
@@ -33,9 +29,7 @@ export type DocItem = {
     imports: [
         FormsModule,
         NgIf,
-        NgForOf,
         Toast,
-        Dialog,
         Button,
         Card,
         Password,
@@ -178,7 +172,6 @@ export class LoginComponent implements OnInit {
                 // se seu backend manda error.error.message, ótimo; senão cai no genérico
                 const msg = error?.error?.message ?? error?.error ?? 'Usuário ou senha inválidos.';
                 this.authError = typeof msg === 'string' ? msg : 'Usuário ou senha inválidos.';
-                this.utils.showMessage(this.authError, 'error', 'Não foi possível fazer Login');
             }
         });
     }

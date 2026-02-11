@@ -32,6 +32,7 @@ export interface ContractResponse {
     contractValue: string,
     additiveFile: string | null,
     companyId: number,
+    lastUpdatedBy: string | null,
 }
 
 export interface ContractItemsResponse {

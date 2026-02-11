@@ -9,7 +9,7 @@ import {
 } from '../../../contract-models';
 import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
 import {Dialog} from 'primeng/dialog';
-import {TableModule} from 'primeng/table';
+import {Table, TableModule} from 'primeng/table';
 import {Button, ButtonDirective} from 'primeng/button';
 import {FormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
@@ -29,6 +29,7 @@ import {Calendar} from 'primeng/calendar';
 import {DropdownModule} from 'primeng/dropdown';
 import {Message} from 'primeng/message';
 import {OverlayPanelModule} from 'primeng/overlaypanel';
+import {Utils} from '../../../../core/service/utils';
 
 
 @Component({
@@ -74,15 +75,15 @@ export class ContractListComponent implements OnInit {
     message = "";
     contextItems: MenuItem[] = [
         {
-            label: 'Exibir Itens', icon:
+            label: 'Exibir/Editar Itens', icon:
                 'pi pi-list',
-            command: async () => this.getItems(this.selectedContract.contractId),
+            command: async () => await this.getItems(this.selectedContract.contractId),
         },
         {
             label: 'Editar Contrato', icon:
                 'pi pi-pencil',
             command: async () => {
-                await this.getItems(this.selectedContract.contractId);
+                await this.getItems(this.selectedContract.contractId, false);
 
                 const items: ContractReferenceItemsDTO[] = [];
                 this.contractItems.forEach((item) => {
@@ -94,7 +95,8 @@ export class ContractListComponent implements OnInit {
                         linking: item.linking ?? '',
                         itemDependency: '',
                         quantity: item.contractedQuantity,
-                        price: item.unitPrice,
+                        price: item.unitPrice
+                            .replace('.', ','),
                         executedQuantity: item.totalExecuted,
                         contractItemId: item.contractItemId
                     });
@@ -152,14 +154,29 @@ export class ContractListComponent implements OnInit {
             this.titleService.setTitle("Importar Pré-Medição");
         }
 
-        this.contractService.getAllContracts().subscribe(c => {
-            this.contracts = c;
-            this.contractsBackup = c;
-            this.loading = false;
-        });
+        this.getContracts();
 
         SharedState.setCurrentPath(['Contratos', 'Exibir Todos']);
 
+    }
+
+    getContracts() {
+        this.contractService.getAllContracts(this.filters).subscribe({
+            next: c => {
+                this.contracts = c;
+                this.contractsBackup = c;
+            },
+            error: err => {
+                this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, 'error');
+                this.loading = false;
+            },
+            complete: () => {
+                this.loading = false;
+
+                if (this.contracts.length > 0) this.showMenu = false;
+                else this.utils.showMessage("Não existe nenhum contrato para os filtros selecionados", "info", "");
+            }
+        });
     }
 
 
@@ -193,7 +210,7 @@ export class ContractListComponent implements OnInit {
     // }
 
 
-    async getItems(contractId: number): Promise<void> {
+    async getItems(contractId: number, showItems: boolean = true): Promise<void> {
         if (contractId === 0 || this.contractId === contractId) return;
 
         this.contractId = contractId;
@@ -203,15 +220,15 @@ export class ContractListComponent implements OnInit {
             this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
                 next: items => {
                     this.contractItems = items || [];
-                    this.normalizeExecutedQuantities(); // 🔧 Preenche etapas faltantes com 0
-                    this.showItems = true;
+                    this.normalizeExecutedQuantities();
+                    this.showItems = showItems;
                 },
                 error: err => {
-                    console.error('Erro ao carregar itens do contrato:', err);
+                    this.loading = false;
                     reject(err);
                 },
                 complete: () => {
-                    this.loading = false;
+                    this.loading = !showItems;
                     resolve();
                 }
             });
@@ -226,84 +243,51 @@ export class ContractListComponent implements OnInit {
         return this.contracts.find(c => c.contractId == this.contractId)?.contractValue || "0.00";
     }
 
+
+    clonedItems: { [key: string]: any } = {};
+
+    @ViewChild('dt') table!: Table;
+
     onRowEditInit(item: any) {
-        console.log('Edit init', item);
+        this.clonedItems[item.id] = { ...item }; // backup da linha
+        this.table.initRowEdit(item); // ativa a edição só desta linha
     }
 
-    onRowEditSave(item: any) {
-        // Aqui você pode validar ou salvar
-        console.log('Item salvo:', item);
+    onRowEditSave(item: any, rowElement: HTMLTableRowElement) {
+        // aqui você valida ou recalcula valores
+        delete this.clonedItems[item.id];
+        this.table.saveRowEdit(item, rowElement); // fecha a edição só desta linha
     }
 
-    onRowEditCancel(item: any, index: number) {
-        console.log('Edição cancelada', item);
+    onRowEditCancel(item: any) {
+        const index = this.contractItems.findIndex(i => i.contractItemId === item.contractItemId);
+        this.contractItems[index] = this.clonedItems[item.id]; // restaura backup
+        delete this.clonedItems[item.id];
+        this.table.cancelRowEdit(item); // fecha a edição só desta linha
     }
 
 
-    download(file: 'contract' | 'notice' | 'additive') {
+    downloadContractFiles() {
         const contract = this.contracts.find(c => c.contractId == this.contractId);
-        switch (file) {
-            case 'contract':
-                const contractFile = contract?.contractFile;
-                if (contractFile) {
-                    this.minioService.downloadFile(contractFile).subscribe(response => {
-                        const contentDisposition = response.headers.get('Content-Disposition');
-                        const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-                        const filename = filenameMatch ? filenameMatch[1] : contractFile;
+        const contractFile = contract?.contractFile;
+        if (contractFile) {
+            this.minioService.downloadFile(contractFile).subscribe(response => {
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+                const filename = filenameMatch ? filenameMatch[1] : contractFile;
 
-                        const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
-                        const url = window.URL.createObjectURL(blob);
+                const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
+                const url = window.URL.createObjectURL(blob);
 
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        link.click();
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
 
-                        window.URL.revokeObjectURL(url);
-                    });
-                } else this.utils.showMessage('Nenhum contrato foi encontrado', "warn", 'Arquivo não existente')
-                break;
-            case 'notice':
-                const noticeFile = contract?.noticeFile;
-                if (noticeFile) {
-                    this.minioService.downloadFile(noticeFile).subscribe(response => {
-                        const contentDisposition = response.headers.get('Content-Disposition');
-                        const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-                        const filename = filenameMatch ? filenameMatch[1] : noticeFile;
-
-                        const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
-                        const url = window.URL.createObjectURL(blob);
-
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        link.click();
-
-                        window.URL.revokeObjectURL(url);
-                    });
-                } else this.utils.showMessage('Nenhum edital foi encontrado', "warn", 'Arquivo não existente')
-                break
-            case 'additive':
-                const additiveFile = contract?.additiveFile;
-                if (additiveFile) {
-                    this.minioService.downloadFile(additiveFile).subscribe(response => {
-                        const contentDisposition = response.headers.get('Content-Disposition');
-                        const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-                        const filename = filenameMatch ? filenameMatch[1] : additiveFile;
-
-                        const blob = new Blob([response.body!], {type: response.headers.get('Content-Type') || 'application/octet-stream'});
-                        const url = window.URL.createObjectURL(blob);
-
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        link.click();
-
-                        window.URL.revokeObjectURL(url);
-                    });
-                } else this.utils.showMessage('Nenhum aditivo foi encontrado', "warn", 'Arquivo não existente')
-                break;
-        }
+                window.URL.revokeObjectURL(url);
+            });
+        } else
+            this.utils.showMessage('Nenhum arquivo foi encontrado', "warn", 'Arquivo não existente')
     }
 
     getExecutions() {
@@ -453,7 +437,23 @@ export class ContractListComponent implements OnInit {
     };
 
     protected applyFilters() {
+        this.submitted = true;
 
+        if ((!this.filters.startDate || !this.filters.endDate || !this.filters.status) && !this.filters.contractor) {
+            return;
+        }
+
+        if (!this.filters.contractor) {
+            const days = Utils.diffInDays(this.filters.startDate!, this.filters.endDate!);
+
+            if (days > 62) {
+                this.utils.showMessage("O Período máximo é de 62 dias.", 'warn', 'Período inválido');
+                return;
+            }
+        }
+
+        this.loading = true;
+        this.getContracts();
     }
 
 
@@ -467,4 +467,13 @@ export class ContractListComponent implements OnInit {
     }
 
     protected readonly Number = Number;
+
+    protected deleteItem(item: ContractItemsResponseWithExecutionsSteps) {
+        if(item.totalExecuted > 0) {
+            this.utils.showMessage('Por motivo de segurança de dados, não é permitido excluir um item com registro de execução.', 'warn','Atenção');
+            return;
+        }
+
+        this.contractItems = this.contractItems.filter(i => i.contractItemId !== item.contractItemId);
+    }
 }

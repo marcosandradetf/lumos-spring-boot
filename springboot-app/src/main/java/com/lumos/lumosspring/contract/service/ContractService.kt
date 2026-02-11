@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.contract.service
 
+import com.lumos.lumosspring.contract.controller.ContractController
 import com.lumos.lumosspring.contract.dto.ContractDTO
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.entities.Contract
@@ -10,6 +11,8 @@ import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.notifications.service.NotificationService
 import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.s3.service.S3Service
+import com.lumos.lumosspring.system.entities.Log
+import com.lumos.lumosspring.system.repository.LogRepository
 import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.*
 import org.springframework.cache.annotation.CacheEvict
@@ -21,6 +24,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 @Service
 class ContractService(
@@ -32,6 +38,7 @@ class ContractService(
     private val notificationService: NotificationService,
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val s3Service: S3Service,
+    private val logRepository: LogRepository,
 ) {
     @Transactional
     fun deleteById(contractId: Long): ResponseEntity<Any> {
@@ -53,7 +60,7 @@ class ContractService(
     )
     @Transactional
     fun saveContract(contractDTO: ContractDTO): ResponseEntity<Any> {
-        return if(contractDTO.contractId != null) {
+        return if (contractDTO.contractId != null) {
             updateContract(contractDTO)
         } else {
             createContract(contractDTO)
@@ -65,21 +72,31 @@ class ContractService(
         val contract = contractRepository.findById(contractId).orElseThrow()
         val user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow()
 
+        val log = Log()
+
+        log.message = """
+            Usuário ${user.username} alterou o contrato ${contract.contractNumber} - ${contract.contractor}
+        """.trimIndent()
+        log.category = "contract"
+        log.type = "update"
+        log.creationTimestamp = Instant.now()
+        log.idUser = user.userId
+        logRepository.save(log)
+
         contract.contractNumber = contractDTO.number
+        contract.phone = contractDTO.phone
         contract.contractor = contractDTO.contractor
         contract.cnpj = contractDTO.cnpj
         contract.address = contractDTO.address
-        contract.createdBy = user.userId
         contract.unifyServices = contractDTO.unifyServices
+        contract.lastUpdatedBy = user.userId
 
-        if((contractDTO.contractFile?.length ?: 0) > 0){
+        if ((contractDTO.contractFile?.length ?: 0) > 0) {
             val filesToDelete = buildSet {
                 contract.contractFile
-                    ?.takeIf { it != contractDTO.contractFile }
                     ?.let { add(it) }
 
                 contract.noticeFile
-                    ?.takeIf { it != contractDTO.noticeFile }
                     ?.let { add(it) }
             }
 
@@ -92,7 +109,6 @@ class ContractService(
         } else {
             val filesToDelete = buildSet {
                 contract.noticeFile
-                    ?.takeIf { it != contractDTO.noticeFile }
                     ?.let { add(it) }
             }
 
@@ -120,14 +136,14 @@ class ContractService(
         }
 
         contractDTO.items.forEach { item ->
-            val ci = if(item.contractItemId != null) {
+            val ci = if (item.contractItemId != null) {
                 currentContractItems.find { it.contractItemId == item.contractItemId }
                     ?: throw Utils.BusinessException("Não foi possível encontrar o item ${item.description} na coleção")
             } else {
                 ContractItem()
             }
 
-            if(item.contractItemId != null && item.quantity!! < ci.quantityExecuted) {
+            if (item.contractItemId != null && item.quantity!! < ci.quantityExecuted) {
                 throw Utils.BusinessException("A nova quantidade do item ${item.description} não pode ser menor que a quantidade executada.");
             }
 
@@ -160,6 +176,7 @@ class ContractService(
         contract.contractor = contractDTO.contractor
         contract.cnpj = contractDTO.cnpj
         contract.address = contractDTO.address
+        contract.phone = contractDTO.phone
         contract.createdBy = user.get().userId
         contract.unifyServices = contractDTO.unifyServices
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
@@ -258,55 +275,20 @@ class ContractService(
         )
     }
 
-    fun getAllActiveContracts(): ResponseEntity<Any> {
-        data class ContractResponseDTO(
-            val contractId: Long,
-            val number: String,
-            val contractor: String,
-            val address: String,
-            val phone: String,
-            val cnpj: String,
-            val noticeFile: String,
-            val contractFile: String,
-            val createdBy: String,
-            val itemQuantity: Int,
-            val contractStatus: String,
-            val contractValue: String,
-            val additiveFile: String,
-            val companyId: Long
+    fun getAllActiveContracts(filters: ContractController.FilterRequest): ResponseEntity<Any> {
+        val endPlusOneDay = filters.endDate?.plus(1, ChronoUnit.DAYS)
+        val contractor = filters.contractor
+
+        val response = contractRepository.findAllByTenantIdAndStatus(
+            Utils.getCurrentTenantId(),
+            filters.status,
+            filters.startDate,
+            endPlusOneDay,
+            if(contractor == "") null else contractor?.lowercase()
         )
 
         return ResponseEntity.ok()
-            .body(contractRepository.findAllByTenantIdAndStatus(Utils.getCurrentTenantId(), ContractStatus.ACTIVE).map {
-                val user = userRepository.findByUserId(it.createdBy)
-                    ?: throw IllegalStateException("Usuário não encontrado")
-
-                val rs = JdbcUtil.getSingleRow(
-                    namedJdbc = namedJdbc,
-                    sql = """
-                    select count(*) as quantity from contract_item
-                    where contract_contract_id = :contractId
-                """.trimIndent(),
-                    params = mapOf("contractId" to it.contractId),
-                )
-
-                ContractResponseDTO(
-                    contractId = it.contractId!!,
-                    number = it.contractNumber ?: "",
-                    contractor = it.contractor ?: "",
-                    address = it.address ?: "",
-                    phone = it.phone ?: "",
-                    cnpj = it.cnpj ?: "",
-                    noticeFile = it.noticeFile ?: "",
-                    contractFile = it.contractFile ?: "",
-                    itemQuantity = (rs?.get("quantity") as Number).toInt(),
-                    createdBy = user.get().completedName,
-                    contractStatus = it.status,
-                    contractValue = it.contractValue.toString(),
-                    additiveFile = "",
-                    companyId = it.companyId
-                )
-            })
+            .body(response)
     }
 
     fun getContractItems(contractId: Long): ResponseEntity<Any> {
