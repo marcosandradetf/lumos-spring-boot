@@ -217,7 +217,10 @@ export class ContractListComponent implements OnInit {
 
 
     async getItems(contractId: number, showItems: boolean = true): Promise<void> {
-        if (contractId === 0 || this.contractId === contractId) return;
+        if (contractId === 0 || this.contractId === contractId) {
+            this.showItems = showItems;
+            return;
+        }
 
         this.contractId = contractId;
         this.loading = true;
@@ -226,8 +229,8 @@ export class ContractListComponent implements OnInit {
             this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
                 next: items => {
                     this.contractItems = items || [];
-                    this.contractItemsBackup = cloneDeep(items || []);
                     this.normalizeExecutedQuantities();
+                    this.contractItemsBackup = cloneDeep(this.contractItems);
                     this.showItems = showItems;
                 },
                 error: err => {

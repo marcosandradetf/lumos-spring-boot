@@ -11,7 +11,7 @@
                 (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Adicionar Itens' : 'Selecionar Itens' }}
         </p-step>
         <p-step [value]="3"
-                (click)="selectedIndex = null; getTotalValue()">{{ currentUrl === '/contratos/editar' ? 'Editar Itens' : 'Revisão' }}
+                (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Editar Itens' : 'Revisão' }}
         </p-step>
       </p-step-list>
       <p-step-panels>
@@ -51,7 +51,8 @@
 
               <!-- Endereço -->
               <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Endereço do contratante*</label>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Endereço do
+                  contratante*</label>
                 <input [(ngModel)]="contract.address"
                        id="address"
                        type="text"
@@ -64,7 +65,8 @@
               <!-- Telefone e CNPJ - lado a lado no desktop -->
               <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex flex-col gap-1 w-full">
-                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Telefone do Contratante*</label>
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Telefone do
+                    Contratante*</label>
                   <input [(ngModel)]="contract.phone"
                          id="phone"
                          type="text"
@@ -173,10 +175,6 @@
 
               </div>
 
-              <!-- Botão continuar -->
-              @if (currentUrl.startsWith("/contratos/editar")) {
-
-              }
               <div class="flex justify-end pt-6">
                 <p-button label="Continuar"
                           icon="pi pi-arrow-right"
@@ -191,19 +189,25 @@
         <p-step-panel [value]="2">
           <ng-template #content let-activateCallback="activateCallback">
             <div>
-              <table class="table table-auto table-xs w-full rounded">
-                <thead>
-                <tr class="text-left">
-                  <th class="px-4 py-2 text-gray-700 dark:text-neutral-100"></th>
-                  <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Descrição</th>
-                  <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Quantidade</th>
-                  <th class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Valor
-                    unitário
-                  </th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr *ngFor="let item of items; let i = index" [class.fade-out]="removingIndex === i"
+              <p-table
+                class="mt-4 text-sm"
+                [value]="items"
+                dataKey="contractItemId"
+                editMode="row"
+                responsiveLayout="scroll"
+              >
+                <ng-template pTemplate="header">
+                  <tr class="text-left">
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 text-center"></th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">Descrição</th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">Quantidade</th>
+                    <th class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">Valor
+                      unitário
+                    </th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item let-editing="editing" let-i="rowIndex">
+                <tr [class.fade-out]="removingIndex === i"
                     [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
                     (click)="selectedIndex = i"
                     [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
@@ -220,7 +224,7 @@
                                rounded-full p-2
                                transition-all transform hover:scale-110
                                focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                          (click)="addItem(item, i)">
+                      (click)="addItem(item, i)">
 
                         <span class="material-icons text-sm">
                           add
@@ -231,37 +235,78 @@
 
                   <td class="px-4 py-2 text-base">{{ item.description }}</td>
 
-                  <td class="px-4 py-2">
-                    <p-inputNumber
-                      name="quantity{{i}}"
-                      required
-                      placeholder="Ex.: 2"
-                      [(ngModel)]="item.quantity"
-                      mode="decimal"
-                      locale="pt-BR"
-                      [minFractionDigits]="0"
-                      [maxFractionDigits]="2"
-                      inputStyleClass="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
-                    </p-inputNumber>
+                  <td [pEditableColumn]="item.quantity" pEditableColumnField="quantity">
+                    <p-cellEditor>
+                      <!-- INPUT -->
+                      <ng-template pTemplate="input">
+                        <p-inputNumber
+                          name="quantity{{i}}"
+                          required
+                          placeholder="Ex.: 12"
+                          [(ngModel)]="item.quantity"
+                          mode="decimal"
+                          locale="pt-BR"
+                          [minFractionDigits]="0"
+                          [maxFractionDigits]="2"
+                          inputStyleClass="w-24 text-right">
+                        </p-inputNumber>
+                      </ng-template>
+
+                      <ng-template pTemplate="output">
+                        <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                                      cursor-pointer transition-all duration-200
+                                      hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                                      dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
+                              <span class="text-gray-800 dark:text-gray-100">
+                                {{ item.quantity }}
+                              </span>
+                          <i class="pi pi-pencil text-xs
+                              text-gray-400 dark:text-gray-500
+                              opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200"></i>
+                        </div>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
 
-                  <td class="px-4 py-2">
-                    <p-inputNumber
-                      name="price{{i}}"
-                      required
-                      placeholder="Ex.: 2"
-                      [(ngModel)]="item.price"
-                      mode="decimal"
-                      locale="pt-BR"
-                      [minFractionDigits]="2"
-                      [maxFractionDigits]="2"
-                      inputStyleClass="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
-                    </p-inputNumber>
+
+                  <td [pEditableColumn]="item.price" pEditableColumnField="price">
+                    <p-cellEditor>
+                      <!-- INPUT -->
+                      <ng-template pTemplate="input">
+                        <p-inputNumber
+                          name="price{{i}}"
+                          required
+                          placeholder="Ex.: 12"
+                          [(ngModel)]="item.price"
+                          mode="decimal"
+                          locale="pt-BR"
+                          [minFractionDigits]="0"
+                          [maxFractionDigits]="2"
+                          inputStyleClass="w-24 text-right">
+                        </p-inputNumber>
+                      </ng-template>
+
+                      <ng-template pTemplate="output">
+                        <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                                      cursor-pointer transition-all duration-200
+                                      hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                                      dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
+                              <span class="text-gray-800 dark:text-gray-100">
+                                {{ item.price | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                              </span>
+                          <i class="pi pi-pencil text-xs
+                              text-gray-400 dark:text-gray-500
+                              opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200"></i>
+                        </div>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
 
                 </tr>
-                </tbody>
-              </table>
+                </ng-template>
+              </p-table>
             </div>
 
 
@@ -269,7 +314,7 @@
               <p-button label="Voltar" severity="secondary" icon="pi pi-arrow-left"
                         (onClick)="activateCallback(1)"/>
               <p-button label="Próximo" icon="pi pi-arrow-right" iconPos="right"
-                        (onClick)="activateCallback(3); selectedIndex = null; getTotalValue()"/>
+                        (onClick)="activateCallback(3); selectedIndex = null;"/>
             </div>
 
           </ng-template>
@@ -287,35 +332,48 @@
                       Valor Total
                     </span>
                     <h2 class="text-3xl sm:text-3xl font-extrabold leading-tight drop-shadow-md">
-                      {{ totalValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                      {{ getTotalValue() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                     </h2>
                   </div>
                 </div>
 
-                <table class="table table-auto table-xs w-full rounded mt-2">
-                  <thead>
-                  <tr>
-                    <th class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"></th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Descrição</th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Quantidade</th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"
-                        *ngIf="currentUrl === '/contratos/editar'">Qtde. Executada
-                    </th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base">Valor unitário
-                    </th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let item of contract.items; let i = index"
+                <p-table
+                  #dt
+                  class="mt-4 text-sm"
+                  [value]="contract.items"
+                  dataKey="contractItemId"
+                  editMode="row"
+                  responsiveLayout="scroll"
+                >
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th
+                        class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center"></th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">
+                        Descrição
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Quantidade
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-right"
+                          *ngIf="currentUrl === '/contratos/editar'">Qtde. Executada
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Valor unitário
+                      </th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-item let-editing="editing" let-i="rowIndex">
+                    <tr
                       [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
                       (click)="selectedIndex = i"
                       [class.fade-out]="removingIndexContract === i"
                       class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
-                    <td class="px-4 py-2 text-center">
-                      <button
-                        type="button"
-                        aria-label="Remover item"
-                        class="flex items-center justify-center
+                      <td class="px-4 py-2 text-center">
+                        <button
+                          type="button"
+                          aria-label="Remover item"
+                          class="flex items-center justify-center
                         text-white bg-red-600
                         hover:bg-red-700 active:bg-red-800
                           rounded-full p-2
@@ -323,46 +381,101 @@
                           focus:outline-none focus:ring-2 focus:ring-red-400"
                           (click)="removeItem(item, i)">
 
-                        <span class="material-icons text-sm">
+                        <span class="material-icons text-xs">
                           delete
                         </span>
-                      </button>
-                    </td>
+                        </button>
+                      </td>
 
-                    <td class="px-3 py-2">{{ item.description }}</td>
+                      <td>{{ item.description }}</td>
 
-                    <td class="px-4 py-2">
+                      <td [pEditableColumn]="item.quantity" pEditableColumnField="quantity" class="text-center">
+                        <p-cellEditor>
+                          <!-- INPUT -->
+                          <ng-template pTemplate="input">
+                            <p-inputNumber
+                              name="quantity{{i}}"
+                              required
+                              placeholder="Ex.: 12"
+                              mode="decimal"
+                              locale="pt-BR"
+                              [minFractionDigits]="0"
+                              [maxFractionDigits]="2"
+                              [(ngModel)]="item.quantity"
+                              #quantityModel="ngModel"
+                              [min]="item.executedQuantity > 0 ? item.executedQuantity : 1"
+                              (ngModelChange)="checkMin(item, quantityModel)"
+                              inputStyleClass="w-24 text-right">
+                            </p-inputNumber>
+                            <p-message *ngIf="quantityModel.control?.hasError('minCustom')" severity="error" styleClass="mt-2">
+                              @if(item.executedQuantity > 0) {
+                                A quantidade mínima é {{ item.executedQuantity }}<br>(total já executado ou reservado em O.S.).
+                              }@else{
+                                A quantidade mínima é 1
+                              }
+                            </p-message>
 
-                      <input type="text" placeholder="Ex.: 2" #inputField
-                             [value]="item.quantity"
-                             (input)="utils.formatFloatNumber($event);"
-                             (blur)="setQuantity(inputField, item.contractReferenceItemId); getTotalValue();"
-                             name="quantity{{i}}"
-                             class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                             required/>
-                    </td>
+                          </ng-template>
 
-                    <td class="px-3 py-2" *ngIf="currentUrl === '/contratos/editar'">{{ item.executedQuantity ?? 0 }}
-                    </td>
+                          <ng-template pTemplate="output">
+                            <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                                      cursor-pointer transition-all duration-200
+                                      hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                                      dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
+                              <span class="text-gray-800 dark:text-gray-100">
+                                {{ item.quantity }}
+                              </span>
+                              <i class="pi pi-pencil text-xs
+                              text-gray-400 dark:text-gray-500
+                              opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200"></i>
+                            </div>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
 
-                    <td class="px-4 py-2">
-                      <p-inputNumber
-                        name="price{{i}}"
-                        required
-                        placeholder="Ex.: 2"
-                        [(ngModel)]="item.price"
-                        mode="decimal"
-                        locale="pt-BR"
-                        [minFractionDigits]="2"
-                        [maxFractionDigits]="2"
-                        inputStyleClass="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
-                      </p-inputNumber>
-                    </td>
+                      <td class="text-right"
+                          *ngIf="currentUrl === '/contratos/editar'">{{ item.executedQuantity ?? 0 }}
+                      </td>
 
-                  </tr>
-                  </tbody>
+                      <td [pEditableColumn]="item.price" pEditableColumnField="price">
+                        <p-cellEditor>
+                          <!-- INPUT -->
+                          <ng-template pTemplate="input">
+                            <p-inputNumber
+                              name="price{{i}}"
+                              required
+                              placeholder="Ex.: 2,00"
+                              [(ngModel)]="item.price"
+                              mode="decimal"
+                              locale="pt-BR"
+                              [minFractionDigits]="2"
+                              [maxFractionDigits]="2"
+                              inputStyleClass="w-24 text-right">
+                            </p-inputNumber>
+                          </ng-template>
 
-                </table>
+                          <ng-template pTemplate="output">
+                            <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                                      cursor-pointer transition-all duration-200
+                                      hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                                      dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
+                              <span class="text-gray-800 dark:text-gray-100">
+                                {{ item.price | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                              </span>
+                              <i class="pi pi-pencil text-xs
+                              text-gray-400 dark:text-gray-500
+                              opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200"></i>
+                            </div>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
+
+                    </tr>
+                  </ng-template>
+
+                </p-table>
               </div>
             } @else {
               <div
@@ -407,7 +520,7 @@
           </svg>
           <div>
             <h3 class="text-lg font-semibold">Sucesso!</h3>
-            @if(currentUrl === '/contratos/editar') {
+            @if (currentUrl === '/contratos/editar') {
               <p class="text-sm">O contrato foi atualizado com sucesso.</p>
             } @else {
               <p class="text-sm">O contrato foi criado com sucesso.</p>

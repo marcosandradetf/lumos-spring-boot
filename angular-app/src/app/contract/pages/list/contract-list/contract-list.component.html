@@ -1,4 +1,4 @@
-<div class="relative">
+<div>
   <app-loading-overlay [loading]="loadingOverlay"></app-loading-overlay>
   <div
     class="pt-3 px-4 w-full flex flex-col items-center justify-center gap-2 text-center"
@@ -140,7 +140,7 @@
           </label>
           <p-calendar
             [(ngModel)]="filters.startDate"
-            [disabled]="(filters?.contractor?.length ?? 0) > 0"
+            [disabled]="(filters.contractor?.length ?? 0) > 0"
             placeholder="dd/mm/aaaa"
             dateFormat="dd/mm/yy"
             fluid
@@ -161,7 +161,7 @@
             placeholder="dd/mm/aaaa"
             dateFormat="dd/mm/yy"
             fluid
-            [disabled]="(filters?.contractor?.length ?? 0) > 0"
+            [disabled]="(filters.contractor?.length ?? 0) > 0"
             class="w-full">
           </p-calendar>
 
@@ -545,7 +545,7 @@
              text-gray-800 dark:text-gray-100"
               >
 
-                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.totalExecuted === 0">
+                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.executedQuantity.length === 0">
                   Nenhuma execução
                 </span>
 
@@ -628,7 +628,7 @@
 
             <p-popover #op>
               <div class="flex flex-col gap-2 min-w-[180px]">
-                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.totalExecuted === 0">
+                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.executedQuantity.length === 0">
                   Nenhuma execução
                 </span>
                 <div

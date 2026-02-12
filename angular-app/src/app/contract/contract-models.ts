@@ -70,7 +70,7 @@ export interface ContractReferenceItemsDTO {
     linking: string;
     itemDependency: string;
     quantity: number;
-    price: string;
+    price: number;
     executedQuantity: number | null;
     contractItemId: number | null;
 }

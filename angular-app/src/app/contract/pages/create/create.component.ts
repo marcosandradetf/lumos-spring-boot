@@ -21,6 +21,8 @@ import {CompanyService} from '../../../company/service/company.service';
 import {CompanyResponse} from '../../../company/dto/company.dto';
 import {SharedState} from '../../../core/service/shared-state';
 import {InputNumber} from 'primeng/inputnumber';
+import {TableModule} from 'primeng/table';
+import {Message} from 'primeng/message';
 
 
 @Component({
@@ -45,7 +47,9 @@ import {InputNumber} from 'primeng/inputnumber';
         Dialog,
         LoadingOverlayComponent,
         DecimalPipe,
-        InputNumber
+        InputNumber,
+        TableModule,
+        Message
     ],
     templateUrl: './create.component.html',
     styleUrl: './create.component.scss'
@@ -71,7 +75,6 @@ export class CreateComponent implements OnInit {
 
     items: ContractReferenceItemsDTO[] = [];
 
-    totalValue: number = 0;
     totalItems: number = 0;
     removingIndex: number | null = null;
     openModal: boolean = false;
@@ -143,21 +146,9 @@ export class CreateComponent implements OnInit {
                 next: result => {
                     result.forEach(item => {
                         const index = this.contract.items.findIndex(i => i.contractReferenceItemId === item.contractReferenceItemId);
-                        const ci = this.contract.items[index];
 
                         if (index !== -1) {
-                            this.items.push({
-                                contractReferenceItemId: item.contractReferenceItemId,
-                                description: item.description,
-                                nameForImport: item.nameForImport,
-                                type: item.type,
-                                linking: item.linking,
-                                itemDependency: item.itemDependency,
-                                quantity: item.quantity,
-                                price: item.price,
-                                executedQuantity: ci.executedQuantity,
-                                contractItemId: ci.contractItemId
-                            });
+                            return;
                         } else {
                             this.items.push(item);
                         }
@@ -242,10 +233,12 @@ export class CreateComponent implements OnInit {
 
 
     addItem(
-        item: ContractReferenceItemsDTO
-        , index: number) {
-        if (item.price === '0,00' || item.quantity === 0) {
-            this.utils.showMessage("Para adicionar este item preencha o valor e a quantidade.", 'warn', "Atenção");
+        item: ContractReferenceItemsDTO,
+        index: number
+    ) {
+        console.log(item);
+        if (item.price === 0 || !item.price || item.quantity === 0 || !item.quantity) {
+            this.utils.showMessage("Para adicionar este item preencha o valor unitário e a quantidade.", 'warn', "Atenção");
             return;
         }
 
@@ -285,9 +278,7 @@ export class CreateComponent implements OnInit {
 
     getTotalValue() {
         let totalInCents = this.contract.items.reduce((sum, item) => {
-            const price = parseFloat(
-                item.price
-            );
+            const price = item.price;
 
             const quantity = item.quantity || 0;
 
@@ -298,7 +289,7 @@ export class CreateComponent implements OnInit {
         }, 0);
 
         // Depois de tudo, converter de volta para reais
-        this.totalValue = (totalInCents / 100);
+        return (totalInCents / 100);
     }
 
 
@@ -319,25 +310,6 @@ export class CreateComponent implements OnInit {
         this.items
             .filter(s => (s.itemDependency === item.type))
             .forEach(i => i.quantity = quantity);
-    }
-
-
-    setQuantity(input: HTMLInputElement, contractReferenceItemId: number) {
-        const index = this.contract.items.findIndex(i => i.contractReferenceItemId === contractReferenceItemId);
-
-        if (index !== -1) {
-            const item = this.contract.items[index];
-            const oldValue = item.quantity;
-            const value = Number(input.value.replace(/^0+/, ''));
-
-            if ((item.executedQuantity ?? 0) > 0 && value < (item.executedQuantity ?? 0)) {
-                this.utils.showMessage(`A nova quantidade do item ${item.description} não pode ser menor que a quantidade executada.`, 'warn', 'Atenção');
-                input.value = oldValue.toString();
-                return;
-            }
-
-            this.contract.items[index].quantity = value
-        }
     }
 
     reviewItems(contractItems: HTMLDivElement, steepFinal: HTMLDivElement) {
@@ -465,13 +437,12 @@ export class CreateComponent implements OnInit {
 
     validateContractItems(): boolean {
         const hasInvalidItem = this.contract.items.some(item =>
-            !item.quantity || item.quantity === 0 ||
-            !item.price || item.price.toString().trim() === ''
+            item.price === 0 || !item.price || item.quantity === 0 || !item.quantity
         );
 
         if (hasInvalidItem) {
             this.utils.showMessage(
-                'Existem itens no contrato com quantidade zero ou valor vazio. Corrija esses dados antes de continuar.',
+                'Existem itens no contrato com quantidade ou valor unitário igual a zero ou vazio. Corrija esses dados antes de continuar.',
                 'warn',
                 'Atenção'
             );
@@ -560,4 +531,14 @@ export class CreateComponent implements OnInit {
 
 
     protected readonly formatNumber = formatNumber;
+
+    checkMin(item: any, model: any) {
+        const min = item.executedQuantity > 0 ? item.executedQuantity : 1;
+
+        if ((item.quantity ?? 0) < min) {
+            model.control.setErrors({ minCustom: true });
+        } else {
+            model.control.setErrors(null);
+        }
+    }
 }
