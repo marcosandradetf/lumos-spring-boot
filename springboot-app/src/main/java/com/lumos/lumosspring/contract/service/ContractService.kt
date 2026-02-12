@@ -20,7 +20,6 @@ import com.lumos.lumosspring.util.*
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.Instant
-import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -244,7 +242,6 @@ class ContractService(
             ci.referenceItemId = item.contractReferenceItemId
             ci.contractId = contract.contractId
             ci.contractedQuantity = item.quantity!!
-            TODO()
             ci.setPrices(item.price)
             contractItemsQuantitativeRepository.save(ci)
         }
@@ -493,10 +490,11 @@ class ContractService(
             val number: Int,
             val contractItemId: Long,
             val description: String,
-            val unitPrice: String,
-            val contractedQuantity: Double,
+            val unitPrice: BigDecimal,
+            val contractedQuantity: BigDecimal,
             val executedQuantity: List<ExecutedQuantity>,
-            val totalExecuted: Double,
+            val totalExecuted: BigDecimal,
+            val reservedQuantity: List<ExecutedQuantity>,
             val linking: String?,
             val nameForImport: String?,
             val type: String
@@ -517,10 +515,11 @@ class ContractService(
                         number = index + 1,
                         contractItemId = it["contract_item_id"] as Long,
                         description = it["description"] as String,
-                        unitPrice = (it["unit_price"] as BigDecimal).toPlainString(),
-                        contractedQuantity = (it["contracted_quantity"] as Number).toDouble(),
+                        unitPrice = it["unit_price"] as BigDecimal,
+                        contractedQuantity = it["contracted_quantity"] as BigDecimal,
                         executedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long),
-                        totalExecuted = (it["quantity_executed"] as Number).toDouble(),
+                        reservedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long, true),
+                        totalExecuted = it["quantity_executed"] as BigDecimal,
                         linking = it["linking"] as? String,
                         nameForImport = it["name_for_import"] as? String,
                         type = it["type"] as String
@@ -530,34 +529,67 @@ class ContractService(
     }
 
     data class ExecutedQuantity(
-        val directExecutionId: Long,
+        val installationId: Long,
         val step: Int,
-        val quantity: Double,
+        val quantity: BigDecimal,
     )
 
-    private fun getExecutedQuantityByContract(contractItemId: Long): List<ExecutedQuantity> {
+    private fun getExecutedQuantityByContract(contractItemId: Long, forReserve: Boolean = false): List<ExecutedQuantity> {
+        val sql = if(forReserve) {
+            """
+                SELECT
+                    t.installation_id,
+                    t.step,
+                    SUM(t.measured_item_quantity) AS reserved_quantity
+                FROM (
+                    SELECT
+                        d.direct_execution_id as installation_id,
+                        i.measured_item_quantity,
+                        d.step
+                    FROM direct_execution_item i
+                    JOIN direct_execution d ON d.direct_execution_id = i.direct_execution_id
+                    WHERE i.contract_item_id = :contractItemId
+                        AND d.direct_execution_status <> 'FINISHED'
+                    UNION ALL
+                    SELECT
+                        p.pre_measurement_id as installation_id,
+                        i.measured_item_quantity,
+                        p.step
+                    FROM pre_measurement_street_item i
+                    JOIN pre_measurement p ON p.pre_measurement_id = i.pre_measurement_id
+                    WHERE i.contract_item_id = :contractItemId
+                        AND p.status <> 'FINISHED'
+                    ) t
+                GROUP BY t.installation_id, t.step
+            """.trimIndent()
+        } else {
+            """
+                SELECT
+                    iv.installation_id,
+                    iv.installation_type,
+                    iv.step,
+                    SUM(isiv.executed_quantity) AS executed_quantity
+                FROM installation_view iv 
+                JOIN installation_street_view isv ON iv.installation_id = isv.installation_id
+                    and isv.installation_type = iv.installation_type
+                JOIN installation_street_item_view isiv ON isiv.installation_street_id = isv.installation_street_id
+                    and isv.installation_type = isiv.installation_type
+                WHERE isiv.contract_item_id = :contractItemId AND iv.status = 'FINISHED'
+                GROUP BY iv.installation_id, iv.installation_type, iv.step
+                ORDER BY iv.step
+            """.trimIndent()
+        }
         val directExecutions = JdbcUtil.getRawData(
             namedJdbc,
-            """
-                SELECT 
-                    des.direct_execution_id,
-                    de.step, -- 🔥 Inclua isso
-                    SUM(desi.executed_quantity) AS executed_quantity
-                FROM direct_execution de 
-                JOIN direct_execution_street des ON de.direct_execution_id = des.direct_execution_id
-                JOIN direct_execution_street_item desi ON desi.direct_execution_street_id = des.direct_execution_street_id
-                WHERE desi.contract_item_id = :contractItemId
-                GROUP BY des.direct_execution_id, de.step -- 🔥 Adicione `des.step` aqui
-                ORDER BY de.step
-            """.trimIndent(),
+            sql,
             mapOf("contractItemId" to contractItemId)
         )
 
         return directExecutions.mapIndexed { index, row ->
             ExecutedQuantity(
-                directExecutionId = row["direct_execution_id"] as Long,
+                installationId = row["installation_id"] as Long,
                 step = (row["step"] as Number).toInt(), // ✅ usa a etapa real
-                quantity = (row["executed_quantity"] as Number).toDouble(),
+                quantity = row["executed_quantity"] as BigDecimal,
             )
         }
     }

@@ -101,36 +101,30 @@ public interface ContractItemsQuantitativeRepository extends CrudRepository<Cont
 
     @Query(
             """
-                    SELECT\s
+                SELECT
                     t.contract_item_id,
                     SUM(t.measured_item_quantity) AS reserved_quantity
-                    FROM (
-                    SELECT\s
-                    i.contract_item_id,
-                    i.measured_item_quantity
+                FROM (
+                    SELECT
+                        i.contract_item_id,
+                        i.measured_item_quantity
                     FROM direct_execution_item i
-                    JOIN direct_execution d\s
-                    ON d.direct_execution_id = i.direct_execution_id
+                    JOIN direct_execution d ON d.direct_execution_id = i.direct_execution_id
                     WHERE i.contract_item_id IN (:ids)
-                    AND d.direct_execution_status <> 'FINISHED'
-                    
+                        AND d.direct_execution_status <> 'FINISHED'
                     UNION ALL
-                    
-                    SELECT\s
-                    i.contract_item_id,
-                    i.measured_item_quantity
+                    SELECT
+                        i.contract_item_id,
+                        i.measured_item_quantity
                     FROM pre_measurement_street_item i
-                    JOIN pre_measurement p\s
-                    ON p.pre_measurement_id = i.pre_measurement_id
+                    JOIN pre_measurement p ON p.pre_measurement_id = i.pre_measurement_id
                     WHERE i.contract_item_id IN (:ids)
-                    AND p.status <> 'FINISHED'
+                        AND p.status <> 'FINISHED'
                     ) t
-                    GROUP BY t.contract_item_id
-                    
-                    """
+                GROUP BY t.contract_item_id
+                """
     )
     List<ReservedQuantityProjection> getReservedQuantity(List<Long> ids);
-
     record ReservedQuantityProjection(
             Long contractItemId,
             BigDecimal reservedQuantity
