@@ -1,21 +1,48 @@
-<div class="flex w-full h-full" #top>
+<div>
   <div class="w-full">
     <div class="pt-2 w-full pl-2 flex items-center justify-center">
-      <h3 class="text-medium pr-5 hidden lg:block">Clique em uma solicitação para continuar</h3>
     </div>
 
     <app-loading *ngIf="loading"></app-loading>
 
-    <div class="flex flex-col mt-80 items-center justify-center text-center text-gray-500 w-full"
-         *ngIf="!loading && reservations.length === 0">
-      <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
-           xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M14 22h20M14 28h20M10 10h28a2 2 0 012 2v24a2 2 0 01-2 2H10a2 2 0 01-2-2V12a2 2 0 012-2z"/>
-      </svg>
+    <div
+      *ngIf="!loading && reservations.length === 0"
+      class="flex flex-1 items-center justify-center mt-32">
 
-      <h3 class="text-lg font-semibold mb-2 dark:text-white">Nenhuma solicitação no momento</h3>
+      <div
+        class="flex flex-col items-center text-center
+           px-8 py-10
+           bg-white dark:bg-neutral-900
+           border border-neutral-200 dark:border-neutral-800
+           rounded-xl shadow-sm
+           max-w-md w-full">
+
+        <!-- Ícone -->
+        <i class="pi pi-inbox text-6xl text-blue-400 dark:text-blue-500 mb-4"></i>
+
+        <!-- Título -->
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+          Nenhuma ordem de serviço
+        </h3>
+
+        <!-- Subtexto -->
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Ainda não há ordens de serviço alocadas para você.
+        </p>
+
+        <!-- Botão opcional -->
+        <button
+          (click)="router.navigate(['/requisicoes/gerenciamento'])"
+          pButton
+          type="button"
+          label="Exibir todas as ordens de serviço"
+          class="p-button-sm p-button-outlined">
+        </button>
+
+      </div>
+
     </div>
+
 
     <div *ngIf="!loading && reservations.length > 0" class="flex flex-col items-center w-full px-4">
       <p-menu #menu [model]="contextItems" [popup]="true"></p-menu>

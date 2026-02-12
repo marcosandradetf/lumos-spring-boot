@@ -41,7 +41,50 @@ export class AppComponent implements OnInit {
         if (savedMenuState !== null) {
             this.menuOpen = JSON.parse(savedMenuState); // Converte de volta para booleano
         }
+
+        const saved = localStorage.getItem('sidebarWidth');
+        if (saved) this.sidebarWidth = +saved;
     }
 
     protected readonly SharedState = SharedState;
+
+    sidebarWidth = 400;
+
+    private resizing = false;
+
+    startResizing(event: MouseEvent) {
+
+        this.resizing = true;
+
+        const startX = event.clientX;
+        const startWidth = this.sidebarWidth;
+
+        const mouseMove = (moveEvent: MouseEvent) => {
+
+            if (!this.resizing) return;
+
+            const newWidth = startWidth + (moveEvent.clientX - startX);
+
+            // limites profissionais
+            if (newWidth >= 280 && newWidth <= 400) {
+                this.sidebarWidth = newWidth;
+            }
+        };
+
+        const mouseUp = () => {
+            this.resizing = false;
+            document.body.style.cursor = 'default';
+            window.removeEventListener('mousemove', mouseMove);
+            window.removeEventListener('mouseup', mouseUp);
+
+            // opcional: salvar tamanho
+            localStorage.setItem('sidebarWidth', this.sidebarWidth.toString());
+        };
+
+        document.body.style.cursor = 'col-resize';
+
+        window.addEventListener('mousemove', mouseMove);
+        window.addEventListener('mouseup', mouseUp);
+    }
+
 }

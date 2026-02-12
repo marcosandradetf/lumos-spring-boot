@@ -199,112 +199,117 @@
                 <ng-template pTemplate="header">
                   <tr class="text-left">
                     <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 text-center"></th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">Descrição</th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">Quantidade</th>
-                    <th class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">Valor
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">
+                      Descrição
+                    </th>
+                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                      Quantidade
+                    </th>
+                    <th class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                      Valor
                       unitário
                     </th>
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-item let-editing="editing" let-i="rowIndex">
-                <tr [class.fade-out]="removingIndex === i"
-                    [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
-                    (click)="selectedIndex = i"
-                    [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
-                    [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
-                    class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
-                  <td class="px-4 py-2 text-center">
-                    <button
-                      type="button"
-                      [disabled]="item.type === 'SERVIÇO' && contract.unifyServices"
-                      aria-label="Adicionar item"
-                      class="flex items-center justify-center
+                  <tr [class.fade-out]="removingIndex === i"
+                      [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
+                      (click)="selectedIndex = i"
+                      [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
+                      [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
+                      class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
+                    <td class="px-4 py-2 text-center">
+                      <button
+                        type="button"
+                        [disabled]="item.type === 'SERVIÇO' && contract.unifyServices"
+                        aria-label="Adicionar item"
+                        class="flex items-center justify-center
                                text-white bg-blue-600
                                hover:bg-blue-700 active:bg-blue-800
                                rounded-full p-2
                                transition-all transform hover:scale-110
                                focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      (click)="addItem(item, i)">
+                        (click)="addItem(item, i)">
 
                         <span class="material-icons text-sm">
                           add
                         </span>
-                    </button>
-                  </td>
+                      </button>
+                    </td>
 
 
-                  <td class="px-4 py-2 text-base">{{ item.description }}</td>
+                    <td class="px-4 py-2 text-base">{{ item.description }}</td>
 
-                  <td [pEditableColumn]="item.quantity" pEditableColumnField="quantity">
-                    <p-cellEditor>
-                      <!-- INPUT -->
-                      <ng-template pTemplate="input">
-                        <p-inputNumber
-                          name="quantity{{i}}"
-                          required
-                          placeholder="Ex.: 12"
-                          [(ngModel)]="item.quantity"
-                          mode="decimal"
-                          locale="pt-BR"
-                          [minFractionDigits]="0"
-                          [maxFractionDigits]="2"
-                          inputStyleClass="w-24 text-right">
-                        </p-inputNumber>
-                      </ng-template>
+                    <td [pEditableColumn]="item.quantity" pEditableColumnField="quantity">
+                      <p-cellEditor>
+                        <!-- INPUT -->
+                        <ng-template pTemplate="input">
+                          <p-inputNumber
+                            name="quantity{{i}}"
+                            required
+                            placeholder="Ex.: 12"
+                            [(ngModel)]="item.quantity"
+                            mode="decimal"
+                            locale="pt-BR"
+                            [minFractionDigits]="0"
+                            [maxFractionDigits]="2"
+                            inputStyleClass="w-24 text-right">
+                          </p-inputNumber>
+                        </ng-template>
 
-                      <ng-template pTemplate="output">
-                        <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                        <ng-template pTemplate="output">
+                          <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
                                       cursor-pointer transition-all duration-200
                                       hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
                                       dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
                               <span class="text-gray-800 dark:text-gray-100">
                                 {{ item.quantity }}
                               </span>
-                          <i class="pi pi-pencil text-xs
+                            <i class="pi pi-pencil text-xs
                               text-gray-400 dark:text-gray-500
                               opacity-0 group-hover:opacity-100
                               transition-opacity duration-200"></i>
-                        </div>
-                      </ng-template>
-                    </p-cellEditor>
-                  </td>
+                          </div>
+                        </ng-template>
+                      </p-cellEditor>
+                    </td>
 
 
-                  <td [pEditableColumn]="item.price" pEditableColumnField="price">
-                    <p-cellEditor>
-                      <!-- INPUT -->
-                      <ng-template pTemplate="input">
-                        <p-inputNumber
-                          name="price{{i}}"
-                          required
-                          placeholder="Ex.: 12"
-                          [(ngModel)]="item.price"
-                          mode="decimal"
-                          locale="pt-BR"
-                          [minFractionDigits]="0"
-                          [maxFractionDigits]="2"
-                          inputStyleClass="w-24 text-right">
-                        </p-inputNumber>
-                      </ng-template>
+                    <td [pEditableColumn]="item.price" pEditableColumnField="price" class="text-center">
+                      <p-cellEditor>
+                        <!-- INPUT -->
+                        <ng-template pTemplate="input">
+                          <p-inputNumber
+                            name="price{{i}}"
+                            required
+                            placeholder="Ex.: 12"
+                            [(ngModel)]="item.price"
+                            mode="decimal"
+                            locale="pt-BR"
+                            [minFractionDigits]="2"
+                            [maxFractionDigits]="2"
+                            inputStyleClass="w-24 text-center">
+                          </p-inputNumber>
+                        </ng-template>
 
-                      <ng-template pTemplate="output">
-                        <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                        <ng-template pTemplate="output">
+                          <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
                                       cursor-pointer transition-all duration-200
                                       hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
                                       dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
                               <span class="text-gray-800 dark:text-gray-100">
                                 {{ item.price | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                               </span>
-                          <i class="pi pi-pencil text-xs
+                            <i class="pi pi-pencil text-xs
                               text-gray-400 dark:text-gray-500
                               opacity-0 group-hover:opacity-100
                               transition-opacity duration-200"></i>
-                        </div>
-                      </ng-template>
-                    </p-cellEditor>
-                  </td>
+                          </div>
+                        </ng-template>
+                      </p-cellEditor>
+                    </td>
 
-                </tr>
+                  </tr>
                 </ng-template>
               </p-table>
             </div>
@@ -348,7 +353,7 @@
                   <ng-template pTemplate="header">
                     <tr>
                       <th
-                        class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center"></th>
+                        class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"></th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">
                         Descrição
                       </th>
@@ -357,6 +362,9 @@
                       </th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-right"
                           *ngIf="currentUrl === '/contratos/editar'">Qtde. Executada
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-right"
+                          *ngIf="currentUrl === '/contratos/editar'">Qtde. Reservada
                       </th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
                         Valor unitário
@@ -394,6 +402,7 @@
                           <!-- INPUT -->
                           <ng-template pTemplate="input">
                             <p-inputNumber
+                              #inputRef
                               name="quantity{{i}}"
                               required
                               placeholder="Ex.: 12"
@@ -403,17 +412,22 @@
                               [maxFractionDigits]="2"
                               [(ngModel)]="item.quantity"
                               #quantityModel="ngModel"
-                              [min]="item.executedQuantity > 0 ? item.executedQuantity : 1"
-                              (ngModelChange)="checkMin(item, quantityModel)"
+                              [min]="getTotalReservedAndExecutedValue(item, 1)"
+                              (ngModelChange)="checkMin(item, quantityModel, pop, inputRef)"
                               inputStyleClass="w-24 text-right">
                             </p-inputNumber>
-                            <p-message *ngIf="quantityModel.control?.hasError('minCustom')" severity="error" styleClass="mt-2">
-                              @if(item.executedQuantity > 0) {
-                                A quantidade mínima é {{ item.executedQuantity }}<br>(total já executado ou reservado em O.S.).
-                              }@else{
-                                A quantidade mínima é 1
-                              }
-                            </p-message>
+                            <p-popover
+                              #pop
+                              [dismissable]="true"
+                              [showCloseIcon]="false">
+                              <p class="text-xs text-error">
+                                @if (getTotalReservedAndExecutedValue(item) > 0) {
+                                  A quantidade mínima é {{ getTotalReservedAndExecutedValue(item) }} total já executado ou reservado em O.S.).
+                                } @else {
+                                  A quantidade mínima é 1
+                                }
+                              </p>
+                            </p-popover>
 
                           </ng-template>
 
@@ -434,11 +448,85 @@
                         </p-cellEditor>
                       </td>
 
-                      <td class="text-right"
-                          *ngIf="currentUrl === '/contratos/editar'">{{ item.executedQuantity ?? 0 }}
+                      <td
+                        class="text-right relative cursor-pointer"
+                        (mouseenter)="op.show($event, anchor)"
+                        (mouseleave)="op.hide()">
+
+                        <span
+                          #anchor
+                          class="inline-block">
+                          {{ item.totalExecuted }}
+                        </span>
+
+                        <p-popover
+                          #op
+                          [dismissable]="false"
+                          [showCloseIcon]="false"
+                          appendTo="body"
+                        >
+                          <div
+                            class="flex flex-col gap-2 min-w-[180px] text-smtext-gray-800 dark:text-gray-100">
+
+                            <span class="text-gray-500 dark:text-gray-400" *ngIf="item.executedQuantity.length === 0">
+                              Nenhuma execução
+                            </span>
+
+                            <div
+                              *ngFor="let step of item.executedQuantity; let i = index"
+                              class="flex justify-between">
+                              <span class="text-gray-500 dark:text-gray-400">
+                                {{ i + 1 }}ª Etapa
+                              </span>
+                              <span class="font-medium">
+                                {{ step.quantity }}
+                              </span>
+                            </div>
+                          </div>
+                        </p-popover>
+
                       </td>
 
-                      <td [pEditableColumn]="item.price" pEditableColumnField="price">
+                      <td
+                        class="text-right relative cursor-pointer"
+                        (mouseenter)="op2.show($event, anchorR)"
+                        (mouseleave)="op2.hide()">
+
+                        <span
+                          #anchorR
+                          class="inline-block">
+                          {{ getTotalReserved(item.contractItemId) }}
+                        </span>
+
+                        <p-popover
+                          #op2
+                          [dismissable]="false"
+                          [showCloseIcon]="false"
+                          appendTo="body"
+                        >
+                          <div class="flex flex-col gap-2 min-w-[180px] text-smtext-gray-800 dark:text-gray-100">
+
+                          <span class="text-gray-500 dark:text-gray-400" *ngIf="item.reservedQuantity.length === 0">
+                            Nenhuma reserva
+                          </span>
+
+                            <div
+                              *ngFor="let step of item.reservedQuantity; let i = index"
+                              class="flex justify-between"
+                            >
+                              <span class="text-gray-500 dark:text-gray-400">
+                                {{ i + 1 }}ª Etapa
+                              </span>
+                              <span class="font-medium">
+                                {{ step.quantity }}
+                              </span>
+                            </div>
+                          </div>
+                        </p-popover>
+
+                      </td>
+
+                      <td [pEditableColumn]="item.price" pEditableColumnField="price" class="text-center">
                         <p-cellEditor>
                           <!-- INPUT -->
                           <ng-template pTemplate="input">
@@ -451,7 +539,7 @@
                               locale="pt-BR"
                               [minFractionDigits]="2"
                               [maxFractionDigits]="2"
-                              inputStyleClass="w-24 text-right">
+                              inputStyleClass="w-24 text-center">
                             </p-inputNumber>
                           </ng-template>
 

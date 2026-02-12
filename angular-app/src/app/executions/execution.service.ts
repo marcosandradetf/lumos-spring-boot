@@ -75,4 +75,7 @@ export class ExecutionService {
     });
   }
 
+    getExecutions(value: string) {
+        return this.http.get<any[]>(`${this.baseUrl}/execution/get-executions/${value}`);
+    }
 }

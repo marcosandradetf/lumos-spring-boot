@@ -1,16 +1,59 @@
-<div class="flex h-fit" #top>
-  <div class="w-full">
-    <div class=" w-full pl-2 flex items-center justify-center">
-      <h3 class="text-medium pr-5 hidden lg:block">Instalaçoes em Progresso</h3>
-    </div>
-    <div class="flex flex-col h-screen items-center justify-center py-20 text-center text-gray-500 w-full">
-      <svg class="w-20 h-20 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48"
-           xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M14 22h20M14 28h20M10 10h28a2 2 0 012 2v24a2 2 0 01-2 2H10a2 2 0 01-2-2V12a2 2 0 012-2z"/>
-      </svg>
+<div>
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
+  <p-toast></p-toast>
 
-      <h3 class="text-lg font-semibold mb-2">Nenhuma execução encontrada</h3>
+  @if (executions.length > 0) {
+    <p-table
+      [value]="executions"
+      class="mt-4 text-sm"
+      dataKey="id"
+      editMode="row"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Execução</th>
+          <th class="text-left">Contrato</th>
+          <th class="text-center">Estoquista</th>
+          <th class="text-right">Equipe</th>
+          <th class="text-right">Status</th>
+          <th class="text-right">Saldo</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-execution let-editing="editing" let-i="rowIndex">
+        <tr [pEditableRow]="execution" #rowElement>
+          <td class="text-right"></td>
+          <td class="text-right"></td>
+          <td class="text-right"></td>
+          <td class="text-right"></td>
+        </tr>
+
+      </ng-template>
+    </p-table>
+  } @else {
+    <div
+      *ngIf="executions.length === 0"
+      class="flex flex-1 items-center justify-center mt-32">
+
+      <div
+        class="flex flex-col items-center text-center
+           px-8 py-10
+           bg-white dark:bg-neutral-900
+           border border-neutral-200 dark:border-neutral-800
+           rounded-xl shadow-sm
+           max-w-md w-full">
+
+        <!-- Ícone -->
+        <i class="pi pi-inbox text-6xl text-blue-400 dark:text-blue-500 mb-4"></i>
+
+        <!-- Título -->
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-white mb-2">
+          Nenhuma ordem de serviço {{ (statuses[status].title).lowerCase }} foi encontrada
+        </h3>
+
+      </div>
+
     </div>
-  </div>
+  }
 </div>

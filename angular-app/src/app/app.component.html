@@ -6,11 +6,31 @@
       </div>
     } @else {
       <!-- Conteúdo principal -->
-      <div class="flex h-screen overflow-auto">
+      <div class="flex h-screen overflow-hidden">
+
         @if (authService.isLoggedIn$ | async) {
-          <div *ngIf="menuOpen" class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
+
+          <!-- SIDEBAR -->
+          <div *ngIf="menuOpen"
+               #menu
+               [style.width.px]="sidebarWidth"
+               class="border-r
+                overflow-y-auto overflow-x-hidden
+                max-h-screen mac-scroll
+                bg-white dark:bg-neutral-900
+                transition-[width] duration-150 ease-out">
+
             <app-sidebar></app-sidebar>
           </div>
+
+          <!-- DRAG HANDLE -->
+          <div *ngIf="menuOpen"
+               class="w-1 cursor-col-resize
+                bg-transparent hover:bg-blue-400/60
+                transition-colors"
+               (mousedown)="startResizing($event)">
+          </div>
+
         }
         <div class="max-h-screen overflow-auto w-screen mac-scroll">
           <app-sidebar-drawer></app-sidebar-drawer>

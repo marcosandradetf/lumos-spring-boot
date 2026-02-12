@@ -71,8 +71,18 @@ export interface ContractReferenceItemsDTO {
     itemDependency: string;
     quantity: number;
     price: number;
-    executedQuantity: number | null;
     contractItemId: number | null;
+    executedQuantity: {
+        installationId: number,
+        step: number,
+        quantity: number,
+    }[];
+    totalExecuted: number | null;
+    reservedQuantity: {
+        installationId: number,
+        step: number,
+        quantity: number,
+    }[];
 }
 
 export interface ContractItemsResponseWithExecutionsSteps {
@@ -80,14 +90,19 @@ export interface ContractItemsResponseWithExecutionsSteps {
     number: number;
     contractItemId: number;
     description: string;
-    unitPrice: string;
+    unitPrice: number;
     contractedQuantity: number;
     executedQuantity: {
-        directExecutionId: number,
+        installationId: number,
         step: number,
         quantity: number,
     }[];
     totalExecuted: number,
+    reservedQuantity: {
+        installationId: number,
+        step: number,
+        quantity: number,
+    }[];
     linking: string | null;
     nameForImport: string | null;
     type: string;

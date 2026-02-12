@@ -468,6 +468,7 @@
           <th class="text-left">Descrição</th>
           <th class="text-center">Qtde</th>
           <th class="text-right">Executado</th>
+          <th class="text-right">Reservado</th>
           <th class="text-right">Saldo</th>
           <th class="text-center">Unit. R$</th>
           <th class="text-right">Total</th>
@@ -488,14 +489,32 @@
               <!-- INPUT -->
               <ng-template pTemplate="input">
                 <p-inputNumber
+                  #inputRef
                   [(ngModel)]="item.contractedQuantity"
                   mode="decimal"
                   locale="pt-BR"
                   [minFractionDigits]="0"
                   [maxFractionDigits]="2"
+                  #quantityModel="ngModel"
+                  (ngModelChange)="checkMin(item, quantityModel, pop, inputRef)"
+                  [min]="getTotalReservedAndExecutedValue(item, 1)"
                   inputStyleClass="w-20 text-right">
                 </p-inputNumber>
+
+                <p-popover
+                  #pop
+                  [dismissable]="true"
+                  [showCloseIcon]="false">
+                  <p class="text-xs text-error">
+                    @if(getTotalReservedAndExecutedValue(item) > 0) {
+                      A quantidade mínima é {{ getTotalReservedAndExecutedValue(item) }} (total já executado ou reservado em O.S.).
+                    }@else{
+                      A quantidade mínima é 1
+                    }
+                  </p>
+                </p-popover>
               </ng-template>
+
 
               <!-- OUTPUT -->
               <ng-template pTemplate="output">
@@ -565,6 +584,49 @@
 
           </td>
 
+          <td
+            class="text-right relative cursor-pointer"
+            (mouseenter)="op2.show($event, anchorR)"
+            (mouseleave)="op2.hide()">
+
+            <span
+              #anchorR
+              class="inline-block">
+              {{ getTotalReserved(item.contractItemId) }}
+            </span>
+
+            <p-popover
+              #op2
+              [dismissable]="false"
+              [showCloseIcon]="false"
+              appendTo="body"
+            >
+              <div
+                class="flex flex-col gap-2 min-w-[180px]
+             text-sm
+             text-gray-800 dark:text-gray-100"
+              >
+
+                <span class="text-gray-500 dark:text-gray-400" *ngIf="item.reservedQuantity.length === 0">
+                  Nenhuma reserva
+                </span>
+
+                <div
+                  *ngFor="let step of item.reservedQuantity; let i = index"
+                  class="flex justify-between"
+                >
+                <span class="text-gray-500 dark:text-gray-400">
+                  {{ i + 1 }}ª Etapa
+                </span>
+                  <span class="font-medium">
+                  {{ step.quantity }}
+                </span>
+                </div>
+              </div>
+            </p-popover>
+
+          </td>
+
 
           <td class="text-right">
             {{ item.contractedQuantity - item.totalExecuted }}
@@ -581,7 +643,7 @@
                   locale="pt-BR"
                   [minFractionDigits]="2"
                   [maxFractionDigits]="2"
-                  inputStyleClass="w-20 text-right">
+                  inputStyleClass="w-20 text-center">
                 </p-inputNumber>
               </ng-template>
 
@@ -599,9 +661,9 @@
 
                   <i
                     class="pi pi-pencil text-xs
-                 text-gray-400 dark:text-gray-500
-                 opacity-0 group-hover:opacity-100
-                 transition-opacity duration-200"
+                    text-gray-400 dark:text-gray-500
+                        opacity-0 group-hover:opacity-100
+                        transition-opacity duration-200"
                   ></i>
                 </div>
               </ng-template>

@@ -83,198 +83,188 @@ export class SidebarComponent implements OnInit {
 
         this.items = [
             {
-                style: {
-                    border: ''
-                },
-                label: 'Pré-Medições',
-                expanded: this.bTogglePreMeasurement,
-                command: () => {
-                    this.togglePreMeasurement(!this.bTogglePreMeasurement);
-                },
-                items: [
-                    {
-                        label: 'Aguardando Análise',
-                        icon: 'pi pi-inbox text-neutral-800 dark:text-neutral-200',
-                        routerLink: 'pre-medicao/pendente',
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
-                    {
-                        label: 'Disponível para execução',
-                        icon: 'pi pi-check-circle text-neutral-800 dark:text-neutral-200',
-                        routerLink: 'pre-medicao/disponivel',
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
-                    {
-                        label: 'Importar pré-medição (.xlx)',
-                        icon: 'pi pi-file-excel text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/contratos/listar'],
-                        queryParams: {for: 'preMeasurement'},
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
-                ]
-            },
-            {
-                style: {
-                    border: ''
-                },
-                label: 'Execuções',
+                label: 'Ordens de Serviço',
+                icon: 'pi pi-briefcase dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleExecution,
-                command: () => {
-                    this.toggleExecution();
-                },
+                command: () => this.toggleExecution(),
                 items: [
+
                     {
-                        label: 'Execução Sem Pré-Medição',
-                        icon: 'pi pi-lightbulb text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/contratos/listar'],
-                        queryParams: {for: 'execution'},
-                        routerLinkActiveOptions: {exact: true},
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
+                        label: 'Nova Ordem de Serviço',
+                        icon: 'pi pi-plus-circle text-green-500',
+                        items: [
+                            {
+                                label: 'Criar sem pré-medição',
+                                icon: 'pi pi-plus text-green-500',
+                                routerLink: ['/contratos/listar'],
+                                queryParams: { for: 'execution' },
+                                command: () => SharedState.showMenuDrawer$.next(false)
+                            },
+                            {
+                                label: 'Usar pré-medição analisada',
+                                icon: 'pi pi-clipboard text-blue-500',
+                                routerLink: 'pre-medicao/disponivel',
+                                command: () => SharedState.showMenuDrawer$.next(false)
+                            }
+                        ]
+                    },
+
+                    {
+                        label: 'Pré-medições para Análise',
+                        icon: 'pi pi-exclamation-circle text-yellow-500',
+                        badge: '3',
+                        badgeStyleClass: 'p-badge-warning',
+                        routerLink: 'pre-medicao/pendente',
+                        command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
-                        label: 'Em progresso',
-                        icon: 'pi pi-spinner  text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/execucoes/em-progresso'],
-                        routerLinkActiveOptions: {exact: true},
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
+                        label: 'Aguardando Estoque',
+                        icon: 'pi pi-box text-orange-500',
+                        routerLink: ['/execucoes/aguardando-estoque'],
+                        command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
-                        label: 'Finalizada',
-                        icon: 'pi pi-check text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/execucoes/finalizadas'],
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
+                        label: 'Prontas para Execução',
+                        icon: 'pi pi-play text-blue-500',
+                        routerLink: ['/execucoes/prontas-para-execucao'],
+                        command: () => SharedState.showMenuDrawer$.next(false)
                     },
+                    {
+                        label: 'Em Execução',
+                        icon: 'pi pi-cog text-blue-600',
+                        routerLink: ['/execucoes/em-execucao'],
+                        command: () => SharedState.showMenuDrawer$.next(false)
+                    },
+                    {
+                        label: 'Concluídas',
+                        icon: 'pi pi-check-circle text-green-600',
+                        routerLink: ['/execucoes/concluidas'],
+                        command: () => SharedState.showMenuDrawer$.next(false)
+                    }
+
+                    // {
+                    //     label: 'Importar pré-medição (.xlx)',
+                    //     icon: 'pi pi-file-excel text-neutral-800 dark:text-neutral-200',
+                    //     routerLink: ['/contratos/listar'],
+                    //     queryParams: {for: 'preMeasurement'},
+                    //     command: () => {
+                    //         SharedState.showMenuDrawer$.next(false);
+                    //     }
+                    // },
                 ]
             },
+
             {
-                style: {
-                    border: ''
-                },
                 label: 'Solicitações ao Estoquista',
+                icon: 'pi pi-box dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleRequest,
                 command: () => {
                     this.toggleRequest();
                 },
                 items: [
                     {
-                        label: 'Gerenciamento de Estoque – Pré-instalação',
-                        icon: 'pi pi-box text-black text-neutral-800 dark:text-neutral-200',
+                        label: 'Pendentes de Aprovação',
+                        icon: 'pi pi-clock text-yellow-500',
+                        routerLink: ['/requisicoes'],
+                        queryParams: { status: 'PENDING' },
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                    {
+                        label: 'Disponíveis para Coleta',
+                        icon: 'pi pi-check-circle text-green-500',
+                        routerLink: ['/requisicoes'],
+                        queryParams: { status: 'APPROVED' },
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                    {
+                        label: 'Gerenciar Ordens de Serviço',
+                        icon: 'pi pi-briefcase text-blue-500',
                         routerLink: ['/requisicoes/instalacoes/gerenciamento-estoque'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
-                    },
-                    {
-                        label: 'Materiais pendentes de Aprovação',
-                        icon: 'fa-solid fa-hourglass-half text-base text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/requisicoes'],
-                        queryParams: {status: 'PENDING'},
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
-                    {
-                        label: 'Materiais disponíveis para Coleta',
-                        icon: 'fa-solid fa-list-check text-base text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/requisicoes'],
-                        queryParams: {status: 'APPROVED'},
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
+                    }
                 ]
             },
+
             {
-                style: {
-                    border: ''
-                },
-                label: 'Execuções Realizadas',
+                label: 'Relatórios',
+                icon: 'pi pi-chart-line dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleReports,
                 command: () => {
                     this.toggleReports(!this.bToggleReports);
                 },
                 items: [
                     {
-                        disabled: false,
-                        label: 'Relatórios Personalizados',
-                        icon: 'pi pi-chart-bar text-black text-neutral-800 dark:text-neutral-200',
+                        label: 'Personalizados',
+                        icon: 'pi pi-sliders-h text-blue-500',
                         routerLink: ['/relatorios/gerenciamento'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        label: 'Manutenções - 30 dias',
-                        icon: 'fa-solid fa-wrench text-base text-neutral-800 dark:text-neutral-200',
+                        label: 'Manutenções (30 dias)',
+                        icon: 'pi pi-wrench text-blue-500',
                         routerLink: ['/relatorios/manutencoes'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        label: 'Instalações - 90 dias',
-                        icon: 'pi pi-lightbulb text-black text-neutral-800 dark:text-neutral-200',
+                        label: 'Instalações (90 dias)',
+                        icon: 'pi pi-lightbulb text-blue-500',
                         routerLink: ['/relatorios/instalacoes'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
-                    },
+                    }
                 ]
             },
+
             {
-                style: {
-                    border: ''
-                },
                 label: 'Contratos',
+                icon: 'pi pi-file dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleContracts,
                 command: () => {
                     this.toggleContracts(!this.bToggleContracts);
                 },
                 items: [
                     {
-                        label: 'Novo contrato',
-                        icon: 'pi pi-plus-circle text-neutral-800 dark:text-neutral-200',
+                        label: 'Novo Contrato',
+                        icon: 'pi pi-plus-circle text-green-500',
                         routerLink: ['/contratos/criar'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        label: 'Exibir Contratos',
-                        icon: 'pi pi-folder-open text-neutral-800 dark:text-neutral-200',
+                        label: 'Listar Contratos',
+                        icon: 'pi pi-folder-open text-blue-500',
                         routerLink: ['/contratos/listar'],
-                        queryParams: {for: 'view'},
+                        queryParams: { for: 'view' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
-                    },
+                    }
                 ]
             },
+
             {
-                style: {
-                    border: ''
-                },
                 label: 'Estoque',
+                icon: 'pi pi-warehouse dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleStock,
                 command: () => {
                     this.toggleStock(!this.bToggleStock);
                 },
                 items: [
                     {
-                        label: 'Movimentação de Estoque',
-                        icon: 'pi pi-barcode text-neutral-800 dark:text-neutral-200',
+                        label: 'Movimentar Estoque',
+                        icon: 'pi pi-arrow-right-arrow-left text-blue-500',
                         routerLink: ['/estoque/movimentar-estoque'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -282,7 +272,7 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Movimentações Pendentes',
-                        icon: 'pi pi-clock text-neutral-800 dark:text-neutral-200',
+                        icon: 'pi pi-clock text-yellow-500',
                         routerLink: ['/estoque/movimentar-estoque-pendente'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -290,23 +280,23 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Cadastro de Materiais',
-                        icon: 'pi pi-plus-circle text-neutral-800 dark:text-neutral-200',
+                        icon: 'pi pi-plus-circle text-green-500',
                         routerLink: ['/estoque/cadastrar-material'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        label: 'Gerenciar Almoxarifados',
-                        icon: 'pi pi-warehouse text-neutral-800 dark:text-neutral-200',
+                        label: 'Almoxarifados',
+                        icon: 'pi pi-home text-blue-500',
                         routerLink: ['/estoque/almoxarifados'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        label: 'Gerenciar Caminhões',
-                        icon: 'pi pi-truck text-neutral-800 dark:text-neutral-200',
+                        label: 'Caminhões',
+                        icon: 'pi pi-truck text-blue-500',
                         routerLink: ['/estoque/caminhoes'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -314,33 +304,23 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Catálogo de Materiais',
-                        icon: 'pi pi-table text-neutral-800 dark:text-neutral-200',
+                        icon: 'pi pi-table text-neutral-500',
                         routerLink: ['/estoque/catalogo-materiais'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
-                    },
-                    {
-                        label: 'Tipos / Subtipos (configuração)',
-                        icon: 'pi pi-cog text-neutral-800 dark:text-neutral-200',
-                        routerLink: ['/estoque/cadastrar-material'],
-                        disabled: true,
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
+                    }
                 ]
             },
+
             {
-                style: {
-                    border: ''
-                },
                 label: 'Configurações',
+                icon: 'pi pi-cog dark:text-neutral-200 text-gray-800',
                 expanded: false,
                 items: [
                     {
                         label: 'Usuários',
-                        icon: 'pi pi-users text-neutral-800 dark:text-neutral-200',
+                        icon: 'pi pi-users text-blue-500',
                         routerLink: ['/configuracoes/usuarios'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -348,7 +328,7 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Minha Conta',
-                        icon: 'pi pi-user text-neutral-800 dark:text-neutral-200',
+                        icon: 'pi pi-user text-blue-500',
                         routerLink: ['/configuracoes/conta'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -356,7 +336,7 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Equipes Operacionais',
-                        icon: 'pi pi-sitemap  text-neutral-800 dark:text-neutral-200',
+                        icon: 'pi pi-sitemap text-blue-500',
                         routerLink: ['/configuracoes/equipes'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -364,8 +344,8 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Estoquistas',
-                        icon: 'pi pi-warehouse text-neutral-800 dark:text-neutral-200',
-                    },
+                        icon: 'pi pi-id-card text-blue-500'
+                    }
                 ]
             }
         ];

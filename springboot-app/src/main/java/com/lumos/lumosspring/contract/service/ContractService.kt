@@ -46,8 +46,8 @@ class ContractService(
         try {
             contractItemsQuantitativeRepository.deleteByContractId((contractId))
             contractRepository.deleteById(contractId)
-        } catch (e: Exception) {
-            throw IllegalStateException("Como este contrato já possui registros vinculados (como manutenções ou instalações já executadas), a exclusão não é permitida.")
+        } catch (_: Exception) {
+            throw IllegalStateException("Como este contrato já possui registros vinculados (como Manutenções, instalações já executadas ou Ordens de Serviços pendentes), a exclusão não é permitida.")
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
@@ -169,9 +169,9 @@ class ContractService(
             if (blockedItems.isNotEmpty()) {
                 val descriptions = blockedItems.joinToString { it }
                 val message = if (blockedItems.size > 1) {
-                    "Não é possível excluir os itens: $descriptions, pois já estão vinculados a registros de execução ou O.S. no sistema."
+                    "Não é possível excluir os itens: $descriptions, pois já estão vinculados a registros de instalações ou O.S. no sistema."
                 } else {
-                    "Não é possível excluir o item: $descriptions, pois já está vinculado a um registro de execução ou O.S. no sistema."
+                    "Não é possível excluir o item: $descriptions, pois já está vinculado a um registro de instalação ou O.S. no sistema."
                 }
 
                 throw Utils.BusinessException(message)
@@ -540,7 +540,7 @@ class ContractService(
                 SELECT
                     t.installation_id,
                     t.step,
-                    SUM(t.measured_item_quantity) AS reserved_quantity
+                    SUM(t.measured_item_quantity) AS quantity
                 FROM (
                     SELECT
                         d.direct_execution_id as installation_id,
@@ -568,7 +568,7 @@ class ContractService(
                     iv.installation_id,
                     iv.installation_type,
                     iv.step,
-                    SUM(isiv.executed_quantity) AS executed_quantity
+                    SUM(isiv.executed_quantity) AS quantity
                 FROM installation_view iv 
                 JOIN installation_street_view isv ON iv.installation_id = isv.installation_id
                     and isv.installation_type = iv.installation_type
@@ -589,7 +589,7 @@ class ContractService(
             ExecutedQuantity(
                 installationId = row["installation_id"] as Long,
                 step = (row["step"] as Number).toInt(), // ✅ usa a etapa real
-                quantity = row["executed_quantity"] as BigDecimal,
+                quantity = row["quantity"] as BigDecimal,
             )
         }
     }

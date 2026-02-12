@@ -23,6 +23,7 @@ import {SharedState} from '../../../core/service/shared-state';
 import {InputNumber} from 'primeng/inputnumber';
 import {TableModule} from 'primeng/table';
 import {Message} from 'primeng/message';
+import {Popover} from 'primeng/popover';
 
 
 @Component({
@@ -49,7 +50,8 @@ import {Message} from 'primeng/message';
         DecimalPipe,
         InputNumber,
         TableModule,
-        Message
+        Message,
+        Popover
     ],
     templateUrl: './create.component.html',
     styleUrl: './create.component.scss'
@@ -262,8 +264,13 @@ export class CreateComponent implements OnInit {
     companyFormSubmit = false;
 
     removeItem(item: ContractReferenceItemsDTO, index: number) {
-        if ((item.executedQuantity ?? 0) > 0) {
-            this.utils.showMessage('Não é permitido remover um item com registro de execução.', 'warn', "Atenção");
+        const minValue = this.getTotalReservedAndExecutedValue(item);
+
+        if (minValue > 0) {
+            this.utils.showMessage(
+                'Por motivo de segurança de dados, não é permitido excluir um item com registro de instalação ou O.S. no sistema.',
+                'warn',
+                "Atenção");
             return;
         }
 
@@ -435,7 +442,7 @@ export class CreateComponent implements OnInit {
         return true;
     }
 
-    validateContractItems(): boolean {
+    private validateContractItems(): boolean {
         const hasInvalidItem = this.contract.items.some(item =>
             item.price === 0 || !item.price || item.quantity === 0 || !item.quantity
         );
@@ -532,13 +539,32 @@ export class CreateComponent implements OnInit {
 
     protected readonly formatNumber = formatNumber;
 
-    checkMin(item: any, model: any) {
-        const min = item.executedQuantity > 0 ? item.executedQuantity : 1;
+    checkMin(item: any, model: any, pop: any, input: any) {
+        const min = this.getTotalReservedAndExecutedValue(item, 1);
 
         if ((item.quantity ?? 0) < min) {
             model.control.setErrors({ minCustom: true });
+            pop.show(null, input.input.nativeElement);
         } else {
             model.control.setErrors(null);
+            pop.hide();
         }
+    }
+
+    protected getTotalReserved(contractItemId: number): number {
+        const contractItem = this.contract.items
+            .find(i => i.contractItemId === contractItemId);
+
+        if (!contractItem) return 0;
+
+        return (contractItem.reservedQuantity ?? [])
+            .reduce((sum, r) => sum + (r.quantity ?? 0), 0);
+    }
+
+    getTotalReservedAndExecutedValue(item: ContractReferenceItemsDTO, defaultValue = 0): number {
+        const reservedQuantity = this.getTotalReserved(item.contractItemId ?? -1);
+        const value = (item.totalExecuted ?? 0) + reservedQuantity;
+        if(value === 0) return defaultValue;
+        return value;
     }
 }

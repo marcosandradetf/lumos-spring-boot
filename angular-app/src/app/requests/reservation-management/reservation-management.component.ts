@@ -11,6 +11,7 @@ import {Menu} from 'primeng/menu';
 import {MenuItem} from 'primeng/api';
 import {Toast} from 'primeng/toast';
 import {SharedState} from '../../core/service/shared-state';
+import {ButtonDirective} from 'primeng/button';
 
 @Component({
     selector: 'app-reservation-management',
@@ -20,7 +21,8 @@ import {SharedState} from '../../core/service/shared-state';
         LoadingComponent,
         NgForOf,
         Menu,
-        Toast
+        Toast,
+        ButtonDirective
     ],
     templateUrl: './reservation-management.component.html',
     styleUrl: './reservation-management.component.scss'
@@ -35,8 +37,8 @@ export class ReservationManagementComponent {
                 protected router: Router,
                 private executionService: ExecutionService) {
 
-        SharedState.setCurrentPath(["Solicitações ao Estoquista", "Gerenciamento de Estoque – Pré-instalação"])
-        this.titleService.setTitle("Gerenciamento de Estoque – Pré-instalação");
+        SharedState.setCurrentPath(["Solicitações ao Estoquista", "Ordens de serviço de instalações"])
+        this.titleService.setTitle("Ordens de serviço de instalações");
 
         this.executionService.getPendingReservesForStockist(this.authService.getUser().uuid).subscribe({
             next: (response) => {

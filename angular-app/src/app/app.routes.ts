@@ -208,15 +208,8 @@ export const routes: Routes = [
     },
 
     {
-        path: 'execucoes/em-progresso',
+        path: 'execucoes/:status',
         loadComponent: () => import('./executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),
-        canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
-    },
-
-    {
-        path: 'execucoes/finalizadas',
-        loadComponent: () => import('./executions/execution-finished/execution-finished.component').then(e => e.ExecutionFinishedComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },

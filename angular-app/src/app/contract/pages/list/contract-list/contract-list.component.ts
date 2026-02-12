@@ -103,8 +103,10 @@ export class ContractListComponent implements OnInit {
                         itemDependency: '',
                         quantity: item.contractedQuantity,
                         price: item.unitPrice,
-                        executedQuantity: item.totalExecuted,
-                        contractItemId: item.contractItemId
+                        totalExecuted: item.totalExecuted,
+                        contractItemId: item.contractItemId,
+                        executedQuantity: item.executedQuantity,
+                        reservedQuantity: item.reservedQuantity
                     });
                 });
 
@@ -184,37 +186,6 @@ export class ContractListComponent implements OnInit {
             }
         });
     }
-
-
-    // private loadPreMeasurements() {
-    //   switch (this.status) {
-    //     case 'pendente':
-    //       this.preMeasurementService.getPreMeasurements('pending').subscribe(preMeasurements => {
-    //         this.preMeasurements = preMeasurements;
-    //         this.city = this.preMeasurements[0].streets[0].city;
-    //       });
-    //       break;
-    //     case 'aguardando-retorno':
-    //       this.preMeasurementService.getPreMeasurements('waiting').subscribe(preMeasurements => {
-    //         this.preMeasurements = preMeasurements;
-    //         this.city = this.preMeasurements[0].streets[0].city;
-    //       });
-    //       break;
-    //     case 'validando':
-    //       this.preMeasurementService.getPreMeasurements('validating').subscribe(preMeasurements => {
-    //         this.preMeasurements = preMeasurements;
-    //         this.city = this.preMeasurements[0].streets[0].city;
-    //       });
-    //       break;
-    //     case 'disponivel':
-    //       this.preMeasurementService.getPreMeasurements('available').subscribe(preMeasurements => {
-    //         this.preMeasurements = preMeasurements;
-    //         this.city = this.preMeasurements[0].streets[0].city;
-    //       });
-    //       break;
-    //   }
-    // }
-
 
     async getItems(contractId: number, showItems: boolean = true): Promise<void> {
         if (contractId === 0 || this.contractId === contractId) {
@@ -325,7 +296,7 @@ export class ContractListComponent implements OnInit {
                 const step = i + 1;
                 const found = quantities.find(q => q.step === step);
                 return found ?? {
-                    directExecutionId: 0, // ou null, se preferir
+                    installationId: 0, // ou null, se preferir
                     step,
                     quantity: 0
                 };
@@ -479,8 +450,12 @@ export class ContractListComponent implements OnInit {
     protected readonly Number = Number;
 
     protected deleteItem(item: ContractItemsResponseWithExecutionsSteps) {
-        if (item.totalExecuted > 0) {
-            this.utils.showMessage('Por motivo de segurança de dados, não é permitido excluir um item com registro de execução.', 'warn', 'Atenção');
+        if (item.totalExecuted + this.getTotalReserved(item.contractItemId) > 0) {
+            this.utils.showMessage(
+                'Por motivo de segurança de dados, não é permitido excluir um item com registro de instalação ou O.S. no sistema.',
+                'warn',
+                'Atenção'
+            );
             return;
         }
 
@@ -492,7 +467,26 @@ export class ContractListComponent implements OnInit {
     }
 
     loadingOverlay = false;
+
+    private validateContractItems(): boolean {
+        const hasInvalidItem = this.contractItems.some(item =>
+            item.unitPrice === 0 || !item.unitPrice || item.contractedQuantity === 0 || !item.contractedQuantity
+        );
+
+        if (hasInvalidItem) {
+            this.utils.showMessage(
+                'Existem itens com quantidade ou valor unitário igual a zero ou vazio. Corrija esses dados antes de continuar.',
+                'warn',
+                'Atenção'
+            );
+            return false;
+        }
+
+        return true;
+    }
+
     protected updateItems() {
+        if(!this.validateContractItems()) return;
         this.loadingOverlay = true;
         const items: ContractReferenceItemsDTO[]
             = this.contractItems.map(item =>
@@ -504,9 +498,11 @@ export class ContractListComponent implements OnInit {
                 linking: "",
                 itemDependency: "",
                 quantity: item.contractedQuantity,
-                price: item.unitPrice.toString(),
-                executedQuantity: item.totalExecuted,
-                contractItemId: item.contractItemId
+                price: item.unitPrice,
+                contractItemId: item.contractItemId,
+                executedQuantity: item.executedQuantity,
+                totalExecuted: item.totalExecuted,
+                reservedQuantity: item.reservedQuantity
             })
         );
 
@@ -529,4 +525,35 @@ export class ContractListComponent implements OnInit {
     protected cancelChanges() {
         this.contractItems = cloneDeep(this.contractItemsBackup);
     }
+
+    protected getTotalReserved(contractItemId: number): number {
+        const contractItem = this.contractItems
+            .find(i => i.contractItemId === contractItemId);
+
+        if (!contractItem) return 0;
+
+        return (contractItem.reservedQuantity ?? [])
+            .reduce((sum, r) => sum + (r.quantity ?? 0), 0);
+    }
+
+    getTotalReservedAndExecutedValue(item: ContractItemsResponseWithExecutionsSteps, defaultValue = 0): number {
+        const reservedQuantity = this.getTotalReserved(item.contractItemId ?? -1);
+        const value = item.totalExecuted + reservedQuantity;
+        if (value === 0) return defaultValue;
+        return value;
+    }
+
+    checkMin(item: any, model: any, pop: any, input: any) {
+        const min = this.getTotalReservedAndExecutedValue(item, 1);
+
+        if ((item.contractedQuantity ?? 0) < min) {
+            model.control.setErrors({ minCustom: true });
+            // abre o popover ancorado no input interno
+            pop.show(null, input.input.nativeElement);
+        } else {
+            model.control.setErrors(null);
+            pop.hide();
+        }
+    }
+
 }

@@ -20,3 +20,5 @@
 	ON direct_execution_item(contract_item_id);
 	CREATE INDEX idx_pre_measurement_contract_item
 	ON pre_measurement_street_item(contract_item_id);
+
+- Versão mobile para tela de contratos e itens
