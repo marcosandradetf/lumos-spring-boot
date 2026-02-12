@@ -2,6 +2,7 @@ package com.lumos.lumosspring.contract.service
 
 import com.lumos.lumosspring.contract.controller.ContractController
 import com.lumos.lumosspring.contract.dto.ContractDTO
+import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.entities.Contract
 import com.lumos.lumosspring.contract.entities.ContractItem
@@ -13,11 +14,13 @@ import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.system.entities.Log
 import com.lumos.lumosspring.system.repository.LogRepository
+import com.lumos.lumosspring.user.model.AppUser
 import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.*
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -67,21 +70,27 @@ class ContractService(
         }
     }
 
+    @Transactional
+    fun updateItems(
+        contractId: Long,
+        items: List<ContractReferenceItemDTO>
+    ): ResponseEntity<Any> {
+        val user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow()
+        val contract = contractRepository.findById(contractId).orElseThrow()
+
+        changeItems(
+            user = user,
+            contract = contract,
+            items = items
+        )
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+    }
+
     private fun updateContract(contractDTO: ContractDTO): ResponseEntity<Any> {
         val contractId = contractDTO.contractId!!
         val contract = contractRepository.findById(contractId).orElseThrow()
         val user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow()
-
-        val log = Log()
-
-        log.message = """
-            Usuário ${user.username} alterou o contrato ${contract.contractNumber} - ${contract.contractor}
-        """.trimIndent()
-        log.category = "contract"
-        log.type = "update"
-        log.creationTimestamp = Instant.now()
-        log.idUser = user.userId
-        logRepository.save(log)
 
         contract.contractNumber = contractDTO.number
         contract.phone = contractDTO.phone
@@ -120,22 +129,73 @@ class ContractService(
         contract.companyId = contractDTO.companyId
         contractRepository.save(contract)
 
+        changeItems(
+            user = user,
+            contract = contract,
+            items = contractDTO.items
+        )
+
+        return ResponseEntity.ok(DefaultResponse("Contrato atualizado com sucesso!"))
+    }
+
+    private fun changeItems(
+        user: AppUser,
+        contract: Contract,
+        items: List<ContractReferenceItemDTO>,
+    ) {
+        val contractId = contract.contractId
+        val log = Log()
+
+        log.message = """
+            Usuário ${user.username} alterou o contrato ${contract.contractNumber} - ${contract.contractor}
+        """.trimIndent()
+        log.category = "contract"
+        log.type = "update"
+        log.creationTimestamp = Instant.now()
+        log.idUser = user.userId
+        logRepository.save(log)
+
         val currentContractItems = contractItemsQuantitativeRepository.findAllByContractId(contractId)
         val deleteContractItemsIds =
             currentContractItems
                 .filterNot { currentItem ->
-                    contractDTO.items.filter { it.contractItemId != null }
+                    items.filter { it.contractItemId != null }
                         .map { it.contractItemId }.contains(currentItem.contractItemId)
                 }
                 .map { it.contractItemId }
 
-        try {
-            contractItemsQuantitativeRepository.deleteAllById(deleteContractItemsIds)
-        } catch (_: Exception) {
-            throw Utils.BusinessException("Não é possível excluir itens com registro de execução")
+        if(deleteContractItemsIds.isNotEmpty()) {
+            val blockedItems = contractItemsQuantitativeRepository
+                .findBlockedItemDescriptions(deleteContractItemsIds)
+
+            if (blockedItems.isNotEmpty()) {
+                val descriptions = blockedItems.joinToString { it }
+                val message = if (blockedItems.size > 1) {
+                    "Não é possível excluir os itens: $descriptions, pois já estão vinculados a registros de execução ou O.S. no sistema."
+                } else {
+                    "Não é possível excluir o item: $descriptions, pois já está vinculado a um registro de execução ou O.S. no sistema."
+                }
+
+                throw Utils.BusinessException(message)
+            }
+
+            try {
+                contractItemsQuantitativeRepository.deleteAllById(deleteContractItemsIds)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+
+                throw Utils.BusinessException(
+                    "Erro ao excluir itens: ${ex.message}"
+                )
+            }
         }
 
-        contractDTO.items.forEach { item ->
+        val reservedQuantityByItem = contractItemsQuantitativeRepository
+            .getReservedQuantity(
+                items.map { it.contractItemId }
+            )
+
+        items.forEach { item ->
             val ci = if (item.contractItemId != null) {
                 currentContractItems.find { it.contractItemId == item.contractItemId }
                     ?: throw Utils.BusinessException("Não foi possível encontrar o item ${item.description} na coleção")
@@ -143,28 +203,23 @@ class ContractService(
                 ContractItem()
             }
 
-            if (item.contractItemId != null && item.quantity!! < ci.quantityExecuted) {
-                throw Utils.BusinessException("A nova quantidade do item ${item.description} não pode ser menor que a quantidade executada.");
+            val reservedQuantity = reservedQuantityByItem
+                .find { it.contractItemId() == item.contractItemId }?.reservedQuantity ?: BigDecimal.ZERO
+            val minQuantity = ci.quantityExecuted + reservedQuantity
+
+            if (item.contractItemId != null && item.quantity!! < minQuantity) {
+                throw Utils.BusinessException(
+                    "A quantidade informada para o item ${item.description} (${item.quantity}) é inferior ao mínimo permitido ($minQuantity). " +
+                            "O valor mínimo corresponde ao total já executado ou reservado em O.S."
+                )
             }
 
             ci.referenceItemId = item.contractReferenceItemId
             ci.contractId = contractId
             ci.contractedQuantity = item.quantity!!
-            ci.setPrices(util.convertToBigDecimal(item.price)!!)
+            ci.setPrices(item.price)
             contractItemsQuantitativeRepository.save(ci)
         }
-
-        for (notificationCode in userRepository.getResponsibleTechUsers(Utils.getCurrentTenantId())) {
-            notificationService.sendNotificationForTopic(
-                title = "Novo contrato pendente para Pré-Medição",
-                body = "${user.name} atualizou o contrato de ${contract.contractor}",
-                action = Routes.CONTRACT_SCREEN,
-                notificationCode = notificationCode.toString(),
-                type = NotificationType.CONTRACT
-            )
-        }
-
-        return ResponseEntity.ok(DefaultResponse("Contrato atualizado com sucesso!"))
     }
 
     private fun createContract(contractDTO: ContractDTO): ResponseEntity<Any> {
@@ -189,7 +244,8 @@ class ContractService(
             ci.referenceItemId = item.contractReferenceItemId
             ci.contractId = contract.contractId
             ci.contractedQuantity = item.quantity!!
-            ci.setPrices(util.convertToBigDecimal(item.price)!!)
+            TODO()
+            ci.setPrices(item.price)
             contractItemsQuantitativeRepository.save(ci)
         }
 
@@ -284,7 +340,7 @@ class ContractService(
             filters.status,
             filters.startDate,
             endPlusOneDay,
-            if(contractor == "") null else contractor?.lowercase()
+            if (contractor == "") null else contractor?.lowercase()
         )
 
         return ResponseEntity.ok()

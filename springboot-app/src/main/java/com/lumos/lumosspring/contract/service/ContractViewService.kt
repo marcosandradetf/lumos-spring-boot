@@ -34,7 +34,7 @@ class ContractViewService(
                     item.linking,
                     item.itemDependency,
                     BigDecimal.ZERO,
-                    "0,00"
+                    BigDecimal.ZERO
                 )
             )
         }

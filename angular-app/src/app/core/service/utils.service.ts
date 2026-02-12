@@ -154,7 +154,7 @@ export class UtilsService {
 
     showMessage(messageContent: string,
                 typeMessage: 'success' | 'info' | 'warn' | 'error' | 'contrast' | 'secondary',
-                summary: string = typeMessage,
+                summary: string = '',
                 stick: boolean = false,
                 key: string | null = null,) {
         switch (typeMessage) {

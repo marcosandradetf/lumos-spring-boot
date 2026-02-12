@@ -20,6 +20,7 @@ import {LoadingOverlayComponent} from '../../../shared/components/loading-overla
 import {CompanyService} from '../../../company/service/company.service';
 import {CompanyResponse} from '../../../company/dto/company.dto';
 import {SharedState} from '../../../core/service/shared-state';
+import {InputNumber} from 'primeng/inputnumber';
 
 
 @Component({
@@ -43,7 +44,8 @@ import {SharedState} from '../../../core/service/shared-state';
         Select,
         Dialog,
         LoadingOverlayComponent,
-        DecimalPipe
+        DecimalPipe,
+        InputNumber
     ],
     templateUrl: './create.component.html',
     styleUrl: './create.component.scss'
@@ -69,7 +71,7 @@ export class CreateComponent implements OnInit {
 
     items: ContractReferenceItemsDTO[] = [];
 
-    totalValue: string = "0,00";
+    totalValue: number = 0;
     totalItems: number = 0;
     removingIndex: number | null = null;
     openModal: boolean = false;
@@ -238,34 +240,6 @@ export class CreateComponent implements OnInit {
     btnLoading: boolean = false;
     finish: boolean = false;
 
-    formatValue(event: Event, itemId: number) {
-        // Obtém o valor diretamente do evento e remove todos os caracteres não numéricos
-        let targetValue = (event.target as HTMLInputElement).value.replace(/\D/g, '');
-        const item = this.items.find(i => i.contractReferenceItemId === itemId);
-        if (!item) {
-            return;
-        }
-
-        // Verifica se targetValue está vazio e define um valor padrão
-        if (!targetValue) {
-            item.price = '0,00';
-            (event.target as HTMLInputElement).value = ''; // Atualiza o valor no campo de input
-            return;
-        }
-
-        // Divide o valor por 100 para inserir as casas decimais
-        const formattedValue = new Intl.NumberFormat('pt-BR', {
-            //style: 'currency',
-            currency: 'BRL',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(parseFloat(targetValue) / 100);
-
-        // Atualiza o valor no modelo e no campo de input
-        item.price = formattedValue;
-        (event.target as HTMLInputElement).value = formattedValue; // Exibe o valor formatado no campo de input
-    }
-
 
     addItem(
         item: ContractReferenceItemsDTO
@@ -313,9 +287,6 @@ export class CreateComponent implements OnInit {
         let totalInCents = this.contract.items.reduce((sum, item) => {
             const price = parseFloat(
                 item.price
-                    .replace(/\./g, '')
-                    .replace(',', '.')
-                    .replace(/[^\d.-]/g, '')
             );
 
             const quantity = item.quantity || 0;
@@ -327,7 +298,7 @@ export class CreateComponent implements OnInit {
         }, 0);
 
         // Depois de tudo, converter de volta para reais
-        this.totalValue = (totalInCents / 100).toFixed(2);
+        this.totalValue = (totalInCents / 100);
     }
 
 
@@ -350,9 +321,6 @@ export class CreateComponent implements OnInit {
             .forEach(i => i.quantity = quantity);
     }
 
-    removeLeadingZeros(input: HTMLInputElement) {
-        input.value = input.value.replace(/^0+/, '');
-    }
 
     setQuantity(input: HTMLInputElement, contractReferenceItemId: number) {
         const index = this.contract.items.findIndex(i => i.contractReferenceItemId === contractReferenceItemId);

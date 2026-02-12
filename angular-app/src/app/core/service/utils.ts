@@ -67,5 +67,24 @@ export class Utils {
         return result.join(' ').toUpperCase();
     }
 
+    static formatValue(event: Event) {
+        let value = (event.target as HTMLInputElement).value.replace(/\D/g, '');
+
+        // Verifica se targetValue está vazio e define um valor padrão
+        if (!value) {
+            (event.target as HTMLInputElement).value = ''; // Atualiza o valor no campo de input
+            return;
+        }
+
+        // Divide o valor por 100 para inserir as casas decimais
+        (event.target as HTMLInputElement).value = new Intl.NumberFormat('pt-BR', {
+            //style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(parseFloat(value) / 100); // Exibe o valor formatado no campo de input
+
+    }
+
 
 }

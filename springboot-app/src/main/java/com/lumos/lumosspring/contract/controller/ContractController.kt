@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.contract.controller
 
 import com.lumos.lumosspring.contract.dto.ContractDTO
+import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.service.ContractService
 import org.springframework.http.ResponseEntity
@@ -18,6 +19,14 @@ class ContractController(
     @PostMapping("/contracts/insert-contract")
     fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> =
         contractService.saveContract(contractDTO)
+
+    @PutMapping("/contracts/update-items")
+    fun changeItems(
+        @RequestBody items: List<ContractReferenceItemDTO>,
+        @RequestParam("contractId") contractId: Long
+    ) : ResponseEntity<Any> {
+        return contractService.updateItems(contractId, items)
+    }
 
     @PostMapping("/contracts/delete-by-id")
     fun deleteById(@RequestBody contractId: Long) : ResponseEntity<Any> =

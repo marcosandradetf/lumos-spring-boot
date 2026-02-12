@@ -232,20 +232,31 @@
                   <td class="px-4 py-2 text-base">{{ item.description }}</td>
 
                   <td class="px-4 py-2">
-                    <input type="text" placeholder="Ex.: 2" #inputField
-                           (input)="removeLeadingZeros(inputField)" [(ngModel)]="item.quantity"
-                           name="quantity{{i}}"
-                           class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
-                           required/>
+                    <p-inputNumber
+                      name="quantity{{i}}"
+                      required
+                      placeholder="Ex.: 2"
+                      [(ngModel)]="item.quantity"
+                      mode="decimal"
+                      locale="pt-BR"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      inputStyleClass="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                    </p-inputNumber>
                   </td>
 
                   <td class="px-4 py-2">
-                    <input type="text"
-                           #priceField
-                           (input)="formatValue($event, item.contractReferenceItemId)"
-                           placeholder="R$" [(ngModel)]="item.price" name="price{{i}}"
-                           class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
-                           required/>
+                    <p-inputNumber
+                      name="price{{i}}"
+                      required
+                      placeholder="Ex.: 2"
+                      [(ngModel)]="item.price"
+                      mode="decimal"
+                      locale="pt-BR"
+                      [minFractionDigits]="2"
+                      [maxFractionDigits]="2"
+                      inputStyleClass="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                    </p-inputNumber>
                   </td>
 
                 </tr>
@@ -335,12 +346,17 @@
                     </td>
 
                     <td class="px-4 py-2">
-                      <input type="text" placeholder="Ex.: R$" #inputField
-                             (input)="formatValue($event, item.contractReferenceItemId); getTotalValue();"
-                             [(ngModel)]="item.price"
-                             name="price{{i}}"
-                             class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                             required/>
+                      <p-inputNumber
+                        name="price{{i}}"
+                        required
+                        placeholder="Ex.: 2"
+                        [(ngModel)]="item.price"
+                        mode="decimal"
+                        locale="pt-BR"
+                        [minFractionDigits]="2"
+                        [maxFractionDigits]="2"
+                        inputStyleClass="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                      </p-inputNumber>
                     </td>
 
                   </tr>

@@ -1,4 +1,5 @@
-<div>
+<div class="relative">
+  <app-loading-overlay [loading]="loadingOverlay"></app-loading-overlay>
   <div
     class="pt-3 px-4 w-full flex flex-col items-center justify-center gap-2 text-center"
     *ngIf="!loading">
@@ -346,17 +347,34 @@
       </div>
 
       <div class="flex gap-2 flex-wrap">
-        <button
-          pButton
-          icon="pi pi-arrow-left"
-          label="Exibir Contratos"
-          class="p-button-sm p-button-text sm:p-button-outlined p-button-info"
-          (click)="showItems = false"
-        ></button>
 
-        <button pButton icon="pi pi-download" label="Arquivos do Contrato"
-                class="p-button-sm p-button-text sm:p-button-outlined"
-                (click)="downloadContractFiles()"></button>
+        @if (!hasDiff()) {
+          <button
+            pButton
+            icon="pi pi-arrow-left"
+            label="Exibir Contratos"
+            class="p-button-sm p-button-text sm:p-button-outlined p-button-info"
+            (click)="showItems = false"
+          ></button>
+
+          <button pButton icon="pi pi-download" label="Arquivos do Contrato"
+                  class="p-button-sm p-button-text sm:p-button-outlined"
+                  (click)="downloadContractFiles()">
+          </button>
+        } @else {
+          <button
+            pButton
+            icon="pi pi-times"
+            label="Cancelar Alterações"
+            class="p-button-sm p-button-text sm:p-button-outlined p-button-danger"
+            (click)="cancelChanges()"
+          ></button>
+
+          <button pButton icon="pi pi-check" label="Salvar Alterações"
+                  class="p-button-sm p-button-text sm:p-button-outlined"
+                  (click)="updateItems()">
+          </button>
+        }
       </div>
     </div>
 
@@ -448,10 +466,10 @@
         <tr>
           <th>Item</th>
           <th class="text-left">Descrição</th>
-          <th class="text-right">Qtde</th>
+          <th class="text-center">Qtde</th>
           <th class="text-right">Executado</th>
           <th class="text-right">Saldo</th>
-          <th class="text-right">Unit.</th>
+          <th class="text-center">Unit. R$</th>
           <th class="text-right">Total</th>
           <th class="text-right">Saldo R$</th>
           <th class="text-center">Etapas</th>
@@ -469,13 +487,14 @@
 
               <!-- INPUT -->
               <ng-template pTemplate="input">
-                <input
-                  pInputText
-                  type="number"
-                  pSize="small"
-                  class="w-20 text-right"
+                <p-inputNumber
                   [(ngModel)]="item.contractedQuantity"
-                />
+                  mode="decimal"
+                  locale="pt-BR"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  inputStyleClass="w-20 text-right">
+                </p-inputNumber>
               </ng-template>
 
               <!-- OUTPUT -->
@@ -514,7 +533,7 @@
               {{ item.totalExecuted }}
             </span>
 
-            <p-overlayPanel
+            <p-popover
               #op
               [dismissable]="false"
               [showCloseIcon]="false"
@@ -537,45 +556,43 @@
                 <span class="text-gray-500 dark:text-gray-400">
                   {{ i + 1 }}ª Etapa
                 </span>
-                          <span class="font-medium">
+                  <span class="font-medium">
                   {{ step.quantity }}
                 </span>
                 </div>
               </div>
-            </p-overlayPanel>
+            </p-popover>
 
           </td>
-
-
 
 
           <td class="text-right">
             {{ item.contractedQuantity - item.totalExecuted }}
           </td>
 
-          <td class="text-right" [pEditableColumn]="item.unitPrice" pEditableColumnField="unitPrice">
+          <td class="text-left" [pEditableColumn]="item.unitPrice" pEditableColumnField="unitPrice">
             <p-cellEditor>
 
               <!-- INPUT -->
               <ng-template pTemplate="input">
-                <input
-                  pInputText
-                  type="number"
-                  pSize="small"
-                  class="w-20 text-right"
+                <p-inputNumber
                   [(ngModel)]="item.unitPrice"
-                />
+                  mode="decimal"
+                  locale="pt-BR"
+                  [minFractionDigits]="2"
+                  [maxFractionDigits]="2"
+                  inputStyleClass="w-20 text-right">
+                </p-inputNumber>
               </ng-template>
+
 
               <!-- OUTPUT -->
               <ng-template pTemplate="output">
                 <div
                   class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
-               cursor-pointer transition-all duration-200
-
-               hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
-               dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40"
-                >
+                          cursor-pointer transition-all duration-200
+                        hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                        dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
                 <span class="text-gray-800 dark:text-gray-100">
                   {{ item.unitPrice | currency:'BRL' }}
                 </span>
@@ -609,7 +626,7 @@
               (click)="op.toggle($event)"
             ></button>
 
-            <p-overlayPanel #op>
+            <p-popover #op>
               <div class="flex flex-col gap-2 min-w-[180px]">
                 <span class="text-gray-500 dark:text-gray-400" *ngIf="item.totalExecuted === 0">
                   Nenhuma execução
@@ -622,7 +639,7 @@
                   <span class="font-medium">{{ step.quantity }}</span>
                 </div>
               </div>
-            </p-overlayPanel>
+            </p-popover>
           </td>
 
           <td class="text-center">

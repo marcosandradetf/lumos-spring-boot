@@ -6,7 +6,7 @@ import {
     ReserveRequest
 } from '../../executions/executions.model';
 import {DatePipe, NgForOf, NgIf} from '@angular/common';
-import {Button, ButtonDirective, ButtonLabel} from 'primeng/button';
+import {Button, ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {CarouselResponsiveOptions} from 'primeng/carousel';
 import {Table, TableModule} from 'primeng/table';

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
 import {
     ContractItemsResponse, ContractItemsResponseWithExecutionsSteps,
@@ -50,4 +50,10 @@ export class ContractService {
         return this.http.post(this.endpoint + "/archive-by-id", contractId);
     }
 
+    updateItems(items: ContractReferenceItemsDTO[], contractId: number) {
+        const param = new HttpParams()
+            .set("contractId", contractId);
+
+        return this.http.put(this.endpoint + "/update-items", items, {params: param});
+    }
 }

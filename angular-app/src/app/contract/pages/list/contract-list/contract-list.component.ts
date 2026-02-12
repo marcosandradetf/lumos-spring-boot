@@ -8,9 +8,8 @@ import {
     ContractResponse
 } from '../../../contract-models';
 import {LoadingComponent} from '../../../../shared/components/loading/loading.component';
-import {Dialog} from 'primeng/dialog';
 import {Table, TableModule} from 'primeng/table';
-import {Button, ButtonDirective} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {FormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Toast} from 'primeng/toast';
@@ -30,7 +29,10 @@ import {DropdownModule} from 'primeng/dropdown';
 import {Message} from 'primeng/message';
 import {OverlayPanelModule} from 'primeng/overlaypanel';
 import {Utils} from '../../../../core/service/utils';
-
+import {isEqual, cloneDeep} from 'lodash';
+import {InputNumber} from 'primeng/inputnumber';
+import {Popover} from 'primeng/popover';
+import {LoadingOverlayComponent} from '../../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
     selector: 'app-contract-list',
@@ -53,7 +55,10 @@ import {Utils} from '../../../../core/service/utils';
         DropdownModule,
         Message,
         DatePipe,
-        OverlayPanelModule
+        OverlayPanelModule,
+        InputNumber,
+        Popover,
+        LoadingOverlayComponent
     ],
     templateUrl: './contract-list.component.html',
     styleUrl: './contract-list.component.scss'
@@ -61,7 +66,9 @@ import {Utils} from '../../../../core/service/utils';
 export class ContractListComponent implements OnInit {
     contracts: ContractResponse[] = [];
     contractsBackup: ContractResponse[] = [];
-    contractItems: ContractItemsResponseWithExecutionsSteps[] = []
+
+    contractItems: ContractItemsResponseWithExecutionsSteps[] = [];
+    contractItemsBackup: ContractItemsResponseWithExecutionsSteps[] = [];
 
     loading: boolean = false;
     protected status: string = "";
@@ -95,8 +102,7 @@ export class ContractListComponent implements OnInit {
                         linking: item.linking ?? '',
                         itemDependency: '',
                         quantity: item.contractedQuantity,
-                        price: item.unitPrice
-                            .replace('.', ','),
+                        price: item.unitPrice,
                         executedQuantity: item.totalExecuted,
                         contractItemId: item.contractItemId
                     });
@@ -220,6 +226,7 @@ export class ContractListComponent implements OnInit {
             this.contractService.getContractItemsWithExecutionsSteps(contractId).subscribe({
                 next: items => {
                     this.contractItems = items || [];
+                    this.contractItemsBackup = cloneDeep(items || []);
                     this.normalizeExecutedQuantities();
                     this.showItems = showItems;
                 },
@@ -249,7 +256,7 @@ export class ContractListComponent implements OnInit {
     @ViewChild('dt') table!: Table;
 
     onRowEditInit(item: any) {
-        this.clonedItems[item.id] = { ...item }; // backup da linha
+        this.clonedItems[item.id] = {...item}; // backup da linha
         this.table.initRowEdit(item); // ativa a edição só desta linha
     }
 
@@ -469,11 +476,54 @@ export class ContractListComponent implements OnInit {
     protected readonly Number = Number;
 
     protected deleteItem(item: ContractItemsResponseWithExecutionsSteps) {
-        if(item.totalExecuted > 0) {
-            this.utils.showMessage('Por motivo de segurança de dados, não é permitido excluir um item com registro de execução.', 'warn','Atenção');
+        if (item.totalExecuted > 0) {
+            this.utils.showMessage('Por motivo de segurança de dados, não é permitido excluir um item com registro de execução.', 'warn', 'Atenção');
             return;
         }
 
         this.contractItems = this.contractItems.filter(i => i.contractItemId !== item.contractItemId);
+    }
+
+    protected hasDiff() {
+        return !isEqual(this.contractItems, this.contractItemsBackup);
+    }
+
+    loadingOverlay = false;
+    protected updateItems() {
+        this.loadingOverlay = true;
+        const items: ContractReferenceItemsDTO[]
+            = this.contractItems.map(item =>
+            ({
+                contractReferenceItemId: item.contractReferenceItemId,
+                description: item.description,
+                nameForImport: item.nameForImport ?? '',
+                type: item.type,
+                linking: "",
+                itemDependency: "",
+                quantity: item.contractedQuantity,
+                price: item.unitPrice.toString(),
+                executedQuantity: item.totalExecuted,
+                contractItemId: item.contractItemId
+            })
+        );
+
+        this.contractService.updateItems(
+            items,
+            this.contractId
+        ).subscribe({
+            error: err => {
+                this.loadingOverlay = false;
+                this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, 'error');
+            },
+            complete: () => {
+                this.contractItemsBackup = cloneDeep(this.contractItems);
+                this.loadingOverlay = false;
+                this.utils.showMessage('Itens atualizados com sucesso', 'success');
+            }
+        });
+    }
+
+    protected cancelChanges() {
+        this.contractItems = cloneDeep(this.contractItemsBackup);
     }
 }
