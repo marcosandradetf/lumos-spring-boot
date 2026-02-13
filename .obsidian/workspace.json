@@ -1,0 +1,200 @@
+{
+  "main": {
+    "id": "700d3880b3b057bf",
+    "type": "split",
+    "children": [
+      {
+        "id": "1a2b1e04f472b59c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9b0fa2117ad58878",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "todo.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "todo"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "9684be3aadec4a05",
+    "type": "split",
+    "children": [
+      {
+        "id": "abe67e691bf79fe2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "32e6973e5c3de239",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "aba2d35593e88f40",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "bca658f3cd010567",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "7a6c6008b9e96778",
+    "type": "split",
+    "children": [
+      {
+        "id": "7f1fb87e2aa0ccbb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "26ec9e4edf08d4cf",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "todo.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for todo"
+            }
+          },
+          {
+            "id": "aa9d42aa07bfea22",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "todo.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from todo"
+            }
+          },
+          {
+            "id": "23d7cde12a7984f7",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "70517486a9ae1701",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "1203e6f87b34ded7",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "todo.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of todo"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "9b0fa2117ad58878",
+  "lastOpenFiles": [
+    "angular-app/src/app/executions/execution-progress/execution-progress.component.ts~",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/controller/premeasurement/InstallationRegisterController.class",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/service/premeasurement/RegisterService.class",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/repository/premeasurement/RegisterRepository.class",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/repository/premeasurement/ViewRepository.class",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/service/premeasurement/ViewService.class",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/service/premeasurement",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/controller/premeasurement/InstallationViewController.class",
+    "springboot-app/target/classes/META-INF/lumos-spring.kotlin_module",
+    "springboot-app/target/classes/META-INF",
+    "springboot-app/target/classes/com/lumos/lumosspring/installation/repository/view/InstallationViewRepository.class"
+  ]
+}

@@ -10,7 +10,7 @@ import com.lumos.lumosspring.maintenance.model.MaintenanceExecutor
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreetItem
 import com.lumos.lumosspring.maintenance.repository.*
-import com.lumos.lumosspring.report.controller.ReportController
+import com.lumos.lumosspring.report.controller.installation.ReportController
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ContentDisposition

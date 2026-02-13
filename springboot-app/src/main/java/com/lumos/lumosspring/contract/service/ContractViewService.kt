@@ -4,12 +4,10 @@ import com.lumos.lumosspring.contract.dto.ContractItemBalance
 import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
-import com.lumos.lumosspring.premeasurement.repository.premeasurement.PreMeasurementRepository
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.util.*
 
 @Service
 class ContractViewService(

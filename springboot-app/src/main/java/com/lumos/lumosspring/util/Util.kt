@@ -233,3 +233,44 @@ object ReservationStatus {
 
     const val FINISHED = "FINISHED"
 }
+
+enum class InstallationStatus(
+    private val translations: Map<String, String>
+) {
+
+    WAITING_STOCKIST(
+        mapOf(
+            "pt" to "Aguardando estoque",
+            "en" to "Waiting stock",
+            "es" to "Esperando almacén"
+        )
+    ),
+
+    AVAILABLE_EXECUTION(
+        mapOf(
+            "pt" to "Pronta para execução",
+            "en" to "Ready for execution",
+            "es" to "Lista para ejecución"
+        )
+    ),
+
+    IN_PROGRESS(
+        mapOf(
+            "pt" to "Em execução",
+            "en" to "In progress",
+            "es" to "En progreso"
+        )
+    ),
+
+    FINISHED(
+        mapOf(
+            "pt" to "Concluída",
+            "en" to "Finished",
+            "es" to "Finalizada"
+        )
+    );
+
+    fun translate(lang: String = "pt"): String {
+        return translations[lang] ?: translations["en"] ?: name
+    }
+}

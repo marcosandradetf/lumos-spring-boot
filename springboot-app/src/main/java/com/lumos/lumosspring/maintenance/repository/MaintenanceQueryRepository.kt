@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lumos.lumosspring.maintenance.dto.MaintenanceStreetItemDTO
-import com.lumos.lumosspring.stock.order.installationrequest.model.MaterialHistory
-import com.lumos.lumosspring.stock.order.installationrequest.repository.MaterialHistoryRepository
+import com.lumos.lumosspring.stock.history.model.MaterialHistory
+import com.lumos.lumosspring.stock.history.repository.MaterialHistoryRepository
 import com.lumos.lumosspring.util.Utils
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository

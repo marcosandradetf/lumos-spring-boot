@@ -84,4 +84,8 @@ export class ExecutionService {
         }
         return this.http.get<any[]>(`${this.baseUrl}/execution/get-executions/${value}`);
     }
+
+    updateManagements(body: {deleted: any[]; updates: {reservationManagementId: any; userId: any; teamId: any}[]}) {
+        return this.http.post(`${this.baseUrl}/execution/update-managements`, body);
+    }
 }

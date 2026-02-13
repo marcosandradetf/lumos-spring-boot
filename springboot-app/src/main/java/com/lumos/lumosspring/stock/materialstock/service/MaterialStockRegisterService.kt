@@ -2,10 +2,10 @@ package com.lumos.lumosspring.stock.materialstock.service
 
 
 import com.lumos.lumosspring.stock.materialstock.repository.StockQueryRepository
-import com.lumos.lumosspring.stock.order.teamrequest.model.OrderMaterial
-import com.lumos.lumosspring.stock.order.teamrequest.model.OrderMaterialItem
-import com.lumos.lumosspring.stock.order.teamrequest.repository.OrderMaterialItemRepository
-import com.lumos.lumosspring.stock.order.teamrequest.repository.OrderMaterialRepository
+import com.lumos.lumosspring.stock.order.model.OrderMaterial
+import com.lumos.lumosspring.stock.order.model.OrderMaterialItem
+import com.lumos.lumosspring.stock.order.repository.OrderMaterialItemRepository
+import com.lumos.lumosspring.stock.order.repository.OrderMaterialRepository
 import com.lumos.lumosspring.team.repository.TeamQueryRepository
 import com.lumos.lumosspring.util.ReservationStatus
 import org.springframework.http.ResponseEntity

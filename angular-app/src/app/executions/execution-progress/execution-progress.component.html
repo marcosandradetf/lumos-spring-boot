@@ -3,10 +3,43 @@
   <p-toast></p-toast>
 
   @if (executions.length > 0) {
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<!--      <div>-->
+<!--        <h2 class="text-base font-semibold text-surface-900 dark:text-surface-0">-->
+<!--          Itens do Contrato-->
+<!--        </h2>-->
+<!--        <p class="text-sm text-surface-600 dark:text-surface-400">-->
+<!--          {{ selectedContract.number }} • {{ selectedContract.contractor }}-->
+<!--        </p>-->
+<!--      </div>-->
+
+      <div class="flex gap-2 flex-wrap">
+
+
+<!--        <button pButton icon="pi pi-download" label="Arquivos do Contrato"-->
+<!--                class="p-button-sm p-button-text sm:p-button-outlined"-->
+<!--                (click)="downloadContractFiles()">-->
+<!--        </button>-->
+
+        @if (hasDiff()) {
+          <button
+            pButton
+            icon="pi pi-times"
+            label="Cancelar Alterações"
+            class="p-button-sm p-button-text sm:p-button-outlined p-button-danger" (click)="cancelChanges()"
+          ></button>
+
+          <button pButton icon="pi pi-check" label="Salvar Alterações"
+                  class="p-button-sm p-button-text sm:p-button-outlined" (click)="updateExecutions()">
+          </button>
+        }
+      </div>
+    </div>
+
     <p-table
       [value]="executions"
       class="mt-4 text-sm"
-      dataKey="id"
+      dataKey="reservationManagementId"
       editMode="row"
       responsiveLayout="scroll">
 
@@ -15,20 +48,52 @@
           <th class="text-center">Execução</th>
           <th class="text-left">Ordem de serviço</th>
           <th class="text-left">Status</th>
-          <th class="text-left">Estoquista</th>
+          <th class="text-center">Estoquista</th>
           <th class="text-left">Criação</th>
-          <th class="text-left">Equipe</th>
+          <th class="text-center">Equipe</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-execution let-editing="editing" let-i="rowIndex">
         <tr [pEditableRow]="execution" #rowElement>
-          <td class="text-center">{{i + 1}}</td>
-          <td class="text-left">{{execution.description}}</td>
-          <td class="text-left">{{statuses[execution.installationStatus].title}}</td>
-          <td class="text-left">{{execution.userName}}</td>
-          <td class="text-left">{{execution.availableAt | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td class="text-left">{{execution.teamName}}</td>
+          <td class="text-center">{{ i + 1 }}</td>
+          <td class="text-left">{{ execution.description }}</td>
+          <td class="text-left">{{ statuses[execution.installationStatus].title }}</td>
+          <td class="text-center" [pEditableColumn]="execution.userId" pEditableColumnField="userId">
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown
+                  [(ngModel)]="execution.userId"
+                  [options]="users"
+                  optionValue="userId"
+                  optionLabel="name"
+                  placeholder="Selecione outro usuário">
+                </p-dropdown>
+              </ng-template>
+
+              <ng-template pTemplate="output">
+                <app-editable-output>{{getUser(execution.userId)}}</app-editable-output>
+              </ng-template>
+            </p-cellEditor>
+          </td>
+          <td class="text-left">{{ execution.availableAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="text-center" [pEditableColumn]="execution.teamId" pEditableColumnField="teamId">
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown
+                  [(ngModel)]="execution.teamId"
+                  [options]="teams"
+                  optionValue="idTeam"
+                  optionLabel="teamName"
+                  placeholder="Selecione outra equipe">
+                </p-dropdown>
+              </ng-template>
+
+              <ng-template pTemplate="output">
+                <app-editable-output>{{ getTeam(execution.teamId) }}</app-editable-output>
+              </ng-template>
+            </p-cellEditor>
+          </td>
         </tr>
 
       </ng-template>
