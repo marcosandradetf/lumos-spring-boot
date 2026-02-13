@@ -31,6 +31,13 @@ public class StockistInstallationController {
         return stockistInstallationService.reserveMaterialsForExecution(reserveDTOCreate, userUUID);
     }
 
+    @GetMapping("/execution/get-executions/{status}")
+    public ResponseEntity<?> getExecutions(
+            @PathVariable String status,
+            @RequestParam(required = false) Long contractId
+    ) {
+        return stockistInstallationService.getExecutions(status, contractId);
+    }
 
 
 }

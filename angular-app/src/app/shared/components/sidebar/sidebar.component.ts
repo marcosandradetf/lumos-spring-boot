@@ -97,7 +97,7 @@ export class SidebarComponent implements OnInit {
                                 label: 'Criar sem pré-medição',
                                 icon: 'pi pi-plus text-green-500',
                                 routerLink: ['/contratos/listar'],
-                                queryParams: { for: 'execution' },
+                                queryParams: {for: 'execution'},
                                 command: () => SharedState.showMenuDrawer$.next(false)
                             },
                             {
@@ -130,12 +130,14 @@ export class SidebarComponent implements OnInit {
                         command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
+                        disabled: true,
                         label: 'Em Execução',
                         icon: 'pi pi-cog text-blue-600',
                         routerLink: ['/execucoes/em-execucao'],
                         command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
+                        disabled: true,
                         label: 'Concluídas',
                         icon: 'pi pi-check-circle text-green-600',
                         routerLink: ['/execucoes/concluidas'],
@@ -166,7 +168,7 @@ export class SidebarComponent implements OnInit {
                         label: 'Pendentes de Aprovação',
                         icon: 'pi pi-clock text-yellow-500',
                         routerLink: ['/requisicoes'],
-                        queryParams: { status: 'PENDING' },
+                        queryParams: {status: 'PENDING'},
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
@@ -175,7 +177,7 @@ export class SidebarComponent implements OnInit {
                         label: 'Disponíveis para Coleta',
                         icon: 'pi pi-check-circle text-green-500',
                         routerLink: ['/requisicoes'],
-                        queryParams: { status: 'APPROVED' },
+                        queryParams: {status: 'APPROVED'},
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
@@ -246,7 +248,7 @@ export class SidebarComponent implements OnInit {
                         label: 'Listar Contratos',
                         icon: 'pi pi-folder-open text-blue-500',
                         routerLink: ['/contratos/listar'],
-                        queryParams: { for: 'view' },
+                        queryParams: {for: 'view'},
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }

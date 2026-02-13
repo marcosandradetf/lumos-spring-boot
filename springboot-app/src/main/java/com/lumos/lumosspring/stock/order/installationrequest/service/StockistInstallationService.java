@@ -173,7 +173,7 @@ public class StockistInstallationService {
             long contractItemId = item.getContractItemId();
 
             for (var materialReserve : item.getMaterials()) {
-                if(!materialReserve.getTruckStockControl()) {
+                if (!materialReserve.getTruckStockControl()) {
                     continue;
                 }
 
@@ -615,17 +615,11 @@ public class StockistInstallationService {
 //        }
     }
 
-    /**
-     * Helper para converter objetos de resultado JDBC em Long de forma segura.
-     */
-    private static Long toLong(Object value) {
-        if (value == null) return null;
-        if (value instanceof Number n) return n.longValue();
-        try {
-            return Long.parseLong(value.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
+    public ResponseEntity<?> getExecutions(String status, Long contractId) {
+        return ResponseEntity.ok().body(reservationManagementRepository.getExecutions(
+                contractId,
+                Utils.getCurrentTenantId(),
+                status
+        ));
     }
-
 }

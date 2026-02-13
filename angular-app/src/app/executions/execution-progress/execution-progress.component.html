@@ -12,21 +12,23 @@
 
       <ng-template pTemplate="header">
         <tr>
-          <th>Execução</th>
-          <th class="text-left">Contrato</th>
-          <th class="text-center">Estoquista</th>
-          <th class="text-right">Equipe</th>
-          <th class="text-right">Status</th>
-          <th class="text-right">Saldo</th>
+          <th class="text-center">Execução</th>
+          <th class="text-left">Ordem de serviço</th>
+          <th class="text-left">Status</th>
+          <th class="text-left">Estoquista</th>
+          <th class="text-left">Criação</th>
+          <th class="text-left">Equipe</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-execution let-editing="editing" let-i="rowIndex">
         <tr [pEditableRow]="execution" #rowElement>
-          <td class="text-right"></td>
-          <td class="text-right"></td>
-          <td class="text-right"></td>
-          <td class="text-right"></td>
+          <td class="text-center">{{i + 1}}</td>
+          <td class="text-left">{{execution.description}}</td>
+          <td class="text-left">{{statuses[execution.installationStatus].title}}</td>
+          <td class="text-left">{{execution.userName}}</td>
+          <td class="text-left">{{execution.availableAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="text-left">{{execution.teamName}}</td>
         </tr>
 
       </ng-template>

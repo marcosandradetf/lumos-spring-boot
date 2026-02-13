@@ -5,7 +5,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ExecutionService} from '../execution.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {ButtonDirective} from 'primeng/button';
-import {NgIf} from '@angular/common';
+import {DatePipe, NgIf} from '@angular/common';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 import {Toast} from 'primeng/toast';
 import {TableModule} from 'primeng/table';
@@ -14,11 +14,11 @@ import {TableModule} from 'primeng/table';
     selector: 'app-execution-progress',
     standalone: true,
     imports: [
-        ButtonDirective,
         NgIf,
         LoadingOverlayComponent,
         Toast,
-        TableModule
+        TableModule,
+        DatePipe
     ],
     templateUrl: './execution-progress.component.html',
     styleUrl: './execution-progress.component.scss'
@@ -27,7 +27,7 @@ export class ExecutionProgressComponent implements OnInit {
     statuses: Record<string, any> = {
         'aguardando-estoque': {
             title: 'Aguardando estoque',
-            value: 'PENDING'
+            value: 'WAITING_STOCKIST'
         },
         'prontas-para-execucao': {
             title: 'Pronta para execuçao',
@@ -41,6 +41,12 @@ export class ExecutionProgressComponent implements OnInit {
             title: 'Concluída',
             value: 'FINISHED'
         },
+        'WAITING_STOCKIST': {
+            title: 'Aguardando estoquista'
+        },
+        'AVAILABLE_EXECUTION': {
+            title: 'Disponível para execução'
+        }
     };
     status = 'aguardando-estoque';
     executions: any[] = [];
@@ -56,11 +62,14 @@ export class ExecutionProgressComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.status = this.route.snapshot.paramMap.get('status') ?? 'aguardando-estoque';
+        this.route.paramMap.subscribe(params => {
+            this.status = params.get('status') ?? 'aguardando-estoque';
 
-        this.title.setTitle(this.statuses[this.status].title);
-        SharedState.setCurrentPath(["Ordens de Serviço", this.statuses[this.status].title]);
-        this.getExecutions();
+            this.title.setTitle(this.statuses[this.status].title);
+            SharedState.setCurrentPath(["Ordens de Serviço", this.statuses[this.status].title]);
+
+            this.getExecutions();
+        });
     }
 
     getStatus(status: string) {
