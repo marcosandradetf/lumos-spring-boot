@@ -12,5 +12,6 @@ data class ReserveDTOResponse(
     val teamName: String,
     val teamNotificationCode: String,
     val truckDepositName: String,
+    val reservationManagementId: Long,
     val items: List<ItemResponseDTO>,
 )

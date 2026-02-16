@@ -118,9 +118,15 @@ export class SidebarComponent implements OnInit {
                         command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
-                        label: 'Aguardando Estoque',
+                        label: 'Em Análise de Estoque',
+                        icon: 'pi pi-search text-yellow-500',
+                        routerLink: ['/execucoes/analise-estoque'],
+                        command: () => SharedState.showMenuDrawer$.next(false)
+                    },
+                    {
+                        label: 'Aguardando Coleta',
                         icon: 'pi pi-box text-orange-500',
-                        routerLink: ['/execucoes/aguardando-estoque'],
+                        routerLink: ['/execucoes/aguardando-coleta'],
                         command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
@@ -130,14 +136,12 @@ export class SidebarComponent implements OnInit {
                         command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
-                        disabled: true,
                         label: 'Em Execução',
                         icon: 'pi pi-cog text-blue-600',
                         routerLink: ['/execucoes/em-execucao'],
                         command: () => SharedState.showMenuDrawer$.next(false)
                     },
                     {
-                        disabled: true,
                         label: 'Concluídas',
                         icon: 'pi pi-check-circle text-green-600',
                         routerLink: ['/execucoes/concluidas'],

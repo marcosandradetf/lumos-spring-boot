@@ -60,7 +60,8 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
                     current_supply = :currentSupply,
                     last_power = :lastPower,
                     installation_latitude = :latitude,
-                    installation_longitude = :longitude
+                    installation_longitude = :longitude,
+                    finished_at = :finishedAt
                 WHERE device_pre_measurement_street_id = :streetId
             """
     )
@@ -71,7 +72,8 @@ public interface PreMeasurementInstallationRepository extends CrudRepository<Pre
             String currentSupply,
             String lastPower,
             Double latitude,
-            Double longitude
+            Double longitude,
+            Instant finishedAt
     );
 
     @Modifying

@@ -25,6 +25,7 @@ export interface ReserveRequest {
     teamName: string,
     teamNotificationCode: string,
     truckDepositName: string,
+    reservationManagementId: number,
     items: ReserveItemRequest[]
 }
 

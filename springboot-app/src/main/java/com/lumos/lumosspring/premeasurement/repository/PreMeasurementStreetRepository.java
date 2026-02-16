@@ -1,6 +1,8 @@
 package com.lumos.lumosspring.premeasurement.repository;
 
 import com.lumos.lumosspring.installation.model.premeasurement.PreMeasurementStreet;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +15,12 @@ public interface PreMeasurementStreetRepository extends CrudRepository<PreMeasur
 
     boolean existsByDevicePreMeasurementStreetId(UUID deviceId);
 
-    void deletePreMeasurementStreetsByPreMeasurementId(Long preMeasurementId);
+    @Modifying
+    @Query(
+        """
+            delete from pre_measurement_street
+            where pre_measurement_id = :preMeasurementId
+        """
+    )
+    void deleteByPreMeasurementId(Long preMeasurementId);
 }

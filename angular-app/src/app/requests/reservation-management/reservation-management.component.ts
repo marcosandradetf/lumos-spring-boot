@@ -40,7 +40,7 @@ export class ReservationManagementComponent {
         SharedState.setCurrentPath(["Solicitações ao Estoquista", "Ordens de serviço de instalações"])
         this.titleService.setTitle("Ordens de serviço de instalações");
 
-        this.executionService.getPendingReservesForStockist(this.authService.getUser().uuid).subscribe({
+        this.executionService.getPendingReservesForStockist().subscribe({
             next: (response) => {
                 this.reservations = response;
             },

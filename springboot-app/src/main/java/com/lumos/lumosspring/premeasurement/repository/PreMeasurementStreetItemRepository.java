@@ -2,6 +2,7 @@ package com.lumos.lumosspring.premeasurement.repository;
 
 import com.lumos.lumosspring.contract.dto.ItemResponseDTO;
 import com.lumos.lumosspring.installation.model.premeasurement.PreMeasurementStreetItem;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -37,7 +38,13 @@ public interface PreMeasurementStreetItemRepository extends CrudRepository<PreMe
     """)
     List<ItemResponseDTO> getItemsByPreMeasurementId(long preMeasurementID, String itemStatus);
 
-    void deletePreMeasurementStreetItemByPreMeasurementId(Long preMeasurementId);
 
-    void deletePreMeasurementStreetItemsByPreMeasurementId(Long preMeasurementId);
+    @Modifying
+    @Query(
+        """
+            delete from pre_measurement_street_item
+            where pre_measurement_id = :preMeasurementId
+        """
+    )
+    void deleteByPreMeasurementId(Long preMeasurementId);
 }

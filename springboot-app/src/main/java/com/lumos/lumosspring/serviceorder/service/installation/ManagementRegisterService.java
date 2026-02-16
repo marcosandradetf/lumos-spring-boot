@@ -7,7 +7,6 @@ import com.lumos.lumosspring.installation.repository.direct_execution.DirectExec
 import com.lumos.lumosspring.installation.repository.premeasurement.PreMeasurementInstallationRepository;
 import com.lumos.lumosspring.installation.repository.view.InstallationViewRepository;
 import com.lumos.lumosspring.premeasurement.repository.PreMeasurementStreetRepository;
-import com.lumos.lumosspring.report.repository.installation.InstallationReportRepository;
 import com.lumos.lumosspring.installation.model.premeasurement.PreMeasurement;
 import com.lumos.lumosspring.premeasurement.repository.PreMeasurementRepository;
 import com.lumos.lumosspring.premeasurement.repository.PreMeasurementStreetItemRepository;
@@ -15,9 +14,7 @@ import com.lumos.lumosspring.stock.materialsku.model.Material;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
-import com.lumos.lumosspring.serviceorder.controller.installation.StockistInstallationController;
 import com.lumos.lumosspring.serviceorder.dto.installation.ReserveDTOCreate;
-import com.lumos.lumosspring.serviceorder.dto.installation.ReserveDTOResponse;
 import com.lumos.lumosspring.stock.history.model.MaterialReservation;
 import com.lumos.lumosspring.serviceorder.repository.installation.MaterialReservationRepository;
 import com.lumos.lumosspring.serviceorder.repository.installation.ReservationManagementRepository;
@@ -32,11 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
-public class StockistInstallationService {
+public class ManagementRegisterService {
     private final NamedParameterJdbcTemplate namedJdbc;
     private final PreMeasurementRepository preMeasurementRepository;
     private final DirectExecutionRepository directExecutionRepository;
@@ -51,7 +47,7 @@ public class StockistInstallationService {
     private final PreMeasurementInstallationRepository preMeasurementInstallationRepository;
     private final PreMeasurementStreetRepository preMeasurementStreetRepository;
 
-    public StockistInstallationService(
+    public ManagementRegisterService(
             NamedParameterJdbcTemplate namedJDBC,
             PreMeasurementRepository preMeasurementRepository,
             DirectExecutionRepository directExecutionRepository,
@@ -80,66 +76,19 @@ public class StockistInstallationService {
         this.preMeasurementStreetRepository = preMeasurementStreetRepository;
     }
 
-    public ResponseEntity<?> getPendingReservesForStockist(UUID userUUID) {
-        var response = new ArrayList<ReserveDTOResponse>();
-        var pendingManagement = reservationManagementRepository.findAllByStatusAndStockistId(ReservationStatus.PENDING, userUUID);
-
-        for (var pRow : pendingManagement) {
-            long reservationManagementId = Objects.requireNonNull(pRow.getReservationManagementId());
-            String description = pRow.getDescription();
-            var installations = reservationManagementRepository.getInstallations(reservationManagementId);
-
-            for (var rs : installations) {
-                Long preMeasurementID = rs.getPreMeasurementId();
-                Long directExecutionID = rs.getDirectExecutionId();
-
-                if (preMeasurementID != null) {
-                    // Consulta para itens de pré-medição
-                    var items = preMeasurementStreetItemRepository.getItemsByPreMeasurementId(preMeasurementID, ReservationStatus.PENDING);
-
-                    response.add(new ReserveDTOResponse(
-                            preMeasurementID,
-                            null,
-                            description,
-                            rs.getComment(),
-                            rs.getCompletedName(),
-                            rs.getTeamId(),
-                            rs.getTeamName(),
-                            rs.getNotificationCode(),
-                            rs.getDepositName(),
-                            items
-                    ));
-
-                } else if (directExecutionID != null) {
-                    // Consulta para itens de execução direta
-                    var items = directExecutionRepositoryItem.getItemsByDirectExecutionId(directExecutionID, ReservationStatus.PENDING);
-
-                    response.add(new ReserveDTOResponse(
-                            null,
-                            directExecutionID,
-                            description,
-                            rs.getComment(),
-                            rs.getCompletedName(),
-                            rs.getTeamId(),
-                            rs.getTeamName(),
-                            rs.getNotificationCode(),
-                            rs.getDepositName(),
-                            items
-                    ));
-                }
-            }
-        }
-
-        return ResponseEntity.ok(response);
-    }
-
-
     @Caching(evict = {
             @CacheEvict(cacheNames = "getPreMeasurementInstallations", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"),
             @CacheEvict(cacheNames = "getDirectExecutionInstallations", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"),
     })
     @Transactional
-    public ResponseEntity<?> reserveMaterialsForExecution(ReserveDTOCreate executionReserve, String strUserUUID) {
+    public ResponseEntity<?> reserveMaterialsForExecution(ReserveDTOCreate executionReserve) {
+        var userUUID = Utils.getCurrentUserId();
+        var management = reservationManagementRepository.findById(executionReserve.getReservationManagementId())
+                .orElseThrow();
+
+        if(management.getStockistId() != userUUID) {
+            throw new Utils.BusinessException("Essa ordem de serviço não está mais atribuída para você");
+        }
 
         // 1) Busca pré-medição (se houver) e valida status
         Long preMeasurementID = executionReserve.getPreMeasurementId();
@@ -162,15 +111,7 @@ public class StockistInstallationService {
                     .orElseThrow(() -> new IllegalArgumentException("Execução não encontrada: " + executionReserve.getDirectExecutionId()));
         }
 
-        // 3) UUID do usuário
-        final UUID userUUID;
-        try {
-            userUUID = UUID.fromString(strUserUUID);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("UUID de usuário inválido: " + strUserUUID);
-        }
-
-        // 4) Descobrir o depósito do time
+        // 4) Descobrir o depósito da equipe
         Map<String, Object> depositRow = JdbcUtil.INSTANCE.getSingleRow(
                 namedJdbc,
                 """
@@ -638,92 +579,68 @@ public class StockistInstallationService {
 //        }
     }
 
-    public ResponseEntity<?> getExecutions(String status, Long contractId) {
-        return ResponseEntity.ok().body(reservationManagementRepository.getExecutions(
-                contractId,
-                Utils.getCurrentTenantId(),
-                status
-        ));
+    @Transactional
+    public ResponseEntity<?> updateManagement(
+            Long reservationManagementId,
+            UUID userId,
+            Long teamId
+    ) {
+        var i = installationViewRepository.findInstallationViewByReservationManagementId(reservationManagementId)
+                .orElseThrow();
+        if (!i.getStatus().equals(ExecutionStatus.WAITING_STOCKIST)) {
+            throw new Utils.BusinessException("A Ordem de serviço " + i.getDescription() + " não está mais com o status aguardando estoque");
+        }
+
+        reservationManagementRepository.updateStockistId(reservationManagementId, userId);
+
+        if (i.getInstallationType().equals("DIRECT_EXECUTION")) {
+            directExecutionRepository.updateTeamId(
+                    i.getReservationManagementId(),
+                    teamId
+            );
+        } else {
+            preMeasurementInstallationRepository.updateTeamId(
+                    i.getReservationManagementId(),
+                    teamId
+            );
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
     @Transactional
-    public ResponseEntity<?> updateManagements(
-            StockistInstallationController.PayloadManagement payload,
-            String currentStatus
-    ) {
-
+    public ResponseEntity<?> deleteManagement(String currentStatus, Long reservationManagementId) {
         var translatedStatus = switch (currentStatus) {
             case ExecutionStatus.AVAILABLE_EXECUTION -> InstallationStatus.AVAILABLE_EXECUTION.translate("pt");
             case ExecutionStatus.WAITING_STOCKIST -> InstallationStatus.WAITING_STOCKIST.translate("pt");
             default -> throw new Utils.BusinessException(currentStatus + "Não é permitido");
         };
 
-        // delete managements
-        if (!payload.deleted().isEmpty()) {
-            deleteManagements(payload.deleted(), currentStatus, translatedStatus);
+        var i = installationViewRepository.findInstallationViewByReservationManagementId(reservationManagementId)
+                .orElseThrow();
+        if (!currentStatus.equals(i.getStatus())) {
+            throw new Utils.BusinessException("Essa ordem de serviço não está mais com o status " + translatedStatus);
         }
 
-        // update managements and service orders
-        var updatedManagements = payload.updated().stream()
-                .map(StockistInstallationController.PayloadUpdate::reservationManagementId)
-                .toList();
-
-        if (updatedManagements.isEmpty()) {
-            throw new Utils.BusinessException("payload não enviado");
-        }
-
-        var installations = installationViewRepository.findInstallationViewByReservationManagementIdIn(updatedManagements);
-        var teamByManagementId = new HashMap<Long, Long>();
-        var stockistByManagementId = new HashMap<Long, UUID>();
-
-        for (var u : payload.updated()) {
-            teamByManagementId.put(u.reservationManagementId(), u.teamId());
-            stockistByManagementId.put(u.reservationManagementId(), u.userId());
-        }
-
-        for (var i : installations) {
-            if (!i.getStatus().equals(currentStatus)) {
-                throw new Utils.BusinessException("A Ordem de serviço " + i.getDescription() + " não está mais com o status " + translatedStatus);
-            }
-
-            reservationManagementRepository.updateStockistId(
-                    i.getReservationManagementId(),
-                    stockistByManagementId.get(i.getReservationManagementId())
-            );
-
-            if (i.getInstallationType().equals("DIRECT_EXECUTION")) {
-                directExecutionRepository.updateTeamId(
-                        i.getReservationManagementId(),
-                        teamByManagementId.get(i.getReservationManagementId())
-                );
+        if (ExecutionStatus.AVAILABLE_EXECUTION.equals(currentStatus)) {
+            if ("DIRECT_EXECUTION".equals(i.getInstallationType())) {
+                materialReservationRepository.deleteByDirectExecutionId(i.getInstallationId());
             } else {
-                preMeasurementInstallationRepository.updateTeamId(
-                        i.getReservationManagementId(),
-                        teamByManagementId.get(i.getReservationManagementId())
-                );
+                materialReservationRepository.deleteByPreMeasurementId(i.getInstallationId());
             }
         }
+
+        if (i.getInstallationType().equals("DIRECT_EXECUTION")) {
+            directExecutionRepositoryItem.deleteByDirectExecutionId(i.getInstallationId());
+            directExecutionRepository.deleteById(i.getInstallationId());
+        } else {
+            preMeasurementStreetItemRepository.deleteByPreMeasurementId(i.getInstallationId());
+            preMeasurementStreetRepository.deleteByPreMeasurementId(i.getInstallationId());
+            preMeasurementRepository.deleteById(i.getInstallationId());
+        }
+
+        reservationManagementRepository.deleteById(reservationManagementId);
 
         return ResponseEntity.noContent().build();
-    }
-
-    private void deleteManagements(List<Long> idsToDelete, String currentStatus, String translatedStatus) {
-        var installations = installationViewRepository.findInstallationViewByReservationManagementIdIn(idsToDelete);
-        for (var i : installations) {
-            if (!i.getStatus().equals(currentStatus)) {
-                throw new Utils.BusinessException("A Ordem de serviço não está mais com o status " + translatedStatus);
-            }
-
-            if (i.getInstallationType().equals("DIRECT_EXECUTION")) {
-                directExecutionRepositoryItem.deleteAllByDirectExecutionId(i.getInstallationId());
-                directExecutionRepository.deleteById(i.getInstallationId());
-            } else {
-                preMeasurementStreetItemRepository.deletePreMeasurementStreetItemsByPreMeasurementId(i.getInstallationId());
-                preMeasurementStreetRepository.deletePreMeasurementStreetsByPreMeasurementId(i.getInstallationId());
-                preMeasurementRepository.deleteById(i.getInstallationId());
-            }
-        }
-
-        reservationManagementRepository.deleteAllById(idsToDelete);
     }
 }

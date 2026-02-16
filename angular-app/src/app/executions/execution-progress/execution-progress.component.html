@@ -1,106 +1,267 @@
 <div>
-  <app-loading-overlay [loading]="loading"></app-loading-overlay>
   <p-toast></p-toast>
-
   @if (executions.length > 0) {
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-<!--      <div>-->
-<!--        <h2 class="text-base font-semibold text-surface-900 dark:text-surface-0">-->
-<!--          Itens do Contrato-->
-<!--        </h2>-->
-<!--        <p class="text-sm text-surface-600 dark:text-surface-400">-->
-<!--          {{ selectedContract.number }} • {{ selectedContract.contractor }}-->
-<!--        </p>-->
-<!--      </div>-->
-
-      <div class="flex gap-2 flex-wrap">
-
-
-<!--        <button pButton icon="pi pi-download" label="Arquivos do Contrato"-->
-<!--                class="p-button-sm p-button-text sm:p-button-outlined"-->
-<!--                (click)="downloadContractFiles()">-->
-<!--        </button>-->
-
-        @if (hasDiff()) {
-          <button
-            pButton
-            icon="pi pi-times"
-            label="Cancelar Alterações"
-            class="p-button-sm p-button-text sm:p-button-outlined p-button-danger" (click)="cancelChanges()"
-          ></button>
-
-          <button pButton icon="pi pi-check" label="Salvar Alterações"
-                  class="p-button-sm p-button-text sm:p-button-outlined" (click)="updateExecutions()">
-          </button>
-        }
-      </div>
-    </div>
-
-    <p-table
+    @if(['WAITING_STOCKIST','WAITING_COLLECT','AVAILABLE_EXECUTION'].includes(getStatus())) {
+      <p-table
       [value]="executions"
       class="mt-4 text-sm"
       dataKey="reservationManagementId"
       editMode="row"
+      rowHover="true"
       responsiveLayout="scroll">
 
       <ng-template pTemplate="header">
         <tr>
-          <th class="text-center">Execução</th>
+          <th class="text-center">#</th>
           <th class="text-left">Ordem de serviço</th>
-          <th class="text-left">Status</th>
           <th class="text-center">Estoquista</th>
-          <th class="text-left">Criação</th>
           <th class="text-center">Equipe</th>
+          <th class="text-left">{{ getStatus() === 'WAITING_STOCKIST' ? 'Criação' : 'Disponível' }}</th>
+          <th class="text-center">+</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-execution let-editing="editing" let-i="rowIndex">
-        <tr [pEditableRow]="execution" #rowElement>
-          <td class="text-center">{{ i + 1 }}</td>
-          <td class="text-left">{{ execution.description }}</td>
-          <td class="text-left">{{ statuses[execution.installationStatus].title }}</td>
-          <td class="text-center" [pEditableColumn]="execution.userId" pEditableColumnField="userId">
-            <p-cellEditor>
-              <ng-template pTemplate="input">
-                <p-dropdown
-                  [(ngModel)]="execution.userId"
-                  [options]="users"
-                  optionValue="userId"
-                  optionLabel="name"
-                  placeholder="Selecione outro usuário">
-                </p-dropdown>
-              </ng-template>
-
-              <ng-template pTemplate="output">
-                <app-editable-output>{{getUser(execution.userId)}}</app-editable-output>
-              </ng-template>
-            </p-cellEditor>
+        <tr
+          [pEditableRow]="execution"
+          [ngClass]="{
+            'transition-all duration-300 border-l-4 bg-amber-50 border-amber-400 dark:bg-amber-900/30 dark:border-amber-500': execution._updated,
+            'transition-all duration-300 border-l-4 bg-rose-50 border-rose-400 dark:bg-rose-900/30 dark:border-rose-500': execution._deleted,
+            'opacity-60 pointer-events-none': execution._saving
+          }">
+          <td class="text-center"
+              [class.line-through]="execution._deleted"
+              [class.opacity-60]="execution._deleted">
+            {{ i + 1 }}
           </td>
-          <td class="text-left">{{ execution.availableAt | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td class="text-center" [pEditableColumn]="execution.teamId" pEditableColumnField="teamId">
-            <p-cellEditor>
-              <ng-template pTemplate="input">
-                <p-dropdown
-                  [(ngModel)]="execution.teamId"
-                  [options]="teams"
-                  optionValue="idTeam"
-                  optionLabel="teamName"
-                  placeholder="Selecione outra equipe">
-                </p-dropdown>
-              </ng-template>
 
-              <ng-template pTemplate="output">
-                <app-editable-output>{{ getTeam(execution.teamId) }}</app-editable-output>
-              </ng-template>
-            </p-cellEditor>
+          <td class="text-left truncate max-w-xs cursor-pointer"
+              [title]="execution.description"
+              [class.line-through]="execution._deleted"
+              [class.opacity-60]="execution._deleted">
+            {{ execution.description }}
           </td>
+
+          @if(getStatus() === 'WAITING_STOCKIST') {
+            <td class="text-center"
+                [pEditableColumn]="execution.userId"
+                pEditableColumnField="userId"
+                [class.line-through]="execution._deleted"
+                [class.opacity-60]="execution._deleted">
+
+              <p-cellEditor>
+                <ng-template pTemplate="input">
+                  <p-dropdown
+                    (onChange)="execution._updated = true"
+                    [(ngModel)]="execution.userId"
+                    [options]="users"
+                    optionValue="userId"
+                    optionLabel="name"
+                    placeholder="Selecione outro usuário">
+                  </p-dropdown>
+                </ng-template>
+
+                <ng-template pTemplate="output">
+                  <app-editable-output>{{ getUser(execution.userId) }}</app-editable-output>
+                </ng-template>
+              </p-cellEditor>
+            </td>
+
+            <td class="text-center"
+                [pEditableColumn]="execution.teamId"
+                pEditableColumnField="teamId"
+                [class.line-through]="execution._deleted"
+                [class.opacity-60]="execution._deleted">
+
+              <p-cellEditor>
+                <ng-template pTemplate="input">
+                  <p-dropdown
+                    [(ngModel)]="execution.teamId"
+                    (onChange)="execution._updated = true"
+                    [options]="teams"
+                    optionValue="idTeam"
+                    optionLabel="teamName"
+                    placeholder="Selecione outra equipe">
+                  </p-dropdown>
+                </ng-template>
+
+                <ng-template pTemplate="output">
+                  <app-editable-output>{{ getTeam(execution.teamId) }}</app-editable-output>
+                </ng-template>
+              </p-cellEditor>
+            </td>
+          }@else {
+            <td class="text-center"
+                [class.line-through]="execution._deleted"
+                [class.opacity-60]="execution._deleted">
+              {{ execution.userName }}
+            </td>
+            <td class="text-center"
+                [class.line-through]="execution._deleted"
+                [class.opacity-60]="execution._deleted">
+              {{ execution.teamName }}
+            </td>
+          }
+
+          <td class="text-left"
+              [class.line-through]="execution._deleted"
+              [class.opacity-60]="execution._deleted">
+            <div class="flex flex-col">
+                <span>
+                  {{ execution.availableAt | date: 'dd/MM/yyyy' }}
+                </span>
+              <small class="text-color-secondary">
+                {{ execution.availableAt | date: 'HH:mm' }}
+              </small>
+            </div>
+          </td>
+
+          <td class="text-center">
+            <div class="flex justify-center item-center">
+              @if (execution._saving) {
+                <i class="pi pi-spin pi-spinner text-sm text-primary"></i>
+              } @else {
+                <button pButton icon="pi pi-times"
+                        *ngIf="execution._updated || execution._deleted"
+                        (click)="execution._updated = false; execution._deleted = false; cancelChange(execution);"
+                        class="p-button-text p-button-sm p-button-danger">
+                </button>
+
+                <button pButton icon="pi pi-check"
+                        *ngIf="execution._updated || execution._deleted"
+                        (click)="saveChanges(execution)"
+                        class="p-button-text p-button-sm p-button-success">
+                </button>
+
+                <button pButton icon="pi pi-trash"
+                        *ngIf="!execution._updated && !execution._deleted"
+                        class="p-button-text p-button-sm p-button-danger"
+                        (click)="execution._deleted = true">
+                </button>
+              }
+            </div>
+          </td>
+
         </tr>
 
       </ng-template>
     </p-table>
-  } @else {
+    } @else {
+      <p-table
+        [value]="executions"
+        dataKey="installation_id"
+        responsiveLayout="scroll"
+        class="mt-4 text-sm"
+        [rowHover]="true"
+      >
+        <!-- HEADER -->
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="w-12 text-center">#</th>
+            <th>Ordem de Serviço</th>
+            <th>Equipe</th>
+            <th>Início</th>
+            <th *ngIf="getStatus() === 'FINISHED'">Fim</th>
+            <th class="text-center">Ruas</th>
+            <th class="w-20 text-center" *ngIf="getStatus() === 'FINISHED'">+</th>
+          </tr>
+        </ng-template>
+
+        <!-- BODY -->
+        <ng-template pTemplate="body" let-execution let-i="rowIndex">
+          <tr
+            class="transition-all duration-200"
+            [ngClass]="{
+        'opacity-60 pointer-events-none': execution._saving
+      }"
+          >
+            <!-- Nº -->
+            <td class="text-center font-medium text-color-secondary">
+              {{ i + 1 }}
+            </td>
+
+            <!-- ORDEM DE SERVIÇO -->
+            <td class="max-w-xs cursor-pointer">
+              <div class="flex flex-col" [title]="execution.contractor">
+                <span class="font-semibold truncate">
+                  {{ execution.contractor }}
+                </span>
+                <small class="text-color-secondary">
+                  Etapa {{ execution.step }}
+                </small>
+              </div>
+            </td>
+
+            <!-- EQUIPE -->
+            <td class="truncate max-w-xs">
+              {{ execution.team_name }}
+            </td>
+
+            <!-- INÍCIO -->
+            <td>
+              <div class="flex flex-col">
+                <span>
+                  {{ execution.started_at | date: 'dd/MM/yyyy' }}
+                </span>
+                <small class="text-color-secondary">
+                  {{ execution.started_at | date: 'HH:mm' }}
+                </small>
+              </div>
+            </td>
+
+            <!-- FIM -->
+            <td *ngIf="getStatus() === 'FINISHED'">
+              <div class="flex flex-col" *ngIf="execution.finished_at; else emAndamento">
+                <span>
+                  {{ execution.finished_at | date: 'dd/MM/yyyy' }}
+                </span>
+                <small class="text-color-secondary">
+                  {{ execution.finished_at | date: 'HH:mm' }}
+                </small>
+              </div>
+
+              <ng-template #emAndamento>
+          <span class="text-orange-500 font-medium">
+            Em andamento
+          </span>
+              </ng-template>
+            </td>
+
+            <!-- RUAS -->
+            <td class="text-center">
+              <p-badge
+                [value]="execution.streets?.length || 0"
+                severity="info"
+              ></p-badge>
+            </td>
+
+            <!-- AÇÃO PDF -->
+            <td class="text-center" *ngIf="getStatus() === 'FINISHED'">
+              <button
+                pButton
+                icon="pi pi-file-pdf"
+                class="p-button-rounded p-button-text p-button-danger"
+                title="Gerar Relatório"
+                [loading]="execution._saving"
+              >
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <!-- EMPTY MESSAGE -->
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-6 text-color-secondary">
+              Nenhuma execução encontrada.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+    }
+  } @else if (!loading) {
     <div
-      *ngIf="executions.length === 0"
       class="flex flex-1 items-center justify-center mt-32">
 
       <div
@@ -122,5 +283,15 @@
       </div>
 
     </div>
+  } @else {
+    @if(['WAITING_STOCKIST','WAITING_COLLECT','AVAILABLE_EXECUTION'].includes(getStatus())) {
+      <app-skeleton-table
+        [columns]="['Nº','Ordem de Serviço','Status','Estoquista','Criação', 'Equipe', 'Ação']">
+      </app-skeleton-table>
+    } @else {
+      <app-skeleton-table
+        [columns]="['Nº','Ordem de Serviço','Status','Estoquista','Criação', 'Equipe', 'Ação']">
+      </app-skeleton-table>
+    }
   }
 </div>

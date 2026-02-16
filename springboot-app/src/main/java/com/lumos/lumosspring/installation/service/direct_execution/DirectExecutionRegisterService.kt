@@ -384,7 +384,6 @@ class DirectExecutionRegisterService(
             signatureUri = null,
             signDate = null,
             finishedAt = Instant.now(),
-            startedAt = null,
             responsible = null
         )
 
@@ -427,7 +426,6 @@ class DirectExecutionRegisterService(
             signatureUri = fileUri,
             signDate = request.signDate,
             finishedAt = request.signDate ?: Instant.now(),
-            startedAt = request.startedAt,
             responsible = request.responsible,
         )
 

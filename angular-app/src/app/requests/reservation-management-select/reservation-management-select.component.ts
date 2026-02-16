@@ -115,6 +115,7 @@ export class ReservationManagementSelectComponent {
         teamName: '',
         teamNotificationCode: '',
         truckDepositName: '',
+        reservationManagementId: 0,
         items: []
     };
 
@@ -362,7 +363,7 @@ export class ReservationManagementSelectComponent {
         }
 
         this.loading = true;
-        this.executionService.reserveMaterialsForExecution(this.reserve, this.userUUID).subscribe({
+        this.executionService.reserveMaterialsForExecution(this.reserve).subscribe({
             next: (response: any) => {
                 this.message = response.message;
             },

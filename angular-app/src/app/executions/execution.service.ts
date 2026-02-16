@@ -12,56 +12,9 @@ export class ExecutionService {
     constructor(private http: HttpClient) {
     }
 
-    public getStockAvailable() {
-        return this.http.get<
-            {
-                streetId: number;
-                materialsInStock: {
-                    materialId: number;
-                    materialName: string;
-                    deposit: string;
-                    availableQuantity: number
-                }[];
-                materialsInTruck: {
-                    materialId: number;
-                    materialName: string;
-                    deposit: string;
-                    availableQuantity: number
-                }[];
-            }[]
-        >(this.baseUrl + '/execution/get-available-stock');
-    }
-
-    public getStockAvailableForStreet() {
-        return this.http.get<
-            {
-                streetId: number;
-                materialsInStock: {
-                    materialId: number;
-                    materialName: string;
-                    deposit: string;
-                    availableQuantity: number
-                }[];
-                materialsInTruck: {
-                    materialId: number;
-                    materialName: string;
-                    deposit: string;
-                    availableQuantity: number
-                }[];
-            }
-        >(this.baseUrl + '/api/execution/get-available-stock');
-    }
-
-    public getPendingReservesForStockist(userUUID: string) {
-        return this.http.get<ReserveRequest[]>(this.baseUrl + `/execution/get-reservations/${userUUID}`);
-    }
 
     public findMaterialsByContractReference(contractReferenceItemId: number, teamId: number) {
         return this.http.get<MaterialInStockDTO[]>(this.baseUrl + `/stock/find-materials-by-contract-reference/${contractReferenceItemId}/${teamId}`);
-    }
-
-    reserveMaterialsForExecution(currentStreet: ReserveRequest, userUUID: string) {
-        return this.http.post(this.baseUrl + `/execution/reserve-materials-for-execution/${userUUID}`, currentStreet);
     }
 
     delegateDirectExecution(execution: DirectExecutionDTO) {
@@ -75,17 +28,44 @@ export class ExecutionService {
         });
     }
 
-    getExecutions(value: string, contractId: number | null = null) {
+    // service orders
+    public getPendingReservesForStockist() {
+        return this.http.get<ReserveRequest[]>(`${this.baseUrl }/service-order/get-reservations`);
+    }
+
+    reserveMaterialsForExecution(currentStreet: ReserveRequest) {
+        return this.http.post(this.baseUrl + `/service-order/reserve-materials-for-execution`, currentStreet);
+    }
+
+    getExecutions(status: string, contractId: number | null = null) {
         if(contractId) {
             const param = new HttpParams()
                 .set('contractId', contractId);
 
-            return this.http.get<any[]>(`${this.baseUrl}/execution/get-executions/${value}`, {params: param});
+            return this.http.get<any[]>(`${this.baseUrl}/service-order/get-executions/${status}`, {params: param});
         }
-        return this.http.get<any[]>(`${this.baseUrl}/execution/get-executions/${value}`);
+        return this.http.get<any[]>(`${this.baseUrl}/service-order/get-executions/${status}`);
     }
 
-    updateManagements(body: {deleted: any[]; updates: {reservationManagementId: any; userId: any; teamId: any}[]}) {
-        return this.http.post(`${this.baseUrl}/execution/update-managements`, body);
+    updateManagement(
+        reservationManagementId: number,
+        userId: string,
+        teamId: number,
+    ) {
+        const param = new HttpParams()
+            .set('reservationManagementId', reservationManagementId)
+            .set('userId', userId)
+            .set('teamId', teamId);
+        return this.http.put(`${this.baseUrl}/service-order/update-management`, {params: param});
+    }
+
+    deleteManagement(
+        status: string,
+        reservationManagementId: number,
+    ) {
+        const param = new HttpParams()
+            .set('status', status)
+            .set('reservationManagementId', reservationManagementId);
+        return this.http.delete(`${this.baseUrl}/service-order/delete-management`, {params: param});
     }
 }

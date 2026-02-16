@@ -22,7 +22,8 @@ interface ReservationManagementRepository : CrudRepository<ReservationManagement
                 p.team_id,
                 t.team_name,
                 t.notification_code,
-                d.deposit_name
+                d.deposit_name,
+                p.reservation_management_id
             from pre_measurement p
             inner join team t on t.id_team = p.team_id
             inner join deposit d on d.id_deposit = t.deposit_id_deposit
@@ -37,7 +38,8 @@ interface ReservationManagementRepository : CrudRepository<ReservationManagement
                 de.team_id,
                 t.team_name,
                 t.notification_code,
-                d.deposit_name
+                d.deposit_name,
+                de.reservation_management_id
             from direct_execution de
             inner join team t on t.id_team = de.team_id
             inner join deposit d on d.id_deposit = t.deposit_id_deposit
@@ -70,7 +72,7 @@ interface ReservationManagementRepository : CrudRepository<ReservationManagement
             order by iv.contract_id, iv.step
         """
     )
-    fun getExecutions(contractId: Long?, tenantId: UUID, status: String): List<ExecutionDto>
+    fun getServiceOrders(contractId: Long?, tenantId: UUID, status: String): List<ExecutionDto>
 
     @Modifying
     @Query("update reservation_management set stockist_id = :stockistId where reservation_management_id = :reservationManagementId")
@@ -99,5 +101,6 @@ interface ReservationManagementRepository : CrudRepository<ReservationManagement
         val teamName: String,
         val notificationCode: String,
         val depositName: String,
+        val reservationManagementId: Long,
     )
 }

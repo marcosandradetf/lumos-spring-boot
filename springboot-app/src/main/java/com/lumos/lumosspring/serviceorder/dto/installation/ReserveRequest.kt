@@ -6,6 +6,7 @@ data class ReserveDTOCreate(
     val preMeasurementId: Long?,
     val directExecutionId: Long?,
     val teamId: Long,
+    val reservationManagementId: Long,
     val items: List<ReserveItemDTO>
 )
 

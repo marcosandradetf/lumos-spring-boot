@@ -481,7 +481,7 @@
       <ng-template pTemplate="body" let-item let-editing="editing" let-ri="rowIndex">
         <tr [pEditableRow]="item" #rowElement>
           <td class="font-medium">{{ item.number }}</td>
-          <td class="max-w-xs truncate">{{ item.description }}</td>
+          <td class="max-w-xs truncate" [title]="item.description">{{ item.description }}</td>
 
           <td class="text-right" [pEditableColumn]="item.contractedQuantity" pEditableColumnField="contractedQuantity">
             <p-cellEditor>

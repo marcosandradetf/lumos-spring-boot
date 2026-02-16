@@ -4,7 +4,7 @@ import {SharedState} from '../../core/service/shared-state';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ExecutionService} from '../execution.service';
 import {UtilsService} from '../../core/service/utils.service';
-import {DatePipe, NgIf} from '@angular/common';
+import {DatePipe, NgClass, NgIf} from '@angular/common';
 import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 import {Toast} from 'primeng/toast';
 import {TableModule} from 'primeng/table';
@@ -16,32 +16,45 @@ import {forkJoin, switchMap} from 'rxjs';
 import {TeamService} from '../../manage/team/team-service.service';
 import {ButtonDirective} from 'primeng/button';
 import {cloneDeep, isEqual, keyBy} from 'lodash';
+import {SkeletonTableComponent} from '../../shared/components/skeleton-table/skeleton-table.component';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import {Tooltip} from 'primeng/tooltip';
+import {Badge} from 'primeng/badge';
+import {Tag} from 'primeng/tag';
 
 @Component({
     selector: 'app-execution-progress',
     standalone: true,
     imports: [
         NgIf,
-        LoadingOverlayComponent,
         Toast,
         TableModule,
         DatePipe,
         DropdownModule,
         FormsModule,
         EditableOutputComponent,
-        ButtonDirective
+        ButtonDirective,
+        NgClass,
+        SkeletonTableComponent,
+        Tooltip,
+        Badge,
+        Tag
     ],
     templateUrl: './execution-progress.component.html',
     styleUrl: './execution-progress.component.scss'
 })
 export class ExecutionProgressComponent implements OnInit {
     statuses: Record<string, any> = {
-        'aguardando-estoque': {
-            title: 'Aguardando estoque',
+        'analise-estoque': {
+            title: 'Em Análise de Estoque',
             value: 'WAITING_STOCKIST'
         },
+        'aguardando-coleta': {
+            title: 'Aguardando Coleta',
+            value: 'WAITING_COLLECT'
+        },
         'prontas-para-execucao': {
-            title: 'Pronta para execuçao',
+            title: 'Prontas para Execuçao',
             value: 'AVAILABLE_EXECUTION'
         },
         'em-execucao': {
@@ -49,14 +62,14 @@ export class ExecutionProgressComponent implements OnInit {
             value: 'IN_PROGRESS'
         },
         'concluidas': {
-            title: 'Concluída',
+            title: 'Concluídas',
             value: 'FINISHED'
         },
         'WAITING_STOCKIST': {
-            title: 'Aguardando estoquista'
+            title: 'Aguardando Estoquista'
         },
         'AVAILABLE_EXECUTION': {
-            title: 'Disponível para execução'
+            title: 'Disponível para Execução'
         }
     };
     status = 'aguardando-estoque';
@@ -84,7 +97,7 @@ export class ExecutionProgressComponent implements OnInit {
                     this.status = params.get('status') ?? 'aguardando-estoque';
                     const statusConfig = this.statuses[this.status];
 
-                    this.title.setTitle(statusConfig.title);
+                    this.title.setTitle('O.S - ' + statusConfig.title);
                     SharedState.setCurrentPath(["Ordens de Serviço", statusConfig.title]);
 
                     this.loading = true;
@@ -99,7 +112,7 @@ export class ExecutionProgressComponent implements OnInit {
             .subscribe({
                 next: ({executions, users, teams}) => {
                     this.executions = executions;
-                    this.executionsBackup = cloneDeep(executions);
+                    this.executionsBackup = cloneDeep(this.executions);
                     this.users.push(...users.map(u => ({userId: u.userId, name: `${u.name} ${u.lastname}`})));
                     this.teams = teams;
                     this.loading = false;
@@ -109,10 +122,6 @@ export class ExecutionProgressComponent implements OnInit {
                     this.utils.showMessage(err?.error?.message ?? 'Erro inesperado', 'error');
                 }
             });
-    }
-
-    protected hasDiff() {
-        return !isEqual(this.executions, this.executionsBackup);
     }
 
     protected getUser(userId: string) {
@@ -131,47 +140,57 @@ export class ExecutionProgressComponent implements OnInit {
         return 'Equipe Inativa';
     }
 
-    protected updateExecutions() {
-        this.loading = true;
-        const changed = this.buildDiff();
-        this.executionService.updateManagements(
-            {
-                deleted: changed.deleted,
-                updates: changed.updated.map(exec => ({
-                    reservationManagementId: exec.reservationManagementId,
-                    userId: exec.userId,
-                    teamId: exec.teamId
-                }))
+    protected cancelChange(execution: any) {
+        const original = this.executionsBackup
+            .find(b => b.reservationManagementId === execution.reservationManagementId);
+        if (original) {
+            const index = this.executions
+                .findIndex(e => e.reservationManagementId === execution.reservationManagementId);
+            if (index !== -1) {
+                this.executions[index] = original;
             }
-        ).subscribe({
-            next: () => {
-                this.executionsBackup = cloneDeep(this.executions);
-                this.loading = false;
-            },
-            error: (err) => {
-                this.utils.showMessage(err?.error?.message ?? 'Erro inesperado', 'error');
-                this.loading = false;
-            }
-        });
+        }
     }
 
-    private buildDiff() {
-
-        const backupMap = keyBy(this.executionsBackup, 'reservationManagementId');
-
-        const updated = this.executions.filter(exec => {
-            const original = backupMap[exec.reservationManagementId] ?? [];
-            return original && (exec.userId !== original.userId || exec.teamId !== original.teamId);
-        });
-
-        const deleted = this.executionsBackup
-            .filter(b => !this.executions.some(e => e.executionId === b.executionId))
-            .map(d => d.executionId);
-
-        return {updated, deleted};
+    protected saveChanges(execution: any) {
+        execution._saving = true;
+        if (execution._updated) {
+            this.executionService.updateManagement(
+                execution.reservationManagementId,
+                execution.userId,
+                execution.teamId
+            ).subscribe({
+                next: () => {
+                    this.executionsBackup = cloneDeep(this.executions);
+                    this.utils.showMessage('O.S Atualizada com sucesso', "success");
+                    execution._saving = false;
+                },
+                error: (err) => {
+                    this.utils.showMessage(err?.error?.message ?? 'Erro inesperado', 'error');
+                    execution._saving = false;
+                }
+            });
+        } else {
+            this.executionService.deleteManagement(
+                this.getStatus(),
+                execution.reservationManagementId
+            ).subscribe({
+                next: () => {
+                    this.executions = this.executions
+                        .filter(e => e.reservationManagementId !== execution.reservationManagementId);
+                    this.executionsBackup = cloneDeep(this.executions);
+                    this.utils.showMessage('O.S Excluída com sucesso', "success");
+                    execution._saving = false;
+                },
+                error: (err) => {
+                    this.utils.showMessage(err?.error?.message ?? 'Erro inesperado', 'error');
+                    execution._saving = false;
+                }
+            });
+        }
     }
 
-    protected cancelChanges() {
-        this.executions = cloneDeep(this.executionsBackup);
+    protected getStatus() {
+        return this.statuses[this.status].value ?? '';
     }
 }

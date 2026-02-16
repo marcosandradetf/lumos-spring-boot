@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -62,7 +63,7 @@ public class RegisterService {
             throw new Utils.BusinessException(message);
         }
 
-        if (!Objects.equals(installation.status(), ExecutionStatus.AVAILABLE_EXECUTION)) {
+        if(!List.of(ExecutionStatus.AVAILABLE_EXECUTION, ExecutionStatus.IN_PROGRESS).contains(installation.status())) {
             return ResponseEntity.noContent().build();
         }
 
@@ -99,7 +100,7 @@ public class RegisterService {
 
         preMeasurementInstallationRepository.finishInstallationStreet(
                 fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId(), installationReq.getCurrentSupply(),
-                installationReq.getLastPower(), installationReq.getLatitude(), installationReq.getLongitude()
+                installationReq.getLastPower(), installationReq.getLatitude(), installationReq.getLongitude(), installationReq.getFinishedAt()
         );
 
         return ResponseEntity.noContent().build();

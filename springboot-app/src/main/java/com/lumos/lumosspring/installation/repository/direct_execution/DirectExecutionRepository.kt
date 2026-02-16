@@ -31,8 +31,7 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
             responsible = :responsible,
             signature_uri = :signatureUri,
             sign_date = :signDate,
-            finished_at = :finishedAt,
-            started_at = COALESCE(:startedAt, available_at + interval '45 minutes')
+            finished_at = :finishedAt
         WHERE direct_execution_id = :id
     """
     )
@@ -42,7 +41,6 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
         @Param("signatureUri") signatureUri: String?,
         @Param("signDate") signDate: Instant?,
         @Param("finishedAt") finishedAt: Instant,
-        @Param("startedAt") startedAt: Instant?,
         @Param("responsible") responsible: String?
     )
 
@@ -101,7 +99,14 @@ interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Lo
         order by description
     """)
     fun getItemsByDirectExecutionId(directExecutionId: Long, itemStatus: String): List<ItemResponseDTO>
-    fun deleteAllByDirectExecutionId(directExecutionId: Long)
+
+    @Modifying
+    @Query("""
+        delete from direct_execution_item
+        where direct_execution_id = :installationId
+    """)
+    fun deleteByDirectExecutionId(installationId: Long)
+
 
 }
 

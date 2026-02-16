@@ -10,6 +10,7 @@ data class InstallationStreetRequest(
     val lastPower: String?,
     val latitude: Double?,
     val longitude: Double?,
+    val finishedAt: Instant? = null,
     val items: List<InstallationItemRequest>
 )
 
