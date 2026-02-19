@@ -126,7 +126,7 @@ class MaintenanceQueryRepository(
                 """
                         AND m.contract_id = :contractId
                         AND m.date_of_visit >= :startDate 
-                        AND m.date_of_visit < (:endDate + INTERVAL '1 day')
+                        AND m.date_of_visit <= :endDate
                         AND EXISTS(
                             SELECT 1
                             FROM maintenance_street_item msi
@@ -518,7 +518,7 @@ class MaintenanceQueryRepository(
                     """
                         WHERE contract_id = :contractId
                           AND date_of_visit >= :startDate
-                          AND date_of_visit < (:endDate + INTERVAL '1 day')
+                          AND date_of_visit <= :endDate
                     """.trimIndent()
                 }}
                   AND EXISTS(
@@ -588,8 +588,8 @@ class MaintenanceQueryRepository(
                                  
                                  ${if (type == "led") {
                                      """
-                                        'last_supply', ms.last_supply,
-                                        'current_supply', ms.current_supply,
+                                        'last_supply', coalesce(ms.last_supply, ''),
+                                        'current_supply', coalesce(ms.current_supply, ''),
                                         'last_power', ms.last_power,
                                         'power', COALESCE((
                                             SELECT ibs.material_power

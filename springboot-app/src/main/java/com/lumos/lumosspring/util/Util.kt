@@ -246,6 +246,22 @@ enum class InstallationStatus(
         )
     ),
 
+    WAITING_RESERVE_CONFIRMATION(
+        mapOf(
+            "pt" to "Aguardando aprovação",
+            "en" to "Waiting confirmation",
+            "es" to "Esperando confirmation"
+        )
+    ),
+
+    WAITING_COLLECT(
+        mapOf(
+            "pt" to "Aguardando coleta",
+            "en" to "Waiting collect",
+            "es" to "Esperando coleta"
+        )
+    ),
+
     AVAILABLE_EXECUTION(
         mapOf(
             "pt" to "Pronta para execução",

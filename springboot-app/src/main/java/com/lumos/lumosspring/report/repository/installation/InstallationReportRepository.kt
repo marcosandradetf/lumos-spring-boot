@@ -41,7 +41,7 @@ class InstallationReportRepository(
                                 """
                                     WHERE contract_id = :contractId
                                         AND started_at >= :startDate
-                                        AND started_at <(:endDate +INTERVAL '1 day')
+                                        AND started_at <= :endDate
                                 """.trimIndent() 
                             }}
                         ),
@@ -398,7 +398,7 @@ class InstallationReportRepository(
                 """
                             AND iv.contract_id = :contractId
                             AND iv.started_at >= :startDate 
-                            AND iv.started_at < (:endDate + INTERVAL '1 day')
+                            AND iv.started_at <= :endDate
                         GROUP BY c.contract_id, c.contractor, iv.started_at
                         ORDER BY c.contractor, iv.started_at desc;
                     """.trimIndent()

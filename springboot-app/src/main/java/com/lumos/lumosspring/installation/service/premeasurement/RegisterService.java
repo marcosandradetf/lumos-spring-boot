@@ -94,9 +94,9 @@ public class RegisterService {
                         .append(description.replaceAll("\\s+", "_"));
             }
 
-            fileUri = s3Service.uploadFile(photo, Utils.INSTANCE.getCurrentBucket(), folder.toString(), "execution", Utils.getCurrentTenantId());
+            fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder.toString(), "execution", Utils.getCurrentTenantId());
         }
-        s3Service.deleteFiles(Utils.INSTANCE.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
+        s3Service.deleteFiles(Utils.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
 
         preMeasurementInstallationRepository.finishInstallationStreet(
                 fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId(), installationReq.getCurrentSupply(),

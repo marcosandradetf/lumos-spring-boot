@@ -83,6 +83,35 @@ export class SidebarComponent implements OnInit {
 
         this.items = [
             {
+                label: 'Dashboard',
+                icon: 'pi pi-chart-bar dark:text-neutral-200 text-gray-800', // ícone mais relacionado a dashboards
+                expanded: false,
+                items: [
+                    {
+                        disabled: true,
+                        label: 'Mapa de Execuções', // título mais curto e direto
+                        title: 'Visualize a localização das execuções em campo',
+                        icon: 'pi pi-map-marker text-blue-500', // azul = informação/visualização
+                        routerLink: ['/requisicoes'],
+                        queryParams: { status: 'PENDING' },
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                    {
+                        disabled: true,
+                        label: 'Produtividade da Equipe', // título mais natural
+                        title: 'Acompanhe a produtividade e tempo das equipes',
+                        icon: 'pi pi-users text-green-500', // verde = performance/progresso
+                        routerLink: ['/requisicoes'],
+                        queryParams: { status: 'APPROVED' },
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                ]
+            },
+            {
                 label: 'Ordens de Serviço',
                 icon: 'pi pi-briefcase dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleExecution,
@@ -206,29 +235,64 @@ export class SidebarComponent implements OnInit {
                 },
                 items: [
                     {
-                        label: 'Personalizados',
-                        icon: 'pi pi-sliders-h text-blue-500',
-                        routerLink: ['/relatorios/gerenciamento'],
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
+                        label: 'Execuções',
+                        icon: 'pi pi-wrench text-orange-400',
+                        expanded: true,
+                        items: [
+                            {
+                                label: 'Personalizados',
+                                icon: 'pi pi-sliders-h text-blue-500',
+                                routerLink: ['/relatorios/gerenciamento'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                }
+                            },
+                            {
+                                label: 'Manutenções (30 dias)',
+                                icon: 'pi pi-wrench text-blue-500',
+                                routerLink: ['/relatorios/manutencoes'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                }
+                            },
+                            {
+                                label: 'Instalações (90 dias)',
+                                icon: 'pi pi-lightbulb text-blue-500',
+                                routerLink: ['/relatorios/instalacoes'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                }
+                            }
+                        ]
                     },
                     {
-                        label: 'Manutenções (30 dias)',
-                        icon: 'pi pi-wrench text-blue-500',
-                        routerLink: ['/relatorios/manutencoes'],
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
-                    },
-                    {
-                        label: 'Instalações (90 dias)',
-                        icon: 'pi pi-lightbulb text-blue-500',
-                        routerLink: ['/relatorios/instalacoes'],
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        }
+                        label: 'Estoque',
+                        icon: 'pi pi-box text-indigo-500',
+                        expanded: false,
+                        items: [
+                            {
+                                label: 'Saída/Saldo por Instalação',
+                                icon: 'pi pi-hammer text-orange-400',
+                                routerLink: ['/relatorios/estoque/saida-saldo-instalacao'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                },
+                                title: 'Demonstrativo de saída e saldo de estoque por instalação'
+                            },
+                            {
+                                label: 'Saída por Requisições',
+                                icon: 'pi pi-briefcase text-orange-300',
+                                disabled: true,
+                                routerLink: ['/relatorios/estoque'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                },
+                                tooltip: 'Disponível em breve'
+                            }
+                        ]
                     }
+
+
                 ]
             },
 

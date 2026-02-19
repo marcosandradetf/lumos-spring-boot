@@ -199,7 +199,7 @@ class OrderServiceRegister(
                 }
 
                 notificationCodes.forEach {
-                    if (it.first === "APPROVED") {
+                    if (it.first == "APPROVED") {
                         notificationService.sendNotificationForTopic(
                             title = "Materiais prontos para instalação",
                             body = "Os materiais para **${it.third}** estão disponíveis no almoxarifado. Toque para ver os detalhes.",
@@ -289,13 +289,14 @@ class OrderServiceRegister(
                 throw Utils.BusinessException("O material ${o.materialName} não possui estoque suficiente.")
             }
 
-            val (sql, param) = if (o.materialIdReservation != null || o.directExecutionId != null) {
+            val (sql, param) = if (o.materialIdReservation != null || o.directExecutionId != null || o.preMeasurementId != null) {
                 """
                     UPDATE material_reservation 
-                    SET status = :status
+                    SET status = :status, collected_at = now, released_by = :userId
                     WHERE material_id_reservation = :reservationId
                 """.trimIndent() to mapOf(
                     "reservationId" to o.materialIdReservation,
+                    "userId" to Utils.getCurrentUserId(),
                     "status" to ReservationStatus.COLLECTED
                 )
             } else {

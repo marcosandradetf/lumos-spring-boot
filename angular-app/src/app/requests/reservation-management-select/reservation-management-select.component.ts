@@ -200,6 +200,7 @@ export class ReservationManagementSelectComponent {
                     this.filteredMaterials = news;
                 },
                 error: (error) => {
+                    this.loading = false;
                     this.utils.showMessage(error.error.message, 'error', 'Erro ao carregar materiais');
                 },
                 complete: () => {
@@ -369,6 +370,7 @@ export class ReservationManagementSelectComponent {
             },
             error: (error) => {
                 this.utils.showMessage(error.error.error ?? error.message ?? error, 'info', 'Não foi possível salvar', true);
+                this.loading = false;
             },
             complete: () => {
                 this.loading = false;

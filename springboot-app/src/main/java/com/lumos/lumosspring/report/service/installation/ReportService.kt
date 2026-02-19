@@ -2,7 +2,7 @@ package com.lumos.lumosspring.report.service.installation
 
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.maintenance.service.MaintenanceService
-import com.lumos.lumosspring.report.controller.installation.ReportController
+import com.lumos.lumosspring.report.controller.installation.ExecutionReportController
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 @Service
 class ReportService(
@@ -117,7 +119,7 @@ class ReportService(
         }
     }
 
-    fun generateExecutionReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+    fun generateExecutionReport(filtersRequest: ExecutionReportController.FiltersRequest): ResponseEntity<Any> {
         return if (filtersRequest.scope == "MAINTENANCE") {
             generateMaintenanceReport(filtersRequest)
         } else {
@@ -125,16 +127,17 @@ class ReportService(
         }
     }
 
-    private fun generateMaintenanceReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+    private fun generateMaintenanceReport(filtersRequest: ExecutionReportController.FiltersRequest): ResponseEntity<Any> {
         return if (filtersRequest.viewMode == "LIST") {
 
-            val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
-            val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+            val startUtc: OffsetDateTime = filtersRequest.startDate.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+            val endUtc: OffsetDateTime = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+                .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999)
 
             val response = maintenanceService.getGroupedMaintenances(
                 filtersRequest.contractId,
-                start,
-                end,
+                startUtc,
+                endUtc,
                 "%${filtersRequest.type}%"
             )
 
@@ -144,16 +147,17 @@ class ReportService(
         }
     }
 
-    private fun generateGroupedInstallationReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+    private fun generateGroupedInstallationReport(filtersRequest: ExecutionReportController.FiltersRequest): ResponseEntity<Any> {
         return if (filtersRequest.viewMode == "LIST") {
 
-            val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
-            val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+            val startUtc: OffsetDateTime = filtersRequest.startDate.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+            val endUtc: OffsetDateTime = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+                .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999)
 
             val response = installationReportService.getInstallationsData(
                 filtersRequest.contractId,
-                start,
-                end
+                startUtc,
+                endUtc
             )
 
             ResponseEntity.ok().body(response)

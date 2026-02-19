@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.serviceorder.repository.installation
 
-import com.lumos.lumosspring.stock.history.model.MaterialReservation
+import com.lumos.lumosspring.serviceorder.model.installation.MaterialReservation
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 

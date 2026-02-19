@@ -113,7 +113,11 @@ export class ExecutionProgressComponent implements OnInit {
                 next: ({executions, users, teams}) => {
                     this.executions = executions;
                     this.executionsBackup = cloneDeep(this.executions);
-                    this.users.push(...users.map(u => ({userId: u.userId, name: `${u.name} ${u.lastname}`})));
+                    const mappedUsers = users
+                        .map(u => ({ userId: u.userId, name: `${u.name} ${u.lastname}` }))
+                        .sort((a, b) => a.name.localeCompare(b.name)); // ordena alfabeticamente
+
+                    this.users.push(...mappedUsers);
                     this.teams = teams;
                     this.loading = false;
                 },

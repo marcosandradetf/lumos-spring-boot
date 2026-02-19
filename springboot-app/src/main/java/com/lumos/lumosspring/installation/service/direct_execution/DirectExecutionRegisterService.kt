@@ -369,7 +369,7 @@ class DirectExecutionRegisterService(
         namedJdbc.update(
             """
                         UPDATE material_reservation
-                        SET status = :status
+                        SET status = :status, finished_at = now()
                         WHERE direct_execution_id = :directExecutionId
                     """.trimIndent(),
             mapOf(
@@ -444,7 +444,7 @@ class DirectExecutionRegisterService(
         namedJdbc.update(
             """
                     UPDATE material_reservation
-                    SET status = :status
+                    SET status = :status, finished_at = now()
                     WHERE direct_execution_id = :directExecutionId
                 """.trimIndent(),
             mapOf(

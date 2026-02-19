@@ -3,7 +3,7 @@ package com.lumos.lumosspring.report.service.installation
 import com.fasterxml.jackson.databind.JsonNode
 import com.lumos.lumosspring.installation.repository.direct_execution.DirectExecutionRepository
 import com.lumos.lumosspring.installation.repository.premeasurement.PreMeasurementInstallationRepository
-import com.lumos.lumosspring.report.controller.installation.ReportController
+import com.lumos.lumosspring.report.controller.installation.ExecutionReportController
 import com.lumos.lumosspring.report.repository.installation.InstallationReportRepository
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
@@ -17,6 +17,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Service
 class InstallationReportService(
@@ -27,18 +28,20 @@ class InstallationReportService(
 )  {
 
     fun generateDataReport(
-        filtersRequest: ReportController.FiltersRequest
+        filtersRequest: ExecutionReportController.FiltersRequest
     ): ResponseEntity<Any> {
         var html = this::class.java.getResource("/templates/maintenance/grouped.html")!!.readText()
 
-        val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
-        val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+        val startUtc: OffsetDateTime = filtersRequest.startDate.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+        val endUtc: OffsetDateTime = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+            .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999)
+
         val executionId = filtersRequest.executionId?.toLong()
         val contractId = filtersRequest.contractId
 
         val data = installationReportRepository.getDataForReport(
-            startDate = start,
-            endDate = end,
+            startDate = startUtc,
+            endDate = endUtc,
             contractId = contractId,
             installationId = executionId,
             installationType = filtersRequest.executionType

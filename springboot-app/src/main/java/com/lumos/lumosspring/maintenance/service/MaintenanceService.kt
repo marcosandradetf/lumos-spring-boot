@@ -10,7 +10,7 @@ import com.lumos.lumosspring.maintenance.model.MaintenanceExecutor
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreet
 import com.lumos.lumosspring.maintenance.model.MaintenanceStreetItem
 import com.lumos.lumosspring.maintenance.repository.*
-import com.lumos.lumosspring.report.controller.installation.ReportController
+import com.lumos.lumosspring.report.controller.installation.ExecutionReportController
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ContentDisposition
@@ -26,6 +26,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.collections.filter
 import kotlin.collections.joinToString
@@ -497,16 +498,17 @@ class MaintenanceService(
         }
     }
 
-    fun generateGroupedMaintenanceReport(filtersRequest: ReportController.FiltersRequest): ResponseEntity<Any> {
+    fun generateGroupedMaintenanceReport(filtersRequest: ExecutionReportController.FiltersRequest): ResponseEntity<Any> {
         var html = this::class.java.getResource("/templates/maintenance/grouped.html")!!.readText()
 
-        val start = filtersRequest.startDate.atOffset(ZoneOffset.UTC)
-        val end = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+        val startUtc: OffsetDateTime = filtersRequest.startDate.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+        val endUtc: OffsetDateTime = filtersRequest.endDate.atOffset(ZoneOffset.UTC)
+            .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999)
         val executionId = filtersRequest.executionId?.let { UUID.fromString(it) }
 
         val data = maintenanceQueryRepository.getGroupedMaintenances(
-            start,
-            end,
+            startUtc,
+            endUtc,
             filtersRequest.contractId,
             filtersRequest.type,
             executionId
@@ -800,8 +802,8 @@ class MaintenanceService(
 
         maintenanceRepository.registerGeneration(
             filtersRequest.contractId,
-            start,
-            end,
+            startUtc,
+            endUtc,
             executionId
         )
 

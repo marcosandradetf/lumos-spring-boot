@@ -12,7 +12,7 @@ import java.time.Instant
 
 @RestController
 @RequestMapping("/api/report")
-class ReportController(
+class ExecutionReportController(
     private val reportService: ReportService
 ) {
 

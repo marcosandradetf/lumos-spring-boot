@@ -15,7 +15,7 @@ import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepos
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
 import com.lumos.lumosspring.serviceorder.dto.installation.ReserveDTOCreate;
-import com.lumos.lumosspring.stock.history.model.MaterialReservation;
+import com.lumos.lumosspring.serviceorder.model.installation.MaterialReservation;
 import com.lumos.lumosspring.serviceorder.repository.installation.MaterialReservationRepository;
 import com.lumos.lumosspring.serviceorder.repository.installation.ReservationManagementRepository;
 import com.lumos.lumosspring.util.*;
@@ -86,8 +86,10 @@ public class ManagementRegisterService {
         var management = reservationManagementRepository.findById(executionReserve.getReservationManagementId())
                 .orElseThrow();
 
-        if(management.getStockistId() != userUUID) {
+        if (!management.getStockistId().equals(userUUID)) {
             throw new Utils.BusinessException("Essa ordem de serviço não está mais atribuída para você");
+        } else if (!management.getStatus().equals("PENDING")) {
+            throw new Utils.BusinessException("Essa ordem de serviço não está mais pendente ou está finalizada.");
         }
 
         // 1) Busca pré-medição (se houver) e valida status
@@ -263,7 +265,13 @@ public class ManagementRegisterService {
                             requested,
                             BigDecimal.ZERO,
                             status,
-                            executionReserve.getTeamId()
+                            executionReserve.getTeamId(),
+                            Instant.now(),
+                            userUUID,
+                            null,
+                            null,
+                            null
+
                     );
 
                 } else {
@@ -288,7 +296,12 @@ public class ManagementRegisterService {
                             requested,
                             BigDecimal.ZERO,
                             ReservationStatus.IN_STOCK,
-                            executionReserve.getTeamId()
+                            executionReserve.getTeamId(),
+                            Instant.now(),
+                            userUUID,
+                            null,
+                            null,
+                            null
                     );
 
                 }

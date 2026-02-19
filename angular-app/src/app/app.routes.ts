@@ -270,6 +270,13 @@ export const routes: Routes = [
         data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'},
     },
 
+    {
+        path: 'relatorios/estoque/saida-saldo-instalacao',
+        loadComponent: () => import('./reports/material-reservation/material-reservation.component').then(r => r.MaterialReservationComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'relatorios'},
+    },
+
     // out
 
     {

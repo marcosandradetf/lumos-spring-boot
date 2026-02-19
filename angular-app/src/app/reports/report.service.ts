@@ -87,4 +87,17 @@ export class ReportService {
     }
 
 
+    getMaterialReservationReport(filters: any) {
+        return this.http.post(
+            `${this.endpoint}/api/report/stock/generate-material-reservation-report`,
+            filters, // body vazio
+            {
+                responseType: 'blob',
+                observe: 'response'
+            }
+        ) as Observable<HttpResponse<Blob>>;
+    }
+
+
+
 }
