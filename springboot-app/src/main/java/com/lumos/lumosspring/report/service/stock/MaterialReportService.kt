@@ -58,6 +58,14 @@ class MaterialReportService(
         val formattedDateEnd = localDateEnd.format(formatter)
 
         val data = getTeamReports(filters.contractId, startUtc, endUtc)
+        if (data.isEmpty() ||
+            data.none { team ->
+                team.installations.any { it.records.isNotEmpty() }
+            }
+        ) {
+            throw Utils.BusinessException("Nenhum dado encontrado no período informado")
+        }
+
         val executionsBlock = buildExecutionsBlock(data)
 
         var logoImage = data.first().companyLogo
@@ -75,7 +83,6 @@ class MaterialReportService(
             .replace("{{COMPANY_PHONE}}", data.first().companyPhone)
             .replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
 
-        println(html)
         val pdf = Utils.sendHtmlToPuppeteer(html, "portrait")
         val responseHeaders = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_PDF
