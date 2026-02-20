@@ -1,0 +1,168 @@
+<div class="p-6 space-y-6 min-h-screen transition-colors">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+      Visão Executiva da operação
+    </h1>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <p-dropdown [options]="cities" placeholder="Prefeitura"></p-dropdown>
+    <p-dropdown [options]="contracts" placeholder="Contrato"></p-dropdown>
+    <p-calendar view="month" dateFormat="mm/yy"></p-calendar>
+    <button pButton label="Aplicar Filtros" icon="pi pi-filter"></button>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+    <div class="kpi-card">
+      <div class="kpi-title">Produtividade</div>
+      <div class="kpi-value text-emerald-500">{{ avgProductivity }}%</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Horas Trabalhadas</div>
+      <div class="kpi-value">{{ totalHours }}h</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Serviços Executados</div>
+      <div class="kpi-value">{{ totalServices }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Estoque Crítico</div>
+      <div class="kpi-value text-amber-500">{{ criticalInventory }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Inconsistências</div>
+      <div class="kpi-value text-red-500">{{ inconsistencyCount }}</div>
+    </div>
+
+  </div>
+
+  <!-- ALERT -->
+  <div *ngIf="inconsistencyCount > 0"
+       class="p-4 rounded-lg bg-red-100 dark:bg-red-900
+              text-red-700 dark:text-red-300 font-medium">
+    ⚠ Foram detectadas {{ inconsistencyCount }} inconsistências críticas neste período.
+  </div>
+
+  <!-- TABS -->
+  <p-tabView>
+
+    <!-- TAB 1: EXECUTIVE -->
+    <p-tabPanel header="Visão Geral">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <p-card header="Tendência de Produtividade">
+          <p-chart type="line" [data]="productivityTrend"></p-chart>
+        </p-card>
+
+        <p-card header="Estoque por Almoxarifado">
+          <p-chart type="bar" [data]="warehouseStockChart"></p-chart>
+        </p-card>
+
+      </div>
+
+    </p-tabPanel>
+
+    <!-- TAB 2: EQUIPES -->
+    <p-tabPanel header="Equipes">
+
+      <p-card header="Produtividade por Equipe">
+        <p-table [value]="teamPerformance">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Equipe</th>
+              <th>Horas</th>
+              <th>Serviços</th>
+              <th>Produtividade</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-team>
+            <tr (click)="selectTeam(team.id)" class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+              <td>{{ team.name }}</td>
+              <td>{{ team.hours }}h</td>
+              <td>{{ team.services }}</td>
+              <td>
+                <span [ngClass]="{
+                  'text-emerald-500': team.productivity > 85,
+                  'text-amber-500': team.productivity <= 85 && team.productivity > 70,
+                  'text-red-500': team.productivity <= 70
+                }">
+                  {{ team.productivity }}%
+                </span>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+
+      <!-- USER DETAIL -->
+      <p-card header="Funcionários da Equipe"
+              *ngIf="selectedTeamId"
+              class="mt-4">
+        <p-table [value]="userPerformance">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Funcionário</th>
+              <th>Horas</th>
+              <th>Serviços</th>
+              <th>Produtividade</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-user>
+            <tr>
+              <td>{{ user.name }}</td>
+              <td>{{ user.hours }}h</td>
+              <td>{{ user.services }}</td>
+              <td>{{ user.productivity }}%</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+
+    </p-tabPanel>
+
+    <!-- TAB 3: INCONSISTENCIES -->
+    <p-tabPanel header="Inconsistências">
+
+      <p-card header="Alertas Estratégicos">
+        <p-table [value]="riskItems">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Contrato</th>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th>Severidade</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.contract }}</td>
+              <td>{{ item.type }}</td>
+              <td>{{ item.description }}</td>
+              <td>
+                <p-tag [severity]="item.severity"
+                       [value]="item.severity">
+                </p-tag>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+
+    </p-tabPanel>
+
+  </p-tabView>
+
+</div>

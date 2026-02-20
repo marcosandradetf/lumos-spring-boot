@@ -24,6 +24,7 @@ data class Maintenance(
     val signatureUri: String? = null,
     val reportViewAt: Instant? = null,
     val finishedAt: Instant? = null,
+    val teamId: Long? = null,
 
     @Transient
     private var isNewEntry: Boolean = true

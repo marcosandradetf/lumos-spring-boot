@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {Title} from '@angular/platform-browser';
-import {PrimeBreadcrumbComponent} from "../shared/components/prime-breadcrumb/prime-breadcrumb.component";
-import {SharedState} from '../core/service/shared-state';
+import {PrimeBreadcrumbComponent} from "../../shared/components/prime-breadcrumb/prime-breadcrumb.component";
+import {SharedState} from '../../core/service/shared-state';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {RouterLink} from '@angular/router';
 import {DashboardService} from './dashboard.service';

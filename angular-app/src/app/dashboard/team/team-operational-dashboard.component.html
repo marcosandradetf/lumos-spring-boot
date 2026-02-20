@@ -1,0 +1,240 @@
+<div class="p-8 space-y-12 max-w-7xl mx-auto">
+
+  <!-- ================= HEADER ================= -->
+  <section class="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+
+    <div class="space-y-1">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        Performance Operacional
+      </h1>
+      <div class="text-sm text-slate-500 dark:text-slate-400">
+        Visão consolidada por período selecionado
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800
+                px-5 py-3 rounded-xl shadow-sm border
+                border-slate-200 dark:border-slate-700">
+
+      <i class="pi pi-calendar text-slate-500 dark:text-slate-400"></i>
+
+      <div class="flex flex-col">
+        <span class="text-xs text-slate-500 dark:text-slate-400">
+          Período
+        </span>
+
+        <p-calendar
+          [(ngModel)]="selectedDateRange"
+          selectionMode="range"
+          dateFormat="dd/mm/yy"
+          [showIcon]="false"
+          inputClass="text-sm font-medium bg-transparent border-none focus:outline-none p-0 text-slate-800 dark:text-slate-100">
+        </p-calendar>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- ================= KPIs ================= -->
+  <section class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
+
+    <!-- Equipes -->
+    <p-card class="rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Equipes</div>
+          <div class="text-4xl font-semibold mt-3 text-slate-900 dark:text-slate-100">
+            {{ totalTeams }}
+          </div>
+        </div>
+        <i class="pi pi-users text-2xl text-slate-300 dark:text-slate-600"></i>
+      </div>
+    </p-card>
+
+    <!-- Colaboradores -->
+    <p-card class="rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Colaboradores</div>
+          <div class="text-4xl font-semibold mt-3 text-slate-900 dark:text-slate-100">
+            {{ totalCollaborators }}
+          </div>
+        </div>
+        <i class="pi pi-id-card text-2xl text-slate-300 dark:text-slate-600"></i>
+      </div>
+    </p-card>
+
+    <!-- Serviços -->
+    <p-card class="rounded-xl border border-blue-200 dark:border-blue-800 hover:shadow-lg transition">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Serviços Executados</div>
+          <div class="text-4xl font-semibold mt-3 text-blue-700 dark:text-blue-400">
+            {{ totalServicesExecuted }}
+          </div>
+        </div>
+        <i class="pi pi-chart-line text-2xl text-blue-600 dark:text-blue-400"></i>
+      </div>
+    </p-card>
+
+    <!-- LEDs -->
+    <p-card class="rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Instalações LED</div>
+          <div class="text-4xl font-semibold mt-3 text-slate-900 dark:text-slate-100">
+            {{ totalLedInstallations }}
+          </div>
+        </div>
+        <i class="pi pi-bolt text-2xl text-slate-300 dark:text-slate-600"></i>
+      </div>
+    </p-card>
+
+    <!-- Hora Extra -->
+    <p-card class="rounded-xl border border-amber-200 dark:border-amber-800 hover:shadow-lg transition">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Hora Extra Total</div>
+          <div class="text-4xl font-semibold mt-3 text-amber-700 dark:text-amber-400">
+            {{ totalOvertimeHours }}h
+          </div>
+        </div>
+        <i class="pi pi-clock text-2xl text-amber-600 dark:text-amber-400"></i>
+      </div>
+    </p-card>
+
+    <!-- Produtividade -->
+    <p-card class="rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Produtividade Média</div>
+          <div class="text-4xl font-semibold mt-3 text-slate-900 dark:text-slate-100">
+            {{ avgProductivity }}%
+          </div>
+        </div>
+        <i class="pi pi-percentage text-2xl text-slate-300 dark:text-slate-600"></i>
+      </div>
+    </p-card>
+
+  </section>
+
+  <!-- ================= PERFORMANCE ================= -->
+  <section>
+    <p-card header="Performance por Equipe"
+            styleClass="border border-slate-200 dark:border-slate-700">
+
+      <div *ngFor="let team of teamPerformance" class="mb-8 last:mb-0">
+
+        <div class="flex items-center gap-3 font-medium mb-2 text-slate-800 dark:text-slate-100 justify-between">
+          <span>{{ team.name }}</span>
+
+          <span *ngIf="team.name === bestTeamName"
+                class="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-sm">
+            <i class="pi pi-trophy"></i>
+            Melhor desempenho
+          </span>
+
+          <span *ngIf="team.superAchieved"
+                class="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs">
+            <i class="pi pi-star-fill"></i>
+            Superou meta
+          </span>
+
+          <span *ngIf="team.achieved && !team.superAchieved"
+                class="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs">
+            <i class="pi pi-check-circle"></i>
+            Meta atingida
+          </span>
+        </div>
+
+        <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
+          <span>Meta: {{ team.meta }}</span>
+          <span>Realizado: {{ team.real }}</span>
+          <span>{{ ((team.real / team.meta) * 100) | number:'1.0-0' }}%</span>
+        </div>
+
+        <div class="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+          <div class="h-3 rounded-full transition-all duration-1000 ease-out"
+               [ngClass]="{
+                 'bg-purple-600 dark:bg-purple-500': team.superAchieved,
+                 'bg-blue-600 dark:bg-blue-500': team.achieved && !team.superAchieved,
+                 'bg-slate-500 dark:bg-slate-600': !team.achieved
+               }"
+               [style.width.%]="team.animatedWidth">
+          </div>
+        </div>
+
+      </div>
+
+    </p-card>
+  </section>
+
+  <!-- ================= RANKING ================= -->
+  <section>
+    <p-card header="Ranking por Serviços Executados"
+            styleClass="border border-slate-200 dark:border-slate-700">
+
+      <div *ngFor="let collaborator of collaboratorRanking"
+           class="flex justify-between items-center py-4 px-2
+                  rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 flex items-center justify-center rounded-full
+                       text-sm font-semibold bg-slate-200 dark:bg-slate-700
+                       text-slate-800 dark:text-slate-100">
+            {{ collaborator.position }}
+          </span>
+
+          <span class="font-medium text-slate-800 dark:text-slate-100">
+            {{ collaborator.name }}
+          </span>
+        </div>
+
+        <span class="font-semibold text-blue-700 dark:text-blue-400">
+          {{ collaborator.services }} serviços
+        </span>
+
+      </div>
+
+    </p-card>
+  </section>
+
+  <!-- ================= TABELA ================= -->
+  <section>
+    <p-card header="Desempenho Individual"
+            styleClass="border border-slate-200 dark:border-slate-700">
+
+      <p-table [value]="collaborators"
+               styleClass="p-datatable-sm"
+               [rowHover]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Colaborador</th>
+            <th>Equipe</th>
+            <th>Horas</th>
+            <th>Hora Extra</th>
+            <th>Serviços</th>
+            <th>LEDs</th>
+            <th>Produtividade</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-user>
+          <tr>
+            <td class="font-medium">{{ user.name }}</td>
+            <td>{{ user.team }}</td>
+            <td>{{ user.workedHours }}h</td>
+            <td class="text-purple-700"> {{ user.overtimeHours }}h</td>
+            <td>{{ user.servicesExecuted }}</td>
+            <td>{{ user.ledInstallations }}</td>
+            <td><span
+              [ngClass]="{ 'text-blue-700': user.productivity > 85, 'text-amber-700': user.productivity <= 85 && user.productivity > 70, 'text-red-700': user.productivity <= 70 }"> {{ user.productivity }}
+              % </span></td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+    </p-card>
+  </section>
+
+</div>

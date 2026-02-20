@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.metrics
+package com.lumos.lumosspring.dashboard.repository.metrics
 
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository

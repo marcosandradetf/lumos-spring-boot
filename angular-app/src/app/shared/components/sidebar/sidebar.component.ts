@@ -83,27 +83,34 @@ export class SidebarComponent implements OnInit {
 
         this.items = [
             {
-                label: 'Dashboard',
+                label: 'Dashboards',
                 icon: 'pi pi-chart-bar dark:text-neutral-200 text-gray-800', // ícone mais relacionado a dashboards
-                expanded: false,
+                expanded: true,
                 items: [
                     {
-                        disabled: true,
                         label: 'Mapa de Execuções', // título mais curto e direto
                         title: 'Visualize a localização das execuções em campo',
                         icon: 'pi pi-map-marker text-blue-500', // azul = informação/visualização
-                        routerLink: ['/requisicoes'],
+                        routerLink: ['/dashboard/mapa-execucoes'],
                         queryParams: { status: 'PENDING' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
                     },
                     {
-                        disabled: true,
+                        label: 'Visão Executiva', // título mais natural
+                        title: 'Acompanhe a produtividade e tempo das equipes',
+                        icon: 'pi pi-compass text-purple-700', // verde = performance/progresso
+                        routerLink: ['/dashboard/visao-executiva'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                    {
                         label: 'Produtividade da Equipe', // título mais natural
                         title: 'Acompanhe a produtividade e tempo das equipes',
                         icon: 'pi pi-users text-green-500', // verde = performance/progresso
-                        routerLink: ['/requisicoes'],
+                        routerLink: ['/dashboard/produtividade-equipe'],
                         queryParams: { status: 'APPROVED' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);

@@ -143,4 +143,6 @@ class MaterialReportRepository(
         @field:JsonProperty("installations_json")
         val installationsJson: String
     )
+
+
 }

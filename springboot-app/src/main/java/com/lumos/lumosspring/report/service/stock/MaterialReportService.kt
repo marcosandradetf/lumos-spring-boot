@@ -99,7 +99,7 @@ class MaterialReportService(
             sb.append("""
                 <div class="page-content">
                     <div class="maintenance-header">
-                        <span>Equipe: ${team.teamName}</span>
+                        <span>Equipe/Caminhão: ${team.teamName}</span>
                         <span>Total de Instalações: ${team.installations.size}</span>
                     </div>
                     <div class="maintenance-body">

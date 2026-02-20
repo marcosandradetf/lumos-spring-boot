@@ -1,0 +1,316 @@
+<div class="p-8 space-y-10 max-w-7xl mx-auto">
+
+  <!-- HEADER -->
+  <section class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+    <div class="space-y-1">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        Execuções no Mapa
+      </h1>
+      <div class="text-sm text-slate-500 dark:text-slate-400">
+        Visualize execuções por tipo, status e equipe — clique nos pontos para detalhes.
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button pButton type="button" label="Aplicar" icon="pi pi-filter"
+              class="p-button-sm"
+              (click)="applyFilters()"></button>
+      <button pButton type="button" label="Limpar" icon="pi pi-times"
+              class="p-button-sm p-button-outlined"
+              (click)="clearFilters()"></button>
+    </div>
+  </section>
+
+  <!-- FILTERS -->
+  <section class="grid grid-cols-1 md:grid-cols-12 gap-4">
+    <p-card class="rounded-xl md:col-span-12 border border-slate-200 dark:border-slate-700">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+
+        <div class="md:col-span-4">
+          <label class="block text-xs text-slate-500 dark:text-slate-400 mb-2">Busca</label>
+          <input pInputText
+                 [(ngModel)]="searchText"
+                 class="w-full"
+                 placeholder="Título, endereço, equipe..."
+          />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="block text-xs text-slate-500 dark:text-slate-400 mb-2">Equipe</label>
+          <p-dropdown
+            [options]="teams"
+            optionLabel="name"
+            optionValue="id"
+            [(ngModel)]="selectedTeamId"
+            [showClear]="true"
+            placeholder="Todas"
+            class="w-full">
+          </p-dropdown>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-xs text-slate-500 dark:text-slate-400 mb-2">Tipos</label>
+          <p-multiSelect
+            [options]="typeOptions"
+            [(ngModel)]="selectedTypes"
+            defaultLabel="Selecione"
+            class="w-full">
+          </p-multiSelect>
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="block text-xs text-slate-500 dark:text-slate-400 mb-2">Status</label>
+          <p-multiSelect
+            [options]="statusOptions"
+            [(ngModel)]="selectedStatuses"
+            defaultLabel="Selecione"
+            class="w-full">
+          </p-multiSelect>
+        </div>
+
+      </div>
+    </p-card>
+  </section>
+
+  <!-- KPIs + LEGEND -->
+  <section class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+
+    <!-- ================= KPIs ================= -->
+    <div class="xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Total -->
+      <p-card styleClass="border border-slate-200 dark:border-slate-700
+                   hover:shadow-md transition-all duration-300 h-full">
+        <div class="flex items-center justify-between">
+
+          <div>
+            <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Total (filtro)
+            </div>
+            <div class="text-3xl font-semibold mt-2 text-slate-900 dark:text-slate-100">
+              {{ kpis.total }}
+            </div>
+          </div>
+
+          <div class="w-10 h-10 flex items-center justify-center
+                    rounded-lg bg-slate-100 dark:bg-slate-800">
+            <i class="pi pi-map-marker text-slate-500 dark:text-slate-400"></i>
+          </div>
+
+        </div>
+      </p-card>
+
+      <!-- Em execução (Destaque principal) -->
+      <p-card styleClass="border border-blue-200 dark:border-blue-800
+                   bg-blue-50/40 dark:bg-blue-900/20
+                   hover:shadow-md transition-all duration-300 h-full">
+        <div class="flex items-center justify-between">
+
+          <div>
+            <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Em execução
+            </div>
+            <div class="text-3xl font-semibold mt-2 text-blue-700 dark:text-blue-400">
+              {{ kpis.inProgress }}
+            </div>
+          </div>
+
+          <div class="w-10 h-10 flex items-center justify-center
+                    rounded-lg bg-blue-100 dark:bg-blue-800/40">
+            <i class="pi pi-sync text-blue-600 dark:text-blue-400"></i>
+          </div>
+
+        </div>
+      </p-card>
+
+      <!-- Pendentes -->
+      <p-card styleClass="border border-green-200 dark:border-slate-700
+                   hover:shadow-md transition-all duration-300 h-full">
+        <div class="flex items-center justify-between">
+
+          <div>
+            <div class="text-xs uppercase tracking-wide text-green-500 dark:text-green-400">
+              Concluído
+            </div>
+            <div class="text-3xl font-semibold mt-2 text-green-700 dark:text-green-300">
+              {{ kpis.finished }}
+            </div>
+          </div>
+
+          <div class="w-10 h-10 flex items-center justify-center
+                    rounded-lg bg-green-100 dark:bg-green-800">
+            <i class="pi pi-check text-green-500 dark:text-green-400"></i>
+          </div>
+
+        </div>
+      </p-card>
+
+    </div>
+
+    <!-- ================= LEGENDA ================= -->
+    <p-card class="rounded-xl xl:col-span-4 border border-slate-200 dark:border-slate-700">
+
+      <div class="flex items-center justify-between mb-4">
+        <div class="font-semibold text-slate-900 dark:text-slate-100">
+          Legenda
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          Cor = Status • Forma = Tipo
+        </div>
+      </div>
+
+      <div class="space-y-4 text-sm">
+
+        <!-- Status -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+            <span class="text-slate-700 dark:text-slate-200">Em execução</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full bg-green-600"></span>
+            <span class="text-slate-700 dark:text-slate-200">Concluído</span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-4 text-xs text-slate-500 dark:text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 bg-slate-600 rounded-sm"></span>
+            Instalação → marcador quadrado
+          </div>
+
+          <div class="flex items-center gap-2 mt-2">
+            <span class="w-3 h-3 bg-slate-600 rounded-full"></span>
+            Manutenção → marcador circular
+          </div>
+        </div>
+
+      </div>
+
+    </p-card>
+
+  </section>
+
+  <!-- MAP + LIST -->
+  <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- MAP -->
+    <p-card class="rounded-xl lg:col-span-8 border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="h-[560px]">
+        <div id="geo-map" class="h-full w-full rounded-lg"></div>
+      </div>
+    </p-card>
+
+    <!-- LIST / SIDEBAR -->
+    <p-card
+      class="rounded-xl lg:col-span-4 border border-slate-200 dark:border-slate-700 shadow-sm"
+      styleClass="h-full">
+
+      <!-- HEADER -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
+        <div class="font-semibold text-slate-900 dark:text-slate-100">
+          Execuções
+        </div>
+
+        <div class="text-xs px-2 py-1 rounded-full
+                bg-slate-100 dark:bg-slate-800
+                text-slate-600 dark:text-slate-300">
+          {{ filteredExecutions.length }}
+        </div>
+      </div>
+
+      <!-- LISTA -->
+      <div class="mt-5 space-y-3 max-h-[520px] overflow-auto pr-1">
+
+        <button
+          *ngFor="let e of filteredExecutions"
+          type="button"
+          (click)="selectExecution(e)"
+          class="relative w-full text-left rounded-xl border px-4 py-4
+             transition-all duration-200
+             border-slate-200 dark:border-slate-700
+             hover:shadow-md hover:-translate-y-[1px]
+             dark:hover:bg-slate-800
+             focus:outline-none"
+          [ngClass]="{
+        'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600':
+        e.id === selectedExecutionId
+      }"
+        >
+
+          <div class="flex items-start justify-between gap-4">
+
+            <!-- LADO ESQUERDO -->
+            <div class="flex-1">
+
+              <!-- TÍTULO -->
+              <div class="font-semibold text-slate-900 dark:text-slate-100">
+                {{ e.title }}
+              </div>
+
+              <!-- ENDEREÇO + EQUIPE -->
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap gap-2 items-center">
+                <span>{{ e.address }}</span>
+                <span class="opacity-40">•</span>
+                <span>{{ e.teamName }}</span>
+              </div>
+
+              <!-- TIPO + STATUS (texto elegante) -->
+              <div class="mt-3 flex items-center gap-4 text-xs">
+
+                <!-- Tipo -->
+                <span class="uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              {{ e.type === 'INSTALLATION' ? 'Instalação' : 'Manutenção' }}
+            </span>
+
+                <!-- Status com ponto -->
+                <span class="flex items-center gap-2">
+
+              <span
+                class="w-2.5 h-2.5 rounded-full"
+                [ngClass]="{
+                  'bg-blue-600': e.status === 'IN_PROGRESS',
+                  'bg-emerald-600': e.status === 'FINISHED',
+                  'bg-red-600': e.status === 'BLOCKED'
+                }">
+              </span>
+
+              <span class="text-slate-600 dark:text-slate-300">
+                {{
+                  e.status === 'IN_PROGRESS' ? 'Em execução' :
+                      e.status === 'FINISHED' ? 'Concluído' : 'Bloqueado'
+                }}
+              </span>
+
+            </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Indicador lateral -->
+          <div
+            *ngIf="e.id === selectedExecutionId"
+            class="absolute left-0 top-0 h-full w-1 rounded-r
+               bg-blue-600 dark:bg-blue-400">
+          </div>
+
+        </button>
+
+        <!-- EMPTY -->
+        <div *ngIf="filteredExecutions.length === 0"
+             class="text-sm text-slate-500 dark:text-slate-400
+                text-center py-14">
+          Nenhuma execução encontrada.
+        </div>
+
+      </div>
+
+    </p-card>
+
+  </section>
+</div>

@@ -162,7 +162,12 @@ class MaintenanceRepository(
     suspend fun callPostMaintenanceStreet(maintenanceStreetId: String): RequestResult<Unit> {
         val street = db.maintenanceDao().getMaintenanceStreetWithItems(maintenanceStreetId)
 
-        val response = ApiExecutor.execute { maintenanceApi.submitMaintenanceStreet(street) }
+        val response = ApiExecutor.execute {
+            maintenanceApi.submitMaintenanceStreet(
+                street,
+                secureStorage.getTeamId(),
+            )
+        }
 
         return when (response) {
             is RequestResult.Success -> {

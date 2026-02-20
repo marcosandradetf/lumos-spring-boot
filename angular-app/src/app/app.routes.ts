@@ -285,12 +285,33 @@ export const routes: Routes = [
     },
 
 
+    //dashboards
     {
         path: 'dashboard',
-        loadComponent: () => import('./dashboard/dashboard.component').then(d => d.DashboardComponent),
+        loadComponent: () => import('./dashboard/home/dashboard.component').then(d => d.DashboardComponent),
         canActivate: [AuthGuard],
         data: {role: [], path: 'dashboard'},
     },
+    {
+        path: 'dashboard/mapa-execucoes',
+        loadComponent: () => import('./dashboard/map/map.component').then(d => d.MapComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+    },
+    {
+        path: 'dashboard/visao-executiva',
+        loadComponent: () => import('./dashboard/executive/executive.component').then(d => d.ExecutiveComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+    },
+    {
+        path: 'dashboard/produtividade-equipe',
+        loadComponent: () => import('./dashboard/team/team-operational-dashboard.component').then(d => d.TeamOperationalDashboardComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+    },
+
+    //
     {path: '**', redirectTo: 'dashboard'},
 
 

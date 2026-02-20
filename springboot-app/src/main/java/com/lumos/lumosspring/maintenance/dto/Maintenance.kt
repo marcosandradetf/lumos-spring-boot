@@ -19,6 +19,7 @@ data class SendMaintenanceDTO(
 )
 
 data class MaintenanceStreetWithItems(
+    val contractId: Long? = null,
     val street: MaintenanceStreetDTO,
     val items: List<MaintenanceStreetItemDTO>
 )
@@ -34,8 +35,7 @@ data class MaintenanceStreetDTO(
 
     val lastSupply: String?, // n obrigatorio
     val currentSupply: String?, // obrigatorio
-    val reason: String?// se led - perguntar qual o problema/motivo da troca
-
+    val reason: String?
 )
 
 data class MaintenanceStreetItemDTO(

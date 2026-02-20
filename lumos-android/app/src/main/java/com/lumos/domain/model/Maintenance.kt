@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.Relation
 
 data class MaintenanceStreetWithItems(
+    val contractId: Long? = null,
     @Embedded val street: MaintenanceStreet,
     @Relation(
         parentColumn = "maintenanceStreetId",
@@ -49,7 +50,6 @@ data class MaintenanceStreet(
     val currentSupply: String?, // obrigatorio
 
     val reason: String?// se led - perguntar qual o problema/motivo daa troca
-
 )
 
 @Entity(primaryKeys = ["maintenanceId", "maintenanceStreetId", "materialStockId"])

@@ -68,7 +68,14 @@ interface MaintenanceDao {
     suspend fun getMaintenance(maintenanceId: String): Maintenance
 
     @Transaction
-    @Query("select * from maintenancestreet where maintenanceStreetId = :maintenanceStreetId")
+    @Query("""
+        select
+            m.contractId,
+            ms.* 
+        from maintenancestreet ms 
+        join maintenance m on m.maintenanceId = ms.maintenanceId
+        where ms.maintenanceStreetId = :maintenanceStreetId
+    """)
     suspend fun getMaintenanceStreetWithItems(maintenanceStreetId: String): MaintenanceStreetWithItems
 
     @Query("select * from maintenanceStreetItem where maintenanceStreetId = :maintenanceStreetId")
@@ -95,6 +102,5 @@ interface MaintenanceDao {
 
     @Update
     suspend fun updateMaintenance(maintenance: Maintenance)
-
 
 }

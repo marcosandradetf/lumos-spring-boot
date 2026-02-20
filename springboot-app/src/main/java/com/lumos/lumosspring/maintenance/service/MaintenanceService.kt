@@ -99,18 +99,20 @@ class MaintenanceService(
     @Transactional
     fun saveStreet(
         street: MaintenanceStreetWithItems,
+        teamId: Long? = null,
     ): ResponseEntity<Any> {
 
         var exists = maintenanceRepository.existsById(street.street.maintenanceId)
         if (!exists) {
             val newMaintenance = Maintenance(
                 maintenanceId = street.street.maintenanceId,
-                contractId = null,
+                contractId = street.contractId,
                 pendingPoints = false,
                 quantityPendingPoints = null,
                 dateOfVisit = Instant.now(),
                 type = "DRAFT - ${street.street.address}",
                 status = "DRAFT",
+                teamId = teamId
             )
 
             maintenanceRepository.save(newMaintenance)

@@ -19,8 +19,9 @@ class MaintenanceController(
     @PostMapping("/maintenance/send-street")
     fun sendStreet(
         @RequestBody street: MaintenanceStreetWithItems,
+        @RequestParam(required = false) teamId: Long?,
     ): ResponseEntity<Any> {
-        return maintenanceService.saveStreet(street)
+        return maintenanceService.saveStreet(street, teamId)
     }
 
     @PostMapping("/maintenance/finish-maintenance")

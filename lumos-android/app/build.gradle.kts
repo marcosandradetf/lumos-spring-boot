@@ -16,8 +16,8 @@ android {
         applicationId = "com.thryon.lumos"
         minSdk = 26
         targetSdk = 36
-        versionCode = 39
-        versionName = "2.0.5"
+        versionCode = 40
+        versionName = "2.0.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -43,11 +43,11 @@ android {
     // 2) Consolide buildTypes (um bloco só)
     signingConfigs {
         create("release") {
-            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
+//            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("C:/Users/Marcos/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("/Users/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
-//            storeFile = file("/home/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("/home/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"

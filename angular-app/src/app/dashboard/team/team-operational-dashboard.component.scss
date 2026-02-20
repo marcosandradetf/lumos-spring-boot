@@ -1,0 +1,75 @@
+.kpi-card {
+  @apply p-5 rounded-xl shadow-sm bg-white dark:bg-gray-800
+  border border-gray-200 dark:border-gray-700
+  transition-all hover:shadow-md;
+}
+
+.kpi-title {
+  @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.kpi-value {
+  @apply text-2xl font-semibold text-gray-800 dark:text-gray-100 mt-2;
+}
+
+
+@keyframes pulseSoft {
+  0% { box-shadow: 0 0 0 rgba(16,185,129,0.0); }
+  50% { box-shadow: 0 0 12px rgba(16,185,129,0.5); }
+  100% { box-shadow: 0 0 0 rgba(16,185,129,0.0); }
+}
+
+.animate-pulse-soft {
+  animation: pulseSoft 1.2s ease-out 1;
+}
+
+@keyframes achievementGlow {
+  0% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+  50% { box-shadow: 0 0 18px rgba(16,185,129,0.8); }
+  100% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+}
+
+.animate-achievement-glow {
+  animation: achievementGlow 0.8s ease-out 1;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.4s ease-out;
+}
+
+
+@keyframes achievementGlow {
+  0% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+  50% { box-shadow: 0 0 16px rgba(16,185,129,0.7); }
+  100% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+}
+
+@keyframes superGlow {
+  0% { box-shadow: 0 0 0 rgba(234,179,8,0); }
+  50% { box-shadow: 0 0 20px rgba(234,179,8,0.9); }
+  100% { box-shadow: 0 0 0 rgba(234,179,8,0); }
+}
+
+@keyframes medalPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.animate-achievement-glow {
+  animation: achievementGlow 0.8s ease-out 1;
+}
+
+.animate-super-glow {
+  animation: superGlow 1s ease-out 1;
+}
+
+.animate-medal-pop {
+  animation: medalPop 0.4s ease-out;
+}
