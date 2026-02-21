@@ -134,6 +134,7 @@ class MaintenanceService(
             lastSupply = street.street.lastSupply,
             currentSupply = street.street.currentSupply,
             reason = street.street.reason,
+            finishedAt = street.street.finishedAt ?: Instant.now(),
         )
 
         maintenanceStreetRepository.save(newStreet)

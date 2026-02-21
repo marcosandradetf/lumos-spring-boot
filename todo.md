@@ -22,22 +22,4 @@
 	ON pre_measurement_street_item(contract_item_id);
 
 - Versão mobile para tela de contratos e itens
-
-
-
-
-ALTER TABLE material_reservation
-    ADD COLUMN IF NOT EXISTS released_by uuid
-    REFERENCES app_user;
-ALTER TABLE material_reservation
-ADD COLUMN IF NOT EXISTS created_at timestamptz;
-ALTER TABLE material_reservation
-    ADD COLUMN IF NOT EXISTS created_by uuid
-    REFERENCES app_user;
-ALTER TABLE material_reservation
-    ADD COLUMN IF NOT EXISTS collected_at timestamptz;
-ALTER TABLE material_reservation
-    ADD COLUMN IF NOT EXISTS released_by uuid
-REFERENCES app_user;
-ALTER TABLE material_reservation
-    ADD COLUMN IF NOT EXISTS finished_at timestamptz;
+- Adicionar prop finishedAt no model maintenance street no mobile

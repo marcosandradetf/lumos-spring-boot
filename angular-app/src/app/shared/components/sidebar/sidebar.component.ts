@@ -98,6 +98,7 @@ export class SidebarComponent implements OnInit {
                         }
                     },
                     {
+                        disabled: true,
                         label: 'Visão Executiva', // título mais natural
                         title: 'Acompanhe a produtividade e tempo das equipes',
                         icon: 'pi pi-compass text-purple-700', // verde = performance/progresso
@@ -107,6 +108,7 @@ export class SidebarComponent implements OnInit {
                         }
                     },
                     {
+                        disabled: true,
                         label: 'Produtividade da Equipe', // título mais natural
                         title: 'Acompanhe a produtividade e tempo das equipes',
                         icon: 'pi pi-users text-green-500', // verde = performance/progresso

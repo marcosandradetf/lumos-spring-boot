@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Transient
 import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Table
+import java.time.Instant
 import java.util.UUID
 
 @Table
@@ -12,13 +13,14 @@ data class MaintenanceStreet(
     val maintenanceStreetId: UUID,
     val maintenanceId: UUID,
     var address: String,
-    var latitude: Double? = null,
-    var longitude: Double? = null,
+    var latitude: Double?,
+    var longitude: Double?,
     val comment: String?,
     val lastPower: String?,
     val lastSupply: String?,
     val currentSupply: String?,
     val reason: String?,
+    val finishedAt: Instant,
 
     @Transient
     private var isNewEntry: Boolean = true

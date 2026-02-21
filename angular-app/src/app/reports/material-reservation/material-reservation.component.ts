@@ -124,8 +124,8 @@ export class MaterialReservationComponent implements OnInit {
             },
             error: (error) => {
                 this.utils.showMessage(
-                    error.error.message ?? error.error.error,
-                    'error',
+                    'Nenhum dado encontrado no período informado',
+                    'info',
                 );
                 this.loading = false;
             },

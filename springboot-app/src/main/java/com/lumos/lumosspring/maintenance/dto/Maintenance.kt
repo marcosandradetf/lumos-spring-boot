@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.maintenance.dto
 
 import java.math.BigDecimal
+import java.time.Instant
 import java.util.*
 
 data class SendMaintenanceDTO(
@@ -35,7 +36,8 @@ data class MaintenanceStreetDTO(
 
     val lastSupply: String?, // n obrigatorio
     val currentSupply: String?, // obrigatorio
-    val reason: String?
+    val reason: String?,
+    val finishedAt: Instant? = null,
 )
 
 data class MaintenanceStreetItemDTO(
