@@ -13,6 +13,8 @@ class MapRepository(
 
     data class GeoExecution (
         val id: String,
+        val executionId: String,
+        val executionType: String?,
         val title: String,
         val type: String,
         val status: String,
@@ -30,9 +32,11 @@ class MapRepository(
             """
                 with executions as (
                     select 
-                        iv.installation_id::text as id,
+                        isv.installation_street_id::text as id,
+                        iv.installation_id::text as execution_id,
+                        iv.installation_type as execution_type,
                         iv.description           as title,
-                        iv.installation_type     as type,
+                        'INSTALLATION' as type,
                         iv.status                as status,
                         isv.latitude             as lat,
                         isv.longitude            as lng,
@@ -51,7 +55,9 @@ class MapRepository(
                     and iv.started_at >= (now() - interval '1 year')
                 UNION ALL
                 select 
+                    ms.maintenance_street_id::text,
                     m.maintenance_id::text,
+                    null,
                     c.contractor,
                     'MAINTENANCE',
                     case
@@ -76,6 +82,8 @@ class MapRepository(
                 )
                 select 
                     e.id,
+                    e.execution_id,
+                    e.execution_type,
                     e.title,
                     e.type,
                     e.status,
@@ -89,7 +97,7 @@ class MapRepository(
                     e.point_number
                 from executions e
                 join team t on e.team_id = t.id_team
-                order by e.title
+                order by e.finished_at desc, e.title
             """.trimIndent()
         val params = mapOf("tenantId" to tenantId)
         return jdbcTemplate.query(sql, params, DataClassRowMapper(GeoExecution::class.java))

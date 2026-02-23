@@ -53,6 +53,7 @@ data class InstallationStreetRequest(
     val materials: List<InstallationItemRequest>,
     val currentSupply: String?,
     val finishAt: Instant?,
+    val pointNumber: Int? = null,
     val executorsIds: List<UUID>? = null,
 )
 

@@ -18,13 +18,17 @@ import type { Feature, Point } from 'geojson';
 import {UtilsService} from '../../core/service/utils.service';
 import {Title} from '@angular/platform-browser';
 import {Skeleton} from 'primeng/skeleton';
+import {SharedState} from '../../core/service/shared-state';
+import {FileService} from '../../core/service/file-service.service';
 
 type ExecutionType = 'INSTALLATION' | 'MAINTENANCE';
 
 type ExecutionStatus = 'IN_PROGRESS' | 'FINISHED' | 'BLOCKED';
 
 interface GeoExecution {
-    id: number;
+    id: string;
+    executionId: string;
+    executionType: string | null;
     title: string;
     type: ExecutionType;
     status: ExecutionStatus;
@@ -32,9 +36,10 @@ interface GeoExecution {
     lng: number;
     address: string;
     finishedAt: Date | null;
-    imageUrl: string | null;
     teamId: number;
     teamName: string;
+    photoUri: string | null;
+    pointNumber: number | null;
 }
 
 @Component({
@@ -55,7 +60,8 @@ interface GeoExecution {
     styleUrls: ['./map.component.scss'],
 })
 export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
-    private markersMap = new Map<number | string, L.Marker>();
+    private markersMap = new Map<string, L.Marker>();
+    private iconCache = new Map<string, L.DivIcon>();
     loading = false;
 
     // ================= MOCK =================
@@ -65,47 +71,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         {id: 3, name: 'Equipe Gama'}
     ];
 
-    executions: GeoExecution[] = [
-        {
-            id: 1,
-            title: 'Poste 18 - Centro',
-            type: 'INSTALLATION',
-            status: 'IN_PROGRESS',
-            teamId: 1,
-            teamName: 'Equipe Alpha',
-            lat: -19.92,
-            lng: -43.94,
-            address: 'Centro',
-            finishedAt: null,
-            imageUrl: null,
-        },
-        {
-            id: 2,
-            title: 'Praça Norte',
-            type: 'MAINTENANCE',
-            status: 'IN_PROGRESS',
-            teamId: 2,
-            teamName: 'Equipe Beta',
-            lat: -18.91,
-            lng: -48.26,
-            address: 'Zona Norte',
-            finishedAt: null,
-            imageUrl: null,
-        },
-        {
-            id: 3,
-            title: 'Av. Sul 120',
-            type: 'INSTALLATION',
-            status: 'FINISHED',
-            teamId: 3,
-            teamName: 'Equipe Gama',
-            lat: -20.39,
-            lng: -43.50,
-            address: 'Zona Sul',
-            finishedAt: null,
-            imageUrl: null,
-        }
-    ];
+    executions: GeoExecution[] = [];
 
     // ================= FILTERS =================
     searchText = '';
@@ -125,39 +91,20 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
     ];
 
     // ================= UI =================
-    selectedExecutionId: number | null = null;
+    selectedExecutionId: string | null = null;
 
     // ================= LEAFLET =================
     private map!: L.Map;
     private markersLayer!: L.LayerGroup;
 
     // ================= GETTERS =================
-    get filteredExecutions(): GeoExecution[] {
-        return this.executions.filter(e => {
-
-            const matchText =
-                !this.searchText ||
-                e.title.toLowerCase().includes(this.searchText.toLowerCase()) ||
-                e.address.toLowerCase().includes(this.searchText.toLowerCase());
-
-            const matchTeam =
-                !this.selectedTeamId || e.teamId === this.selectedTeamId;
-
-            const matchType =
-                this.selectedTypes.includes(e.type);
-
-            const matchStatus =
-                this.selectedStatuses.includes(e.status);
-
-            return matchText && matchTeam && matchType && matchStatus;
-        });
-    }
+    protected _filteredExecutions: GeoExecution[] = [];
 
     get kpis() {
         return {
-            total: this.filteredExecutions.length,
-            inProgress: this.filteredExecutions.filter(x => x.status === 'IN_PROGRESS').length,
-            finished: this.filteredExecutions.filter(x => x.status === 'FINISHED').length
+            total: this._filteredExecutions.length,
+            inProgress: this._filteredExecutions.filter(x => x.status === 'IN_PROGRESS').length,
+            finished: this._filteredExecutions.filter(x => x.status === 'FINISHED').length
         };
     }
 
@@ -165,13 +112,19 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         private teamService: TeamService,
         private dashboardService: DashboardService,
         private utils: UtilsService,
-        private titleService: Title
+        private titleService: Title,
+        private fileService: FileService
     ) {
 
     }
 
     ngOnInit(): void {
+        this.titleService.setTitle('Mapa de execuções');
+        SharedState.setCurrentPath(['Dashboard', 'Mapa de execuções']);
         this.loading = true;
+        window.addEventListener('open-photo', (event: any) => {
+            this.openModal(event.detail);
+        });
         forkJoin({
             executions: this.dashboardService.getExecutions(),
             teams: this.teamService.getTeams()
@@ -185,9 +138,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
                 );
 
                 if (this.map) {
-                    this.buildClusterIndex();
-                    this.renderMarkers();
-                    this.fitToData();
+                    this.applyFilters();
                 }
 
                 this.loading = false;
@@ -206,10 +157,34 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
 
     ngOnDestroy(): void {
         this.map?.remove();
+
+        this.photoCache.forEach(url => {
+            URL.revokeObjectURL(url);
+        });
+
+        this.photoCache.clear();
     }
 
     // ================= ACTIONS =================
     applyFilters(): void {
+        this._filteredExecutions = this.executions.filter(e => {
+
+            const matchText =
+                !this.searchText ||
+                e.title.toLowerCase().includes(this.searchText.toLowerCase()) ||
+                e.address.toLowerCase().includes(this.searchText.toLowerCase());
+
+            const matchTeam =
+                !this.selectedTeamId || e.teamId === this.selectedTeamId;
+
+            const matchType =
+                this.selectedTypes.includes(e.type);
+
+            const matchStatus =
+                this.selectedStatuses.includes(e.status);
+
+            return matchText && matchTeam && matchType && matchStatus;
+        });
         this.buildClusterIndex();
         this.renderMarkers();
         this.fitToData();
@@ -220,57 +195,56 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         this.selectedTeamId = null;
         this.selectedTypes = ['INSTALLATION', 'MAINTENANCE'];
         this.selectedStatuses = ['IN_PROGRESS', 'FINISHED', 'BLOCKED'];
-        this.renderMarkers();
-        this.fitToData();
+
+        this.applyFilters(); // 👈 isso resolve tudo
     }
 
     selectExecution(execution: GeoExecution): void {
-        if (!this.clusterIndex || !this.map) return;
+        if (!this.map) return;
 
-        const zoom = this.map.getZoom();
+        const latlng: [number, number] = [execution.lat, execution.lng];
 
-        const clusters = this.clusterIndex.getClusters(
-            [execution.lng, execution.lat, execution.lng, execution.lat],
-            zoom
-        );
-
-        const cluster = clusters[0];
-
-        let targetZoom = 18;
-
-        if (
-            cluster &&
-            (cluster.properties as any).cluster &&
-            typeof cluster.id === 'number'
-        ) {
-            targetZoom =
-                this.clusterIndex.getClusterExpansionZoom(cluster.id);
-        }
-
-        // Usa flyTo para animação suave
-        this.map.flyTo([execution.lat, execution.lng], targetZoom, {
-            duration: 0.4
-        });
-
-        // Aguarda o fim do movimento do mapa
         this.map.once('moveend', () => {
-            this.renderMarkers();
+            this.map.closePopup();
 
-            const marker = this.markersMap.get(execution.id);
+            const key = this.getPointKey(execution);
+            const marker = this.markersMap.get(key);
+
             marker?.openPopup();
         });
+
+        this.map.flyTo(latlng, 18, { duration: 0.4 });
     }
 
     // ================= MAP =================
     private initMap(): void {
 
-        this.map = L.map('geo-map').setView(
-            [-18.91, -48.26],
-            4
-        );
+        this.map = L.map('geo-map', {
+            preferCanvas: true
+        }).setView([-18.91, -48.26], 4);
 
         this.map.on('moveend zoomend', () => {
             this.renderMarkers();
+        });
+
+        this.map.on('popupopen', (event: any) => {
+
+            const popupElement = event.popup.getElement();
+            if (!popupElement) return;
+
+            const pointKey = popupElement.querySelector('[data-point-key]')
+                ?.getAttribute('data-point-key');
+
+            if (!pointKey) return;
+
+            // Busca execution pelo pointKey
+            const execution = this._filteredExecutions.find(e =>
+                this.getPointKey(e) === pointKey
+            );
+
+            if (!execution) return;
+
+            this.loadPhotoIfNeeded(execution);
         });
 
         L.tileLayer(
@@ -284,66 +258,59 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         this.markersLayer = L.layerGroup().addTo(this.map);
     }
 
-    // private renderMarkers(): void {
-    //
-    //     if (!this.map || !this.markersLayer) return;
-    //
-    //     this.markersLayer.clearLayers();
-    //
-    //     const validExecutions = this.filteredExecutions.filter(e => e.lat && e.lng);
-    //
-    //     validExecutions.forEach(e => {
-    //
-    //         const marker = L.marker([Number(e.lat), Number(e.lng)]);
-    //
-    //         marker.bindPopup(`
-    //         <strong>${e.title}</strong><br/>
-    //         ${e.address ?? ''}<br/>
-    //         Tipo: ${e.type}<br/>
-    //         Status: ${e.status}<br/>
-    //         Equipe: ${e.teamName}
-    //     `);
-    //
-    //         marker.addTo(this.markersLayer);
-    //     });
-    //
-    //     // 🔥 AQUI entra o fitBounds
-    //     if (validExecutions.length > 0) {
-    //
-    //         const bounds = L.latLngBounds(
-    //             validExecutions.map(e => [Number(e.lat), Number(e.lng)] as [number, number])
-    //         );
-    //
-    //         this.map.fitBounds(bounds.pad(0.2));
-    //     }
-    // }
-
     private createCustomIcon(type: ExecutionType, status: ExecutionStatus) {
-        // Cor: Finalizado = Verde, Em Execução = Azul
-        const colorClass = status === 'FINISHED' ? 'bg-emerald-600' : 'bg-blue-600';
+        const key = `${type}_${status}`;
 
-        // Forma: Instalação = Quadrado, Manutenção = Redondo
+        if (this.iconCache.has(key)) {
+            return this.iconCache.get(key)!;
+        }
+
+        const colorClass = status === 'FINISHED' ? 'bg-emerald-600' : 'bg-blue-600';
         const shapeClass = type === 'INSTALLATION' ? 'rounded-none' : 'rounded-full';
 
-        return L.divIcon({
+        const icon = L.divIcon({
             className: 'custom-marker',
-            // Criamos uma div interna com as classes do Tailwind
-            html: `<div class="w-4 h-4 shadow-lg border-2 border-white ${colorClass} ${shapeClass} transition-transform hover:scale-125"></div>`,
+            html: `<div class="w-4 h-4 shadow-lg border-2 border-white ${colorClass} ${shapeClass}"></div>`,
             iconSize: [16, 16],
-            iconAnchor: [8, 8] // Centraliza o ícone na coordenada
+            iconAnchor: [8, 8]
         });
+
+        this.iconCache.set(key, icon);
+        return icon;
     }
 
     private clusterIndex!: Supercluster<
-        { executionId: number; execution: GeoExecution },
+        { id: string; execution: GeoExecution },
         any
     >;
 
+    private clusterIconCache = new Map<number, L.DivIcon>();
+
+    private createClusterIcon(count: number): L.DivIcon {
+        if (this.clusterIconCache.has(count)) {
+            return this.clusterIconCache.get(count)!;
+        }
+
+        const icon = L.divIcon({
+            html: `
+      <div class="flex items-center justify-center rounded-full bg-blue-600 text-white font-bold shadow-lg border-2 border-white"
+           style="width: 40px; height: 40px;">
+        ${count}
+      </div>`,
+            className: '',
+            iconSize: [40, 40]
+        });
+
+        this.clusterIconCache.set(count, icon);
+        return icon;
+    }
+
+    private getPointKey(e: GeoExecution): string {
+        return `point_${e.executionType ?? 'default'}_${e.id}`;
+    }
+
     private renderMarkers(): void {
         if (!this.map || !this.clusterIndex) return;
-
-        this.markersLayer.clearLayers();
-        this.markersMap.clear();
 
         const bounds = this.map.getBounds();
         const zoom = this.map.getZoom();
@@ -355,66 +322,73 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
             bounds.getNorth()
         ], zoom);
 
+        const newIds = new Set<string>();
+
         clusters.forEach(cluster => {
+
+            const isCluster = (cluster.properties as any).cluster === true;
+
+            let id: string;
+            let marker: L.Marker;
 
             const [lng, lat] = cluster.geometry.coordinates;
 
-            if ((cluster.properties as any).cluster) {
+            if (isCluster) {
+
+                id = `cluster_${cluster.id}`;
+
+                newIds.add(id);
+                if (this.markersMap.has(id)) return;
 
                 const count = (cluster.properties as any).point_count;
 
-                const marker = L.marker([lat, lng], {
-                    icon: L.divIcon({
-                        html: `
-                        <div class="flex items-center justify-center rounded-full bg-blue-600 text-white font-bold shadow-lg border-2 border-white"
-                             style="width: 40px; height: 40px;">
-                            ${count}
-                        </div>`,
-                        className: '',
-                        iconSize: [40, 40]
-                    })
+                marker = L.marker([lat, lng], {
+                    icon: this.createClusterIcon(count)
                 });
 
                 marker.on('click', () => {
+                    const expansionZoom =
+                        this.clusterIndex.getClusterExpansionZoom(cluster.id as number);
 
-                    if (
-                        (cluster.properties as any).cluster &&
-                        typeof cluster.id === 'number'
-                    ) {
-                        const expansionZoom =
-                            this.clusterIndex.getClusterExpansionZoom(cluster.id);
-
-                        this.map.setView([lat, lng], expansionZoom);
-                    }
+                    this.map.setView([lat, lng], expansionZoom);
                 });
-
-                marker.addTo(this.markersLayer);
 
             } else {
 
-                const execution = (cluster.properties as any).execution;
+                const execution = (cluster.properties as any).execution as GeoExecution;
 
-                const marker = L.marker([lat, lng], {
+                id = this.getPointKey(execution); // ✅ usa helper correto
+
+                newIds.add(id);
+                if (this.markersMap.has(id)) return;
+
+                marker = L.marker([lat, lng], {
                     icon: this.createCustomIcon(execution.type, execution.status)
                 });
 
                 marker.bindPopup(this.buildPopup(execution), {
-                    maxWidth: 300,
                     className: 'lumos-custom-popup',
-                    autoPanPadding: [20, 20]
                 });
-                this.markersMap.set(execution.id, marker);
-                marker.addTo(this.markersLayer);
             }
+
+            marker.addTo(this.markersLayer);
+            this.markersMap.set(id, marker);
         });
 
+        // Remove os que não estão mais visíveis
+        for (const [id, marker] of this.markersMap.entries()) {
+            if (!newIds.has(id)) {
+                this.markersLayer.removeLayer(marker);
+                this.markersMap.delete(id);
+            }
+        }
     }
 
     private fitToData(): void {
-        if (!this.filteredExecutions.length) return;
+        if (!this._filteredExecutions.length) return;
 
         const bounds = L.latLngBounds(
-            this.filteredExecutions.map(e =>
+            this._filteredExecutions.map(e =>
                 [Number(e.lat), Number(e.lng)] as [number, number]
             )
         );
@@ -422,9 +396,78 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         this.map.fitBounds(bounds.pad(0.2));
     }
 
+    private photoCache = new Map<string, string>();
+    private loadPhotoIfNeeded(e: GeoExecution) {
+
+        if (!e.photoUri) return;
+
+        const container = document.getElementById(`photo-container-${e.id}`);
+        if (!container) return;
+
+        // 🔥 Se já tiver em cache → usa direto
+        if (this.photoCache.has(e.id)) {
+            const cachedUrl = this.photoCache.get(e.id)!;
+            container.innerHTML = this.buildFinalImageHtml(cachedUrl, e);
+            return;
+        }
+
+        this.fileService.getPhoto(e.photoUri).subscribe({
+            next: (blob: Blob) => {
+
+                const blobUrl = URL.createObjectURL(blob);
+
+                this.photoCache.set(e.id, blobUrl);
+
+                container.innerHTML = this.buildFinalImageHtml(blobUrl, e);
+            },
+            error: () => {
+                container.innerHTML = `
+                <div class="w-full h-32 flex items-center justify-center text-xs text-slate-400">
+                    Erro ao carregar imagem
+                </div>
+            `;
+            }
+        });
+    }
+
+    private buildFinalImageHtml(url: string, e: GeoExecution): string {
+        return `
+        <div class="flex justify-center mt-3">
+
+            <div class="relative max-h-40 overflow-hidden rounded-lg shadow-sm group cursor-pointer"
+                 onclick="window.dispatchEvent(new CustomEvent('open-photo', { detail: '${url}' }))">
+
+                ${e.pointNumber ? `
+                    <div class="absolute top-2 left-2 z-20 transition-opacity duration-300 group-hover:opacity-0 pointer-events-none">
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-900/70 text-white backdrop-blur-md rounded-md">
+                            ID do Ponto ${e.pointNumber}
+                        </span>
+                    </div>
+                ` : ''}
+
+                <img src="${url}"
+                     alt="Ponto"
+                     class="h-auto max-h-40 object-contain transition-transform duration-300 group-hover:scale-105">
+
+                <!-- Overlay hover -->
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div class="flex items-center gap-2 text-white text-sm font-medium">
+                        <i class="pi pi-search text-2xl"></i>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+    }
+
     private buildPopup(e: GeoExecution): string {
         return `
-    <div id="popup-${e.id}" class="p-3 min-w-[240px] font-sans text-slate-800 transition-all duration-300">
+    <div
+        data-point-key="${this.getPointKey(e)}"
+        id="popup-${e.id}"
+        class="p-3 min-w-[240px] font-sans text-slate-800 transition-all duration-300">
 
         <div class="hide-on-expand space-y-3">
             <div class="flex flex-col gap-1 border-b border-slate-100 pb-2">
@@ -449,17 +492,22 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
             </div>
         </div>
 
-        ${e.imageUrl ? `
+         ${e.photoUri ? `
             <div
+                id="photo-container-${e.id}"
                 class="img-container relative mt-3 overflow-hidden rounded-lg border border-slate-100 shadow-sm group cursor-pointer transition-all duration-300">
-                <div class="absolute top-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0 pointer-events-none">
-                    <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-900/70 text-white backdrop-blur-md rounded-md">
-                        ID do Ponto #5550123
-                    </span>
-                </div>
-                <img src="${e.imageUrl}"
-                    alt="Ponto"
-                    class="w-full h-32 object-cover transition-all duration-500 hover:scale-105">
+
+                ${e.pointNumber ? `
+                    <div class="absolute top-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0 pointer-events-none">
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-900/70 text-white backdrop-blur-md rounded-md">
+                            ID do Ponto ${e.pointNumber}
+                        </span>
+                    </div>
+                ` : ''}
+
+                <!-- Skeleton -->
+                <div class="w-full h-32 bg-slate-200 animate-pulse"></div>
+
             </div>
         ` : ''}
 
@@ -476,13 +524,13 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
     private buildClusterIndex(): void {
         const points: Feature<
             Point,
-            { executionId: number; execution: GeoExecution }
-        >[] = this.filteredExecutions
+            { id: string; execution: GeoExecution }
+        >[] = this._filteredExecutions
             .filter(e => e.lat && e.lng)
             .map(e => ({
                 type: 'Feature' as const,
                 properties: {
-                    executionId: e.id,
+                    id: e.id,
                     execution: e
                 },
                 geometry: {
@@ -498,5 +546,17 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
 
         this.clusterIndex.load(points);
     }
+
+    modalImage: string | null = null;
+
+    openModal(url: string) {
+        this.modalImage = url;
+    }
+
+    closeModal() {
+        this.modalImage = null;
+    }
+
+
 
 }

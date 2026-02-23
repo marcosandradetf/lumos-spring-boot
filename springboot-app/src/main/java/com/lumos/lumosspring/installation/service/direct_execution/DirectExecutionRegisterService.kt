@@ -71,7 +71,8 @@ class DirectExecutionRegisterService(
             deviceId = installationReq.deviceId,
             finishedAt = installationReq.finishAt,
             directExecutionId = installationReq.directExecutionId,
-            currentSupply = installationReq.currentSupply
+            currentSupply = installationReq.currentSupply,
+            pointNumber = installationReq.pointNumber
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
@@ -274,7 +275,8 @@ class DirectExecutionRegisterService(
             deviceId = installationReq.deviceId,
             finishedAt = installationReq.finishAt,
             directExecutionId = installationReq.directExecutionId,
-            currentSupply = installationReq.currentSupply
+            currentSupply = installationReq.currentSupply,
+            pointNumber = installationReq.pointNumber
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"

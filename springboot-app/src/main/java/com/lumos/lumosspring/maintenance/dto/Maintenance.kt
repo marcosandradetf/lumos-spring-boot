@@ -38,6 +38,7 @@ data class MaintenanceStreetDTO(
     val currentSupply: String?, // obrigatorio
     val reason: String?,
     val finishedAt: Instant? = null,
+    val pointNumber: Int? = null
 )
 
 data class MaintenanceStreetItemDTO(

@@ -20,6 +20,4 @@ export class DashboardService {
     getExecutions() {
         return this.http.get<any[]>(this.baseUrl + '/map/get-executions');
     }
-
-
 }

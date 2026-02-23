@@ -48,4 +48,11 @@ export class FileService {
         });
     }
 
+    getPhoto(uri: string) {
+        return this.http.get(`${this.endpoint}/get-photo`, {
+            params: { uri },
+            responseType: 'blob'
+        });
+    }
+
 }

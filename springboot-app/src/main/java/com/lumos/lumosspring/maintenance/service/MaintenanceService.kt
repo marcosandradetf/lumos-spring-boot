@@ -135,6 +135,7 @@ class MaintenanceService(
             currentSupply = street.street.currentSupply,
             reason = street.street.reason,
             finishedAt = street.street.finishedAt ?: Instant.now(),
+            pointNumber = street.street.pointNumber
         )
 
         maintenanceStreetRepository.save(newStreet)

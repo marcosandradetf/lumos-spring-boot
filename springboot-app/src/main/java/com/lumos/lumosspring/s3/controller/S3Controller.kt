@@ -46,4 +46,21 @@ class S3Controller(private val service: S3Service) {
 
     @GetMapping("/mobile/s3/download/{fileName}")
     fun downloadFileMobile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> = downloadFile(fileName)
+
+    @GetMapping("/s3/get-photo")
+    fun getPhoto(@RequestParam("uri") uri: String): ResponseEntity<InputStreamResource> {
+
+        val inputStream: InputStream =
+            service.downloadFile(uri, Utils.getCurrentBucket())
+
+        val resource = InputStreamResource(inputStream)
+
+        val filePath = Paths.get(uri)
+        val contentType =
+            Files.probeContentType(filePath) ?: MediaType.APPLICATION_OCTET_STREAM_VALUE
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(contentType))
+            .body(resource)
+    }
 }
