@@ -92,7 +92,6 @@ export class SidebarComponent implements OnInit {
                         title: 'Visualize a localização das execuções em campo',
                         icon: 'pi pi-map-marker text-blue-500', // azul = informação/visualização
                         routerLink: ['/dashboard/mapa-execucoes'],
-                        queryParams: { status: 'PENDING' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }

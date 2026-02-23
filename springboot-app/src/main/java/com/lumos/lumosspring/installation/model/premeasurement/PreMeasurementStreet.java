@@ -56,7 +56,7 @@ public class PreMeasurementStreet {
     private String currentSupply;
     private Double installationLatitude;
     private Double installationLongitude;
-
+    private Integer pointNumber;
 
     public long getPreMeasurementStreetId() {
         return preMeasurementStreetId;
@@ -241,5 +241,13 @@ public class PreMeasurementStreet {
 
     public void setCurrentSupply(String currentSupply) {
         this.currentSupply = currentSupply;
+    }
+
+    public Integer getPointNumber() {
+        return pointNumber;
+    }
+
+    public void setPointNumber(Integer pointNumber) {
+        this.pointNumber = pointNumber;
     }
 }

@@ -22,21 +22,25 @@ class MapRepository(
         val finishedAt: Instant?,
         val teamId: Long,
         val teamName: String,
+        val photoUri: String?,
+        val pointNumber: Int?,
     )
     fun getExecutions(tenantId: UUID): List<GeoExecution> {
         val sql =
             """
                 with executions as (
                     select 
-                    iv.installation_id::text as id,
-                    iv.description           as title,
-                    'INSTALLATION'           as type,
-                    iv.status                as status,
-                    isv.latitude             as lat,
-                    isv.longitude            as lng,
-                    isv.address,
-                    isv.finished_at,
-                    iv.team_id
+                        iv.installation_id::text as id,
+                        iv.description           as title,
+                        iv.installation_type     as type,
+                        iv.status                as status,
+                        isv.latitude             as lat,
+                        isv.longitude            as lng,
+                        isv.address,
+                        isv.finished_at,
+                        iv.team_id,
+                        isv.execution_photo_uri as photo_uri,
+                        isv.point_number
                 from installation_view iv
                 join installation_street_view isv on isv.installation_id = iv.installation_id
                     and iv.installation_type = isv.installation_type
@@ -58,7 +62,9 @@ class MapRepository(
                     ms.longitude,
                     ms.address,
                     ms.finished_at,
-                    m.team_id
+                    m.team_id,
+                    null,
+                    ms.point_number
                 from maintenance m
                 join maintenance_street ms on ms.maintenance_id = m.maintenance_id
                     and ms.latitude is not null
@@ -69,8 +75,18 @@ class MapRepository(
                 and m.tenant_id = :tenantId
                 )
                 select 
-                    e.*,
-                    t.team_name
+                    e.id,
+                    e.title,
+                    e.type,
+                    e.status,
+                    e.lat,
+                    e.lng,
+                    e.address,
+                    e.finished_at,
+                    e.team_id,
+                    t.team_name,
+                    e.photo_uri,
+                    e.point_number
                 from executions e
                 join team t on e.team_id = t.id_team
                 order by e.title

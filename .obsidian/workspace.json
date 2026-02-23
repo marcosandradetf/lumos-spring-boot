@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "7a6c6008b9e96778",
@@ -185,16 +186,28 @@
   },
   "active": "9b0fa2117ad58878",
   "lastOpenFiles": [
-    "angular-app/src/app/executions/execution-progress/execution-progress.component.ts~",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/controller/premeasurement/InstallationRegisterController.class",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/service/premeasurement/RegisterService.class",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/repository/premeasurement/RegisterRepository.class",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/repository/premeasurement/ViewRepository.class",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/service/premeasurement/ViewService.class",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/service/premeasurement",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/controller/premeasurement/InstallationViewController.class",
-    "springboot-app/target/classes/META-INF/lumos-spring.kotlin_module",
-    "springboot-app/target/classes/META-INF",
-    "springboot-app/target/classes/com/lumos/lumosspring/installation/repository/view/InstallationViewRepository.class"
+    "springboot-app/src/main/resources/db/migration/V32__migration.sql~",
+    "springboot-app/src/main/resources/db/migration/V32__migration.sql",
+    "angular-app/src/app/dashboard/map/map.component.html~",
+    "angular-app/src/app/dashboard/map/map.component.ts~",
+    "angular-app/dist/estoque-frontend/browser/styles-IDLJ3WLP.css",
+    "angular-app/dist/estoque-frontend/browser/chunk-CT3IRFVT.js",
+    "angular-app/dist/estoque-frontend/browser/chunk-YHN7GVMM.js",
+    "angular-app/dist/estoque-frontend/browser/chunk-JVAPU6QV.js",
+    "angular-app/dist/estoque-frontend/browser/chunk-M6UE3LDU.js",
+    "angular-app/dist/estoque-frontend/browser/chunk-IXDYJQ5T.js",
+    "angular-app/dist/estoque-frontend/browser/chunk-UK7QUBFS.js",
+    "springboot-app/target/classes/node_modules/@types/leaflet.markercluster/README.md",
+    "springboot-app/target/classes/node_modules/@types/leaflet/README.md",
+    "springboot-app/target/classes/node_modules/@types/geojson/README.md",
+    "angular-app/node_modules/@types/leaflet.markercluster/README.md",
+    "springboot-app/src/main/resources/node_modules/@types/leaflet.markercluster/README.md",
+    "springboot-app/src/main/resources/node_modules/@types/leaflet/README.md",
+    "springboot-app/src/main/resources/node_modules/@types/geojson/README.md",
+    "angular-app/node_modules/leaflet.markercluster/example/map.png",
+    "angular-app/node_modules/leaflet.markercluster/README.md",
+    "angular-app/node_modules/leaflet.markercluster/ISSUE_TEMPLATE.md",
+    "angular-app/node_modules/leaflet.markercluster/CONTRIBUTING.md",
+    "angular-app/node_modules/leaflet.markercluster/CHANGELOG.md"
   ]
 }

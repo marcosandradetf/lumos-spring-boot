@@ -1,9 +1,8 @@
-/* Remove o padding padrão do Leaflet para o card preencher tudo */
 .lumos-custom-popup .leaflet-popup-content-wrapper {
   padding: 0;
   overflow: hidden;
   border-radius: 12px;
-  background: white; /* Ou use as cores do seu tema dark se preferir */
+  background: white;
 }
 
 .lumos-custom-popup .leaflet-popup-content {
@@ -11,7 +10,6 @@
   width: auto !important;
 }
 
-/* Customiza a "perninha" do popup */
 .lumos-custom-popup .leaflet-popup-tip {
   background: white;
 }

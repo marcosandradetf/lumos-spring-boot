@@ -1,3 +1,4 @@
+import * as L from 'leaflet';
 import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -9,13 +10,17 @@ import {InputTextModule} from 'primeng/inputtext';
 import {TagModule} from 'primeng/tag';
 import {ButtonModule} from 'primeng/button';
 
-import * as L from 'leaflet';
 import {TeamService} from '../../manage/team/team-service.service';
 import {forkJoin} from 'rxjs';
 import {DashboardService} from '../home/dashboard.service';
-import 'leaflet.markercluster';
+import Supercluster from 'supercluster';
+import type { Feature, Point } from 'geojson';
+import {UtilsService} from '../../core/service/utils.service';
+import {Title} from '@angular/platform-browser';
+import {Skeleton} from 'primeng/skeleton';
 
 type ExecutionType = 'INSTALLATION' | 'MAINTENANCE';
+
 type ExecutionStatus = 'IN_PROGRESS' | 'FINISHED' | 'BLOCKED';
 
 interface GeoExecution {
@@ -27,6 +32,7 @@ interface GeoExecution {
     lng: number;
     address: string;
     finishedAt: Date | null;
+    imageUrl: string | null;
     teamId: number;
     teamName: string;
 }
@@ -42,14 +48,15 @@ interface GeoExecution {
         MultiSelectModule,
         InputTextModule,
         TagModule,
-        ButtonModule
+        ButtonModule,
+        Skeleton
     ],
     templateUrl: './map.component.html',
     styleUrls: ['./map.component.scss'],
 })
 export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
-    // No topo da classe
     private markersMap = new Map<number | string, L.Marker>();
+    loading = false;
 
     // ================= MOCK =================
     teams = [
@@ -69,7 +76,8 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
             lat: -19.92,
             lng: -43.94,
             address: 'Centro',
-            finishedAt: null
+            finishedAt: null,
+            imageUrl: null,
         },
         {
             id: 2,
@@ -81,7 +89,8 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
             lat: -18.91,
             lng: -48.26,
             address: 'Zona Norte',
-            finishedAt: null
+            finishedAt: null,
+            imageUrl: null,
         },
         {
             id: 3,
@@ -93,7 +102,8 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
             lat: -20.39,
             lng: -43.50,
             address: 'Zona Sul',
-            finishedAt: null
+            finishedAt: null,
+            imageUrl: null,
         }
     ];
 
@@ -154,11 +164,14 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
     constructor(
         private teamService: TeamService,
         private dashboardService: DashboardService,
+        private utils: UtilsService,
+        private titleService: Title
     ) {
 
     }
 
     ngOnInit(): void {
+        this.loading = true;
         forkJoin({
             executions: this.dashboardService.getExecutions(),
             teams: this.teamService.getTeams()
@@ -172,8 +185,16 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
                 );
 
                 if (this.map) {
+                    this.buildClusterIndex();
                     this.renderMarkers();
+                    this.fitToData();
                 }
+
+                this.loading = false;
+            },
+            error: err => {
+                this.loading = false;
+                this.utils.showMessage(err.error.message ?? err.error.error, 'error')
             }
         })
     }
@@ -189,7 +210,9 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // ================= ACTIONS =================
     applyFilters(): void {
+        this.buildClusterIndex();
         this.renderMarkers();
+        this.fitToData();
     }
 
     clearFilters(): void {
@@ -198,37 +221,57 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         this.selectedTypes = ['INSTALLATION', 'MAINTENANCE'];
         this.selectedStatuses = ['IN_PROGRESS', 'FINISHED', 'BLOCKED'];
         this.renderMarkers();
+        this.fitToData();
     }
 
     selectExecution(execution: GeoExecution): void {
-        this.selectedExecutionId = execution.id;
+        if (!this.clusterIndex || !this.map) return;
 
-        const marker = this.markersMap.get(execution.id);
+        const zoom = this.map.getZoom();
 
-        if (marker) {
-            // 1. FORÇA o fechamento de qualquer popup que o mapa esteja exibindo no momento
-            this.map.closePopup();
+        const clusters = this.clusterIndex.getClusters(
+            [execution.lng, execution.lat, execution.lng, execution.lat],
+            zoom
+        );
 
-            const clusterGroup = this.markersLayer.getLayers()[0] as any;
+        const cluster = clusters[0];
 
-            // 2. Garante que o marcador esteja visível (abre o cluster se necessário)
-            clusterGroup.zoomToShowLayer(marker, () => {
-                // 3. Reposiciona a câmera
-                this.map.setView([execution.lat, execution.lng], 18);
+        let targetZoom = 18;
 
-                // 4. Abre o novo popup
-                marker.openPopup();
-            });
+        if (
+            cluster &&
+            (cluster.properties as any).cluster &&
+            typeof cluster.id === 'number'
+        ) {
+            targetZoom =
+                this.clusterIndex.getClusterExpansionZoom(cluster.id);
         }
+
+        // Usa flyTo para animação suave
+        this.map.flyTo([execution.lat, execution.lng], targetZoom, {
+            duration: 0.4
+        });
+
+        // Aguarda o fim do movimento do mapa
+        this.map.once('moveend', () => {
+            this.renderMarkers();
+
+            const marker = this.markersMap.get(execution.id);
+            marker?.openPopup();
+        });
     }
 
     // ================= MAP =================
     private initMap(): void {
 
         this.map = L.map('geo-map').setView(
-            [-23.55052, -46.633308],
-            12
+            [-18.91, -48.26],
+            4
         );
+
+        this.map.on('moveend zoomend', () => {
+            this.renderMarkers();
+        });
 
         L.tileLayer(
             'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -291,83 +334,169 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
         });
     }
 
+    private clusterIndex!: Supercluster<
+        { executionId: number; execution: GeoExecution },
+        any
+    >;
+
     private renderMarkers(): void {
-        if (!this.map) return;
+        if (!this.map || !this.clusterIndex) return;
 
         this.markersLayer.clearLayers();
+        this.markersMap.clear();
 
-        // Configurações do Cluster
-        const clusterGroup = (L as any).markerClusterGroup({
-            disableClusteringAtZoom: 17,
-            maxClusterRadius: 50,
-            iconCreateFunction: (cluster: any) => {
-                const count = cluster.getChildCount();
+        const bounds = this.map.getBounds();
+        const zoom = this.map.getZoom();
 
-                // Estilização usando as cores do seu sistema (Blue-600)
-                return L.divIcon({
-                    html: `
-                <div class="flex items-center justify-center rounded-full bg-blue-600 text-white font-bold shadow-lg border-2 border-white"
-                     style="width: 40px; height: 40px;">
-                    ${count}
-                </div>`,
-                    className: 'custom-cluster-icon',
-                    iconSize: [40, 40]
+        const clusters = this.clusterIndex.getClusters([
+            bounds.getWest(),
+            bounds.getSouth(),
+            bounds.getEast(),
+            bounds.getNorth()
+        ], zoom);
+
+        clusters.forEach(cluster => {
+
+            const [lng, lat] = cluster.geometry.coordinates;
+
+            if ((cluster.properties as any).cluster) {
+
+                const count = (cluster.properties as any).point_count;
+
+                const marker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        html: `
+                        <div class="flex items-center justify-center rounded-full bg-blue-600 text-white font-bold shadow-lg border-2 border-white"
+                             style="width: 40px; height: 40px;">
+                            ${count}
+                        </div>`,
+                        className: '',
+                        iconSize: [40, 40]
+                    })
                 });
-            }
-        });
 
-        this.filteredExecutions.forEach(e => {
-            if (e.lat && e.lng) {
-                const marker = L.marker([Number(e.lat), Number(e.lng)], {
-                    icon: this.createCustomIcon(e.type, e.status)
+                marker.on('click', () => {
+
+                    if (
+                        (cluster.properties as any).cluster &&
+                        typeof cluster.id === 'number'
+                    ) {
+                        const expansionZoom =
+                            this.clusterIndex.getClusterExpansionZoom(cluster.id);
+
+                        this.map.setView([lat, lng], expansionZoom);
+                    }
                 });
 
-                marker.bindPopup(`
-                  <div class="p-3 min-w-[240px] space-y-3 font-sans text-slate-800">
-                    <div class="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                      <div class="flex items-center justify-between">
-                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            ${e.type === 'INSTALLATION' ? 'Instalação' : 'Manutenção'}
-                         </span>
-                         <span class="flex h-2 w-2 rounded-full ${e.status === 'FINISHED' ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
-                      </div>
-                      <strong class="text-sm leading-tight text-slate-900 ">${e.title}</strong>
-                    </div>
+                marker.addTo(this.markersLayer);
 
-                    <div class="space-y-2 text-xs">
-                      <div class="flex items-start gap-2">
-                        <i class="pi pi-map-marker mt-0.5 text-slate-400"></i>
-                        <span>${e.address || 'Sem endereço registrado'}</span>
-                      </div>
+            } else {
 
-                      <div class="flex items-center gap-2">
-                        <i class="pi pi-users text-slate-400"></i>
-                        <span>Equipe: <b class="text-slate-700 ">${e.teamName}</b></span>
-                      </div>
+                const execution = (cluster.properties as any).execution;
 
-                      ${e.finishedAt ? `
-                        <div class="flex items-center gap-2">
-                          <i class="pi pi-calendar-check text-emerald-500"></i>
-                          <span>Finalizado em: <b>${new Date(e.finishedAt).toLocaleString('pt-BR')}</b></span>
-                        </div>
-                      ` : ''}
-                    </div>
-                  </div>
-            `, {
+                const marker = L.marker([lat, lng], {
+                    icon: this.createCustomIcon(execution.type, execution.status)
+                });
+
+                marker.bindPopup(this.buildPopup(execution), {
                     maxWidth: 300,
-                    className: 'lumos-custom-popup' // Classe para remover as bordas feias do Leaflet
+                    className: 'lumos-custom-popup',
+                    autoPanPadding: [20, 20]
                 });
-                this.markersMap.set(e.id, marker);
-                clusterGroup.addLayer(marker);
+                this.markersMap.set(execution.id, marker);
+                marker.addTo(this.markersLayer);
             }
         });
 
-        const bounds = L.latLngBounds(
-            this.filteredExecutions.map(e => [Number(e.lat), Number(e.lng)] as [number, number])
-        );
-        this.map.fitBounds(bounds.pad(0.014));
-        this.markersLayer.addLayer(clusterGroup);
     }
 
+    private fitToData(): void {
+        if (!this.filteredExecutions.length) return;
+
+        const bounds = L.latLngBounds(
+            this.filteredExecutions.map(e =>
+                [Number(e.lat), Number(e.lng)] as [number, number]
+            )
+        );
+
+        this.map.fitBounds(bounds.pad(0.2));
+    }
+
+    private buildPopup(e: GeoExecution): string {
+        return `
+    <div id="popup-${e.id}" class="p-3 min-w-[240px] font-sans text-slate-800 transition-all duration-300">
+
+        <div class="hide-on-expand space-y-3">
+            <div class="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        ${e.type === 'INSTALLATION' ? 'Instalação' : 'Manutenção'}
+                    </span>
+                    <span class="flex h-2 w-2 rounded-full ${e.status === 'FINISHED' ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
+                </div>
+                <strong class="text-sm leading-tight text-slate-900">${e.title}</strong>
+            </div>
+
+            <div class="space-y-2 text-xs">
+                <div class="flex items-start gap-2">
+                    <i class="pi pi-map-marker mt-0.5 text-slate-400"></i>
+                    <span>${e.address || 'Sem endereço registrado'}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="pi pi-users text-slate-400"></i>
+                    <span>Equipe: <b class="text-slate-700">${e.teamName}</b></span>
+                </div>
+            </div>
+        </div>
+
+        ${e.imageUrl ? `
+            <div
+                class="img-container relative mt-3 overflow-hidden rounded-lg border border-slate-100 shadow-sm group cursor-pointer transition-all duration-300">
+                <div class="absolute top-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0 pointer-events-none">
+                    <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-900/70 text-white backdrop-blur-md rounded-md">
+                        ID do Ponto #5550123
+                    </span>
+                </div>
+                <img src="${e.imageUrl}"
+                    alt="Ponto"
+                    class="w-full h-32 object-cover transition-all duration-500 hover:scale-105">
+            </div>
+        ` : ''}
+
+        ${e.finishedAt ? `
+            <div class="hide-on-expand mt-3 text-xs flex items-center gap-2">
+                <i class="pi pi-calendar-check text-emerald-500"></i>
+                <span>Finalizado em: <b>${new Date(e.finishedAt).toLocaleString('pt-BR')}</b></span>
+            </div>
+        ` : ''}
+    </div>
+    `;
+    }
+
+    private buildClusterIndex(): void {
+        const points: Feature<
+            Point,
+            { executionId: number; execution: GeoExecution }
+        >[] = this.filteredExecutions
+            .filter(e => e.lat && e.lng)
+            .map(e => ({
+                type: 'Feature' as const,
+                properties: {
+                    executionId: e.id,
+                    execution: e
+                },
+                geometry: {
+                    type: 'Point' as const,
+                    coordinates: [Number(e.lng), Number(e.lat)]
+                }
+            }));
+
+        this.clusterIndex = new Supercluster({
+            radius: 60,
+            maxZoom: 17
+        });
+
+        this.clusterIndex.load(points);
+    }
 
 }

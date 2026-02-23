@@ -21,6 +21,7 @@ data class MaintenanceStreet(
     val currentSupply: String?,
     val reason: String?,
     val finishedAt: Instant,
+    val pointNumber: Int?,
 
     @Transient
     private var isNewEntry: Boolean = true
