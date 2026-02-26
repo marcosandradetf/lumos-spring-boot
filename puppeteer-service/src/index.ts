@@ -3,7 +3,8 @@ import { closeBrowser } from './config/puppeter.client'
 import { enqueuePdfTask } from './config/puppeteerQueue';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 app.post('/generate-pdf', async (req, res) => {
     const { html, orientation = 'landscape' } = req.body;

@@ -21,8 +21,8 @@ interface MaintenanceRepository : CrudRepository<Maintenance, UUID> {
         SET report_view_at = now()
         WHERE
         (
-            (:executionId IS NOT NULL AND maintenance_id = :executionId)
-            OR (:executionId IS NULL AND contract_id = :contractId 
+            (:executionId::uuid IS NOT NULL AND maintenance_id = :executionId)
+            OR (:executionId::uuid IS NULL AND contract_id = :contractId 
                 AND date_of_visit >= :start 
                 AND date_of_visit < :end)
         )
