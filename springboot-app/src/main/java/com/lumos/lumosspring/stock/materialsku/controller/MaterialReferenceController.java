@@ -52,4 +52,9 @@ public class MaterialReferenceController {
     public ResponseEntity<?> getCatalogue() {
         return materialReferenceService.getCatalogue();
     }
+
+    @GetMapping("/get-brands")
+    public ResponseEntity<?> getBrands() {
+        return materialReferenceService.getBrands();
+    }
 }

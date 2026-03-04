@@ -248,9 +248,9 @@ export class SidebarComponent implements OnInit {
                         expanded: true,
                         items: [
                             {
-                                label: 'Personalizados',
+                                label: 'Analítico de Operações',
                                 icon: 'pi pi-sliders-h text-blue-500',
-                                routerLink: ['/relatorios/gerenciamento'],
+                                routerLink: ['/relatorios/execucoes/analitico-de-operacoes'],
                                 command: () => {
                                     SharedState.showMenuDrawer$.next(false);
                                 }
@@ -270,7 +270,15 @@ export class SidebarComponent implements OnInit {
                                 command: () => {
                                     SharedState.showMenuDrawer$.next(false);
                                 }
-                            }
+                            },
+                            {
+                                label: 'Agrupados',
+                                icon: 'pi pi-box text-blue-500',
+                                routerLink: ['/relatorios/gerenciamento'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                }
+                            },
                         ]
                     },
                     {

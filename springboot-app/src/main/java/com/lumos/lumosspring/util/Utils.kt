@@ -52,8 +52,9 @@ object Utils {
 
     fun sendHtmlToPuppeteer(
         templateHtml: String,
+        title: String,
         orientation: String = "landscape",
-        url: String = "http://localhost:3000/generate-pdf"
+        url: String = "http://localhost:3000/generate-pdf",
     ): ByteArray? {
         val restTemplate = RestTemplate()
 
@@ -63,7 +64,8 @@ object Utils {
 
         val body = mapOf(
             "html" to templateHtml,
-            "orientation" to orientation // <-- aqui está a mágica
+            "orientation" to orientation,
+            "title" to title,
         )
 
         val request = HttpEntity(body, headers)

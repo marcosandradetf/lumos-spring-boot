@@ -25,7 +25,7 @@ class InstallationReportService(
     private val installationReportRepository: InstallationReportRepository,
     private val directExecutionRepository: DirectExecutionRepository,
     private val preMeasurementInstallationRepository: PreMeasurementInstallationRepository,
-)  {
+) {
 
     fun generateDataReport(
         filtersRequest: ExecutionReportController.FiltersRequest
@@ -222,7 +222,7 @@ class InstallationReportService(
                     <div class="page-content">
                         <div class="maintenance-header">
                             <div>Período: De $dateOfVisit às $signDate (Produtividade: $durationFormatted)</div>
-                            ${if(!e["responsible"].isNull) "<div>Responsável pelo acompanhamento: ${e["responsible"].asText()}</div>" else ""}
+                            ${if (!e["responsible"].isNull) "<div>Responsável pelo acompanhamento: ${e["responsible"].asText()}</div>" else ""}
                         </div>
                         
                         <div class="maintenance-body">
@@ -307,7 +307,11 @@ class InstallationReportService(
             .replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
             .replace("{{GENERAL_TOTAL}}", valuesTable)
 
-        val pdf = Utils.sendHtmlToPuppeteer(html)
+        val pdf = Utils.sendHtmlToPuppeteer(
+            html,
+            if (filtersRequest.type == "led") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
+            else "RELATÓRIO FOTOGRÁFICO"
+        )
 
         updateReportView
             .filter { it.first == "DIRECT_EXECUTION" }
@@ -466,7 +470,11 @@ class InstallationReportService(
         TODO()
     }
 
-    fun getInstallationsData(contractId: Long, startDate: OffsetDateTime, endDate: OffsetDateTime): List<Map<String, JsonNode>> {
+    fun getInstallationsData(
+        contractId: Long,
+        startDate: OffsetDateTime,
+        endDate: OffsetDateTime
+    ): List<Map<String, JsonNode>> {
         return installationReportRepository.getInstallationsData(
             contractId, startDate, endDate
         )

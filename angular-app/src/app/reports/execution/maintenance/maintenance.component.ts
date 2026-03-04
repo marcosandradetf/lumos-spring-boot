@@ -1,20 +1,20 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {SafeUrlPipe} from '../../safe-url.pipe';
-import {ReportService} from '../report.service';
-import {UtilsService} from '../../core/service/utils.service';
+import {SafeUrlPipe} from '../../../safe-url.pipe';
+import {ReportService} from '../../report.service';
+import {UtilsService} from '../../../core/service/utils.service';
 import {Title} from '@angular/platform-browser';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import {LoadingComponent} from '../../../shared/components/loading/loading.component';
 import {DatePipe, NgForOf} from '@angular/common';
 import {Toast} from 'primeng/toast';
 import {Menu} from 'primeng/menu';
 import {MenuItem} from 'primeng/api';
-import {PrimeConfirmDialogComponent} from '../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
-import {AuthService} from '../../core/auth/auth.service';
+import {PrimeConfirmDialogComponent} from '../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
+import {AuthService} from '../../../core/auth/auth.service';
 import {IconField} from 'primeng/iconfield';
 import {InputIcon} from 'primeng/inputicon';
 import {InputText} from 'primeng/inputtext';
-import {SharedState} from '../../core/service/shared-state';
-import {Utils} from '../../core/service/utils';
+import {SharedState} from '../../../core/service/shared-state';
+import {Utils} from '../../../core/service/utils';
 
 
 @Component({

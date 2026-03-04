@@ -4,16 +4,16 @@ import {Calendar} from 'primeng/calendar';
 import {FormsModule} from '@angular/forms';
 import {DropdownModule} from 'primeng/dropdown';
 import {SelectButton} from 'primeng/selectbutton';
-import {SharedState} from '../../core/service/shared-state';
+import {SharedState} from '../../../core/service/shared-state';
 import {Title} from '@angular/platform-browser';
-import {Utils} from '../../core/service/utils';
+import {Utils} from '../../../core/service/utils';
 import {Message} from 'primeng/message';
-import {UtilsService} from '../../core/service/utils.service';
-import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
-import {ReportService} from '../report.service';
+import {UtilsService} from '../../../core/service/utils.service';
+import {LoadingOverlayComponent} from '../../../shared/components/loading-overlay/loading-overlay.component';
+import {ReportService} from '../../report.service';
 import {HttpResponse} from '@angular/common/http';
 import {Toast} from 'primeng/toast';
-import {SafeUrlPipe} from '../../safe-url.pipe';
+import {SafeUrlPipe} from '../../../safe-url.pipe';
 
 @Component({
     selector: 'app-report-manage',
@@ -42,8 +42,8 @@ export class ReportManageComponent implements OnInit {
     selectedScope = 'MAINTENANCE';
 
     viewModes = [
-        {label: 'Lista', value: 'LIST'},
-        {label: 'Agrupado', value: 'GROUP'}
+        {label: 'Agrupado', value: 'GROUP'},
+        {label: 'Lista', value: 'LIST'}
     ];
 
 
@@ -59,9 +59,9 @@ export class ReportManageComponent implements OnInit {
     } = {
         contractId: null,
         type: null,
-        startDate: null,
-        endDate: null,
-        viewMode: 'LIST',
+        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        endDate: new Date(),
+        viewMode: 'GROUP',
         scope: 'MAINTENANCE',
         executionId: null,
         executionType: null
@@ -244,9 +244,9 @@ export class ReportManageComponent implements OnInit {
         this.filters = {
             contractId: null,
             type: null,
-            startDate: null,
-            endDate: null,
-            viewMode: 'LIST',
+            startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            endDate: new Date(),
+            viewMode: 'GROUP',
             scope: scope,
             executionId: null,
             executionType: null

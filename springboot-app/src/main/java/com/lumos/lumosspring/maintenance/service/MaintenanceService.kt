@@ -314,7 +314,7 @@ class MaintenanceService(
         }
 
         try {
-            val response = Utils.sendHtmlToPuppeteer(templateHtml)
+            val response = Utils.sendHtmlToPuppeteer(templateHtml, "Relatório de Manutenção Convencional")
 
             maintenanceRepository.registerGeneration(
                 0,
@@ -480,7 +480,7 @@ class MaintenanceService(
         }
 
         try {
-            val response = Utils.sendHtmlToPuppeteer(templateHtml)
+            val response = Utils.sendHtmlToPuppeteer(templateHtml, "Relatório de Manutenção em LEDs")
 
             maintenanceRepository.registerGeneration(
                 0,
@@ -802,7 +802,11 @@ class MaintenanceService(
         html = html.replace("{{EXECUTIONS_BLOCK}}", maintenanceBlocks)
         html = html.replace("{{GENERAL_TOTAL}}", generalTotal)
 
-        val pdf = Utils.sendHtmlToPuppeteer(html)
+        val pdf = Utils.sendHtmlToPuppeteer(
+            html,
+            if (filtersRequest.type == "led") "Relatório de Manutenções de LEDs"
+            else "Relatório de Manutenções Convencionais"
+        )
 
         maintenanceRepository.registerGeneration(
             filtersRequest.contractId,

@@ -83,7 +83,7 @@ class MaterialReportService(
             .replace("{{COMPANY_PHONE}}", data.first().companyPhone)
             .replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
 
-        val pdf = Utils.sendHtmlToPuppeteer(html, "portrait")
+        val pdf = Utils.sendHtmlToPuppeteer(html, "Relatório de Saídas/Saldo de estoque por instalação","portrait")
         val responseHeaders = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_PDF
             contentDisposition = ContentDisposition.attachment().filename("report.pdf").build()

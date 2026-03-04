@@ -98,6 +98,16 @@ export class ReportService {
         ) as Observable<HttpResponse<Blob>>;
     }
 
+    generateOperationalReport(filters: any) {
+        return this.http.post(
+            `${this.endpoint}/api/report/execution/generate-operational-report`,
+            filters,
+            {
+                responseType: 'blob',
+                observe: 'response'
+            }
+        );
+    }
 
 
 }

@@ -150,7 +150,7 @@ class DirectExecutionReportService(
             .replace("{{TEAM_ROWS}}", teamRows)
 
         try {
-            val response = sendHtmlToPuppeteer(templateHtml)
+            val response = sendHtmlToPuppeteer(templateHtml, "Relatório de Instalações")
 //            val responseHeaders = HttpHeaders().apply {
 //                contentType = MediaType.APPLICATION_PDF
 //                contentDisposition = ContentDisposition.inline()
@@ -283,7 +283,7 @@ class DirectExecutionReportService(
 
 
         try {
-            val response = sendHtmlToPuppeteer(templateHtml, "portrait")
+            val response = sendHtmlToPuppeteer(templateHtml, "Relatório Fotográfico de Instalações", "portrait")
 //            val responseHeaders = HttpHeaders().apply {
 //                contentType = MediaType.APPLICATION_PDF
 //                contentDisposition = ContentDisposition.inline()

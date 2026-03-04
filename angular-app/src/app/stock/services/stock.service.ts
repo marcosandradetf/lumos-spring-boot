@@ -112,4 +112,7 @@ export class StockService {
     return this.http.post(this.endpoint + '/material/create', material);
   }
 
+    getBrands() {
+        return this.http.get<any[]>(`${this.endpoint}/material/get-brands`);
+    }
 }

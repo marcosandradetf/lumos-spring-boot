@@ -105,11 +105,11 @@
         </dependency>
 
         <!-- MinIO -->
-<!--        <dependency>-->
-<!--            <groupId>io.minio</groupId>-->
-<!--            <artifactId>minio</artifactId>-->
-<!--            <version>8.5.7</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>io.minio</groupId>-->
+        <!--            <artifactId>minio</artifactId>-->
+        <!--            <version>8.5.7</version>-->
+        <!--        </dependency>-->
 
         <!--        AWS S3 SDK-->
         <dependency>
@@ -152,6 +152,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!--        report-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
     </dependencies>
 

@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.materialsku.repository;
 
 import com.lumos.lumosspring.stock.materialsku.model.MaterialType;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -8,9 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface TypeRepository extends CrudRepository<MaterialType, Long> {
+
     record TypeUnitResponse(String code, String description, Boolean truckStockControl, Boolean buyUnit) {}
     record TypeSubtypeResponse(Long typeId, String typeName, Long subtypeId, String subtypeName) {}
 

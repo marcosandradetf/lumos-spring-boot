@@ -7,7 +7,7 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 app.post('/generate-pdf', async (req, res) => {
-    const { html, orientation = 'landscape' } = req.body;
+    const { html, orientation = 'landscape', title = 'Relatório Operacional Consolidado' } = req.body;
 
     try {
         if (!html) {
@@ -27,7 +27,37 @@ app.post('/generate-pdf', async (req, res) => {
                 format: 'A4',
                 printBackground: true,
                 landscape: orientation === 'landscape',
-                margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' },
+
+                displayHeaderFooter: true,
+
+                margin: {
+                    top: '10mm',
+                    bottom: '25mm', // precisa aumentar por causa do footer
+                    left: '10mm',
+                    right: '10mm'
+                },
+                headerTemplate: `<div></div>`,
+
+                footerTemplate: `
+                    <div style="
+                        width:100%;
+                        font-size:10px;
+                        padding:0 20px;
+                        display:flex;
+                        justify-content:space-between;
+                        font-family:Arial;
+                        color:#475569;
+                    ">
+                        <span>
+                            <b>${title}</b>
+                        </span>
+
+                        <span>
+                            Página <span class="pageNumber"></span>
+                            de <span class="totalPages"></span>
+                        </span>
+                    </div>
+                `
             });
 
             await page.close();
@@ -58,7 +88,7 @@ const shutdown = async () => {
     console.log('\n[Server] Encerrando...');
     await closeBrowser();
     process.exit(0);
-  };
+};
 
 process.on('SIGINT', shutdown);   // Para Ctrl+C
 process.on('SIGTERM', shutdown);  // Para Docker stop / down

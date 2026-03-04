@@ -4,10 +4,10 @@
 
 export const environment = {
     production: false,
-    // springboot: "http://localhost:8080",
-    // minio: "http://localhost:9000",
-    springboot: "",
-    minio: "",
+    springboot: "http://localhost:8080",
+    minio: "http://localhost:9000",
+    // springboot: "",
+    // minio: "",
 };
 
 /*

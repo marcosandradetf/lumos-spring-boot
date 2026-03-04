@@ -16,11 +16,6 @@ class ExecutionReportController(
     private val reportService: ReportService
 ) {
 
-    @PostMapping("/pdf/generate/{title}")
-    fun generatePdf(@RequestBody htmlRequest: String, @PathVariable title: String): ResponseEntity<ByteArray?> {
-        return reportService.generatePdf(htmlRequest, title)
-    }
-
     data class FiltersRequest(
         val contractId: Long,
         val type: String, // MAINTENANCE: CONVENTIONAL | LED || INSTALLATION: LED | PHOTO
@@ -42,6 +37,14 @@ class ExecutionReportController(
     fun getContracts(): ResponseEntity<Any> {
         return reportService.getContracts()
     }
+
+    @PostMapping("/execution/generate-operational-report")
+    fun generateOperationalReport(@RequestBody filtersRequest: com.lumos.lumosspring.report.dto.execution.FiltersRequest): ResponseEntity<Any> {
+        return reportService.generateOperationalReport(filtersRequest)
+
+    }
+
+
 
 
 }

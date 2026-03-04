@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.materialsku.repository;
 
 import com.lumos.lumosspring.stock.materialsku.model.Material;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -44,6 +45,7 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
                 order by m.material_name
             """)
     List<MaterialResponse> getCatalogue(UUID tenantId);
+
     record MaterialResponse(
             Long materialId,
             String materialName,
@@ -54,5 +56,20 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
             String requestUnit,
             Boolean inactive) {
     }
+
+    @Query("""
+                SELECT
+                    distinct m.material_brand
+                FROM material m
+                WHERE tenant_id = :currentTenantId
+                    AND m.material_brand is not null
+            """)
+    List<BrandResponse> getBrands(UUID currentTenantId);
+
+    record BrandResponse(
+            String materialBrand
+    ) {
+    }
+
 }
 

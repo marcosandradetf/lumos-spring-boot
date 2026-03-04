@@ -311,9 +311,13 @@ public class MaterialReferenceService {
     }
 
     public ResponseEntity<?> getCatalogue() {
-        var materials = materialReferenceRepository.getCatalogue(Utils.INSTANCE.getCurrentTenantId());
+        var materials = materialReferenceRepository.getCatalogue(Utils.getCurrentTenantId());
         return ResponseEntity.ok(materials);
     }
 
 
+    public ResponseEntity<?> getBrands() {
+        var brands = materialReferenceRepository.getBrands(Utils.getCurrentTenantId());
+        return ResponseEntity.ok(brands);
+    }
 }

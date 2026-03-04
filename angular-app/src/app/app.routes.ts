@@ -247,7 +247,7 @@ export const routes: Routes = [
     //reports
     {
         path: 'relatorios/gerenciamento',
-        loadComponent: () => import('./reports/manage/report-manage.component').then(r => r.ReportManageComponent),
+        loadComponent: () => import('./reports/execution/manage/report-manage.component').then(r => r.ReportManageComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
@@ -256,7 +256,7 @@ export const routes: Routes = [
     },
     {
         path: 'relatorios/manutencoes',
-        loadComponent: () => import('./reports/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
+        loadComponent: () => import('./reports/execution/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
@@ -265,16 +265,21 @@ export const routes: Routes = [
     },
     {
         path: 'relatorios/instalacoes',
-        loadComponent: () => import('./reports/installation/installation.component').then(r => r.InstallationComponent),
+        loadComponent: () => import('./reports/execution/installation/installation.component').then(r => r.InstallationComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'},
     },
-
     {
         path: 'relatorios/estoque/saida-saldo-instalacao',
         loadComponent: () => import('./reports/material-reservation/material-reservation.component').then(r => r.MaterialReservationComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'relatorios'},
+    },
+    {
+        path: 'relatorios/execucoes/analitico-de-operacoes',
+        loadComponent: () => import('./reports/execution/operation/operation.component').then(r => r.OperationComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA'], path: 'relatorios'},
     },
 
     // out
