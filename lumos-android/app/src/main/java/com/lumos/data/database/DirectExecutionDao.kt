@@ -12,6 +12,7 @@ import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.DirectReserve
 import com.lumos.domain.model.ReserveMaterialJoin
 import com.lumos.domain.model.ReservePartial
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DirectExecutionDao {
@@ -71,7 +72,7 @@ interface DirectExecutionDao {
           AND contractItemId = :contractItemId
     """
     )
-    suspend fun debitMaterial(
+    suspend fun debitReserve(
         materialStockId: Long,
         contractItemId: Long,
         quantityExecuted: String
@@ -165,7 +166,7 @@ interface DirectExecutionDao {
     )
 
     @Query("SELECT * from direct_execution_street where directExecutionId = :installationID")
-    suspend fun getStreetsByInstallationId(installationID: Long?): List<DirectExecutionStreet>
+    fun getStreetsByInstallationId(installationID: Long?): Flow<List<DirectExecutionStreet>>
 
     @Transaction
     suspend fun deleteAllInstallations(ids: List<Long>) {

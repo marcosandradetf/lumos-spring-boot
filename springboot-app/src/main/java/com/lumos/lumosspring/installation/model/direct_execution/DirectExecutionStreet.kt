@@ -20,5 +20,5 @@ data class DirectExecutionStreet (
     var executionPhotoUri: String? = null,
     var directExecutionId: Long,
     val currentSupply: String?,
-    val pointNumber: Int?
+    val comment: String? = null,
 )

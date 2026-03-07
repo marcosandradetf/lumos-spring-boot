@@ -58,7 +58,7 @@ class InstallationReportService(
         val executions = root["executions"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val logoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
+        val logoUrl = s3Service.getPresignedObjectUrl( logoUri)
 
         val titleDoc = if (filtersRequest.type == "data") "Relatório de Instalações de LEDs"
         else "Relatório Fotográfico"
@@ -207,7 +207,7 @@ class InstallationReportService(
             // signSection
             val signSection = if (!e["signature_uri"].isNull) {
                 val signUrl = s3Service.getPresignedObjectUrl(
-                    Utils.getCurrentBucket(), e["signature_uri"].asText()
+                     e["signature_uri"].asText()
                 )
                 """
                     <div class="signature">

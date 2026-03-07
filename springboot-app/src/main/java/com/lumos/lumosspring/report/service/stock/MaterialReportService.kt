@@ -70,9 +70,9 @@ class MaterialReportService(
 
         var logoImage = data.first().companyLogo
         logoImage?.let { image ->
-            logoImage = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), image)
+            logoImage = s3Service.getPresignedObjectUrl(image)
         }
-        val html =  template
+        val html = template
             .replace("{{TITLE_DOC}}", "Relatório de Saídas/Saldo de estoque por instalação")
             .replace("{{TITLE_PDF}}", "Saídas/Saldo de estoque por instalação")
             .replace("{{CONTRACT_NUMBER}}", "Período de $formattedDateStart à $formattedDateEnd")
@@ -83,7 +83,7 @@ class MaterialReportService(
             .replace("{{COMPANY_PHONE}}", data.first().companyPhone)
             .replace("{{EXECUTIONS_BLOCK}}", executionsBlock)
 
-        val pdf = Utils.sendHtmlToPuppeteer(html, "Relatório de Saídas/Saldo de estoque por instalação","portrait")
+        val pdf = Utils.sendHtmlToPuppeteer(html, "Relatório de Saídas/Saldo de estoque por instalação", "portrait")
         val responseHeaders = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_PDF
             contentDisposition = ContentDisposition.attachment().filename("report.pdf").build()
@@ -96,19 +96,24 @@ class MaterialReportService(
         val sb = StringBuilder()
 
         teamReports.forEach { team ->
-            sb.append("""
+            sb.append(
+                """
                 <div class="page-content">
                     <div class="maintenance-header">
                         <span>Equipe/Caminhão: ${team.teamName}</span>
                         <span>Total de Instalações: ${team.installations.size}</span>
                     </div>
                     <div class="maintenance-body">
-            """.trimIndent())
+            """.trimIndent()
+            )
 
             team.installations.forEach { installation ->
                 val translatedStatus = when (installation.status) {
                     ExecutionStatus.WAITING_STOCKIST -> InstallationStatus.WAITING_STOCKIST.translate("pt")
-                    ExecutionStatus.WAITING_RESERVE_CONFIRMATION -> InstallationStatus.WAITING_RESERVE_CONFIRMATION.translate("pt")
+                    ExecutionStatus.WAITING_RESERVE_CONFIRMATION -> InstallationStatus.WAITING_RESERVE_CONFIRMATION.translate(
+                        "pt"
+                    )
+
                     ExecutionStatus.WAITING_COLLECT -> InstallationStatus.WAITING_COLLECT.translate("pt")
                     ExecutionStatus.AVAILABLE_EXECUTION -> InstallationStatus.AVAILABLE_EXECUTION.translate("pt")
                     ExecutionStatus.IN_PROGRESS -> InstallationStatus.IN_PROGRESS.translate("pt")
@@ -118,15 +123,26 @@ class MaterialReportService(
 
                 val (bgColor, textColor, borderColor) = when (installation.status) {
                     ExecutionStatus.WAITING_STOCKIST -> Triple("bg-yellow-100", "text-yellow-800", "border-yellow-300")
-                    ExecutionStatus.WAITING_RESERVE_CONFIRMATION -> Triple("bg-orange-100", "text-orange-800", "border-orange-300")
+                    ExecutionStatus.WAITING_RESERVE_CONFIRMATION -> Triple(
+                        "bg-orange-100",
+                        "text-orange-800",
+                        "border-orange-300"
+                    )
+
                     ExecutionStatus.WAITING_COLLECT -> Triple("bg-blue-100", "text-blue-800", "border-blue-300")
-                    ExecutionStatus.AVAILABLE_EXECUTION -> Triple("bg-indigo-100", "text-indigo-800", "border-indigo-300")
+                    ExecutionStatus.AVAILABLE_EXECUTION -> Triple(
+                        "bg-indigo-100",
+                        "text-indigo-800",
+                        "border-indigo-300"
+                    )
+
                     ExecutionStatus.IN_PROGRESS -> Triple("bg-purple-100", "text-purple-800", "border-purple-300")
                     ExecutionStatus.FINISHED -> Triple("bg-green-100", "text-green-800", "border-green-300")
                     else -> Triple("bg-gray-100", "text-gray-800", "border-gray-300")
                 }
 
-                sb.append("""
+                sb.append(
+                    """
                     <div class="bg-slate-100 border border-slate-300 border-l-4 border-l-slate-800 rounded p-3 my-3">
     
                         <div class="text-sm font-bold tracking-wide text-slate-900 mb-1">
@@ -165,7 +181,8 @@ class MaterialReportService(
                             </tr>
                         </thead>
                         <tbody>
-                """.trimIndent())
+                """.trimIndent()
+                )
 
                 installation.records.forEach { record ->
                     val collectedAt = record.collectedAt?.let { Instant.parse(it) }
@@ -173,7 +190,8 @@ class MaterialReportService(
                     val formatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")
                     val formattedDate = localDate?.format(formatter)
 
-                    sb.append("""
+                    sb.append(
+                        """
                         <tr>
                             <td style="text-align:left;">${record.materialName}</td>
                             <td style="text-align:right;">${record.releasedQuantity}</td>
@@ -189,20 +207,25 @@ class MaterialReportService(
                                 ${formattedDate ?: "<span style='color:#888'>Não coletado</span>"}
                             </td>
                         </tr>
-                    """.trimIndent())
+                    """.trimIndent()
+                    )
                 }
 
-                sb.append("""
+                sb.append(
+                    """
                         </tbody>
                     </table>
                     <br/>
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
 
-            sb.append("""
+            sb.append(
+                """
                     </div>
                 </div>
-            """.trimIndent())
+            """.trimIndent()
+            )
         }
 
         return sb.toString()

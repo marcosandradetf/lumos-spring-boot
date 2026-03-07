@@ -23,6 +23,7 @@ open class S3Config {
     @Value("\${r2.secret-key}")
     private lateinit var secretKey: String
 
+
     @Bean
     open fun s3Client(): S3Client {
         return S3Client.builder()

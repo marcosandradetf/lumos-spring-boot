@@ -99,7 +99,7 @@ public class ViewRepository {
                                         )
                                 );
 
-                                var publicUrl = s3Service.getPublicUrl(Utils.getCurrentBucket(), rs2.getString("pre_measurement_photo_uri"), 2 * 24 * 60 * 60); // 2 dias
+                                var publicUrl = s3Service.getPublicUrl(rs2.getString("pre_measurement_photo_uri"), 2 * 24 * 60 * 60); // 2 dias
                                 return new StreetsInstallationResponse(
                                         rs.getObject("device_pre_measurement_id", UUID.class),
                                         rs2.getObject("device_pre_measurement_street_id", UUID.class),

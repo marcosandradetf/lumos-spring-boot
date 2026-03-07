@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.UUID
 
 @Repository
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
@@ -62,6 +63,24 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
         WHERE reservation_management_id = :id
     """)
     fun updateTeamId(reservationManagementId: Long, teamId: Long)
+    fun existsDirectExecutionByExternalIdAndTenantId(externalId: Long, tenantId: UUID): Boolean
+
+    @Query("""
+        WITH updated AS (
+            UPDATE direct_execution
+            SET direct_execution_status = 'VALIDATING'
+            WHERE external_id = :externalId
+              AND direct_execution_status <> 'VALIDATING'
+            RETURNING direct_execution_id
+        )
+        SELECT direct_execution_id FROM updated
+        UNION ALL
+        SELECT direct_execution_id 
+        FROM direct_execution
+        WHERE external_id = :externalId
+          AND NOT EXISTS (SELECT 1 FROM updated)
+    """)
+    fun findDirectExecutionIdByExternalId(externalId: Long): Long?
 
 }
 
@@ -120,6 +139,7 @@ interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet
     """
     )
     fun getByDirectExecutionId(id: Long): List<Long>
+    fun existsDirectExecutionStreetByDeviceStreetIdAndDeviceId(deviceStreetId: Long, deviceId: String): Boolean
 }
 
 @Repository

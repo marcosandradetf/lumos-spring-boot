@@ -32,7 +32,7 @@ public class CompanyService {
     }
 
     public ResponseEntity<Long> save(CompanyRequest req, MultipartFile logo) {
-        var logoUri = this.s3Service.uploadFile(logo, Utils.getCurrentBucket(), "photos/logo", req.fantasyName(), Utils.getCurrentTenantId());
+        var logoUri = this.s3Service.uploadFile(logo, "photos/logo", req.fantasyName(), Utils.getCurrentTenantId());
 
         var company = new Company(
                 req.socialReason(),

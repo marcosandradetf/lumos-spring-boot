@@ -138,6 +138,21 @@ object SyncManager {
         }
     }
 
+    suspend fun createInstallation(context: Context, db: AppDatabase, executionId: Long) {
+        val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.CREATE_INSTALLATION, executionId)
+        if (count == 0) {
+
+            val syncItem = SyncQueueEntity(
+                relatedId = executionId,
+                type = SyncTypes.CREATE_INSTALLATION,
+                priority = 16
+            )
+
+            db.queueDao().insert(syncItem)
+            enqueueSync(context)
+        }
+    }
+
     suspend fun queuePostDirectExecution(context: Context, db: AppDatabase, streetId: Long) {
         val count = db.queueDao().countPendingItemsByTypeAndId(SyncTypes.POST_DIRECT_EXECUTION, streetId)
         if (count == 0) {
@@ -276,5 +291,7 @@ object SyncManager {
             enqueueSync(context)
         }
     }
+
+
 
 }

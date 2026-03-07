@@ -1,6 +1,7 @@
 package com.lumos.ui.installationholder
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,14 +21,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NotListedLocation
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.SentimentVerySatisfied
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
@@ -42,19 +47,23 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.lumos.domain.model.InstallationView
 import com.lumos.midleware.SecureStorage
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
+import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
 import com.lumos.repository.PreMeasurementInstallationRepository
 import com.lumos.repository.ViewRepository
@@ -73,16 +82,15 @@ fun InstallationHolderScreen(
     viewRepository: ViewRepository,
     navController: NavHostController,
     roles: Set<String>,
-    secureStorage: SecureStorage
+    secureStorage: SecureStorage,
 ) {
     val requiredRoles = setOf("MOTORISTA", "ELETRICISTA")
-
     val executions by viewRepository.getFlowInstallations(listOf("PENDING", "IN_PROGRESS"))
         .collectAsState(emptyList())
 
-    var isSyncing by remember { mutableStateOf(false) }
+    var isSyncing by rememberSaveable { mutableStateOf(false) }
     var responseError by remember { mutableStateOf<String?>(null) }
-    var stockCount by remember { mutableIntStateOf(0) }
+    var stockCount by rememberSaveable { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -129,6 +137,10 @@ fun InstallationHolderScreen(
                 .let { if (it.isNotEmpty()) "?$it" else "" }
 
             if (type != "PreMeasurementInstallation") {
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("route_event", Routes.DIRECT_EXECUTION_HOME_SCREEN)
+
                 navController.navigate(
                     "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$id/$contractorEncoded/$creationDateEncoded$query"
                 )
@@ -142,12 +154,16 @@ fun InstallationHolderScreen(
         error = responseError,
         refresh = {
             scope.launch {
+                isSyncing = true
                 directExecutionRepository.syncDirectExecutions()
                 preMeasurementInstallationRepository.syncExecutions()
+                isSyncing = false
             }
         },
-        stockDataSize = stockCount
+        stockDataSize = stockCount,
     )
+
+
 }
 
 
@@ -165,7 +181,7 @@ fun ContentCitiesScreen(
     var showModal by remember { mutableStateOf(false) }
 
     AppLayout(
-        title = "Instalações disponíveis",
+        title = "Gerenciar Instalações",
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateToMore = {
             navController.navigate(Routes.MORE) {
@@ -195,7 +211,7 @@ fun ContentCitiesScreen(
                 body = "Você precisa carregar os dados do estoque para criar uma nova instalação. Deseja fazer isso agora?",
                 confirm = {
                     showModal = false
-                    navController.navigate(Routes.STOCK){
+                    navController.navigate(Routes.STOCK) {
                         popUpTo(Routes.INSTALLATION_HOLDER) { inclusive = true }
                     }
                 },
@@ -243,6 +259,20 @@ fun ContentCitiesScreen(
                     item {
                         NothingData(
                             "Nenhuma execução disponível no momento, volte mais tarde!"
+                        )
+                    }
+                } else if (!isSyncing) {
+                    item {
+                        Text(
+                            "Instalações em Andamento",
+                            style = TextStyle(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            ),
+                            modifier = Modifier.padding(
+                                top = if (!error.isNullOrBlank()) 7.dp else 0.dp,
+                                bottom = 7.dp
+                            )
                         )
                     }
                 }
@@ -389,6 +419,44 @@ fun ContentCitiesScreen(
                     }
 
 
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize() // Garante que o Box ocupe a tela para o alinhamento funcionar
+                    .padding(16.dp)
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        navController.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("route_event", Routes.CREATE_INSTALLATION)
+
+                        navController.navigate(Routes.CREATE_INSTALLATION)
+                    },
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = RoundedCornerShape(16.dp), // FABs modernos são levemente arredondados, não círculos perfeitos
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Nova",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         }

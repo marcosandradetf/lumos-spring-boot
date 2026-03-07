@@ -7,6 +7,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.time.Instant
 import java.util.UUID
 
 @RestController
@@ -14,14 +15,24 @@ import java.util.UUID
 class DirectExecutionRegisterController(
     private val registerService: DirectExecutionRegisterService,
 ) {
-    @PostMapping(
-        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
-        value = ["/mobile/execution/upload-direct-execution"]
+
+    data class InstallationCreateRequest(
+        val directExecutionId: Long,
+        var contractId: Long?,
+        var description: String,
+        var instructions: String? = null,
+        val executionStatus: String,
+        val creationDate: Instant,
+        val executorsIds: List<String>? = null,
     )
-    fun uploadDirectExecution(
-        @RequestPart("photo") photo: MultipartFile,
-        @RequestPart("execution") execution: InstallationStreetRequest?
-    ): ResponseEntity<Any> = registerService.saveStreetInstallation(photo, execution)
+    @PostMapping("/mobile/v1/direct-execution/create-installation")
+    fun createInstallation(
+        @RequestBody execution: InstallationCreateRequest,
+        @RequestParam teamId: Long
+    ): ResponseEntity<Any> {
+        return registerService.createInstallation(execution, teamId)
+    }
+
 
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
@@ -32,12 +43,6 @@ class DirectExecutionRegisterController(
         @RequestPart("execution") execution: InstallationStreetRequest?
     ): ResponseEntity<Any> = registerService.saveStreetInstallationV2(photo, execution)
 
-    @PostMapping("/mobile/execution/finish-direct-execution/{directExecutionId}")
-    fun finishDirectExecution(
-        @PathVariable directExecutionId: Long,
-        @RequestParam(required = false) operationalUsers: List<UUID>?
-    ): ResponseEntity<Any> =
-        registerService.finishDirectExecution(directExecutionId, operationalUsers)
 
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],

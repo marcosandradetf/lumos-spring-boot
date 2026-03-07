@@ -10,6 +10,6 @@ data class DirectExecutionStreetItem (
     var directExecutionStreetItemId: Long? = null,
     var executedQuantity: BigDecimal = BigDecimal.ZERO,
     var materialStockId: Long?,
-    var contractItemId: Long,
+    var contractItemId: Long?,
     var directExecutionStreetId: Long
 )

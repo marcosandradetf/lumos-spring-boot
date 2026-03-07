@@ -2,10 +2,8 @@ package com.lumos.lumosspring.util
 
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.Normalizer
@@ -15,13 +13,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-
 @Component
 class Util(
     private val jwtDecoder: JwtDecoder,
     private val jdbcTemplate: JdbcTemplate,
-    private val refreshTokenRepository: RefreshTokenRepository,
-    private val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
+    private val refreshTokenRepository: RefreshTokenRepository
 ) {
     fun convertToBigDecimal(value: String?): BigDecimal? {
         if (value == null) {
@@ -195,7 +191,6 @@ object ContractType {
 
 object ExecutionStatus {
     const val PENDING = "PENDING"
-    const val VALIDATING = "VALIDATING"
     const val WAITING_CONTRACTOR = "WAITING_CONTRACTOR"
     const val AVAILABLE = "AVAILABLE"
     const val WAITING_STOCKIST = "WAITING_STOCKIST"
@@ -204,6 +199,10 @@ object ExecutionStatus {
     const val AVAILABLE_EXECUTION = "AVAILABLE_EXECUTION"
     const val IN_PROGRESS = "IN_PROGRESS"
     const val FINISHED = "FINISHED"
+
+    const val DRAFT = "DRAFT"
+    const val VALIDATING = "VALIDATING"
+    const val AWAITING_COMPLETION = "AWAITING_COMPLETION"
 }
 
 object ItemStatus {

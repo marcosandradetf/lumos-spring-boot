@@ -66,6 +66,8 @@ object SyncTypes {
     // PreMeasurementInstallation
     const val SUBMIT_PRE_MEASUREMENT_INSTALLATION = "SUBMIT_PRE_MEASUREMENT_INSTALLATION"
 
+    const val CREATE_INSTALLATION = "CREATE_INSTALLATION"
+
 }
 
 
@@ -170,6 +172,7 @@ class SyncQueueWorker(
 
                 SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION_STREET -> submitPreMeasurementInstallationStreet(item)
                 SyncTypes.SUBMIT_PRE_MEASUREMENT_INSTALLATION -> submitPreMeasurementInstallation(item)
+                SyncTypes.CREATE_INSTALLATION -> createInstallation(item)
 
                 else -> {
                     Log.e("SyncWorker", "Tipo desconhecido: ${item.type}")
@@ -781,6 +784,53 @@ class SyncQueueWorker(
             }
 
             val response = preMeasurementInstallationRepository.submitInstallation(item.relatedUuid)
+            checkResponse(response, item)
+
+        } catch (e: Exception) {
+            queueDao.update(
+                inProgressItem.copy(
+                    status = SyncStatus.FAILED,
+                    errorMessage = e.message
+                )
+            )
+            UserExperience.sendNotification(
+                context = applicationContext,
+                title = "Ops! Algo deu errado",
+                body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+            )
+            FirebaseCrashlytics.getInstance().recordException(e)
+            Result.failure()
+        }
+    }
+
+    private suspend fun createInstallation(item: SyncQueueEntity): Result {
+        val inProgressItem = item.copy(
+            status = SyncStatus.IN_PROGRESS,
+            attemptCount = item.attemptCount + 1
+        )
+
+        return try {
+            if (item.relatedId == null) {
+                queueDao.update(inProgressItem.copy(status = SyncStatus.FAILED))
+                return Result.success()
+            }
+
+            if (!connectivityGate.canReachServer()) return Result.retry()
+
+            queueDao.update(inProgressItem)
+            // Atualiza o item com novo status e tentativa
+
+            // Checa limite de tentativas antes de continuar
+            if (inProgressItem.attemptCount >= 5 && item.status == SyncStatus.FAILED) {
+                UserExperience.sendNotification(
+                    context = applicationContext,
+                    title = "Ops! Algo deu errado",
+                    body = "Uma instalação não foi enviada. Veja o motivo em: Mais → Perfil → Tarefas em Sincronização."
+                )
+                return Result.success() // não tenta mais esse
+            }
+
+            val response = directExecutionRepository.createInstallation(item.relatedId)
             checkResponse(response, item)
 
         } catch (e: Exception) {

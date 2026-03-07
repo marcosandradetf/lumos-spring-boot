@@ -108,6 +108,8 @@ public class DirectExecutionManagementService {
                 step,
                 null,
                 null,
+                null,
+                null,
                 null
         );
 
@@ -325,7 +327,7 @@ public class DirectExecutionManagementService {
                     Map.of("direct_execution_id", directExecutionId)
             );
 
-            s3Service.deleteFiles(Utils.INSTANCE.getCurrentBucket(), uriObject);
+            s3Service.deleteFiles(uriObject);
 
             namedJdbc.update(
                     """

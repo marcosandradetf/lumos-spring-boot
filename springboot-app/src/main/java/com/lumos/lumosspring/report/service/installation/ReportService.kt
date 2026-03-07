@@ -202,7 +202,7 @@ class ReportService(
                 )
             }
 
-        val companyLogo = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), company.companyLogo)
+        val companyLogo = s3Service.getPresignedObjectUrl(company.companyLogo)
 
         val logoResource = ClassPathResource("static/images/logo.png")
         val logoBytes = logoResource.inputStream.readAllBytes()

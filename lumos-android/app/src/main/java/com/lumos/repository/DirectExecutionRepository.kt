@@ -25,7 +25,7 @@ import com.lumos.utils.Utils.compressImageFromUri
 import com.lumos.utils.Utils.getFileFromUri
 import com.lumos.utils.Utils.isStaleCheckTeam
 import com.lumos.worker.SyncManager
-import com.lumos.worker.SyncTypes
+import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -39,43 +39,13 @@ class DirectExecutionRepository(
     private val secureStorage: SecureStorage,
     private val app: Application
 ) {
-
-//    suspend fun checkUpdate(currentVersion: Long): RequestResult<Update> {
-//
-//        val response = ApiExecutor.execute { api.checkUpdate(currentVersion) }
-//        return when (response) {
-//            is RequestResult.Success -> {
-//                RequestResult.Success(response.data)
-//            }
-//
-//            is SuccessEmptyBody -> {
-//                ServerError(204, "Resposta 204 inesperada")
-//            }
-//
-//            is RequestResult.NoInternet -> {
-//                SyncManager.queueSyncExecutions(app.applicationContext, db)
-//                RequestResult.NoInternet
-//            }
-//
-//            is RequestResult.Timeout -> RequestResult.Timeout
-//            is ServerError -> ServerError(
-//                response.code,
-//                response.message
-//            )
-//
-//            is RequestResult.UnknownError -> {
-//                Log.e("Sync", "Erro desconhecido", response.error)
-//                RequestResult.UnknownError(response.error)
-//            }
-//        }
-//    }
-
     suspend fun syncDirectExecutions(): RequestResult<Unit> {
         val teamId = secureStorage.getTeamId()
         val executorsIds = secureStorage.getOperationalUsers().toList()
         if (executorsIds.isEmpty() || isStaleCheckTeam(secureStorage)) RequestResult.Success(Unit)
 
-        val response = ApiExecutor.execute { api.getDirectExecutions(teamId, "AVAILABLE_EXECUTION") }
+        val response =
+            ApiExecutor.execute { api.getDirectExecutions(teamId, "AVAILABLE_EXECUTION") }
         return when (response) {
             is RequestResult.Success -> {
                 saveDirectExecutionsToDb(response.data, executorsIds)
@@ -104,7 +74,10 @@ class DirectExecutionRepository(
         }
     }
 
-    private suspend fun saveDirectExecutionsToDb(fetchedExecutions: List<DirectExecutionDTOResponse>, executorsIds: List<String>) {
+    private suspend fun saveDirectExecutionsToDb(
+        fetchedExecutions: List<DirectExecutionDTOResponse>,
+        executorsIds: List<String>
+    ) {
         fetchedExecutions.forEach { executionDto ->
 
             val execution = DirectExecution(
@@ -149,6 +122,14 @@ class DirectExecutionRepository(
     suspend fun getReservesOnce(directExecutionId: Long): List<ReserveMaterialJoin> =
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
+    suspend fun getDirectExecutionByContractId(contractId: Long): DirectExecution? {
+        TODO()
+    }
+
+    suspend fun insertExecution(execution: DirectExecution) {
+        db.directExecutionDao().insertExecution(execution)
+        SyncManager.createInstallation(app.applicationContext, db, execution.directExecutionId)
+    }
 
     suspend fun saveAndQueueStreet(
         street: DirectExecutionStreet?,
@@ -164,9 +145,13 @@ class DirectExecutionRepository(
             }
 
             for (item in items) {
-                db.directExecutionDao().debitMaterial(
-                    item.materialStockId, item.contractItemId, item.quantityExecuted
-                )
+                if (item.contractItemId > 0) {
+                    db.directExecutionDao().debitReserve(
+                        item.materialStockId, item.contractItemId, item.quantityExecuted
+                    )
+
+                    db.contractDao().debitContractItem(item.contractItemId, item.quantityExecuted)
+                }
 
                 db.directExecutionDao().insertDirectExecutionStreetItem(
                     item.copy(
@@ -175,7 +160,6 @@ class DirectExecutionRepository(
                 )
 
                 db.stockDao().debitStock(item.materialStockId, item.quantityExecuted)
-                db.contractDao().debitContractItem(item.contractItemId, item.quantityExecuted)
             }
 
             SyncManager.queuePostDirectExecution(
@@ -193,7 +177,7 @@ class DirectExecutionRepository(
         val gson = Gson()
 
         val photoUri = db.directExecutionDao().getPhotoUri(streetId)
-            ?: return ServerError(-1, "Foto da pré-medição não encontrada")
+            ?: return ServerError(-1, "Foto da instalação não encontrada")
 
         val street = db.directExecutionDao().getStreet(streetId)
         val materials = db.directExecutionDao().getStreetItems(streetId)
@@ -211,6 +195,7 @@ class DirectExecutionRepository(
             materials = materials,
             currentSupply = street.currentSupply,
             finishAt = street.finishAt,
+            comment = street.comment
         )
 
         val json = gson.toJson(dto)
@@ -358,8 +343,44 @@ class DirectExecutionRepository(
         return db.stockDao().materialCount()
     }
 
-    suspend fun getStreets(installationID: Long?): List<DirectExecutionStreet> {
+    fun getStreets(installationID: Long?): Flow<List<DirectExecutionStreet>> {
         return db.directExecutionDao().getStreetsByInstallationId(installationID)
     }
+
+    suspend fun createInstallation(executionId: Long): RequestResult<Unit> {
+        val execution = db.directExecutionDao().getExecution(executionId)
+
+        val response = ApiExecutor.execute {
+            api.createInstallation(execution, secureStorage.getTeamId())
+        }
+
+        return when (response) {
+            is RequestResult.Success -> {
+                RequestResult.Success(Unit)
+            }
+
+            is SuccessEmptyBody -> {
+                RequestResult.Success(Unit)
+            }
+
+            is RequestResult.Timeout -> {
+                RequestResult.Timeout
+            }
+
+            is RequestResult.NoInternet -> {
+                RequestResult.NoInternet
+            }
+
+            is ServerError -> {
+                ServerError(response.code, response.message)
+            }
+
+            is RequestResult.UnknownError -> {
+                RequestResult.UnknownError(response.error)
+            }
+        }
+
+    }
+
 
 }

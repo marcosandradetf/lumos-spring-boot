@@ -18,7 +18,6 @@ import java.time.ZonedDateTime
 import java.util.*
 
 object Utils {
-
     @JvmStatic
     fun getCurrentUserId(): UUID {
         val authentication = SecurityContextHolder.getContext().authentication
@@ -35,11 +34,6 @@ object Utils {
         }
 
         throw IllegalStateException("Usuário não autenticado ou token inválido")
-    }
-
-    @JvmStatic
-    fun getCurrentBucket(): String {
-        return "lumos"
     }
 
     fun String.replacePlaceholders(values: Map<String, String>): String {

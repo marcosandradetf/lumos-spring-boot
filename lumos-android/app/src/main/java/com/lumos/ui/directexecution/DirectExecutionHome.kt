@@ -33,8 +33,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,8 +55,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.lumos.domain.model.DirectExecutionStreet
+import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.navigation.BottomBar
 import com.lumos.navigation.Routes
 import com.lumos.ui.components.AppLayout
@@ -66,6 +70,7 @@ import com.lumos.utils.Utils.hasFullName
 import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.time.Instant
 
 @Composable
 fun DirectExecutionHomeScreen(
@@ -74,10 +79,10 @@ fun DirectExecutionHomeScreen(
 ) {
     val contractor = viewModel.contractor
     val loading = viewModel.isLoading
-    val streets = viewModel.streets
     val creationDate = viewModel.creationDate
     val triedToSubmit = viewModel.triedToSubmit
     val instructions = viewModel.instructions
+    val streets by viewModel.streets.collectAsState(emptyList())
 
 
     var confirmModal by remember { mutableStateOf(false) }
@@ -116,7 +121,7 @@ fun DirectExecutionHomeScreen(
             })
     } else {
         AppLayout(
-            title = Utils.abbreviate(contractor ?: ""),
+            title = "Gerenciar Instalação",
             selectedIcon = BottomBar.EXECUTIONS.value,
             navigateBack = {
                 navController.popBackStack()
@@ -460,6 +465,11 @@ fun DirectExecutionHomeScreen(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            Text(
+                                text = Utils.abbreviate(contractor ?: "Sem Contrato"),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
 
                             // LINHA 1: qtd de ruas finalizadas
                             Row(
@@ -477,11 +487,11 @@ fun DirectExecutionHomeScreen(
 
                                 Text(
                                     text = if (streets.isEmpty())
-                                        "Nenhum ponto finalizado"
+                                        "Nenhuma rua finalizada"
                                     else if (streets.size == 1)
-                                        "${streets.size} ponto finalizado"
+                                        "${streets.size} rua finalizada"
                                     else
-                                        "${streets.size} pontos finalizados",
+                                        "${streets.size} rua finalizadas",
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                                     )
@@ -571,7 +581,7 @@ fun DirectExecutionHomeScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 175.dp, bottom = 130.dp),
+                            .padding(top = 200.dp, bottom = 130.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
 
@@ -639,17 +649,32 @@ fun DirectExecutionHomeScreen(
                         Button(
                             onClick = {
                                 viewModel.loadExecutionData()
-                                navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                                    .savedStateHandle["route_event"] =
-                                    Routes.DIRECT_EXECUTION_SCREEN_MATERIALS
 
-                                navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS)
+                                val id = viewModel.installationId ?: run {
+                                    viewModel.errorMessage = "Instalação inválida"
+                                    return@Button
+                                }
+
+                                if(id > 0) {
+                                    navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                                        .savedStateHandle["route_event"] =
+                                        Routes.DIRECT_EXECUTION_SCREEN_MATERIALS
+
+                                    navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS)
+                                } else {
+                                    viewModel.acceptedResponsibilityTerm = streets.isNotEmpty()
+                                    navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                                        .savedStateHandle["route_event"] =
+                                        Routes.DIRECT_EXECUTION_NO_WORK_ORDER
+
+                                    navController.navigate(Routes.DIRECT_EXECUTION_NO_WORK_ORDER)
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth(0.9f)
                                 .height(45.dp),
                         ) {
-                            Text("Iniciar novo ponto")
+                            Text("Adicionar nova rua")
                         }
                     }
                 }
@@ -761,15 +786,26 @@ fun PrevDirectExecutionHome() {
     )
 
 
-//    DirectExecutionHomeScreen(
-//        DirectExecutionViewModel(
-//            null,
-//            null,
-//            mockContractor = "ETAPA 1 - Prefeitura de Iguatama",
-//            mockCreationDate = Instant.now().toString(),
-//            mockStreets = mockStreets,
-//
-//            ),
-//        rememberNavController()
-//    )
+    DirectExecutionHomeScreen(
+        viewModel = DirectExecutionViewModel(
+            null,
+            null,
+            null,
+            null,
+            mockItems = emptyList(),
+            mockStreetItems = listOf(
+                DirectExecutionStreetItem(
+                    directStreetItemId = 1,
+                    reserveId = 1,
+                    materialStockId = 10,
+                    materialName = "",
+                    contractItemId = -1,
+                    directStreetId = 1,
+                    quantityExecuted = "12"
+                )
+            ),
+            mockStockData = emptyList()
+        ),
+        rememberNavController()
+    )
 }

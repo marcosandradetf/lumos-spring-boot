@@ -57,5 +57,13 @@ public interface MaterialStockRegisterRepository extends CrudRepository<Material
             """
     )
     void insertMaterials(Long depositId, UUID tenantId);
+
+    @Query("""
+        select stock_quantity
+        from material_stock
+        where material_id_stock = :materialStockId
+        limit 1
+    """)
+    Optional<BigDecimal> findStockQuantityByMaterialIdStock(long materialStockId);
 }
 

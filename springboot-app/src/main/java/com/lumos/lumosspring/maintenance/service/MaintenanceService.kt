@@ -63,7 +63,7 @@ class MaintenanceService(
 
         val fileUri = signature?.let {
             val folder = "photos/maintenance/${maintenance.responsible?.replace("\\s+".toRegex(), "_")}"
-            s3Service.uploadFile(it, Utils.getCurrentBucket(), folder, "maintenance", Utils.getCurrentTenantId())
+            s3Service.uploadFile(it, folder, "maintenance", Utils.getCurrentTenantId())
         }
 
         val newMaintenance = Maintenance(
@@ -230,7 +230,7 @@ class MaintenanceService(
         }.joinToString("\n")
 
         val companyLink = s3Service.getPresignedObjectUrl(
-            Utils.getCurrentBucket(),
+
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
@@ -273,7 +273,7 @@ class MaintenanceService(
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = s3Service.getPresignedObjectUrl(
-                Utils.getCurrentBucket(), maintenance["signature_uri"]?.asText() ?: ""
+                maintenance["signature_uri"]?.asText() ?: ""
             )
 
             val signSection = """
@@ -397,7 +397,7 @@ class MaintenanceService(
         }.joinToString("\n")
 
         val companyLink = s3Service.getPresignedObjectUrl(
-            Utils.getCurrentBucket(),
+
             company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo ausente")
         )
         val dateOfVisit = Utils.convertToSaoPauloLocal(Instant.parse(maintenance["date_of_visit"].asText()))
@@ -439,7 +439,7 @@ class MaintenanceService(
 
         if (maintenance.has("signature_uri") && !maintenance["signature_uri"].isNull) {
             val signatureImage = s3Service.getPresignedObjectUrl(
-                Utils.getCurrentBucket(), maintenance["signature_uri"]?.asText() ?: ""
+                maintenance["signature_uri"]?.asText() ?: ""
             )
 
             val signSection = """
@@ -528,7 +528,7 @@ class MaintenanceService(
         val maintenances = root["maintenances"]!!
 
         val logoUrl = s3Service.getPresignedObjectUrl(
-            Utils.getCurrentBucket(), company["company_logo"].asText()
+            company["company_logo"].asText()
         )
 
         val titleDoc = if (filtersRequest.type == "led") "Relatório de Manutenções de LEDs"
@@ -638,7 +638,7 @@ class MaintenanceService(
 
             val signSection = if (!m["signature_uri"].isNull) {
                 val signUrl = s3Service.getPresignedObjectUrl(
-                    Utils.getCurrentBucket(), m["signature_uri"].asText()
+                    m["signature_uri"].asText()
                 )
                 """
                                 <div class="signature">

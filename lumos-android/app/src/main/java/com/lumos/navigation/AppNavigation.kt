@@ -22,7 +22,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
 import com.lumos.MyApp
 import com.lumos.api.ContractApi
@@ -51,9 +50,11 @@ import com.lumos.repository.ViewRepository
 import com.lumos.ui.auth.LoginScreen
 import com.lumos.ui.components.SplashScreen
 import com.lumos.ui.directexecution.DirectExecutionHomeScreen
+import com.lumos.ui.directexecution.StreetInstallationNoWorkOrder
 import com.lumos.ui.directexecution.StreetMaterialScreen
 import com.lumos.ui.home.HomeScreen
 import com.lumos.ui.installationholder.InstallationHolderScreen
+import com.lumos.ui.installationholder.NewInstallationScreen
 import com.lumos.ui.lockscreen.LockedAppScreen
 import com.lumos.ui.maintenance.MaintenanceScreen
 import com.lumos.ui.menu.MenuScreen
@@ -124,9 +125,13 @@ object Routes {
     const val PRE_MEASUREMENT_INSTALLATION_MATERIALS = "pre-measurement-installation-materials"
 
     // -> direct-installations
+    const val CREATE_INSTALLATION= "create-installation"
     const val DIRECT_EXECUTION_FLOW = "direct-execution-flow"
     const val DIRECT_EXECUTION_HOME_SCREEN = "direct-execution-home-screen"
     const val DIRECT_EXECUTION_SCREEN_MATERIALS = "direct-execution-screen-materials"
+    const val DIRECT_EXECUTION_NO_WORK_ORDER = "direct_execution_no_work_order"
+
+    // -> others
     const val UPDATE = "update"
     const val SYNC_FLOW = "sync-flow"
     const val SYNC = "sync"
@@ -683,25 +688,25 @@ fun AppNavigation(
                 route = Routes.DIRECT_EXECUTION_FLOW,
                 startDestination = Routes.DIRECT_EXECUTION_HOME_SCREEN
             ) {
-                composable(
-                    route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{creationDate}" +
-                            "?contractId={contractId}&instructions={instructions}",
-                    arguments = listOf(
-                        navArgument("id") { type = NavType.LongType },
-                        navArgument("contractor") { type = NavType.StringType },
-                        navArgument("creationDate") { type = NavType.StringType },
-                        navArgument("contractId") {
-                            type = NavType.StringType
-                            nullable = true
-                            defaultValue = null
-                        },
-                        navArgument("instructions") {
-                            type = NavType.StringType
-                            nullable = true
-                            defaultValue = null
-                        }
-                    )
-                ) { backStackEntry ->
+                    composable(
+                        route = "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/{id}/{contractor}/{creationDate}" +
+                                "?contractId={contractId}&instructions={instructions}",
+                        arguments = listOf(
+                            navArgument("id") { type = NavType.LongType },
+                            navArgument("contractor") { type = NavType.StringType },
+                            navArgument("creationDate") { type = NavType.StringType },
+                            navArgument("contractId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("instructions") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
+                    ) { backStackEntry ->
                     val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
                     }
@@ -710,7 +715,8 @@ fun AppNavigation(
                         DirectExecutionViewModel(
                             repository = directExecutionRepository,
                             contractRepository = contractRepository,
-                            parentEntry.savedStateHandle
+                            parentEntry.savedStateHandle,
+                            stockRepository
                         )
                     }
 
@@ -729,7 +735,8 @@ fun AppNavigation(
                         DirectExecutionViewModel(
                             repository = directExecutionRepository,
                             contractRepository = contractRepository,
-                            parentEntry.savedStateHandle
+                            parentEntry.savedStateHandle,
+                            stockRepository
                         )
                     }
 
@@ -739,6 +746,52 @@ fun AppNavigation(
                         navController = navController,
                         coordinates = coordinatesService,
                         addressService = addressService,
+                    )
+                }
+
+                composable(Routes.CREATE_INSTALLATION) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                    }
+
+                    val vm: DirectExecutionViewModel = viewModel(parentEntry) {
+                        DirectExecutionViewModel(
+                            repository = directExecutionRepository,
+                            contractRepository = contractRepository,
+                            parentEntry.savedStateHandle,
+                            stockRepository
+                        )
+                    }
+
+                    NewInstallationScreen(
+                        viewModel = vm,
+                        navController = navController,
+                        coordinatesService = coordinatesService,
+                        addressService = addressService,
+                    )
+
+                }
+
+                composable(Routes.DIRECT_EXECUTION_NO_WORK_ORDER) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
+                    }
+
+                    val vm: DirectExecutionViewModel = viewModel(parentEntry) {
+                        DirectExecutionViewModel(
+                            repository = directExecutionRepository,
+                            contractRepository = contractRepository,
+                            parentEntry.savedStateHandle,
+                            stockRepository
+                        )
+                    }
+
+                    StreetInstallationNoWorkOrder(
+                        navController = navController,
+                        coordinates = coordinatesService,
+                        addressService = addressService,
+                        viewModel = vm,
+                        context = context,
                     )
                 }
 

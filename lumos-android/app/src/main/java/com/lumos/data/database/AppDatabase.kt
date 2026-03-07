@@ -73,7 +73,7 @@ import com.lumos.domain.model.PreMeasurementInstallationItem
         (PreMeasurementInstallationStreet::class),
         (PreMeasurementInstallationItem::class),
     ],
-    version = 18,
+    version = 19,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -757,6 +757,11 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_18_19 = object : Migration(18,19) {
+            override fun migrate(db: SupportSQLiteDatabase){
+                db.execSQL("alter table direct_execution_street add column comment text")
+            }
+        }
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -782,6 +787,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_15_16,
                     MIGRATION_16_17,
                     MIGRATION_17_18,
+                    MIGRATION_18_19,
                 ).setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDB", "SQL executed: $sqlQuery with args: $bindArgs")
                 }, Executors.newSingleThreadExecutor()).build()

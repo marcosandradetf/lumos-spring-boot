@@ -32,7 +32,7 @@ data class DirectExecution( //tabela nova
 )
 
 @Entity(tableName = "direct_execution_street")
-data class DirectExecutionStreet( //tabela nova
+data class DirectExecutionStreet(
     @PrimaryKey(autoGenerate = true) val directStreetId: Long = 0,
     var address: String,
     var latitude: Double? = null,
@@ -41,11 +41,10 @@ data class DirectExecutionStreet( //tabela nova
     var deviceId: String,
     val directExecutionId: Long,
     val description: String,
-
     val lastPower: String? = null,
-
     val finishAt: String?,
     val currentSupply: String?,
+    val comment: String? = null
 )
 
 @Entity(tableName = "direct_execution_street_item")
@@ -57,7 +56,7 @@ data class DirectExecutionStreetItem( //tabela nova
     val materialName: String,
     val contractItemId: Long,
     var directStreetId: Long = 0,
-    val quantityExecuted: String
+    var quantityExecuted: String
 )
 
 data class DirectExecutionDTOResponse(

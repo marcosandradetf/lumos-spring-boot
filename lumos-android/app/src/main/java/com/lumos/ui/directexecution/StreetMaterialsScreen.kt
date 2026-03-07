@@ -82,7 +82,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.google.android.gms.location.LocationServices
 import com.lumos.domain.model.DirectExecutionStreet
 import com.lumos.domain.model.DirectExecutionStreetItem
 import com.lumos.domain.model.ReserveMaterialJoin
@@ -100,7 +99,6 @@ import com.lumos.utils.Utils.sanitizeDecimalInput
 import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.math.BigDecimal
-import java.util.UUID
 
 @Composable
 fun StreetMaterialScreen(
@@ -124,7 +122,7 @@ fun StreetMaterialScreen(
         if (directExecutionViewModel.reserves.isEmpty()) {
             return@LaunchedEffect
         } else if (directExecutionViewModel.sameStreet) {
-            directExecutionViewModel.initializeExecutionSameStreet(currentAddress)
+            directExecutionViewModel.startNewExecution(currentAddress)
         } else {
             directExecutionViewModel.loadingCoordinates = true
             currentAddress = ""
@@ -228,7 +226,7 @@ fun StreetMaterialScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Esse ponto está concluído.\nFinalize todos os pontos e depois toque em Gerenciar Instalação para enviar a instalação.",
+                        text = "Essa rua está concluído.\nFinalize todos os pontos e depois toque em Gerenciar Instalação para enviar a instalação.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -274,6 +272,21 @@ fun StreetMaterialScreen(
                             "Nova Instalação Nessa Rua"
                         )
                     }
+
+                    Button(
+                        onClick = {
+                            directExecutionViewModel.startNewExecution(null)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(32.dp)
+                    ) {
+                        Text(
+                            "Nova Rua"
+                        )
+                    }
+
                 }
 
             }
@@ -873,7 +886,7 @@ fun MaterialItem(
 
                     Spacer(Modifier.height(12.dp))
 
-                    // ---------------- CAMPO DE QUANTIDADE (mantido da sua lógica!) -------------------
+                    // ---------------- CAMPO DE QUANTIDADE -------------------
                     OutlinedTextField(
                         value = text,
                         onValueChange = { newValue ->
@@ -1232,7 +1245,10 @@ fun PrevMStreetScreen() {
 
     StreetMaterialScreen(
         directExecutionViewModel = DirectExecutionViewModel(
-            null, null,
+            null,
+            null,
+            null,
+            null,
             mockItems = mockItems,
             mockStreetItems = listOf(
                 DirectExecutionStreetItem(

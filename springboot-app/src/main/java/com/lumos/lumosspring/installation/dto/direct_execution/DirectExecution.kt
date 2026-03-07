@@ -55,6 +55,7 @@ data class InstallationStreetRequest(
     val finishAt: Instant?,
     val pointNumber: Int? = null,
     val executorsIds: List<UUID>? = null,
+    val comment: String? = null,
 )
 
 data class InstallationItemRequest(

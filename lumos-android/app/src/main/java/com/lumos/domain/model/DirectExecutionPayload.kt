@@ -19,7 +19,8 @@ data class DirectExecutionStreetRequest(
     val lastPower: String?,
     val materials: List<ReservePartial>,
     val currentSupply: String?,
-    val finishAt: String?
+    val finishAt: String?,
+    val comment: String?
 )
 
 data class ReservePartial(

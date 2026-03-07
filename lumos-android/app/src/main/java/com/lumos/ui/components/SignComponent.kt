@@ -291,9 +291,12 @@ fun captureSignatureAsBitmap(
     width: Int,
     height: Int
 ): Bitmap {
-    val tempBitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    // 1. Garantir que o tamanho inicial seja válido
+    val safeWidth = if (width <= 0) 100 else width
+    val safeHeight = if (height <= 0) 100 else height
+
+    val tempBitmap = createBitmap(safeWidth, safeHeight, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(tempBitmap)
-    canvas.drawColor(android.graphics.Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
     val paint = Paint().apply {
         color = android.graphics.Color.BLACK
@@ -308,11 +311,19 @@ fun captureSignatureAsBitmap(
     var minY = Float.MAX_VALUE
     var maxX = Float.MIN_VALUE
     var maxY = Float.MIN_VALUE
+    var hasValidPoints = false
 
     strokes.forEach { stroke ->
-        if (stroke.size < 2) return@forEach
+        if (stroke.isEmpty()) return@forEach
+        hasValidPoints = true
         val path = android.graphics.Path()
         path.moveTo(stroke[0].x, stroke[0].y)
+
+        // Atualiza limites mesmo para o primeiro ponto
+        minX = min(minX, stroke[0].x)
+        minY = min(minY, stroke[0].y)
+        maxX = max(maxX, stroke[0].x)
+        maxY = max(maxY, stroke[0].y)
 
         for (point in stroke.drop(1)) {
             path.lineTo(point.x, point.y)
@@ -321,19 +332,30 @@ fun captureSignatureAsBitmap(
             maxX = max(maxX, point.x)
             maxY = max(maxY, point.y)
         }
-
         canvas.drawPath(path, paint)
     }
 
-    // Adiciona margem de segurança
+    // Se não houver pontos válidos ou as coordenadas não mudaram, retorna o bitmap inteiro
+    if (!hasValidPoints || minX == Float.MAX_VALUE) {
+        return tempBitmap
+    }
+
+    // 2. Cálculo seguro do recorte
     val padding = 20
     val left = max(minX.toInt() - padding, 0)
     val top = max(minY.toInt() - padding, 0)
-    val right = min(maxX.toInt() + padding, width)
-    val bottom = min(maxY.toInt() + padding, height)
+    val right = min(maxX.toInt() + padding, safeWidth)
+    val bottom = min(maxY.toInt() + padding, safeHeight)
 
-    // Corta a imagem final
-    return createBitmap(tempBitmap, left, top, right - left, bottom - top)
+    val finalWidth = right - left
+    val finalHeight = bottom - top
+
+    // 3. Verificação crucial antes do createBitmap
+    return if (finalWidth > 0 && finalHeight > 0) {
+        createBitmap(tempBitmap, left, top, finalWidth, finalHeight)
+    } else {
+        tempBitmap
+    }
 }
 
 

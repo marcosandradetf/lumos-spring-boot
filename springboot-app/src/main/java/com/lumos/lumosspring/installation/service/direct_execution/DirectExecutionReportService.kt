@@ -40,7 +40,7 @@ class DirectExecutionReportService(
         val total = jsonData["total"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
+        val companyLogoUrl = s3Service.getPresignedObjectUrl( logoUri)
 
         val team = jsonData["team"]!!
         val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
@@ -192,10 +192,10 @@ class DirectExecutionReportService(
         val streets = jsonData["streets"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), logoUri)
+        val companyLogoUrl = s3Service.getPresignedObjectUrl( logoUri)
 
         val streetLinesHtml = streets.joinToString("\n") { line ->
-            val photoUrl = s3Service.getPresignedObjectUrl(Utils.getCurrentBucket(), line["execution_photo_uri"].asText())
+            val photoUrl = s3Service.getPresignedObjectUrl( line["execution_photo_uri"].asText())
             """
                 <div style="
                       page-break-inside: avoid;

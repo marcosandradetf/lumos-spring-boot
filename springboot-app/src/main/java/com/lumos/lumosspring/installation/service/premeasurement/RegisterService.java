@@ -63,7 +63,7 @@ public class RegisterService {
             throw new Utils.BusinessException(message);
         }
 
-        if(!List.of(ExecutionStatus.AVAILABLE_EXECUTION, ExecutionStatus.IN_PROGRESS).contains(installation.status())) {
+        if (!List.of(ExecutionStatus.AVAILABLE_EXECUTION, ExecutionStatus.IN_PROGRESS).contains(installation.status())) {
             return ResponseEntity.noContent().build();
         }
 
@@ -75,7 +75,7 @@ public class RegisterService {
             );
             saveLinkedItems(r.getContractItemId(), r.getQuantityExecuted(), installation.preMeasurementStreetId());
 
-            if(r.getTruckStockControl()) {
+            if (r.getTruckStockControl()) {
                 materialStockRegisterRepository.debitStock(
                         r.getQuantityExecuted(),
                         r.getTruckMaterialStockId()
@@ -94,9 +94,9 @@ public class RegisterService {
                         .append(description.replaceAll("\\s+", "_"));
             }
 
-            fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder.toString(), "execution", Utils.getCurrentTenantId());
+            fileUri = s3Service.uploadFile(photo, folder.toString(), "execution", Utils.getCurrentTenantId());
         }
-        s3Service.deleteFiles(Utils.getCurrentBucket(), Set.of(installation.preMeasurementPhotoUri()));
+        s3Service.deleteFiles(Set.of(installation.preMeasurementPhotoUri()));
 
         preMeasurementInstallationRepository.finishInstallationStreet(
                 fileUri, ExecutionStatus.FINISHED, installationReq.getStreetId(), installationReq.getCurrentSupply(),
@@ -136,7 +136,7 @@ public class RegisterService {
                         .append(installationReq.getResponsible().replaceAll("\\s+", "_"));
             }
 
-            fileUri = s3Service.uploadFile(photo, Utils.getCurrentBucket(), folder.toString(), "installation", Utils.getCurrentTenantId());
+            fileUri = s3Service.uploadFile(photo, folder.toString(), "installation", Utils.getCurrentTenantId());
         }
 
         preMeasurementInstallationRepository.saveInstallationSignPhotoUri(

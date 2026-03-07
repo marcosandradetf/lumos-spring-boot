@@ -108,7 +108,7 @@ class ContractService(
             }
 
             if (filesToDelete.isNotEmpty()) {
-                s3Service.deleteFiles(Utils.getCurrentBucket(), filesToDelete)
+                s3Service.deleteFiles(filesToDelete)
             }
 
             contract.contractFile = contractDTO.contractFile
@@ -120,7 +120,7 @@ class ContractService(
             }
 
             if (filesToDelete.isNotEmpty()) {
-                s3Service.deleteFiles(Utils.getCurrentBucket(), filesToDelete)
+                s3Service.deleteFiles(filesToDelete)
             }
         }
 
@@ -162,7 +162,7 @@ class ContractService(
                 }
                 .map { it.contractItemId }
 
-        if(deleteContractItemsIds.isNotEmpty()) {
+        if (deleteContractItemsIds.isNotEmpty()) {
             val blockedItems = contractItemsQuantitativeRepository
                 .findBlockedItemDescriptions(deleteContractItemsIds)
 
@@ -534,8 +534,11 @@ class ContractService(
         val quantity: BigDecimal,
     )
 
-    private fun getExecutedQuantityByContract(contractItemId: Long, forReserve: Boolean = false): List<ExecutedQuantity> {
-        val sql = if(forReserve) {
+    private fun getExecutedQuantityByContract(
+        contractItemId: Long,
+        forReserve: Boolean = false
+    ): List<ExecutedQuantity> {
+        val sql = if (forReserve) {
             """
                 SELECT
                     t.installation_id,

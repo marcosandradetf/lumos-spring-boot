@@ -20,7 +20,6 @@ class S3Controller(private val service: S3Service) {
     fun uploadFile(@RequestParam("file") file: MultipartFile): ResponseEntity<String> {
         val response = service.uploadFile(
             file,
-            Utils.getCurrentBucket(),
             "documents",
             "document",
             Utils.getCurrentTenantId()
@@ -31,7 +30,7 @@ class S3Controller(private val service: S3Service) {
 
     @GetMapping("/s3/download/{fileName}")
     fun downloadFile(@PathVariable fileName: String): ResponseEntity<InputStreamResource> {
-        val inputStream: InputStream = service.downloadFile(fileName, Utils.getCurrentBucket())
+        val inputStream: InputStream = service.downloadFile(fileName)
         val resource = InputStreamResource(inputStream)
 
         // Detecta o MIME type automaticamente
@@ -51,7 +50,7 @@ class S3Controller(private val service: S3Service) {
     fun getPhoto(@RequestParam("uri") uri: String): ResponseEntity<InputStreamResource> {
 
         val inputStream: InputStream =
-            service.downloadFile(uri, Utils.getCurrentBucket())
+            service.downloadFile(uri)
 
         val resource = InputStreamResource(inputStream)
 

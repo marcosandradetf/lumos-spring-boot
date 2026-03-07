@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.s3.service
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
@@ -18,12 +19,13 @@ import java.util.UUID
 @Service
 class S3Service(
     private val s3Client: S3Client,
-    private val s3Presigner: S3Presigner
+    private val s3Presigner: S3Presigner,
+    @param:Value("\${r2.bucket-name}")
+    private val bucketName: String
 ) {
 
     fun uploadFile(
         file: MultipartFile,
-        bucketName: String,
         folder: String,
         fileName: String,
         tenantId: UUID,
@@ -48,7 +50,7 @@ class S3Service(
         return objectName
     }
 
-    fun downloadFile(objectName: String, bucketName: String): InputStream {
+    fun downloadFile(objectName: String): InputStream {
         return s3Client.getObject(
             GetObjectRequest.builder()
                 .bucket(bucketName)
@@ -58,7 +60,6 @@ class S3Service(
     }
 
     fun getPresignedObjectUrl(
-        bucketName: String,
         objectName: String,
         expiryAt: Int = 5 * 60
     ): String {
@@ -81,7 +82,6 @@ class S3Service(
     )
 
     fun getPublicUrl(
-        bucketName: String,
         objectName: String?,
         expiryAt: Int = 5 * 60
     ): PublicUrlResponse {
@@ -89,13 +89,13 @@ class S3Service(
             return PublicUrlResponse(null, null)
         }
 
-        val url = getPresignedObjectUrl(bucketName, objectName, expiryAt)
+        val url = getPresignedObjectUrl(objectName, expiryAt)
         val expiresAt = Instant.now().plusSeconds(expiryAt.toLong()).epochSecond
 
         return PublicUrlResponse(url, expiresAt)
     }
 
-    fun deleteFiles(bucketName: String, objectNames: Set<String>) {
+    fun deleteFiles(objectNames: Set<String>) {
         val identifiers = objectNames.map {
             ObjectIdentifier.builder().key(it).build()
         }

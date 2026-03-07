@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,19 +15,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,11 +50,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -400,7 +413,7 @@ fun NewMaintenanceContent(
     createMaintenance: (Long) -> Unit,
     back: () -> Unit
 ) {
-
+    // Mantém sua lógica de sincronização inicial
     LaunchedEffect(Unit) {
         resync()
     }
@@ -410,115 +423,184 @@ fun NewMaintenanceContent(
         selectedIcon = BottomBar.MAINTENANCE.value,
         navigateBack = back,
         navigateToHome = {
-            navController.navigate(Routes.HOME){
+            navController.navigate(Routes.HOME) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToMore = {
-            navController.navigate(Routes.MORE){
+            navController.navigate(Routes.MORE) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToStock = {
-            navController.navigate(Routes.STOCK){
+            navController.navigate(Routes.STOCK) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToMaintenance = {
-            navController.navigate(Routes.MAINTENANCE){
+            navController.navigate(Routes.MAINTENANCE) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         },
         navigateToExecutions = {
-            navController.navigate(Routes.INSTALLATION_HOLDER){
+            navController.navigate(Routes.INSTALLATION_HOLDER) {
                 popUpTo(Routes.MAINTENANCE) { inclusive = true }
             }
         }
     ) { _, _ ->
 
-        if (loading) {
-            Loading("Carregando")
-        } else {
-
-            LazyColumn {
-
-                if (!hasInternet) {
-                    item {
-                        Column(
-                            Modifier.clickable {
-                                resync()
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (loading) {
+                // Centraliza o loading na tela
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Loading("Carregando contratos...")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Alerta de Internet estilizado como um Card de aviso
+                    if (!hasInternet) {
+                        item {
+                            Surface(
+                                onClick = resync,
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.WifiOff,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Text(
+                                        text = "Sem internet. Se o contrato não aparecer, toque aqui para tentar de novo.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
                             }
-                        ) {
-                            NoInternet("Se o contrato que procura não aparecer, verifique a internet e clique para tentar de novo.")
+                        }
+                    }
+
+                    if (contracts.isEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier.fillParentMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                                Spacer(Modifier.height(16.dp))
+                                NothingData("Nenhum contrato encontrado")
+                                TextButton(onClick = resync) {
+                                    Text("Tentar atualizar agora")
+                                }
+                            }
+                        }
+                    } else {
+                        // Cabeçalho da Lista
+                        item {
+                            Text(
+                                text = "Selecione o contrato para continuar",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                            )
+                        }
+
+                        // Lista de Contratos
+                        items(
+                            contracts,
+                            key = { it.contractId }
+                        ) { contract ->
+                            ContractCard(
+                                contractorName = abbreviate(contract.contractor),
+                                onClick = { createMaintenance(contract.contractId) }
+                            )
                         }
                     }
                 }
+            }
+        }
+    }
+}
 
-                if (contracts.isEmpty()) {
-                    item {
-                        Spacer(Modifier.height(50.dp))
-                        NothingData("Nenhum contrato encontrado")
-                    }
-                } else {
-                    item {
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 20.dp),
-                            text = "Selecione o contrato para continuar",
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    items(
-                        contracts,
-                        key = { it.contractId }
-                    ) { contract ->
-                        ListItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    createMaintenance(contract.contractId)
-                                }
-                                .background(MaterialTheme.colorScheme.surface)
-                                .shadow(
-                                    elevation = 4.dp,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
-                            headlineContent = {
-                                Text(
-                                    text = abbreviate(contract.contractor),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(vertical = 8.dp)
-                                )
-                            },
-                            leadingContent = {
-                                Icon(
-                                    contentDescription = null,
-                                    imageVector = Icons.Default.Build
-                                )
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContractCard(
+    contractorName: String,
+    onClick: () -> Unit
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = contractorName,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.sp
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = "Toque para iniciar o atendimento",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            leadingContent = {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(42.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Build,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
-
-            }
-
-
-        }
-
+            },
+            trailingContent = {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.outline
+                )
+            },
+            colors = ListItemDefaults.colors(
+                containerColor = Color.Transparent // O Card já provê a cor
+            )
+        )
     }
-
 }
 
 @Preview

@@ -1,9 +1,11 @@
 package com.lumos.api
 
+import com.lumos.domain.model.DirectExecution
 import com.lumos.domain.model.DirectExecutionDTOResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -18,7 +20,7 @@ interface DirectExecutionApi {
         @Query("teamId") teamId: Long,
         @Query("status") status: String,
     ): Response<List<DirectExecutionDTOResponse>>
-    
+
     @Multipart
     @POST("api/mobile/execution/save-street-installation")
     suspend fun submitDirectExecutionStreet(
@@ -31,5 +33,11 @@ interface DirectExecutionApi {
     suspend fun submitDirectExecution(
         @Part signature: MultipartBody.Part?,
         @Part("installation") installation: RequestBody?,
+    ): Response<Void>
+
+    @POST("api/mobile/v1/direct-execution/create-installation")
+    suspend fun createInstallation(
+        @Body execution: DirectExecution?,
+        @Query("teamId") teamId: Long
     ): Response<Void>
 }

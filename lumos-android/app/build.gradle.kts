@@ -16,8 +16,8 @@ android {
         applicationId = "com.thryon.lumos"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40
-        versionName = "2.0.6"
+        versionCode = 41
+        versionName = "2.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -44,10 +44,10 @@ android {
     signingConfigs {
         create("release") {
 //            storeFile = file("C:/Users/marco/projects/lumos-keystore/com.thryon.lumos.jks")
-//            storeFile = file("C:/Users/Marcos/projects/lumos-keystore/com.thryon.lumos.jks")
+            storeFile = file("C:/Users/Marcos/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("/Users/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
 //            storeFile = file("/home/marcosandrade/projects/lumos-keystore/com.thryon.lumos.jks")
-            storeFile = file("/home/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
+//            storeFile = file("/home/marcos/projects/lumos-keystore/com.thryon.lumos.jks")
             storePassword = "4dejulho_"
             keyAlias = "key0"
             keyPassword = "4dejulho_"
@@ -162,5 +162,11 @@ dependencies {
     implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     implementation("com.auth0.android:jwtdecode:2.0.2")
+
+    //map
+    implementation("org.maplibre.gl:android-sdk:11.11.0")
+    // Plugin de Anotações (para PointAnnotationManager e draggable)
+    // Note que o pacote mudou para org.maplibre
+    implementation("org.maplibre.gl:android-plugin-annotation-v9:3.0.1")
 
 }

@@ -210,7 +210,7 @@ fun StreetMaintenanceContent(
             }
 
             street.latitude = lat
-            street.longitude = lat
+            street.longitude = long
         }
         loadingCoordinates = false
     }
