@@ -218,6 +218,8 @@ fun StreetInstallationNoWorkOrder(
 
 
     LaunchedEffect(Unit) {
+        viewModel.onExecutionScreen()
+
         loadingCoordinates = true
         val (lat, long) = coordinates.execute()
         if (lat != null && long != null) {
@@ -263,9 +265,6 @@ fun StreetInstallationNoWorkOrder(
         title = "Nova Rua",
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateBack = {
-            navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                .savedStateHandle["route_event"] = Routes.DIRECT_EXECUTION_HOME_SCREEN
-
             navController.popBackStack()
         },
         navigateToHome = {
@@ -360,10 +359,6 @@ fun StreetInstallationNoWorkOrder(
                     // 🔹 Ação principal
                     OutlinedButton(
                         onClick = {
-                            navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                                .savedStateHandle["route_event"] =
-                                Routes.DIRECT_EXECUTION_HOME_SCREEN
-
                             navController.popBackStack()
                         },
                         modifier = Modifier

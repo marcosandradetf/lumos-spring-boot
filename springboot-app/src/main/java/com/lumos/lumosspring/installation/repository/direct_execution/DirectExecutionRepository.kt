@@ -11,6 +11,7 @@ import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
+
 @Repository
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     data class InstallationRow(val status: String, val description: String)
@@ -82,6 +83,11 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     """)
     fun findDirectExecutionIdByExternalId(externalId: Long): Long?
 
+    fun findAllByDirectExecutionStatusAndTenantId(
+        directExecutionStatus: String,
+        tenantId: UUID
+    ): MutableList<DirectExecution>
+
 }
 
 @Repository
@@ -140,10 +146,13 @@ interface DirectExecutionRepositoryStreet : CrudRepository<DirectExecutionStreet
     )
     fun getByDirectExecutionId(id: Long): List<Long>
     fun existsDirectExecutionStreetByDeviceStreetIdAndDeviceId(deviceStreetId: Long, deviceId: String): Boolean
+    fun findAllByDirectExecutionId(directExecutionId: Long): MutableList<DirectExecutionStreet>
 }
 
 @Repository
 interface DirectExecutionRepositoryStreetItem : CrudRepository<DirectExecutionStreetItem, Long> {
+    fun findAllByDirectExecutionStreetIdIn(directExecutionStreetIds: MutableCollection<Long>): MutableList<DirectExecutionStreetItem>
+    fun findByDirectExecutionStreetItemIdIn(directExecutionStreetItemIds: MutableCollection<Long>): MutableList<DirectExecutionStreetItem>
 }
 
 @Repository

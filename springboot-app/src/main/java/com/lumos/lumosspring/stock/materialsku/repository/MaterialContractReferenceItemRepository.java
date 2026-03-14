@@ -8,6 +8,7 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -24,4 +25,10 @@ public interface MaterialContractReferenceItemRepository extends CrudRepository<
             """
     )
     List<Long> findAllByMaterialId(Long materialId);
+
+    List<MaterialContractReferenceItem> findByContractReferenceItemIdIn(Collection<Long> contractReferenceItemIds);
+
+    List<MaterialContractReferenceItem> findByMaterialId(Long materialId);
+
+    List<MaterialContractReferenceItem> findByMaterialIdIn(Collection<Long> materialIds);
 }

@@ -84,6 +84,7 @@ fun NewInstallationScreen(
 
     // Mantém sua lógica de sincronização inicial
     LaunchedEffect(Unit) {
+        viewModel.onCreateInstallation()
         viewModel.syncContracts()
 
         val (lat, long) = coordinatesService.execute()
@@ -106,10 +107,6 @@ fun NewInstallationScreen(
             val query = listOfNotNull(contractParam, instructionsParam)
                 .joinToString("&")
                 .let { if (it.isNotEmpty()) "?$it" else "" }
-
-            navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                .savedStateHandle["route_event"] =
-                Routes.DIRECT_EXECUTION_HOME_SCREEN
 
             navController.navigate(
                 "${Routes.DIRECT_EXECUTION_HOME_SCREEN}/$localId/$contractorEncoded/$creationDateEncoded$query"
@@ -160,7 +157,7 @@ fun NewInstallationScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = 130.dp),
+                        .padding(bottom = 240.dp),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {

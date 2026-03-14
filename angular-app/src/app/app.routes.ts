@@ -124,6 +124,19 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
+
+    {
+        path: 'contratos/instalacoes-pendentes',
+        loadComponent: () => import('./contract/pending-executions/pending-executions.component').then(e => e.PendingExecutionsComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+    },
+    {
+        path: 'contratos/validar-execucao/:id',
+        loadComponent: () => import('./contract/validate-execution/execution-no-work-service.component').then(e => e.ExecutionNoWorkServiceComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+    },
     // end
 
     // start settings path

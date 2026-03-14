@@ -123,7 +123,7 @@ class DirectExecutionRepository(
         db.directExecutionDao().getReservesOnce(directExecutionId)
 
     suspend fun getDirectExecutionByContractId(contractId: Long): DirectExecution? {
-        TODO()
+        return db.directExecutionDao().getDirectExecutionByContractId(contractId)
     }
 
     suspend fun insertExecution(execution: DirectExecution) {

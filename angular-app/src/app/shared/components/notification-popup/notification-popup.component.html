@@ -1,0 +1,99 @@
+<div
+  class="w-full bg-white dark:bg-neutral-950 rounded-xl  overflow-hidden">
+
+  <!-- HEADER -->
+  <div class="flex items-start gap-4 px-6 pt-6 pb-5">
+
+    <!-- Ícone -->
+    <div
+      class="w-12 h-12 flex items-center justify-center rounded-xl
+             bg-emerald-100 dark:bg-emerald-500/10
+             text-emerald-600 dark:text-emerald-400
+             shadow-sm flex-shrink-0">
+      <i class="pi pi-bell text-lg"></i>
+    </div>
+
+    <!-- Título e Badge -->
+    <div class="flex-1 min-w-0">
+
+      <div class="flex items-start justify-between gap-4">
+
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-white leading-snug">
+          {{ data.title || 'Instalação concluída aguardando validação' }}
+        </h2>
+
+        <span class="text-xs text-slate-400 dark:text-neutral-500 whitespace-nowrap">
+          Agora
+        </span>
+
+      </div>
+
+      <div class="mt-2">
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium
+                 bg-slate-100 dark:bg-neutral-800
+                 text-slate-600 dark:text-neutral-300">
+          Notificação do Sistema
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="px-6 pb-6">
+
+    <div class="space-y-3 text-sm text-slate-600 dark:text-neutral-400 leading-relaxed">
+
+      <p>
+        {{ data.subtitle ?? 'Uma instalação foi concluída no campo sem ordem de serviço prévia.' }}
+      </p>
+
+      <div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3">
+        <p class="text-amber-700 dark:text-amber-400 text-sm">
+          {{ data.body ?? 'Para liberar o status, é necessário validar a execução vinculando os materiais aos seus respectivos itens contratuais.' }}
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div
+    class="flex items-center justify-end gap-4 px-6 py-5
+           border-t border-slate-200 dark:border-neutral-800
+           bg-gradient-to-b from-white to-slate-50
+           dark:from-neutral-950 dark:to-neutral-900">
+
+    <!-- Secundário -->
+    <button
+      (click)="close()"
+      class="text-sm font-medium text-slate-500 hover:text-slate-700
+             dark:text-neutral-400 dark:hover:text-white
+             transition-colors duration-200">
+      Ignorar
+    </button>
+
+    <!-- Primário -->
+    <button
+      (click)="goToDetails()"
+      class="group inline-flex items-center gap-2 px-5 py-2.5
+             rounded-xl text-sm font-semibold text-white
+             bg-emerald-500 hover:bg-emerald-600
+             shadow-md hover:shadow-lg
+             transition-all duration-200
+             hover:-translate-y-0.5 active:translate-y-0">
+
+      <span>Conferir detalhes</span>
+
+      <i
+        class="pi pi-arrow-right text-xs
+               transition-transform duration-200
+               group-hover:translate-x-1">
+      </i>
+
+    </button>
+
+  </div>
+</div>

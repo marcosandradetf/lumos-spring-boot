@@ -101,6 +101,7 @@ export class CreateComponent implements OnInit {
     }
 
     currentUrl = "";
+    step = 1;
 
     ngOnInit() {
         this.currentUrl = this.router.url;
@@ -109,6 +110,7 @@ export class CreateComponent implements OnInit {
             const state = history.state as {
                 contract?: ContractResponse;
                 items?: ContractReferenceItemsDTO[];
+                step?: number | undefined | null
             };
 
             if (state?.contract && state?.items) {
@@ -128,6 +130,10 @@ export class CreateComponent implements OnInit {
                     items: items,
                     companyId: contract.companyId,
                 };
+
+                if (state?.step) {
+                    this.step = state?.step;
+                }
 
             } else {
                 void this.router.navigate(['/contratos/listar'], {

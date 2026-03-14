@@ -3,9 +3,9 @@ package com.lumos.lumosspring.contract.entities
 import com.lumos.lumosspring.authentication.model.TenantEntity
 import com.lumos.lumosspring.util.ContractStatus
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
 
@@ -29,5 +29,8 @@ class Contract : TenantEntity() {
     var status : String = ContractStatus.ACTIVE
     var companyId: Long = -1L
     var lastUpdatedBy: UUID? = null
+
+    @Transient
+    var items: List<ContractItem> = emptyList()
 
 }

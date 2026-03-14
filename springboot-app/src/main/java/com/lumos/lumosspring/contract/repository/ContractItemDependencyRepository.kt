@@ -20,6 +20,17 @@ interface ContractItemDependencyRepository: CrudRepository<ContractItemDependenc
     """)
     fun getAllDirectExecutionItemsById(contractItemId: Long, directExecutionId: Long): List<ContractItemDependencyRow>
 
+
+    @Query("""
+        select ci2.contract_item_id, cid.factor
+        from contract_reference_item cri
+                 join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
+                 join contract_item_dependency cid on cid.contract_item_reference_id = cri.contract_reference_item_id
+                 join contract_item ci2 on ci2.contract_item_reference_id = cid.contract_item_reference_id_dependency
+        where ci.contract_item_id = :contractItemId and ci2.contract_contract_id = :contractId
+    """)
+    fun getAllRelatedContractItemsItemsById(contractItemId: Long, contractId: Long): List<ContractItemDependencyRow>
+
     @Query("""
         select 
             psi.contract_item_id, cid.factor

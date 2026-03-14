@@ -1,10 +1,11 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, catchError, map, Observable, of, switchMap, tap} from 'rxjs';
+import {BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap} from 'rxjs';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {User} from '../../models/user.model';
 import {environment} from '../../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
+import {FcmService} from '../service/fcm.service';
 
 export interface DecodedToken {
     iss: string;
@@ -28,7 +29,11 @@ export class AuthService {
     public isLoggedInSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(this.hasTokens());
     public isLoading$ = new BehaviorSubject<boolean>(true); // status de carregamento
 
-    constructor(private http: HttpClient, private router: Router, public user: User) {
+    constructor(
+        private http: HttpClient,
+        private router: Router,
+        public user: User,
+        private fcmService: FcmService) {
         if (typeof window !== 'undefined' && window.localStorage) {
             const storedUser = localStorage.getItem('user');
             if (storedUser) {
@@ -92,6 +97,7 @@ export class AuthService {
                 );
                 if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
                 this.isLoggedInSubject.next(true);
+                void this.fcmService.getPermission(roles);
             }),
             catchError(error => {
                 throw error;
@@ -99,22 +105,36 @@ export class AuthService {
         );
     }
 
-    logout() {
-        return this.http.post(this.apiUrl + '/logout', {}, {withCredentials: true}).pipe(
+    logout(): Observable<void> {
+        return this.http.post(this.apiUrl + '/logout', {}, { withCredentials: true }).pipe(
+            switchMap(() => {
+                if (!this.user) return of(void 0);
+
+                // 👇 aqui ele realmente ESPERA a Promise terminar
+                return from(this.fcmService.revokePermission(this.user.roles));
+            }),
             tap(() => {
                 this.user?.clearToken();
-                if (typeof window !== 'undefined' && window.localStorage) localStorage.removeItem('user');
+
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.removeItem('user');
+                }
+
                 this.isLoggedInSubject.next(false);
-                this.router.navigate(['/auth/login']);
                 this.isLoading$.next(false);
-            }), catchError(error => {
+
+                void this.router.navigate(['/auth/login']);
+            }),
+            catchError(error => {
                 console.error("Erro no logout:", error);
+
                 this.user?.clearToken();
-                if (typeof window !== 'undefined' && window.localStorage) localStorage.removeItem('user');
+                localStorage.removeItem('user');
                 this.isLoggedInSubject.next(false);
                 this.isLoading$.next(false);
+
                 window.location.reload();
-                return of(null); // Retorna um observable nulo em caso de erro
+                return of(void 0);
             })
         );
     }

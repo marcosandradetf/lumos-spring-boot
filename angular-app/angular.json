@@ -30,7 +30,8 @@
                 "glob": "**/*",
                 "input": "public",
                 "output": "public"
-              }
+              },
+              "src/firebase-messaging-sw.js"
             ],
             "styles": [
               "material-design-icons-iconfont/dist/material-design-icons.css",

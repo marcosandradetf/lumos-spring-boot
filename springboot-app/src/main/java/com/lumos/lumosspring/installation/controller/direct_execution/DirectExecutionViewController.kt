@@ -24,4 +24,23 @@ class DirectExecutionViewController(
     fun getGroupedInstallations(): ResponseEntity<List<Map<String, JsonNode>>> =
         ResponseEntity.ok(viewService.getGroupedInstallations())
 
+    @GetMapping("/execution/contract/{id}/items-for-link")
+    fun getContractItemsForLink(
+        @PathVariable id: Long
+    ): ResponseEntity<Any> {
+        return viewService.getContractItemsForLink(id)
+    }
+
+    @GetMapping("/execution/get-installations-waiting-validation")
+    fun getInstallationsWaitingValidation(): ResponseEntity<Any> {
+        return viewService.getInstallationsWaitingValidation()
+    }
+
+    @GetMapping("/execution/{id}/waiting-validation")
+    fun getExecutionWaitingValidation(
+        @PathVariable id: Long
+    ): ResponseEntity<Any> {
+        return viewService.getExecutionWaitingValidation(id)
+    }
+
 }

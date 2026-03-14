@@ -33,10 +33,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
@@ -70,7 +70,6 @@ import com.lumos.utils.Utils.hasFullName
 import com.lumos.viewmodel.DirectExecutionViewModel
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.time.Instant
 
 @Composable
 fun DirectExecutionHomeScreen(
@@ -82,8 +81,11 @@ fun DirectExecutionHomeScreen(
     val creationDate = viewModel.creationDate
     val triedToSubmit = viewModel.triedToSubmit
     val instructions = viewModel.instructions
-    val streets by viewModel.streets.collectAsState(emptyList())
+    val streets by viewModel.streets.collectAsStateWithLifecycle(emptyList())
 
+    LaunchedEffect(Unit) {
+        viewModel.onHomeScreen()
+    }
 
     var confirmModal by remember { mutableStateOf(false) }
     val alertMessage = remember {
@@ -656,17 +658,8 @@ fun DirectExecutionHomeScreen(
                                 }
 
                                 if(id > 0) {
-                                    navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                                        .savedStateHandle["route_event"] =
-                                        Routes.DIRECT_EXECUTION_SCREEN_MATERIALS
-
                                     navController.navigate(Routes.DIRECT_EXECUTION_SCREEN_MATERIALS)
                                 } else {
-                                    viewModel.acceptedResponsibilityTerm = streets.isNotEmpty()
-                                    navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                                        .savedStateHandle["route_event"] =
-                                        Routes.DIRECT_EXECUTION_NO_WORK_ORDER
-
                                     navController.navigate(Routes.DIRECT_EXECUTION_NO_WORK_ORDER)
                                 }
                             },

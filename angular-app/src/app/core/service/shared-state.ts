@@ -23,5 +23,4 @@ export class SharedState {
         const current = SharedState.showNotificationDrawer$.value;
         this.showNotificationDrawer$.next(!current);
     }
-
 }

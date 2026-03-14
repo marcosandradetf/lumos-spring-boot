@@ -324,3 +324,33 @@ svg path {
     margin: 2rem 0;
   }
 }
+
+
+/* Só afeta o toast com styleClass="corporate-toast" */
+
+.corporate-toast .p-toast-message {
+  all: unset !important;
+  display: block !important;
+  margin-bottom: 1rem !important;
+}
+
+.corporate-toast .p-toast-message-content {
+  all: unset !important;
+  display: block !important;
+}
+
+.corporate-toast .p-toast-message-icon,
+.corporate-toast .p-toast-icon-close {
+  display: none !important;
+}
+
+.corporate-toast.p-toast-top-right {
+  top: 1.5rem !important;
+  right: 1.5rem !important;
+}
+
+
+.corporate-toast .p-toast-message button {
+  display: none !important;
+}
+

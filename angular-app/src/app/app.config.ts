@@ -17,6 +17,10 @@ import Aura from '@primeng/themes/aura';
 import Lara from '@primeng/themes/lara';
 import {MessageService} from 'primeng/api';
 import {MarkdownModule} from 'ngx-markdown';
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getMessaging, provideMessaging } from '@angular/fire/messaging';
+import {environment} from '../environments/environment';
+import {DialogService} from 'primeng/dynamicdialog';
 
 
 registerLocaleData(localePt, 'pt');
@@ -45,6 +49,7 @@ export const appConfig: ApplicationConfig = {
 
         provideAnimationsAsync(),
         MessageService,
+        DialogService,
 
         importProvidersFrom(
             MarkdownModule.forRoot({
@@ -65,7 +70,11 @@ export const appConfig: ApplicationConfig = {
                     }
                 }
             }
-        })
+        }),
+
+        // 🔹 Firebase configurado via environment
+        provideFirebaseApp(() => initializeApp(environment.firebase)),
+        provideMessaging(() => getMessaging()),
     ],
 };
 

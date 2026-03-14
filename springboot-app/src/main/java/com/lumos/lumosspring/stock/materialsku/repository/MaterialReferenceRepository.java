@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +46,8 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
                 order by m.material_name
             """)
     List<MaterialResponse> getCatalogue(UUID tenantId);
+
+    List<Material> findByIdMaterialIn(Collection<Long> idMaterials);
 
     record MaterialResponse(
             Long materialId,

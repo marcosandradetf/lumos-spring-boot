@@ -1,0 +1,9 @@
+.custom-corporate-dialog .p-dialog-mask {
+  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.35); /* slate-900 com transparência */
+}
+
+.custom-corporate-dialog .p-dialog {
+  border-radius: 20px;
+  overflow: hidden;
+}

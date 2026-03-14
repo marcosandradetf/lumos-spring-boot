@@ -16,8 +16,8 @@ android {
         applicationId = "com.thryon.lumos"
         minSdk = 26
         targetSdk = 36
-        versionCode = 41
-        versionName = "2.0.7"
+        versionCode = 43
+        versionName = "2.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

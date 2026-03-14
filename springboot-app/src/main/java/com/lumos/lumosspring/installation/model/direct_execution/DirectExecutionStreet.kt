@@ -4,6 +4,7 @@ import com.lumos.lumosspring.util.ExecutionStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
+import org.springframework.data.annotation.Transient
 
 @Table("direct_execution_street")
 data class DirectExecutionStreet (
@@ -21,4 +22,9 @@ data class DirectExecutionStreet (
     var directExecutionId: Long,
     val currentSupply: String?,
     val comment: String? = null,
-)
+
+) {
+    @Transient
+    @get:Transient
+    var items: List<DirectExecutionStreetItem> = emptyList()
+}

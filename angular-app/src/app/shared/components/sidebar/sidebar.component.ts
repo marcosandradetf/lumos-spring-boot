@@ -336,7 +336,16 @@ export class SidebarComponent implements OnInit {
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
-                    }
+                    },
+                    {
+                        label: 'Vincular Instalações', // O título que você escolheu
+                        title: 'Vincule instalações concluídas sem ordem de serviço aos itens contratuais para cobrança',
+                        icon: 'pi pi-link text-emerald-500', // Verde = pronto para cobrar / dinheiro
+                        routerLink: ['/contratos/instalacoes-pendentes'],
+                        badge: '15',
+                        badgeStyleClass: 'p-badge-success', // Badge verde para indicar que é coisa pronta esperando só o vínculo
+                        command: () => SharedState.showMenuDrawer$.next(false)
+                    },
                 ]
             },
 

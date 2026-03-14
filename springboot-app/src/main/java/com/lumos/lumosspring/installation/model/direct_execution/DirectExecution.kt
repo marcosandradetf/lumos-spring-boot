@@ -3,14 +3,16 @@ package com.lumos.lumosspring.installation.model.direct_execution
 import com.lumos.lumosspring.authentication.model.TenantEntity
 import com.lumos.lumosspring.util.ExecutionStatus
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Table("direct_execution")
 data class DirectExecution(
     @Id
+    @Column("direct_execution_id")
     var directExecutionId: Long? = null,
     var description: String?,
     var instructions: String? = null,
@@ -27,4 +29,13 @@ data class DirectExecution(
     var finishedAt: Instant? = null,
     var startedAt: Instant? = null,
     var externalId: Long? = null,
-): TenantEntity()
+
+): TenantEntity(){
+
+    @Transient
+    var teamName: String? = null
+
+    @Transient
+    @get:Transient
+    var streets: List<DirectExecutionStreet> = emptyList()
+}

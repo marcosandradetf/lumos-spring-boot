@@ -179,4 +179,7 @@ interface DirectExecutionDao {
 
     @Query("DELETE FROM direct_execution WHERE directExecutionId = (:ids)")
     suspend fun deleteInstallations(ids: List<Long>)
+
+    @Query("select * from direct_execution where directExecutionId < 0 and contractId = :contractId")
+    suspend fun getDirectExecutionByContractId(contractId: Long): DirectExecution?
 }

@@ -9,7 +9,7 @@ import com.lumos.lumosspring.contract.entities.ContractItem
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
-import com.lumos.lumosspring.notifications.service.NotificationService
+import com.lumos.lumosspring.notifications.service.FCMService
 import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.system.entities.Log
@@ -36,7 +36,7 @@ class ContractService(
     private val contractReferenceItemRepository: ContractReferenceItemRepository,
     private val util: Util,
     private val userRepository: UserRepository,
-    private val notificationService: NotificationService,
+    private val fcmService: FCMService,
     private val namedJdbc: NamedParameterJdbcTemplate,
     private val s3Service: S3Service,
     private val logRepository: LogRepository,
@@ -247,7 +247,7 @@ class ContractService(
         }
 
         for (notificationCode in userRepository.getResponsibleTechUsers(Utils.getCurrentTenantId())) {
-            notificationService.sendNotificationForTopic(
+            fcmService.sendNotificationForTopic(
                 title = "Novo contrato pendente para Pré-Medição",
                 body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
                 action = Routes.CONTRACT_SCREEN,
@@ -517,8 +517,8 @@ class ContractService(
                         description = it["description"] as String,
                         unitPrice = it["unit_price"] as BigDecimal,
                         contractedQuantity = it["contracted_quantity"] as BigDecimal,
-                        executedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long),
-                        reservedQuantity = getExecutedQuantityByContract(it["contract_item_id"] as Long, true),
+                        executedQuantity = getExecutedQuantityByContract(listOf(it["contract_item_id"] as Long)),
+                        reservedQuantity = getExecutedQuantityByContract(listOf(it["contract_item_id"] as Long), true),
                         totalExecuted = it["quantity_executed"] as BigDecimal,
                         linking = it["linking"] as? String,
                         nameForImport = it["name_for_import"] as? String,
@@ -531,11 +531,12 @@ class ContractService(
     data class ExecutedQuantity(
         val installationId: Long,
         val step: Int,
-        val quantity: BigDecimal,
+        var quantity: BigDecimal,
+        val contractItemId: Long,
     )
 
-    private fun getExecutedQuantityByContract(
-        contractItemId: Long,
+    fun getExecutedQuantityByContract(
+        contractItemId: List<Long>,
         forReserve: Boolean = false
     ): List<ExecutedQuantity> {
         val sql = if (forReserve) {
@@ -543,27 +544,32 @@ class ContractService(
                 SELECT
                     t.installation_id,
                     t.step,
-                    SUM(t.measured_item_quantity) AS quantity
+                    t.contract_item_id,
+                    SUM(t.quantity) AS quantity
                 FROM (
-                    SELECT
-                        d.direct_execution_id as installation_id,
-                        i.measured_item_quantity,
-                        d.step
-                    FROM direct_execution_item i
-                    JOIN direct_execution d ON d.direct_execution_id = i.direct_execution_id
-                    WHERE i.contract_item_id = :contractItemId
-                        AND d.direct_execution_status <> 'FINISHED'
-                    UNION ALL
-                    SELECT
-                        p.pre_measurement_id as installation_id,
-                        i.measured_item_quantity,
-                        p.step
-                    FROM pre_measurement_street_item i
-                    JOIN pre_measurement p ON p.pre_measurement_id = i.pre_measurement_id
-                    WHERE i.contract_item_id = :contractItemId
-                        AND p.status <> 'FINISHED'
-                    ) t
-                GROUP BY t.installation_id, t.step
+                         select
+                             iv.installation_id,
+                             reserved_quantity - quantity_completed as quantity,
+                             iv.step,
+                             m.contract_item_id
+                         from material_reservation m
+                         join installation_view iv on iv.installation_id = coalesce(m.direct_execution_id, m.pre_measurement_id)
+                            and iv.installation_type = case when m.direct_execution_id is null then 'PRE_MEASUREMENT' else 'DIRECT_EXECUTION' end
+                         where m.contract_item_id IN (:contractItemId)
+                            and m.status <> 'FINISHED'
+                         UNION ALL
+                         SELECT
+                             d.direct_execution_id,
+                             i.executed_quantity,
+                             d.step,
+                             i.contract_item_id
+                         FROM direct_execution_street_item i
+                                  JOIN direct_execution_street s ON s.direct_execution_street_id = i.direct_execution_street_id
+                                  JOIN direct_execution d on d.direct_execution_id = s.direct_execution_id
+                         WHERE i.contract_item_id IN (:contractItemId)
+                           AND d.direct_execution_status = 'VALIDATING'
+                     ) t
+                GROUP BY t.installation_id, t.step, t.contract_item_id;
             """.trimIndent()
         } else {
             """
@@ -571,14 +577,15 @@ class ContractService(
                     iv.installation_id,
                     iv.installation_type,
                     iv.step,
+                    isiv.contract_item_id,
                     SUM(isiv.executed_quantity) AS quantity
                 FROM installation_view iv 
                 JOIN installation_street_view isv ON iv.installation_id = isv.installation_id
                     and isv.installation_type = iv.installation_type
                 JOIN installation_street_item_view isiv ON isiv.installation_street_id = isv.installation_street_id
                     and isv.installation_type = isiv.installation_type
-                WHERE isiv.contract_item_id = :contractItemId AND iv.status = 'FINISHED'
-                GROUP BY iv.installation_id, iv.installation_type, iv.step
+                WHERE isiv.contract_item_id IN (:contractItemId) AND iv.status = 'FINISHED'
+                GROUP BY iv.installation_id, iv.installation_type, iv.step, isiv.contract_item_id
                 ORDER BY iv.step
             """.trimIndent()
         }
@@ -593,6 +600,7 @@ class ContractService(
                 installationId = row["installation_id"] as Long,
                 step = (row["step"] as Number).toInt(), // ✅ usa a etapa real
                 quantity = row["quantity"] as BigDecimal,
+                contractItemId = row["contract_item_id"] as Long,
             )
         }
     }

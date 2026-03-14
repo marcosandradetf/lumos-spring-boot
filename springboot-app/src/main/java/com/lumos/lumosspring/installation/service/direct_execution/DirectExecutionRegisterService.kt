@@ -3,10 +3,10 @@ package com.lumos.lumosspring.installation.service.direct_execution
 import com.lumos.lumosspring.contract.repository.ContractItemDependencyRepository
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
+import com.lumos.lumosspring.contract.service.ContractService
 import com.lumos.lumosspring.installation.controller.direct_execution.DirectExecutionRegisterController
 import com.lumos.lumosspring.installation.dto.direct_execution.InstallationRequest
 import com.lumos.lumosspring.installation.dto.direct_execution.InstallationStreetRequest
-import com.lumos.lumosspring.installation.dto.premeasurement.InstallationResponse
 import com.lumos.lumosspring.installation.model.direct_execution.DirectExecution
 import com.lumos.lumosspring.installation.model.direct_execution.DirectExecutionExecutor
 import com.lumos.lumosspring.installation.model.direct_execution.DirectExecutionStreet
@@ -15,13 +15,16 @@ import com.lumos.lumosspring.installation.repository.direct_execution.DirectExec
 import com.lumos.lumosspring.installation.repository.direct_execution.DirectExecutionRepository
 import com.lumos.lumosspring.installation.repository.direct_execution.DirectExecutionRepositoryStreet
 import com.lumos.lumosspring.installation.repository.direct_execution.DirectExecutionRepositoryStreetItem
+import com.lumos.lumosspring.notifications.service.FCMService
 import com.lumos.lumosspring.s3.service.S3Service
+import com.lumos.lumosspring.scheduler.SchedulerService
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository
 import com.lumos.lumosspring.util.ExecutionStatus
-import com.lumos.lumosspring.util.JdbcUtil
+import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.ReservationStatus
 import com.lumos.lumosspring.util.Utils
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
@@ -42,6 +45,9 @@ class DirectExecutionRegisterService(
     private val contractItemDependencyRepository: ContractItemDependencyRepository,
     private val materialStockRegisterRepository: MaterialStockRegisterRepository,
     private val contractRepository: ContractRepository,
+    private val contractService: ContractService,
+    private val schedulerService: SchedulerService,
+    private val fcmService: FCMService
 ) {
     fun createInstallation(
         execution: DirectExecutionRegisterController.InstallationCreateRequest,
@@ -52,12 +58,12 @@ class DirectExecutionRegisterService(
             tenantId = Utils.getCurrentTenantId()
         )
 
-        if(exists) {
-           return ResponseEntity.noContent().build()
+        if (exists) {
+            return ResponseEntity.noContent().build()
         }
 
         var step = 0
-        val contract = if(execution.contractId != null) {
+        val contract = if (execution.contractId != null) {
             step = contractRepository.getLastStep(execution.contractId!!) + 1
             contractRepository.findById(execution.contractId!!).orElseThrow()
         } else null
@@ -110,8 +116,8 @@ class DirectExecutionRegisterService(
         } else {
             // external id (mobile local generated)
             // and update status on first street
-            directExecutionRepository.findDirectExecutionIdByExternalId(externalId = installationReq.directExecutionId) ?:
-                throw Utils.BusinessException("Código externo dessa execução não encontrado.")
+            directExecutionRepository.findDirectExecutionIdByExternalId(externalId = installationReq.directExecutionId)
+                ?: throw Utils.BusinessException("Código externo dessa execução não encontrado.")
         }
 
         var installationStreet = DirectExecutionStreet(
@@ -128,7 +134,7 @@ class DirectExecutionRegisterService(
         )
 
         val folder = "photos/${installationReq.description.replace("\\s+".toRegex(), "_")}"
-        val fileUri = s3Service.uploadFile(photo, folder, "installation",Utils.getCurrentTenantId())
+        val fileUri = s3Service.uploadFile(photo, folder, "installation", Utils.getCurrentTenantId())
         installationStreet.executionPhotoUri = fileUri
 
         try {
@@ -142,6 +148,10 @@ class DirectExecutionRegisterService(
         }
 
         for (m in installationReq.materials) {
+            if(!m.truckStockControl) {
+                continue
+            }
+
             val balance = materialStockRegisterRepository.findStockQuantityByMaterialIdStock(m.truckMaterialStockId)
                 .orElse(null)
 
@@ -149,12 +159,10 @@ class DirectExecutionRegisterService(
                 throw Utils.BusinessException("Sem estoque para o material: " + m.truckMaterialStockId + " - " + m.materialName)
             }
 
-            if (m.truckStockControl) {
-                materialStockRegisterRepository.debitStock(
-                    m.quantityExecuted,
-                    m.truckMaterialStockId
-                )
-            }
+            materialStockRegisterRepository.debitStock(
+                m.quantityExecuted,
+                m.truckMaterialStockId
+            )
 
             if (m.reserveId >= 0) {
                 namedJdbc.update(
@@ -173,7 +181,7 @@ class DirectExecutionRegisterService(
             val item = DirectExecutionStreetItem(
                 executedQuantity = m.quantityExecuted,
                 materialStockId = m.truckMaterialStockId,
-                contractItemId = if(m.contractItemId > 0) m.contractItemId else null,
+                contractItemId = if (m.contractItemId > 0) m.contractItemId else null,
                 directExecutionStreetId = installationStreet.directExecutionStreetId
                     ?: throw IllegalStateException("directExecutionStreetId not setted")
             )
@@ -185,7 +193,7 @@ class DirectExecutionRegisterService(
                     item.contractItemId!!,
                     item.executedQuantity
                 )
-                saveLinkedItems(item, directExecutionId)
+                saveLinkedItems(item, directExecutionId, null)
             }
 
         }
@@ -204,8 +212,8 @@ class DirectExecutionRegisterService(
             request.directExecutionId
         } else {
             // external id (mobile local generated)
-            directExecutionRepository.findDirectExecutionIdByExternalId(externalId = request.directExecutionId) ?:
-                throw Utils.BusinessException("Código externo dessa execução não encontrado.")
+            directExecutionRepository.findDirectExecutionIdByExternalId(externalId = request.directExecutionId)
+                ?: throw Utils.BusinessException("Código externo dessa execução não encontrado.")
         }
 
         val installation = directExecutionRepository.getInstallation(directExecutionId)
@@ -228,12 +236,12 @@ class DirectExecutionRegisterService(
                     folder += "/${request.responsible.replace("\\s+".toRegex(), "_")}"
                 }
 
-                s3Service.uploadFile(photo,  folder, "installation", Utils.getCurrentTenantId())
+                s3Service.uploadFile(photo, folder, "installation", Utils.getCurrentTenantId())
             } else null
 
         directExecutionRepository.finishDirectExecution(
             id = directExecutionId,
-            status = if(request.directExecutionId > 0) ExecutionStatus.FINISHED else ExecutionStatus.AWAITING_COMPLETION,
+            status = if (request.directExecutionId > 0) ExecutionStatus.FINISHED else ExecutionStatus.AWAITING_COMPLETION,
             signatureUri = fileUri,
             signDate = request.signDate,
             finishedAt = request.signDate ?: Instant.now(),
@@ -252,7 +260,7 @@ class DirectExecutionRegisterService(
             )
         }
 
-        if(directExecutionId > 0) {
+        if (request.directExecutionId > 0) {
             namedJdbc.update(
                 """
                     UPDATE material_reservation
@@ -264,14 +272,37 @@ class DirectExecutionRegisterService(
                     "status" to ReservationStatus.FINISHED
                 )
             )
+        } else {
+            this.fcmService.sendNotificationForTopic(
+                title = "Instalação concluída aguardando validação",
+                body = "Para liberar o status, é necessário validar a execução vinculando os materiais aos seus respectivos itens contratuais.",
+                notificationCode = "ANALISTA_${Utils.getCurrentTenantId()}",
+                type = NotificationType.ALERT_BANNER,
+                platform = FCMService.TargetPlatform.WEB,
+                isPopUp = true,
+                uri = "/contratos/validar-execucao/${directExecutionId}",
+                relatedId = directExecutionId.toString(),
+                subtitle = "Uma instalação foi concluída no campo sem ordem de serviço prévia."
+            )
         }
+
         return ResponseEntity.ok().build()
     }
 
-    private fun saveLinkedItems(item: DirectExecutionStreetItem, directExecutionId: Long) {
-        val itemDependency =
+    private fun saveLinkedItems(
+        item: DirectExecutionStreetItem,
+        directExecutionId: Long?,
+        contractId: Long?
+    ): List<DirectExecutionStreetItem> {
+        val itemDependency = if (directExecutionId != null) {
             contractItemDependencyRepository.getAllDirectExecutionItemsById(item.contractItemId!!, directExecutionId)
+        } else if (contractId != null) {
+            contractItemDependencyRepository.getAllRelatedContractItemsItemsById(item.contractItemId!!, contractId)
+        } else {
+            emptyList()
+        }
 
+        val dependencyItems: MutableList<DirectExecutionStreetItem> = mutableListOf()
         itemDependency.forEach { dependency ->
             val dependencyItem = item.copy(
                 contractItemId = dependency.contractItemId,
@@ -279,11 +310,237 @@ class DirectExecutionRegisterService(
                 directExecutionStreetItemId = null,
                 materialStockId = null
             )
-            directExecutionRepositoryStreetItem.save(dependencyItem)
-            contractItemsQuantitativeRepository.updateBalance(
-                dependency.contractItemId,
-                item.executedQuantity * dependency.factor
+            dependencyItems.add(dependencyItem)
+
+            // somente debitar quando for origem de OS Gerada no sistema.
+            if (directExecutionId != null) {
+                directExecutionRepositoryStreetItem.save(dependencyItem)
+                contractItemsQuantitativeRepository.updateBalance(
+                    dependency.contractItemId,
+                    item.executedQuantity * dependency.factor
+                )
+            }
+        }
+
+        return dependencyItems
+    }
+
+    @Transactional
+    fun preValidateExecution(req: DirectExecutionRegisterController.ReqValidation): ResponseEntity<Any> {
+        val execution = directExecutionRepository.findById(req.directExecutionId).orElseThrow()
+
+        if (execution.directExecutionStatus != ExecutionStatus.AWAITING_COMPLETION) {
+            throw Utils.BusinessException("Execução solicitada não está com status de validação")
+        }
+
+        val linkedItemsResponse: MutableList<DirectExecutionStreetItem> = mutableListOf()
+        val streetItems = directExecutionRepositoryStreetItem
+            .findByDirectExecutionStreetItemIdIn(
+                req.items.map { it.directExecutionStreetItemId }.toMutableList()
+            )
+
+        if (streetItems.size != req.items.size) {
+            throw Utils.BusinessException("Alguns itens não foram encontrados")
+        }
+
+        val streetItemsMap = streetItems.associateBy { it.directExecutionStreetItemId }
+
+        val contractItemIds = streetItems
+            .mapNotNull { it.contractItemId }
+            .distinct()
+
+        val reservedQuantityItems =
+            contractService.getExecutedQuantityByContract(
+                contractItemIds.toMutableList(),
+                true
+            )
+
+        val contractItems = contractItemsQuantitativeRepository
+            .findByContractItemIdIn(contractItemIds)
+
+        val reservedMap = reservedQuantityItems.groupBy { it.contractItemId }
+        val contractItemsMap = contractItems
+            .associateBy { it.contractItemId }
+
+        req.items.forEach { item ->
+            val streetItem =
+                streetItemsMap[item.directExecutionStreetItemId]
+                    ?: throw Utils.BusinessException("Item da execução não encontrado")
+
+            val contractItem = contractItemsMap[streetItem.contractItemId]
+                ?: throw Utils.BusinessException("Item do contrato não encontrado")
+
+            val reserved =
+                reservedMap[streetItem.contractItemId]?.sumOf { it.quantity }
+                    ?: BigDecimal.ZERO
+
+            val balance = contractItem.contractedQuantity - (contractItem.quantityExecuted + reserved)
+
+            if (balance < streetItem.executedQuantity) {
+                throw Utils.BusinessException("Quantidade indisponível")
+            }
+
+            streetItem.contractItemId = item.contractItemId
+
+            val linkedItems = saveLinkedItems(streetItem, null, req.contractId)
+            linkedItemsResponse.addAll(linkedItems)
+            streetItems.addAll(linkedItems)
+        }
+
+        execution.contractId = req.contractId
+        execution.step = contractRepository.getLastStep(execution.contractId!!) + 1
+        execution.directExecutionStatus = ExecutionStatus.VALIDATING
+
+        directExecutionRepositoryStreetItem.saveAll(streetItems)
+        directExecutionRepository.save(execution)
+
+        schedulerService.scheduleAutoConfirm(
+            execution.directExecutionId!!,
+//            Instant.now().plusSeconds(600)
+            Instant.now().plusSeconds(60)
+        )
+
+        return ResponseEntity.ok().body(
+            linkedItemsResponse
+        )
+    }
+
+    @Transactional
+    fun cancelValidation(executionId: Long, streetItemIds: List<Long>) {
+        schedulerService.cancelAutoConfirm(executionId)
+
+        val execution = directExecutionRepository.findById(executionId).orElseThrow()
+        execution.contractId = null
+        execution.step = 0
+        execution.directExecutionStatus = ExecutionStatus.AWAITING_COMPLETION
+
+        val streetItems = directExecutionRepositoryStreetItem
+            .findByDirectExecutionStreetItemIdIn(streetItemIds.toMutableList())
+
+        val itemsToDelete = streetItems.filter { it.materialStockId == null }
+        val itemsToUpdate = streetItems.filter { it.materialStockId != null }
+
+        itemsToUpdate.forEach {
+            it.contractItemId = null
+        }
+
+        directExecutionRepositoryStreetItem.saveAll(itemsToUpdate)
+        directExecutionRepositoryStreetItem.deleteAll(itemsToDelete)
+
+        directExecutionRepository.save(execution)
+    }
+
+    @Transactional
+    fun deleteItem(itemId: Long): ResponseEntity<Any> {
+        val streetItem = directExecutionRepositoryStreetItem.findById(itemId).orElseThrow()
+        streetItem.contractItemId = null
+        directExecutionRepositoryStreetItem.save(streetItem)
+
+        return ResponseEntity.ok().build()
+    }
+
+
+    @Transactional
+    fun confirmPreparedExecution(executionId: Long): ResponseEntity<Any> {
+        println("schedule executando")
+        schedulerService.cancelAutoConfirm(executionId)
+        validateExecution(executionId)
+        return ResponseEntity.ok().build()
+    }
+
+    @Transactional
+    fun validateExecution(executionId: Long) {
+        val execution = directExecutionRepository.findById(executionId).orElseThrow()
+
+        if (execution.directExecutionStatus != ExecutionStatus.VALIDATING) {
+            throw Utils.BusinessException(
+                "Execução solicitada não está com status de confirmação. Atualize a tela e tente novamente."
             )
         }
+
+        val streets = directExecutionRepositoryStreet.findAllByDirectExecutionId(executionId)
+        val streetItems = directExecutionRepositoryStreetItem
+            .findAllByDirectExecutionStreetIdIn(
+                streets.map { it.directExecutionStreetId!! }.toMutableList()
+            )
+
+        val contract = contractRepository.findById(execution.contractId!!).orElseThrow()
+        val contractItemIds = streetItems
+            .mapNotNull { it.contractItemId }
+            .distinct()
+
+        val reservedQuantityItems =
+            contractService.getExecutedQuantityByContract(
+                contractItemIds.toMutableList(),
+                true
+            )
+
+        val contractItems = contractItemsQuantitativeRepository
+            .findByContractItemIdIn(contractItemIds)
+
+        val reservedMap = reservedQuantityItems.groupBy { it.contractItemId }
+        val contractItemsMap = contractItems
+            .associateBy { it.contractItemId }
+
+        streetItems
+            .filter { it.contractItemId != null }
+            .forEach { streetItem ->
+                val contractItem = contractItemsMap[streetItem.contractItemId]
+
+                if(contractItem == null) {
+                    cancelValidation(
+                        executionId = execution.directExecutionId!!,
+                        streetItemIds = streetItems.mapNotNull { it.directExecutionStreetItemId }
+                    )
+                    throw Utils.BusinessException("Item do contrato não encontrado")
+                }
+
+                reservedMap[streetItem.contractItemId]
+                    ?.find { it.step == execution.step && it.installationId == execution.directExecutionId }
+                    ?.quantity -= streetItem.executedQuantity
+
+                val reserved =
+                    reservedMap[streetItem.contractItemId]?.sumOf { it.quantity }
+                        ?: BigDecimal.ZERO
+
+                val balance = contractItem.contractedQuantity - (contractItem.quantityExecuted + reserved)
+
+                if (balance < streetItem.executedQuantity) {
+                    cancelValidation(
+                        executionId = execution.directExecutionId!!,
+                        streetItemIds = streetItems.mapNotNull { it.directExecutionStreetItemId }
+                    )
+                    throw Utils.BusinessException("Quantidade indisponível")
+                }
+
+                contractItem.quantityExecuted += streetItem.executedQuantity
+            }
+
+        execution.directExecutionStatus = ExecutionStatus.FINISHED
+        execution.description = "Etapa " + execution.step + " - " + contract.contractor
+
+        try {
+            contractItemsQuantitativeRepository.saveAll(contractItems)
+        } catch (_: OptimisticLockingFailureException) {
+            cancelValidation(
+                executionId = execution.directExecutionId!!,
+                streetItemIds = streetItems.mapNotNull { it.directExecutionStreetItemId }
+            )
+            throw Utils.BusinessException(
+                "O saldo do contrato foi alterado por outra operação. Atualize a tela e tente novamente."
+            )
+        }
+
+        directExecutionRepository.save(execution)
+
+        // excui os itens que foram excluídos
+        directExecutionRepositoryStreetItem.deleteAll(
+            streetItems
+                .filter { it.contractItemId == null }
+        )
+
+        println("schedule finalizado")
     }
+
+
 }

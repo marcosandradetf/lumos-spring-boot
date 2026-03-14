@@ -4,7 +4,7 @@
     <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
 
-    <p-stepper [value]="1" class="basis-[50rem]" *ngIf="!finish">
+    <p-stepper [(value)]="step" class="basis-[50rem]" *ngIf="!finish">
       <p-step-list class="px-10">
         <p-step [value]="1">{{ currentUrl === '/contratos/editar' ? 'Editar dados' : 'Inserir dados' }}</p-step>
         <p-step [value]="2"

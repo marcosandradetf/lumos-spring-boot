@@ -7,10 +7,15 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 public interface ContractItemsQuantitativeRepository extends CrudRepository<ContractItem, Long> {
     List<ContractItem> findAllByContractId(Long contractId);
+
+    List<ContractItem> findByContractId(Long contractId);
+
+    List<ContractItem> findByContractItemIdIn(Collection<Long> contractItemIds);
 
     record ItemDistributionRow(BigDecimal quantity, BigDecimal correction, Long contractItemId) {
     }

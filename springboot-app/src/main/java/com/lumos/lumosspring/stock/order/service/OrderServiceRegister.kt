@@ -2,7 +2,7 @@ package com.lumos.lumosspring.stock.order.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.lumos.lumosspring.notifications.service.NotificationService
+import com.lumos.lumosspring.notifications.service.FCMService
 import com.lumos.lumosspring.stock.order.dto.ReplyRequest
 import com.lumos.lumosspring.stock.order.dto.OrderRequest
 import com.lumos.lumosspring.stock.order.repository.OrderMaterialRepository
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class OrderServiceRegister(
     private val namedJdbc: NamedParameterJdbcTemplate,
-    private val notificationService: NotificationService,
+    private val FCMService: FCMService,
     private val orderMaterialRepository: OrderMaterialRepository,
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
@@ -85,7 +85,7 @@ class OrderServiceRegister(
             }
 
             updatedOrders.forEach {
-                notificationService.sendNotificationForTopic(
+                FCMService.sendNotificationForTopic(
                     title = "Atualização na sua solicitação",
                     body = "O status da sua requisição de materiais ${it.second} foi atualizado. Toque para ver os detalhes.",
                     action = "APPROVATED_ORDERS",
@@ -200,7 +200,7 @@ class OrderServiceRegister(
 
                 notificationCodes.forEach {
                     if (it.first == "APPROVED") {
-                        notificationService.sendNotificationForTopic(
+                        FCMService.sendNotificationForTopic(
                             title = "Materiais prontos para instalação",
                             body = "Os materiais para **${it.third}** estão disponíveis no almoxarifado. Toque para ver os detalhes.",
                             action = "APPROVATED_ORDERS",
@@ -208,7 +208,7 @@ class OrderServiceRegister(
                             type = NotificationType.ALERT
                         )
                     } else {
-                        notificationService.sendNotificationForTopic(
+                        FCMService.sendNotificationForTopic(
                             title = "Gerenciamento pendente de materiais",
                             body = "Alguns materiais da instalação **${it.third}** foram recusados pelo estoquista. Refaça o gerenciamento para prosseguir com a instalação.",
                             action = "/requisicoes/instalacoes/gerenciamento-estoque",

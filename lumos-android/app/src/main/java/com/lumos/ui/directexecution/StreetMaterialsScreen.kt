@@ -118,6 +118,10 @@ fun StreetMaterialScreen(
         )
     }
 
+    LaunchedEffect(Unit) {
+        directExecutionViewModel.onExecutionScreen()
+    }
+
     LaunchedEffect(directExecutionViewModel.reserves) {
         if (directExecutionViewModel.reserves.isEmpty()) {
             return@LaunchedEffect
@@ -991,9 +995,6 @@ fun InstallationData(
         title = Utils.abbreviate(contractor ?: ""),
         selectedIcon = BottomBar.EXECUTIONS.value,
         navigateBack = {
-            navController.getBackStackEntry(Routes.DIRECT_EXECUTION_FLOW)
-                .savedStateHandle["route_event"] = Routes.DIRECT_EXECUTION_HOME_SCREEN
-
             navController.popBackStack()
         },
         navigateToHome = {

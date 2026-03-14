@@ -1,0 +1,77 @@
+<div class="p-4 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+  <div class="mb-6 flex items-end justify-between border-b border-slate-100 pb-6 dark:border-neutral-800">
+    <div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-800 dark:text-white">
+        Instalações Pendentes
+      </h1>
+      <p class="mt-1 text-sm text-slate-500 dark:text-neutral-400">
+        Associe as execuções avulsas aos seus respectivos contratos.
+      </p>
+    </div>
+
+    <span class="rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 dark:bg-neutral-800 dark:text-neutral-400">
+      {{ executions.length }} {{ executions.length === 1 ? 'item' : 'itens' }}
+    </span>
+  </div>
+
+  <div class="flex flex-col gap-3">
+    @for (exec of executions; track exec.directExecutionId) {
+      <div
+        (click)="navigateToLink(exec.directExecutionId)"
+        class="group relative flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-blue-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-blue-900 sm:flex-row sm:items-center sm:justify-between cursor-pointer"
+      >
+        <div class="flex flex-col min-w-0 flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] font-black uppercase tracking-widest text-blue-500">ID #{{ exec.directExecutionId }}</span>
+            <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-neutral-700"></span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Status: AGUARDANDO VALIDAÇÃO</span>
+          </div>
+
+          <h3 class="truncate text-base font-bold text-slate-700 dark:text-neutral-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            {{ exec.description }}
+          </h3>
+
+          @if (exec.instructions) {
+            <p class="mt-1 truncate text-xs text-slate-400 dark:text-neutral-500">
+              {{ exec.instructions }}
+            </p>
+          }
+        </div>
+
+        <div class="flex items-center gap-6 sm:gap-10 shrink-0">
+          <div class="flex flex-col items-start">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Equipe</span>
+            <div class="mt-1 flex items-center gap-2">
+              <div class="text-base font-bold text-slate-600  dark:text-neutral-300">
+                {{ exec.teamName }}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-start">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Finalizado</span>
+            <span class="mt-1 text-sm font-bold text-slate-600 dark:text-neutral-300">
+              {{ exec.finishedAt | date: 'dd/MM' }} <span class="text-[10px] font-normal opacity-60">às {{ exec.finishedAt | date: 'HH:mm' }}</span>
+            </span>
+          </div>
+
+          <div class="hidden sm:block">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-neutral-900">
+              <i class="pi pi-arrow-right text-sm"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="flex flex-col items-center justify-center py-20 rounded-3xl border-2 border-dashed border-slate-100 dark:border-neutral-900">
+        <div class="rounded-full bg-slate-50 p-4 dark:bg-neutral-900/50">
+          <i class="pi pi-check-circle text-3xl text-slate-300 dark:text-neutral-700"></i>
+        </div>
+        <p class="mt-4 text-sm font-medium text-slate-400 dark:text-neutral-500">
+          Nenhuma instalação aguardando vínculo.
+        </p>
+      </div>
+    }
+  </div>
+</div>

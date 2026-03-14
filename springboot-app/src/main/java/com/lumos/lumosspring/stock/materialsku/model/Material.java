@@ -2,9 +2,10 @@ package com.lumos.lumosspring.stock.materialsku.model;
 
 import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Table
 public class Material extends TenantEntity {
@@ -39,6 +40,9 @@ public class Material extends TenantEntity {
     private String materialWeight;
     private String barcode;
     private Boolean truckStockControl;
+
+    @Transient
+    private List<Long> referenceItemsIds;
 
     public Material() {
     }
@@ -293,6 +297,14 @@ public class Material extends TenantEntity {
 
     public void setTruckStockControl(Boolean truckStockControl) {
         this.truckStockControl = truckStockControl;
+    }
+
+    public List<Long> getReferenceItemsIds() {
+        return referenceItemsIds;
+    }
+
+    public void setReferenceItemsIds(List<Long> referenceItemsIds) {
+        this.referenceItemsIds = referenceItemsIds;
     }
 }
 

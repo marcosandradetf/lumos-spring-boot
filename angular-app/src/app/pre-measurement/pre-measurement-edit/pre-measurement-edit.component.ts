@@ -83,6 +83,7 @@ export class PreMeasurementEditComponent implements OnInit {
     contractValue: '',
     additiveFile: ''
   };
+
   openModal: boolean = false;
   loading: boolean = true;
 

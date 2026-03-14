@@ -347,7 +347,7 @@ public class TokenService {
         var now = Instant.now();
         var expiresIn = 90L;
         var token = UUID.randomUUID();
-        var userId = Utils.INSTANCE.getCurrentUserId();
+        var userId = Utils.getCurrentUserId();
 
         qrcodeTokenRepository.deleteAllByUserId(userId);
 

@@ -12,5 +12,6 @@ data class DirectExecutionItem (
     var measuredItemQuantity: BigDecimal = BigDecimal.ZERO,
     var contractItemId: Long,
     var directExecutionId: Long,
-    var itemStatus: String = ReservationStatus.PENDING
+    var itemStatus: String = ReservationStatus.PENDING,
+
 )

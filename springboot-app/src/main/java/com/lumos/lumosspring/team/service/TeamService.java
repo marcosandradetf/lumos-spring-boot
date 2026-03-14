@@ -1,6 +1,6 @@
 package com.lumos.lumosspring.team.service;
 
-import com.lumos.lumosspring.notifications.service.NotificationService;
+import com.lumos.lumosspring.notifications.service.FCMService;
 import com.lumos.lumosspring.notifications.service.NotificationType;
 import com.lumos.lumosspring.notifications.service.Routes;
 import com.lumos.lumosspring.stock.deposit.model.Deposit;
@@ -37,13 +37,13 @@ public class TeamService {
     private final TeamQueryRepository teamQueryRepository;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final MaterialStockRegisterRepository materialStockRegisterRepository;
-    private final NotificationService notificationService;
+    private final FCMService FCMService;
 
     public TeamService(TeamRepository teamRepository,
                        RegionRepository regionRepository,
                        DepositRepository depositRepository,
                        TeamQueryRepository teamQueryRepository, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
-                       MaterialStockRegisterRepository materialStockRegisterRepository, NotificationService notificationService) {
+                       MaterialStockRegisterRepository materialStockRegisterRepository, FCMService FCMService) {
 
         this.teamRepository = teamRepository;
         this.regionRepository = regionRepository;
@@ -51,7 +51,7 @@ public class TeamService {
         this.teamQueryRepository = teamQueryRepository;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.materialStockRegisterRepository = materialStockRegisterRepository;
-        this.notificationService = notificationService;
+        this.FCMService = FCMService;
     }
 
     @Cacheable(
@@ -230,7 +230,7 @@ public class TeamService {
     }
 
     public ResponseEntity<?> sendStockNotification(String description, String notificationCode, String materialName) {
-        notificationService.sendNotificationForTopic(
+        FCMService.sendNotificationForTopic(
                 "Verificar material para instalação",
                 """
                         Será feita a instalação:
@@ -247,7 +247,12 @@ public class TeamService {
                 Routes.STOCK,
                 notificationCode,
                 Instant.now(),
-                NotificationType.WARNING
+                NotificationType.WARNING,
+                com.lumos.lumosspring.notifications.service.FCMService.TargetPlatform.ANDROID,
+                false,
+                null,
+                null,
+                null
         );
         return ResponseEntity.noContent().build();
     }

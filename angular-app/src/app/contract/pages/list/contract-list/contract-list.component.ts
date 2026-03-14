@@ -115,7 +115,7 @@ export class ContractListComponent implements OnInit {
                         contract: this.selectedContract,
                         items: items
                     }
-                })
+                });
             },
         },
         {
@@ -386,7 +386,7 @@ export class ContractListComponent implements OnInit {
             return;
         }
 
-        this.router.navigate(
+        void this.router.navigate(
             ['/execucoes/iniciar-sem-pre-medicao/'],
             {
                 queryParams: {
@@ -412,7 +412,7 @@ export class ContractListComponent implements OnInit {
         status: 'ACTIVE' | 'ARCHIVED';
     } = {
         contractor: null,
-        startDate: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+        startDate: new Date(new Date().setMonth(new Date().getMonth() - 3)),
         endDate: new Date(),
         status: 'ACTIVE',
     };
@@ -427,8 +427,8 @@ export class ContractListComponent implements OnInit {
         if (!this.filters.contractor) {
             const days = Utils.diffInDays(this.filters.startDate!, this.filters.endDate!);
 
-            if (days > 62) {
-                this.utils.showMessage("O Período máximo é de 62 dias.", 'warn', 'Período inválido');
+            if (days > 93) {
+                this.utils.showMessage("O Período máximo é de 3 meses.", 'warn', 'Período inválido');
                 return;
             }
         }
@@ -441,8 +441,8 @@ export class ContractListComponent implements OnInit {
     protected resetFilters() {
         this.filters = {
             contractor: null,
-            startDate: null,
-            endDate: null,
+            startDate: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+            endDate: new Date(),
             status: 'ACTIVE',
         };
     }

@@ -18,16 +18,23 @@ import com.lumos.repository.ContractRepository
 import com.lumos.repository.DirectExecutionRepository
 import com.lumos.repository.StockRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.util.UUID
+import kotlin.collections.emptyList
 
 class DirectExecutionViewModel(
     private val repository: DirectExecutionRepository?,
     private val contractRepository: ContractRepository?,
-    private val savedStateHandle: SavedStateHandle?,
-    private val stockRepository: StockRepository?,
+    savedStateHandle: SavedStateHandle?,
+    stockRepository: StockRepository?,
 
     mockContractor: String? = null,
     mockCreationDate: String? = null,
@@ -37,7 +44,8 @@ class DirectExecutionViewModel(
     mockStockData: List<MaterialStock> = emptyList()
 
 ) : ViewModel() {
-    var installationId by mutableStateOf(savedStateHandle?.get<Long>("id"))
+    private val _installationId = MutableStateFlow(savedStateHandle?.get<Long>("id"))
+    val installationId: Long? get() = _installationId.value
     var creationDate by mutableStateOf(savedStateHandle?.get<String>("creationDate"))
     var contractId by mutableStateOf(savedStateHandle?.get<String>("contractId")?.toLongOrNull())
     var contractor by mutableStateOf(savedStateHandle?.get<String>("contractor"))
@@ -48,7 +56,18 @@ class DirectExecutionViewModel(
 
     var street by mutableStateOf<DirectExecutionStreet?>(null)
 
-    var streets = repository!!.getStreets(installationId)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val streets = _installationId.flatMapLatest { id ->
+        if (id == null) {
+            flowOf(emptyList())
+        } else {
+            repository!!.getStreets(id)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
     var streetItems by mutableStateOf(mockStreetItems)
 
     var hasPosted by mutableStateOf(false)
@@ -77,68 +96,60 @@ class DirectExecutionViewModel(
     var acceptedResponsibilityTerm by mutableStateOf(false)
 
     // -> control viewModel
-    init {
-        //setStreets()
-        viewModelScope.launch {
-            savedStateHandle
-                ?.getStateFlow("route_event", null as String?)
-                ?.collect { route ->
-                    when (route) {
-                        Routes.INSTALLATION_HOLDER, Routes.CREATE_INSTALLATION -> {
-                            installationId = null
-                            contractId = null
-                            contractor = null
-                            creationDate = null
-                            instructions = null
+    fun onCreateInstallation() {
+        _installationId.value = null
+        contractId = null
+        contractor = null
+        creationDate = null
+        instructions = null
 
-                            reserves = emptyList()
+        reserves = emptyList()
 
-                            street = null
-                            streetItems = emptyList()
+        street = null
+        streetItems = emptyList()
 
-                            alertModal = false
-                            hasPosted = false
-                            confirmModal = false
-                            showSignScreen = false
-                            showFinishForm = false
+        alertModal = false
+        hasPosted = false
+        confirmModal = false
+        showSignScreen = false
+        showFinishForm = false
 
-                            hasResponsible = null
-                            responsible = null
-                            signPath = null
-                            signDate = null
-                            sameStreet = false
-                            triedToSubmit = false
+        hasResponsible = null
+        responsible = null
+        signPath = null
+        signDate = null
+        sameStreet = false
+        triedToSubmit = false
 
-                            stockCount = 0
-                            acceptedResponsibilityTerm = false
-                        }
+        stockCount = 0
+        acceptedResponsibilityTerm = false
+    }
 
-                        Routes.DIRECT_EXECUTION_HOME_SCREEN -> {
-                            alertModal = false
-                            hasPosted = false
-                            confirmModal = false
-                            showSignScreen = false
-                            showFinishForm = false
+    fun onHomeScreen() {
+        alertModal = false
+        hasPosted = false
+        confirmModal = false
+        showSignScreen = false
+        showFinishForm = false
 
-                            street = null
-                            streetItems = emptyList()
+        street = null
+        streetItems = emptyList()
 
-                            hasResponsible = null
-                            responsible = null
-                            signPath = null
-                            signDate = null
-                            sameStreet = false
-                            triedToSubmit = false
+        hasResponsible = null
+        responsible = null
+        signPath = null
+        signDate = null
+        sameStreet = false
+        triedToSubmit = false
 
-                            loadExecutionData()
-                        }
+        loadExecutionData()
+    }
 
-                        Routes.DIRECT_EXECUTION_SCREEN_MATERIALS, Routes.DIRECT_EXECUTION_NO_WORK_ORDER -> {
-                            initializeExecution(installationId!!, contractor!!)
-                        }
-                    }
-                }
-        }
+    fun onExecutionScreen() {
+        val id = installationId ?: return
+        val contractorName = contractor ?: return
+
+        initializeExecution(id, contractorName)
     }
 
     private fun initializeExecution(directExecutionId: Long, description: String) {
@@ -240,7 +251,7 @@ class DirectExecutionViewModel(
                         signDate
                     )
                 }
-                installationId = null
+                _installationId.value = null
                 street = null
             } catch (e: Exception) {
                 errorMessage = e.message
@@ -288,7 +299,7 @@ class DirectExecutionViewModel(
                 isLoading = true
                 if (directExecution.contractId != null) {
                     repository?.getDirectExecutionByContractId(directExecution.contractId!!)?.let {
-                        installationId = it.directExecutionId
+                        _installationId.value = it.directExecutionId
                         return@launch
                     }
                 }
@@ -296,7 +307,7 @@ class DirectExecutionViewModel(
                     repository?.insertExecution(directExecution)
                 }
 
-                installationId = directExecution.directExecutionId
+                _installationId.value = directExecution.directExecutionId
                 contractor = directExecution.description
                 creationDate = directExecution.creationDate
                 acceptedResponsibilityTerm = false

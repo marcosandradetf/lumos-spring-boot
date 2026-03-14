@@ -2,6 +2,7 @@ package com.lumos.lumosspring.stock.materialstock.model;
 
 import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
@@ -29,6 +30,9 @@ public class MaterialStock extends TenantEntity {
     private BigDecimal costPrice;
 
     private boolean inactive;
+
+    @Version
+    private Long version;
 
     public  MaterialStock() {}
 
@@ -130,5 +134,13 @@ public class MaterialStock extends TenantEntity {
 
     public void addStockAvailable(BigDecimal quantityCompleted) {
         this.stockAvailable = this.stockAvailable.add(quantityCompleted);
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

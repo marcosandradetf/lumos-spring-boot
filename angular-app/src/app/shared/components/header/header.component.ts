@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core';
-import {AsyncPipe, NgClass, NgOptimizedImage} from '@angular/common';
+import {Component, inject, OnInit} from '@angular/core';
+import {AsyncPipe, NgClass, NgIf, NgOptimizedImage} from '@angular/common';
 import {StockService} from '../../../stock/services/stock.service';
 import {Router} from '@angular/router';
 import {AuthService} from '../../../core/auth/auth.service';
@@ -11,6 +11,7 @@ import {Badge} from 'primeng/badge';
 import {UtilsService} from '../../../core/service/utils.service';
 import {PrimeBreadcrumbComponent} from '../prime-breadcrumb/prime-breadcrumb.component';
 import {SharedState} from '../../../core/service/shared-state';
+import {FcmService} from '../../../core/service/fcm.service';
 
 @Component({
     selector: 'app-header',
@@ -20,9 +21,9 @@ import {SharedState} from '../../../core/service/shared-state';
         NgOptimizedImage,
         Menubar,
         Avatar,
-        Badge,
         PrimeBreadcrumbComponent,
-        NgClass
+        NgClass,
+        NgIf
     ],
     templateUrl: './header.component.html',
     styleUrl: './header.component.scss'
@@ -31,9 +32,12 @@ export class HeaderComponent implements OnInit {
     user: User | null = null;
     menuOpen = false; // Controle para o menu
     options: MenuItem[] | undefined;
+    protected notificationCount$ = inject(FcmService).notifications$;
 
-    constructor(private estoqueService: StockService, protected authService: AuthService, private router: Router,
-                private utils: UtilsService) {
+    constructor(protected authService: AuthService,
+                private router: Router,
+                private utils: UtilsService,
+    ) {
         if (typeof window !== 'undefined' && window.localStorage) {
             const storedUser = window.localStorage.getItem('user');
             if (storedUser) {
@@ -43,7 +47,6 @@ export class HeaderComponent implements OnInit {
     }
 
     ngOnInit() {
-
         this.options = [
             {
                 label: 'Perfil',

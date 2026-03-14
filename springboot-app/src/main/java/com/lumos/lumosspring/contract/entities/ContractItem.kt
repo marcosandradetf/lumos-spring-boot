@@ -1,8 +1,12 @@
 package com.lumos.lumosspring.contract.entities
 
+import com.lumos.lumosspring.contract.service.ContractService.ExecutedQuantity
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
+import org.springframework.data.annotation.Version
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+
 import java.math.BigDecimal
 
 @Table("contract_item")
@@ -21,6 +25,18 @@ class ContractItem {
 
     var unitPrice : BigDecimal = BigDecimal.ZERO
     var totalPrice : BigDecimal = BigDecimal.ZERO
+
+    @Transient
+    var referenceItem: ContractReferenceItem? = null
+
+    @Transient
+    var executedQuantity: List<ExecutedQuantity> = emptyList()
+
+    @Transient
+    var reservedQuantity: List<ExecutedQuantity> = emptyList()
+
+    @Version
+    var version: Long? = null
 
     fun setPrices(itemValue: BigDecimal) {
         unitPrice = itemValue

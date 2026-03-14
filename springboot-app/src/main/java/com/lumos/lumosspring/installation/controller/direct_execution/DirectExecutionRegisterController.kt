@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
-import java.util.UUID
 
 @RestController
 @RequestMapping("/api")
@@ -52,5 +51,46 @@ class DirectExecutionRegisterController(
         @RequestPart("installation") installation: InstallationRequest?
     ): ResponseEntity<Any> =
         registerService.finishDirectExecutionV2(signature, installation)
+
+
+    data class ReqValidation(
+        val directExecutionId: Long,
+        val contractId: Long,
+        val items: List<ReqValidationItems>
+    )
+
+    data class ReqValidationItems(
+        val directExecutionStreetItemId: Long,
+        val contractItemId: Long,
+    )
+
+    @PostMapping("/direct-execution/pre-validate-execution")
+    fun preValidateExecution(@RequestBody request: ReqValidation): ResponseEntity<Any> {
+        return registerService.preValidateExecution(request)
+    }
+
+    @DeleteMapping("/direct-execution/delete-item/{streetItemId}")
+    fun deleteItem(
+        @PathVariable streetItemId: Long,
+    ): ResponseEntity<Any>  {
+        return registerService.deleteItem(streetItemId)
+    }
+
+    @PutMapping("/direct-execution/cancel-validation")
+    fun cancelValidation(
+        @RequestParam executionId: Long,
+        @RequestParam streetItemsIds: List<Long>,
+    ): ResponseEntity<Any> {
+        registerService.cancelValidation(executionId, streetItemsIds)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PutMapping("/direct-execution/validate-execution/{executionId}")
+    fun validateExecution (
+        @PathVariable executionId: Long,
+    ): ResponseEntity<Any> {
+        registerService.validateExecution(executionId)
+        return ResponseEntity.noContent().build()
+    }
 
 }

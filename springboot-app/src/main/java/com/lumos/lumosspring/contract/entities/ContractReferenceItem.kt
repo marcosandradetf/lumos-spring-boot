@@ -2,6 +2,7 @@ package com.lumos.lumosspring.contract.entities
 
 import com.lumos.lumosspring.authentication.model.TenantEntity
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
@@ -20,4 +21,7 @@ class ContractReferenceItem : TenantEntity() {
     var linking: String? = null
 
     var itemDependency: String? = null
+
+    @Transient
+    var referenceMaterialsIds: List<Long> = emptyList()
 }

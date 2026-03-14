@@ -1,6 +1,5 @@
 package com.lumos.lumosspring.installation.service.direct_execution;
 
-import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository;
 import com.lumos.lumosspring.contract.repository.ContractRepository;
 import com.lumos.lumosspring.contract.service.ContractService;
 import com.lumos.lumosspring.installation.dto.direct_execution.DirectExecutionDTO;
@@ -8,7 +7,7 @@ import com.lumos.lumosspring.installation.model.direct_execution.DirectExecution
 import com.lumos.lumosspring.installation.model.direct_execution.DirectExecutionItem;
 import com.lumos.lumosspring.installation.repository.direct_execution.DirectExecutionRepository;
 import com.lumos.lumosspring.installation.repository.direct_execution.DirectExecutionRepositoryItem;
-import com.lumos.lumosspring.notifications.service.NotificationService;
+import com.lumos.lumosspring.notifications.service.FCMService;
 import com.lumos.lumosspring.s3.service.S3Service;
 import com.lumos.lumosspring.serviceorder.model.installation.ReservationManagement;
 import com.lumos.lumosspring.serviceorder.repository.installation.ReservationManagementRepository;
@@ -33,7 +32,7 @@ public class DirectExecutionManagementService {
     private final DirectExecutionRepository directExecutionRepository;
     private final NamedParameterJdbcTemplate namedJdbc;
     private final ContractService contractService;
-    private final NotificationService notificationService;
+    private final FCMService FCMService;
     private final DirectExecutionRepositoryItem directExecutionItemRepository;
     private final S3Service s3Service;
 
@@ -43,7 +42,7 @@ public class DirectExecutionManagementService {
             ReservationManagementRepository reservationManagementRepository,
             DirectExecutionRepository directExecutionRepository,
             NamedParameterJdbcTemplate namedJdbc,
-            ContractService contractService, NotificationService notificationService,
+            ContractService contractService, FCMService FCMService,
             DirectExecutionRepositoryItem directExecutionItemRepository,
             S3Service s3Service
     ) {
@@ -53,7 +52,7 @@ public class DirectExecutionManagementService {
         this.directExecutionRepository = directExecutionRepository;
         this.namedJdbc = namedJdbc;
         this.contractService = contractService;
-        this.notificationService = notificationService;
+        this.FCMService = FCMService;
         this.directExecutionItemRepository = directExecutionItemRepository;
         this.s3Service = s3Service;
     }
@@ -175,13 +174,18 @@ public class DirectExecutionManagementService {
         }
 
         // 8) Notifica o estoquista responsável
-        notificationService.sendNotificationForTopic(
+        FCMService.sendNotificationForTopic(
                 "Nova Ordem Disponível",
                 "Uma nova ordem foi atribuída a você. Acesse a tela de Gerenciamento de Reservas para iniciar o processo.",
                 null,
                 execution.getStockistId().toString(),
                 Instant.now(),
-                NotificationType.ALERT
+                NotificationType.ALERT,
+                com.lumos.lumosspring.notifications.service.FCMService.TargetPlatform.WEB,
+                false,
+                null,
+                null,
+                null
         );
 
         return ResponseEntity.ok(new DefaultResponse(step + " etapa criada com sucesso"));

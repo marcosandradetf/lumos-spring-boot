@@ -218,6 +218,7 @@ object NotificationType {
     const val WARNING = "WARNING"
     const val CASH = "CASH"
     const val ALERT = "ALERT"
+    const val ALERT_BANNER = "ALERT_BANNER"
 }
 
 object ReservationStatus {

@@ -1,0 +1,939 @@
+<div class="min-h-screen text-slate-800 dark:text-white relative">
+  <div class="mx-auto max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
+
+    <!-- Header -->
+    <div
+      *ngIf="currentStep() !== 'FINISHED'"
+      class="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0">
+          <div
+            class="mb-2 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+            Execução aguardando validação contratual
+          </div>
+
+          <h1 class="text-2xl font-semibold tracking-tight">
+            Validação de execução operacional
+          </h1>
+
+          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-neutral-400">
+            Uma execução concluída em campo precisa ser vinculada a um contrato para consolidar os materiais aplicados e
+            liberar a geração do relatório.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div
+            class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+            <div class="text-xs text-slate-500 dark:text-neutral-400">Execução</div>
+            <div class="mt-1 text-sm font-semibold">
+              {{ execution()?.startedAt | date:'dd/MM' }} - {{ execution()?.finishedAt | date:'dd/MM/yyyy' }}
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+            <div class="text-xs text-slate-500 dark:text-neutral-400">Equipe</div>
+            <div class="mt-1 text-sm font-semibold">{{ execution()?.teamName }}</div>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+            <div class="text-xs text-slate-500 dark:text-neutral-400">Itens vinculados</div>
+            <div class="mt-1 text-sm font-semibold">{{ mappedCount() }}</div>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+            <div class="text-xs text-slate-500 dark:text-neutral-400">Pendentes</div>
+            <div class="mt-1 text-sm font-semibold">{{ pendingCount() }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="flex justify-between mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+        <div>
+          <div class="text-xs text-slate-500 dark:text-neutral-400">Descrição</div>
+          <div class="mt-1 text-sm font-semibold">{{ execution()?.description }}</div>
+        </div>
+
+        <div class="relative h-24 w-24">
+
+          <svg class="h-24 w-24 transform -rotate-90">
+            <circle
+              cx="48"
+              cy="48"
+              r="40"
+              stroke="currentColor"
+              stroke-width="8"
+              class="text-slate-200 dark:text-neutral-800 fill-none"
+            />
+            <circle
+              cx="48"
+              cy="48"
+              r="40"
+              stroke="currentColor"
+              stroke-width="8"
+              [attr.stroke-dasharray]="251"
+              [attr.stroke-dashoffset]="251 - (251 * progressPercentage() / 100)"
+              class="text-emerald-500 fill-none transition-all duration-500"
+            />
+          </svg>
+
+          <div class="absolute inset-0 flex items-center justify-center text-lg font-semibold">
+            {{ progressPercentage() }}%
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Stepper -->
+    <div class="mb-6 flex flex-wrap items-center gap-3" *ngIf="currentStep() !== 'FINISHED'">
+      <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
+           [class]="currentStep() === 'CONTRACT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-white text-slate-500 dark:bg-neutral-900 dark:text-neutral-400'">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>
+        Contrato
+      </div>
+
+      <div class="h-px w-8 bg-slate-300 dark:bg-neutral-700"></div>
+
+      <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
+           [class]="currentStep() === 'MAPPING' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-white text-slate-500 dark:bg-neutral-900 dark:text-neutral-400'">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>
+        Vinculação
+      </div>
+
+      <div class="h-px w-8 bg-slate-300 dark:bg-neutral-700"></div>
+
+      <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
+           [class]="currentStep() === 'REVIEW' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-white text-slate-500 dark:bg-neutral-900 dark:text-neutral-400'">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">3</span>
+        Revisão
+      </div>
+    </div>
+
+    <!-- STEP 1: contrato -->
+    @if (currentStep() === 'CONTRACT') {
+      <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <div
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <h2
+            class="text-lg font-semibold">{{ showMenu ? 'Exibindo filtros de contratos' : 'Selecionar contrato existente' }}</h2>
+
+          <div
+            *ngIf="!showMenu"
+            class="flex flex-wrap items-center justify-center gap-2 text-sm
+           text-gray-500 dark:text-gray-400 border shadow p-2 rounded-xl m-2">
+            <span>Listando contratos criados no período de</span>
+
+            <span
+              class="px-2 py-1 rounded-md font-medium
+             bg-gray-100 text-gray-700
+             dark:bg-gray-800 dark:text-gray-200"
+            >
+          {{ filters.startDate | date: 'dd/MM/yyyy' }}
+        </span>
+
+            <span>até</span>
+
+            <span
+              class="px-2 py-1 rounded-md font-medium
+             bg-gray-100 text-gray-700
+             dark:bg-gray-800 dark:text-gray-200"
+            >
+          {{ filters.endDate | date: 'dd/MM/yyyy' }}
+        </span>
+
+            <!-- Hint de filtro -->
+            <span class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              <i
+                class="pi pi-info-circle align-middle"
+                style="font-size: 1rem; vertical-align: middle;"
+              ></i>
+              <span class="align-middle">
+                Para alterar o período, utilize o botão de filtro abaixo
+              </span>
+            </span>
+
+            <div class="w-full flex justify-center py-4">
+              <button
+                (click)="showMenu = true"
+                type="button"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg
+          text-sm font-medium
+          bg-slate-50 dark:bg-white/5
+          text-slate-600 dark:text-slate-300
+          hover:bg-slate-100 dark:hover:bg-white/10
+          transition">
+
+                <span>Mostrar filtros</span>
+
+                <i
+                  class="pi pi-chevron-down text-xs transition-transform duration-200"
+                ></i>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="showMenu" class="px-4">
+            <div class="w-full flex justify-center py-4">
+              <button
+                (click)="showMenu = false"
+                type="button"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg
+          text-sm font-medium
+          bg-slate-50 dark:bg-white/5
+          text-slate-600 dark:text-slate-300
+          hover:bg-slate-100 dark:hover:bg-white/10
+          transition">
+
+                <span>Mostrar contratos</span>
+
+                <i
+                  class="pi pi-chevron-down text-xs transition-transform duration-200"
+                ></i>
+              </button>
+            </div>
+
+            <section
+              *ngIf="showMenu"
+              class="rounded-2xl border border-slate-200 dark:border-white/10
+         bg-white dark:bg-slate-900 shadow-sm">
+
+              <!-- Header -->
+              <div class="px-6 py-4 border-b border-slate-200 dark:border-white/10">
+                <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Filtros
+                </h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400">
+                  Refine os resultados por status, período de criação, razão social e número do contrato
+                </p>
+              </div>
+
+              <!-- Campos -->
+              <div class="p-6 grid grid-cols-1 gap-5">
+
+                <!-- Tipo de serviço -->
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    Status
+                  </label>
+                  <p-dropdown
+                    [options]="statuses"
+                    [disabled]="(filters.contractor?.length ?? 0) > 0"
+                    optionLabel="label"
+                    optionValue="value"
+                    [(ngModel)]="filters.status"
+                    placeholder="Selecione o tipo"
+                    class="w-full">
+                  </p-dropdown>
+
+                  <p-message severity="error" styleClass="mt-1" *ngIf="!filters.status && submitted">Filtro obrigatório
+                  </p-message>
+                </div>
+
+                <!-- Data inicial -->
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    Data inicial
+                  </label>
+                  <p-calendar
+                    [(ngModel)]="filters.startDate"
+                    [disabled]="(filters.contractor?.length ?? 0) > 0"
+                    placeholder="dd/mm/aaaa"
+                    dateFormat="dd/mm/yy"
+                    fluid
+                    class="w-full">
+                  </p-calendar>
+
+                  <p-message severity="error" styleClass="mt-1" *ngIf="!filters.startDate && submitted">Filtro
+                    obrigatório
+                  </p-message>
+                </div>
+
+                <!-- Data final -->
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    Data final
+                  </label>
+                  <p-calendar
+                    [(ngModel)]="filters.endDate"
+                    placeholder="dd/mm/aaaa"
+                    dateFormat="dd/mm/yy"
+                    fluid
+                    [disabled]="(filters.contractor?.length ?? 0) > 0"
+                    class="w-full">
+                  </p-calendar>
+
+                  <p-message severity="error" styleClass="mt-1" *ngIf="!filters.endDate && submitted">Filtro obrigatório
+                  </p-message>
+                </div>
+
+                <!-- Modo de visualização -->
+                <div class="flex flex-col gap-1 w-full">
+                  <label class="text-xs font-medium text-slate-600 dark:text-slate-400 w-full">
+                    Razão Social ou Nº do contrato
+                  </label>
+                  <input
+
+                    type="text"
+                    pInputText [(ngModel)]="filters.contractor"/>
+                </div>
+
+              </div>
+
+              <!-- Ações -->
+              <div
+                class="px-6 py-4 flex flex-col sm:flex-row justify-end gap-3
+           border-t border-slate-200 dark:border-white/10">
+
+                <button
+                  class="px-4 py-2 rounded-lg border text-sm
+             border-slate-300 dark:border-white/20
+             text-slate-600 dark:text-slate-300
+             hover:bg-slate-50 dark:hover:bg-white/5"
+                  (click)="resetFilters()">
+                  Limpar filtros
+                </button>
+
+                <button
+                  (click)="applyFilters()"
+                  class="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm
+             hover:bg-blue-700 transition">
+                  Filtrar contratos
+                </button>
+
+              </div>
+
+            </section>
+          </div>
+
+          <p class="mt-1 text-sm text-slate-600 dark:text-neutral-400" *ngIf="!showMenu">
+            Escolha um contrato ativo para consolidar esta execução e vincular os itens executados.
+          </p>
+
+          <div class="mt-5 space-y-3" *ngIf="!showMenu">
+            @for (contract of filteredContracts(); track contract.contractId) {
+              <button
+                type="button"
+                (click)="selectContract(contract)"
+                class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50/60 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/5"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold">{{ contract.number }}</div>
+                    <div class="mt-1 text-sm text-slate-600 dark:text-neutral-400">{{ contract.contractor }}</div>
+                    <div class="mt-2 text-xs text-slate-500 dark:text-neutral-500">
+                      {{ contract.cnpj }} · {{ contract.address }}
+                    </div>
+                  </div>
+
+                  <span
+                    class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                    {{ contract.itemQuantity }} itens
+                  </span>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 class="text-lg font-semibold">Criar novo contrato</h2>
+          <p class="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+            Caso a execução não pertença a um contrato existente, crie um novo contrato para seguir com a validação.
+          </p>
+
+          <div
+            class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 dark:border-neutral-700 dark:bg-neutral-950">
+            <div class="text-sm font-medium">Quando usar esta opção</div>
+            <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-neutral-400">
+              <li>• A execução pertence a uma nova contratação</li>
+              <li>• O contrato ainda não foi cadastrado no corporativo</li>
+              <li>• É necessário formalizar o vínculo antes do relatório</li>
+            </ul>
+          </div>
+
+          <button
+            type="button"
+            (click)="goToCreateContract()"
+            class="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+          >
+            Criar novo contrato
+            <span>→</span>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 2: mapping -->
+    @if (currentStep() === 'MAPPING' && selectedContract()) {
+      <div class="space-y-6">
+        <div
+          class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="text-sm text-slate-500 dark:text-neutral-400">Contrato selecionado</div>
+              <div class="mt-1 text-lg font-semibold">
+                {{ selectedContract()!.contractNumber }} · {{ selectedContract()!.contractor }}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              (click)="backToContractSelection()"
+              class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            >
+              Trocar contrato
+            </button>
+          </div>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div
+            #leftPanel
+            class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="mb-4">
+              <h2 class="text-lg font-semibold">Materiais executados</h2>
+              <p class="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+                Revise os itens executados em campo e confirme o item contratual sugerido.
+              </p>
+            </div>
+
+            <div
+              class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+
+              <div class="flex items-center gap-3">
+
+                <button
+                  (click)="preselectContractItems()"
+                  class="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition">
+                  Aplicar todas sugestões
+                </button>
+
+                <button
+                  (click)="clearAllBindings()"
+                  class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800 transition">
+                  Limpar todos vínculos
+                </button>
+
+              </div>
+
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-neutral-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    [checked]="showOnlyPending()"
+                    (change)="toggleOnlyPending()"/>
+                  Mostrar apenas pendentes
+                </label>
+              </div>
+
+            </div>
+
+            <div class="space-y-5">
+              @for (street of visibleStreets(); track street.directExecutionStreetId) {
+
+                <div class="mb-4 flex items-center justify-between">
+
+                  <div>
+                    <h3 class="text-sm font-semibold">{{ street.address }}</h3>
+                    <p class="text-xs text-slate-500 dark:text-neutral-500">
+                      {{ street.items.length }} itens executados
+                    </p>
+                  </div>
+
+                  <button
+                    (click)="applySuggestionsForStreet(street.directExecutionStreetId)"
+                    class="rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 transition">
+                    Aplicar sugestões desta rua
+                  </button>
+
+                </div>
+
+                <div
+                  class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-neutral-800 dark:bg-neutral-950">
+                  <div class="mb-4 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 class="text-sm font-semibold">{{ street.address }}</h3>
+                    </div>
+
+                    <span
+                      class="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
+                      {{ street.items.length }} itens
+                    </span>
+                  </div>
+
+                  <div class="space-y-3">
+                    @for (item of street.visibleItems;
+                      track item.directExecutionStreetItemId) {
+                      <div
+                        class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900 transition hover:shadow-sm">
+
+                        <!-- Linha superior -->
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+
+                          <div class="min-w-0">
+                            <div class="text-sm font-semibold text-slate-800 dark:text-white">
+                              {{ item.material.materialName }}
+                            </div>
+
+                            <div class="mt-1 text-xs text-slate-500 dark:text-neutral-500">
+                              Quantidade executada:
+                              <span class="font-medium text-slate-700 dark:text-neutral-300">
+                                {{ item.executedQuantity }} {{ item.material.requestUnit || 'UN' }}
+                              </span>
+                            </div>
+                          </div>
+
+                          <!-- Status -->
+                          <div>
+                              <span
+                                class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
+                                [ngClass]="{
+                                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400':
+                                    item.selectedContractItemId && item.suggestedContractItemId === item.selectedContractItemId,
+
+                                  'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400':
+                                    item.selectedContractItemId && item.suggestedContractItemId !== item.selectedContractItemId,
+
+                                  'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400':
+                                    !item.selectedContractItemId
+                                }"
+                              >
+                                {{
+                                  item.selectedContractItemId
+                                    ? (item.suggestedContractItemId === item.selectedContractItemId
+                                      ? 'Vinculado automaticamente'
+                                      : 'Vinculado manualmente')
+                                    : 'Pendente'
+                                }}
+                              </span>
+                          </div>
+                        </div>
+
+                        <!-- Sugestão automática -->
+                        @let suggestedBalance = liveAvailableBalanceMap().get(item.suggestedContractItemId!) ?? 0;
+                        @let canApply = suggestedBalance >= item.executedQuantity;
+
+                        @if (item.suggestedContractItemId && !item.selectedContractItemId) {
+                          <div
+                            [ngClass]="canApply
+                              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/5'
+                              : 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/5'"
+                            class="mt-4 rounded-xl border p-4 transition-colors">
+
+                            <div class="flex items-center justify-between gap-4">
+                              <div class="flex flex-col gap-0.5">
+                                <div
+                                  [class]="canApply ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'"
+                                  class="text-sm font-medium">
+                                  {{ canApply ? 'Sugestão automática disponível' : 'Sugestão indisponível por saldo' }}
+                                </div>
+                                <div class="text-[11px] opacity-70 dark:text-neutral-400">
+                                  Baseada no vínculo material ↔ item contratual
+                                </div>
+                              </div>
+
+                              @if (canApply) {
+                                <button
+                                  type="button"
+                                  (click)="updateItemBinding(item.directExecutionStreetItemId, item.suggestedContractItemId)"
+                                  class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition shadow-sm flex items-center gap-2"
+                                >
+                                  <i class="pi pi-magic-wand text-[10px]"></i>
+                                  Aplicar
+                                </button>
+                              } @else {
+                                <div class="flex flex-col items-end gap-1">
+                                  <span class="text-[10px] font-bold text-amber-600 uppercase">Saldo insuficiente</span>
+                                  <span
+                                    class="text-[10px] text-amber-500 italic">Faltam {{ item.executedQuantity - suggestedBalance }}
+                                    un</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
+
+                        <!-- Dropdown -->
+                        <div class="mt-4 flex flex-col gap-2">
+                          <label
+                            class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+                            Item Contratual Vinculado
+                          </label>
+
+                          <p-dropdown
+                            [options]="getAvailableContractItemsForExecutionItem(item)"
+                            [(ngModel)]="item.selectedContractItemId"
+                            optionValue="contractItemId"
+                            [filter]="true"
+                            filterBy="referenceItem.description"
+                            placeholder="Selecione um item do contrato"
+                            styleClass="w-full lumos-dropdown"
+                            [panelStyle]="{'max-width': '100%'}"
+                            (onChange)="updateItemBinding(item.directExecutionStreetItemId, $event.value)"
+                          >
+                            <ng-template pTemplate="selectedItem" let-selectedOption>
+                              <div
+                                (mouseenter)="selectContractItem(selectedOption, $event)"
+                                (mouseleave)="selectContractItem(null)"
+                                class="flex items-center gap-2 w-full min-w-0"
+                                [title]="selectedOption.referenceItem.description">
+                                <i class="pi pi-check-circle text-emerald-500 shrink-0"></i>
+                                <span
+                                  class="truncate block font-medium max-w-lg">{{ selectedOption.referenceItem.description }}</span>
+                              </div>
+                            </ng-template>
+
+                            <ng-template let-ci pTemplate="item">
+                              @let balance = liveAvailableBalanceMap().get(ci.contractItemId) ?? 0;
+                              @let isSuggested = item.suggestedContractItemId === ci.contractItemId;
+                              @let isInsufficient = balance < item.executedQuantity;
+
+                              <div
+                                class="flex w-full flex-col border-b border-slate-100 py-2 dark:border-neutral-800 min-w-0 transition-opacity"
+                                (mouseenter)="selectContractItem(ci, $event)"
+                                (mouseleave)="selectContractItem(null)"
+                                (click)="onContractItemClick($event, isInsufficient)"
+                                [class.opacity-40]="isInsufficient"
+                                [class.cursor-not-allowed]="isInsufficient"
+                              >
+                                <div class="flex items-center  gap-4">
+
+                                  <div class="flex items-center gap-2">
+                                    @if (ci.isPriority) {
+                                      <span
+                                        class="text-[9px] bg-blue-100 text-blue-600 px-1 rounded font-bold uppercase">Sugestão</span>
+                                    }
+                                  </div>
+
+                                  <div class="flex items-center gap-2 min-w-0">
+                                    @if (isSuggested && !isInsufficient) {
+                                      <i class="pi pi-star-fill text-amber-400 text-xs shrink-0 animate-pulse"></i>
+                                    }
+                                    <span class="text-sm font-semibold text-slate-700 dark:text-neutral-200 truncate"
+                                          [class.text-slate-400]="isInsufficient"
+                                          [title]="ci.referenceItem.description">
+                                      {{ ci.referenceItem.description }}
+                                    </span>
+                                  </div>
+
+                                  <span
+                                    [class]="isInsufficient
+                                      ? 'bg-red-500 text-white shadow-sm ring-1 ring-red-600'
+                                      : 'bg-emerald-100 text-emerald-700'"
+                                    class="whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-black uppercase shrink-0 transition-colors">
+                                    {{ isInsufficient ? 'Sem Saldo: ' + balance : 'Saldo: ' + balance }}
+                                  </span>
+                                </div>
+
+                                <div class="mt-1 flex items-center gap-3 text-[10px]">
+                                  <span class="flex items-center gap-1 shrink-0 text-slate-400">
+                                    <i class="pi pi-tag text-[10px]"></i> ID: {{ ci.contractItemId }}
+                                  </span>
+
+                                  @if (isInsufficient) {
+                                    <span
+                                      class="flex items-center gap-1 text-red-600 font-bold uppercase tracking-tighter italic">
+                                      <i
+                                        class="pi pi-ban text-[10px]"></i> Bloqueado: Necessário {{ item.executedQuantity }}
+                                    </span>
+                                  }
+                                  @if (isSuggested) {
+                                    <span class="text-amber-600 font-medium">Recomendado para esta execução</span>
+                                  }
+                                </div>
+                              </div>
+                            </ng-template>
+                          </p-dropdown>
+                        </div>
+
+                        <!-- Ação rápida -->
+                        @if (item.selectedContractItemId) {
+                          <div class="mt-3 flex justify-end">
+                            <button
+                              type="button"
+                              (click)="updateItemBinding(item.directExecutionStreetItemId, null)"
+                              class="text-xs font-medium text-slate-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition"
+                            >
+                              Remover vínculo
+                            </button>
+                          </div>
+                        }
+
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="space-y-6" >
+            <div
+              class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <h2 class="text-lg font-semibold">Resumo da vinculação</h2>
+
+              <div class="mt-4 grid gap-3">
+                <div class="rounded-xl bg-emerald-50 px-4 py-3 dark:bg-emerald-500/10">
+                  <div class="text-xs text-emerald-700 dark:text-emerald-400">Itens vinculados</div>
+                  <div class="mt-1 text-lg font-semibold text-emerald-800 dark:text-emerald-300">{{ mappedCount() }}
+                  </div>
+                </div>
+
+                <div class="rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-500/10">
+                  <div class="text-xs text-amber-700 dark:text-amber-400">Pendentes</div>
+                  <div class="mt-1 text-lg font-semibold text-amber-800 dark:text-amber-300">{{ pendingCount() }}</div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                (click)="goToReview()"
+                class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              >
+                Revisar validação
+                <span>→</span>
+              </button>
+            </div>
+
+            <div
+              class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <div class="flex items-center justify-between w-full">
+                <h3 class="text-sm font-semibold">Itens do contrato</h3>
+                <p-button rounded="true" severity="contrast" (onClick)="newItem()">Criar novo item</p-button>
+              </div>
+
+              <div class="mt-4 space-y-3 relative overflow-auto" #rightPanel
+                   [style.Height.px]="minH()"
+              >
+                @for (item of (selectedContractItem() ? [selectedContractItem()!] : selectedContract()!.items); track item.contractItemId) {
+
+                  <div
+                    class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-950"
+                    [class.absolute]="selectedContractItem()"
+                    [style.top.px]="previewTop()">
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="text-sm font-bold text-slate-700 dark:text-neutral-200">
+                        {{ item.referenceItem.description }}
+                      </div>
+
+                      @let realBalance = liveAvailableBalanceMap().get(item.contractItemId) ?? 0;
+
+                      <div [class]="realBalance < 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'"
+                           class="rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-tight">
+                        Saldo Real: {{ realBalance }}
+                      </div>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-2 gap-y-3 sm:grid-cols-4">
+                      <div class="flex flex-col">
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Contratado</span>
+                        <span
+                          class="text-xs font-medium text-slate-600 dark:text-neutral-400">{{ item.contractedQuantity }}</span>
+                      </div>
+
+                      <div class="flex flex-col">
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Executado</span>
+                        <span
+                          class="text-xs font-medium text-slate-600 dark:text-neutral-400">{{ item.quantityExecuted }}</span>
+                      </div>
+
+                      <div class="flex flex-col border-l border-slate-200 pl-3 dark:border-neutral-800">
+                        @let selected = currentSelectionMap().get(item.contractItemId) ?? 0;
+                        <span class="text-[10px] font-bold uppercase text-amber-500">Selecionado</span>
+                        <span class="text-xs font-medium text-amber-600">{{ selected }}</span>
+                      </div>
+
+                      <div class="flex flex-col">
+                        @let reserved = committedInDatabaseMap().get(item.contractItemId) ?? 0;
+
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Reservado</span>
+                        <span class="text-xs font-medium text-slate-600 dark:text-neutral-400">{{ reserved }}</span>
+                      </div>
+                    </div>
+
+                    @if (realBalance < 0) {
+                      <div
+                        class="mt-3 flex items-center gap-2 rounded-lg bg-red-50 p-2 text-[10px] font-bold text-red-600 dark:bg-red-500/10">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        ATENÇÃO: Quantidade reservada excede o saldo do contrato!
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 3: review -->
+    @if (currentStep() === 'REVIEW' && selectedContract()) {
+      <div class="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
+        <div
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 class="text-lg font-semibold">Revisão final</h2>
+          <p class="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+            Confirme os dados abaixo antes de concluir a validação da execução.
+          </p>
+
+
+          <div class="mt-6 space-y-4">
+            @for (item of allExecutionItems(); track item.directExecutionStreetItemId) {
+              <div
+                class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-neutral-800 dark:bg-neutral-950">
+                <div class="flex flex-col gap-2">
+                  <div class="text-sm font-medium">{{ item.material.materialName }}</div>
+                  <div class="text-xs text-slate-500 dark:text-neutral-500">{{ item.streetAddress }}</div>
+                  <div class="text-xs text-slate-500 dark:text-neutral-500">
+                    Quantidade: {{ item.executedQuantity }} {{ item.material.requestUnit || 'UN' }}
+                  </div>
+                  <div class="text-xs font-medium"
+                       [class]="item.selectedContractItemId ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
+                    {{
+                      item.selectedContractItemId
+                        ? 'Vinculado ao item contratual #' + item.selectedContractItemId
+                        : 'Ainda não vinculado'
+                    }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 class="text-lg font-semibold">Confirmação</h2>
+
+          <div class="mt-5 space-y-4 text-sm">
+            <div>
+              <div class="text-slate-500 dark:text-neutral-400">Contrato</div>
+              <div class="mt-1 font-medium">{{ selectedContract()!.contractNumber }}
+                · {{ selectedContract()!.contractor }}
+              </div>
+            </div>
+
+            <div>
+              <div class="text-slate-500 dark:text-neutral-400">Execução</div>
+              <div class="mt-1 font-medium">
+                {{ execution()?.startedAt | date:'dd/MM/yyyy' }}
+                - {{ execution()?.finishedAt | date:'dd/MM/yyyy' }}
+              </div>
+            </div>
+
+            <div>
+              <div class="text-slate-500 dark:text-neutral-400">Itens vinculados</div>
+              <div class="mt-1 font-medium">{{ mappedCount() }}</div>
+            </div>
+
+            <div>
+              <div class="text-slate-500 dark:text-neutral-400">Pendências</div>
+              <div class="mt-1 font-medium">{{ pendingCount() }}</div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex flex-col gap-3">
+            <div class="flex flex-col gap-2">
+
+              <div class="flex items-center justify-between">
+
+            <span class="text-sm text-slate-500 mr-4">
+              Essa execução será confirmada automaticamente em
+            </span>
+
+                <p-tag
+                  styleClass="text-xl"
+                  severity="warn"
+                  icon="pi pi-clock"
+                  [value]="formattedTime">
+                </p-tag>
+
+              </div>
+
+              <p-progressBar
+                [value]="(remainingSeconds / 600) * 100"
+                [showValue]="false"
+                styleClass="h-2">
+              </p-progressBar>
+
+            </div>
+
+            <button
+              type="button"
+              (click)="validateExecution()"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            >
+              Confirmar agora
+            </button>
+
+            <button
+              type="button"
+              (click)="backToMapping()"
+              class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            >
+              Voltar para vinculação
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (currentStep() === 'FINISHED') {
+      <div class="flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+
+        <div class="relative mb-6">
+          <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+          <div class="relative flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/40">
+            <i class="pi pi-check text-4xl font-bold"></i>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-black text-slate-800 dark:text-neutral-100">
+          Vínculo Concluído!
+        </h2>
+        <p class="mt-2 max-w-xs text-center text-sm text-slate-500 dark:text-neutral-400">
+          Os itens da execução foram vinculados com sucesso aos itens do contrato
+          <span class="font-bold text-slate-700 dark:text-neutral-200">#{{ selectedContract()?.contractNumber }}</span>.
+        </p>
+
+        <div class="mt-8 w-full max-w-md divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-950">
+          <div class="flex items-center justify-between p-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total de Itens</span>
+            <span class="text-sm font-bold text-slate-700 dark:text-neutral-200">
+           {{ execution()?.streets?.length }} Ruas Processadas
+        </span>
+          </div>
+
+          <div class="flex items-center justify-between p-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Status do Contrato</span>
+            <div class="flex items-center gap-2">
+              <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
+              <span class="text-sm font-bold text-emerald-600 uppercase">Finalizado</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-10 flex flex-col gap-3 w-full max-w-xs">
+          <button
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+          >
+            <i class="pi pi-list"></i>
+            Gerar relatório
+          </button>
+
+        </div>
+      </div>
+    }
+
+  </div>
+  <app-loading-overlay [loading]="loading()"></app-loading-overlay>
+</div>
+
+<p-toast></p-toast>
