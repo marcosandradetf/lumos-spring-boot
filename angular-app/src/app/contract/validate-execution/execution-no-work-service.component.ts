@@ -66,7 +66,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
 
     private readonly previewHeight = 260;
     private readonly previewPadding = 12;
-    remainingSeconds = 600; // 10 minutos
+    remainingSeconds = 60; // 10 minutos
     intervalId: any;
 
 
@@ -599,8 +599,8 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
                 this.addLinkedItems();
 
                 this.currentStep.set('REVIEW');
-                this.startTimer();
                 this.loading.set(false);
+                this.startTimer();
             },
             error: err => {
                 this.utils.showMessage(err.error.message ?? err.error.error, "error");
@@ -802,7 +802,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
                 this.remainingSeconds--;
             } else {
                 clearInterval(this.intervalId);
-                this.validateExecution();
+                this.currentStep.set('FINISHED');
             }
 
         }, 1000);
@@ -875,6 +875,19 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
     }
 
 
+    protected generateReport() {
+        void this.router.navigate(["/relatorios/gerenciamento"],
+            {
+                queryParams: {
+                    contractId: this.selectedContract()?.contractId,
+                    executionId: this.execution()?.directExecutionId,
+                    type: "data",
+                    scope: "INSTALLATION",
+                    executionType: "DIRECT_EXECUTION"
+                }
+            }
+        );
+    }
 }
 
 

@@ -14,6 +14,7 @@ import {ReportService} from '../../report.service';
 import {HttpResponse} from '@angular/common/http';
 import {Toast} from 'primeng/toast';
 import {SafeUrlPipe} from '../../../safe-url.pipe';
+import {ActivatedRoute} from '@angular/router';
 
 @Component({
     selector: 'app-report-manage',
@@ -120,7 +121,8 @@ export class ReportManageComponent implements OnInit {
     constructor(
         private title: Title,
         private utils: UtilsService,
-        private reportService: ReportService
+        private reportService: ReportService,
+        private route: ActivatedRoute
     ) {
     }
 
@@ -145,6 +147,28 @@ export class ReportManageComponent implements OnInit {
                 });
                 this.filteredContracts = this.contracts
                     .filter(c => c.type === this.filters.scope);
+
+                this.route.queryParams.subscribe(params => {
+                    const contractId = params["contractId"]
+                    const executionId = params['executionId'];
+                    const type = params['type'];
+                    const scope = params['scope'];
+                    const executionType = params['executionType'];
+
+                    if(!executionId || !type || !scope || !contractId || !executionType) return;
+
+                    this.filters = {
+                        contractId: contractId,
+                        type: type,
+                        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                        endDate: new Date(),
+                        viewMode: "GROUP",
+                        scope: scope,
+                        executionId: executionId,
+                        executionType: executionType
+                    }
+                    this.applyFilters();
+                });
             },
             error: (err) => {
                 this.loading = false;

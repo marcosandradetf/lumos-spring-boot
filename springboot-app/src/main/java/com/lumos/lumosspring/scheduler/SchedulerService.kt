@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledFuture
 
@@ -16,16 +17,19 @@ class SchedulerService(
 
     private val tasks = ConcurrentHashMap<Long, ScheduledFuture<*>>()
 
-    fun scheduleAutoConfirm(executionId: Long, whenExecute: Instant) {
+    fun scheduleAutoConfirm(executionId: Long, tenantId: UUID, whenExecute: Instant) {
         cancelAutoConfirm(executionId)
 
         val future = taskScheduler.schedule(
             {
                 try {
-                    executionService.confirmPreparedExecution(executionId)
                     println("schedule ativado")
+                    AsyncTenantContext.setTenant(tenantId)
+                    executionService.confirmPreparedExecution(executionId)
                 } finally {
                     tasks.remove(executionId)
+                    AsyncTenantContext.clear()
+                    println("tenant limpo")
                 }
             },
             whenExecute
@@ -39,4 +43,12 @@ class SchedulerService(
     fun cancelAutoConfirm(executionId: Long) {
         tasks.remove(executionId)?.cancel(false)
     }
+}
+
+object AsyncTenantContext {
+    private val storage = ThreadLocal<UUID>()
+
+    fun setTenant(id: UUID) = storage.set(id)
+    fun getTenant(): UUID? = storage.get()
+    fun clear() = storage.remove()
 }

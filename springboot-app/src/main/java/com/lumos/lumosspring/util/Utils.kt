@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.util
 
+import com.lumos.lumosspring.scheduler.AsyncTenantContext
 import org.springframework.http.*
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -32,6 +33,8 @@ object Utils {
             val jwt = authentication.token
             return UUID.fromString(jwt.getClaimAsString("tenant") ?: "f0dc9ab8-cb2c-4f21-a75f-05b122614862")
         }
+
+        AsyncTenantContext.getTenant()?.let { return it }
 
         throw IllegalStateException("Usuário não autenticado ou token inválido")
     }

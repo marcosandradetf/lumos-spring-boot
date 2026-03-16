@@ -345,8 +345,8 @@ class DirectExecutionRegisterService(
 
         val streetItemsMap = streetItems.associateBy { it.directExecutionStreetItemId }
 
-        val contractItemIds = streetItems
-            .mapNotNull { it.contractItemId }
+        val contractItemIds = req.items
+            .map { it.contractItemId }
             .distinct()
 
         val reservedQuantityItems =
@@ -367,11 +367,11 @@ class DirectExecutionRegisterService(
                 streetItemsMap[item.directExecutionStreetItemId]
                     ?: throw Utils.BusinessException("Item da execução não encontrado")
 
-            val contractItem = contractItemsMap[streetItem.contractItemId]
+            val contractItem = contractItemsMap[item.contractItemId]
                 ?: throw Utils.BusinessException("Item do contrato não encontrado")
 
             val reserved =
-                reservedMap[streetItem.contractItemId]?.sumOf { it.quantity }
+                reservedMap[item.contractItemId]?.sumOf { it.quantity }
                     ?: BigDecimal.ZERO
 
             val balance = contractItem.contractedQuantity - (contractItem.quantityExecuted + reserved)
@@ -385,6 +385,10 @@ class DirectExecutionRegisterService(
             val linkedItems = saveLinkedItems(streetItem, null, req.contractId)
             linkedItemsResponse.addAll(linkedItems)
             streetItems.addAll(linkedItems)
+
+            reservedMap[streetItem.contractItemId]
+                ?.getOrNull(0)
+                ?.quantity += streetItem.executedQuantity
         }
 
         execution.contractId = req.contractId
@@ -396,8 +400,9 @@ class DirectExecutionRegisterService(
 
         schedulerService.scheduleAutoConfirm(
             execution.directExecutionId!!,
-//            Instant.now().plusSeconds(600)
-            Instant.now().plusSeconds(60)
+            Utils.getCurrentTenantId(),
+//            Instant.now().plusSeconds(602)
+            Instant.now().plusSeconds(62)
         )
 
         return ResponseEntity.ok().body(
@@ -521,6 +526,14 @@ class DirectExecutionRegisterService(
 
         try {
             contractItemsQuantitativeRepository.saveAll(contractItems)
+
+            directExecutionRepository.save(execution)
+
+            // excui os itens que foram excluídos
+            directExecutionRepositoryStreetItem.deleteAll(
+                streetItems
+                    .filter { it.contractItemId == null }
+            )
         } catch (_: OptimisticLockingFailureException) {
             cancelValidation(
                 executionId = execution.directExecutionId!!,
@@ -529,15 +542,13 @@ class DirectExecutionRegisterService(
             throw Utils.BusinessException(
                 "O saldo do contrato foi alterado por outra operação. Atualize a tela e tente novamente."
             )
+        } catch (e: Exception) {
+            cancelValidation(
+                executionId = execution.directExecutionId!!,
+                streetItemIds = streetItems.mapNotNull { it.directExecutionStreetItemId }
+            )
+            throw Utils.BusinessException(e.message)
         }
-
-        directExecutionRepository.save(execution)
-
-        // excui os itens que foram excluídos
-        directExecutionRepositoryStreetItem.deleteAll(
-            streetItems
-                .filter { it.contractItemId == null }
-        )
 
         println("schedule finalizado")
     }
