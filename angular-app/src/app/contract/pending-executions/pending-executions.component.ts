@@ -6,13 +6,15 @@ import {SharedState} from '../../core/service/shared-state';
 import {UtilsService} from '../../core/service/utils.service';
 import {TableModule} from 'primeng/table';
 import {DatePipe} from '@angular/common';
+import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-pending-executions',
   standalone: true,
     imports: [
         TableModule,
-        DatePipe
+        DatePipe,
+        LoadingOverlayComponent
     ],
   templateUrl: './pending-executions.component.html',
   styleUrl: './pending-executions.component.scss'

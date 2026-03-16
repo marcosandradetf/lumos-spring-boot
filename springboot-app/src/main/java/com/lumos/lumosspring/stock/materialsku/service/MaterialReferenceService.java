@@ -103,7 +103,7 @@ public class MaterialReferenceService {
     @Transactional
     public ResponseEntity<?> create(MaterialRequest material) {
         // Cria e salva o log de atualização
-        var user = userRepository.findByUserId(Utils.INSTANCE.getCurrentUserId()).orElseThrow();
+        var user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow();
         Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName(), Utils.INSTANCE.getCurrentTenantId());
         var log = new Log();
         String logMessage;

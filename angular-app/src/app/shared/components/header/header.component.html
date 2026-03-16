@@ -79,13 +79,25 @@
           <div class="flex items-center justify-center">
 
             <div class="relative flex items-center justify-center dark:bg-gray-800 bg-gray-300 rounded-full p-3 mr-2">
-              <span class="pi pi-bell cursor-pointer text-xl" (click)="SharedState.toggleNotificationDrawer()"></span>
+              @let hasNotification = (hasNotifications$ | async) ?? true;
+              <span class="pi pi-bell cursor-pointer text-xl" (click)="hasNotification ? SharedState.toggleNotificationDrawer() : showBlockedNotificationInfo()"
+                    [title]="hasNotification ? 'Abrir notificações' : 'Você bloqueou notificações. Ative nas configurações do navegador.'"></span>
+              @if(hasNotification) {
+                @let count = (notificationCount$ | async) ?? 0;
 
-              <span *ngIf="(notificationCount$ | async) as count" class="absolute top-0 right-0 transform translate-x-1 -translate-y-1
-               flex items-center justify-center bg-red-500 text-white
-               text-xs font-bold rounded-full h-5 w-5 border-2 border-white dark:border-gray-800">
-                  {{ count > 99 ? '99+' : count }}
+                <span class="absolute top-0 right-0 transform translate-x-1 -translate-y-1
+                   flex items-center justify-center bg-red-500 text-white
+                   text-xs font-bold rounded-full h-5 w-5 border-2 border-white dark:border-gray-800">
+                      {{ count > 99 ? '99+' : count }}
                 </span>
+              } @else {
+                <span class="absolute top-0 right-0 transform translate-x-1 -translate-y-1
+                   flex items-center justify-center  text-white
+                   text-xs font-bold h-5 w-5">
+                    <i class="pi pi-lock"></i>
+                </span>
+              }
+
             </div>
 
             <div class="flex items-center justify-center gap-2">

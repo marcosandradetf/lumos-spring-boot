@@ -6,7 +6,7 @@ import {AuthService} from '../../../core/auth/auth.service';
 import {User} from '../../../models/user.model';
 import {Menubar} from 'primeng/menubar';
 import {Avatar} from 'primeng/avatar';
-import {MenuItem} from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import {Badge} from 'primeng/badge';
 import {UtilsService} from '../../../core/service/utils.service';
 import {PrimeBreadcrumbComponent} from '../prime-breadcrumb/prime-breadcrumb.component';
@@ -33,10 +33,12 @@ export class HeaderComponent implements OnInit {
     menuOpen = false; // Controle para o menu
     options: MenuItem[] | undefined;
     protected notificationCount$ = inject(FcmService).notifications$;
+    protected hasNotifications$ = inject(FcmService).hasNotifications$;
 
     constructor(protected authService: AuthService,
                 private router: Router,
                 private utils: UtilsService,
+                private messageService: MessageService
     ) {
         if (typeof window !== 'undefined' && window.localStorage) {
             const storedUser = window.localStorage.getItem('user');
@@ -92,4 +94,15 @@ export class HeaderComponent implements OnInit {
     }
 
     protected readonly SharedState = SharedState;
+
+    protected showBlockedNotificationInfo() {
+        this.messageService.add({
+            key: 'notifications',
+            severity: 'warn',
+            summary: 'Notificações bloqueadas',
+            detail: 'Você bloqueou notificações do navegador. Para receber alertas, clique no ícone ao lado do endereço do site na barra de navegação, depois em Configurações do site e habilite as notificações..',
+            life: 8000,
+            data: {}
+        });
+    }
 }

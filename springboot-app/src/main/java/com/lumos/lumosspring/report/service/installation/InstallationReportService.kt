@@ -62,7 +62,7 @@ class InstallationReportService(
 
         val titleDoc = if (filtersRequest.type == "data") "Relatório de Instalações de LEDs"
         else "Relatório Fotográfico"
-        val titlePdf = if (filtersRequest.type == "led") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
+        val titlePdf = if (filtersRequest.type == "data") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
         else "RELATÓRIO FOTOGRÁFICO"
 
         var startDate: String? = null
@@ -309,7 +309,7 @@ class InstallationReportService(
 
         val pdf = Utils.sendHtmlToPuppeteer(
             html,
-            if (filtersRequest.type == "led") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
+            if (filtersRequest.type == "data") "RELATÓRIO DE INSTALAÇÕES DE LEDS"
             else "RELATÓRIO FOTOGRÁFICO"
         )
 

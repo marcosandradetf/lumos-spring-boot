@@ -12,13 +12,18 @@ import {UtilsService} from './utils.service';
 @Injectable({providedIn: 'root'})
 export class FcmService {
     private messaging = inject(Messaging);
-    private dialogService = inject(DialogService); // Troquei aqui
+    private dialogService = inject(DialogService);
     private messageService = inject(MessageService)
     private http = inject(HttpClient);
-    private zone = inject(NgZone); // 👈 Injete aqui
+    private zone = inject(NgZone);
     private notificationCount = new BehaviorSubject<number>(0);
+
     private utils = inject(UtilsService);
     notifications$ = this.notificationCount.asObservable();
+
+    private hasNotifications = new BehaviorSubject<boolean>(true);
+    hasNotifications$ = this.hasNotifications.asObservable()
+
     ref: DynamicDialogRef | undefined;
 
     constructor() {
@@ -180,35 +185,71 @@ export class FcmService {
     }
 
     async getPermission(roles: string[]) {
-        const token = await getToken(this.messaging, {
-                vapidKey: 'BFrjDQvKE8sixitc6d_Z3zWDpPWljJNKZY3Qn3E-dAkwWLSJM88wvi0HisEGCUypTG2GSZkHvb1MLa37FQ3f5Vk'
-            }
-        );
-        console.log(token);
-        if (token) {
-            // Envia para o Spring inscrever este navegador no tópico
-            this.subscribeOnTopic(token, roles);
+        switch (Notification.permission) {
+            case 'granted':
+                await this.subscribeFCMToken(roles);
+                this.hasNotifications.next(true);
+                break;
+
+            case 'denied':
+                this.hasNotifications.next(false);
+                break;
+
+            case 'default':
+            default:
+                console.info('Permissão de notificações ainda não respondida.');
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    await this.subscribeFCMToken(roles);
+                    this.hasNotifications.next(true);
+                } else {
+                    console.warn('Permissão de notificações não concedida.');
+                    this.hasNotifications.next(false);
+                }
+                break;
+        }
+    }
+
+    private async subscribeFCMToken(roles: string[]) {
+        try {
+            const token = await getToken(this.messaging, {
+                vapidKey: 'BFrjDQvKE8sixitc6d_Z3zWDpPWljJNKZY3Qn3E-dAkwWLSJM88wvi0HisEGCUypTG2GSZkHvb1MLa37FQ3f5Vk',
+            });
+            if (token) this.subscribeOnTopic(token, roles);
+        } catch (err) {
+            console.error('Erro ao pegar token FCM:', err);
+            this.hasNotifications.next(false);
         }
     }
 
     async revokePermission(roles: string[]): Promise<void> {
-        const token = await getToken(this.messaging, {
-            vapidKey: 'BFrjDQvKE8sixitc6d_Z3zWDpPWljJNKZY3Qn3E-dAkwWLSJM88wvi0HisEGCUypTG2GSZkHvb1MLa37FQ3f5Vk'
-        });
-
-        if (token) {
-            await firstValueFrom(
-                this.unSubscribeOnTopic(token, roles)
-            );
+        if (Notification.permission === 'granted') {
+            try {
+                const token = await getToken(this.messaging, {
+                    vapidKey: 'BFrjDQvKE8sixitc6d_Z3zWDpPWljJNKZY3Qn3E-dAkwWLSJM88wvi0HisEGCUypTG2GSZkHvb1MLa37FQ3f5Vk'
+                });
+                if (token) {
+                    await firstValueFrom(
+                        this.unSubscribeOnTopic(token, roles)
+                    );
+                }
+            } catch(err) {
+                console.error('Erro ao pegar token FCM:', err);
+            }
+        } else {
+            console.log('Usuário não permitiu notificações, fallback ativo');
         }
     }
 
     private subscribeOnTopic(token: string, roles: string[]) {
         // Usar HttpParams garante que a lista seja formatada corretamente na URL
         const params = new HttpParams().set('roles', roles.join(','));
+        console.log("subscribe")
 
         this.http.post(`${environment.springboot}/api/fcm/subscribe`, {token}, {params})
             .subscribe();
+
+        localStorage.setItem('fcmToken', token);
     }
 
     resetCount() {
@@ -283,12 +324,15 @@ export class FcmService {
                 ),
                 'prev'
             );
-            console.log(cursor)
 
             return cursor?.value ?? null;
         } catch (error) {
             console.error("Erro ao buscar histórico:", error);
             return null;
         }
+    }
+
+    setPermission(b: boolean) {
+        this.hasNotifications.next(b);
     }
 }

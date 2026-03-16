@@ -3,6 +3,9 @@ package com.lumos.ui.installationholder
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.KeyboardHide
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.WifiOff
@@ -42,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -49,8 +54,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -81,6 +89,9 @@ fun NewInstallationScreen(
     val localId = viewModel.installationId
     val loading = viewModel.isLoading
     val error = viewModel.errorMessage
+    val focusManager = LocalFocusManager.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
 
     // Mantém sua lógica de sincronização inicial
     LaunchedEffect(Unit) {
@@ -238,7 +249,8 @@ fun NewInstallationScreen(
                             ContractCard(
                                 contractorName = abbreviate(contract.contractor),
                                 onClick = {
-                                    val externalId = System.currentTimeMillis() * 10_000 + (0..9999).random()
+                                    val externalId =
+                                        System.currentTimeMillis() * 10_000 + (0..9999).random()
                                     val localId = -externalId
                                     viewModel.insertInstallation(
                                         DirectExecution(
@@ -295,16 +307,37 @@ fun NewInstallationScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            // 🔹 INPUT DE DESCRIÇÃO
                             OutlinedTextField(
                                 value = description,
-                                onValueChange = { description = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Descrição da Instalação") },
+                                onValueChange = { description = it.uppercase() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(90.dp),
+                                label = {
+                                    Row(
+                                        modifier =  Modifier.fillMaxWidth(if(isFocused) 1f else 0.5f),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ){
+                                        Text("Descrição da Instalação")
+
+                                        if (isFocused) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardHide,
+                                                contentDescription = "Fechar teclado",
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .clickable { focusManager.clearFocus() }
+                                            )
+                                        }
+                                    }
+                                },
                                 placeholder = { Text("Ex: Instalação padrão residencial") },
                                 shape = RoundedCornerShape(12.dp),
                                 singleLine = false,
-                                maxLines = 3
+                                maxLines = 3,
+                                textStyle = TextStyle(fontSize = 16.sp),
+                                interactionSource = interactionSource,
                             )
 
                             OutlinedButton(

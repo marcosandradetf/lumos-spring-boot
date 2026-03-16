@@ -5,7 +5,7 @@ import {FooterComponent} from './shared/components/footer/footer.component';
 import {AuthService} from './core/auth/auth.service';
 import {AsyncPipe, NgClass, NgIf} from '@angular/common';
 import {SidebarComponent} from './shared/components/sidebar/sidebar.component';
-import {filter} from 'rxjs';
+import {filter, Observable, take} from 'rxjs';
 import {UtilsService} from './core/service/utils.service';
 import {SidebarDrawerComponent} from './shared/components/sidebar-drawer/sidebar-drawer.component';
 import {SharedState} from './core/service/shared-state';
@@ -16,16 +16,19 @@ import {Toast} from 'primeng/toast';
 import {NotificationPopupComponent} from './shared/components/notification-popup/notification-popup.component';
 import {DialogService} from 'primeng/dynamicdialog';
 import {MessageService, PrimeTemplate} from 'primeng/api';
+import {getToken} from '@angular/fire/messaging';
+import {LoadingOverlayComponent} from './shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent, NotificationDrawerComponent, AccountDrawerComponent, Toast, PrimeTemplate],
+    imports: [RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent, NotificationDrawerComponent, AccountDrawerComponent, Toast, PrimeTemplate, LoadingOverlayComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
     currentUrl: string = '';
+    logoutLoading$: Observable<boolean>;
 
     constructor(
         public authService: AuthService,
@@ -40,18 +43,45 @@ export class AppComponent implements OnInit {
         ).subscribe((event: NavigationEnd) => {
             this.currentUrl = event.urlAfterRedirects;
         });
+
+        this.logoutLoading$ = this.authService.isLoading$;
     }
 
 
     menuOpen = false;  // Definir o estado do menu no componente pai
 
     async ngOnInit() {
+        const userStorage = localStorage.getItem('user');
+        if (!userStorage) return;
+        console.log("logado")
+
+        const notificationStatus = Notification.permission;
+        if (notificationStatus === 'granted' || notificationStatus === 'default') {
+            let token = localStorage.getItem('fcmToken');
+            if (!token) {
+                await this.fcmService.getPermission(this.authService.getUser().getRoles());
+                token = localStorage.getItem('fcmToken');
+            }
+            this.fcmService.setPermission(token !== null);
+        } else {
+            this.fcmService.setPermission(false);
+            setTimeout(() => {
+                this.messageService.add({
+                    key: 'notifications',
+                    severity: 'warn',
+                    summary: 'Notificações bloqueadas',
+                    detail: 'Você bloqueou notificações do navegador. Para receber alertas, clique no ícone ao lado do endereço do site na barra de navegação, depois em Configurações do site e habilite as notificações..',
+                    life: 8000,
+                    data: {}
+                });
+            }, 0);
+        }
+
         this.fcmService.initListen();
 
-        this.utils.playSound('open');
         const bannerData = await this.fcmService.getBanner("ALERT_BANNER");
-        if(bannerData) {
-            console.log(bannerData)
+        if (bannerData) {
+            this.utils.playSound('open');
             this.dialogService.open(NotificationPopupComponent, {
                 data: bannerData,
                 width: '720px',
@@ -127,10 +157,14 @@ export class AppComponent implements OnInit {
 
     getIcon(type: string): string {
         switch (type) {
-            case 'ALERT': return 'pi pi-exclamation-triangle text-orange-500';
-            case 'ERROR': return 'pi pi-times-circle text-red-500';
-            case 'SUCCESS': return 'pi pi-check-circle text-green-500';
-            default: return 'pi pi-info-circle text-blue-500';
+            case 'ALERT':
+                return 'pi pi-exclamation-triangle text-orange-500';
+            case 'ERROR':
+                return 'pi pi-times-circle text-red-500';
+            case 'SUCCESS':
+                return 'pi pi-check-circle text-green-500';
+            default:
+                return 'pi pi-info-circle text-blue-500';
         }
     }
 

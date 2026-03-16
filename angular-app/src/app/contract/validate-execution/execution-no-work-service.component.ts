@@ -58,6 +58,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
     loading = signal<boolean>(true);
     showOnlyPending = signal<boolean>(false);
     contractSearch = signal<string>('');
+    deletedItems = signal<Set<number>>(new Set<number>);
 
     @ViewChild('rightPanel') rightPanelRef?: ElementRef<HTMLElement>;
     @ViewChild('leftPanel') leftPanel?: ElementRef<HTMLElement>;
@@ -66,7 +67,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
 
     private readonly previewHeight = 260;
     private readonly previewPadding = 12;
-    remainingSeconds = 60; // 10 minutos
+    remainingSeconds = 599;
     intervalId: any;
 
 
@@ -122,8 +123,6 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
             next: ({contracts, execution}) => {
 
                 this.execution.set(execution);
-
-                // Se API retornar paginação use contracts.content
                 this.contracts.set(contracts);
 
                 if (execution.contractId) {
@@ -136,7 +135,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
                 this.loading.set(false);
             },
             error: err => {
-                console.error(err);
+                this.utils.showMessage(err.error.error, 'error');
                 this.loading.set(false);
             }
         });
@@ -534,17 +533,22 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
 
             const streetItemIds = this.execution()!.streets
                 .flatMap(s => s.items)
-                .map(i => i.directExecutionStreetItemId)
+                .map(i => i.directExecutionStreetItemId);
+
+            const deletedIds = [...this.deletedItems()];
+            const allIds = [...streetItemIds, ...deletedIds];
 
             this.stopTimer();
             this.api.cancelValidation(
                 this.execution()!.directExecutionId,
-                streetItemIds
+                allIds
             ).subscribe({
                 next: () => {
+                    this.deletedItems.set(new Set());
                     const itemIdsToRemove = new Set(this.linkedItemsResponse().map(item => item.directExecutionStreetItemId));
                     this.removeItems(itemIdsToRemove);
                     this.currentStep.set('MAPPING');
+                    this.stopTimer();
                     this.loading.set(false);
                 },
                 error: err => {
@@ -614,6 +618,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
         this.api.deleteItem(streetItemId).subscribe({
             next: () => {
                 this.removeItems(new Set([streetItemId]));
+                this.deletedItems.set(new Set([...this.deletedItems(), streetItemId]));
                 this.utils.showMessage("Item excluído com sucesso.", "success");
                 this.loading.set(false);
             },
@@ -631,6 +636,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
             this.loading.set(true);
             this.api.validateExecution(this.execution()!.directExecutionId).subscribe({
                 next: () => {
+                    this.deletedItems.set(new Set());
                     this.currentStep.set("FINISHED");
                     this.loading.set(false);
                 },

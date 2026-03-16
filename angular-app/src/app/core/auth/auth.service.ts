@@ -27,7 +27,8 @@ export interface DecodedToken {
 export class AuthService {
     private apiUrl = environment.springboot + "/api/auth";
     public isLoggedInSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(this.hasTokens());
-    public isLoading$ = new BehaviorSubject<boolean>(true); // status de carregamento
+    private isLoading = new BehaviorSubject<boolean>(false); // status de carregamento
+    isLoading$ = this.isLoading.asObservable();
 
     constructor(
         private http: HttpClient,
@@ -62,7 +63,7 @@ export class AuthService {
         if (this.user.accessToken) {
             this.isLoggedInSubject.next(true);
         }
-        this.isLoading$.next(false); // Atualiza o status de carregamento
+        this.isLoading.next(false); // Atualiza o status de carregamento
     }
 
     hasTokens(): boolean {
@@ -74,8 +75,10 @@ export class AuthService {
     }
 
     login(username: string, password: string) { // Retorna um Observable
+        this.isLoading.next(true);
         return this.http.post<any>(`${this.apiUrl}/login`, {username, password}, {withCredentials: true}).pipe(
             tap(response => {
+                this.isLoading.next(false);
                 const decodedToken = jwtDecode<DecodedToken>(response.accessToken);
 
                 const userId = decodedToken.sub;
@@ -100,12 +103,15 @@ export class AuthService {
                 void this.fcmService.getPermission(roles);
             }),
             catchError(error => {
+
+                this.isLoading.next(false);
                 throw error;
             })
         );
     }
 
     logout(): Observable<void> {
+        this.isLoading.next(true);
         return this.http.post(this.apiUrl + '/logout', {}, { withCredentials: true }).pipe(
             switchMap(() => {
                 if (!this.user) return of(void 0);
@@ -118,10 +124,11 @@ export class AuthService {
 
                 if (typeof window !== 'undefined' && window.localStorage) {
                     localStorage.removeItem('user');
+                    localStorage.removeItem('fcmToken');
                 }
 
                 this.isLoggedInSubject.next(false);
-                this.isLoading$.next(false);
+                this.isLoading.next(false);
 
                 void this.router.navigate(['/auth/login']);
             }),
@@ -131,7 +138,7 @@ export class AuthService {
                 this.user?.clearToken();
                 localStorage.removeItem('user');
                 this.isLoggedInSubject.next(false);
-                this.isLoading$.next(false);
+                this.isLoading.next(false);
 
                 window.location.reload();
                 return of(void 0);

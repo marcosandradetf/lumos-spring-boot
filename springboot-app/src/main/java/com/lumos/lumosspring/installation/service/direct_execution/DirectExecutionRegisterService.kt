@@ -2,6 +2,7 @@ package com.lumos.lumosspring.installation.service.direct_execution
 
 import com.lumos.lumosspring.contract.repository.ContractItemDependencyRepository
 import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
+import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.contract.service.ContractService
 import com.lumos.lumosspring.installation.controller.direct_execution.DirectExecutionRegisterController
@@ -18,6 +19,7 @@ import com.lumos.lumosspring.installation.repository.direct_execution.DirectExec
 import com.lumos.lumosspring.notifications.service.FCMService
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.scheduler.SchedulerService
+import com.lumos.lumosspring.stock.materialsku.model.Material
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.NotificationType
@@ -47,7 +49,8 @@ class DirectExecutionRegisterService(
     private val contractRepository: ContractRepository,
     private val contractService: ContractService,
     private val schedulerService: SchedulerService,
-    private val fcmService: FCMService
+    private val fcmService: FCMService,
+    private val contractReferenceItemRepository: ContractReferenceItemRepository
 ) {
     fun createInstallation(
         execution: DirectExecutionRegisterController.InstallationCreateRequest,
@@ -148,7 +151,7 @@ class DirectExecutionRegisterService(
         }
 
         for (m in installationReq.materials) {
-            if(!m.truckStockControl) {
+            if (!m.truckStockControl) {
                 continue
             }
 
@@ -384,7 +387,19 @@ class DirectExecutionRegisterService(
 
             val linkedItems = saveLinkedItems(streetItem, null, req.contractId)
             linkedItemsResponse.addAll(linkedItems)
-            streetItems.addAll(linkedItems)
+            streetItems.addAll(
+                linkedItems.map { linkedItem ->
+                    val material = Material()
+                    val description = contractReferenceItemRepository
+                        .getDescription(linkedItem.contractItemId).orElse(null)
+                        ?: throw Utils.BusinessException(
+                            "Descrição do item vinculado não encontrada"
+                        )
+                    material.materialName = description
+                    linkedItem.material = material
+                    linkedItem
+                }
+            )
 
             reservedMap[streetItem.contractItemId]
                 ?.getOrNull(0)
@@ -401,8 +416,7 @@ class DirectExecutionRegisterService(
         schedulerService.scheduleAutoConfirm(
             execution.directExecutionId!!,
             Utils.getCurrentTenantId(),
-//            Instant.now().plusSeconds(602)
-            Instant.now().plusSeconds(62)
+            Instant.now().plusSeconds(600)
         )
 
         return ResponseEntity.ok().body(
@@ -492,7 +506,7 @@ class DirectExecutionRegisterService(
             .forEach { streetItem ->
                 val contractItem = contractItemsMap[streetItem.contractItemId]
 
-                if(contractItem == null) {
+                if (contractItem == null) {
                     cancelValidation(
                         executionId = execution.directExecutionId!!,
                         streetItemIds = streetItems.mapNotNull { it.directExecutionStreetItemId }
@@ -518,7 +532,9 @@ class DirectExecutionRegisterService(
                     throw Utils.BusinessException("Quantidade indisponível")
                 }
 
+                println("Item ${contractItem.executedQuantity} - Referencia: ${contractItem.referenceItemId}: Quantidade Executada: ${contractItem.quantityExecuted}")
                 contractItem.quantityExecuted += streetItem.executedQuantity
+                println("Item ${contractItem.executedQuantity} - Referencia: ${contractItem.referenceItemId}: Quantidade Executada: ${contractItem.quantityExecuted}")
             }
 
         execution.directExecutionStatus = ExecutionStatus.FINISHED

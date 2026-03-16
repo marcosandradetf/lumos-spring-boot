@@ -787,7 +787,11 @@
             @for (item of allExecutionItems(); track item.directExecutionStreetItemId) {
               <div
                 class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-neutral-800 dark:bg-neutral-950">
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2 relative" >
+                  <i
+                    *ngIf="!item.selectedContractItemId"
+                    title="Excluir item"
+                    class="pi pi-trash absolute top-1 right-1 cursor-pointer text-error" (click)="deleteItem(item.directExecutionStreetItemId)"></i>
                   <div class="text-sm font-medium">{{ item.material.materialName }}</div>
                   <div class="text-xs text-slate-500 dark:text-neutral-500">{{ item.streetAddress }}</div>
                   <div class="text-xs text-slate-500 dark:text-neutral-500">
@@ -795,11 +799,14 @@
                   </div>
                   <div class="text-xs font-medium"
                        [class]="item.selectedContractItemId ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
-                    {{
-                      item.selectedContractItemId
-                        ? 'Vinculado ao item contratual #' + item.selectedContractItemId
-                        : 'Ainda não vinculado'
-                    }}
+                    @if(item.selectedContractItemId) {
+                      {{
+                        'Vinculado ao item contratual #' + item.selectedContractItemId
+                      }}
+                    }
+                    @else {
+                      Item dependente vinculado automaticamente
+                    }
                   </div>
                 </div>
               </div>

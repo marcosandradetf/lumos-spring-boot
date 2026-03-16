@@ -391,7 +391,7 @@ fun StreetInstallationNoWorkOrder(
                         onClick = {
                             nextStep = false
                             imageSaved.value = false
-                            viewModel.startNewExecution(null)
+                            viewModel.startNewExecution(address)
                         },
                         modifier = Modifier
                             .fillMaxWidth()

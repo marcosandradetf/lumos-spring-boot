@@ -146,6 +146,7 @@ class DirectExecutionViewModel(
     }
 
     fun onExecutionScreen() {
+        signPath = null
         val id = installationId ?: return
         val contractorName = contractor ?: return
 

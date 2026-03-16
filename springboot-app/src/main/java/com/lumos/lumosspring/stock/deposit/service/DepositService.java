@@ -84,7 +84,7 @@ public class DepositService {
 
         deposit = depositRepository.save(deposit);
 
-        materialStockRegisterRepository.insertMaterials(deposit.getIdDeposit(), Utils.INSTANCE.getCurrentTenantId());
+        materialStockRegisterRepository.insertMaterials(deposit.getIdDeposit(), Utils.getCurrentTenantId());
 
         return ResponseEntity.ok(this.findAll());
     }

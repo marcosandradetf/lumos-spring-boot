@@ -84,7 +84,9 @@ fun DirectExecutionHomeScreen(
     val streets by viewModel.streets.collectAsStateWithLifecycle(emptyList())
 
     LaunchedEffect(Unit) {
-        viewModel.onHomeScreen()
+        if(!viewModel.showSignScreen && viewModel.signPath == null) {
+            viewModel.onHomeScreen()
+        }
     }
 
     var confirmModal by remember { mutableStateOf(false) }
