@@ -1,10 +1,6 @@
 ---
 /**
- * Documentation Landing Page
- *
- * @description
- * A landing page for documentation that displays all available docs
- * organized by section with descriptions and quick links.
+ * Lumos - Centro de Conhecimento
  */
 import { getCollection, type CollectionEntry } from 'astro:content';
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
@@ -13,10 +9,8 @@ import { siteConfig } from '@/config';
 
 type DocsEntry = CollectionEntry<'docs'>;
 
-// Get all non-draft docs
 const allDocs = await getCollection('docs', ({ data }: { data: DocsEntry['data'] }) => !data.draft);
 
-// Group docs by section and sort by order
 interface DocItem {
   title: string;
   description: string;
@@ -44,30 +38,27 @@ for (const doc of allDocs) {
   });
 }
 
-// Sort items within each section by order
 const docsSections: DocsSection[] = [];
 for (const [sectionName, items] of sectionMap) {
   items.sort((a, b) => a.order - b.order);
   docsSections.push({ section: sectionName, items });
 }
 
-// Sort sections by the minimum order of their items
 docsSections.sort((a, b) => {
   const aMinOrder = Math.min(...a.items.map((i) => i.order));
   const bMinOrder = Math.min(...b.items.map((i) => i.order));
   return aMinOrder - bMinOrder;
 });
 
-// Get the first doc for "Get Started" button
 const firstDoc = allDocs.sort((a: DocsEntry, b: DocsEntry) => a.data.order - b.data.order)[0];
 
-// Section icons mapping
 const sectionIcons: Record<string, string> = {
-  'Getting Started': 'lucide:rocket',
-  Configuration: 'lucide:settings',
-  Customization: 'lucide:palette',
-  Guides: 'lucide:book-open',
-  Reference: 'lucide:file-text',
+  Introdução: 'lucide:info',
+  'Gestão de Acesso': 'lucide:shield-check',
+  Estoque: 'lucide:package',
+  Contratos: 'lucide:file-signature',
+  Operacional: 'lucide:hard-hat',
+  Relatórios: 'lucide:bar-chart-3',
   FAQ: 'lucide:help-circle',
 };
 
@@ -77,98 +68,93 @@ function getSectionIcon(section: string): string {
 ---
 
 <MarketingLayout
-  title={`Documentation - ${siteConfig.name}`}
-  description={`Learn how to use ${siteConfig.name}. Guides, tutorials, and reference documentation to help you get started.`}
+  title={`Centro de Conhecimento - Lumos`}
+  description="Domine a gestão de iluminação pública. Guias técnicos e operacionais para equipes e gestores."
 >
-  <!-- Hero Section -->
   <section class="py-section bg-surface">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="max-w-3xl mx-auto text-center">
-        <h1 class="text-4xl sm:text-5xl font-bold text-text">Documentation</h1>
-        <p class="mt-6 text-lg text-text-muted">
-          Everything you need to know about {siteConfig.name}. From getting started to advanced
-          configuration.
-        </p>
-        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          {
-            firstDoc && (
-              <a
-                href={`/docs/${firstDoc.id}`}
-                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
-              >
-                <Icon name="lucide:book-open" class="w-5 h-5" />
-                Get Started
-              </a>
-            )
-          }
-          <a
-            href="#sections"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-border bg-background text-text font-medium hover:bg-surface transition-colors"
-          >
-            <Icon name="lucide:list" class="w-5 h-5" />
-            Browse All
-          </a>
-        </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 class="text-4xl sm:text-5xl font-bold text-text">Centro de Conhecimento</h1>
+      <p class="mt-6 text-lg text-text-muted max-w-2xl mx-auto">
+        Da configuração de contratos à liquidação financeira de campo. Tudo o que você precisa para
+        dominar a operação do Lumos.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        {
+          firstDoc && (
+            <a
+              href={`/docs/${firstDoc.id}`}
+              class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary text-white font-medium hover:bg-primary-dark transition-all"
+            >
+              <Icon name="lucide:rocket" class="w-5 h-5" />
+              Começar o Treinamento
+            </a>
+          )
+        }
+        <a
+          href="#sections"
+          class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-border bg-background text-text font-medium hover:bg-surface transition-all"
+        >
+          <Icon name="lucide:list" class="w-5 h-5" />
+          Navegar por Módulos
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- Quick Links -->
   <section class="py-12 border-b border-border">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <a
-          href="/docs/installation"
-          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-colors group"
+          href="/docs/02-access-management/01-profiles"
+          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
             class="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
           >
-            <Icon name="lucide:download" class="w-5 h-5" />
+            <Icon name="lucide:users" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">Installation</span>
+          <span class="font-medium text-text">Usuários</span>
         </a>
         <a
-          href="/docs/configuration"
-          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-colors group"
+          href="/docs/03-stock/01-warehouses"
+          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
             class="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
           >
-            <Icon name="lucide:settings" class="w-5 h-5" />
+            <Icon name="lucide:package" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">Configuration</span>
+          <span class="font-medium text-text">Estoque</span>
         </a>
         <a
-          href="/docs/customization"
-          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-colors group"
+          href="/docs/04-contracts/01-setup"
+          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
             class="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
           >
-            <Icon name="lucide:palette" class="w-5 h-5" />
+            <Icon name="lucide:file-text" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">Customization</span>
+          <span class="font-medium text-text">Contratos</span>
         </a>
         <a
-          href="/docs/faq"
-          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-colors group"
+          href="/docs/05-operation/01-os-flow"
+          class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
             class="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
           >
-            <Icon name="lucide:help-circle" class="w-5 h-5" />
+            <Icon name="lucide:zap" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">FAQ</span>
+          <span class="font-medium text-text">Ordens de Serviço</span>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- Documentation Sections -->
   <section id="sections" class="py-section">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="space-y-12">
+      <div class="space-y-16">
         {
           docsSections.map((section) => (
             <div>
@@ -178,18 +164,18 @@ function getSectionIcon(section: string): string {
                 </div>
                 <h2 class="text-2xl font-bold text-text">{section.section}</h2>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {section.items.map((doc) => (
                   <a
                     href={`/docs/${doc.slug}`}
-                    class="block p-6 rounded-lg border border-border bg-background hover:border-primary hover:shadow-md transition-all group"
+                    class="block p-6 rounded-lg border border-border bg-background hover:border-primary hover:shadow-lg transition-all group"
                   >
-                    <h3 class="font-semibold text-text group-hover:text-primary transition-colors">
+                    <h3 class="font-semibold text-text group-hover:text-primary transition-colors text-lg">
                       {doc.title}
                     </h3>
                     <p class="mt-2 text-sm text-text-muted line-clamp-2">{doc.description}</p>
-                    <div class="mt-4 flex items-center gap-1 text-sm text-primary font-medium">
-                      Read more
+                    <div class="mt-4 flex items-center gap-1 text-sm text-primary font-bold">
+                      Acessar manual
                       <Icon
                         name="lucide:arrow-right"
                         class="w-4 h-4 group-hover:translate-x-1 transition-transform"
@@ -205,28 +191,28 @@ function getSectionIcon(section: string): string {
     </div>
   </section>
 
-  <!-- Help Section -->
-  <section class="py-section bg-surface">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-2xl font-bold text-text">Need more help?</h2>
-        <p class="mt-4 text-text-muted">Can't find what you're looking for? We're here to help.</p>
-        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/contact"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-border bg-background text-text font-medium hover:bg-background/80 transition-colors"
-          >
-            <Icon name="lucide:mail" class="w-5 h-5" />
-            Contact Support
-          </a>
-          <a
-            href="/faq"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-border bg-background text-text font-medium hover:bg-background/80 transition-colors"
-          >
-            <Icon name="lucide:help-circle" class="w-5 h-5" />
-            View FAQ
-          </a>
-        </div>
+  <section class="py-section bg-surface border-t border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-2xl font-bold text-text">Dúvidas com a implantação?</h2>
+      <p class="mt-4 text-text-muted max-w-xl mx-auto">
+        Nosso corpo técnico está à disposição para auxiliar na configuração inicial do seu contrato
+        e treinamento da equipe de campo.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <a
+          href="/contact"
+          class="bg-primary text-white px-6 py-3 rounded-md font-medium hover:bg-primary-dark transition-all inline-flex items-center gap-2"
+        >
+          <Icon name="lucide:headphones" class="w-5 h-5" />
+          Suporte Técnico
+        </a>
+        <a
+          href="/faq"
+          class="border border-border bg-background px-6 py-3 rounded-md font-medium hover:bg-surface transition-all inline-flex items-center gap-2"
+        >
+          <Icon name="lucide:help-circle" class="w-5 h-5" />
+          Perguntas Frequentes
+        </a>
       </div>
     </div>
   </section>

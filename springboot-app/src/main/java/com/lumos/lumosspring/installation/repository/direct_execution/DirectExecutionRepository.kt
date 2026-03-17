@@ -14,11 +14,11 @@ import java.util.UUID
 
 @Repository
 interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
-    data class InstallationRow(val status: String, val description: String)
+    data class InstallationRow(val status: String, val description: String, val contractId: Long?)
 
     @Query(
         """
-        SELECT direct_execution_status as status, description
+        SELECT direct_execution_status as status, description, contract_id
         FROM direct_execution 
         WHERE direct_execution_id = :id
     """
@@ -92,19 +92,6 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
 
 @Repository
 interface DirectExecutionRepositoryItem : CrudRepository<DirectExecutionItem, Long> {
-    data class InstallationRow(val contractItemId: Long, val measuredItemQuantity: BigDecimal, val factor: BigDecimal?)
-
-    @Query(
-        """
-        select dei.contract_item_id, dei.measured_item_quantity, cri.factor 
-        from direct_execution_item dei
-        join contract_item ci on ci.contract_item_id = dei.contract_item_id
-        join public.contract_reference_item cri on cri.contract_reference_item_id = ci.contract_item_reference_id
-        where dei.direct_execution_id = :direct_execution_id
-    """
-    )
-    fun getByDirectExecutionId(directExecutionId: Long): List<InstallationRow>
-
     @Query("""
         select
             ci.contract_item_id,

@@ -23,13 +23,11 @@ class SchedulerService(
         val future = taskScheduler.schedule(
             {
                 try {
-                    println("schedule ativado")
                     AsyncTenantContext.setTenant(tenantId)
                     executionService.confirmPreparedExecution(executionId)
                 } finally {
                     tasks.remove(executionId)
                     AsyncTenantContext.clear()
-                    println("tenant limpo")
                 }
             },
             whenExecute

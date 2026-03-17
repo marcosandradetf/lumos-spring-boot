@@ -222,6 +222,7 @@ class DirectExecutionRegisterService(
         val installation = directExecutionRepository.getInstallation(directExecutionId)
         val description = installation?.description
         val status = installation?.status
+        val contractId = installation?.contractId
 
         if (status == ExecutionStatus.FINISHED || status == ExecutionStatus.AWAITING_COMPLETION) {
             return ResponseEntity.noContent().build()
@@ -275,6 +276,19 @@ class DirectExecutionRegisterService(
                     "status" to ReservationStatus.FINISHED
                 )
             )
+
+            this.fcmService.sendNotificationForTopic(
+                title = "$description CONCLUÍDA",
+                body = "A instalação foi finalizada com sucesso. Toque para gerar e visualizar o relatório.",
+                notificationCode = "ANALISTA_${Utils.getCurrentTenantId()}",
+                type = NotificationType.ALERT,
+                platform = FCMService.TargetPlatform.WEB,
+                isPopUp = false,
+                uri = "/relatorios/gerenciamento?contractId=${contractId}&executionId=${directExecutionId}&type=data&scope=INSTALLATION&executionType=DIRECT_EXECUTION",
+                relatedId = directExecutionId.toString(),
+                subtitle = "Relatório disponível"
+            )
+
         } else {
             this.fcmService.sendNotificationForTopic(
                 title = "Instalação concluída aguardando validação",
@@ -416,7 +430,7 @@ class DirectExecutionRegisterService(
         schedulerService.scheduleAutoConfirm(
             execution.directExecutionId!!,
             Utils.getCurrentTenantId(),
-            Instant.now().plusSeconds(600)
+            Instant.now().plusSeconds(598)
         )
 
         return ResponseEntity.ok().body(
@@ -461,7 +475,6 @@ class DirectExecutionRegisterService(
 
     @Transactional
     fun confirmPreparedExecution(executionId: Long): ResponseEntity<Any> {
-        println("schedule executando")
         schedulerService.cancelAutoConfirm(executionId)
         validateExecution(executionId)
         return ResponseEntity.ok().build()

@@ -27,7 +27,6 @@ import {LoadingOverlayComponent} from './shared/components/loading-overlay/loadi
     styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
-    currentUrl: string = '';
     logoutLoading$: Observable<boolean>;
 
     constructor(
@@ -38,11 +37,6 @@ export class AppComponent implements OnInit {
         private messageService: MessageService,
         private dialogService: DialogService,
     ) {
-        this.router.events.pipe(
-            filter(event => event instanceof NavigationEnd)
-        ).subscribe((event: NavigationEnd) => {
-            this.currentUrl = event.urlAfterRedirects;
-        });
 
         this.logoutLoading$ = this.authService.isLoading$;
     }
@@ -53,7 +47,6 @@ export class AppComponent implements OnInit {
     async ngOnInit() {
         const userStorage = localStorage.getItem('user');
         if (!userStorage) return;
-        console.log("logado")
 
         const notificationStatus = Notification.permission;
         if (notificationStatus === 'granted' || notificationStatus === 'default') {

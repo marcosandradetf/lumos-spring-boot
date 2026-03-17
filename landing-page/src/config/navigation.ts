@@ -21,11 +21,10 @@ export const navigation: Navigation = {
     main: [
       { label: 'Recursos', href: '/features' },
       { label: 'Preços', href: '/pricing' },
-      { label: 'Demonstração', href: '/dashboard' },
       { label: 'Parceiros', href: '/customers' },
       { label: 'Sobre a Empresa', href: '/enterprise' },
       { label: 'Documentação', href: '/docs', feature: 'docs' },
-      // { label: 'Blog', href: '/blog', feature: 'blog' },
+      { label: 'Blog', href: '/blog', feature: 'blog' },
     ],
     cta: [{ label: 'Entrar', href: 'https://lumos.thryon.com.br', variant: 'ghost' }],
   },

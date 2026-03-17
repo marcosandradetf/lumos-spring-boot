@@ -67,7 +67,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
 
     private readonly previewHeight = 260;
     private readonly previewPadding = 12;
-    remainingSeconds = 599;
+    remainingSeconds = 600;
     intervalId: any;
 
 

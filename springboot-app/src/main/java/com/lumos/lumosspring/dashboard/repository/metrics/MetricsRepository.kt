@@ -149,7 +149,7 @@ FROM (
          SELECT 'Ordens de serviço',
                 o.value,
                 'Ação imediata',
-                '/metrica/ordem-servico/pendentes',
+                '/execucoes/analise-estoque',
                 NULL::jsonb,
                 'Em aberto' as description
          FROM ordens_servico_pendentes o
@@ -158,7 +158,7 @@ FROM (
          SELECT 'Instalações',
                 sum(i.value) as value,
                 'Monitorar',
-                NULL,
+                '/execucoes/em-execucao',
                 NULL::jsonb,
                 'Em curso'   as description
          FROM instalacoes_em_curso i
@@ -167,7 +167,7 @@ FROM (
          SELECT 'Instalações',
                 sum(i.value) as value,
                 'Crítico',
-                '/metrica/instalacoes/pendentes',
+                '/execucoes/prontas-para-execucao',
                 NULL::jsonb,
                 'Paradas há mais de 7 dias'    as description
          FROM instalacoes_paradas i
@@ -217,7 +217,7 @@ FROM (
          SELECT 'Manutenções',
                 m.value,
                 'Últimos 30 dias',
-                '/metrica/manutencoes/concluidas',
+                '/relatorios/manutencoes',
                 NULL::jsonb,
                 'Concluídas nos últimos 30 dias' as description
          FROM manutencoes_concluidas_30_dias m
@@ -226,7 +226,7 @@ FROM (
          SELECT 'Instalações',
                 sum(i.value) as value,
                 'Últimos 30 dias',
-                '/metrica/instalacoes/concluidas',
+                '/execucoes/concluidas',
                 NULL::jsonb,
                 'Concluídas nos últimos 30 dias' as description
          FROM instalacoes_concluidas_30_dias i

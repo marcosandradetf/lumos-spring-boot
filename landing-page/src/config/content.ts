@@ -7,40 +7,40 @@
  */
 
 import type { AnnouncementConfig, ContentStrings } from '../lib/types';
-
 /** Announcement bar configuration */
 export const announcement: AnnouncementConfig = {
   /** Show/hide the announcement bar */
   enabled: true,
 
-  /** Unique ID - change this to reset dismissal for new announcements */
-  id: 'launch-2025',
+  /** ID único para o lançamento do Lumos */
+  id: 'lumos-launch-2026',
 
-  /** Announcement text */
-  text: '🚀 Virex 2.0 is here!',
+  /** Texto do anúncio focado na plataforma */
+  text: '💡 Conheça o Lumos: A nova era na gestão de iluminação pública.',
 
-  /** Optional link URL */
-  href: '/changelog',
+  /** Link para uma demo ou página de funcionalidades */
+  href: '/features',
 
-  /** Optional link text */
-  linkText: "See what's new",
+  /** Texto do link */
+  linkText: 'Saiba mais',
 
-  /** Visual style: 'primary' | 'secondary' | 'gradient' */
-  variant: 'primary',
+  /** Visual style: 'gradient' para destaque tecnológico */
+  variant: 'gradient',
 
-  /** Allow users to dismiss the announcement */
+  /** Permitir que o usuário feche */
   dismissible: true,
 };
 
 /** Configurable content strings for various sections */
 export const content: ContentStrings = {
   newsletter: {
-    title: 'Stay in the loop',
-    description: 'Get the latest updates, tips, and news delivered to your inbox.',
-    placeholder: 'Enter your email',
-    buttonText: 'Subscribe',
-    successMessage: 'Thanks for subscribing! Check your inbox to confirm.',
-    errorMessage: 'Something went wrong. Please try again.',
-    privacyNote: 'We respect your privacy. Unsubscribe at any time.',
+    title: 'Mantenha sua gestão atualizada',
+    description:
+      'Receba atualizações sobre novas funcionalidades, relatórios e conformidade contratual.',
+    placeholder: 'Seu e-mail corporativo',
+    buttonText: 'Cadastrar',
+    successMessage: 'Obrigado! Em breve você receberá novidades sobre o Lumos.',
+    errorMessage: 'Ocorreu um erro. Por favor, tente novamente.',
+    privacyNote: 'Respeitamos seus dados. Cancele a inscrição quando desejar.',
   },
 };

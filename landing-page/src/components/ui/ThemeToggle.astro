@@ -53,7 +53,7 @@ import { Icon } from 'astro-icon/components';
     if (stored === 'dark' || stored === 'light') {
       return stored;
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'light';
   }
 
   function setTheme(theme: 'dark' | 'light') {
