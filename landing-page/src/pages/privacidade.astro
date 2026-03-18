@@ -1,0 +1,116 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import { siteConfig } from '@/config';
+
+const { legal, contact } = siteConfig;
+const fullAddress = `${contact.address.street}, ${contact.address.city}, ${contact.address.state} ${contact.address.zip}`;
+---
+
+<MarketingLayout
+  title={`Política de Privacidade - ${siteConfig.name}`}
+  description={`Política de Privacidade do ${siteConfig.name}. Saiba como tratamos seus dados conforme a LGPD.`}
+>
+  <section class="py-section">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header class="mb-12">
+        <h1 class="text-4xl font-bold text-text">Política de Privacidade</h1>
+        <p class="mt-4 text-text-muted">Última atualização: {legal.lastUpdated}</p>
+      </header>
+
+      <div class="prose prose-lg max-w-none dark:prose-invert">
+        <p>
+          O {siteConfig.name} valoriza a privacidade e a proteção dos dados pessoais de seus usuários.
+          Esta Política de Privacidade descreve como coletamos, utilizamos, armazenamos e protegemos as
+          informações, em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados – LGPD).
+        </p>
+
+        <h2>1. Dados coletados</h2>
+
+        <p>Podemos coletar os seguintes dados:</p>
+        <ul>
+          <li>Nome, e-mail e telefone</li>
+          <li>Empresa e cargo</li>
+          <li>Informações fornecidas em formulários</li>
+          <li>Dados de navegação (IP, dispositivo, páginas acessadas)</li>
+        </ul>
+
+        <h2>2. Finalidade do tratamento</h2>
+
+        <p>Os dados são utilizados para:</p>
+        <ul>
+          <li>Contato comercial e demonstrações do sistema</li>
+          <li>Prestação de serviços e suporte</li>
+          <li>Melhoria da experiência do usuário</li>
+          <li>Cumprimento de obrigações legais e regulatórias</li>
+        </ul>
+
+        <h2>3. Base legal</h2>
+
+        <p>O tratamento de dados é realizado com base nas seguintes hipóteses legais:</p>
+        <ul>
+          <li>Consentimento do titular</li>
+          <li>Execução de contrato</li>
+          <li>Cumprimento de obrigação legal</li>
+          <li>Legítimo interesse</li>
+        </ul>
+
+        <h2>4. Compartilhamento de dados</h2>
+
+        <p>Os dados poderão ser compartilhados com:</p>
+        <ul>
+          <li>Prestadores de serviço essenciais (hospedagem, infraestrutura, analytics)</li>
+          <li>Autoridades públicas, quando exigido por lei</li>
+        </ul>
+
+        <p>O {siteConfig.name} não comercializa dados pessoais.</p>
+
+        <h2>5. Armazenamento e segurança</h2>
+
+        <p>
+          Adotamos medidas técnicas e organizacionais adequadas para proteger os dados contra acesso
+          não autorizado, perda ou destruição.
+        </p>
+
+        <h2>6. Direitos do titular</h2>
+
+        <p>Nos termos da LGPD, você pode solicitar:</p>
+        <ul>
+          <li>Confirmação da existência de tratamento</li>
+          <li>Acesso aos dados</li>
+          <li>Correção de dados incompletos ou desatualizados</li>
+          <li>Anonimização ou exclusão</li>
+          <li>Revogação do consentimento</li>
+        </ul>
+
+        <h2>7. Retenção de dados</h2>
+
+        <p>
+          Os dados serão mantidos pelo tempo necessário para cumprir as finalidades descritas ou
+          conforme exigido por lei.
+        </p>
+
+        <h2>8. Cookies</h2>
+
+        <p>
+          Utilizamos cookies para melhorar a experiência do usuário e analisar o tráfego do site.
+        </p>
+
+        <h2>9. Alterações desta política</h2>
+
+        <p>
+          Esta Política poderá ser atualizada a qualquer momento. Recomendamos sua revisão
+          periódica.
+        </p>
+
+        <h2>10. Contato</h2>
+
+        <p>Para exercer seus direitos ou esclarecer dúvidas:</p>
+
+        <ul>
+          <li>Email: {legal.privacyEmail}</li>
+          <li>Endereço: {fullAddress}</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>

@@ -60,7 +60,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
     <div>
       <label for="demo-firstName" class="block text-sm font-medium text-text mb-2">
-        First Name <span class="text-red-500">*</span>
+        Primeiro Nome <span class="text-red-500">*</span>
       </label>
       <input
         type="text"
@@ -69,13 +69,13 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
         required
         minlength="2"
         class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-        placeholder="John"
+        placeholder="José"
       />
       <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-firstName"></p>
     </div>
     <div>
       <label for="demo-lastName" class="block text-sm font-medium text-text mb-2">
-        Last Name <span class="text-red-500">*</span>
+        Sobrenome <span class="text-red-500">*</span>
       </label>
       <input
         type="text"
@@ -84,7 +84,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
         required
         minlength="2"
         class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-        placeholder="Doe"
+        placeholder="Silva"
       />
       <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-lastName"></p>
     </div>
@@ -92,7 +92,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
 
   <div>
     <label for="demo-email" class="block text-sm font-medium text-text mb-2">
-      Work Email <span class="text-red-500">*</span>
+      Email Corporativo <span class="text-red-500">*</span>
     </label>
     <input
       type="email"
@@ -100,14 +100,14 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       name="email"
       required
       class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-      placeholder="john@company.com"
+      placeholder="jose@empresa.com.br"
     />
     <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-email"></p>
   </div>
 
   <div>
     <label for="demo-company" class="block text-sm font-medium text-text mb-2">
-      Company <span class="text-red-500">*</span>
+      Empresa <span class="text-red-500">*</span>
     </label>
     <input
       type="text"
@@ -115,14 +115,14 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       name="company"
       required
       class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-      placeholder="Acme Inc"
+      placeholder="Acme Ltda"
     />
     <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-company"></p>
   </div>
 
   <div>
     <label for="demo-teamSize" class="block text-sm font-medium text-text mb-2">
-      Team Size <span class="text-red-500">*</span>
+      Tamanho da Equipe <span class="text-red-500">*</span>
     </label>
     <div class="relative">
       <select
@@ -131,11 +131,11 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
         required
         class="w-full px-4 py-3 pr-10 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors appearance-none cursor-pointer"
       >
-        <option value="">Select team size</option>
-        <option value="1-10">1-10 developers</option>
-        <option value="11-50">11-50 developers</option>
-        <option value="51-200">51-200 developers</option>
-        <option value="200+">200+ developers</option>
+        <option value="">Selecione o tamanho da sua equipe</option>
+        <option value="1-10">1-10 colaboradores</option>
+        <option value="11-50">11-50 colaboradores</option>
+        <option value="51-200">51-200 colaboradores</option>
+        <option value="200+">200+ colaboradores</option>
       </select>
       <div
         class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted"
@@ -151,14 +151,14 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
 
   <div>
     <label for="demo-message" class="block text-sm font-medium text-text mb-2">
-      What are you looking to solve? <span class="text-text-muted">(Optional)</span>
+      Qual é o problema que você está tentando resolver? <span class="text-text-muted">(Opcional)</span>
     </label>
     <textarea
       id="demo-message"
       name="message"
       rows="3"
       class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none transition-colors"
-      placeholder="Tell us about your deployment challenges..."></textarea>
+      placeholder="Conte-nos sobre os seus desafios..."></textarea>
   </div>
 
   <!-- Form status messages -->
@@ -167,18 +167,18 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       id="demo-form-success"
       class="hidden p-4 rounded-lg bg-green-100 dark:bg-green-950 border border-green-300 dark:border-green-800"
     >
-      <p class="text-green-900 dark:text-green-100 font-medium">Demo request submitted!</p>
+      <p class="text-green-900 dark:text-green-100 font-medium">Solicitação de demonstração enviada!</p>
       <p class="text-green-800 dark:text-green-300 text-sm mt-1">
-        Our team will reach out within 24 hours to schedule your demo.
+        Nossa equipe entrará em contato em até 24 horas para agendar sua demonstração.
       </p>
     </div>
     <div
       id="demo-form-error"
       class="hidden p-4 rounded-lg bg-red-100 dark:bg-red-950 border border-red-300 dark:border-red-800"
     >
-      <p class="text-red-900 dark:text-red-100 font-medium">Something went wrong</p>
+      <p class="text-red-900 dark:text-red-100 font-medium">Algo deu errado</p>
       <p class="text-red-800 dark:text-red-300 text-sm mt-1">
-        Please try again or contact us directly via email.
+        Por favor, tente novamente ou entre em contato conosco diretamente por e-mail.
       </p>
     </div>
   </div>
@@ -188,7 +188,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     id="demo-submit-button"
     class="w-full cursor-pointer px-6 py-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
   >
-    <span id="demo-button-text">Request Demo</span>
+    <span id="demo-button-text">Solicitar Demonstração</span>
     <span id="demo-button-loading" class="hidden">
       <svg
         class="animate-spin inline-block w-5 h-5 mr-2"
@@ -204,7 +204,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         ></path>
       </svg>
-      Submitting...
+      Enviando...
     </span>
     <svg
       id="demo-button-arrow"
@@ -222,8 +222,8 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   </button>
 
   <p class="text-xs text-text-muted text-center">
-    By submitting, you agree to our <a href="/privacy" class="underline hover:text-primary"
-      >Privacy Policy</a
+    Ao enviar, você concorda com nossos termos. <a href="/privacidade" class="underline hover:text-primary"
+      >Política de Privacidade</a
     >.
   </p>
 </form>
@@ -241,27 +241,27 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   // Validation rules
   const validationRules: Record<string, (value: string) => string | null> = {
     'demo-firstName': (value) => {
-      if (!value.trim()) return 'First name is required';
-      if (value.trim().length < 2) return 'First name must be at least 2 characters';
+      if (!value.trim()) return 'O primeiro nome é obrigatório';
+      if (value.trim().length < 2) return 'O primeiro nome deve ter pelo menos 2 caracteres';
       return null;
     },
     'demo-lastName': (value) => {
-      if (!value.trim()) return 'Last name is required';
-      if (value.trim().length < 2) return 'Last name must be at least 2 characters';
+      if (!value.trim()) return 'Sobrenome é obrigatório';
+      if (value.trim().length < 2) return 'O sobrenome deve ter pelo menos 2 caracteres';
       return null;
     },
     'demo-email': (value) => {
-      if (!value.trim()) return 'Email is required';
+      if (!value.trim()) return 'Email é obrigatório';
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) return 'Please enter a valid email address';
+      if (!emailRegex.test(value)) return 'Por favor, insira um endereço de e-mail válido';
       return null;
     },
     'demo-company': (value) => {
-      if (!value.trim()) return 'Company name is required';
+      if (!value.trim()) return 'Nome da empresa é obrigatório';
       return null;
     },
     'demo-teamSize': (value) => {
-      if (!value) return 'Please select a team size';
+      if (!value) return 'Por favor, selecione o tamanho da equipe';
       return null;
     },
   };

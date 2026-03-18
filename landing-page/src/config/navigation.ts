@@ -19,14 +19,17 @@ export const navigation: Navigation = {
    */
   header: {
     main: [
-      { label: 'Recursos', href: '/features' },
-      { label: 'Preços', href: '/pricing' },
-      { label: 'Parceiros', href: '/customers' },
-      { label: 'Sobre a Empresa', href: '/enterprise' },
-      { label: 'Documentação', href: '/docs', feature: 'docs' },
+      { label: 'Recursos', href: '/recursos' },
+      { label: 'Preços', href: '/precos' },
+      { label: 'Parceiros', href: '/parceiros' },
+      { label: 'Como usar', href: '/como-usar', feature: 'docs' },
       { label: 'Blog', href: '/blog', feature: 'blog' },
+      { label: 'Sobre', href: '/sobre' },
     ],
-    cta: [{ label: 'Entrar', href: 'https://lumos.thryon.com.br', variant: 'ghost' }],
+    cta: [
+      { label: 'Entrar', href: 'https://lumos.thryon.com.br', variant: 'ghost' },
+      { label: 'Teste Grátis', href: '/contato', variant: 'primary' },
+    ],
   },
 
   /**
@@ -35,16 +38,15 @@ export const navigation: Navigation = {
    */
   footer: {
     product: [
-      { label: 'Features', href: '/features' },
-      { label: 'Integrations', href: '/integrations' },
-      { label: 'Security', href: '/security' },
-      { label: 'Pricing', href: '/pricing' },
+      { label: 'Recursos', href: '/features' },
+      { label: 'Segurança', href: '/seguranca' },
+      { label: 'Preços', href: '/precos' },
       { label: 'FAQ', href: '/faq' },
     ],
     solutions: [
       { label: 'Enterprise', href: '/enterprise' },
-      { label: 'Customers', href: '/customers' },
-      { label: 'Request Demo', href: '/demo' },
+      { label: 'Parceiros', href: '/parceiros' },
+      { label: 'Solicite uma demonstração', href: '/demonstração' },
       { label: 'Status', href: '/status' },
     ],
     resources: [

@@ -19,7 +19,7 @@ export const announcement: AnnouncementConfig = {
   text: '💡 Conheça o Lumos: A nova era na gestão de iluminação pública.',
 
   /** Link para uma demo ou página de funcionalidades */
-  href: '/features',
+  href: '/recursos',
 
   /** Texto do link */
   linkText: 'Saiba mais',

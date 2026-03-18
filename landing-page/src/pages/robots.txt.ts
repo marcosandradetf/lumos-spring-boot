@@ -8,12 +8,11 @@ export const GET: APIRoute = () => {
 User-agent: *
 Allow: /
 
-# Disallow admin and API routes (if any)
 Disallow: /api/
 Disallow: /_astro/
+Disallow: /admin/
 
-# Sitemap location
-Sitemap: ${siteConfig.url}/sitemap-index.xml
+Sitemap: https://lumosip.com.br/sitemap-index.xml
 `;
 
   return new Response(robotsTxt, {

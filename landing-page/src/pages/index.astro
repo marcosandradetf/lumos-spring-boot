@@ -148,7 +148,7 @@ const pricingPlans = [
     highlighted: false,
     cta: {
       label: 'Iniciar teste grátis',
-      href: '/contact',
+      href: '/contato',
     },
   },
   {
@@ -165,7 +165,7 @@ const pricingPlans = [
     highlighted: true,
     cta: {
       label: 'Iniciar teste grátis',
-      href: '/contact',
+      href: '/contato',
     },
   },
   {
@@ -182,7 +182,7 @@ const pricingPlans = [
     highlighted: false,
     cta: {
       label: 'Iniciar Teste Grátis',
-      href: '/contact',
+      href: '/contato',
     },
   },
 ];
@@ -192,11 +192,17 @@ const pricingPlans = [
   title={`${siteConfig.name} - ${siteConfig.description}`}
   description={siteConfig.description}
 >
+
   <Hero
     title="Lumos, Gestão de Iluminação Pública"
     subtitle="O Lumos otimiza todo o seu fluxo de trabalho, do Cadastro de Novos Contratos à Visualização de Relatórios. Gerencie o fluxo operacional e administrativo em um único lugar. Sem necessidade de uso de planilhas ou relatórios manuais."
-    primaryCTA={{ label: 'Testar Grátis', href: '/pricing' }}
-    secondaryCTA={{ label: 'Acessar Demonstração', href: '/pricing' }}
+    primaryCTA={{ label: 'Testar Grátis', href: '/contato' }}
+    secondaryCTA={{ label: 'Acessar Demonstração', href: '/demonstracao' }}
+
+    backgroundType="image"
+    backgroundImage="/images/lumos-login-bg.png"
+    overlay={true}
+    overlayOpacity={60}
   />
 
   <LogoCloud
@@ -249,7 +255,7 @@ const pricingPlans = [
     title="Soberania operacional em cada ponto"
     subtitle="Da execução em campo à liquidação financeira do contrato. O Lumos consolida cada etapa da sua operação em uma estrutura de dados inquestionável."features={features}
     background="muted"
-    footerLink={{ label: 'Ver todos os recursos →', href: '/features' }}
+    footerLink={{ label: 'Ver todos os recursos →', href: '/recursos' }}
   />
 
   <BentoGrid
@@ -265,7 +271,7 @@ const pricingPlans = [
     plans={pricingPlans}
     annualDiscount={20}
     background="default"
-    footerLink={{ label: 'Ver os planos detalhados →', href: '/pricing' }}
+    footerLink={{ label: 'Ver os planos detalhados →', href: '/precos' }}
   />
 
   {
@@ -290,7 +296,7 @@ const pricingPlans = [
   <CTA
     title="Pronto para melhorar sua operação?"
     description="Comece a usar o Lumos hoje mesmo. Oferecemos um período de 14 dias para testar."
-    action={{ label: 'Conhecer os Planos', href: '/pricing' }}
+    action={{ label: 'Conhecer os Planos', href: '/precos' }}
   />
 
   <!--<Newsletter />-->

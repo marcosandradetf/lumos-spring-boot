@@ -1,0 +1,101 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import CTA from '@sections/marketing/CTA.astro';
+---
+
+<MarketingLayout
+  title="Software de Iluminação Pública | Gestão Completa para Empresas"
+  description="Software de gestão de iluminação pública para empresas que atuam com prefeituras. Controle de campo, vínculo contratual inteligente e faturamento sem glosas."
+>
+  <!-- HERO -->
+  <section class="py-20 text-center max-w-4xl mx-auto">
+    <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+      O software de iluminação pública que conecta execução em campo diretamente ao contrato
+    </h1>
+
+    <p class="mt-6 text-lg text-muted-foreground">
+      Pare de perder dinheiro com falhas na medição, falta de controle e retrabalho. O Lumos
+      automatiza sua operação, garante rastreabilidade total e transforma execução em faturamento
+      seguro.
+    </p>
+
+    <div class="mt-8">
+      <a href="/contato" class="btn btn-primary text-lg px-6 py-3"> Solicitar demonstração </a>
+    </div>
+  </section>
+
+  <!-- PROBLEMA -->
+  <section class="py-16 bg-muted">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6">
+        Por que empresas de iluminação pública perdem dinheiro?
+      </h2>
+
+      <ul class="space-y-4 text-lg">
+        <li>• Execuções feitas em campo que não são faturadas</li>
+        <li>• Falta de vínculo entre serviço executado e contrato</li>
+        <li>• Erros na medição enviados para a prefeitura</li>
+        <li>• Falta de controle sobre equipes e materiais</li>
+        <li>• Glosas por inconsistência ou ausência de evidência</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SOLUÇÃO -->
+  <section class="py-16">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6">Como o Lumos resolve isso</h2>
+
+      <p class="text-lg mb-6">
+        O Lumos foi criado especificamente para empresas que operam contratos de iluminação pública.
+        Ele conecta a execução em campo diretamente aos itens contratuais, garantindo que tudo o que
+        for executado seja corretamente medido e faturado.
+      </p>
+
+      <ul class="space-y-4 text-lg">
+        <li>✔ Execução em campo com registro georreferenciado</li>
+        <li>✔ Fotos obrigatórias com data e hora</li>
+        <li>✔ Vínculo automático (ou posterior) ao contrato</li>
+        <li>✔ Cálculo automático de valores</li>
+        <li>✔ Relatórios prontos para envio à prefeitura</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- DIFERENCIAL -->
+  <section class="py-16 bg-muted">
+    <div class="max-w-5xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-6">
+        O único sistema que conecta execução em campo diretamente ao contrato
+      </h2>
+
+      <p class="text-lg">
+        Mesmo sem Ordem de Serviço, sua execução não se perde. O Lumos garante rastreabilidade
+        completa entre o que foi feito no campo e o que será faturado.
+      </p>
+    </div>
+  </section>
+
+  <!-- FUNCIONALIDADES RESUMO -->
+  <section class="py-16">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl font-bold mb-8">Tudo o que você precisa em um único sistema</h2>
+
+      <div class="grid md:grid-cols-2 gap-6 text-lg">
+        <div>📍 Mapa operacional em tempo real</div>
+        <div>📦 Controle de estoque com rastreabilidade</div>
+        <div>📊 Dashboard de produtividade</div>
+        <div>📑 Relatórios de medição prontos</div>
+        <div>🔗 Vínculo contratual inteligente</div>
+        <div>👷 Gestão de equipes de campo</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <CTA
+    title="Pronto para parar de perder dinheiro na sua operação?"
+    description="Veja como o Lumos pode transformar sua gestão de iluminação pública e aumentar sua margem."
+    action={{ label: 'Solicitar demonstração', href: '/contato' }}
+  />
+</MarketingLayout>

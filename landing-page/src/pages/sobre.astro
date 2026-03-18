@@ -1,0 +1,153 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Hero from '@sections/marketing/Hero.astro';
+import StatsSection from '@sections/social-proof/StatsSection.astro';
+import CTA from '@sections/marketing/CTA.astro';
+import { siteConfig } from '@/config';
+import Icon from 'node_modules/astro-icon/components/Icon.astro';
+
+const values = [
+  {
+    title: 'Precisão nos dados',
+    description:
+      'Na gestão pública não existe espaço para suposição. Cada informação registrada no Lumos é uma evidência operacional real.',
+    icon: 'lucide:target',
+  },
+  {
+    title: 'Foco na operação real',
+    description:
+      'O sistema foi construído para quem está no campo. Cada funcionalidade existe para facilitar a execução e não gerar burocracia.',
+    icon: 'lucide:hard-hat',
+  },
+  {
+    title: 'Segurança contratual',
+    description:
+      'O Lumos atua como uma camada de proteção operacional e financeira, garantindo que tudo o que é executado seja corretamente medido e faturado.',
+    icon: 'lucide:shield-check',
+  },
+];
+
+const milestones = [
+  {
+    label: 'A Origem',
+    title: 'O caos do papel',
+    description:
+      'O Lumos nasceu da observação direta da operação: equipes em campo sem controle, execuções sem registro e medições sendo contestadas por falta de evidência.',
+  },
+  {
+    label: 'A Inovação',
+    title: 'Inteligência de vínculo',
+    description:
+      'Desenvolvemos um modelo que conecta diretamente a execução de campo aos itens contratuais, eliminando falhas na medição e perdas no faturamento.',
+  },
+  {
+    label: 'Hoje',
+    title: 'Controle total da operação',
+    description:
+      'O Lumos se consolidou como a ferramenta para empresas que buscam rastreabilidade, segurança contratual e aumento de margem em contratos públicos.',
+  },
+];
+---
+
+<MarketingLayout
+  title={`Sobre - ${siteConfig.name}`}
+  description="Conheça o Lumos, software especializado em gestão de iluminação pública para empresas que operam contratos com prefeituras."
+>
+  <Hero
+    title="Não é mais um software. É o novo padrão de operação."
+    subtitle="O Lumos surgiu para substituir o improviso por controle real. Conectamos execução em campo, contrato e faturamento em um único sistema."
+    background="default"
+    primaryCTA={{
+      label: 'Solicitar demonstração',
+      href: '/contato',
+    }}
+  />
+
+  {/* TESE */}
+  <section class="py-20 px-6 max-w-5xl mx-auto">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h2 class="text-3xl font-bold mb-6 text-primary">A nossa tese</h2>
+
+        <p class="text-lg text-muted-foreground mb-4">
+          A maioria dos sistemas de gestão falha porque é desenhada por quem não vive a operação.
+          Focam em relatórios bonitos, mas ignoram a realidade do campo.
+        </p>
+
+        <p class="text-lg text-muted-foreground">
+          O <strong>Lumos</strong> foi construído para resolver isso. Ele conecta o que acontece no campo
+          com o que é medido e faturado, garantindo rastreabilidade e segurança para quem assina o contrato.
+        </p>
+      </div>
+
+      <div class="bg-muted rounded-2xl p-8 border border-border">
+        <blockquote class="text-xl italic font-medium">
+          "Não gerenciamos apenas iluminação pública. Garantimos que cada execução seja comprovada,
+          medida e faturada com segurança."
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  {/* STATS */}
+  <StatsSection
+    stats={[
+      { value: '100%', label: 'Foco em iluminação pública' },
+      { value: 'Zero perda', label: 'de execução não faturada' },
+      { value: 'Rastreabilidade', label: 'de ponta a ponta' },
+    ]}
+    background="muted"
+  />
+
+  {/* PILARES */}
+  <section class="py-20 px-6 bg-default">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-16">Nossos pilares</h2>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          values.map((value) => (
+            <div class="p-8 rounded-xl border border-border bg-card hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6 text-primary">
+                <Icon name={value.icon} class="w-6 h-6" />
+              </div>
+              <h3 class="text-xl font-bold mb-3">{value.title}</h3>
+              <p class="text-muted-foreground">{value.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* EVOLUÇÃO */}
+  <section class="py-20 px-6 bg-muted">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-16">Nossa evolução</h2>
+
+      <div class="space-y-12">
+        {
+          milestones.map((item) => (
+            <div class="flex gap-8 items-start">
+              <div>
+                <span class="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded">
+                  {item.label}
+                </span>
+                <h3 class="text-2xl font-bold mb-2">{item.title}</h3>
+                <p class="text-lg text-muted-foreground">{item.description}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* CTA FINAL */}
+  <CTA
+    title="Veja como eliminar perdas na sua operação"
+    description="Solicite uma demonstração e entenda como conectar execução em campo ao contrato e garantir faturamento completo."
+    action={{ label: 'Teste Grátis', href: '/contato' }}
+    background="accent"
+  />
+</MarketingLayout>

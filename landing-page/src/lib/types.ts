@@ -48,6 +48,8 @@ export interface SocialLinks {
   twitter?: string;
   github?: string;
   discord?: string;
+  linkedin?: string;
+  whatsapp?: string;
 }
 
 export interface Address {

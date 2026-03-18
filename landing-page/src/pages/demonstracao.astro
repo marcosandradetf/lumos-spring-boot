@@ -1,0 +1,134 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import DemoRequestForm from '@forms/DemoRequestForm.astro';
+import { Icon } from 'astro-icon/components';
+import { siteConfig } from '@/config';
+
+const benefits = [
+  {
+    icon: 'lucide:map',
+    title: 'Demonstração prática do sistema',
+    description:
+      'Veja em tempo real como funciona o mapa operacional, execução em campo e controle das equipes.',
+  },
+  {
+    icon: 'lucide:file-check',
+    title: 'Vínculo contratual na prática',
+    description:
+      'Entenda como o Lumos conecta execução diretamente aos itens do contrato e evita perdas financeiras.',
+  },
+  {
+    icon: 'lucide:calculator',
+    title: 'Simulação de faturamento',
+    description: 'Veja como suas execuções viram medições e faturamento, sem risco de glosa.',
+  },
+  {
+    icon: 'lucide:users',
+    title: 'Análise da sua operação',
+    description: 'Mostramos exatamente onde você pode estar perdendo dinheiro hoje.',
+  },
+];
+
+const faqs = [
+  {
+    question: 'Quanto tempo dura a demonstração?',
+    answer: 'A demonstração dura em média 30 minutos e já é focada na sua operação real.',
+  },
+  {
+    question: 'Preciso preparar algo antes?',
+    answer: 'Não. Se quiser, você pode trazer um contrato ou cenário real para analisarmos juntos.',
+  },
+  {
+    question: 'A demonstração é gratuita?',
+    answer: 'Sim, totalmente gratuita e sem compromisso.',
+  },
+  {
+    question: 'Vocês atendem empresas de qualquer porte?',
+    answer:
+      'Sim. Atendemos desde empresas locais até consórcios que operam múltiplos contratos com prefeituras.',
+  },
+];
+---
+
+<MarketingLayout
+  title={`Solicitar Demonstração | ${siteConfig.name}`}
+  description="Agende uma demonstração do Lumos e veja como conectar execução em campo ao contrato, evitar glosas e aumentar sua margem nos contratos de iluminação pública."
+>
+  <section class="py-section bg-background">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+        {/* Left: Content */}
+        <div>
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4"
+          >
+            Demonstração Lumos
+          </span>
+
+          <h1 class="text-4xl sm:text-5xl font-bold text-text mb-6">
+            Veja como parar de perder dinheiro na sua operação de iluminação pública
+          </h1>
+
+          <p class="text-xl text-text-muted mb-8 leading-relaxed">
+            Descubra como o Lumos conecta execução em campo diretamente ao contrato, garantindo
+            rastreabilidade completa e faturamento seguro — mesmo sem Ordem de Serviço.
+          </p>
+
+          {/* Benefits */}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+            {
+              benefits.map((benefit) => (
+                <div class="flex gap-4">
+                  <div class="shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Icon name={benefit.icon} class="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-text mb-1">{benefit.title}</h3>
+                    <p class="text-sm text-text-muted">{benefit.description}</p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          {/* Social proof (adaptado) */}
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-surface border border-border">
+            <div>
+              <p class="text-sm font-medium text-text">
+                Feito para empresas que atuam com contratos públicos
+              </p>
+              <p class="text-xs text-text-muted">
+                Iluminação pública com controle total de execução e faturamento
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Form */}
+        <div class="lg:pl-8">
+          <div class="bg-surface border border-border rounded-2xl p-8">
+            <h2 class="text-2xl font-bold text-text mb-6">Solicitar demonstração</h2>
+            <DemoRequestForm />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* FAQ Section */}
+  <section class="py-section bg-surface">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-bold text-text text-center mb-8">Dúvidas frequentes</h2>
+      <div class="space-y-4">
+        {
+          faqs.map((faq) => (
+            <div class="p-6 rounded-xl bg-background border border-border">
+              <h3 class="font-semibold text-text mb-2">{faq.question}</h3>
+              <p class="text-text-muted">{faq.answer}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
